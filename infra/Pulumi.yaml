@@ -1,0 +1,3 @@
+name: sunshine-aws
+runtime: nodejs
+description: Sunshine on AWS

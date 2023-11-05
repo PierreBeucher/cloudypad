@@ -1,0 +1,9 @@
+config:
+  aws:region: eu-west-3
+  sunshine-aws:environment: dev
+  sunshine-aws:hostedZoneName: devops.crafteo.io
+  sunshine-aws:fqdn: sunshine.devops.crafteo.io
+  sunshine-aws:ami: "ami-01a6e4c1659b08390" # https://nixos.org/download#nixos-amazon eu-west-3
+  sunshine-aws:instanceType: g4dn.xlarge
+  sunshine-aws:tags: {}
+  sunshine-aws:publicKey: ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQCiK6FYG5u6y10hJu3VTytiDh5XY1i11m1hft1xKLj9Hv4kGEdP3yTkEIZfKmkD3Kl8yT2QYAii6ec2ZVveLXHeTgBN6Ew483UJ7dDJ/H53XqHKd9c3gY0HgG0KiyW6cMqibQ6g9THl3GaYq1zSVqLSM7WMVlCc5bugy3TE72PK+SoVW5vt9c9b56q9YazFsH9hNq9ybAF4W2wFGduev9PnqorgND5QtdNpBKnM+IKRnGFrQ5sbKlo/Rc14zb4UqSOCfpVHmQrcS3aK3eeBn4+AtPHBAIe43MyS7+JmUQHvcTzm6/vobAP1E2NimkWJS2TD6zEdPu06GR6PXRjC6y2Zhp/7truzKhxMkFo0wDXlV5cgmD3v68Mt0otzwtDN8qbMzBObPyqiIt3mjbDHRdpE72/eAkU4KkwnbolaaTfpSO4ishpn0/nBReiIrP+U+U4ssrAAAQ3efAnSYa++B7a0fOd4s43leOp9VKHGw1iu0UVS1hGcL4hbrU23LMOKPKE=
