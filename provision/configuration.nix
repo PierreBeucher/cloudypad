@@ -19,6 +19,9 @@
         xorg.xrandr
     ];
 
+    # Steam
+    programs.steam.enable = true;
+
     # X and audio
     services.xserver = {
         enable = true;
@@ -26,6 +29,7 @@
         
         displayManager.startx.enable = true;
 
+        # Dummy screen
         monitorSection = ''
             VendorName     "Unknown"
             HorizSync   30-85
@@ -53,6 +57,45 @@
             EndSubSection
         '';
     };
+
+    users.users.sunshine = {
+        isNormalUser  = true;
+        home  = "/home/sunshine";
+        description  = "Sunshine Server";
+        extraGroups  = [ "wheel" "networkmanager" "input" "video"];
+        openssh.authorizedKeys.keys = [ "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQCiK6FYG5u6y10hJu3VTytiDh5XY1i11m1hft1xKLj9Hv4kGEdP3yTkEIZfKmkD3Kl8yT2QYAii6ec2ZVveLXHeTgBN6Ew483UJ7dDJ/H53XqHKd9c3gY0HgG0KiyW6cMqibQ6g9THl3GaYq1zSVqLSM7WMVlCc5bugy3TE72PK+SoVW5vt9c9b56q9YazFsH9hNq9ybAF4W2wFGduev9PnqorgND5QtdNpBKnM+IKRnGFrQ5sbKlo/Rc14zb4UqSOCfpVHmQrcS3aK3eeBn4+AtPHBAIe43MyS7+JmUQHvcTzm6/vobAP1E2NimkWJS2TD6zEdPu06GR6PXRjC6y2Zhp/7truzKhxMkFo0wDXlV5cgmD3v68Mt0otzwtDN8qbMzBObPyqiIt3mjbDHRdpE72/eAkU4KkwnbolaaTfpSO4ishpn0/nBReiIrP+U+U4ssrAAAQ3efAnSYa++B7a0fOd4s43leOp9VKHGw1iu0UVS1hGcL4hbrU23LMOKPKE=" ];
+    };
+
+    security.sudo.extraRules = [
+        {  
+            users = [ "sunshine" ];
+            commands = [
+                { 
+                    command = "ALL" ;
+                    options= [ "NOPASSWD" ];
+                }
+            ];
+        }
+    ];
+
+    security.wrappers.sunshine = {
+        owner = "root";
+        group = "root";
+        capabilities = "cap_sys_admin+p";
+        source = "${pkgs.sunshine}/bin/sunshine";
+    };
+
+    # Required to simulate input
+    boot.kernelModules = [ "uinput" ];
+    # services.udev.extraRules = ''
+    #   KERNEL=="uinput", SUBSYSTEM=="misc", OPTIONS+="static_node=uinput", TAG+="uaccess"
+    # '';
+
+    services.udev.extraRules = ''
+      KERNEL=="uinput", GROUP="input", MODE="0660", OPTIONS+="static_node=uinput"
+    '';
+
+    
 
     # Force stop udisks2 (conflict with Gnome)
     services.udisks2.enable = lib.mkForce false;

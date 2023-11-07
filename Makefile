@@ -5,8 +5,14 @@ nix-config:
 	scp -i .ssh/key provision/configuration.nix root@$(SUNSHINE_HOST):/etc/nixos/configuration.nix
 	ssh -i .ssh/key root@$(SUNSHINE_HOST) nixos-rebuild switch
 
+.PHONY: sunshine-config
 sunshine-config:
 	scp -i .ssh/key provision/sunshine.conf root@$(SUNSHINE_HOST):/root/.config/sunshine/sunshine.conf
+
+.PHONY: sunshine
+sunshine: sunshine-config
+	scp -i .ssh/key provision/start-sunshine.sh root@$(SUNSHINE_HOST):/root/start-sunshine.sh
+	ssh -i .ssh/key root@$(SUNSHINE_HOST) /root/start-sunshine.sh
 
 .PHONY: infra
 infra:
