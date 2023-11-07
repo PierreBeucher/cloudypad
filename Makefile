@@ -7,12 +7,12 @@ nix-config:
 
 .PHONY: sunshine-config
 sunshine-config:
-	scp -i .ssh/key provision/sunshine.conf root@$(SUNSHINE_HOST):/root/.config/sunshine/sunshine.conf
+	scp -i .ssh/key provision/sunshine.conf sunshine@$(SUNSHINE_HOST):./.config/sunshine/sunshine.conf
 
 .PHONY: sunshine
 sunshine: sunshine-config
-	scp -i .ssh/key provision/start-sunshine.sh root@$(SUNSHINE_HOST):/root/start-sunshine.sh
-	ssh -i .ssh/key root@$(SUNSHINE_HOST) /root/start-sunshine.sh
+	scp -i .ssh/key provision/start-sunshine.sh sunshine@$(SUNSHINE_HOST):./start-sunshine.sh
+	ssh -i .ssh/key sunshine@$(SUNSHINE_HOST) ./start-sunshine.sh
 
 .PHONY: infra
 infra:
