@@ -9,7 +9,18 @@
       # enable = true;
       allowedTCPPortRanges = [ { from = 0; to = 65535; } ];
       allowedUDPPortRanges = [ { from = 0; to = 65535; } ];
-    };   
+    };
+
+    networking.networkmanager.enable = true;
+
+    # Configure keymap in X11
+    services.xserver = {
+        layout = "fr";
+        xkbVariant = "azerty";
+    };
+
+    # Configure console keymap
+    console.keyMap = "fr";
 
     system.stateVersion = "23.05";
 
