@@ -4,7 +4,7 @@
     ];
 
     nixpkgs.config.allowUnfree = true; 
-  
+
     networking.firewall = {
       # enable = true;
       allowedTCPPortRanges = [ { from = 0; to = 65535; } ];
@@ -28,17 +28,23 @@
     environment.systemPackages = with pkgs; [
         sunshine
         xorg.xrandr
+
+        # nvidia-video-sdk # broken link
+        nvidia-vaapi-driver
+        x265
     ];
 
-    # Steam
-    programs.steam.enable = true;
-
     # X and audio
+    sound.enable = true;
+    hardware.pulseaudio.enable = true;
+    security.rtkit.enable = true;
+    
     services.xserver = {
         enable = true;
         videoDrivers = ["nvidia"];
         
-        displayManager.startx.enable = true;
+        # displayManager.lightdm.enable = true; # root service
+        displayManager.startx.enable = true; # run manually
 
         # Dummy screen
         monitorSection = ''
@@ -46,7 +52,7 @@
             HorizSync   30-85
             VertRefresh 48-120
 
-                ModeLine        "1920x1080" 148.35  1920 2008 2052 2200 1080 1084 1089 1125
+            ModeLine        "1920x1080" 148.35  1920 2008 2052 2200 1080 1084 1089 1125
             ModelName      "Unknown"
             Option         "DPMS"
         '';
@@ -73,7 +79,7 @@
         isNormalUser  = true;
         home  = "/home/sunshine";
         description  = "Sunshine Server";
-        extraGroups  = [ "wheel" "networkmanager" "input" "video"];
+        extraGroups  = [ "wheel" "networkmanager" "input" "video" "sound"];
         openssh.authorizedKeys.keys = [ "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQCiK6FYG5u6y10hJu3VTytiDh5XY1i11m1hft1xKLj9Hv4kGEdP3yTkEIZfKmkD3Kl8yT2QYAii6ec2ZVveLXHeTgBN6Ew483UJ7dDJ/H53XqHKd9c3gY0HgG0KiyW6cMqibQ6g9THl3GaYq1zSVqLSM7WMVlCc5bugy3TE72PK+SoVW5vt9c9b56q9YazFsH9hNq9ybAF4W2wFGduev9PnqorgND5QtdNpBKnM+IKRnGFrQ5sbKlo/Rc14zb4UqSOCfpVHmQrcS3aK3eeBn4+AtPHBAIe43MyS7+JmUQHvcTzm6/vobAP1E2NimkWJS2TD6zEdPu06GR6PXRjC6y2Zhp/7truzKhxMkFo0wDXlV5cgmD3v68Mt0otzwtDN8qbMzBObPyqiIt3mjbDHRdpE72/eAkU4KkwnbolaaTfpSO4ishpn0/nBReiIrP+U+U4ssrAAAQ3efAnSYa++B7a0fOd4s43leOp9VKHGw1iu0UVS1hGcL4hbrU23LMOKPKE=" ];
     };
 
@@ -98,18 +104,17 @@
 
     # Required to simulate input
     boot.kernelModules = [ "uinput" ];
-    # services.udev.extraRules = ''
-    #   KERNEL=="uinput", SUBSYSTEM=="misc", OPTIONS+="static_node=uinput", TAG+="uaccess"
-    # '';
 
+    # Maybe not necessary ? udev rules are ignored with ssh ?
     services.udev.extraRules = ''
       KERNEL=="uinput", GROUP="input", MODE="0660", OPTIONS+="static_node=uinput"
     '';
 
-    
-
     # Force stop udisks2 (conflict with Gnome)
     services.udisks2.enable = lib.mkForce false;
+
+    # Steam
+    programs.steam.enable = true;
 
     # Enable OpenGL
     hardware.opengl = {

@@ -66,10 +66,9 @@ export class SunshineInfra extends pulumi.ComponentResource {
             keyName: keyPair.keyName,
             rootBlockDevice: {
                 encrypted: true,
-                volumeSize: 40,
-                volumeType: "gp3"
+                volumeSize: 200,
+                volumeType: "standard"
             }
-
         }, {
             parent: this
         });
