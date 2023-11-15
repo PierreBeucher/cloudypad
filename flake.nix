@@ -19,6 +19,8 @@
 
               moonlight-qt
 
+              turbovnc
+
             ];
 
             shellHook = ''
