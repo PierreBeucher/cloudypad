@@ -33,6 +33,14 @@ refresh:
 destroy:
 	pulumi -C infra destroy -yfr
 
+.PHONY: start
+start:
+	 aws ec2 start-instances --instance-ids $$(pulumi -C infra stack output infra | jq .instanceId -r)
+
+.PHONY: stop
+stop:
+	 aws ec2 stop-instances --instance-ids $$(pulumi -C infra stack output infra | jq .instanceId -r)
+
 .PHONY: ssh
 ssh:
 	ssh -i .ssh/key root@$(SUNSHINE_HOST)

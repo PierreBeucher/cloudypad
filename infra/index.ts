@@ -18,6 +18,8 @@ interface SunshineInfraConfig {
 export class SunshineInfra extends pulumi.ComponentResource {
 
     eip: aws.ec2.Eip;
+
+    instanceId: pulumi.Output<string>;
     
     constructor(name : string, infraConfig : SunshineInfraConfig, opts? : pulumi.ComponentResourceOptions) {
         super("crafteo:sunshine-aws", name, infraConfig, opts);
@@ -72,6 +74,8 @@ export class SunshineInfra extends pulumi.ComponentResource {
         }, {
             parent: this
         });
+
+        this.instanceId = ec2Instance.id
 
         this.eip = new aws.ec2.Eip(`eip-${name}`, {
             tags: commonTags

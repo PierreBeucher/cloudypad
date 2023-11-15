@@ -24,6 +24,8 @@
             ];
 
             shellHook = ''
+
+              trap "echo 'Stopping instance...' && make stop" EXIT
             '';
           };
         };
