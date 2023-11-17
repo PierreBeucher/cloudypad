@@ -64,7 +64,6 @@ in {
             HorizSync   30-85
             VertRefresh 48-120
 
-            ModeLine        "1920x1080" 148.35  1920 2008 2052 2200 1080 1084 1089 1125
             ModelName      "Unknown"
             Option         "DPMS"
         '';
