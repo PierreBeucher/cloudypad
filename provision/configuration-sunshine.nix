@@ -1,4 +1,11 @@
-{ modulesPath, pkgs, lib, config, ... }: {
+{ modulesPath, pkgs, lib, config, ... }: let
+    
+    configFile = pkgs.writeTextDir "config/sunshine.conf"
+        ''
+        origin_web_ui_allowed=wan
+        '';
+
+in {
     imports = [ 
         "${modulesPath}/virtualisation/amazon-image.nix"  # NixOS built-in config for AWS, do not remove
     ];
@@ -28,12 +35,8 @@
     environment.systemPackages = with pkgs; [
         sunshine
         xorg.xrandr
-
-        # nvidia-video-sdk # broken link
-        nvidia-vaapi-driver
-        x265
     ];
-
+    
     # X and audio
     sound.enable = true;
     hardware.pulseaudio.enable = true;
@@ -43,8 +46,17 @@
         enable = true;
         videoDrivers = ["nvidia"];
         
-        # displayManager.lightdm.enable = true; # root service
-        displayManager.startx.enable = true; # run manually
+        # Using gdm and gnome
+        # lightdm failed to start with autologin, probably linked to X auth and Gnome service conflict
+        # X auth was not ready when Gnome session started, can be seen with journalctl _UID=$(id -u sunshine) -b
+        # Maybe another combination of displayManager / desktopManager works
+        displayManager.gdm.enable = true;
+        desktopManager.gnome.enable = true;
+
+        # autologin
+        displayManager.autoLogin.enable = true;
+        displayManager.autoLogin.user = "sunshine";
+        displayManager.defaultSession = "gnome";
 
         # Dummy screen
         monitorSection = ''
@@ -75,6 +87,7 @@
         '';
     };
 
+    # Sunshine user, service and config 
     users.users.sunshine = {
         isNormalUser  = true;
         home  = "/home/sunshine";
@@ -101,6 +114,26 @@
         capabilities = "cap_sys_admin+p";
         source = "${pkgs.sunshine}/bin/sunshine";
     };
+
+    # Inspired from https://github.com/LizardByte/Sunshine/blob/5bca024899eff8f50e04c1723aeca25fc5e542ca/packaging/linux/sunshine.service.in
+    systemd.user.services.sunshine = {
+        description = "Sunshine server";
+        wantedBy = [ "graphical-session.target" ];
+        startLimitIntervalSec = 500;
+        startLimitBurst = 5;
+        partOf = [ "graphical-session.target" ];
+        wants = [ "graphical-session.target" ];
+        after = [ "graphical-session.target" ];
+
+        serviceConfig = {
+            ExecStart = "${config.security.wrapperDir}/sunshine ${configFile}/config/sunshine.conf";
+            Restart = "on-failure";
+            RestartSec = "5s";
+        };
+    };
+    
+    # Avahi is used by Sunshine
+    services.avahi.publish.userServices = true;
 
     # Required to simulate input
     boot.kernelModules = [ "uinput" ];

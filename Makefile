@@ -1,9 +1,13 @@
-SUNSHINE_HOST = sunshine.devops.crafteo.io
-NIX_CONFIG = "provision/configuration-vnc.nix"
+SUNSHINE_HOST = sunshine-fast.devops.crafteo.io
+NIX_CONFIG = "provision/configuration-sunshine.nix"
 
 .PHONY: nix-config
 nix-config:
 	scp -i .ssh/key $(NIX_CONFIG) root@$(SUNSHINE_HOST):/etc/nixos/configuration.nix
+	# workaround for sunshine which crashes if .config doesn't exists
+	# only present on Sunshine 0.19.1 (NixOS 23.05), seems OK with later versions
+	# probably using a solution with Home Manager would be cleaner
+	ssh -i .ssh/key root@$(SUNSHINE_HOST) mkdir -p .config
 	ssh -i .ssh/key root@$(SUNSHINE_HOST) nixos-rebuild switch
 
 # This ought to be in NixOS or as Ansible
@@ -40,6 +44,10 @@ start:
 .PHONY: stop
 stop:
 	 aws ec2 stop-instances --instance-ids $$(pulumi -C infra stack output infra | jq .instanceId -r)
+
+.PHONY: reboot
+reboot:
+	ssh -i .ssh/key root@$(SUNSHINE_HOST) reboot
 
 .PHONY: ssh
 ssh:
