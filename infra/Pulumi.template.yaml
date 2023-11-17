@@ -1,0 +1,32 @@
+config:
+  aws:region: eu-west-3
+
+  # Environment name (used to tag resources)
+  sunshine-aws:environment: sunshine-small
+
+  # Hosted Zone name under which to create DNS record for instance
+  sunshine-aws:hostedZoneName: sunshine.mydomain.org
+  
+  # Optional Fully Qualified Domain Name for instance
+  # If not specified, FQDN == Hosted Zone name
+  # sunshine-aws:fqdn: small.sunshine.mydomain.org
+
+  # AMI to use
+  # Only NixOS AMI are supported for now
+  # See https://nixos.org/download#nixos-amazon
+  sunshine-aws:ami: "ami-01a6e4c1659b08390" # eu-west-3
+  
+  # Instance type
+  # Only NVidia instances are supported for now
+  sunshine-aws:instanceType: g4dn.xlarge
+
+  # Additional resurces tags
+  # sunshine-aws:tags: {}
+
+  # SSH Public key to connect to instance
+  sunshine-aws:publicKey: ssh-rsa xxx...
+
+  # Customize instance root volume type and size 
+  sunshine-aws:volumeType: gp3
+  sunshine-aws:volumeSize: 150
+

@@ -3,3 +3,4 @@
 **/.ssh/
 tmp
 infra/Pulumi.*.yaml
+!infra/Pulumi.template.yaml
