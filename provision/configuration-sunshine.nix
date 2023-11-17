@@ -18,6 +18,8 @@ in {
       allowedUDPPortRanges = [ { from = 0; to = 65535; } ];
     };
 
+    services.openssh.settings.PasswordAuthentication = false;
+
     networking.networkmanager.enable = true;
 
     # Configure keymap in X11
