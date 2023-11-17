@@ -10,7 +10,12 @@ interface SunshineInfraConfig {
     instanceType: string
     publicKey: string
     tags: {[key: string]: string}
+    volumeSize?: number
+    volumeType?: string
 }
+
+export const DEFAULT_VOLUME_TYPE = "standard"
+export const DEFAULT_VOLUME_SIZE = 200
 
 /**
  * 
@@ -30,6 +35,9 @@ export class SunshineInfra extends pulumi.ComponentResource {
                 Name: `${name}-${infraConfig.environment}`,
             }
         }
+
+        const volType = infraConfig.volumeType || DEFAULT_VOLUME_TYPE
+        const volSize = infraConfig.volumeSize || DEFAULT_VOLUME_SIZE
 
     
         const sg = new aws.ec2.SecurityGroup(`${name}`, {
@@ -68,8 +76,8 @@ export class SunshineInfra extends pulumi.ComponentResource {
             keyName: keyPair.keyName,
             rootBlockDevice: {
                 encrypted: true,
-                volumeSize: 200,
-                volumeType: "standard"
+                volumeSize: volSize,
+                volumeType: volType
             }
         }, {
             parent: this
@@ -129,4 +137,6 @@ export const infra = new SunshineInfra("sunshine", {
     instanceType: config.require("instanceType"),
     publicKey: config.require("publicKey"),
     tags: config.requireObject("tags"),
+    volumeSize: config.getObject<number>("volumeSize"),
+    volumeType: config.get("volumeType"),
 })
