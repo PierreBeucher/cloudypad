@@ -2,3 +2,4 @@
 **/node_modules/
 **/.ssh/
 tmp
+infra/Pulumi.*.yaml

@@ -9,13 +9,14 @@ interface SunshineInfraConfig {
     ami: string
     instanceType: string
     publicKey: string
-    tags: {[key: string]: string}
+    tags?: {[key: string]: string}
     volumeSize?: number
     volumeType?: string
 }
 
 export const DEFAULT_VOLUME_TYPE = "standard"
 export const DEFAULT_VOLUME_SIZE = 200
+export const DEFAULT_TAGS = {}
 
 /**
  * 
@@ -30,7 +31,7 @@ export class SunshineInfra extends pulumi.ComponentResource {
         super("crafteo:sunshine-aws", name, infraConfig, opts);
         
         const commonTags = {
-            ...infraConfig.tags, 
+            ...infraConfig.tags || DEFAULT_TAGS, 
             ...{
                 Name: `${name}-${infraConfig.environment}`,
             }
@@ -136,7 +137,7 @@ export const infra = new SunshineInfra("sunshine", {
     ami: config.require("ami"),
     instanceType: config.require("instanceType"),
     publicKey: config.require("publicKey"),
-    tags: config.requireObject("tags"),
+    tags: config.getObject("tags"),
     volumeSize: config.getObject<number>("volumeSize"),
     volumeType: config.get("volumeType"),
 })
