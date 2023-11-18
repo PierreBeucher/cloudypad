@@ -12,6 +12,12 @@ in {
 
     nixpkgs.config.allowUnfree = true; 
 
+    fileSystems."/var/lib/steam-data" = {
+      device = "/dev/nvme1n1";
+      fsType = "ext4";
+      autoFormat = true;
+    };
+
     networking.firewall = {
       # enable = true;
       allowedTCPPortRanges = [ { from = 0; to = 65535; } ];
@@ -28,8 +34,8 @@ in {
         xkbVariant = "azerty";
     };
 
-    # Configure console keymap
     console.keyMap = "fr";
+    time.timeZone = "Europe/Paris";
 
     system.stateVersion = "23.05";
 

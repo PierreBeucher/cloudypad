@@ -12,6 +12,16 @@ interface SunshineInfraConfig {
     tags?: {[key: string]: string}
     volumeSize?: number
     volumeType?: string
+    additionalVolumes?: AdditionalVolume[]
+}
+
+interface AdditionalVolume {
+    deviceName: string
+    az: string,
+    type: string
+    size: number
+    iops: number
+    throughput: number
 }
 
 export const DEFAULT_VOLUME_TYPE = "standard"
@@ -84,6 +94,24 @@ export class SunshineInfra extends pulumi.ComponentResource {
             parent: this
         });
 
+        for (const volConf of infraConfig.additionalVolumes || []) {
+            const vol = new aws.ebs.Volume(`additional-vol-${volConf.deviceName}`, {
+                encrypted: true,
+                availabilityZone: volConf.az,
+                size: volConf.size,
+                type: volConf.type,
+                iops: volConf.throughput,
+                throughput: volConf.throughput,
+                tags: commonTags
+            });
+
+            const volAtt = new aws.ec2.VolumeAttachment(`additional-vol-attach-${volConf.deviceName}`, {
+                deviceName: volConf.deviceName,
+                volumeId: vol.id,
+                instanceId: ec2Instance.id,
+            });
+        }
+
         this.instanceId = ec2Instance.id
 
         this.eip = new aws.ec2.Eip(`eip-${name}`, {
@@ -140,4 +168,5 @@ export const infra = new SunshineInfra("sunshine", {
     tags: config.getObject("tags"),
     volumeSize: config.getObject<number>("volumeSize"),
     volumeType: config.get("volumeType"),
+    additionalVolumes: config.getObject<AdditionalVolume[]>("additionalVolumes")
 })

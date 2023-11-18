@@ -11,6 +11,12 @@ That's all :) Nix will provide every needed binary: AWS CLI, NodeJS, Pulumi, etc
 
 ## Usage
 
+Every commands must bu run under Nix shell. Start Nix shell with
+
+```
+nix develop
+```
+
 ### Initial setup
 
 Deploy an AWS GPU instance and configure Sunshine server

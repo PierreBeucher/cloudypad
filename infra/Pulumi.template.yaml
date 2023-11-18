@@ -27,6 +27,17 @@ config:
   sunshine-aws:publicKey: ssh-rsa xxx...
 
   # Customize instance root volume type and size 
-  sunshine-aws:volumeType: gp3
-  sunshine-aws:volumeSize: 150
+  # sunshine-aws:volumeType: gp3
+  # sunshine-aws:volumeSize: 150
+
+  # Additional volumes to attach to instance
+  # e.g. to mount as Steam data store
+  # sunshine-aws:additionalVolumes:
+  # - deviceName: /dev/sdh
+  #   az: eu-west-3a
+  #   type: gp3
+  #   size: 80
+  #   iops: 3000
+  #   throughput: 125
+
 
