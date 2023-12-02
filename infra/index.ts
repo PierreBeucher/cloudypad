@@ -5,14 +5,16 @@ import * as fs from "fs"
 interface SunshineInfraConfig {
     environment: string
     hostedZoneName: string
-    fqdn: string
-    ami: string
+    fqdn?: string
+    ami?: string
     instanceType: string
     publicKey: string
     tags?: {[key: string]: string}
     volumeSize?: number
     volumeType?: string
     additionalVolumes?: AdditionalVolume[]
+    vpc?: string,
+    subnet?: string
 }
 
 interface AdditionalVolume {
@@ -24,18 +26,20 @@ interface AdditionalVolume {
     throughput: number
 }
 
-export const DEFAULT_VOLUME_TYPE = "standard"
-export const DEFAULT_VOLUME_SIZE = 200
-export const DEFAULT_TAGS = {}
+const DEFAULT_VOLUME_TYPE = "standard"
+const DEFAULT_VOLUME_SIZE = 200
+const DEFAULT_TAGS = {}
 
 /**
  * 
  */
-export class SunshineInfra extends pulumi.ComponentResource {
+class SunshineInfra extends pulumi.ComponentResource {
 
-    eip: aws.ec2.Eip;
+    eip: aws.ec2.Eip
 
-    instanceId: pulumi.Output<string>;
+    instanceId: pulumi.Output<string>
+
+    fqdn: pulumi.Output<string>
     
     constructor(name : string, infraConfig : SunshineInfraConfig, opts? : pulumi.ComponentResourceOptions) {
         super("crafteo:sunshine-aws", name, infraConfig, opts);
@@ -54,10 +58,16 @@ export class SunshineInfra extends pulumi.ComponentResource {
         const sg = new aws.ec2.SecurityGroup(`${name}`, {
             ingress: [
                 { fromPort: 22, toPort: 22, protocol: "tcp", cidrBlocks: ["0.0.0.0/0"], ipv6CidrBlocks: ["0.0.0.0/0"] },
-                { fromPort: 80, toPort: 80, protocol: "tcp", cidrBlocks: ["0.0.0.0/0"], ipv6CidrBlocks: ["0.0.0.0/0"] },
-                { fromPort: 443, toPort: 443, protocol: "tcp", cidrBlocks: ["0.0.0.0/0"], ipv6CidrBlocks: ["0.0.0.0/0"] },
-                { fromPort: 47984, toPort: 48010, protocol: "tcp", cidrBlocks: ["0.0.0.0/0"], ipv6CidrBlocks: ["0.0.0.0/0"] },
-                { fromPort: 47984, toPort: 48010, protocol: "udp", cidrBlocks: ["0.0.0.0/0"], ipv6CidrBlocks: ["0.0.0.0/0"] },
+                // Sunshine ports
+                // see https://docs.lizardbyte.dev/projects/sunshine/en/latest/about/advanced_usage.html#port
+                { fromPort: 47984, toPort: 47984, protocol: "tcp", cidrBlocks: ["0.0.0.0/0"], ipv6CidrBlocks: ["0.0.0.0/0"] },
+                { fromPort: 47989, toPort: 47989, protocol: "tcp", cidrBlocks: ["0.0.0.0/0"], ipv6CidrBlocks: ["0.0.0.0/0"] },
+                { fromPort: 47990, toPort: 47990, protocol: "tcp", cidrBlocks: ["0.0.0.0/0"], ipv6CidrBlocks: ["0.0.0.0/0"] },
+                { fromPort: 48010, toPort: 48010, protocol: "tcp", cidrBlocks: ["0.0.0.0/0"], ipv6CidrBlocks: ["0.0.0.0/0"] },
+                { fromPort: 47998, toPort: 47998, protocol: "tcp", cidrBlocks: ["0.0.0.0/0"], ipv6CidrBlocks: ["0.0.0.0/0"] },
+                { fromPort: 47999, toPort: 47999, protocol: "tcp", cidrBlocks: ["0.0.0.0/0"], ipv6CidrBlocks: ["0.0.0.0/0"] },
+                { fromPort: 48000, toPort: 48000, protocol: "tcp", cidrBlocks: ["0.0.0.0/0"], ipv6CidrBlocks: ["0.0.0.0/0"] },
+                { fromPort: 48002, toPort: 48002, protocol: "tcp", cidrBlocks: ["0.0.0.0/0"], ipv6CidrBlocks: ["0.0.0.0/0"] },
             ],
             egress: [{
                 fromPort: 0,
@@ -67,6 +77,7 @@ export class SunshineInfra extends pulumi.ComponentResource {
                 ipv6CidrBlocks: ["::/0"],
             }],
             tags: commonTags,
+            vpcId: infraConfig.vpc,
         }, {
             parent: this
         });
@@ -78,8 +89,24 @@ export class SunshineInfra extends pulumi.ComponentResource {
             parent: this
         })
 
+        // Use NixOS AMI for current region if no specific AMI provided
+        const ami = infraConfig.ami ? infraConfig.ami : aws.ec2.getAmi({
+            mostRecent: true,
+            filters: [
+                {
+                    name: "name",
+                    values: ["NixOS-23.05.555.52869451b83-x86_64-linux"],
+                },
+                {
+                    name: "virtualization-type",
+                    values: ["hvm"],
+                },
+            ],
+            owners: ["080433136561"],
+        }).then(amiResult => amiResult.id);
+
         const ec2Instance = new aws.ec2.Instance(`ec2Instance-${name}`, {
-            ami: infraConfig.ami,
+            ami: ami,
             instanceType: infraConfig.instanceType,
             tags: commonTags,
             volumeTags: commonTags,
@@ -89,7 +116,9 @@ export class SunshineInfra extends pulumi.ComponentResource {
                 encrypted: true,
                 volumeSize: volSize,
                 volumeType: volType
-            }
+            },
+            subnetId: infraConfig.subnet,
+            associatePublicIpAddress: true
         }, {
             parent: this
         });
@@ -127,46 +156,62 @@ export class SunshineInfra extends pulumi.ComponentResource {
             parent: this
         });
 
-        const hostedZone = aws.route53.getZone({ name: infraConfig.hostedZoneName })
-        const hzId = hostedZone.then(hz => hz.id)
+        // Set fqdn attribute to Route53 if defined 
+        // Otherwise use auto-generated instance fqdn
+        if (infraConfig.fqdn) {
+            const hostedZone = aws.route53.getZone({ name: infraConfig.hostedZoneName })
+            const hzId = hostedZone.then(hz => hz.id)
+    
+            // DNS record using Elastic IP
+            const dnsRecord = new aws.route53.Record(`dns-record-${name}`, {
+                zoneId: hzId,
+                name: infraConfig.fqdn,
+                type: "A",
+                ttl: 30,
+                records: [this.eip.publicIp],
+            }, {
+                parent: this
+            });
+    
+            const wildcardDnsRecord = new aws.route53.Record(`wildcard-dns-record-${name}`, {
+                zoneId: hzId,
+                name: `*.${infraConfig.fqdn}`,
+                type: "A",
+                ttl: 30,
+                records: [this.eip.publicIp],
+            }, {
+                parent: this
+            });
 
-        // DNS record using Elastic IP
-        const dnsRecord = new aws.route53.Record(`dns-record-${name}`, {
-            zoneId: hzId,
-            name: infraConfig.fqdn,
-            type: "A",
-            ttl: 30,
-            records: [this.eip.publicIp],
-        }, {
-            parent: this
-        });
-
-        const wildcardDnsRecord = new aws.route53.Record(`wildcard-dns-record-${name}`, {
-            zoneId: hzId,
-            name: `*.${infraConfig.fqdn}`,
-            type: "A",
-            ttl: 30,
-            records: [this.eip.publicIp],
-        }, {
-            parent: this
-        });
-   
+            this.fqdn = pulumi.output(infraConfig.fqdn)
+        } else {
+            this.fqdn = pulumi.output(ec2Instance.publicDns)
+        }
     }
 }
 
 const config = new pulumi.Config();
+const awsConfig = new pulumi.Config("aws");
 
-export const fqdn = config.require("fqdn")
+export const awsRegion = awsConfig.get("region")
 
-export const infra = new SunshineInfra("sunshine", {
+const infra = new SunshineInfra("sunshine", {
     environment: config.require("environment"),
     hostedZoneName: config.require("hostedZoneName"),
-    fqdn: fqdn,
-    ami: config.require("ami"),
+    fqdn: config.get("fqdn"),
+    ami: config.get("ami"),
     instanceType: config.require("instanceType"),
     publicKey: config.require("publicKey"),
     tags: config.getObject("tags"),
     volumeSize: config.getObject<number>("volumeSize"),
     volumeType: config.get("volumeType"),
-    additionalVolumes: config.getObject<AdditionalVolume[]>("additionalVolumes")
+    additionalVolumes: config.getObject<AdditionalVolume[]>("additionalVolumes"),
+    vpc: config.get("vpc"),
+    subnet: config.get("subnet"),
 })
+
+export const ipAddress = infra.eip.publicIp
+
+export const ip = infra.eip.publicIp
+export const fqdn = infra.fqdn
+export const ec2InstanceId = infra.instanceId

@@ -1,30 +1,35 @@
 config:
+  # AWS region under which to manage infrastructure
   aws:region: eu-west-3
 
   # Environment name (used to tag resources)
-  sunshine-aws:environment: sunshine-small
-
-  # Hosted Zone name under which to create DNS record for instance
-  sunshine-aws:hostedZoneName: sunshine.mydomain.org
-  
-  # Optional Fully Qualified Domain Name for instance
-  # If not specified, FQDN == Hosted Zone name
-  # sunshine-aws:fqdn: small.sunshine.mydomain.org
-
-  # AMI to use
-  # Only NixOS AMI are supported for now
-  # See https://nixos.org/download#nixos-amazon
-  sunshine-aws:ami: "ami-01a6e4c1659b08390" # eu-west-3
+  # Must be unique per AWS account
+  sunshine-aws:environment: sunshine
   
   # Instance type
-  # Only NVidia instances are supported for now
+  # Only NVidia instances are supported for now (g4dn, g5, p2, p3...)
+  # See https://aws.amazon.com/ec2/instance-types/ > Accelerated Computing instances
   sunshine-aws:instanceType: g4dn.xlarge
+
+  # SSH Public key to connect to instance
+  sunshine-aws:publicKey: ssh-rsa xxx...
+
+  # AMI to use
+  # Default to NixOS 23.05 on eu-west-3
+  # Only NixOS AMI are supported for now
+  # See https://nixos.org/download#nixos-amazon
+  # sunshine-aws:ami: "ami-01a6e4c1659b08390"
 
   # Additional resurces tags
   # sunshine-aws:tags: {}
 
-  # SSH Public key to connect to instance
-  sunshine-aws:publicKey: ssh-rsa xxx...
+  # Optional Hosted Zone name under which to create DNS record for instance
+  # If not specified, fqdn output is set to instence public DNS 
+  # sunshine-aws:hostedZoneName: sunshine.mydomain.org
+  
+  # Optional Fully Qualified Domain Name for instance
+  # If not specified, FQDN == Hosted Zone name
+  # sunshine-aws:fqdn: small.sunshine.mydomain.org
 
   # Customize instance root volume type and size 
   # sunshine-aws:volumeType: gp3
@@ -39,5 +44,10 @@ config:
   #   size: 80
   #   iops: 3000
   #   throughput: 125
+
+  # Optional VPC and Subnet ID under which to create instance
+  # If not defined, will use default VPC and subnet
+  # vpc: xxx
+  # subnet: xxx
 
 
