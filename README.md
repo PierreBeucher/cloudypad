@@ -65,11 +65,11 @@ Congrats, your Cloudy Sunshine is ready ! 🥳
 
 Run Moonlight and connect to your instance. You'll need to validate PIN on first usage
 
-```
+```sh
 moonlight
 ```
 
-**Important: ** remember to `task stop` your instance to avoid unnecessary costs 💸 Event stopped, you may still be billed for disk usage and EIP usage. 
+**Important:** remember to `task stop` your instance to avoid unnecessary costs 💸 Event stopped, you may still be billed for disk usage and EIP usage. 
 
 ### Everyday usage
 
@@ -88,7 +88,7 @@ moonlight
 Once finished, **remember to stop your instance to avoid unnecessary costs 💸**
 
 ```sh
-make stop
+task stop
 ```
 
 ## How much will I pay? 🤑
