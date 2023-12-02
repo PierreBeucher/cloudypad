@@ -53,6 +53,8 @@ tasks:
         sh: pulumi -C infra stack output awsRegion
       AWS_EC2_INSTANCE_ID: 
         sh: pulumi -C infra stack output ec2InstanceId
+      SUNSHINE_URL: 
+        sh: pulumi -C infra stack output sunshineUrl
     cmd: ssh -i .ssh/key root@{{.SUNSHINE_HOST}} reboot
     ignore_error: true # reboot closes SSH session with non-0
 
@@ -62,7 +64,6 @@ tasks:
       aws --region {{.AWS_REGION}}
       ec2 start-instances --instance-ids {{.AWS_EC2_INSTANCE_ID}}
     
-
   stop: 
     vars: *vars
     cmd: >-
@@ -80,6 +81,10 @@ tasks:
     vars: *vars
     cmd: ssh -i .ssh/key root@{{.SUNSHINE_HOST}}
     interactive: true
+
+  sunshine-browser:
+    vars: *vars
+    cmd: xdg-open {{.SUNSHINE_URL}}
 
 
       

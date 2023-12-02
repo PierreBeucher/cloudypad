@@ -216,3 +216,4 @@ export const ipAddress = infra.eip.publicIp
 export const ip = infra.eip.publicIp
 export const fqdn = infra.fqdn
 export const ec2InstanceId = infra.instanceId
+export const sunshineUrl = pulumi.interpolate`https://${infra.fqdn}:47990`
