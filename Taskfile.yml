@@ -1,0 +1,85 @@
+version: '3'
+
+vars:
+  NIX_CONFIG_DIR: provision
+  
+tasks:
+  # 
+  # Pulumi
+  # 
+
+  preview:
+    dir: infra
+    cmds:
+      - pulumi preview
+
+  infra:
+    dir: infra
+    cmds:
+      - pulumi up -yf
+
+  refresh:
+    dir: infra
+    cmds:
+      - pulumi refresh -y
+  
+  destroy:
+    dir: infra
+    cmds:
+      - pulumi destroy -yfr
+  
+  output:
+    dir: infra
+    cmds:
+      - pulumi stack output -j
+  
+  select:
+    dir: infra
+    cmds:
+      - pulumi stack select
+
+  #
+  # Instance management
+  #
+
+  reboot: 
+    # Use anchor as Task will always try to get variables 
+    # even though stack does not exists yet
+    # Place it here instead of top-level .vars element or such to avoid syntax complaints
+    vars: &vars
+      SUNSHINE_HOST: 
+        sh: pulumi -C infra stack output -j | jq .ipAddress -r
+      AWS_REGION: 
+        sh: pulumi -C infra stack output awsRegion
+      AWS_EC2_INSTANCE_ID: 
+        sh: pulumi -C infra stack output ec2InstanceId
+    cmd: ssh -i .ssh/key root@{{.SUNSHINE_HOST}} reboot
+    ignore_error: true # reboot closes SSH session with non-0
+
+  start: 
+    vars: *vars
+    cmd: >-
+      aws --region {{.AWS_REGION}}
+      ec2 start-instances --instance-ids {{.AWS_EC2_INSTANCE_ID}}
+    
+
+  stop: 
+    vars: *vars
+    cmd: >-
+      aws --region {{.AWS_REGION}}
+      ec2 start-instances --instance-ids {{.AWS_EC2_INSTANCE_ID}}
+
+  nix-config:
+    vars: *vars
+    cmds:
+      - scp -i .ssh/key -rp {{.NIX_CONFIG_DIR}}/configuration.nix root@{{.SUNSHINE_HOST}}:/etc/nixos/configuration.nix
+      - scp -i .ssh/key -rp {{.NIX_CONFIG_DIR}}/modules root@{{.SUNSHINE_HOST}}:/etc/nixos
+      - ssh -i .ssh/key root@{{.SUNSHINE_HOST}} nixos-rebuild switch
+  
+  ssh:
+    vars: *vars
+    cmd: ssh -i .ssh/key root@{{.SUNSHINE_HOST}}
+    interactive: true
+
+
+      

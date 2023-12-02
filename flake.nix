@@ -16,16 +16,10 @@
               pulumi
               pulumiPackages.pulumi-language-nodejs
               nodePackages.pnpm
-
-              moonlight-qt
-
-              turbovnc
-
+              go-task
             ];
-
+            
             shellHook = ''
-
-              trap "echo 'Stopping instance...' && make stop" EXIT
             '';
           };
         };
