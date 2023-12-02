@@ -4,7 +4,7 @@ import * as fs from "fs"
 
 interface SunshineInfraConfig {
     environment: string
-    hostedZoneName: string
+    hostedZoneName?: string
     fqdn?: string
     ami?: string
     eipEnable?: boolean,
@@ -170,6 +170,10 @@ class SunshineInfra extends pulumi.ComponentResource {
         // Set fqdn attribute to Route53 if defined 
         // Otherwise use auto-generated instance fqdn
         if (infraConfig.fqdn) {
+            if (!infraConfig.hostedZoneName){
+                throw new Error("Hosted zone name must be defined if fqdn is defined")
+            }
+
             const hostedZone = aws.route53.getZone({ name: infraConfig.hostedZoneName })
             const hzId = hostedZone.then(hz => hz.id)
     
@@ -206,14 +210,18 @@ const awsConfig = new pulumi.Config("aws");
 
 export const awsRegion = awsConfig.get("region")
 
+// Read public key file
+const sshPublicKeyPath = config.require("sshPublicKeyPath")
+const sshPublicKey = fs.readFileSync(sshPublicKeyPath, "utf8")
+
 const infra = new SunshineInfra("sunshine", {
     environment: config.require("environment"),
-    hostedZoneName: config.require("hostedZoneName"),
+    hostedZoneName: config.get("hostedZoneName"),
     eipEnable: config.getBoolean("eipEnable"),
     fqdn: config.get("fqdn"),
     ami: config.get("ami"),
     instanceType: config.require("instanceType"),
-    publicKey: config.require("publicKey"),
+    publicKey: sshPublicKey,
     tags: config.getObject("tags"),
     volumeSize: config.getObject<number>("volumeSize"),
     volumeType: config.get("volumeType"),
