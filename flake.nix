@@ -17,6 +17,7 @@
               pulumiPackages.pulumi-language-nodejs
               nodePackages.pnpm
               go-task
+              gettext
             ];
             
             shellHook = ''

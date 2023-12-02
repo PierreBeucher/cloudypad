@@ -19,9 +19,19 @@ Every commands should be run under Nix shell, start it with:
 nix develop
 ```
 
-### Initial setup
+### Quickstart initial setup
 
-Cloudy Sunshine deploys a Pulumi stack with a Cloud server and use NixOS to configure Sunshine on deployed Cloud server. Nix shell provide required binaries to run deployment tasks (Taskfile, Pulumi, etc.), you don't have to install anything appart Nix as listed above. 
+Follow the guide 🧙
+
+```sh
+task quickstart
+```
+
+You'll be able to choose interactively your instance config and follow setup. 
+
+### Advanced initial setup
+
+Cloudy Sunshine deploys a Pulumi stack with a Cloud server and use NixOS to configure Sunshine on deployed Cloud server. Nix shell provides required binaries to run deployment tasks (Node, Pulumi, etc.), you don't have to install anything appart Nix as listed above. 
 
 Create Pulumi stack config file from template. Example below use a stack named `sunshine`
 
@@ -37,7 +47,7 @@ Once done, deploy infrastructure with:
 task infra
 ```
 
-Wait for instance to start. Once started and ready, run NixOS provisioning - **first may take a while as lots of things will be downloaded and installed.** Subsequent runs (for update/upgrade) should be must faster. 
+Wait for instance to start (you can use `task wait-ssh`). Once started and ready, run NixOS configuration. **First run might take a while as lots of things will be downloaded and installed.** Subsequent runs (for update/upgrade) will run much faster. 
 
 ```sh
 task nixos-config
@@ -49,9 +59,9 @@ Once NixOS is configured, reboot
 task reboot
 ```
 
-Sunshine server should now start with instance.
+Sunshine server should now start with Sunshine service.
 
-Access Sunshine via broswer on port 47990 using either task command, IP address or defined FQDN on port `47990` to setup password:
+Access Sunshine via broswer on port 47990 using either task command, IP address or defined FQDN to setup password:
 
 ```sh
 # Open Sunshine on default browser
@@ -59,17 +69,22 @@ task sunshine-browser
 
 # Show stack outputs and use IP address or FQDN directly in your browser
 task output
+# {
+#   ...
+#   "fqdn": "sunshine.devops.crafteo.io", # <== use IP or FQDN
+#   "ipAddress": "3.79.72.13"
+# }
 ```
 
 Congrats, your Cloudy Sunshine is ready ! 🥳
 
-Run Moonlight and connect to your instance. You'll need to validate PIN on first usage
+Run Moonlight and connect to your instance. Usage is standard from now on: you'll need to validate PIN via Moonlight and maybe tweak Sunshine configs. 
 
 ```sh
 moonlight
 ```
 
-**Important:** remember to `task stop` your instance to avoid unnecessary costs 💸 Event stopped, you may still be billed for disk usage and EIP usage. 
+**Important:** remember to `task stop` your instance to avoid unnecessary costs 💸 Even stopped, you may still be billed for disk usage and EIP usage. 
 
 ### Everyday usage
 
@@ -89,6 +104,36 @@ Once finished, **remember to stop your instance to avoid unnecessary costs 💸*
 
 ```sh
 task stop
+```
+
+### Customizing installation
+
+You can leverage Nix modules to customize Sunshine installation by creating a Nix module at `provision/modules/custom-config.nix`. 
+
+Example: install Steam and change default keyboard layout
+
+```nix
+{ lib, pkgs, config, ... }: {
+    
+    # Enable Steam
+    programs.steam.enable = true;
+
+    # French layout
+    services.xserver = {
+        layout = "fr";
+        xkbVariant = "azerty";
+    };
+    console.keyMap = "fr";
+    time.timeZone = "Europe/Paris";
+}
+```
+
+See `provision/modules/custom-config.example.nix` for more examples.
+
+Apply your custom configs with:
+
+```sh
+task nix-config 
 ```
 
 ## How much will I pay? 🤑

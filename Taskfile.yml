@@ -4,6 +4,8 @@ vars:
   NIX_CONFIG_DIR: provision
   
 tasks:
+  quickstart:
+    cmd: scripts/quickstart.sh
   # 
   # Pulumi
   # 
@@ -25,8 +27,9 @@ tasks:
   
   destroy:
     dir: infra
+    prompt: This will destroy all resources and disk data. Make sure to make a backup or sync your saved games. Continue?
     cmds:
-      - pulumi destroy -yfr
+      - pulumi destroy -ryf
   
   output:
     dir: infra
@@ -77,6 +80,15 @@ tasks:
       - scp -i .ssh/key -rp {{.NIX_CONFIG_DIR}}/modules root@{{.SUNSHINE_HOST}}:/etc/nixos
       - ssh -i .ssh/key root@{{.SUNSHINE_HOST}} nixos-rebuild switch
   
+  wait-ssh:
+    vars: *vars
+    cmd: |-
+      while ! ssh -o StrictHostKeyChecking=no -o ConnectTimeout=10 -i .ssh/key root@{{.SUNSHINE_HOST}} exit; do
+          echo "Waiting for SSH on {{.SUNSHINE_HOST}}..."
+          sleep 10
+      done
+      echo "{{.SUNSHINE_HOST}} reached via SSH"
+
   ssh:
     vars: *vars
     cmd: ssh -i .ssh/key root@{{.SUNSHINE_HOST}}
