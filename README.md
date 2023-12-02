@@ -4,6 +4,18 @@
 
 > Sunshine is a self-hosted game stream host for Moonlight. Offering low latency, cloud gaming server capabilities
 
+---
+
+- [Requirements](#requirements)
+- [Usage](#usage)
+  - [Quickstart initial setup](#quickstart-initial-setup)
+  - [Advanced initial setup](#advanced-initial-setup)
+  - [Everyday usage](#everyday-usage)
+  - [Customizing installation](#customizing-installation)
+- [How much will I pay? �](#how-much-will-i-pay-)
+- [Development](#development)
+- [License](#license)
+
 ## Requirements
 
 - [Nix](https://nixos.org/download)
@@ -136,7 +148,7 @@ Apply your custom configs with:
 task nix-config 
 ```
 
-## How much will I pay? 🤑
+## How much will I pay? 🫰
 
 Depends on your usage and how long your instance will run. **You are responsible for your usage**, make sure to check services costs and have proper usage (eg. stop instance when not in use) to avoid unnecessary costs !
 
