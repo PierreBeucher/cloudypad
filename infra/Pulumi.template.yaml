@@ -31,6 +31,12 @@ config:
   # If not specified, FQDN == Hosted Zone name
   # sunshine-aws:fqdn: small.sunshine.mydomain.org
 
+  # Optional static Elastic IP address to affect to instance
+  # It will allow easier access to Sunshine server as IP address won't change
+  # Note that it will result in additional charges, see https://aws.amazon.com/ec2/pricing/on-demand/#Elastic_IP_Addresses
+  # If set, output will show correspond EIP address
+  # sunshine-aws:eipEnable: true
+
   # Customize instance root volume type and size 
   # sunshine-aws:volumeType: gp3
   # sunshine-aws:volumeSize: 150

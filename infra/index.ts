@@ -7,6 +7,7 @@ interface SunshineInfraConfig {
     hostedZoneName: string
     fqdn?: string
     ami?: string
+    eipEnable?: boolean,
     instanceType: string
     publicKey: string
     tags?: {[key: string]: string}
@@ -35,7 +36,7 @@ const DEFAULT_TAGS = {}
  */
 class SunshineInfra extends pulumi.ComponentResource {
 
-    eip: aws.ec2.Eip
+    ipAddress: pulumi.Output<string>
 
     instanceId: pulumi.Output<string>
 
@@ -144,18 +145,27 @@ class SunshineInfra extends pulumi.ComponentResource {
 
         this.instanceId = ec2Instance.id
 
-        this.eip = new aws.ec2.Eip(`eip-${name}`, {
-            tags: commonTags
-        }, {
-            parent: this
-        });
+        // Create and attach EIP if enabled
+        // Otherwise use instance generated IP as attribute
+        if (infraConfig.eipEnable) {
+            const eip = new aws.ec2.Eip(`eip-${name}`, {
+                tags: commonTags
+            }, {
+                parent: this
+            });
+                    
+            const eipAssoc = new aws.ec2.EipAssociation(`eipAssoc-${name}`, {
+                instanceId: ec2Instance.id,
+                allocationId: eip.id,
+            }, {
+                parent: this
+            });
 
-        const eipAssoc = new aws.ec2.EipAssociation(`eipAssoc-${name}`, {
-            instanceId: ec2Instance.id,
-            allocationId: this.eip.id,
-        }, {
-            parent: this
-        });
+            this.ipAddress = eip.publicIp
+        } else {
+            this.ipAddress = ec2Instance.publicIp
+        }
+
 
         // Set fqdn attribute to Route53 if defined 
         // Otherwise use auto-generated instance fqdn
@@ -169,7 +179,7 @@ class SunshineInfra extends pulumi.ComponentResource {
                 name: infraConfig.fqdn,
                 type: "A",
                 ttl: 30,
-                records: [this.eip.publicIp],
+                records: [this.ipAddress],
             }, {
                 parent: this
             });
@@ -179,7 +189,7 @@ class SunshineInfra extends pulumi.ComponentResource {
                 name: `*.${infraConfig.fqdn}`,
                 type: "A",
                 ttl: 30,
-                records: [this.eip.publicIp],
+                records: [this.ipAddress],
             }, {
                 parent: this
             });
@@ -199,6 +209,7 @@ export const awsRegion = awsConfig.get("region")
 const infra = new SunshineInfra("sunshine", {
     environment: config.require("environment"),
     hostedZoneName: config.require("hostedZoneName"),
+    eipEnable: config.getBoolean("eipEnable"),
     fqdn: config.get("fqdn"),
     ami: config.get("ami"),
     instanceType: config.require("instanceType"),
@@ -211,9 +222,7 @@ const infra = new SunshineInfra("sunshine", {
     subnet: config.get("subnet"),
 })
 
-export const ipAddress = infra.eip.publicIp
-
-export const ip = infra.eip.publicIp
+export const ipAddress = infra.ipAddress
 export const fqdn = infra.fqdn
 export const ec2InstanceId = infra.instanceId
 export const sunshineUrl = pulumi.interpolate`https://${infra.fqdn}:47990`
