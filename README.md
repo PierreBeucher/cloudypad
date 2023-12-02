@@ -12,7 +12,7 @@
   - [Advanced initial setup](#advanced-initial-setup)
   - [Everyday usage](#everyday-usage)
   - [Customizing installation](#customizing-installation)
-- [How much will I pay? �](#how-much-will-i-pay-)
+- [How much will I pay? 🫰](#how-much-will-i-pay-)
 - [Development](#development)
 - [License](#license)
 
