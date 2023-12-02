@@ -19,7 +19,7 @@
 ## Requirements
 
 - [Nix](https://nixos.org/download)
-- Access to an AWS account with read/Write permissions on EC2 & Route53
+- Access to an AWS account with read/write permissions on EC2 & Route53
 
 That's all 😎 Nix will provide every tools and binaries: AWS CLI, NodeJS, Pulumi, etc. 
 
@@ -62,7 +62,7 @@ task infra
 Wait for instance to start (you can use `task wait-ssh`). Once started and ready, run NixOS configuration. **First run might take a while as lots of things will be downloaded and installed.** Subsequent runs (for update/upgrade) will run much faster. 
 
 ```sh
-task nixos-config
+task nix-config
 ```
 
 Once NixOS is configured, reboot
