@@ -5,12 +5,26 @@
         origin_web_ui_allowed=wan
         '';
 
+    sunshinePort = 47989;
+
 in {
     
     networking.firewall = {
-        # SSH and Sunshine ports
+        # SSH and Sunshine ports based on offset of 47989 by default
         # See https://docs.lizardbyte.dev/projects/sunshine/en/latest/about/advanced_usage.html#port
-        allowedTCPPorts = [ 22 47984 47989 47990 47998 47999 48000 48002 48010];
+        allowedTCPPorts = [ 
+            22 
+            (sunshinePort - 5)
+            sunshinePort
+            (sunshinePort + 1)
+            (sunshinePort + 21)
+        ];
+        allowedUDPPorts = [ 
+            (sunshinePort + 9)
+            (sunshinePort + 10)
+            (sunshinePort + 11)
+            (sunshinePort + 13)
+        ];
     };
 
     environment.systemPackages = with pkgs; [

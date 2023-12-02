@@ -54,20 +54,21 @@ class SunshineInfra extends pulumi.ComponentResource {
         const volType = infraConfig.volumeType || DEFAULT_VOLUME_TYPE
         const volSize = infraConfig.volumeSize || DEFAULT_VOLUME_SIZE
 
-    
+        const sunshinePort = 47989
+
         const sg = new aws.ec2.SecurityGroup(`${name}`, {
             ingress: [
                 { fromPort: 22, toPort: 22, protocol: "tcp", cidrBlocks: ["0.0.0.0/0"], ipv6CidrBlocks: ["0.0.0.0/0"] },
-                // Sunshine ports
+                // Sunshine ports based on default port 47989 and offset -5 to +21
                 // see https://docs.lizardbyte.dev/projects/sunshine/en/latest/about/advanced_usage.html#port
-                { fromPort: 47984, toPort: 47984, protocol: "tcp", cidrBlocks: ["0.0.0.0/0"], ipv6CidrBlocks: ["0.0.0.0/0"] },
-                { fromPort: 47989, toPort: 47989, protocol: "tcp", cidrBlocks: ["0.0.0.0/0"], ipv6CidrBlocks: ["0.0.0.0/0"] },
-                { fromPort: 47990, toPort: 47990, protocol: "tcp", cidrBlocks: ["0.0.0.0/0"], ipv6CidrBlocks: ["0.0.0.0/0"] },
-                { fromPort: 48010, toPort: 48010, protocol: "tcp", cidrBlocks: ["0.0.0.0/0"], ipv6CidrBlocks: ["0.0.0.0/0"] },
-                { fromPort: 47998, toPort: 47998, protocol: "tcp", cidrBlocks: ["0.0.0.0/0"], ipv6CidrBlocks: ["0.0.0.0/0"] },
-                { fromPort: 47999, toPort: 47999, protocol: "tcp", cidrBlocks: ["0.0.0.0/0"], ipv6CidrBlocks: ["0.0.0.0/0"] },
-                { fromPort: 48000, toPort: 48000, protocol: "tcp", cidrBlocks: ["0.0.0.0/0"], ipv6CidrBlocks: ["0.0.0.0/0"] },
-                { fromPort: 48002, toPort: 48002, protocol: "tcp", cidrBlocks: ["0.0.0.0/0"], ipv6CidrBlocks: ["0.0.0.0/0"] },
+                { fromPort: sunshinePort-5, toPort: sunshinePort-5, protocol: "tcp", cidrBlocks: ["0.0.0.0/0"], ipv6CidrBlocks: ["0.0.0.0/0"] },
+                { fromPort: sunshinePort, toPort: sunshinePort, protocol: "tcp", cidrBlocks: ["0.0.0.0/0"], ipv6CidrBlocks: ["0.0.0.0/0"] },
+                { fromPort: sunshinePort+1, toPort: sunshinePort+1, protocol: "tcp", cidrBlocks: ["0.0.0.0/0"], ipv6CidrBlocks: ["0.0.0.0/0"] },
+                { fromPort: sunshinePort+21, toPort: sunshinePort+21, protocol: "tcp", cidrBlocks: ["0.0.0.0/0"], ipv6CidrBlocks: ["0.0.0.0/0"] },
+                { fromPort: sunshinePort+9, toPort: sunshinePort+9, protocol: "udp", cidrBlocks: ["0.0.0.0/0"], ipv6CidrBlocks: ["0.0.0.0/0"] },
+                { fromPort: sunshinePort+10, toPort: sunshinePort+10, protocol: "udp", cidrBlocks: ["0.0.0.0/0"], ipv6CidrBlocks: ["0.0.0.0/0"] },
+                { fromPort: sunshinePort+11, toPort: sunshinePort+11, protocol: "udp", cidrBlocks: ["0.0.0.0/0"], ipv6CidrBlocks: ["0.0.0.0/0"] },
+                { fromPort: sunshinePort+13, toPort: sunshinePort+13, protocol: "udp", cidrBlocks: ["0.0.0.0/0"], ipv6CidrBlocks: ["0.0.0.0/0"] },
             ],
             egress: [{
                 fromPort: 0,
