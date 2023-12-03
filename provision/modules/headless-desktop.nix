@@ -7,6 +7,8 @@
 
     environment.systemPackages = with pkgs; [
         xorg.xrandr
+        htop
+        cloud-utils
     ];
 
     # X and audio

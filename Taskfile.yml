@@ -99,9 +99,13 @@ tasks:
     cmd: ssh -i .ssh/key root@{{.SUNSHINE_HOST}}
     interactive: true
 
+  ssh-tunnel:
+    vars: *vars
+    cmd: ssh -i .ssh/key -L localhost:47990:localhost:47990 root@{{.SUNSHINE_HOST}}
+
   sunshine-browser:
     vars: *vars
-    cmd: xdg-open {{.SUNSHINE_URL}}
+    cmd: xdg-open https://localhost:47990
 
 
       
