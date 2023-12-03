@@ -2,6 +2,7 @@
 
     networking.networkmanager.enable = true;
 
+    # Disable SSH password auth for security
     services.openssh.settings.PasswordAuthentication = false;
 
     environment.systemPackages = with pkgs; [

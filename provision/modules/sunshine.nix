@@ -7,6 +7,14 @@
 
     sunshinePort = 47989;
 
+    # Fix for NixOS 23.11 removing a dependency 
+    # See https://github.com/NixOS/nixpkgs/issues/271333
+    # Solved by https://github.com/NixOS/nixpkgs/pull/271352 but nit yet ported to unstable or later release
+    # Should not impact previous release (<23.11)
+    sunshineOverride = pkgs.sunshine.overrideAttrs (prev: {
+        runtimeDependencies = prev.runtimeDependencies ++ [ pkgs.libglvnd ];
+    });
+
 in {
     
     networking.firewall = {
@@ -28,14 +36,14 @@ in {
     };
 
     environment.systemPackages = with pkgs; [
-        sunshine
+        sunshineOverride
     ];
 
     security.wrappers.sunshine = {
         owner = "root";
         group = "root";
         capabilities = "cap_sys_admin+p";
-        source = "${pkgs.sunshine}/bin/sunshine";
+        source = "${sunshineOverride}/bin/sunshine";
     };
 
     # Inspired from https://github.com/LizardByte/Sunshine/blob/5bca024899eff8f50e04c1723aeca25fc5e542ca/packaging/linux/sunshine.service.in
@@ -62,7 +70,7 @@ in {
     boot.kernelModules = [ "uinput" ];
 
     services.udev.extraRules = ''
-      KERNEL=="uinput", GROUP="input", MODE="0660", OPTIONS+="static_node=uinput"
+      KERNEL=="uinput", SUBSYSTEM=="misc", OPTIONS+="static_node=uinput", TAG+="uaccess"
     '';
     
 }
