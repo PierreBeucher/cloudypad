@@ -41,6 +41,11 @@ tasks:
     cmds:
       - pulumi stack select
 
+  cancel:
+    dir: infra
+    cmds:
+      - pulumi cancel -y
+
   #
   # Instance management
   #
@@ -71,7 +76,7 @@ tasks:
     vars: *vars
     cmd: >-
       aws --region {{.AWS_REGION}}
-      ec2 start-instances --instance-ids {{.AWS_EC2_INSTANCE_ID}}
+      ec2 stop-instances --instance-ids {{.AWS_EC2_INSTANCE_ID}}
 
   nix-config:
     vars: *vars
