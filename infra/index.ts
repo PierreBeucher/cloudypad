@@ -211,8 +211,7 @@ const awsConfig = new pulumi.Config("aws");
 export const awsRegion = awsConfig.get("region")
 
 // Read public key file
-const sshPublicKeyPath = config.require("sshPublicKeyPath")
-const sshPublicKey = fs.readFileSync(sshPublicKeyPath, "utf8")
+const sshPublicKey = config.require("sshPublicKey")
 
 const infra = new SunshineInfra("sunshine", {
     environment: config.require("environment"),

@@ -8,9 +8,16 @@ trap 'echo && echo "😢 Oh no ! An error was encountered. You can file an issue
 YELLOW=$'\e[33m'
 NORMAL=$'\e[0m'
 
+# Set to true for dry run (testing purposes)
+DRY_RUN=false
+
 # Wrapper to run tasks
 function run_task {
-  task $1 -s # -n # Uncomment -n to dry-run
+  if [ "$DRY_RUN" = true ]; then
+    echo "task $1 -s"
+  else
+    task $1 -s
+  fi
 }
 
 echo "👋 Hello there ! How shall we name your shiny Sunshine instance?"
@@ -48,7 +55,8 @@ else
 fi
 
 echo 
-echo "🔐 SSH public key file used to allow access on your instance?"
+echo "🔐 SSH public key used to allow access on your instance?"
+echo "   If you do not use one of SSH default public key, you'll need to configure SSH to use it."
 echo "   Available public keys in your ~/.ssh folder:"
 echo
 
@@ -58,19 +66,14 @@ echo
 echo "   Alternatively you can generate one with 'ssh-keygen -t ed25519 -a 100'"
 echo
 
-read -p "   SSH public key file: " SUNSHINE_SSH_PUBLIC_KEY_PATH
+read -p "   Copy SSH public key: " SUNSHINE_SSH_PUBLIC_KEY
 
-while [ -z "$SUNSHINE_SSH_PUBLIC_KEY_PATH" ]; do
+while [ -z "$SUNSHINE_SSH_PUBLIC_KEY" ]; do
   echo "   SSH public key file cannot be empty."
-  read -p "   SSH public key file: " SUNSHINE_SSH_PUBLIC_KEY_PATH
+  read -p "   Copy SSH public key: " SUNSHINE_SSH_PUBLIC_KEY
 done
 
-while [ ! -f $SUNSHINE_SSH_PUBLIC_KEY_PATH ]; do
-  echo "   File $SUNSHINE_SSH_PUBLIC_KEY_PATH does not exist."
-  read -p "   SSH public key file: " SUNSHINE_SSH_PUBLIC_KEY_PATH
-done
-
-export SUNSHINE_SSH_PUBLIC_KEY_PATH
+export SUNSHINE_SSH_PUBLIC_KEY
 
 echo
 echo "🖥️  Which instance type do you want to use? (default: g4dn.xlarge)"
@@ -91,7 +94,7 @@ export SUNSHINE_DISK_SIZE=${SUNSHINE_DISK_SIZE_INPUT:-100}
 echo
 echo "📝 Your config:"
 echo "   > Sunshine instance name: ${SUNSHINE_ENVIRONMENT}"
-echo "   > Public SSH key: ${SUNSHINE_SSH_PUBLIC_KEY_PATH}"
+echo "   > Public SSH key: ${SUNSHINE_SSH_PUBLIC_KEY}"
 echo "   > Instance type: ${SUNSHINE_INSTANCE_TYPE}"
 echo "   > AWS region: ${SUNSHINE_AWS_REGION}"
 echo "   > Disk size: ${SUNSHINE_DISK_SIZE}"
@@ -106,7 +109,11 @@ done
 
 echo "🚀 Creating Sunshine infrastructure..."
 cat infra/Pulumi.template.yaml | envsubst > infra/Pulumi.${SUNSHINE_ENVIRONMENT}.yaml
-pulumi -C infra stack select -c -s ${SUNSHINE_ENVIRONMENT}
+
+if [ ! "$DRY_RUN" = true ]; then
+  pulumi -C infra stack select -c -s ${SUNSHINE_ENVIRONMENT}
+fi
+
 run_task infra
 
 echo
@@ -130,15 +137,13 @@ run_task wait-ssh
 
 echo
 echo "🤩 Your Sunshine instance is ready !"
-read -p "   Open Sunshine in browser? (Y/n) " -n 1 BROWSER_REPLY
-
-if [[ ! $BROWSER_REPLY =~ ^[Nn]$ ]]; then
-  echo
-  run_task sunshine-browser
-fi
-
+echo "   You are almost there: to secure your instance, you need to open an SSH tunnel before accessing web UI"
+echo "   Run these commands to access Sunshine web UI: "
 echo
-echo "   You can now follow standard Sunshine setup procedure and run Moonlight."
+echo "   $ task ssh-tunnel"
+echo "   $ task sunshine-browser"
+echo
+echo "   You can then follow standard Sunshine setup procedure and run Moonlight."
 echo
 echo "💸 ${YELLOW}Remember to stop your instance once done to avoid unnecessary costs.${NORMAL}"    
 echo "   See README for tips and tricks to avoid unnecessary costs."

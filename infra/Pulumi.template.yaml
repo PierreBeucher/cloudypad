@@ -12,7 +12,7 @@ config:
   sunshine-aws:instanceType: $SUNSHINE_INSTANCE_TYPE
 
   # SSH Public key to connect to instance
-  sunshine-aws:sshPublicKeyPath: $SUNSHINE_SSH_PUBLIC_KEY_PATH
+  sunshine-aws:sshPublicKey: $SUNSHINE_SSH_PUBLIC_KEY
 
   # Instance root volume type and size 
   sunshine-aws:volumeType: gp3
