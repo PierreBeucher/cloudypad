@@ -131,7 +131,7 @@ class SunshineInfra extends pulumi.ComponentResource {
                 availabilityZone: volConf.az,
                 size: volConf.size,
                 type: volConf.type,
-                iops: volConf.throughput,
+                iops: volConf.iops,
                 throughput: volConf.throughput,
                 tags: commonTags
             });
