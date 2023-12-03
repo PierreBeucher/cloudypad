@@ -76,9 +76,12 @@ task reboot
 
 Sunshine server should now start with Sunshine service.
 
-Access Sunshine via broswer on port 47990 using either task command, IP address or defined FQDN to setup password:
+Access Sunshine via broswer on port 47990 using either task command, IP address or defined FQDN to setup password. Remote access is disabled by default, you'll need to open an SSH tunnel.
 
 ```sh
+# Open SSH tunnel
+task ssh-tunnel
+
 # Open Sunshine on default browser
 task sunshine-browser
 

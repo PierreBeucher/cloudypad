@@ -2,7 +2,7 @@
     
     configFile = pkgs.writeTextDir "config/sunshine.conf"
         ''
-        origin_web_ui_allowed=wan
+        origin_web_ui_allowed=pc
         '';
 
     sunshinePort = 47989;
@@ -24,8 +24,8 @@ in {
             22 
             (sunshinePort - 5)
             sunshinePort
-            (sunshinePort + 1)
-            (sunshinePort + 21)
+            # (sunshinePort + 1)   # Web UI
+            (sunshinePort + 21) 
         ];
         allowedUDPPorts = [ 
             (sunshinePort + 9)
