@@ -13,6 +13,9 @@
   - [Everyday usage](#everyday-usage)
   - [Customizing installation](#customizing-installation)
 - [How much will I pay? 🫰](#how-much-will-i-pay-)
+- [Performance tweakings](#performance-tweakings)
+- [Maintenance](#maintenance)
+  - [Grow disk after resize](#grow-disk-after-resize)
 - [Development](#development)
 - [License](#license)
 
@@ -169,16 +172,41 @@ Optimizing usage and cost:
 
 Example setups and pricing estimation*:
 
-|                    | g5.xlarge instance<br>100 Go GP3 disk<br>15h / month | g5.xlarge instance<br>100 Go GP3 disk<br>20h / month | g5.2xlarge instance<br>100 Go GP3 disk<br>20h / month | g5.2xlarge instance<br>100 Go GP3 disk<br>30h / month | g5.2xlarge instance<br>100 Go GP3 disk<br>30h / month<br>Static IP enabled |
-|--------------------|------------------------------------------------------|------------------------------------------------------|-------------------------------------------------------|-------------------------------------------------------|----------------------------------------------------------------------------|
-| EC2 instance       |                                               $18.87 |                                               $25.16 |                                                $30.31 |                                                $45.47 |                                                                     $45.47 |
-| Route53 record     |                                                $0.00 |                                                $0.00 |                                                 $0.00 |                                                 $0.00 |                                                                      $0.00 |
-| EC2 volume (disk)  |                                                $9.52 |                                                $9.52 |                                                 $9.52 |                                                 $9.52 |                                                                      $9.52 |
-| EIP address        |                                                $0.00 |                                                $0.00 |                                                 $0.00 |                                                 $0.00 |                                                                      $3.45 |
-| Est. TOTAL / month |                                               $28.39 |                                               $34.68 |                                                $39.83 |                                                $54.99 |                                                                     $58.44 |
+|                    | g5.xlarge instance 100 Go GP3 disk 15h / month | g5.xlarge instance 100 Go GP3 disk 20h / month | g5.2xlarge instance 100 Go GP3 disk 20h / month | g5.2xlarge instance 100 Go GP3 disk 30h / month | g5.2xlarge instance 100 Go GP3 disk 30h / month |
+|--------------------|------------------------------------------------|------------------------------------------------|-------------------------------------------------|-------------------------------------------------|-------------------------------------------------|
+| EC2 instance       |                                         $18.87 |                                         $25.16 |                                          $30.31 |                                          $45.47 |                                          $45.47 |
+| Route53 record     |                                          $0.00 |                                          $0.00 |                                           $0.00 |                                           $0.00 |                                           $0.00 |
+| EC2 volume (disk)  |                                          $9.52 |                                          $9.52 |                                           $9.52 |                                           $9.52 |                                           $9.52 |
+| EIP address        |                                          $3.53 |                                          $3.50 |                                           $3.50 |                                           $3.45 |                                           $3.45 |
+| Est. TOTAL / month |                                         $31.92 |                                         $38.18 |                                          $43.33 |                                          $58.44 |                                          $58.44 |
 
 _*Estimation based on eu-central-1 (Frankfurt) pricing in December 2023. Exact prices vary with time and regions._
 
+## Performance tweakings
+
+- Reduce in-game quality
+- Reduce screen size
+- Sunshine: set lower quality encoder settings
+
+## Maintenance
+
+### Grow disk after resize
+
+See [AWS doc for details](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/recognize-expanded-volume-linux.html)
+
+SSH into instance and:
+
+```
+# Check disk size to resize
+df -h
+lsblk -hT
+
+# Grow partition
+growpart /dev/nvme0n1 2
+
+# Resize filesystem
+resize2fs /dev/nvme0n1p2
+```
 
 ## Development
 
