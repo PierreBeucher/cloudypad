@@ -36,10 +36,8 @@ config:
   # sunshine-aws:fqdn: small.sunshine.mydomain.org
 
   # Optional static Elastic IP address to affect to instance
-  # It will allow easier access to Sunshine server as IP address won't change
-  # Note that it will result in additional charges, see https://aws.amazon.com/ec2/pricing/on-demand/#Elastic_IP_Addresses
-  # If set, output will show correspond EIP address
-  # sunshine-aws:eipEnable: true
+  # Allows easier access to Sunshine server as IP address won't change
+  sunshine-aws:eipEnable: true
 
   # Additional volumes to attach to instance
   # e.g. to mount as Steam data store
