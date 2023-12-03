@@ -182,11 +182,36 @@ _*Estimation based on eu-central-1 (Frankfurt) pricing in December 2023. Exact p
 
 ## Development
 
-Debugging commands:
+Get Sunshine service status and logs 
  
 ```sh
-# Show sunshine user journal (e.g. sunshine server logs)
+# Show sunshine user journal (e.g. sunshine server logs and other useful debug info)
 journalctl _UID=1000 -b
+
+# Get user systemd service status and logs 
+su sunshine
+journalctl --user -u sunshine
+systemctl --user status sunshine
+```
+
+Run Sunshine interactively via SSH
+
+```sh
+# Access display
+export DISPLAY=:0
+
+# Retrieve X authority file
+ps -ef | grep Xauthority
+cp /run/user/1000/gdm/Xauthority ~/.Xauthority
+
+# Get command used to start sunshine (wrapper script)
+cat /etc/systemd/user/sunshine.service 
+# ...
+# ExecStart=/run/wrappers/bin/sunshine /nix/store/pqyi3jwp47zsis33asq8hn2i01zdygcd-sunshine.conf/config/sunshine.conf
+# ...
+
+# Run sunshine with or without wrapper and conf
+/run/wrappers/bin/sunshine /nix/store/90vsycwg87c82jldkg0ssl0a19a884lp-sunshine.conf/config/sunshine.conf
 ```
 
 ## License
