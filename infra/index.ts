@@ -1,6 +1,5 @@
 import * as aws from "@pulumi/aws";
 import * as pulumi from "@pulumi/pulumi";
-import * as fs from "fs"
 
 interface SunshineInfraConfig {
     environment: string
@@ -30,6 +29,7 @@ interface AdditionalVolume {
 const DEFAULT_VOLUME_TYPE = "standard"
 const DEFAULT_VOLUME_SIZE = 200
 const DEFAULT_TAGS = {}
+const DEFAULT_NIXOS_AMI_NAME = "NixOS-23.05.555.52869451b83-x86_64-linux"
 
 /**
  * 
@@ -97,7 +97,7 @@ class SunshineInfra extends pulumi.ComponentResource {
             filters: [
                 {
                     name: "name",
-                    values: ["NixOS-23.05.555.52869451b83-x86_64-linux"],
+                    values: [DEFAULT_NIXOS_AMI_NAME],
                 },
                 {
                     name: "virtualization-type",
