@@ -1,5 +1,6 @@
 import * as aws from "@pulumi/aws";
 import * as pulumi from "@pulumi/pulumi";
+import * as ports from "./ports";
 
 interface SunshineInfraConfig {
     environment: string
@@ -14,7 +15,8 @@ interface SunshineInfraConfig {
     volumeType?: string
     additionalVolumes?: AdditionalVolume[]
     vpc?: string,
-    subnet?: string
+    subnet?: string,
+    additionalPorts?: ports.PortDefinition[]
 }
 
 interface AdditionalVolume {
@@ -54,23 +56,17 @@ class SunshineInfra extends pulumi.ComponentResource {
 
         const volType = infraConfig.volumeType || DEFAULT_VOLUME_TYPE
         const volSize = infraConfig.volumeSize || DEFAULT_VOLUME_SIZE
-
-        const sunshinePort = 47989
+        
+        const ingressPorts = ports.DEFAULT_PORTS
+            .concat(ports.WOLF_PORTS)
+            .concat(infraConfig.additionalPorts || [])
 
         const sg = new aws.ec2.SecurityGroup(`${name}`, {
-            ingress: [
-                { fromPort: 22, toPort: 22, protocol: "tcp", cidrBlocks: ["0.0.0.0/0"], ipv6CidrBlocks: ["0.0.0.0/0"] },
-                // Sunshine ports based on default port 47989 and offset -5 to +21
-                // see https://docs.lizardbyte.dev/projects/sunshine/en/latest/about/advanced_usage.html#port
-                { fromPort: sunshinePort-5, toPort: sunshinePort-5, protocol: "tcp", cidrBlocks: ["0.0.0.0/0"], ipv6CidrBlocks: ["0.0.0.0/0"] },
-                { fromPort: sunshinePort, toPort: sunshinePort, protocol: "tcp", cidrBlocks: ["0.0.0.0/0"], ipv6CidrBlocks: ["0.0.0.0/0"] },
-                // { fromPort: sunshinePort+1, toPort: sunshinePort+1, protocol: "tcp", cidrBlocks: ["0.0.0.0/0"], ipv6CidrBlocks: ["0.0.0.0/0"] }, # Web UI
-                { fromPort: sunshinePort+21, toPort: sunshinePort+21, protocol: "tcp", cidrBlocks: ["0.0.0.0/0"], ipv6CidrBlocks: ["0.0.0.0/0"] },
-                { fromPort: sunshinePort+9, toPort: sunshinePort+9, protocol: "udp", cidrBlocks: ["0.0.0.0/0"], ipv6CidrBlocks: ["0.0.0.0/0"] },
-                { fromPort: sunshinePort+10, toPort: sunshinePort+10, protocol: "udp", cidrBlocks: ["0.0.0.0/0"], ipv6CidrBlocks: ["0.0.0.0/0"] },
-                { fromPort: sunshinePort+11, toPort: sunshinePort+11, protocol: "udp", cidrBlocks: ["0.0.0.0/0"], ipv6CidrBlocks: ["0.0.0.0/0"] },
-                { fromPort: sunshinePort+13, toPort: sunshinePort+13, protocol: "udp", cidrBlocks: ["0.0.0.0/0"], ipv6CidrBlocks: ["0.0.0.0/0"] },
-            ],
+            // Open SSH port and all ports for streaming service to use
+            // if only from defined, use it as to (i.e. from:22 to: 22)
+            ingress: ingressPorts.map(p => {
+                return { fromPort: p.from, toPort: p.to || p.from, protocol: p.protocol, cidrBlocks: ["0.0.0.0/0"], ipv6CidrBlocks: ["::/0"]}
+            }),
             egress: [{
                 fromPort: 0,
                 toPort: 0,
@@ -227,6 +223,7 @@ const infra = new SunshineInfra("sunshine", {
     additionalVolumes: config.getObject<AdditionalVolume[]>("additionalVolumes"),
     vpc: config.get("vpc"),
     subnet: config.get("subnet"),
+    additionalPorts: config.getObject<ports.PortDefinition[]>("additionalPorts")
 })
 
 export const ipAddress = infra.ipAddress

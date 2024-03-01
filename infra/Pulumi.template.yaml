@@ -18,6 +18,14 @@ config:
   sunshine-aws:volumeType: gp3
   sunshine-aws:volumeSize: $SUNSHINE_DISK_SIZE
 
+  # Additiona ports for which to allow external access
+  # only 'from' and 'protocol' is required
+  # if 'to' is not defined, only 'from' port will be opened
+  sunshine-aws:additionalPorts: []
+  # - from: 8080
+  #   to: 8085
+  #   protocol: tcp
+
   # AMI to use
   # Default to NixOS 23.05 on eu-west-3
   # Only NixOS AMI are supported for now

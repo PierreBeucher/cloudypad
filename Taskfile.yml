@@ -2,6 +2,7 @@ version: '3'
 
 vars:
   NIX_CONFIG_DIR: provision
+  WOLF_CONFIG_DIR: wolf
   
 tasks:
   quickstart:
@@ -11,40 +12,33 @@ tasks:
   # 
 
   preview:
-    dir: infra
     cmds:
-      - pulumi preview
+      - pulumi -C infra preview
 
   infra:
-    dir: infra
     cmds:
-      - pulumi up -yf
+      - pulumi -C infra up -yf
 
   refresh:
-    dir: infra
     cmds:
-      - pulumi refresh -y
+      - pulumi -C infra refresh -y
   
   destroy:
-    dir: infra
     prompt: This will destroy all resources and disk data. Make sure to make a backup or sync your saved games. Continue?
     cmds:
-      - pulumi destroy -ryf
+      - pulumi -C infra destroy -ryf
   
   output:
-    dir: infra
     cmds:
-      - pulumi stack output -j
+      - pulumi -C infra stack output -j
   
   select:
-    dir: infra
     cmds:
-      - pulumi stack select
+      - pulumi -C infra stack select
 
   cancel:
-    dir: infra
     cmds:
-      - pulumi cancel -y
+      - pulumi -C infra cancel -y
 
   #
   # Instance management
@@ -107,5 +101,8 @@ tasks:
     vars: *vars
     cmd: xdg-open https://localhost:47990
 
-
-      
+  wolf-nvidia:
+    vars: *vars
+    cmds:
+    - scp -i .ssh/key -rp {{.WOLF_CONFIG_DIR}}/* root@{{.SUNSHINE_HOST}}:/root/wolf/
+    - ssh -i .ssh/key root@{{.SUNSHINE_HOST}} /root/wolf/docker-nvidia-start.sh
