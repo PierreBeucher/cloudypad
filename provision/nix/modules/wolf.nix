@@ -1,9 +1,9 @@
 { modulesPath, pkgs, lib, config, ... }: 
 let
-  # wolfCompose = pkgs.writeTextFile {
-  #   name = "docker-compose.yml";
-  #   text = builtins.readFile ./docker-compose.yml;
-  # };
+  wolfCompose = pkgs.writeTextFile {
+    name = "docker-compose.yml";
+    text = builtins.readFile ./docker-compose.yml;
+  };
 in
 {
     # SSH and Wolf ports

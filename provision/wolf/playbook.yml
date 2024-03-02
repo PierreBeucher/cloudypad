@@ -1,0 +1,17 @@
+- hosts: target
+  tasks:
+    - name: ccopy Docker Compose file
+      ansible.builtin.copy:
+        src: docker-compose.nvidia.yml
+        dest: "{{ ansible_env.HOME }}/wolf/docker-compose.nvidia.yml"
+
+    - name: Copy Wolf startup script
+      ansible.builtin.copy:
+        src: provision/wolf/docker-nvidia-start.sh
+        dest: "{{ ansible_env.HOME }}/wolf/docker-nvidia-start.sh"
+        mode: '0755'
+
+    - name: Run Docker Compose
+      community.docker.docker_compose:
+        project_src: /remote/path
+        state: present
