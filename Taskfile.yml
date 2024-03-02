@@ -17,7 +17,7 @@ tasks:
 
   infra:
     cmds:
-      - pulumi -C infra up -yf
+      - pulumi -C infra up -yfr
 
   refresh:
     cmds:

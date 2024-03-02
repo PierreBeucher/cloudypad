@@ -1,0 +1,30 @@
+{
+  "name": "cloudy-box",
+  "version": "1.0.0",
+  "description": "CloudyBox - Collection of Cloud components and services",
+  "main": "main.ts",
+  "scripts": {
+    "start": "ts-node main.ts"
+  },
+  "dependencies": {
+    "@pulumi/aws": "^4.0.0",
+    "@pulumi/awsx": "^0.30.0",
+    "@pulumi/pulumi": "^3.0.0",
+    "node-ssh": "^13.1.0",
+    "ts-node": "^10.0.0",
+    "typescript": "^4.0.0",
+    "upath": "^2.0.1",
+    "yargs": "^17.0.1"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.24",
+    "@types/ssh2": "^1.11.19",
+    "@types/yargs": "^17.0.32",
+    "@typescript-eslint/eslint-plugin": "^7.1.0",
+    "@typescript-eslint/parser": "^7.1.0",
+    "eslint": "^8.57.0"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
+}

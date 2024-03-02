@@ -18,6 +18,7 @@
               nodePackages.pnpm
               go-task
               gettext
+              typescript
             ];
             
             shellHook = ''
