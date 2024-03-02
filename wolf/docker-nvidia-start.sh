@@ -30,6 +30,11 @@ if [[ $(cat /sys/module/nvidia_drm/parameters/modeset) != "Y" ]]; then
     exit 2
 fi
 
+# Sometime /dev/nvidia-caps/* is not present after boot
+# Running this seems to make it appear
+# TODO enqure why
+nvidia-smi > /dev/null # still show errors
+
 # Start wolf with matching nvidia volume
 SCRIPT_DIR=$(dirname $0)
 NVIDIA_VOLUME_NAME=$NVIDIA_VOLUME_NAME docker compose -f $SCRIPT_DIR/docker-compose.nvidia.yml up -d
