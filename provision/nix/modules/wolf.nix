@@ -42,4 +42,19 @@ in
         SUBSYSTEMS=="input", ATTRS{name}=="Wolf Nintendo (virtual) pad", MODE="0660", GROUP="input"   
     '';
 
+    # Copy Wolf config Docker compose files in user home
+
+
+    home-manager.users.root = {
+      home.file."wolf/docker-compose.nvidia.yml" = {
+        source = ./wolf/docker-compose.nvidia.yml;
+      };
+      home.file."wolf/docker-nvidia-start.sh" = {
+        source = ./wolf/docker-nvidia-start.sh;
+        executable = true;
+      };
+
+      home.stateVersion = "23.05";
+    };
+
 }

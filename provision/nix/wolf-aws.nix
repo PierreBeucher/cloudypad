@@ -3,6 +3,7 @@
 in {
     imports = [ 
         "${modulesPath}/virtualisation/amazon-image.nix"  # NixOS built-in config for AWS, do not remove
+        <home-manager/nixos>
         ./modules/nvidia.nix
         ./modules/wolf.nix
         ./modules/vscode.nix
