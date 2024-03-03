@@ -1,4 +1,4 @@
-import { NodeSSH } from "node-ssh";
+import { NodeSSH, SSHExecCommandResponse } from "node-ssh";
 import { BoxInfraDetails } from "./infra.js";
 import * as utils from "./utils.js"
 import * as logging from "./logging.js"
@@ -29,14 +29,19 @@ export async function nixSshProvision(box: BoxInfraDetails, nixConfig: string){
     }
 }
 
-export async function wolfSshProvisioning(box: BoxInfraDetails){
+export async function runSshCommand(box: BoxInfraDetails, cmd: string[], logPrefix?: string){
+    if (cmd.length < 0){
+        throw new Error("Command array length must be >0")
+    }
+
     const ssh = await sshBox(box)
     try {
-        console.info("  Copying Wolf configuration...")
-        await sshPutDirectory(ssh, utils.WOLF_PROVISION_DIR, "/root/wolf")
-        // await sshExec(ssh, ["sudo", "nixos-rebuild", "switch"], "nixos-rebuild")
+        return await sshExec(ssh, cmd, logPrefix || cmd[0])
+    } catch (error) {
+      console.error('Failed to run provisioning via ssh: ', error);
+      throw error
     } finally {
-        ssh.dispose()
+      ssh.dispose();
     }
 }
 
@@ -64,12 +69,12 @@ async function sshPutDirectory(ssh: NodeSSH, src: string, dest: string){
     }
 }
 
-async function sshExec(ssh: NodeSSH, exec: string[], logPrefix: string, stderrLogPefix?: string){
+async function sshExec(ssh: NodeSSH, exec: string[], logPrefix: string, stderrLogPefix?: string) : Promise<SSHExecCommandResponse>{
     if (!exec.length){
         throw new Error("No command provided.")
     }
     const command = exec[0]
-    await ssh.exec(command, exec.slice(1), {
+    const sshResp = await ssh.exec(command, exec.slice(1), {
         stream: "both",
         onStdout(chunk) {
             logging.gray(`${logPrefix}: ${chunk.toString('utf8').trim()}`, )
@@ -78,6 +83,9 @@ async function sshExec(ssh: NodeSSH, exec: string[], logPrefix: string, stderrLo
             logging.gray(`${stderrLogPefix || logPrefix}: ${chunk.toString('utf8').trim()}`)
         }
     })
+    logging.clear()
+
+    return sshResp
 }
 
 async function sshBox(box: BoxInfraDetails) : Promise<NodeSSH> {
