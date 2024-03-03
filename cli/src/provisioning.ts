@@ -1,10 +1,8 @@
-import { NodeSSH } from 'node-ssh';
-import { BoxInfraDetails } from './infra';
-import * as upath from "upath";
+import { NodeSSH } from "node-ssh";
+import { BoxInfraDetails } from "./infra.js";
+import * as utils from "./utils.js"
+import * as logging from "./logging.js"
 
-const PROVISION_DIR = upath.joinSafe(__dirname, "..", "..", "provision")
-const NIX_PROVISION_DIR = upath.joinSafe(PROVISION_DIR, "nix")
-const WOLF_PROVISION_DIR = upath.joinSafe(PROVISION_DIR, "wolf")
 /**
  * Provision a NixOS host with given NixOS configuration
  * @param boxInfraDetails Box details
@@ -13,12 +11,14 @@ const WOLF_PROVISION_DIR = upath.joinSafe(PROVISION_DIR, "wolf")
 export async function nixSshProvision(box: BoxInfraDetails, nixConfig: string){
     const ssh = await sshBox(box)
     try {
-        console.info("Copying NixOS configuration...")
-        await sshPutDirectory(ssh, NIX_PROVISION_DIR, '/etc/nixos/')
-        await ssh.putFile(upath.joinSafe(NIX_PROVISION_DIR, nixConfig), "/etc/nixos/configuration.nix",)
+        console.info("  Copying NixOS configuration...")
+        await sshPutDirectory(ssh, utils.NIX_PROVISION_DIR, '/etc/nixos/')
+        await ssh.putFile(utils.joinSafe(utils.NIX_PROVISION_DIR, nixConfig), "/etc/nixos/configuration.nix",)
         
-        console.info("Updating NixOS configuration...")
+        console.info("  Updating NixOS configuration...")
         await sshExec(ssh, ["sudo", "nix-channel", "--add", "https://nixos.org/channels/nixos-23.05", "nixos"], "nixos-rebuild")
+        await sshExec(ssh, ["sudo", "nix-channel", "--add", "https://github.com/nix-community/home-manager/archive/release-23.05.tar.gz", "home-manager"], "nixos-rebuild")
+        await sshExec(ssh, ["sudo", "nix-channel", "--update"], "nixos-rebuild")
         await sshExec(ssh, ["sudo", "nixos-rebuild", "switch", "--upgrade"], "nixos-rebuild")
 
     } catch (error) {
@@ -32,8 +32,8 @@ export async function nixSshProvision(box: BoxInfraDetails, nixConfig: string){
 export async function wolfSshProvisioning(box: BoxInfraDetails){
     const ssh = await sshBox(box)
     try {
-        console.info("Copying Wolf configuration...")
-        await sshPutDirectory(ssh, WOLF_PROVISION_DIR, "/root/wolf")
+        console.info("  Copying Wolf configuration...")
+        await sshPutDirectory(ssh, utils.WOLF_PROVISION_DIR, "/root/wolf")
         // await sshExec(ssh, ["sudo", "nixos-rebuild", "switch"], "nixos-rebuild")
     } finally {
         ssh.dispose()
@@ -48,7 +48,7 @@ async function sshPutDirectory(ssh: NodeSSH, src: string, dest: string){
         recursive: true,
         concurrency: 10,
         validate: (itemPath) => {
-            console.log(`Transferring ${itemPath}`);
+            logging.gray(`Transferring ${itemPath}`)
             return true;
         },
         tick: function(localPath, remotePath, error) {
@@ -57,6 +57,7 @@ async function sshPutDirectory(ssh: NodeSSH, src: string, dest: string){
             }
         }
     })
+    logging.clear()
 
     if (!putStatus) {
         throw new Error("Some file(s) failed to transfer.")
@@ -71,10 +72,10 @@ async function sshExec(ssh: NodeSSH, exec: string[], logPrefix: string, stderrLo
     await ssh.exec(command, exec.slice(1), {
         stream: "both",
         onStdout(chunk) {
-            console.log(`${logPrefix}: `, chunk.toString('utf8').trim())
+            logging.gray(`${logPrefix}: ${chunk.toString('utf8').trim()}`, )
         },
         onStderr(chunk) {
-            console.log(`${stderrLogPefix || logPrefix}: `, chunk.toString('utf8').trim())
+            logging.gray(`${stderrLogPefix || logPrefix}: ${chunk.toString('utf8').trim()}`)
         }
     })
 }

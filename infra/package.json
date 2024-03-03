@@ -1,0 +1,4 @@
+{
+  "name": "cloudy-box-infra",
+  "description": "This projects only serves to make Pulumi happy otherwise it's not possible to call it from CLI code. Pulumi automation does not seem to support being called from a ESM code directly unless a package.json exists to change module type."
+}

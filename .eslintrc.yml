@@ -11,3 +11,4 @@ parserOptions:
 plugins:
   - '@typescript-eslint'
 rules: {}
+  # no-unused-vars: "warn"

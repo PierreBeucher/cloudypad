@@ -2,20 +2,20 @@
   "name": "cloudy-box",
   "version": "1.0.0",
   "description": "CloudyBox - Collection of Cloud components and services",
-  "main": "main.ts",
-  "scripts": {
-    "start": "ts-node main.ts"
-  },
   "dependencies": {
     "@pulumi/aws": "^4.0.0",
     "@pulumi/awsx": "^0.30.0",
     "@pulumi/pulumi": "^3.0.0",
+    "chalk": "^5.3.0",
+    "log-update": "^6.0.0",
+    "node-emoji": "^2.1.3",
     "node-ssh": "^13.1.0",
     "ts-node": "^10.0.0",
     "typescript": "^4.0.0",
     "upath": "^2.0.1",
     "yargs": "^17.0.1"
   },
+  "type": "module",
   "devDependencies": {
     "@types/node": "^20.11.24",
     "@types/ssh2": "^1.11.19",
@@ -25,6 +25,6 @@
     "eslint": "^8.57.0"
   },
   "keywords": [],
-  "author": "",
-  "license": "ISC"
+  "author": "Pierre Beucher",
+  "license": "GPL-3.0-only"
 }

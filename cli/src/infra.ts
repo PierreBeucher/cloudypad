@@ -1,5 +1,6 @@
-import { LocalProgramArgs, LocalWorkspace, OutputMap } from "@pulumi/pulumi/automation";
-import * as upath from "upath";
+import { LocalProgramArgs, LocalWorkspace, OutputMap } from "@pulumi/pulumi/automation/index.js"
+import * as utils from "./utils.js"
+import * as logging from "./logging.js"
 
 export interface BoxInfraDetails {
     host: string,
@@ -17,7 +18,7 @@ async function createOrSelectPulumiStack(stackName: string){
     // in the ../website directory
     const args: LocalProgramArgs = {
         stackName: stackName,
-        workDir: upath.joinSafe(__dirname, "..", "..", "infra"),
+        workDir: utils.INFRA_DIR
     };
 
     // create (or select if one already exists) a stack that uses our local program
@@ -40,17 +41,23 @@ function buildBoxDetails(outputs: OutputMap){
     }
 }
 
+
+
 export async function deployPulumi(stackName: string) : Promise<BoxInfraDetails> {
     
     const stack = await createOrSelectPulumiStack(stackName)
 
-    console.info("Infra - Preview stack changes...")
-    await stack.preview({ onOutput: console.info, diff: true })
+    console.info("   Previewing stack changes...")
 
-    console.info("Infra - Updating stack...")
-    const upRes = await stack.up({ onOutput: console.info });
+    await stack.preview({ onOutput: logging.gray, refresh: true, diff: true })
+    logging.clear()
+
+    console.info("   Updating stack...")
+    const upRes = await stack.up({ onOutput: logging.gray, refresh: true });
+    logging.clear()
     
-    console.log(`Infra - Update summary: \n${JSON.stringify(upRes.summary.resourceChanges, null, 4)}`);
+    console.info("   Stack updated !")
+    console.log(`   Update summary: \n${JSON.stringify(upRes.summary.resourceChanges, null, 4)}`);
 
     return buildBoxDetails(upRes.outputs)
 

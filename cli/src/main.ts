@@ -1,6 +1,8 @@
-import yargs from 'yargs/yargs';
-import * as infra from './infra'
-import * as provisioning from "./provisioning"
+import yargs from "yargs/yargs";
+import * as infra from "./infra.js"
+import * as provisioning from "./provisioning.js"
+// import * as logging from "./logging.js";
+import * as emoji from "node-emoji"
 
 const yargResult = yargs(process.argv.slice(2)).command('box [deploy|destroy|list]', 'Manage boxes', (yargs) => {
     return yargs.command('list', 'List all boxes', () => {
@@ -59,10 +61,12 @@ async function deploy(boxName: string) {
 }
 
 async function deployInfra(boxName: string) {
+    console.info(`${emoji.get("cloud")} Updating Cloud stack`)
     await infra.deployPulumi(boxName)
 }
 
 async function provision(boxName: string) {
+    console.info(`${emoji.get("snowflake")} Provisioning box`)
     const box = await infra.getBoxDetailsPulumi(boxName)
     await provisioning.nixSshProvision(box, "wolf-aws.nix")
     await provisioning.wolfSshProvisioning(box)

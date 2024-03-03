@@ -132,7 +132,7 @@ class SunshineInfra extends pulumi.ComponentResource {
                 tags: commonTags
             });
 
-            const volAtt = new aws.ec2.VolumeAttachment(`additional-vol-attach-${volConf.deviceName}`, {
+            new aws.ec2.VolumeAttachment(`additional-vol-attach-${volConf.deviceName}`, {
                 deviceName: volConf.deviceName,
                 volumeId: vol.id,
                 instanceId: ec2Instance.id,
@@ -150,7 +150,7 @@ class SunshineInfra extends pulumi.ComponentResource {
                 parent: this
             });
                     
-            const eipAssoc = new aws.ec2.EipAssociation(`eipAssoc-${name}`, {
+            new aws.ec2.EipAssociation(`eipAssoc-${name}`, {
                 instanceId: ec2Instance.id,
                 allocationId: eip.id,
             }, {
@@ -174,7 +174,7 @@ class SunshineInfra extends pulumi.ComponentResource {
             const hzId = hostedZone.then(hz => hz.id)
     
             // DNS record using Elastic IP
-            const dnsRecord = new aws.route53.Record(`dns-record-${name}`, {
+            new aws.route53.Record(`dns-record-${name}`, {
                 zoneId: hzId,
                 name: infraConfig.fqdn,
                 type: "A",
@@ -184,7 +184,7 @@ class SunshineInfra extends pulumi.ComponentResource {
                 parent: this
             });
     
-            const wildcardDnsRecord = new aws.route53.Record(`wildcard-dns-record-${name}`, {
+            new aws.route53.Record(`wildcard-dns-record-${name}`, {
                 zoneId: hzId,
                 name: `*.${infraConfig.fqdn}`,
                 type: "A",
