@@ -1,9 +1,16 @@
 { modulesPath, pkgs, lib, config, ... }: 
 let
-  wolfCompose = pkgs.writeTextFile {
+  wolfComposeFile = pkgs.writeTextFile {
     name = "docker-compose.yml";
-    text = builtins.readFile ./docker-compose.yml;
+    text = builtins.readFile ./wolf/docker-compose.nvidia.yml;
   };
+
+  wolfComposeStartScript = pkgs.writeTextFile {
+    name = "docker-nvidia-start.sh";
+    text = builtins.readFile ./wolf/docker-nvidia-start.sh;
+    executable = true;
+  };
+
 in
 {
     # SSH and Wolf ports
@@ -45,16 +52,36 @@ in
     # Copy Wolf config Docker compose files in user home
 
 
-    home-manager.users.root = {
-      home.file."wolf/docker-compose.nvidia.yml" = {
-        source = ./wolf/docker-compose.nvidia.yml;
-      };
-      home.file."wolf/docker-nvidia-start.sh" = {
-        source = ./wolf/docker-nvidia-start.sh;
-        executable = true;
-      };
+    # home-manager.users.root = {
+    #   home.file."wolf/docker-compose.nvidia.yml" = {
+    #     source = ./wolf/docker-compose.nvidia.yml;
+    #   };
+    #   home.file."wolf/docker-nvidia-start.sh" = {
+    #     source = ./wolf/docker-nvidia-start.sh;
+    #     executable = true;
+    #   };
 
-      home.stateVersion = "23.05";
+    #   home.stateVersion = "23.05";
+    # };
+
+    # Wold as Docker Compose service
+    systemd.services.wolf = {
+      description = "Wolf as a Docker service";
+      after = [ "network.target" "docker.service" ];
+      wants = [ "docker.service" ];
+      script = ''
+        ${wolfComposeStartScript} ${wolfComposeFile} 
+      '';
+      serviceConfig = {
+        Environment = "PATH=/run/current-system/sw/bin:" + lib.makeBinPath [ pkgs.curl pkgs.docker ];
+        # Ensures the service executes on startup
+        Type = "oneshot";
+        RemainAfterExit = true;
+        User = "root";
+        Group = "root";
+      };
+      # Ensures the service is started at boot
+      wantedBy = [ "multi-user.target" ];
     };
 
 }

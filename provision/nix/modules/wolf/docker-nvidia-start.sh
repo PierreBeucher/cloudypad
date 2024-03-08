@@ -5,6 +5,8 @@
 # - Build Nvidia image
 # - Populate volume
 
+WOLF_COMPOSE_FILE=$1
+
 # Check Nvidia driver version
 REQUIRED_NVIDIA_VERSION="530.30.02"
 CURRENT_NVIDIA_VERSION=$(cat /sys/module/nvidia/version)
@@ -37,4 +39,4 @@ nvidia-smi > /dev/null # still show errors
 
 # Start wolf with matching nvidia volume
 SCRIPT_DIR=$(dirname $0)
-NVIDIA_VOLUME_NAME=$NVIDIA_VOLUME_NAME docker compose -f $SCRIPT_DIR/docker-compose.nvidia.yml up -d
+NVIDIA_VOLUME_NAME=$NVIDIA_VOLUME_NAME docker compose -p wolf -f $WOLF_COMPOSE_FILE up -d

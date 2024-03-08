@@ -1,108 +1,113 @@
-import yargs from "yargs/yargs";
-import * as infra from "./infra.js"
-import * as provisioning from "./provisioning.js"
-// import * as logging from "./logging.js";
+import { Command } from 'commander';
 import * as emoji from "node-emoji"
+import { getBoxManager } from './lib/core.js';
+import * as logging from "./lib/logging.js"
 
-const yargResult = yargs(process.argv.slice(2)).command('box [deploy|destroy|list]', 'Manage boxes', (yargs) => {
-    return yargs.command('list', 'List all boxes', () => {
-        // TODO
-    })
-    .command('deploy <name>', 'Deploy a box', (yargs) => {
-        yargs.positional('name', {
-            describe: "Box name",
-            type: 'string'
-        })
-    }, async (args) => {
-        console.info(`Deploying ${args.name}`)
-        await deploy("dev")
-    })
-    .command('provision <name>', 'Run box provisioning', (yargs) => {
-        yargs.positional('name', {
-            describe: "Box name",
-            type: 'string'
-        })
-    }, async (args) => {
-        console.info(`Provisioning ${args.name}`)
-        await provision("dev")
-    })
-    .command('destroy', 'Delete a box', (yargs) => {
-        console.info(yargs)
-        // TODO
-    })
-    .command('get <name>', 'Get details about a box', (yargs) => {
-        yargs.positional('name', {
-            describe: "Box name",
-            type: 'string'
-        })
-    }, async (args) => {
-        const boxName = args.name as string
-        await getBoxDetails(boxName)
-    })
-    .command('ssh', 'SSH into a box', (yargs) => {
-        console.info(yargs)
-        // TODO
-    })
+const program = new Command();
+
+program.name('cloudybox')
+  .description('Manage CloudyBox instances')
+  .version('0.1.0');
+
+program.command('deploy <name>')
+  .description('Deploy an instance')
+  .action((name: string) => {
+    deploy(name)
+  })
+
+program.command('provision <name>')
+  .description('Provison an instance')
+  .action((name: string) => {
+    provision(name)
+  })
+
+program.command('preview <name>')
+  .description('Preview changes for an instance deployment')
+  .action((name: string) => {
+    preview(name)
 })
-.command('utils [wolf]', 'Utilitary functions for various boxes templates.', (yargs) => {
-    return yargs.command('wolf [get-pin]', 'Wolf utils commands', (yargs) => {
-        yargs.command("get-pin <box>", "Get the PIN code from Wolf output", (yargs) => {
-            yargs.positional('box', {
-                describe: "Box name",
-                type: 'string'
-            })
-        }, async (args) => {
-            const boxName = args.box as string
-            getWolfPin(boxName)
-        })
-    })
-})
-.demandCommand()
-.help()
-.parseAsync()
 
-yargResult.catch(e => console.error(e))
+program.command('destroy <name>')
+  .description('Destroy an instance')
+  .action((name: string) => {
+    console.log(`Destroying instance named ${name}`);
+    destroy(name)
+  });
 
-async function deploy(boxName: string) {
-    await deployInfra(boxName)
-    await provision(boxName)
+program.command('get <name>')
+  .description('Get details of an instance')
+  .action((name: string) => {
+    getBoxDetails(name)
+  });
+
+program.command('list')
+  .description('List all instances')
+  .action(() => {
+    listBoxes()
+  });
+
+// Utils subcommands for some box
+const utils = program.command('utils')
+  .description('Utilities for cloudybox');
+
+const wolfCmd = utils.command("wolf")
+  .description("Wolf utils commands")
+
+wolfCmd.command("get-pin <name>")
+  .description("Get PIN from Wolf instance logs")
+  .action((name: string) => {
+    getWolfPin(name)
+  })
+
+try {
+  program.parse(process.argv).exitOverride()
+} catch (e){
+  console.error(`Something went wrong: ${e}`) 
+  console.error(`See full logs at: ${logging.tmpLogFile}`)
 }
 
-async function deployInfra(boxName: string) {
-    console.info(`${emoji.get("cloud")} Updating Cloud stack`)
-    await infra.deployPulumi(boxName)
+async function deploy(boxName: string) {
+    console.info(`${emoji.get("rocket")} Deploying box: ${boxName}...`)
+    const bm = getBoxManager(boxName)
+    await bm.deploy()
+    console.info(`${emoji.get("white_check_mark")} Deployed: ${boxName}...`)
 }
 
 async function provision(boxName: string) {
-    console.info(`${emoji.get("snowflake")} Provisioning box`)
-    const box = await infra.getBoxDetailsPulumi(boxName)
-    await provisioning.nixSshProvision(box, "wolf-aws.nix")
-    // TODO as systemd service or aliased command
-    await provisioning.runSshCommand(box, ["/root/wolf/docker-nvidia-start.sh"])
+  console.info(`${emoji.get("gear")} Provisioning box: ${boxName}...`)
+  const bm = getBoxManager(boxName)
+  await bm.provision()
+  console.info(`${emoji.get("white_check_mark")} Provisioned: ${boxName}...`)
+}
+
+async function preview(boxName: string) {
+    console.info(`${emoji.get("cloud")} Previewing updates of Cloud stack`)
+    const bm = getBoxManager(boxName)
+    await bm.preview()
+}
+
+async function destroy(boxName: string) {
+  console.info(`${emoji.get("bomb")} Destroying box: ${boxName}...`)
+  const bm = getBoxManager(boxName)
+  await bm.destroy()
+  console.info(`${emoji.get("boom")} Destroyed ${boxName}...`)
 }
 
 async function getWolfPin(boxName: string){
-    const box = await infra.getBoxDetailsPulumi(boxName)
-    
-    // Returns exactly 1 line
-    // Extract HTTP address and replace by box IP
-    const sshResp = await provisioning.runSshCommand(box, ["sh", "-c", "docker logs wolf-wolf-1 2>&1 | grep -a 'Insert pin at' | tail -n 1"])
+  const bm = getBoxManager(boxName)
+  const wolfPinUrl = await bm.getWolfPinUrl()
 
-    const urlRegex = /(http:\/\/\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}:\d+\/pin\/#[0-9A-F]+)/;
-    const match = sshResp.stdout.match(urlRegex);
-
-    if (match) {
-        const url = match[0];
-        const replacedUrl = url.replace(/\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}/, box.host);
-
-        console.log(`Open browser at ${replacedUrl} to validate PIN`);
-    } else {
-        console.log("PIN validation URL not found in Wolf logs.");
-    }
-
+  console.info(`Connect to ${wolfPinUrl} to validate PIN.`)
 }
 
 async function getBoxDetails(boxName: string){
-    const box = await infra.getBoxDetailsPulumi(boxName)
-    console.info(JSON.stringify(box, undefined, 2))
+    const bm = getBoxManager(boxName)
+    const outputs = bm.get()
+    console.info(JSON.stringify(outputs, undefined, 2))
+}
+
+async function listBoxes(){
+  throw new Error("Not implemented")
+  // const boxes = await pulumi.list("wolf-aws")
+  // console.info(JSON.stringify(boxes))
 }
