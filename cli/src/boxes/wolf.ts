@@ -41,9 +41,36 @@ export class WolfAWSBoxManager {
         return this.getPulumiBoxManager().get()
     }
 
+    async reboot(){
+        const bm = await this.getNixosBoxManager()
+        await bm.runSshCommand(["reboot"])
+    }
+
     async provision() {
        const box = await this.getNixosBoxManager()
-       box.deploy()
+       await box.deploy()
+
+       // It may be needed to restart instance after initial deployment
+       // Check for presence of /sys/module/nvidia/version
+       // If not present, restart needed, otherwise we're good to go
+       // If still absent after reboot, something went wrong
+       const checkNvidia = await this.checkNvidiaReady()
+       if(!checkNvidia) {
+            logging.ephemeralInfo(`Nvidia driver version file not found, rebooting...`)
+            await this.reboot() 
+            logging.ephemeralInfo(`Waiting for instance to start after reboot...`)
+            await box.waitForSsh()
+       }
+    }
+
+    private async checkNvidiaReady(): Promise<boolean>{
+        const box = await this.getNixosBoxManager()
+        const cmdRes = await box.runSshCommand(["cat", "/sys/module/nvidia/version"], { ignoreNonZeroExitCode: true})
+        if(cmdRes.code == 0){
+            return true
+       } else {
+            return false
+       }
     }
 
     async getWolfPinUrl(): Promise<string>{
@@ -56,7 +83,7 @@ export class WolfAWSBoxManager {
         
         if (match) {
             const url = match[0];
-            const replacedUrl = url.replace(/\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}/, box.boxInput.host);
+            const replacedUrl = url.replace(/\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}/, box.args.host);
 
             return replacedUrl
         } else {

@@ -30,6 +30,11 @@ export class SSHFileTransferError extends Error{
 
 }
 
+export interface SSHCommandOpts {
+    logPrefix?: string, 
+    ignoreNonZeroExitCode?: boolean
+}
+
 /**
  * Simple SSH client implementation
  */
@@ -43,13 +48,13 @@ export class SSHClient {
         this.client = new NodeSSH()
     }
 
-    async command(cmd: string[], logPrefix?: string) : Promise<SSHExecCommandResponse>{
+    async command(cmd: string[], args?: SSHCommandOpts) : Promise<SSHExecCommandResponse>{
         if (cmd.length < 0){
             throw new Error("Command array length must be >0")
         }
     
-        const result = await this.#sshExec(cmd, logPrefix || cmd[0])
-        if (result.code != 0){
+        const result = await this.sshExec(cmd, args?.logPrefix || cmd[0])
+        if (result.code != 0 && !args?.ignoreNonZeroExitCode){
             throw new SSHExecError(`Error running command: '${JSON.stringify(cmd)}'`, result)
         }
 
@@ -90,7 +95,7 @@ export class SSHClient {
         }
     }
     
-    async #sshExec(exec: string[], logPrefix: string, stderrLogPefix?: string) : Promise<SSHExecCommandResponse>{
+    private async sshExec(exec: string[], logPrefix: string, stderrLogPefix?: string) : Promise<SSHExecCommandResponse>{
         if (!exec.length){
             throw new Error("No command provided.")
         }
@@ -108,16 +113,37 @@ export class SSHClient {
     
         return sshResp
     }
-    
-    async connect() {
-        logging.ephemeralInfo(`Connecting via SSH to ${this.args.host}...`)
-    
-        await this.client.connect({
+
+    async waitForConnection(retries=12, delayMs=10000){
+        for (let attempt = 1; attempt <= retries; attempt++){
+            try {
+                logging.ephemeralInfo(`Trying SSH connect on ${this.args.host} (${attempt}/${retries})`)
+                await this.doConnect()
+                logging.ephemeralClear()
+                return
+            } catch (e){
+                if (attempt == retries){
+                    throw e
+                }
+                await new Promise(resolve => setTimeout(resolve, delayMs));
+            }
+        }
+        
+    }
+
+    private async doConnect(){
+        return this.client.connect({
             host: this.args.host,
             port: this.args.port,
             username: this.args.user,
             privateKeyPath: this.args.sshKeyPath
         });
+    }
+    
+    async connect() {
+        logging.ephemeralInfo(`Connecting via SSH to ${this.args.host}...`)
+    
+        await this.doConnect()
     
         logging.ephemeralClear()
     }

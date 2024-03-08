@@ -39,14 +39,6 @@ export class PulumiBoxManager {
         await this.doDestroy()
         return this.buildOutput({})
     }
-    
-    public async start(): Promise<PulumiBoxOutput> {
-        throw new Error("Method not implemented.")
-    }
-    
-    public async stop(): Promise<PulumiBoxOutput> {
-        throw new Error("Method not implemented.")
-    }
 
     private buildOutput(outputs: OutputMap) : PulumiBoxOutput{
         return { outputs: outputs }

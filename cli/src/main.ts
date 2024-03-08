@@ -59,12 +59,12 @@ wolfCmd.command("get-pin <name>")
     getWolfPin(name)
   })
 
-try {
-  program.parse(process.argv).exitOverride()
-} catch (e){
+
+program.exitOverride((e) => {
   console.error(`Something went wrong: ${e}`) 
   console.error(`See full logs at: ${logging.tmpLogFile}`)
-}
+  process.exit(1)
+}).parse(process.argv)
 
 async function deploy(boxName: string) {
     console.info(`${emoji.get("rocket")} Deploying box: ${boxName}...`)
