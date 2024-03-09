@@ -1,17 +1,68 @@
 # Cloudy Box 
 
-Collection of Cloud components and services 
+Collection of Cloud components and services
 
-## 
+_This project is under heavy development and will have breaking changes. Feel free to ping me an email or create an issue !_
 
-## Development
+## Features
 
-### Architecture
+**Gaming**
 
-A Box is deployed through:
+- 🐺 Deploy a [Wolf](https://games-on-whales.github.io/wolf/stable/) instance in the Cloud
+- 🌤️ (soon) Deploy a [Sunshine](https://github.com/LizardByte/Sunshine) instance in the Cloud
 
-- A Cloud provider and deployment tool (eg. AWS + Pulumi)
-- A provisionning tool (eg. Nix)
-- A deployment script (eg. bash to run containers)
+**Coming soon**
 
-Box are named after these components, for example:
+- Deploy a fleet of instances with various services (VSCode, GPU, databases, etc.)
+- Deploy Kubernetes clusters
+
+## Usage
+
+
+**Requirements**
+- [Pulumi account](https://www.pulumi.com/) or [self-managed Pulumi backend](https://www.pulumi.com/docs/concepts/state/#using-a-self-managed-backend)
+- [AWS](https://aws.amazon.com/) account
+
+Only local usage is possible for now. A full binary package will be implemented soon.
+
+```sh
+npx ts-node cli/src/main.ts --help
+npx ts-node cli/src/main.ts deploy dev
+npx ts-node cli/src/main.ts provision dev
+npx ts-node cli/src/main.ts get dev
+npx ts-node cli/src/main.ts destroy dev
+```
+
+### Wolf
+
+Deploy a Wolf gamin instance on AWS:
+
+```sh
+# Deploy Wolf instance
+# Will also run provision
+npx ts-node cli/src/main.ts deploy dev
+
+# If needed, run only provision
+#npx ts-node cli/src/main.ts provision dev
+
+# If needed, get instance details (IP address for Moonlight)
+# npx ts-node cli/src/main.ts get dev
+```
+
+Run Moonlight and connect to instance:
+
+```sh
+moonlight
+```
+
+Open browser to enter Moonlight server-side PIN:
+
+```sh
+npx ts-node cli/src/main.ts utils wolf open-pin
+```
+
+Destroy instance:
+
+```sh
+npx ts-node cli/src/main.ts destroy dev
+```
