@@ -2,6 +2,7 @@ import { Command } from 'commander';
 import * as emoji from "node-emoji"
 import { getBoxManager } from './lib/core.js';
 import * as logging from "./lib/logging.js"
+import open from 'open';
 
 const program = new Command();
 
@@ -53,8 +54,8 @@ const utils = program.command('utils')
 const wolfCmd = utils.command("wolf")
   .description("Wolf utils commands")
 
-wolfCmd.command("get-pin <name>")
-  .description("Get PIN from Wolf instance logs")
+wolfCmd.command("open-pin <name>")
+  .description("Open a browser to enter Wolf PIN")
   .action((name: string) => {
     getWolfPin(name)
   })
@@ -97,12 +98,13 @@ async function getWolfPin(boxName: string){
   const bm = getBoxManager(boxName)
   const wolfPinUrl = await bm.getWolfPinUrl()
 
-  console.info(`Connect to ${wolfPinUrl} to validate PIN.`)
+  console.info(`Opening ${wolfPinUrl} in default browser...`)
+  open(wolfPinUrl);
 }
 
 async function getBoxDetails(boxName: string){
     const bm = getBoxManager(boxName)
-    const outputs = bm.get()
+    const outputs = await bm.get()
     console.info(JSON.stringify(outputs, undefined, 2))
 }
 

@@ -43,12 +43,21 @@ export async function wolfEc2InstanceProgram(name: string, args: WolfInstanceArg
 
     const instance = new CompositeEC2Instance(name, finalArgs, opts)
 
-    return {
-        ipAddress: instance.ipAddress
-    }
+    return pulumi.all([instance.ipAddress, instance.ec2Instance.id]).apply( ([ip, instanceId]) => {
+        const o : WolfEC2IntanceStackOutput = {
+            ipAddress: ip,
+            instanceId: instanceId
+        } 
+        return o
+    })
+    
     
 }
 
+/**
+ * Interface for Wolf stack outputs
+ */
 export interface WolfEC2IntanceStackOutput {
     ipAddress: string
+    instanceId: string
 }

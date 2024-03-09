@@ -30,7 +30,7 @@ export class WolfAWSBoxManager {
 
     async deploy() {
         await this.getPulumiBoxManager().deploy()
-        await (await this.getNixosBoxManager()).deploy()
+        this.provision()
     }
     
     async destroy() {
@@ -38,7 +38,8 @@ export class WolfAWSBoxManager {
     }
 
     async get() {
-        return this.getPulumiBoxManager().get()
+        const rawOutputs = await this.getPulumiBoxManager().get()
+        return this.buildOutputFromStack(rawOutputs)
     }
 
     async reboot(){
@@ -95,7 +96,8 @@ export class WolfAWSBoxManager {
         const stackOutputs = boxOutput.outputs
         
         return {
-            ipAddress: stackOutputs["ipAddress"].value
+            ipAddress: stackOutputs["ipAddress"].value,
+            instanceId: stackOutputs["instanceId"].value,
         }
     }
 

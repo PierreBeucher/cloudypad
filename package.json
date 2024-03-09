@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "description": "CloudyBox - Collection of Cloud components and services",
   "dependencies": {
+    "@aws-sdk/client-ec2": "^3.529.1",
     "@pulumi/aws": "^4.0.0",
     "@pulumi/awsx": "^0.30.0",
     "@pulumi/pulumi": "^3.0.0",
@@ -11,6 +12,7 @@
     "log-update": "^6.0.0",
     "node-emoji": "^2.1.3",
     "node-ssh": "^13.1.0",
+    "open": "^10.1.0",
     "ts-node": "^10.0.0",
     "typescript": "^4.0.0",
     "upath": "^2.0.1",

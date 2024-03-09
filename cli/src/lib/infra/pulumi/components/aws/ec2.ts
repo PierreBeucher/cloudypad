@@ -63,9 +63,9 @@ export interface CompositeEC2InstanceArgs {
  */
 export class CompositeEC2Instance extends pulumi.ComponentResource {
 
-    ipAddress: pulumi.Output<string>
+    readonly ipAddress: pulumi.Output<string>
 
-    // instanceId: pulumi.Output<string>
+    readonly ec2Instance: pulumi.Output<aws.ec2.Instance>
 
     // fqdn: pulumi.Output<string>
     
@@ -128,6 +128,7 @@ export class CompositeEC2Instance extends pulumi.ComponentResource {
         }, {
             parent: this
         });
+        this.ec2Instance = pulumi.output(ec2Instance)
 
         args.volumes?.forEach(v => {
             const vol = new aws.ebs.Volume(`${resourceBasename}-volume-${v.deviceName}`, {
