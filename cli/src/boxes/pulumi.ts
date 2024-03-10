@@ -1,14 +1,14 @@
 import { ConfigMap, DestroyResult, InlineProgramArgs, LocalWorkspace, OutputMap, PulumiFn, Stack, StackSummary, UpResult } from "@pulumi/pulumi/automation/index.js"
 import * as logging from "../lib/logging.js"
-import { BoxInput, BoxOutput } from "../lib/core.js"
 
-export interface PulumiBoxInput extends BoxInput {
+export interface PulumiBoxInput {
+    stackName: string
     projectName: string
     program: PulumiFn
     config: ConfigMap
 }
 
-export interface PulumiBoxOutput extends BoxOutput {
+export interface PulumiBoxOutput {
     outputs: OutputMap
 }
 
@@ -20,34 +20,29 @@ export class PulumiBoxManager {
         this.boxInput = box
     }
 
-    public async get(): Promise<PulumiBoxOutput> {
-        const res = await this.doGetStackOutput()
-        return this.buildOutput(res)
+    public async get(): Promise<OutputMap> {
+        return await this.doGetStackOutput()
+
     }
 
     public async preview(): Promise<string> {
-        const res =await this.doPreview()
+        const res = await this.doPreview()
         return res.stdout
     }
 
-    public async deploy(): Promise<PulumiBoxOutput> {
+    public async deploy(): Promise<OutputMap> {
         const res = await this.doUp()
-        return this.buildOutput(res.outputs)
+        return res.outputs
     }
     
-    public async destroy(): Promise<PulumiBoxOutput> {
+    public async destroy(): Promise<void> {
         await this.doDestroy()
-        return this.buildOutput({})
-    }
-
-    private buildOutput(outputs: OutputMap) : PulumiBoxOutput{
-        return { outputs: outputs }
     }
 
     private async createOrSelectPulumiStackProgram() : Promise<Stack>{
     
         const args: InlineProgramArgs = {
-            stackName: this.boxInput.name,
+            stackName: this.boxInput.stackName,
             projectName: this.boxInput.projectName,
             program: this.boxInput.program
         };
@@ -65,37 +60,37 @@ export class PulumiBoxManager {
     private async doUp(): Promise<UpResult>{
         const stack = await this.createOrSelectPulumiStackProgram()
         
-        console.info("   Deploying stack...")
+        logging.info("   Deploying stack...")
         const upRes = await stack.up({ onOutput: logging.ephemeralInfo, refresh: true });
         logging.ephemeralClear()
         
-        console.info("   Stack deployed !")
+        logging.info("   Stack deployed !")
     
         return upRes
 
     }
 
     private async doPreview() {
-        console.debug(`Preview Pulumi stack ${JSON.stringify(this.boxInput)}`)
+        logging.ephemeralInfo(`Preview Pulumi stack ${JSON.stringify(this.boxInput)}`)
         const stack = await this.createOrSelectPulumiStackProgram()
-        console.info("   Previewing stack changes...")
+        logging.info("   Previewing stack changes...")
     
         const previewRes = await stack.preview({ onOutput: logging.ephemeralInfo, refresh: true, diff: true })
         logging.ephemeralClear()
 
-        console.info(previewRes.stdout)
+        logging.info(previewRes.stdout)
         return previewRes
     }
 
     private async doDestroy(): Promise<DestroyResult>{
         const stack = await this.createOrSelectPulumiStackProgram()
         
-        console.info("   Destroying stack...")
+        logging.info("   Destroying stack...")
         const destroyRes = await stack.destroy({ onOutput: logging.ephemeralInfo });
+        logging.ephemeralInfo(`   Update summary: \n${JSON.stringify(destroyRes.summary.resourceChanges, null, 4)}`);
         logging.ephemeralClear()
-        
-        console.info("   Stack Destroyed !")
-        console.log(`   Update summary: \n${JSON.stringify(destroyRes.summary.resourceChanges, null, 4)}`);
+
+        logging.info("   Stack Destroyed !")
     
         return destroyRes
 

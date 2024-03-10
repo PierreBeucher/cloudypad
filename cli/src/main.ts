@@ -37,8 +37,8 @@ program.command('destroy <name>')
 
 program.command('get <name>')
   .description('Get details of an instance')
-  .action((name: string) => {
-    getBoxDetails(name)
+  .action(async (name: string) => {
+    await getBoxDetails(name)
   });
 
 program.command('list')
@@ -71,7 +71,7 @@ async function deploy(boxName: string) {
     console.info(`${emoji.get("rocket")} Deploying box: ${boxName}...`)
     const bm = getBoxManager(boxName)
     await bm.deploy()
-    console.info(`${emoji.get("white_check_mark")} Deployed: ${boxName}...`)
+    console.info(`${emoji.get("white_check_mark")} Deployed: ${boxName}`)
     const outputs = await bm.get()
     console.info(JSON.stringify(outputs))
 }
@@ -97,11 +97,12 @@ async function destroy(boxName: string) {
 }
 
 async function getWolfPin(boxName: string){
+  boxName
   const bm = getBoxManager(boxName)
   const wolfPinUrl = await bm.getWolfPinUrl()
 
   console.info(`Opening ${wolfPinUrl} in default browser...`)
-  open(wolfPinUrl);
+  open("/dev/null");
 }
 
 async function getBoxDetails(boxName: string){

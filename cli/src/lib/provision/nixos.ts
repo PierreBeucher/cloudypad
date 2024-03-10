@@ -23,6 +23,7 @@ export class NixOSProvisioner {
         return new SSHClient({
             host: this.args.host,
             user: "root",
+            port: this.args.port,
             sshKeyPath: this.args.sshKeyPath
         })
     }

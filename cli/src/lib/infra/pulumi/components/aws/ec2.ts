@@ -1,13 +1,6 @@
 import * as aws from "@pulumi/aws";
 import * as pulumi from "@pulumi/pulumi";
-
-export interface PortDefinition {
-    from: pulumi.Input<number>,
-    to?: pulumi.Input<number>,
-    protocol?: pulumi.Input<string>,
-    cidrBlocks?: pulumi.Input<string>[]
-    ipv6CirdBlocks?: pulumi.Input<string>[]
-}
+import { PortDefinition } from "../security.js";
 
 export interface CompositeEC2InstanceArgs {
 
