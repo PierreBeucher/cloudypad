@@ -16,6 +16,12 @@ export interface CloudVMBoxManager {
     preview() : Promise<string>
 
     get() : Promise<CloudVMBoxManagerOutputs>
+
+    stop() : Promise<void>
+
+    start() : Promise<void>
+
+    reboot() : Promise<void>
 }
 
 export function outputsFromPulumi(o : OutputMap) : CloudVMBoxManagerOutputs{

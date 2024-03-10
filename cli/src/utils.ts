@@ -1,12 +1,12 @@
 import path from 'path';
 import { fileURLToPath } from 'url';
+import * as fs from "fs"
 
-// upath cannot be imported directly as it's CommonJS module
-// ts-node gives error:
-// SyntaxError: Named export 'joinSafe' not found. The requested module 'upath' is a CommonJS module, which may not support all module.exports as named exports.
-// CommonJS modules can always be imported via the default export, for example using:
-import upathpkg from 'upath'; // actual provided example
-export const { joinSafe } = upathpkg;
+// commonJS import
+import sshpk from 'sshpk';
+export const { parseKey, parsePrivateKey } = sshpk;
+import upath from 'upath';
+export const { joinSafe } = upath;
 
 const CURRENT_DIR = path.dirname(fileURLToPath(import.meta.url))
 
@@ -15,3 +15,8 @@ export const PROVISION_DIR = joinSafe(CURRENT_DIR, "..", "..", "provision");
 export const NIX_PROVISION_DIR = joinSafe(PROVISION_DIR, "nix")
 export const WOLF_PROVISION_DIR = joinSafe(PROVISION_DIR, "wolf")
 
+export async function parseSshPrivateKeyToPublic(keyPath: string){
+    const privateKey = fs.readFileSync(keyPath, { encoding: 'utf8' });
+    const privKey = parseKey(privateKey, "ssh-private")
+    return privKey.toString("ssh")
+}

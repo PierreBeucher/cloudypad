@@ -3,6 +3,7 @@ import * as emoji from "node-emoji"
 import { getBoxManager } from './lib/core.js';
 import * as logging from "./lib/logging.js"
 import open from 'open';
+import { WolfBoxManager } from './boxes/gaming/wolf.js';
 
 const program = new Command();
 
@@ -97,12 +98,12 @@ async function destroy(boxName: string) {
 }
 
 async function getWolfPin(boxName: string){
-  boxName
   const bm = getBoxManager(boxName)
-  const wolfPinUrl = await bm.getWolfPinUrl()
-
-  console.info(`Opening ${wolfPinUrl} in default browser...`)
-  open("/dev/null");
+  if(bm instanceof WolfBoxManager){
+    const wolfPinUrl = await bm.getWolfPinUrl()
+    console.info(`Opening ${wolfPinUrl} in default browser...`)
+    open(wolfPinUrl);
+  }
 }
 
 async function getBoxDetails(boxName: string){

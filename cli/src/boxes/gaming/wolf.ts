@@ -1,6 +1,9 @@
 import { PortDefinition } from "../../lib/infra/pulumi/components/security.js";
 import { NixOSBoxArgs, NixOSBoxManager } from "../nix/nixos.js";
 import * as logging from "../../lib/logging.js"
+import { EC2InstanceBoxManager } from "../aws/ec2-instance.js";
+import { CloudVMBoxManager, STANDARD_SSH_PORTS } from "../common/cloud-virtual-machine.js";
+import { parseSshPrivateKeyToPublic } from "../../utils.js";
 
 /**
  * Wolf ports
@@ -31,13 +34,15 @@ export class WolfBoxManager extends NixOSBoxManager {
     async provision() {
         const o = await super.provision()
 
-        console.info("   Checking GPU drivers...")
+        
 
         // It may be needed to restart instance after initial deployment
         // Check for presence of /sys/module/nvidia/version
         // If not present, restart needed, otherwise we're good to go
         // If still absent after reboot, something went wrong
+        console.info("   Checking GPU drivers...")
         const checkNvidia = await this.checkNvidiaReady()
+
         if(!checkNvidia) {
             logging.ephemeralInfo(`Nvidia driver version file not found, rebooting...`)
             await this.reboot() 
@@ -48,10 +53,6 @@ export class WolfBoxManager extends NixOSBoxManager {
         console.info("   GPU drivers ready !")
 
         return o
-    }
-
-    async reboot(){
-        await this.runSshCommand(["reboot"])
     }
 
     private async checkNvidiaReady(): Promise<boolean>{
@@ -79,4 +80,42 @@ export class WolfBoxManager extends NixOSBoxManager {
             throw new Error("PIN validation URL not found in Wolf logs.");
         }
     }
+}
+
+export interface WolfAWSBoxArgs {
+    region?: string,
+    instanceType: string
+    sshPrivateKeyPath: string,
+}
+
+/**
+ * Build a Wolf box for AWS
+ */
+export function getWolfAWSBox(name: string, args: WolfAWSBoxArgs) : CloudVMBoxManager {
+
+
+    const awsBm = new EC2InstanceBoxManager(`wolf-${name}`, { 
+        aws: { region: args.region },
+        infraArgs: {
+            instance: {
+                ami: "ami-024965d66b21fb7ab", // nixos/23.11.5060.617579a78725-x86_64-linux eu-central-1
+                type: args.instanceType,
+                publicKey: parseSshPrivateKeyToPublic(args.sshPrivateKeyPath),
+                rootVolume: {
+                    sizeGb: 150
+                }
+            },
+            ingressPorts: STANDARD_SSH_PORTS.concat(WOLF_PORTS),
+        },
+    })
+
+    return new WolfBoxManager({ 
+        nixosConfigName: "wolf-aws",
+        nixosChannel: "nixos-23.05",
+        homeManagerRelease: "release-23.05",
+        infraBoxManager: awsBm,
+        ssh: {
+            privateKeyPath: args.sshPrivateKeyPath
+        }
+    })
 }

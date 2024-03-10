@@ -19,4 +19,8 @@ export class AwsClient {
   async stopInstance(instanceId: string): Promise<void> {
     await this.ec2.stopInstances({ InstanceIds: [instanceId] });
   }
+
+  async rebootInstance(instanceId: string): Promise<void> {
+    await this.ec2.rebootInstances({ InstanceIds: [instanceId] });
+  }
 }

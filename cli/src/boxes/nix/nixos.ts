@@ -55,12 +55,24 @@ export class NixOSBoxManager implements CloudVMBoxManager{
         return this.args.infraBoxManager.get()
     }
 
+    public async stop() {
+        return this.args.infraBoxManager.stop()
+    }
+
+    public async start() {
+        return this.args.infraBoxManager.start()
+    }
+
+    public async reboot() {
+        return this.args.infraBoxManager.reboot()
+    }
+
     public async runSshCommand(cmd: string[], opts?: SSHCommandOpts){
         const o = await this.get()
         return this.doRunSshCommand(o, cmd, opts)
     }
 
-    async waitForSsh(){
+    public async waitForSsh(){
         const o = await this.get()
         this.doWaitForSsh(o)
     }
