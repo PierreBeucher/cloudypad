@@ -72,6 +72,8 @@ async function deploy(boxName: string) {
     const bm = getBoxManager(boxName)
     await bm.deploy()
     console.info(`${emoji.get("white_check_mark")} Deployed: ${boxName}...`)
+    const outputs = await bm.get()
+    console.info(JSON.stringify(outputs))
 }
 
 async function provision(boxName: string) {
