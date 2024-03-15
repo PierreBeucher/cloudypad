@@ -1,28 +1,27 @@
 import { ConfigMap, DestroyResult, InlineProgramArgs, LocalWorkspace, OutputMap, PulumiFn, Stack, StackSummary, UpResult } from "@pulumi/pulumi/automation/index.js"
-import * as logging from "../lib/logging.js"
+import * as logging from "../../logging.js"
 
-export interface PulumiBoxInput {
+export interface PulumiBoxManagerArgs {
     stackName: string
     projectName: string
     program: PulumiFn
     config: ConfigMap
 }
 
-export interface PulumiBoxOutput {
+export interface PulumiStackOutput {
     outputs: OutputMap
 }
 
-export class PulumiBoxManager {
+export class PulumiClient {
 
-    readonly boxInput: PulumiBoxInput
+    readonly args: PulumiBoxManagerArgs
     
-    constructor(box: PulumiBoxInput) {
-        this.boxInput = box
+    constructor(box: PulumiBoxManagerArgs) {
+        this.args = box
     }
 
     public async get(): Promise<OutputMap> {
         return await this.doGetStackOutput()
-
     }
 
     public async preview(): Promise<string> {
@@ -42,13 +41,13 @@ export class PulumiBoxManager {
     private async createOrSelectPulumiStackProgram() : Promise<Stack>{
     
         const args: InlineProgramArgs = {
-            stackName: this.boxInput.stackName,
-            projectName: this.boxInput.projectName,
-            program: this.boxInput.program
+            stackName: this.args.stackName,
+            projectName: this.args.projectName,
+            program: this.args.program
         };
 
         const stack = await LocalWorkspace.createOrSelectStack(args);        
-        await stack.setAllConfig(this.boxInput.config)
+        await stack.setAllConfig(this.args.config)
         return stack
     }
     
@@ -71,7 +70,7 @@ export class PulumiBoxManager {
     }
 
     private async doPreview() {
-        logging.ephemeralInfo(`Preview Pulumi stack ${JSON.stringify(this.boxInput)}`)
+        logging.ephemeralInfo(`Preview Pulumi stack ${JSON.stringify(this.args)}`)
         const stack = await this.createOrSelectPulumiStackProgram()
         logging.info("   Previewing stack changes...")
     

@@ -1,11 +1,13 @@
 import { ConfigMap } from "@pulumi/pulumi/automation";
-import { PulumiBoxManager } from "../pulumi.js";
+import { PulumiClient } from "../../lib/infra/pulumi/pulumi-client.js";
 import { ec2InstanceProgram } from "../../lib/infra/pulumi/programs/ec2-instance.js";
 import { CompositeEC2InstanceArgs } from "../../lib/infra/pulumi/components/aws/ec2.js";
 import { CloudVMBoxManager, outputsFromPulumi } from "../common/cloud-virtual-machine.js";
 import { AwsClient } from "../../lib/infra/aws/client.js";
+import { BoxMetadata } from "../../lib/core.js";
 
 export interface EC2InstanceBoxArgs {
+    name: string,
     aws?: {
         region?: string
     }
@@ -15,28 +17,28 @@ export interface EC2InstanceBoxArgs {
 export class EC2InstanceBoxManager implements CloudVMBoxManager {
     
     readonly args: EC2InstanceBoxArgs
-    readonly name: string
-    readonly pulumiBm: PulumiBoxManager
+    readonly pulumiClient: PulumiClient
     readonly awsClient: AwsClient
+    readonly meta: BoxMetadata
 
-    constructor(name: string, args: EC2InstanceBoxArgs){
-        this.name = name
+    constructor(args: EC2InstanceBoxArgs){
+        this.meta = new BoxMetadata({ name: args.name, kind: "aws-ec2-instance"})
         this.args = args
-        this.pulumiBm = buildPulumiBoxManager(name, args)
+        this.pulumiClient = buildPulumiClient(args)
         this.awsClient = new AwsClient({region: args.aws?.region})
     }
 
     async deploy() {
-        const o = await this.pulumiBm.deploy()
+        const o = await this.pulumiClient.deploy()
         return outputsFromPulumi(o)        
     }
     
     async destroy() {
-        return this.pulumiBm.destroy()
+        return this.pulumiClient.destroy()
     }
 
     async preview() {
-        return this.pulumiBm.preview()    
+        return this.pulumiClient.preview()    
     }
 
     async provision() {
@@ -44,7 +46,7 @@ export class EC2InstanceBoxManager implements CloudVMBoxManager {
     }
 
     async get() {
-        const o = await this.pulumiBm.get()
+        const o = await this.pulumiClient.get()
         return outputsFromPulumi(o)    
     }
 
@@ -58,13 +60,17 @@ export class EC2InstanceBoxManager implements CloudVMBoxManager {
         await this.awsClient.startInstance(o.id)
     }
 
-    async reboot(){
+    async restart(){
         const o = await this.get()
         await this.awsClient.rebootInstance(o.id)
     }
+
+    async getMetadata(): Promise<BoxMetadata> {
+        return this.meta
+    }
 }
 
-function buildPulumiBoxManager(name: string, args: EC2InstanceBoxArgs) : PulumiBoxManager {
+function buildPulumiClient(args: EC2InstanceBoxArgs) : PulumiClient {
 
     // TODO generic for AWS stacks ?
     const pulumiConfig : ConfigMap = {}
@@ -72,11 +78,11 @@ function buildPulumiBoxManager(name: string, args: EC2InstanceBoxArgs) : PulumiB
         pulumiConfig["aws:region"] = { value: args.aws?.region }
     }
 
-    return new PulumiBoxManager({
-        stackName: name,
+    return new PulumiClient({
+        stackName: args.name,
         projectName: `cloudybox-aws-ec2-instance`,
         program: async () => {
-            return ec2InstanceProgram(name, args.infraArgs)
+            return ec2InstanceProgram(args.name, args.infraArgs)
         },
         config: pulumiConfig
     })

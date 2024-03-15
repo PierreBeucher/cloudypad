@@ -1,9 +1,33 @@
 import { PortDefinition } from "../../lib/infra/pulumi/components/security.js";
-import { NixOSBoxArgs, NixOSBoxManager } from "../nix/nixos.js";
+import { NixOSBoxManager, BOX_SPEC_NIXOS, NixOSBoxManagerArgs, NixOSBoxSpec } from "../nix/nixos.js";
 import * as logging from "../../lib/logging.js"
 import { EC2InstanceBoxManager } from "../aws/ec2-instance.js";
-import { CloudVMBoxManager, STANDARD_SSH_PORTS } from "../common/cloud-virtual-machine.js";
+import { STANDARD_SSH_PORTS } from "../common/cloud-virtual-machine.js";
 import { parseSshPrivateKeyToPublic } from "../../utils.js";
+import { z } from "zod";
+import { BOX_SCHEMA_BASE } from "../common/base.js";
+
+export const BOX_SPEC_WOLF = z.object({
+    ssh: z.object({
+        privateKeyPath: z.string(),
+    }),
+    nixos: z.optional(BOX_SPEC_NIXOS, { description: "NixOS spec overrides."}),
+    aws: z.object({
+        region: z.string(),
+        instanceType: z.optional(z.string())
+    })
+})
+
+export const BOX_SCHEMA_WOLF = BOX_SCHEMA_BASE.extend({
+    spec: BOX_SPEC_WOLF
+})
+
+export type WolfBoxSchema = z.infer<typeof BOX_SCHEMA_WOLF>
+export type WolfBoxSpec = z.infer<typeof BOX_SPEC_WOLF>
+
+export interface WolfBoxManagerArgs extends NixOSBoxManagerArgs {
+
+}
 
 /**
  * Wolf ports
@@ -18,23 +42,17 @@ export const WOLF_PORTS : PortDefinition[] = [
     { from: 48200, to: 48210, protocol: "udp" }, // Audio (up to 10 users)
 ]
 
-export interface WolfBoxArgs extends NixOSBoxArgs {
-
-}
-
 export class WolfBoxManager extends NixOSBoxManager {
 
-    readonly args: WolfBoxArgs
+    readonly args: WolfBoxManagerArgs
 
-    constructor(args: WolfBoxArgs){
+    constructor(args: WolfBoxManagerArgs){
         super(args)
         this.args = args
     }
 
     async provision() {
         const o = await super.provision()
-
-        
 
         // It may be needed to restart instance after initial deployment
         // Check for presence of /sys/module/nvidia/version
@@ -45,7 +63,7 @@ export class WolfBoxManager extends NixOSBoxManager {
 
         if(!checkNvidia) {
             logging.ephemeralInfo(`Nvidia driver version file not found, rebooting...`)
-            await this.reboot() 
+            await this.restart() 
             logging.ephemeralInfo(`Waiting for instance to start after reboot...`)
             await this.waitForSsh()
         }
@@ -82,25 +100,24 @@ export class WolfBoxManager extends NixOSBoxManager {
     }
 }
 
-export interface WolfAWSBoxArgs {
-    region?: string,
-    instanceType: string
-    sshPrivateKeyPath: string,
+export async function parseWolfBoxSpec(rawConfig: unknown) : Promise<WolfBoxManager> {
+    const schema = await BOX_SCHEMA_WOLF.parseAsync(rawConfig)
+    return buildWolfAWSBox(schema.name, schema.spec)
 }
 
 /**
  * Build a Wolf box for AWS
  */
-export function getWolfAWSBox(name: string, args: WolfAWSBoxArgs) : CloudVMBoxManager {
+export function buildWolfAWSBox(name: string, spec: WolfBoxSpec) : WolfBoxManager {
 
-
-    const awsBm = new EC2InstanceBoxManager(`wolf-${name}`, { 
-        aws: { region: args.region },
+    const awsBm = new EC2InstanceBoxManager({
+        name: `wolf-${name}`,
+        aws: { region: spec.aws.region },
         infraArgs: {
             instance: {
                 ami: "ami-024965d66b21fb7ab", // nixos/23.11.5060.617579a78725-x86_64-linux eu-central-1
-                type: args.instanceType,
-                publicKey: parseSshPrivateKeyToPublic(args.sshPrivateKeyPath),
+                type: spec.aws.instanceType || "g5.xlarge",
+                publicKey: parseSshPrivateKeyToPublic(spec.ssh.privateKeyPath),
                 rootVolume: {
                     sizeGb: 150
                 }
@@ -109,13 +126,18 @@ export function getWolfAWSBox(name: string, args: WolfAWSBoxArgs) : CloudVMBoxMa
         },
     })
 
-    return new WolfBoxManager({ 
+    const nixosBoxConf : NixOSBoxSpec = {
+        nixosChannel: spec.nixos?.nixosChannel || "nixos-23.05",
+        homeManagerRelease: spec.nixos?.homeManagerRelease || "release-23.05",
         nixosConfigName: "wolf-aws",
-        nixosChannel: "nixos-23.05",
-        homeManagerRelease: "release-23.05",
-        infraBoxManager: awsBm,
         ssh: {
-            privateKeyPath: args.sshPrivateKeyPath
+            privateKeyPath: spec.ssh.privateKeyPath
         }
+    }
+
+    return new WolfBoxManager({
+        name: name,
+        infraBoxManager: awsBm,
+        spec: nixosBoxConf
     })
 }

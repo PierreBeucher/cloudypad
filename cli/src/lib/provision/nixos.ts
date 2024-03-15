@@ -31,7 +31,7 @@ export class NixOSProvisioner {
     /**
      * Ensure NixOS instance channels are set
      */
-    async ensureNixChannel(nixosChannel: string, homeManagerRelease: string){
+    async ensureNixChannel(nixosChannel: string, homeManagerRelease?: string){
 
         const ssh = this.buildSshClient()
 
@@ -39,7 +39,9 @@ export class NixOSProvisioner {
             await ssh.connect()
             
             await ssh.command(["nix-channel", "--add", `https://nixos.org/channels/${nixosChannel}`, "nixos"])
-            await ssh.command(["nix-channel", "--add", `https://github.com/nix-community/home-manager/archive/${homeManagerRelease}.tar.gz`, "home-manager"])
+            if (homeManagerRelease){
+                await ssh.command(["nix-channel", "--add", `https://github.com/nix-community/home-manager/archive/${homeManagerRelease}.tar.gz`, "home-manager"])
+            }
             await ssh.command(["nix-channel", "--update"])
 
         } catch (error) {

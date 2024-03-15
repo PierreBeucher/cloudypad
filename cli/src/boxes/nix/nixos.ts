@@ -1,26 +1,44 @@
+import { BoxMetadata } from "../../lib/core.js";
 import { NixOSProvisioner } from "../../lib/provision/nixos.js";
 import { SSHClient, SSHCommandOpts } from "../../lib/provision/ssh.js";
+import { BOX_SCHEMA_BASE } from "../common/base.js";
 import { CloudVMBoxManager, CloudVMBoxManagerOutputs as CloudVMBoxOutputs } from "../common/cloud-virtual-machine.js";
+import { z } from "zod";
 
-export interface NixOSBoxArgs {
+export const BOX_SPEC_NIXOS = z.object({
+    nixosConfigName: z.string(),
+    nixosChannel: z.string(),
+    homeManagerRelease: z.optional(z.string()),
+    ssh: z.object({
+        privateKeyPath: z.string(),
+        port: z.optional(z.number()),
+        user: z.optional(z.string())
+    })
+})
+
+export const BOX_SCHEMA_NIXOS = BOX_SCHEMA_BASE.extend({
+    spec: BOX_SPEC_NIXOS
+})
+
+export type NixOSBoxSpec = z.infer<typeof BOX_SPEC_NIXOS>
+export type NixOSBoxSchema = z.infer<typeof BOX_SCHEMA_NIXOS>
+
+export interface NixOSBoxManagerArgs {
+    name: string,
     infraBoxManager: CloudVMBoxManager
-    nixosConfigName: string
-    nixosChannel: string
-    homeManagerRelease: string
-    ssh: {
-        user?: string
-        port?: number
-        privateKeyPath: string
-    }
+    spec: NixOSBoxSpec
 }
 
+export class NixOSBoxManager implements CloudVMBoxManager {
 
-export class NixOSBoxManager implements CloudVMBoxManager{
+    readonly meta: BoxMetadata
+    readonly args: NixOSBoxManagerArgs
+    readonly spec: NixOSBoxSpec
 
-    readonly args: NixOSBoxArgs
-    
-    constructor(args: NixOSBoxArgs) {
+    constructor(args: NixOSBoxManagerArgs) {
+        this.meta = new BoxMetadata({ name: args.name, kind: "linux.nixos"})
         this.args = args
+        this.spec = args.spec
     }
 
     public async deploy() {
@@ -36,8 +54,8 @@ export class NixOSBoxManager implements CloudVMBoxManager{
         await this.doWaitForSsh(o)
 
         const nixosPrv = this.buildNixosProvisioner(o)
-        await nixosPrv.ensureNixChannel(this.args.nixosChannel, this.args.homeManagerRelease)
-        await nixosPrv.ensureNixosConfig(this.args.nixosConfigName)
+        await nixosPrv.ensureNixChannel(this.spec.nixosChannel, this.spec.homeManagerRelease)
+        await nixosPrv.ensureNixosConfig(this.spec.nixosConfigName)
         console.info("   NixOS instance provisioned !")
 
         return o
@@ -63,8 +81,8 @@ export class NixOSBoxManager implements CloudVMBoxManager{
         return this.args.infraBoxManager.start()
     }
 
-    public async reboot() {
-        return this.args.infraBoxManager.reboot()
+    public async restart() {
+        return this.args.infraBoxManager.restart()
     }
 
     public async runSshCommand(cmd: string[], opts?: SSHCommandOpts){
@@ -75,6 +93,10 @@ export class NixOSBoxManager implements CloudVMBoxManager{
     public async waitForSsh(){
         const o = await this.get()
         this.doWaitForSsh(o)
+    }
+
+    public async getMetadata(): Promise<BoxMetadata> {
+        return this.meta
     }
 
     private async doWaitForSsh(o: CloudVMBoxOutputs){
@@ -99,16 +121,16 @@ export class NixOSBoxManager implements CloudVMBoxManager{
     private buildNixosProvisioner(o: CloudVMBoxOutputs){
         return new NixOSProvisioner({
             host: o.ipAddress,
-            port: this.args.ssh.port,
-            sshKeyPath: this.args.ssh.privateKeyPath
+            port: this.spec.ssh.port,
+            sshKeyPath: this.spec.ssh.privateKeyPath
         })
     }
 
     private buildSshClient(o: CloudVMBoxOutputs){
         return new SSHClient({
             host: o.ipAddress,
-            user: this.args.ssh.user || "root",
-            sshKeyPath: this.args.ssh.privateKeyPath
+            user: this.spec.ssh.user || "root",
+            sshKeyPath: this.spec.ssh.privateKeyPath
         })
     }
 

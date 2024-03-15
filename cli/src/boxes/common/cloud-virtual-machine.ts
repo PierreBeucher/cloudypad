@@ -1,27 +1,18 @@
 import { OutputMap } from "@pulumi/pulumi/automation"
 import { PortDefinition } from "../../lib/infra/pulumi/components/security.js"
+import { BoxManager, BoxManagerOutputs } from "../../lib/core.js"
 
-export interface CloudVMBoxManagerOutputs {
+export interface CloudVMBoxManagerOutputs extends BoxManagerOutputs {
     ipAddress: string
     id: string
 }
 
-export interface CloudVMBoxManager {
+export interface CloudVMBoxManager extends BoxManager {
     deploy() : Promise<CloudVMBoxManagerOutputs>
 
     provision() : Promise<CloudVMBoxManagerOutputs>
-    
-    destroy() : Promise<void>
-
-    preview() : Promise<string>
 
     get() : Promise<CloudVMBoxManagerOutputs>
-
-    stop() : Promise<void>
-
-    start() : Promise<void>
-
-    reboot() : Promise<void>
 }
 
 export function outputsFromPulumi(o : OutputMap) : CloudVMBoxManagerOutputs{
