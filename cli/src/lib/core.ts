@@ -1,8 +1,10 @@
 import { z } from "zod"
 import * as fs from 'fs'
-import { parseWolfBoxSpec } from "../boxes/gaming/wolf.js"
+import { KIND_GAMING_WOLF, parseWolfBoxSpec } from "../boxes/gaming/wolf.js"
 import * as yaml from "js-yaml"
 import { BOX_SCHEMA_BASE } from "../boxes/common/base.js"
+import { KIND_EC2_INSTANCE, parseAWSEC2InstanceSpec } from "../boxes/aws/ec2-instance.js"
+import { KIND_LINUX_NIXOS, parseLinuxNixOSBoxSpec } from "../boxes/nix/nixos.js"
 
 export interface BoxManagerOutputs {
 
@@ -48,8 +50,9 @@ export class BoxMetadata {
 export type BoxSchemaBase = z.infer<typeof BOX_SCHEMA_BASE>
 
 export const KIND_TO_MANAGER_MAP = new Map<string, (s: unknown) => Promise<BoxManager>>([
-    ["gaming.Wolf", parseWolfBoxSpec],
-    // ["linux.NixOS", BOX_SCHEMA_WOLF.parseAsync]
+    [KIND_GAMING_WOLF, parseWolfBoxSpec],
+    [KIND_EC2_INSTANCE, parseAWSEC2InstanceSpec],
+    [KIND_LINUX_NIXOS, parseLinuxNixOSBoxSpec]
 ])
 
 export async function getBoxManager(path: string) : Promise<BoxManager> {

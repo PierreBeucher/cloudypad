@@ -1,5 +1,6 @@
 import * as pulumi from "@pulumi/pulumi";
-import { CompositeEC2Instance, CompositeEC2InstanceArgs, PortDefinition } from "../components/aws/ec2.js";
+import { CompositeEC2Instance, CompositeEC2InstanceArgs } from "../components/aws/ec2.js";
+import { PortDefinition } from "../components/security.js";
 
 /**
  * Wolf ports
@@ -50,8 +51,6 @@ export async function wolfEc2InstanceProgram(name: string, args: WolfInstanceArg
         } 
         return o
     })
-    
-    
 }
 
 /**

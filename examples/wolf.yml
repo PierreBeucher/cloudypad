@@ -3,6 +3,6 @@ kind: gaming.Wolf
 spec: 
     ssh:
       privateKeyPath: "/home/pbeucher/.ssh/id_ed25519"
-    aws:
-      region: eu-central-1
-      instanceType: g5.xlarge
+    cloud:
+      aws:
+        region: eu-central-1

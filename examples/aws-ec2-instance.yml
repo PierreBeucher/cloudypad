@@ -1,0 +1,14 @@
+name: example-ec2-instance
+kind: aws.ec2.Instance
+spec:
+  config:
+    region: eu-central-1
+  instance:
+    ami: ami-024965d66b21fb7ab
+    type: t3.nano
+    publicKey: ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIGaNlYLbwtAmfcNjlOsP6Ryh3QxGn9qlhlQjPo5nbzBa
+    rootVolume: 
+      sizeGb: 15
+      encrypted: true
+  ingressPorts:
+    - from: 22
