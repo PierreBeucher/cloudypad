@@ -1,8 +1,8 @@
 name: dev
 kind: gaming.Wolf
 spec: 
-    ssh:
-      privateKeyPath: "/home/pbeucher/.ssh/id_ed25519"
-    cloud:
-      aws:
-        region: eu-central-1
+  ssh:
+    privateKeyPath: "/home/pbeucher/.ssh/id_ed25519"
+  cloud:
+    aws:
+      region: eu-central-1

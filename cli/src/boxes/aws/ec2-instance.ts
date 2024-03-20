@@ -17,6 +17,7 @@ export const BOX_SCHEMA_EC2_INSTANCE_SPEC = z.object({
         ami: z.string(),
         type: z.string(),
         publicKey: z.string(),
+        availabilityZone: z.string().optional(),
         rootVolume: z.object({
             sizeGb: z.number().optional(),
             type: z.string().optional(),
@@ -27,10 +28,10 @@ export const BOX_SCHEMA_EC2_INSTANCE_SPEC = z.object({
         size: z.number(),
         type: z.string().optional(),
         deviceName: z.string(),
-        encrypted: z.boolean(),
-        availabilityZone: z.string(),
-        iops: z.number(),
-        throughput: z.number(),
+        encrypted: z.boolean().optional(),
+        availabilityZone: z.string().optional(),
+        iops: z.number().optional(),
+        throughput: z.number().optional(),
     })).optional(),
     ingressPorts: z.array(z.object({
         from: z.number(),

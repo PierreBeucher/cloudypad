@@ -8,6 +8,7 @@ export interface CompositeEC2InstanceArgs {
         ami: pulumi.Input<string>
         type: pulumi.Input<string>
         publicKey: pulumi.Input<string>
+        availabilityZone?: pulumi.Input<string>
         rootVolume?: {
             sizeGb?: pulumi.Input<number>
             type?: pulumi.Input<string>
@@ -19,10 +20,10 @@ export interface CompositeEC2InstanceArgs {
         size: pulumi.Input<number>
         type?: pulumi.Input<string>
         deviceName: string
-        encrypted: pulumi.Input<boolean>
-        availabilityZone: pulumi.Input<string>
-        iops: pulumi.Input<number>
-        throughput: pulumi.Input<number>
+        encrypted?: pulumi.Input<boolean>
+        availabilityZone?: pulumi.Input<string>
+        iops?: pulumi.Input<number>
+        throughput?: pulumi.Input<number>
     }[]
 
     ingressPorts?: PortDefinition[]
@@ -107,6 +108,7 @@ export class CompositeEC2Instance extends pulumi.ComponentResource {
         const ec2Instance = new aws.ec2.Instance(`${resourceBasename}`, {
             ami: args.instance.ami,
             instanceType: args.instance.type,
+            availabilityZone: args.instance.availabilityZone,
             tags: resourceTags,
             volumeTags: resourceTags,
             vpcSecurityGroupIds: [sg.id],
@@ -123,10 +125,10 @@ export class CompositeEC2Instance extends pulumi.ComponentResource {
         });
         this.ec2Instance = pulumi.output(ec2Instance)
 
-        args.volumes?.forEach(v => {
+        args.volumes?.forEach(v => {        
             const vol = new aws.ebs.Volume(`${resourceBasename}-volume-${v.deviceName}`, {
                 encrypted: v.encrypted || true,
-                availabilityZone: v.availabilityZone,
+                availabilityZone: v.availabilityZone || ec2Instance.availabilityZone,
                 size: v.size,
                 type: v.type,
                 iops: v.iops,
