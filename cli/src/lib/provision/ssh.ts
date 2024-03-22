@@ -88,7 +88,6 @@ export class SSHClient {
 
             }
         })
-        logging.ephemeralClear()
     
         if (!putStatus) {
             throw new SSHFileTransferError(`Some file(s) failed to transfer: ${JSON.stringify(fail)}`, ok, fail)
@@ -109,7 +108,6 @@ export class SSHClient {
                 logging.ephemeralInfo(`${stderrLogPefix || logPrefix}: ${chunk.toString('utf8').trim()}`)
             }
         })
-        logging.ephemeralClear()
     
         return sshResp
     }
@@ -119,8 +117,7 @@ export class SSHClient {
             try {
                 logging.ephemeralInfo(`Trying SSH connect on ${this.args.host} (${attempt}/${retries})`)
                 await this.doConnect()
-                logging.ephemeralClear()
-                return
+                        return
             } catch (e){
                 if (attempt == retries){
                     throw e
@@ -145,7 +142,6 @@ export class SSHClient {
     
         await this.doConnect()
     
-        logging.ephemeralClear()
     }
 
     dispose(){

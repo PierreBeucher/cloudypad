@@ -45,7 +45,7 @@ export class NixOSProvisioner {
             await ssh.command(["nix-channel", "--update"])
 
         } catch (error) {
-            console.error('Failed to update Nix channels: ', error);
+            logging.error(`Failed to update Nix channels: ${error}`);
             throw error
         } finally {
             ssh.dispose();
@@ -73,7 +73,7 @@ export class NixOSProvisioner {
             await ssh.command(["nixos-rebuild", "switch", "--upgrade"])
 
         } catch (error) {
-            console.error('Failed to switch NixOS config: ', error);
+            logging.error(`Failed to switch NixOS config: ${error}`);
             throw error
         } finally {
             ssh.dispose();

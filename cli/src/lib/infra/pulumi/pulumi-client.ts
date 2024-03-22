@@ -61,7 +61,6 @@ export class PulumiClient {
         
         logging.info("   Deploying stack...")
         const upRes = await stack.up({ onOutput: logging.ephemeralInfo, refresh: true });
-        logging.ephemeralClear()
         
         logging.info("   Stack deployed !")
     
@@ -75,7 +74,6 @@ export class PulumiClient {
         logging.info("   Previewing stack changes...")
     
         const previewRes = await stack.preview({ onOutput: logging.ephemeralInfo, refresh: true, diff: true })
-        logging.ephemeralClear()
 
         logging.info(previewRes.stdout)
         return previewRes
@@ -87,7 +85,6 @@ export class PulumiClient {
         logging.info("   Destroying stack...")
         const destroyRes = await stack.destroy({ onOutput: logging.ephemeralInfo });
         logging.ephemeralInfo(`   Update summary: \n${JSON.stringify(destroyRes.summary.resourceChanges, null, 4)}`);
-        logging.ephemeralClear()
 
         logging.info("   Stack Destroyed !")
     

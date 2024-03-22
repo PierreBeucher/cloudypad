@@ -16,31 +16,45 @@ function writeTmpLog(level: string, msg: string){
     fs.appendFileSync(tmpLogFile, `${level}: ${msg}`);   
 }
 
-
 export function debug(m: string){
-    writeTmpLog("debug", m)
+    logUpdate.clear()
     console.debug(m)
 }
 
 export function info(m: string){
-    writeTmpLog("info", m)
+    logUpdate.clear()
     console.info(m)
 }
 
-
 export function warn(m: string){
-    writeTmpLog("warn", m)
+    logUpdate.clear()
     console.warn(m)
 }
 
 export function error(m: string){
-    writeTmpLog("error", m)
+    logUpdate.clear()
     console.error(m)
 }
 
+const EPHEMERAL_LOG_MAX_LINES = 5
+
+const ephemeralLogHistory : Array<string> = new Array<string>()
+
 export function ephemeralInfo(m: string){
     writeTmpLog("info", m)
-    logUpdate(chalk.gray(m))
+
+    // Split message into lines
+    const splittedMsg = m.split("\n")
+
+    // Add new lines at beginning of array
+    ephemeralLogHistory.push(...splittedMsg)
+
+    // Truncate if length exceed max
+    if (ephemeralLogHistory.length > EPHEMERAL_LOG_MAX_LINES) {
+        ephemeralLogHistory.splice(0, ephemeralLogHistory.length-EPHEMERAL_LOG_MAX_LINES)
+    }
+    
+    logUpdate(chalk.gray(ephemeralLogHistory.join("\n")))
 }
 
 export function ephemeralClear(){

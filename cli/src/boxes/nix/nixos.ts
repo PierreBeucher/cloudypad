@@ -8,6 +8,7 @@ import { BOX_SCHEMA_EC2_INSTANCE_SPEC, EC2InstanceBoxManager, EC2InstanceBoxMana
 import { BOX_SCHEMA_BASE } from "../common/base.js";
 import { CloudVMBoxManager, CloudVMBoxManagerOutputs as CloudVMBoxOutputs, SSHConfig, SUBSCHEMA_SSH_DEFINITION } from "../common/cloud-virtual-machine.js";
 import { z } from "zod";
+import * as logging from "../../lib/logging.js"
 
 export const KIND_LINUX_NIXOS = "linux.NixOS"
 
@@ -57,14 +58,14 @@ export class NixOSBoxManager implements CloudVMBoxManager {
 
     public async provision() {
         const o = await this.get()
-        console.info("   Provisioning NixOS instance...")
+        logging.info("   Provisioning NixOS instance...")
 
         await this.doWaitForSsh(o)
 
         const nixosPrv = this.buildNixosProvisioner(o)
         await nixosPrv.ensureNixChannel(this.args.nixos.nixosChannel, this.args.nixos.homeManagerRelease)
         await nixosPrv.ensureNixosConfig(this.args.nixos.nixosConfigName)
-        console.info("   NixOS instance provisioned !")
+        logging.info("   NixOS instance provisioned !")
 
         return o
     }

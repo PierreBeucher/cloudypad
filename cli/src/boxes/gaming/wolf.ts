@@ -55,7 +55,7 @@ export class WolfBoxManager extends NixOSBoxManager {
         // Check for presence of /sys/module/nvidia/version
         // If not present, restart needed, otherwise we're good to go
         // If still absent after reboot, something went wrong
-        console.info("   Checking GPU drivers...")
+        logging.info("   Checking GPU drivers...")
         const checkNvidia = await this.checkNvidiaReady()
 
         if(!checkNvidia) {
@@ -65,7 +65,7 @@ export class WolfBoxManager extends NixOSBoxManager {
             await this.waitForSsh()
         }
 
-        console.info("   GPU drivers ready !")
+        logging.info("   GPU drivers ready !")
 
         return o
     }
