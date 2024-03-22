@@ -48,6 +48,9 @@ export class PulumiClient {
 
         const stack = await LocalWorkspace.createOrSelectStack(args);        
         await stack.setAllConfig(this.args.config)
+
+        logging.ephemeralInfo(`Pulumi workdir: ${stack.workspace.workDir}`)
+        
         return stack
     }
     
