@@ -43,11 +43,9 @@ export const BOX_SCHEMA_EC2_INSTANCE_SPEC = z.object({
     dns: z.object({
         zoneName: z.string().optional(),
         zoneId: z.string().optional(),
-        records: z.array(z.object({
-            fqdn: z.string(),
-            ttl: z.number(),
-            type: z.string(),
-        })).optional(),
+        prefix: z.string().optional(),
+        ttl: z.number().optional(),
+        type: z.string().optional(),
     }).optional(),
     network: z.object({
         vpcId: z.string().optional(),

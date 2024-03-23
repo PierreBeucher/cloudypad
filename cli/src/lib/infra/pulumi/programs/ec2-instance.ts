@@ -11,7 +11,13 @@ export interface CompositeEC2IntanceStackOutput {
  */
 export async function ec2InstanceProgram(name: string, args: CompositeEC2InstanceArgs, opts?: pulumi.CustomResourceOptions) {
 
-    const instance = new CompositeEC2Instance(name, args, opts)
+    const composeInstance = new CompositeEC2Instance(name, args, opts)
+    const instances = [...composeInstance.outputs.values()]
+    if (instances.length != 1){
+        throw new Error(`Expected a single instance, got ${JSON.stringify(instances)}`)
+    }
+
+    const instance = instances[0]
 
     return pulumi.all([instance.ipAddress, instance.ec2Instance.id]).apply( ([ip, instanceId]) => {
         const o : CompositeEC2IntanceStackOutput = {

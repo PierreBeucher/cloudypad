@@ -8,4 +8,7 @@ spec:
   ssh:
     privateKeyPath: "/home/pbeucher/.ssh/id_ed25519"
   cloud:
-    aws: {}
+    aws:
+      dns:
+        zoneName: k8s.crafteo.io
+        prefix: cloudybox
