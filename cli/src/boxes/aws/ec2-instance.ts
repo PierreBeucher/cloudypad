@@ -53,7 +53,7 @@ export const BOX_SCHEMA_EC2_INSTANCE_SPEC = z.object({
         staticIpEnable: z.boolean(),
     }).optional(),
     tags: z.record(z.string()).optional(),
-})
+}).strict()
 
 /**
  * Matches CompositeEC2InstanceArgs

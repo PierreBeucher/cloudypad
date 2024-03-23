@@ -16,15 +16,15 @@ export const SUBSCHEMA_NIXOS_CONFIG = z.object({
     nixosConfigName: z.string(),
     nixosChannel: z.string(),
     homeManagerRelease: z.optional(z.string())
-})
+}).strict()
 
 export const BOX_SPEC_NIXOS = z.object({
     nixos: SUBSCHEMA_NIXOS_CONFIG,
     ssh: SUBSCHEMA_SSH_DEFINITION,
     cloud: z.object({
-        aws: BOX_SCHEMA_EC2_INSTANCE_SPEC.partial()
+        aws: BOX_SCHEMA_EC2_INSTANCE_SPEC.partial().strict()
     })
-})    
+}).strict()
 
 export const BOX_SCHEMA_NIXOS = BOX_SCHEMA_BASE.extend({
     spec: BOX_SPEC_NIXOS

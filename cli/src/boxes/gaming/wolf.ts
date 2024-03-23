@@ -20,6 +20,7 @@ export const BOX_SCHEMA_WOLF = BOX_SCHEMA_BASE.extend({
         })
     })
 })
+.strict()
 
 export type WolfBoxSchema = z.infer<typeof BOX_SCHEMA_WOLF>
 
