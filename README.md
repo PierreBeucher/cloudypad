@@ -66,3 +66,11 @@ Destroy instance:
 ```sh
 npx ts-node cli/src/main.ts destroy dev
 ```
+
+## Development
+
+Test NixOS config
+
+```sh
+nix-instantiate '<nixpkgs/nixos>' -A config.system.build.toplevel -I nixpkgs=channel:nixos-23.05 --arg configuration ./provision/nix/wolf-aws.nix
+```

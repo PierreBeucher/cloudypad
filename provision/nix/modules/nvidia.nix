@@ -1,12 +1,32 @@
-{ modulesPath, pkgs, lib, config, ... }: {
+{ modulesPath, pkgs, lib, config, ... }:
+with lib;
+let
+  cfg = config.services.nvidia;
+in
+{
 
-    # OS packages
+  options.services.nvidia = {
+    enable = mkEnableOption "nvidia service";
+
+    xVideoDrivers = mkOption {
+      type = types.listOf types.str;
+      default = ["nvidia"];
+    };
+
+    nvidiaPackage = mkOption {
+      type = types.package;
+      default = config.boot.kernelPackages.nvidiaPackages.production;
+    };
+  };
+
+  config = mkIf cfg.enable {
+
     environment.systemPackages = with pkgs; [
         nvtop-nvidia
     ];
     
     services.xserver = {
-        videoDrivers = ["nvidia"];
+        videoDrivers = cfg.xVideoDrivers;
     };
 
     hardware.opengl = {
@@ -42,7 +62,8 @@
         nvidiaSettings = true;
 
         # Optionally, you may need to select the appropriate driver version for your specific GPU.
-        package = config.boot.kernelPackages.nvidiaPackages.production;
+        package = cfg.nvidiaPackage;
     };
+  };
     
 }

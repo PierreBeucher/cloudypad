@@ -1,5 +1,8 @@
 { modulesPath, pkgs, lib, config, ... }: 
+with lib;
 let
+  cfg = config.services.wolf;
+
   wolfComposeFile = pkgs.writeTextFile {
     name = "docker-compose.yml";
     text = builtins.readFile ./wolf/docker-compose.nvidia.yml;
@@ -13,6 +16,12 @@ let
 
 in
 {
+
+  options.services.wolf = {
+    enable = mkEnableOption "wolf service";
+  };
+
+  config = mkIf cfg.enable {
     # SSH and Wolf ports
     # See https://games-on-whales.github.io/wolf/stable/user/quickstart.html
     networking.firewall = {
@@ -49,21 +58,6 @@ in
         SUBSYSTEMS=="input", ATTRS{name}=="Wolf Nintendo (virtual) pad", MODE="0660", GROUP="input"   
     '';
 
-    # Copy Wolf config Docker compose files in user home
-
-
-    # home-manager.users.root = {
-    #   home.file."wolf/docker-compose.nvidia.yml" = {
-    #     source = ./wolf/docker-compose.nvidia.yml;
-    #   };
-    #   home.file."wolf/docker-nvidia-start.sh" = {
-    #     source = ./wolf/docker-nvidia-start.sh;
-    #     executable = true;
-    #   };
-
-    #   home.stateVersion = "23.05";
-    # };
-
     # Wold as Docker Compose service
     systemd.services.wolf = {
       description = "Wolf as a Docker service";
@@ -73,7 +67,7 @@ in
         ${wolfComposeStartScript} ${wolfComposeFile} 
       '';
       serviceConfig = {
-        Environment = "PATH=/run/current-system/sw/bin:" + lib.makeBinPath [ pkgs.curl pkgs.docker ];
+        Environment = "PATH=/run/current-system/sw/bin:" + makeBinPath [ pkgs.curl pkgs.docker ];
         # Ensures the service executes on startup
         Type = "oneshot";
         RemainAfterExit = true;
@@ -83,5 +77,6 @@ in
       # Ensures the service is started at boot
       wantedBy = [ "multi-user.target" ];
     };
+  };
 
 }
