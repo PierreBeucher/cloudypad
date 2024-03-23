@@ -8,9 +8,9 @@ export interface CloudVMBoxManagerOutputs extends BoxManagerOutputs {
 }
 
 export interface CloudVMBoxManager extends BoxManager {
-    deploy() : Promise<CloudVMBoxManagerOutputs>
-
     provision() : Promise<CloudVMBoxManagerOutputs>
+
+    configure() : Promise<CloudVMBoxManagerOutputs>
 
     get() : Promise<CloudVMBoxManagerOutputs>
 }

@@ -29,7 +29,7 @@ export class PulumiClient {
         return res.stdout
     }
 
-    public async deploy(): Promise<OutputMap> {
+    public async up(): Promise<OutputMap> {
         const res = await this.doUp()
         return res.outputs
     }
@@ -62,10 +62,10 @@ export class PulumiClient {
     private async doUp(): Promise<UpResult>{
         const stack = await this.createOrSelectPulumiStackProgram()
         
-        logging.info("   Deploying stack...")
+        logging.info("   Updating stack...")
         const upRes = await stack.up({ onOutput: logging.ephemeralInfo, refresh: true });
         
-        logging.info("   Stack deployed !")
+        logging.info("   Stack updated !")
     
         return upRes
 

@@ -15,6 +15,8 @@ export interface BoxManager {
     deploy() : Promise<BoxManagerOutputs>
 
     provision() : Promise<BoxManagerOutputs>
+
+    configure() : Promise<BoxManagerOutputs>
     
     destroy() : Promise<void>
 

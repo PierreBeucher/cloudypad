@@ -27,26 +27,27 @@ Only local usage is possible for now. A full binary package will be implemented 
 
 ```sh
 npx ts-node cli/src/main.ts --help
-npx ts-node cli/src/main.ts deploy dev
-npx ts-node cli/src/main.ts provision dev
-npx ts-node cli/src/main.ts get dev
-npx ts-node cli/src/main.ts destroy dev
+npx ts-node cli/src/main.ts deploy examples/wolf.yml
+npx ts-node cli/src/main.ts provision examples/wolf.yml
+npx ts-node cli/src/main.ts configure examples/wolf.yml
+npx ts-node cli/src/main.ts get examples/wolf.yml
+npx ts-node cli/src/main.ts destroy examples/wolf.yml
 ```
 
 ### Wolf
 
-Deploy a Wolf gamin instance on AWS:
+Deploy a Wolf gaming instance on AWS:
 
 ```sh
 # Deploy Wolf instance
-# Will also run provision
-npx ts-node cli/src/main.ts deploy dev
+npx ts-node cli/src/main.ts deploy examples/wolf.yml
 
-# If needed, run only provision
-#npx ts-node cli/src/main.ts provision dev
+# Run only provision or configure steps
+npx ts-node cli/src/main.ts provision examples/wolf.yml
+npx ts-node cli/src/main.ts configure examples/wolf.yml
 
-# If needed, get instance details (IP address for Moonlight)
-# npx ts-node cli/src/main.ts get dev
+# Get box details (IP address for Moonlight)
+npx ts-node cli/src/main.ts get examples/wolf.yml
 ```
 
 Run Moonlight and connect to instance:
@@ -72,5 +73,5 @@ npx ts-node cli/src/main.ts destroy dev
 Test NixOS config
 
 ```sh
-nix-instantiate '<nixpkgs/nixos>' -A config.system.build.toplevel -I nixpkgs=channel:nixos-23.05 --arg configuration ./provision/nix/wolf-aws.nix
+nix-instantiate '<nixpkgs/nixos>' -A config.system.build.toplevel -I nixpkgs=channel:nixos-23.05 --arg configuration ./configs/nix/wolf-aws.nix
 ```

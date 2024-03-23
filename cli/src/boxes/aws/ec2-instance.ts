@@ -80,8 +80,14 @@ export class EC2InstanceBoxManager implements CloudVMBoxManager {
         this.awsClient = new AwsClient({ region: spec.config?.region })
     }
 
-    async deploy() {
-        const o = await this.pulumiClient.deploy()
+    public async deploy() {
+        await this.provision()
+        const o = await this.configure()
+        return o
+    }
+
+    async provision() {
+        const o = await this.pulumiClient.up()
         return outputsFromPulumi(o)
     }
 
@@ -93,7 +99,8 @@ export class EC2InstanceBoxManager implements CloudVMBoxManager {
         return this.pulumiClient.preview()
     }
 
-    async provision() {
+    async configure() {
+        // NO OP
         return this.get()
     }
 

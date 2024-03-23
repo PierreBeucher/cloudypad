@@ -1,8 +1,8 @@
 import lodash from 'lodash';
 const { merge } = lodash;
 import { BoxMetadata } from "../../lib/core.js";
-import { NixOSProvisioner } from "../../lib/provision/nixos.js";
-import { SSHClient, SSHCommandOpts } from "../../lib/provision/ssh.js";
+import { NixOSConfigurator } from "../../lib/configurator/nixos.js";
+import { SSHClient, SSHCommandOpts } from "../../lib/configurator/ssh.js";
 import { parseSshPrivateKeyToPublic } from "../../utils.js";
 import { BOX_SCHEMA_EC2_INSTANCE_SPEC, EC2InstanceBoxManager, EC2InstanceBoxManagerArgs } from "../aws/ec2-instance.js";
 import { BOX_SCHEMA_BASE } from "../common/base.js";
@@ -51,18 +51,24 @@ export class NixOSBoxManager implements CloudVMBoxManager {
     }
 
     public async deploy() {
-        const o = await this.args.cloud.deploy()
         await this.provision()
+        const o = await this.configure()
         return o
     }
 
     public async provision() {
+        const o = await this.args.cloud.provision()
+        await this.configure()
+        return o
+    }
+
+    public async configure() {
         const o = await this.get()
-        logging.info("   Provisioning NixOS instance...")
+        logging.info("   Configuring NixOS instance...")
 
         await this.doWaitForSsh(o)
 
-        const nixosPrv = this.buildNixosProvisioner(o)
+        const nixosPrv = this.buildNixosConfigurator(o)
         await nixosPrv.ensureNixChannel(this.args.nixos.nixosChannel, this.args.nixos.homeManagerRelease)
         await nixosPrv.ensureNixosConfig(this.args.nixos.nixosConfigName)
         logging.info("   NixOS instance provisioned !")
@@ -127,8 +133,8 @@ export class NixOSBoxManager implements CloudVMBoxManager {
         }
     }
 
-    private buildNixosProvisioner(o: CloudVMBoxOutputs){
-        return new NixOSProvisioner({
+    private buildNixosConfigurator(o: CloudVMBoxOutputs){
+        return new NixOSConfigurator({
             host: o.ipAddress,
             port: this.args.ssh.port,
             sshKeyPath: this.args.ssh.privateKeyPath

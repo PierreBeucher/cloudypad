@@ -49,10 +49,10 @@ export class WolfBoxManager extends NixOSBoxManager {
         this.args = args
     }
 
-    async provision() {
-        const o = await super.provision()
+    async configure() {
+        const o = await super.configure()
 
-        // It may be needed to restart instance after initial deployment
+        // It may be needed to restart instance after initial driver installation
         // Check for presence of /sys/module/nvidia/version
         // If not present, restart needed, otherwise we're good to go
         // If still absent after reboot, something went wrong

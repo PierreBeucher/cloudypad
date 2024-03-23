@@ -13,19 +13,25 @@ async function main(){
     .version('0.1.0')
 
   program.command('deploy <box>')
-    .description('Deploy an instance')
+    .description('Deploy a box')
     .action(async (box: string) => {
       await deploy(box)
     })
-  
+
   program.command('provision <box>')
-    .description('Provison an instance')
+    .description('Provision a box')
     .action(async (box: string) => {
       await provision(box)
     })
   
+  program.command('configure <box>')
+    .description('Configure a box')
+    .action(async (box: string) => {
+      await configure(box)
+    })
+  
   program.command('preview <box>')
-    .description('Preview changes for an instance deployment')
+    .description('Preview changes for a box deployment')
     .action(async (box: string) => {
       await preview(box)
   })
@@ -86,22 +92,31 @@ async function main(){
 }
 
 async function deploy(box: string) {
-    const bm = await getBoxManager(box)
-    const meta = await bm.getMetadata()
-    logging.info(`${emoji.get("rocket")} Deploying ${meta.kind} box ${meta.name}...`)
-    const o = await bm.deploy()
-    logging.info(`${emoji.get("white_check_mark")} ${meta.name} deployed !`)
-    logging.info(JSON.stringify(o, undefined, 2))
+  const bm = await getBoxManager(box)
+  const meta = await bm.getMetadata()
+  logging.info(`${emoji.get("rocket")} Deploying ${meta.kind} box ${meta.name}...`)
+  const o = await bm.deploy()
+  logging.info(`${emoji.get("white_check_mark")} ${meta.name} Deployed !`)
+  logging.info(JSON.stringify(o, undefined, 2))
 }
 
 async function provision(box: string) {
+    const bm = await getBoxManager(box)
+    const meta = await bm.getMetadata()
+    logging.info(`${emoji.get("rocket")} Provisioning ${meta.kind} box ${meta.name}...`)
+    const o = await bm.provision()
+    logging.info(`${emoji.get("white_check_mark")} ${meta.name} Provisioned !`)
+    logging.info(JSON.stringify(o, undefined, 2))
+}
+
+async function configure(box: string) {
   const bm = await getBoxManager(box)
   const meta = await bm.getMetadata()
 
-  logging.info(`${emoji.get("gear")} Provisioning ${meta.kind} box ${meta.name}...`)
+  logging.info(`${emoji.get("gear")} Configuring ${meta.kind} box ${meta.name}...`)
 
-  const o = await bm.provision()
-  logging.info(`${emoji.get("white_check_mark")} Provisioned: ${meta.name}...`)
+  const o = await bm.configure()
+  logging.info(`${emoji.get("white_check_mark")} Configured: ${meta.name}...`)
   logging.info(JSON.stringify(o, undefined, 2))
 }
 

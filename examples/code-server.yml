@@ -1,0 +1,11 @@
+name: example-nixos
+kind: linux.NixOS
+spec:
+  nixos: # TODO should be optional with sane defaults
+    nixosChannel: nixos-23.05
+    homeManagerRelease: release-23.05
+    nixosConfigName: code-server
+  ssh:
+    privateKeyPath: "/home/pbeucher/.ssh/id_ed25519"
+  cloud:
+    aws: {}

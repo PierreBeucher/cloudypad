@@ -2,20 +2,20 @@ import { SSHClient } from "./ssh.js";
 import * as utils from "../../utils.js"
 import * as logging from "../logging.js"
 
-export interface NixOSProvisionerArgs {
+export interface NixOSConfiguratorArgs {
     host: string,
     port?: number,
     sshKeyPath?: string
 }
 
 /**
- * Manage NixOS machine provisioning using configurations in [provision/nix](../../../../provision/nix/)
+ * Manage NixOS machine using configurations in [configs/nix](../../../../configs/nix/)
  */
-export class NixOSProvisioner {
+export class NixOSConfigurator {
     
-    args: NixOSProvisionerArgs
+    args: NixOSConfiguratorArgs
 
-    constructor(args: NixOSProvisionerArgs){
+    constructor(args: NixOSConfiguratorArgs){
         this.args = args
     }
 
@@ -60,13 +60,13 @@ export class NixOSProvisioner {
         logging.ephemeralInfo("  Rebuilding NixOS config...")
 
         const ssh = this.buildSshClient()
-        const configFile = utils.joinSafe(utils.NIX_PROVISION_DIR, `${nixosConfigName}.nix`)
+        const configFile = utils.joinSafe(utils.NIX_CONFIGS_DIR, `${nixosConfigName}.nix`)
 
         try {
             await ssh.connect()
             
             logging.ephemeralInfo("  Copying NixOS configuration...")
-            await ssh.putDirectory(utils.NIX_PROVISION_DIR, '/etc/nixos/')
+            await ssh.putDirectory(utils.NIX_CONFIGS_DIR, '/etc/nixos/')
             await ssh.putFile(configFile, "/etc/nixos/configuration.nix",)
             
             logging.ephemeralInfo("  Rebuilding NixOS configuration...")
