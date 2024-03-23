@@ -3,6 +3,8 @@ kind: gaming.Wolf
 spec: 
   ssh:
     privateKeyPath: "/home/pbeucher/.ssh/id_ed25519"
+  additionalPorts:
+  - from: 8080
   cloud:
     aws:
       region: eu-central-1

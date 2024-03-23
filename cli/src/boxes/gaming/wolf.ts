@@ -1,7 +1,7 @@
 import { NixOSBoxManager, NixOSBoxManagerArgs, NixOSConfig, SUBSCHEMA_NIXOS_CONFIG } from "../nix/nixos.js";
 import * as logging from "../../lib/logging.js"
 import { BOX_SCHEMA_EC2_INSTANCE_SPEC, EC2InstanceBoxManager, EC2InstanceBoxManagerArgs } from "../aws/ec2-instance.js";
-import { PortDefinition, STANDARD_SSH_PORTS, SUBSCHEMA_SSH_DEFINITION } from "../common/cloud-virtual-machine.js";
+import { PortDefinition, STANDARD_SSH_PORTS, SUBSCHEMA_PORT_DEFINITION, SUBSCHEMA_SSH_DEFINITION } from "../common/cloud-virtual-machine.js";
 import { parseSshPrivateKeyToPublic } from "../../utils.js";
 import { z } from "zod";
 import { BOX_SCHEMA_BASE } from "../common/base.js";
@@ -14,6 +14,7 @@ export const BOX_SCHEMA_WOLF = BOX_SCHEMA_BASE.extend({
     spec: z.object({
         ssh: SUBSCHEMA_SSH_DEFINITION,
         nixos: z.optional(SUBSCHEMA_NIXOS_CONFIG, { description: "NixOS config overrides."}),
+        additionalPorts: z.optional(z.array(SUBSCHEMA_PORT_DEFINITION)),
         cloud: z.object({
             aws: BOX_SCHEMA_EC2_INSTANCE_SPEC.partial()
         })
@@ -107,7 +108,9 @@ export async function parseWolfBoxSpec(rawConfig: unknown) : Promise<WolfBoxMana
  */
 export async function buildWolfAWSBox(config: WolfBoxSchema) : Promise<WolfBoxManager> {
 
-    const ports = STANDARD_SSH_PORTS.concat(WOLF_PORTS)
+    const ports = STANDARD_SSH_PORTS
+        .concat(WOLF_PORTS)
+        .concat(config.spec.additionalPorts || [])
 
     const defaultAwsConfig: EC2InstanceBoxManagerArgs = {
         config: { region: "eu-central-1" },
