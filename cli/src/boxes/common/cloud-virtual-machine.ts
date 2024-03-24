@@ -1,26 +1,18 @@
-import { OutputMap } from "@pulumi/pulumi/automation"
-import { BoxManager, BoxManagerOutputs } from "../../lib/core.js"
 import { z } from "zod"
+import { BoxManager, BoxManagerOutputs } from "./base.js"
 
+// TODO use zod type ? 
 export interface CloudVMBoxManagerOutputs extends BoxManagerOutputs {
     ipAddress: string
-    id: string
+    instanceId: string
 }
 
-export interface CloudVMBoxManager extends BoxManager {
-    provision() : Promise<CloudVMBoxManagerOutputs>
+export abstract class CloudVMBoxManager extends BoxManager {
+    abstract provision() : Promise<CloudVMBoxManagerOutputs>
 
-    configure() : Promise<CloudVMBoxManagerOutputs>
+    abstract configure() : Promise<CloudVMBoxManagerOutputs>
 
-    get() : Promise<CloudVMBoxManagerOutputs>
-}
-
-export function outputsFromPulumi(o : OutputMap) : CloudVMBoxManagerOutputs{
-    const result: CloudVMBoxManagerOutputs = {
-        ipAddress: o["ipAddress"].value,
-        id: o["id"].value
-    }
-    return result
+    abstract get() : Promise<CloudVMBoxManagerOutputs>
 }
 
 export const SUBSCHEMA_PORT_DEFINITION = z.object({

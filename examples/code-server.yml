@@ -1,4 +1,4 @@
-name: example-nixos
+name: example
 kind: linux.NixOS
 spec:
   nixos: # TODO should be optional with sane defaults

@@ -1,16 +1,13 @@
 import lodash from 'lodash';
 const { merge } = lodash;
-import { BoxMetadata } from "../../lib/core.js";
 import { NixOSConfigurator } from "../../lib/configurator/nixos.js";
 import { SSHClient, SSHCommandOpts } from "../../lib/configurator/ssh.js";
 import { parseSshPrivateKeyToPublic } from "../../utils.js";
-import { BOX_SCHEMA_EC2_INSTANCE_SPEC, EC2InstanceBoxManager, EC2InstanceBoxManagerArgs } from "../aws/ec2-instance.js";
-import { BOX_SCHEMA_BASE } from "../common/base.js";
-import { CloudVMBoxManager, CloudVMBoxManagerOutputs as CloudVMBoxOutputs, SSHConfig, SUBSCHEMA_SSH_DEFINITION } from "../common/cloud-virtual-machine.js";
+import { CompositeEC2InstanceBoxManagerArgsZ, CompositeEC2BoxManager, EC2InstanceBoxManagerArgs } from "../aws/composite-ec2.js";
+import { BoxSchemaBaseZ, BoxMetadata } from "../common/base.js";
+import { CloudVMBoxManager, CloudVMBoxManagerOutputs, SSHConfig, SUBSCHEMA_SSH_DEFINITION } from "../common/cloud-virtual-machine.js";
 import { z } from "zod";
 import * as logging from "../../lib/logging.js"
-
-export const KIND_LINUX_NIXOS = "linux.NixOS"
 
 export const SUBSCHEMA_NIXOS_CONFIG = z.object({
     nixosConfigName: z.string(),
@@ -22,11 +19,11 @@ export const BOX_SPEC_NIXOS = z.object({
     nixos: SUBSCHEMA_NIXOS_CONFIG,
     ssh: SUBSCHEMA_SSH_DEFINITION,
     cloud: z.object({
-        aws: BOX_SCHEMA_EC2_INSTANCE_SPEC.partial().strict()
+        aws: CompositeEC2InstanceBoxManagerArgsZ.partial().strict()
     })
 }).strict()
 
-export const BOX_SCHEMA_NIXOS = BOX_SCHEMA_BASE.extend({
+export const BOX_SCHEMA_NIXOS = BoxSchemaBaseZ.extend({
     spec: BOX_SPEC_NIXOS
 })
 
@@ -40,13 +37,16 @@ export interface NixOSBoxManagerArgs {
     ssh: SSHConfig
 }
 
-export class NixOSBoxManager implements CloudVMBoxManager {
+export const BOX_KIND_LINUX_NIXOS = "linux.NixOS"
 
-    readonly meta: BoxMetadata
+export class NixOSBoxManager extends CloudVMBoxManager {
+
+    static parseSpec = parseLinuxNixOSBoxSpec
+
     readonly args: NixOSBoxManagerArgs
 
-    constructor(name: string, args: NixOSBoxManagerArgs, kind = KIND_LINUX_NIXOS) {
-        this.meta = new BoxMetadata({ name: name, kind: kind})
+    constructor(name: string, args: NixOSBoxManagerArgs, kind = BOX_KIND_LINUX_NIXOS) {
+        super(new BoxMetadata({ name: name, kind: kind}))
         this.args = args
     }
 
@@ -84,7 +84,7 @@ export class NixOSBoxManager implements CloudVMBoxManager {
         return this.args.cloud.preview()
     }
 
-    public async get(): Promise<CloudVMBoxOutputs> {
+    public async get(): Promise<CloudVMBoxManagerOutputs> {
         return this.args.cloud.get()
     }
 
@@ -110,11 +110,7 @@ export class NixOSBoxManager implements CloudVMBoxManager {
         this.doWaitForSsh(o)
     }
 
-    public async getMetadata(): Promise<BoxMetadata> {
-        return this.meta
-    }
-
-    private async doWaitForSsh(o: CloudVMBoxOutputs){
+    private async doWaitForSsh(o: CloudVMBoxManagerOutputs){
         const ssh = this.buildSshClient(o)
         try {
             return await ssh.waitForConnection()
@@ -123,7 +119,7 @@ export class NixOSBoxManager implements CloudVMBoxManager {
         }
     }
 
-    private async doRunSshCommand(o: CloudVMBoxOutputs, cmd: string[], opts?: SSHCommandOpts){
+    private async doRunSshCommand(o: CloudVMBoxManagerOutputs, cmd: string[], opts?: SSHCommandOpts){
         const ssh = this.buildSshClient(o)        
         try {
             await ssh.connect()
@@ -133,7 +129,7 @@ export class NixOSBoxManager implements CloudVMBoxManager {
         }
     }
 
-    private buildNixosConfigurator(o: CloudVMBoxOutputs){
+    private buildNixosConfigurator(o: CloudVMBoxManagerOutputs){
         return new NixOSConfigurator({
             host: o.ipAddress,
             port: this.args.ssh.port,
@@ -141,7 +137,7 @@ export class NixOSBoxManager implements CloudVMBoxManager {
         })
     }
 
-    private buildSshClient(o: CloudVMBoxOutputs){
+    private buildSshClient(o: CloudVMBoxManagerOutputs){
         return new SSHClient({
             host: o.ipAddress,
             user: this.args.ssh.user || "root",
@@ -154,24 +150,26 @@ export async function parseLinuxNixOSBoxSpec(rawConfig: unknown) : Promise<NixOS
     const config = await BOX_SCHEMA_NIXOS.parseAsync(rawConfig)
 
     const defaultAwsConfig: EC2InstanceBoxManagerArgs = {
-        config: {
+        awsConfig: {
             region: "eu-central-1" // TODO from user environment?
         }, 
+        publicKey: await parseSshPrivateKeyToPublic(config.spec.ssh.privateKeyPath),
         instance: {
             ami: "ami-024965d66b21fb7ab", // nixos/23.11.5060.617579a78725-x86_64-linux eu-central-1
-            publicKey: await parseSshPrivateKeyToPublic(config.spec.ssh.privateKeyPath),
             type: "t3.small", // TODO not as default ? May be hard for update
             rootVolume: {
                 sizeGb: 16 // NixOS needs generous amount of disk by default
             }
         },
-        ingressPorts: [{
-            from: 22
-        }]
+        network: {
+            ingressPorts: [{
+                from: 22
+            }]
+        }
     }
     const finalAwsConfig = merge(defaultAwsConfig, config.spec.cloud.aws)
 
-    const awsBoxManager = new EC2InstanceBoxManager(`nixos-${config.name}`, finalAwsConfig)
+    const awsBoxManager = new CompositeEC2BoxManager(`nixos-${config.name}`, finalAwsConfig)
 
     return new NixOSBoxManager(config.name, {
         cloud: awsBoxManager,

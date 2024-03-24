@@ -1,4 +1,4 @@
-name: example-ec2-instance
+name: example-t3.nano
 kind: aws.ec2.Instance
 spec:
   config:
