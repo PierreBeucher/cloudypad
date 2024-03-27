@@ -1,0 +1,22 @@
+name: example-t3.nano
+kind: aws.ec2.ReplicatedInstance
+spec:
+  replicas:
+  - pierre
+  - elsa
+  awsConfig:
+    region: eu-central-1
+  publicKey: ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIGaNlYLbwtAmfcNjlOsP6Ryh3QxGn9qlhlQjPo5nbzBa
+  network:
+    ingressPorts:
+      - from: 22
+  dns:
+    zoneName: cloudybox.crafteo.io
+  template:
+    instance:
+      ami: ami-024965d66b21fb7ab
+      type: t3.nano
+      rootVolume: 
+        sizeGb: 15
+        encrypted: true
+  

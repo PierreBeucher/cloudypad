@@ -1,5 +1,5 @@
 name: example-t3.nano
-kind: aws.ec2.Instance
+kind: aws.ec2.CompositeInstance
 spec:
   config:
     region: eu-central-1
