@@ -1,13 +1,13 @@
-import { CloudVMBoxManager } from "../common/cloud-virtual-machine.js";
 import { AwsClient } from "../../lib/infra/aws/client.js";
 import { z } from "zod";
-import { BoxSchemaBaseZ as BoxSchemaBase, BoxMetadata } from "../common/base.js";
-import { PulumiBoxManager } from "../pulumi/box-manager.js";
+import { BoxSchemaBaseZ as BoxSchemaBase } from "../common/base.js";
+import { PulumiBoxManager } from "../pulumi/manager.js";
 import { CompositeEC2Instance } from "../../lib/infra/pulumi/components/aws/composite-ec2.js";
 import * as pulumi from "@pulumi/pulumi"
 import { pulumiOutputMapToPlainObject } from "../../lib/infra/pulumi/pulumi-client.js";
 import { OutputMap } from "@pulumi/pulumi/automation/stack.js";
 import { DnsSchema, InstanceSchema, NetworkSchema, TagsSchema, VolumeSchema } from "./common.js";
+import { VMBoxProvisioner } from "../common/virtual-machine.js";
 
 export const CompositeEC2InstanceBoxManagerArgsZ = z.object({
     publicKey: z.string(),
@@ -43,7 +43,7 @@ export type EC2InstanceBoxManagerArgs = z.infer<typeof CompositeEC2InstanceBoxMa
 
 export const BOX_KIND_COMPOSITE_EC2_INSTANCE = "aws.ec2.CompositeInstance"
 
-export class CompositeEC2BoxManager extends PulumiBoxManager<CompositeEC2InstanceOutputs> implements CloudVMBoxManager {
+export class CompositeEC2BoxManager extends PulumiBoxManager<CompositeEC2InstanceOutputs> implements VMBoxProvisioner {
     
     static async parseSpec(source: unknown) : Promise<CompositeEC2BoxManager> {
         const config = CompositeEC2InstanceBoxSchema.parse(source)
@@ -75,7 +75,7 @@ export class CompositeEC2BoxManager extends PulumiBoxManager<CompositeEC2Instanc
                 config: {
                     "aws:region": { value: spec.awsConfig.region }
                 },
-                meta: new BoxMetadata({ name: name, kind: BOX_KIND_COMPOSITE_EC2_INSTANCE })
+                meta: { name: name, kind: BOX_KIND_COMPOSITE_EC2_INSTANCE }
             },
         )
 

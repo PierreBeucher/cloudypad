@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import { DnsSchema, InstanceSchema, NetworkSchema, VolumeSchema } from './common.js';
-import { BoxMetadata, BoxSchemaBaseZ } from '../common/base.js';
-import { PulumiBoxManager } from '../pulumi/box-manager.js';
+import { BoxSchemaBaseZ } from '../common/base.js';
+import { PulumiBoxManager } from '../pulumi/manager.js';
 import { AwsClient } from '../../lib/infra/aws/client.js';
 import { ReplicatedEC2instance } from '../../lib/infra/pulumi/components/aws/replicated-ec2.js';
 import { OutputMap } from '@pulumi/pulumi/automation/stack.js';
@@ -79,7 +79,7 @@ export class ReplicatedEC2BoxManager extends PulumiBoxManager<ReplicatedEC2Insta
                 config: {
                     "aws:region": { value: spec.awsConfig.region }
                 },
-                meta: new BoxMetadata({ name: name, kind: BOX_KIND_REPLICATED_EC2_INSTANCE })
+                meta: { name: name, kind: BOX_KIND_REPLICATED_EC2_INSTANCE }
             },
         )
 

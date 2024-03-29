@@ -2,7 +2,7 @@ import { PulumiClient } from "../../lib/infra/pulumi/pulumi-client.js";
 import { OutputMap } from "@pulumi/pulumi/automation/stack.js";
 import { ConfigMap } from "@pulumi/pulumi/automation/config.js";
 import { PulumiFn } from "@pulumi/pulumi/automation/workspace.js";
-import { BoxManager, BoxManagerOutputs, BoxMetadata } from "../common/base.js";
+import { BoxOutputs, BoxMetadata, BoxBase, BoxManager } from "../common/base.js";
 
 export interface PulumiBoxManagerArgs  {
     program: PulumiFn
@@ -12,10 +12,8 @@ export interface PulumiBoxManagerArgs  {
 
 /**
  * A generic box manager using Pulumi. T is an interface matching Pulumi stack output.
- * 
- * 
  */
-export abstract class PulumiBoxManager<T extends BoxManagerOutputs>  extends BoxManager {
+export abstract class PulumiBoxManager<T extends BoxOutputs>  extends BoxBase implements BoxManager {
 
     readonly args: PulumiBoxManagerArgs
     readonly client: PulumiClient

@@ -1,13 +1,13 @@
 name: example-23.05
-kind: linux.NixOS
+kind: Linux.NixOS.Manager
 spec:
-  nixos: # TODO should be optional with sane defaults
+  nixos:
     nixosChannel: nixos-23.05
     homeManagerRelease: release-23.05
     nixosConfigName: aws-base
   ssh:
     privateKeyPath: "/home/pbeucher/.ssh/id_ed25519"
-  cloud:
+  provider:
     aws:
       dns:
         zoneName: k8s.crafteo.io

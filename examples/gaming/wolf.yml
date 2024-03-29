@@ -1,10 +1,8 @@
 name: dev
-kind: gaming.Wolf
+kind: gaming.Wolf.Manager
 spec: 
   ssh:
     privateKeyPath: "/home/pbeucher/.ssh/id_ed25519"
-  additionalPorts:
-  - from: 8080
-  cloud:
+  provider:
     aws:
       region: eu-central-1

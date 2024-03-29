@@ -1,0 +1,7 @@
+name: simple-example
+kind: Linux.NixOS.Manager
+spec:
+  ssh:
+    privateKeyPath: "/home/pbeucher/.ssh/id_ed25519"
+  provider:
+    aws: {}

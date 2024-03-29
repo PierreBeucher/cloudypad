@@ -69,10 +69,6 @@ export class CompositeEC2Instance extends pulumi.ComponentResource {
             ...args.tags
         }
 
-        new aws.Provider("foo", {
-            
-        })
-
         const sg = new aws.ec2.SecurityGroup(`${resourceBasename}-sg`, {
             vpcId: args.network?.vpcId,
             ingress: args.network?.ingressPorts?.map(p => {

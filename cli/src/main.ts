@@ -2,8 +2,8 @@ import { Command } from 'commander';
 import * as emoji from "node-emoji"
 import { getBoxManager } from './lib/core.js';
 import * as logging from "./lib/logging.js"
+import { WolfBoxManager } from './boxes/gaming/manager.js';
 import open from 'open';
-import { WolfBoxManager } from './boxes/gaming/wolf.js';
 
 async function main(){
   const program = new Command();
@@ -161,10 +161,12 @@ async function stop(box: string) {
 
 async function getWolfPin(box: string){
   const bm = await getBoxManager(box)
-  if(bm instanceof WolfBoxManager){ // TODO better check
+  if(bm instanceof WolfBoxManager){ 
     const wolfPinUrl = await bm.getWolfPinUrl()
     logging.info(`Opening ${wolfPinUrl} in default browser...`)
     open(wolfPinUrl);
+  } else {
+    throw new Error("You need to Wolf box to retrieve Wolf PIN.")
   }
 }
 

@@ -1,26 +1,27 @@
-import { NixOSBoxManager, NixOSBoxManagerArgs, NixOSConfig, SUBSCHEMA_NIXOS_CONFIG } from "../nix/nixos.js";
+import { NixOSBoxManager, NixOSBoxManagerArgs } from "../nix/manager.js";
 import * as logging from "../../lib/logging.js"
 import { CompositeEC2InstanceBoxManagerArgsZ, CompositeEC2BoxManager, EC2InstanceBoxManagerArgs } from "../aws/composite-ec2.js";
-import { PortDefinition, STANDARD_SSH_PORTS, SUBSCHEMA_PORT_DEFINITION, SUBSCHEMA_SSH_DEFINITION } from "../common/cloud-virtual-machine.js";
+import { PortDefinition, SSHDefinitionZ, STANDARD_SSH_PORTS } from "../common/virtual-machine.js";
 import { parseSshPrivateKeyToPublic } from "../../utils.js";
 import { z } from "zod";
 import { BoxSchemaBaseZ } from "../common/base.js";
 import lodash from 'lodash';
+import { NixOSBoxConfig, NixOSBoxConfigZ } from "../nix/configurator.js";
+import { SSHClient } from "../../lib/ssh/client.js";
 const { merge } = lodash;
 
-export const BOX_SCHEMA_WOLF = BoxSchemaBaseZ.extend({
+export const WolfBoxSchemaZ = BoxSchemaBaseZ.extend({
     spec: z.object({
-        ssh: SUBSCHEMA_SSH_DEFINITION,
-        nixos: z.optional(SUBSCHEMA_NIXOS_CONFIG, { description: "NixOS config overrides."}),
-        additionalPorts: z.optional(z.array(SUBSCHEMA_PORT_DEFINITION)),
-        cloud: z.object({
+        ssh: SSHDefinitionZ,
+        nixos: z.optional(NixOSBoxConfigZ, { description: "NixOS config overrides."}),
+        provider: z.object({
             aws: CompositeEC2InstanceBoxManagerArgsZ.partial()
         })
     })
 })
 .strict()
 
-export type WolfBoxSchema = z.infer<typeof BOX_SCHEMA_WOLF>
+export type WolfBoxSchema = z.infer<typeof WolfBoxSchemaZ>
 
 export interface WolfBoxManagerArgs extends NixOSBoxManagerArgs {
 
@@ -39,51 +40,50 @@ export const WOLF_PORTS : PortDefinition[] = [
     { from: 48200, to: 48210, protocol: "udp" }, // Audio (up to 10 users)
 ]
 
-export const BOX_KIND_GAMING_WOLF = "gaming.Wolf"
+export const BOX_KIND_GAMING_WOLF = "gaming.Wolf.Manager"
 
-export class WolfBoxManager extends NixOSBoxManager {
+/**
+ * Manages a Cloud VM and install Wolf on it. 
+ */
+export class WolfBoxManager extends NixOSBoxManager { // TODO use composition not extension
 
     static async parseSpec(rawConfig: unknown) : Promise<WolfBoxManager> {
-        const config = await BOX_SCHEMA_WOLF.parseAsync(rawConfig)
-        return buildWolfAWSBox(config)
+        return parseWolfBoxSpec(rawConfig)
     }
-
-    readonly args: WolfBoxManagerArgs
 
     constructor(name: string, args: WolfBoxManagerArgs){
-        super(name, args, BOX_KIND_GAMING_WOLF)
-        this.args = args
+        super(name, { 
+            ...args, 
+            additionalConfigSteps: [ async (ssh: SSHClient) => {
+                await this.configureWolf(ssh) 
+            }]
+        }, BOX_KIND_GAMING_WOLF)
     }
 
-    async configure() {
-        const o = await super.configure()
+    private async configureWolf(ssh: SSHClient) {
 
         // It may be needed to restart instance after initial driver installation
         // Check for presence of /sys/module/nvidia/version
         // If not present, restart needed, otherwise we're good to go
         // If still absent after reboot, something went wrong
         logging.info("   Checking GPU drivers...")
-        const checkNvidia = await this.checkNvidiaReady()
 
-        if(!checkNvidia) {
-            logging.ephemeralInfo(`Nvidia driver version file not found, rebooting...`)
+        let nvidiaReady = false
+        const cmdRes = await ssh.command(["cat", "/sys/module/nvidia/version"], { ignoreNonZeroExitCode: true})
+        if(cmdRes.code == 0){
+            nvidiaReady = true
+        }
+
+        logging.info(`Nvidia driver check result: ${JSON.stringify(cmdRes)}`)
+
+        if(!nvidiaReady) {
+            logging.info(`Nvidia driver version file not found, rebooting...`)
             await this.restart() 
-            logging.ephemeralInfo(`Waiting for instance to start after reboot...`)
-            await this.waitForSsh()
+            logging.info(`Waiting for instance to start after reboot...`)
+            await ssh.waitForConnection()
         }
 
         logging.info("   GPU drivers ready !")
-
-        return o
-    }
-
-    private async checkNvidiaReady(): Promise<boolean>{
-        const cmdRes = await this.runSshCommand(["cat", "/sys/module/nvidia/version"], { ignoreNonZeroExitCode: true})
-        if(cmdRes.code == 0){
-            return true
-       } else {
-            return false
-       }
     }
 
     async getWolfPinUrl(): Promise<string>{
@@ -107,11 +107,12 @@ export class WolfBoxManager extends NixOSBoxManager {
 /**
  * Build a Wolf box for AWS
  */
-export async function buildWolfAWSBox(config: WolfBoxSchema) : Promise<WolfBoxManager> {
+export async function parseWolfBoxSpec(rawConfig: unknown) : Promise<WolfBoxManager> {
+
+    const config = await WolfBoxSchemaZ.parseAsync(rawConfig)
 
     const ports = STANDARD_SSH_PORTS
         .concat(WOLF_PORTS)
-        .concat(config.spec.additionalPorts || [])
 
     const defaultAwsConfig: EC2InstanceBoxManagerArgs = {
         awsConfig: { region: "eu-central-1" },
@@ -128,12 +129,12 @@ export async function buildWolfAWSBox(config: WolfBoxSchema) : Promise<WolfBoxMa
         }
     }
 
-    const finalAwsConfig = merge(defaultAwsConfig, config.spec.cloud.aws)
+    const finalAwsConfig = merge(defaultAwsConfig, config.spec.provider.aws)
 
     const awsBm = new CompositeEC2BoxManager(`wolf-${config.name}`, finalAwsConfig)
     
     // Default NixOS config overridable by user 
-    const nixosConf : NixOSConfig = {
+    const nixosConf : NixOSBoxConfig = {
         nixosChannel: config.spec.nixos?.nixosChannel || "nixos-23.05",
         homeManagerRelease: config.spec.nixos?.homeManagerRelease || "release-23.05",
         nixosConfigName: "wolf-aws",
@@ -141,9 +142,12 @@ export async function buildWolfAWSBox(config: WolfBoxSchema) : Promise<WolfBoxMa
 
     const finalNixosConfig = merge(nixosConf, config.spec.nixos)
 
-    return new WolfBoxManager(config.name, {
-        cloud: awsBm,
-        nixos: finalNixosConfig,
-        ssh: config.spec.ssh
+    return new WolfBoxManager(config.name, { 
+        provider: awsBm,
+        spec: {
+            nixos: finalNixosConfig,
+            ssh: config.spec.ssh,
+            provider: config.spec.provider
+        }
     })
 }

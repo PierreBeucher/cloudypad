@@ -117,7 +117,7 @@ export class SSHClient {
             try {
                 logging.ephemeralInfo(`Trying SSH connect on ${this.args.host} (${attempt}/${retries})`)
                 await this.doConnect()
-                        return
+                return
             } catch (e){
                 if (attempt == retries){
                     throw e
