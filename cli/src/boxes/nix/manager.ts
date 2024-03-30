@@ -4,14 +4,14 @@ import { parseSshPrivateKeyToPublic } from "../../utils.js";
 import { BoxSchemaBaseZ, BoxBase, BoxManager } from "../common/base.js";
 import { SSHDefinitionZ } from "../common/virtual-machine.js";
 import { z } from "zod";
-import { NixOSBoxConfigZ, NixOSBoxConfigurator, NixOSConfigStep } from './configurator.js';
+import { NixOSBoxConfig, NixOSBoxConfigZ, NixOSBoxConfigurator, NixOSBoxConfiguratorSpec, NixOSConfigStep } from './configurator.js';
 import { SSHCommandOpts } from '../../lib/ssh/client.js';
 import { DnsSchema, NetworkSchema } from '../aws/common.js';
 import { ReplicatedEC2BoxManager, ReplicatedEC2InstanceBoxManagerArgs, ReplicatedEC2InstanceOutput, ReplicatedEC2InstanceSchema } from '../aws/replicated-ec2.js';
 import { SSHExecCommandResponse } from 'node-ssh';
 
 export const ReplicatedNixOSBoxManagerSpecZ = z.object({
-    nixos: NixOSBoxConfigZ,
+    nixos: NixOSBoxConfigZ.partial().optional(),
     ssh: SSHDefinitionZ,
     replicas: z.union([z.array(z.string()), z.number()]).optional(),
     dns: DnsSchema.optional(),
@@ -34,7 +34,13 @@ export interface ReplicatedNixOSBoxManagerArgs {
     additionalConfigSteps?: NixOSConfigStep[]
 }
 
-export const BOX_KIND_LINUX_REPLICATED_NIXOS = "Linux.ReplicatedNixOS.Manager"
+export const BOX_KIND_LINUX_REPLICATED_NIXOS = "Linux.NixOS.Manager"
+
+const DEFAULT_NIXOS_CONFIG : NixOSBoxConfig = {
+    nixosChannel: "nixos-23.05",
+    homeManagerRelease: "release-23.05",
+    nixosConfigName: "aws-base"
+}
 
 /**
  * Manages a cloud VM and NixOS configuration within. 
@@ -111,13 +117,15 @@ export class ReplicatedNixOSBoxManager extends BoxBase implements BoxManager {
         const o = await this.get()
         
         const result = o.replicas.map(r => {
+            const configuratorSpec : NixOSBoxConfiguratorSpec = merge({
+                hostname: r.publicIp,
+                nixos: DEFAULT_NIXOS_CONFIG,
+            }, this.args.spec)
+
             return {
                 replica: r,
                 configurator: new NixOSBoxConfigurator(`${this.metadata.name}-${r.name}`, {
-                    spec: {
-                        ...this.args.spec,
-                        hostname: r.publicIp
-                    },
+                    spec: configuratorSpec,
                     additionalSteps: this.args.additionalConfigSteps
                 })
             }

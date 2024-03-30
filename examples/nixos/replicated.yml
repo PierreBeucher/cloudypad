@@ -1,9 +1,7 @@
 name: replicated-example
-kind: Linux.ReplicatedNixOS.Manager
+kind: Linux.NixOS.Manager
 spec:
   nixos:
-    nixosChannel: nixos-23.05
-    homeManagerRelease: release-23.05
     nixosConfigName: code-server
   replicas:
   - pierre
