@@ -6,7 +6,6 @@ import { AwsClient } from '../../lib/infra/aws/client.js';
 import { ReplicatedEC2instance } from '../../lib/infra/pulumi/components/aws/replicated-ec2.js';
 import { OutputMap } from '@pulumi/pulumi/automation/stack.js';
 import { pulumiOutputMapToPlainObject } from '../../lib/infra/pulumi/pulumi-client.js';
-import { CompositeEC2InstanceOutputs, CompositeEC2InstanceOutputsZ } from './composite-ec2.js';
 import * as pulumi from "@pulumi/pulumi"
 import * as logging from "../../lib/logging.js"
 
@@ -14,53 +13,61 @@ export const ReplicatedEC2InstanceBoxManagerSpecZ = z.object({
     awsConfig: z.object({ // TODO need a better way to handle that
         region: z.string()
     }),
+    replicas: z.union([z.array(z.string()), z.number()]).optional(),
     publicKey: z.string(),
     network: NetworkSchema,
     dns: DnsSchema.optional(),
     tags: z.record(z.string()).optional(),
-    replicas: z.union([z.array(z.string()), z.number()]),
-    template: z.object({
-        instance: InstanceSchema,
-        volumes: z.array(VolumeSchema).optional(),
-    }),
+    instance: InstanceSchema,
+    volumes: z.array(VolumeSchema).optional(),
 });
-
-export type ReplicatedEC2InstanceBoxManagerSpec = z.infer<typeof ReplicatedEC2InstanceBoxManagerSpecZ>
 
 export const ReplicatedEC2InstanceSchema = BoxSchemaBaseZ.extend({
     spec: ReplicatedEC2InstanceBoxManagerSpecZ,
 })
 
+export const ReplicatedEC2InstanceOutputZ = z.object({
+    name: z.string(),
+    publicIp: z.string(),
+    instanceId: z.string(),
+    fqdn: z.string().optional()
+})
+
 export const ReplicatedEC2InstanceOutputsZ = z.object({
-    replicas: z.array(CompositeEC2InstanceOutputsZ)
+    replicas: z.array(ReplicatedEC2InstanceOutputZ)
 })
 
 export type ReplicatedEC2InstanceOutputs = z.infer<typeof ReplicatedEC2InstanceOutputsZ>
-
+export type ReplicatedEC2InstanceBoxManagerSpec = z.infer<typeof ReplicatedEC2InstanceBoxManagerSpecZ>
+export type ReplicatedEC2InstanceOutput = z.infer<typeof ReplicatedEC2InstanceOutputZ>
 
 export const BOX_KIND_REPLICATED_EC2_INSTANCE = "aws.ec2.ReplicatedInstance"
+
+export interface ReplicatedEC2InstanceBoxManagerArgs {
+    spec: ReplicatedEC2InstanceBoxManagerSpec
+}
 
 export class ReplicatedEC2BoxManager extends PulumiBoxManager<ReplicatedEC2InstanceOutputs> {
     
     static async parseSpec(source: unknown) : Promise<ReplicatedEC2BoxManager> {
         const config = ReplicatedEC2InstanceSchema.parse(source)
-        return new ReplicatedEC2BoxManager(config.name, config.spec)
+        return new ReplicatedEC2BoxManager(config.name, config)
     }
 
     readonly awsClient: AwsClient
 
-    constructor(name: string, spec: ReplicatedEC2InstanceBoxManagerSpec) {
+    constructor(name: string, args: ReplicatedEC2InstanceBoxManagerArgs) {
 
         const pulumiFn = async ()  => {
-            const instances = new ReplicatedEC2instance(name, spec)
+            const instances = new ReplicatedEC2instance(name, args.spec)
 
             const replicas = instances.replicas.map(r => pulumi.all([ 
-                    r.instanceVolumesEIP.instance.id,
-                    r.instanceVolumesEIP.publicIp,
+                    r.instance.id,
+                    r.publicIp,
                     r.fqdn,
-                ]).apply(([instanceId, ip, fqdn]) : CompositeEC2InstanceOutputs => {
+                ]).apply(([instanceId, ip, fqdn]) : ReplicatedEC2InstanceOutput => {
                     return {
-                        ipAddress: ip,
+                        publicIp: ip,
                         instanceId: instanceId,
                         fqdn: fqdn,
                         name: r.name
@@ -78,13 +85,13 @@ export class ReplicatedEC2BoxManager extends PulumiBoxManager<ReplicatedEC2Insta
         super({ 
                 program: pulumiFn,
                 config: {
-                    "aws:region": { value: spec.awsConfig.region }
+                    "aws:region": { value: args.spec.awsConfig.region }
                 },
                 meta: { name: name, kind: BOX_KIND_REPLICATED_EC2_INSTANCE }
             },
         )
 
-        this.awsClient = new AwsClient({ region: spec.awsConfig?.region })
+        this.awsClient = new AwsClient({ region: args.spec.awsConfig?.region })
     }
 
     async stackOuputToBoxOutput(o: OutputMap): Promise<ReplicatedEC2InstanceOutputs> {

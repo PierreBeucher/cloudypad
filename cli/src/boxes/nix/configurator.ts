@@ -1,6 +1,6 @@
 import { SSHClient, SSHCommandOpts } from "../../lib/ssh/client.js";
 import { BoxSchemaBaseZ, BoxBase, BoxConfigurator } from "../common/base.js";
-import { SSHDefinitionZ, VMConfiguratorOutputs } from "../common/virtual-machine.js";
+import { SSHDefinitionZ } from "../common/virtual-machine.js";
 import { z } from "zod";
 import * as logging from "../../lib/logging.js"
 import * as utils from "../../utils.js"
@@ -93,7 +93,7 @@ export class NixOSBoxConfigurator extends BoxBase implements BoxConfigurator {
         return o
     }
 
-    public async get() : Promise<VMConfiguratorOutputs> {
+    public async get() {
         return { 
             hostname: this.args.spec.hostname 
         }
@@ -148,7 +148,7 @@ export class NixOSBoxConfigurator extends BoxBase implements BoxConfigurator {
      * Ensure NixOS instance channels are set
      */
     private async ensureNixChannel(ssh: SSHClient, nixosChannel: string, homeManagerRelease?: string){            
-        await ssh.command(["nix-channel", "--add", `https://nixos.org/channels/${nixosChannel}`, "nixos"])
+        await ssh.command([`nix-channel`, "--add", `https://nixos.org/channels/${nixosChannel}`, "nixos"])
 
         if (homeManagerRelease){
             await ssh.command(["nix-channel", "--add", `https://github.com/nix-community/home-manager/archive/${homeManagerRelease}.tar.gz`, "home-manager"])
@@ -171,7 +171,7 @@ export class NixOSBoxConfigurator extends BoxBase implements BoxConfigurator {
         await ssh.putFile(configFile, "/etc/nixos/configuration.nix",)
         
         logging.ephemeralInfo("  Rebuilding NixOS configuration...")
-        await ssh.command(["nixos-rebuild", "switch", "--upgrade"])
+        await ssh.command(["nixos-rebuild", "switch", "--upgrade"] )
     }
 
     private buildSshClient(){

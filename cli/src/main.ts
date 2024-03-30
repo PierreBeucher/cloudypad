@@ -162,9 +162,11 @@ async function stop(box: string) {
 async function getWolfPin(box: string){
   const bm = await getBoxManager(box)
   if(bm instanceof WolfBoxManager){ 
-    const wolfPinUrl = await bm.getWolfPinUrl()
-    logging.info(`Opening ${wolfPinUrl} in default browser...`)
-    open(wolfPinUrl);
+    const wolfPinUrls = await bm.getWolfPinUrl()
+    wolfPinUrls.forEach(url => {
+      logging.info(`Opening ${url} in default browser...`)
+      open(url);
+    })
   } else {
     throw new Error("You need to Wolf box to retrieve Wolf PIN.")
   }

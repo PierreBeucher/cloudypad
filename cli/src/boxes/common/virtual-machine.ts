@@ -1,27 +1,4 @@
 import { z } from "zod"
-import { BoxOutputs, BoxProvisioner } from "./base.js"
-
-export interface VMProvisionerBoxOutputs extends BoxOutputs {
-    ipAddress: string
-    instanceId: string
-}
-
-export interface MultiVMProvisionerBoxOutputs extends BoxOutputs {
-    replicas: VMProvisionerBoxOutputs[]
-}
-
-export interface VMConfiguratorOutputs extends BoxOutputs {
-    hostname: string
-}
-
-export interface VMBoxProvisioner extends BoxProvisioner {
-    get() : Promise<VMProvisionerBoxOutputs>
-    provision() : Promise<VMProvisionerBoxOutputs>
-}
-
-export interface MultiVMBoxProvisioner extends BoxProvisioner {
-    
-}
 
 export const PortDefinitionZ = z.object({
     from: z.number(),
@@ -39,7 +16,7 @@ export const SSHDefinitionZ = z.object({
     user: z.optional(z.string())
 })
 
-export type SSHConfig = z.infer<typeof SSHDefinitionZ>
+export type SSHDefinition = z.infer<typeof SSHDefinitionZ>
 
 /**
  * Open standard oprt 22 for SSH
