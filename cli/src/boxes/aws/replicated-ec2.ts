@@ -10,7 +10,7 @@ import { CompositeEC2InstanceOutputs, CompositeEC2InstanceOutputsZ } from './com
 import * as pulumi from "@pulumi/pulumi"
 import * as logging from "../../lib/logging.js"
 
-export const ReplicatedEC2InstanceArgsZ = z.object({
+export const ReplicatedEC2InstanceBoxManagerSpecZ = z.object({
     awsConfig: z.object({ // TODO need a better way to handle that
         region: z.string()
     }),
@@ -25,10 +25,10 @@ export const ReplicatedEC2InstanceArgsZ = z.object({
     }),
 });
 
-export type ReplicatedEC2InstanceArgs = z.infer<typeof ReplicatedEC2InstanceArgsZ>
+export type ReplicatedEC2InstanceBoxManagerSpec = z.infer<typeof ReplicatedEC2InstanceBoxManagerSpecZ>
 
 export const ReplicatedEC2InstanceSchema = BoxSchemaBaseZ.extend({
-    spec: ReplicatedEC2InstanceArgsZ,
+    spec: ReplicatedEC2InstanceBoxManagerSpecZ,
 })
 
 export const ReplicatedEC2InstanceOutputsZ = z.object({
@@ -49,7 +49,7 @@ export class ReplicatedEC2BoxManager extends PulumiBoxManager<ReplicatedEC2Insta
 
     readonly awsClient: AwsClient
 
-    constructor(name: string, spec: ReplicatedEC2InstanceArgs) {
+    constructor(name: string, spec: ReplicatedEC2InstanceBoxManagerSpec) {
 
         const pulumiFn = async ()  => {
             const instances = new ReplicatedEC2instance(name, spec)
@@ -57,12 +57,13 @@ export class ReplicatedEC2BoxManager extends PulumiBoxManager<ReplicatedEC2Insta
             const replicas = instances.replicas.map(r => pulumi.all([ 
                     r.instanceVolumesEIP.instance.id,
                     r.instanceVolumesEIP.publicIp,
-                    r.fqdn
+                    r.fqdn,
                 ]).apply(([instanceId, ip, fqdn]) : CompositeEC2InstanceOutputs => {
                     return {
                         ipAddress: ip,
                         instanceId: instanceId,
-                        fqdn: fqdn
+                        fqdn: fqdn,
+                        name: r.name
                     }
                 })
             )

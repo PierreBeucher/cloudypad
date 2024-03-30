@@ -32,6 +32,7 @@ export const CompositeEC2InstanceBoxSchema = BoxSchemaBase.extend({
  * Outputs from Pulumi stack
  */
 export const CompositeEC2InstanceOutputsZ = z.object({
+    name: z.string(),
     ipAddress: z.string(),
     instanceId: z.string(),
     fqdn: z.string().optional()
@@ -60,11 +61,12 @@ export class CompositeEC2BoxManager extends PulumiBoxManager<CompositeEC2Instanc
     
             return pulumi.all([
                 instance.instanceVolumesEIP.publicIp, 
-                instance.instanceVolumesEIP.instance.id
+                instance.instanceVolumesEIP.instance.id,
             ]).apply( ([ip, instanceId]) => {
                 const o: CompositeEC2InstanceOutputs = {
                     ipAddress: ip,
                     instanceId: instanceId,
+                    name: name
                 } 
                 return o
             })

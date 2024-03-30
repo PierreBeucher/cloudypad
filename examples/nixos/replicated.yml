@@ -1,0 +1,23 @@
+name: replicated-example
+kind: Linux.ReplicatedNixOS.Manager
+spec:
+  nixos:
+    nixosChannel: nixos-23.05
+    homeManagerRelease: release-23.05
+    nixosConfigName: code-server
+  replicas:
+  - pierre
+  - emily
+  # Generate DNS like
+  # - pierre.nixos-example.cloudybox.crafteo.io
+  # - emily.nixos-example.cloudybox.crafteo.io
+  dns:
+    zoneName: cloudybox.crafteo.io
+    prefix: nixos-example
+  ssh:
+    privateKeyPath: "/home/pbeucher/.ssh/id_ed25519"
+  network:
+    ingressPorts:
+      - from: 8080
+  provider:
+    aws: {}

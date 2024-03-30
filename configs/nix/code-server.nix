@@ -8,7 +8,7 @@ in {
 
     services.cloudybox-code-server = {
         enable = true;
-        hashedPassword = "$argon2i$v=19$m=4096,t=3,p=1$W6P5b7te1jM+B8Ah4GmByA$CWeNHUmjFFO4yt6wCfvvXP302wjiTXCQrvYpe9EiosA";
+        hashedPassword = "$argon2i$v=19$m=4096,t=3,p=1$bVCx3O3GH9h+kmotPNNnWA$4IZMEwSXGuXhoGW6/lcH1wwSd6CmGaShq3InXcr4FMU";
     };
 
     system.stateVersion = "23.05";

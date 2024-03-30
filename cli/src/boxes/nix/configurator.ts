@@ -86,9 +86,9 @@ export class NixOSBoxConfigurator extends BoxBase implements BoxConfigurator {
     public async configure() {
         const o = await this.get()
 
-        logging.info("   Configuring NixOS instance...")
+        logging.info(`   Configuring NixOS instance ${this.metadata.name}`)
         await this.doConfigure()
-        logging.info("   NixOS instance provisioned !")
+        logging.info(`   NixOS instance ${this.metadata.name} provisioned !`)
 
         return o
     }

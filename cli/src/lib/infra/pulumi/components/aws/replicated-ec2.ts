@@ -28,22 +28,23 @@ export class ReplicatedEC2instance extends pulumi.ComponentResource {
     
     readonly replicas: {
         instanceVolumesEIP: EC2InstanceVolumesEIP,
-        fqdn?: pulumi.Output<string>
+        fqdn?: pulumi.Output<string>,
+        name: string
     }[]
 
     constructor(name : string, args: ReplicatedEC2instanceArgs, opts? : pulumi.ComponentResourceOptions) {
         super("crafteo:cloudybox:aws:replicated-ec2-instance", name, args, opts);
 
-        const resourceBasename = `replicated-ec2-instance-${name}`
+        const pulumiResourceName = `replicated-ec2-instance-${name}`
 
-        // DUPLICATED CODE ?
+        const resourceNameTagBase = `CloudyBox-${name}`
         const resourceTags = {
-            Name: `CloudyBox-${name}`,
+            Name: resourceNameTagBase,
             CloudyBox: name,
             ...args.tags
         }
 
-        const sg = new aws.ec2.SecurityGroup(`${resourceBasename}-sg`, {
+        const sg = new aws.ec2.SecurityGroup(`${pulumiResourceName}-sg`, {
             vpcId: args.network?.vpcId,
             ingress: args.network?.ingressPorts?.map(p => {
                 return { 
@@ -66,12 +67,11 @@ export class ReplicatedEC2instance extends pulumi.ComponentResource {
             parent: this
         });
 
-        const keyPair = new aws.ec2.KeyPair(`${resourceBasename}-keypair`, {
+        const keyPair = new aws.ec2.KeyPair(`${pulumiResourceName}-keypair`, {
             publicKey: args.publicKey,
         }, {
             parent: this
         })
-        // DUPLICATED CODE ?
 
         // If replicas is number name instance from index,
         // otherwise use provided names. 
@@ -103,10 +103,16 @@ export class ReplicatedEC2instance extends pulumi.ComponentResource {
         }
 
         const replicas = replicaNames.map(rname => {
-            const ec2InstanceVolumesEIP = new EC2InstanceVolumesEIP(`${resourceBasename}-replica-${rname}`, {
+
+            const replicaNameTag = `${resourceNameTagBase}-${rname}`
+
+            const ec2InstanceVolumesEIP = new EC2InstanceVolumesEIP(`${pulumiResourceName}-replica-${rname}`, {
                 keyPairName: keyPair.keyName,
                 instance: args.template.instance,
-                tags: resourceTags,
+                tags: {
+                    ...resourceTags,
+                    Name: replicaNameTag
+                },
                 enableEIP: args.template.instance.staticIpEnable,
                 subnetId: args.network?.subnetId,
                 volumes: args.template.volumes,
@@ -123,7 +129,7 @@ export class ReplicatedEC2instance extends pulumi.ComponentResource {
                 }
                 
                 fqdn = pulumi.interpolate`${rname}.${fqdnSuffix}`
-                new aws.route53.Record(`${resourceBasename}-${rname}-dns-record`, {
+                new aws.route53.Record(`${pulumiResourceName}-${rname}-dns-record`, {
                     zoneId: dnsZone.id,
                     name: fqdn,
                     type: args.dns.type || "A",
@@ -136,7 +142,8 @@ export class ReplicatedEC2instance extends pulumi.ComponentResource {
 
             return {
                 instanceVolumesEIP: ec2InstanceVolumesEIP,
-                fqdn: fqdn
+                fqdn: fqdn,
+                name: rname
             }
         })
 
