@@ -160,7 +160,7 @@ export class ReplicatedEC2instance extends pulumi.ComponentResource {
                 return vol
             })
             
-            let eip = undefined
+            let eip: aws.ec2.Eip | undefined = undefined
             
             if (args.instance.staticIpEnable) {
                 eip = new aws.ec2.Eip(`${perReplicaPulumiResourceName}-eip`, {
