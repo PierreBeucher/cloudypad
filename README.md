@@ -8,8 +8,8 @@ _This project is under heavy development and will have breaking changes. Feel fr
 
 **Gaming**
 
-- 🐺 Deploy a [Wolf](https://games-on-whales.github.io/wolf/stable/) instance in the Cloud
-- 🌤️ (soon) Deploy a [Sunshine](https://github.com/LizardByte/Sunshine) instance in the Cloud
+- 🐺 [Wolf](https://games-on-whales.github.io/wolf/stable/) Cloud instance
+- 🌤️ (soon) [Sunshine](https://github.com/LizardByte/Sunshine) Cloud instance
 
 **Coming soon**
 
@@ -18,6 +18,7 @@ _This project is under heavy development and will have breaking changes. Feel fr
 
 ## Usage
 
+### General usage 
 
 **Requirements**
 - [Pulumi account](https://www.pulumi.com/) or [self-managed Pulumi backend](https://www.pulumi.com/docs/concepts/state/#using-a-self-managed-backend)
@@ -26,46 +27,73 @@ _This project is under heavy development and will have breaking changes. Feel fr
 Only local usage is possible for now. A full binary package will be implemented soon.
 
 ```sh
-npx ts-node cli/src/main.ts --help
-npx ts-node cli/src/main.ts deploy examples/wolf.yml
-npx ts-node cli/src/main.ts provision examples/wolf.yml
-npx ts-node cli/src/main.ts configure examples/wolf.yml
-npx ts-node cli/src/main.ts get examples/wolf.yml
-npx ts-node cli/src/main.ts destroy examples/wolf.yml
+# Show help
+npx ts-node src/main.ts --help
+
+# Deploy a Box (provision + configure)
+npx ts-node src/main.ts deploy examples/gaming/wolf.yml
+
+# Provision a Box
+# Only run infrastructure provisioning 
+# such as AWS resource management
+npx ts-node src/main.ts provision examples/gaming/wolf.yml
+
+# Configure a Box
+# Only run Box configuration such as NixOS rebuild
+npx ts-node src/main.ts configure examples/gaming/wolf.yml
+
+# Get a Box details
+npx ts-node src/main.ts get examples/gaming/wolf.yml
+
+# Destroy a Box 
+npx ts-node src/main.ts destroy examples/gaming/wolf.yml
 ```
 
-### Wolf
+### 🐺 Wolf 
 
-Deploy a Wolf gaming instance on AWS:
+Deploy a [Wolf](https://games-on-whales.github.io/wolf/stable/) Cloud instance:
 
 ```sh
-# Deploy Wolf instance
-npx ts-node cli/src/main.ts deploy examples/wolf.yml
+# Deploy instance (provision + configuration)
+npx ts-node src/main.ts deploy examples/gaming/wolf.yml
 
 # Run only provision or configure steps
-npx ts-node cli/src/main.ts provision examples/wolf.yml
-npx ts-node cli/src/main.ts configure examples/wolf.yml
-
-# Get box details (IP address for Moonlight)
-npx ts-node cli/src/main.ts get examples/wolf.yml
+# npx ts-node src/main.ts provision examples/gaming/wolf.yml
+# npx ts-node src/main.ts configure examples/gaming/wolf.yml
 ```
 
-Run Moonlight and connect to instance:
+Deployment will take care of everything: machine provisioning, configuration, driver installation...
 
-```sh
-moonlight
+Output shows something like:
+
+```json
+{
+  "replicas": [
+    {
+      "name": "instance",
+      "publicIp": "3.73.159.77",
+      "instanceId": "i-08f25ac5ab47afa79"
+    }
+  ]
+}
 ```
 
-Open browser to enter Moonlight server-side PIN:
+Alternatively get instance details with
 
 ```sh
-npx ts-node cli/src/main.ts utils wolf open-pin
+npx ts-node src/main.ts get examples/gaming/wolf.yml
 ```
 
-Destroy instance:
+Once deployed, run Moonlight and connect to instance. Open a browser to enter PIN with:
 
 ```sh
-npx ts-node cli/src/main.ts destroy dev
+npx ts-node src/main.ts utils wolf open-pin examples/gaming/wolf.yml
+```
+
+Destroy instance - _⚠️ All data will be lost !_
+
+```sh
+npx ts-node src/main.ts destroy examples/gaming/wolf.yml
 ```
 
 ## Development
@@ -74,4 +102,13 @@ Test NixOS config
 
 ```sh
 nix-instantiate '<nixpkgs/nixos>' -A config.system.build.toplevel -I nixpkgs=channel:nixos-23.05 --arg configuration ./configs/nix/wolf-aws.nix
+```
+
+Manage underlying Pulumi stacks:
+
+```sh
+pulumi stack ls -a
+pulumi destroy -s full-stack-name
+pulumi stack output -s full-stack-name
+pulumi stack rm full-stack-name
 ```
