@@ -1,4 +1,4 @@
-name: dev
+name: woof
 kind: gaming.Wolf.Manager
 spec: 
   ssh:

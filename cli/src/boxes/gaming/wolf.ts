@@ -70,7 +70,7 @@ export class WolfBoxManager extends ReplicatedNixOSBoxManager {
         // Check for presence of /sys/module/nvidia/version
         // If not present, restart needed, otherwise we're good to go
         // If still absent after reboot, something went wrong
-        logging.info("   Checking GPU drivers...")
+        logging.ephemeralInfo("   Checking GPU drivers...")
 
         let nvidiaReady = false
         const cmdRes = await ssh.command(["cat", "/sys/module/nvidia/version"], { ignoreNonZeroExitCode: true})
@@ -78,12 +78,12 @@ export class WolfBoxManager extends ReplicatedNixOSBoxManager {
             nvidiaReady = true
         }
 
-        logging.info(`Nvidia driver check result: ${JSON.stringify(cmdRes)}`)
+        logging.ephemeralInfo(`Nvidia driver check result: ${JSON.stringify(cmdRes)}`)
 
         if(!nvidiaReady) {
-            logging.info(`Nvidia driver version file not found, rebooting...`)
+            logging.ephemeralInfo(`Nvidia driver version file not found, rebooting...`)
             await this.restart() 
-            logging.info(`Waiting for instance to start after reboot...`)
+            logging.ephemeralInfo(`Waiting for instance to start after reboot...`)
             await ssh.waitForConnection()
         }
 
@@ -140,7 +140,7 @@ export async function parseWolfBoxSpec(rawConfig: unknown) : Promise<WolfBoxMana
     }
 
     const finalAwsConfig = merge(defaultAwsConfig, config.spec.provider.aws)
-    const awsBoxManager = new ReplicatedEC2BoxManager(`wolf-${config.name}`, finalAwsConfig)
+    const awsBoxManager = new ReplicatedEC2BoxManager(`${BOX_KIND_GAMING_WOLF}-${config.name}`, finalAwsConfig)
     
     const nixosConf : NixOSBoxConfig = {
         nixosChannel: config.spec.nixos?.nixosChannel || "nixos-23.05",

@@ -2,7 +2,7 @@ import { Command } from 'commander';
 import * as emoji from "node-emoji"
 import { getBoxManager } from './lib/core.js';
 import * as logging from "./lib/logging.js"
-import { WolfBoxManager } from './boxes/gaming/manager.js';
+import { WolfBoxManager } from './boxes/gaming/wolf.js';
 import open from 'open';
 
 async function main(){

@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { DnsSchema, InstanceSchema, NetworkSchema, VolumeSchema } from './common.js';
-import { BoxSchemaBaseZ } from '../common/base.js';
+import { BoxMetadata, BoxSchemaBaseZ } from '../common/base.js';
 import { PulumiBoxManager } from '../pulumi/manager.js';
 import { AwsClient } from '../../lib/infra/aws/client.js';
 import { ReplicatedEC2instance } from '../../lib/infra/pulumi/components/aws/replicated-ec2.js';
@@ -58,8 +58,10 @@ export class ReplicatedEC2BoxManager extends PulumiBoxManager<ReplicatedEC2Insta
 
     constructor(name: string, args: ReplicatedEC2InstanceBoxManagerArgs) {
 
+        const metadata : BoxMetadata = { name: name, kind: BOX_KIND_REPLICATED_EC2_INSTANCE }
+
         const pulumiFn = async ()  => {
-            const instances = new ReplicatedEC2instance(name, args.spec)
+            const instances = new ReplicatedEC2instance(`${metadata.name}`, args.spec)
 
             const replicas = instances.replicas.map(r => pulumi.all([ 
                     r.instance.id,
