@@ -1,3 +1,5 @@
+#!/usr/bin/env node
+
 import { Command } from 'commander';
 import * as emoji from "node-emoji"
 import { getBoxManager } from './lib/core.js';

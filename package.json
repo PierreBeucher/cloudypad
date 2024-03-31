@@ -1,7 +1,14 @@
 {
   "name": "cloudy-box",
-  "version": "1.0.0",
+  "version": "0.1.0",
   "description": "CloudyBox - Collection of Cloud components and services",
+  "main": "dist/main.js",
+  "bin": {
+      "cloudybox": "./dist/main.js"
+  },
+  "scripts": {
+    "build": "tsc"
+  },
   "dependencies": {
     "@aws-sdk/client-ec2": "^3.529.1",
     "@pulumi/aws": "^4.0.0",
