@@ -4,6 +4,15 @@ Collection of Cloud components and services
 
 _This project is under heavy development and will have breaking changes. Feel free to ping me an email or create an issue !_
 
+- [Features](#features)
+- [Installation](#installation)
+- [Usage](#usage)
+  - [General](#general)
+  - [🐺 Wolf](#-wolf)
+  - [❄️ NixOS instance fleet](#️-nixos-instance-fleet)
+- [Example configurations](#example-configurations)
+- [Development](#development)
+
 ## Features
 
 **Gaming**
@@ -11,42 +20,56 @@ _This project is under heavy development and will have breaking changes. Feel fr
 - 🐺 [Wolf](https://games-on-whales.github.io/wolf/stable/) Cloud instance
 - 🌤️ (soon) [Sunshine](https://github.com/LizardByte/Sunshine) Cloud instance
 
+**❄️ NixOS**
+
+- [NixOS](https://nixos.org/) instance fleet for various usage: VSCode Server, Docker, etc. 
+
 **Coming soon**
 
 - Deploy a fleet of instances with various services (VSCode, GPU, databases, etc.)
 - Deploy Kubernetes clusters
 
+## Installation
+
+Clone this repository and install globally:
+
+```sh
+npm i -g
+```
+
+Package will soon be published publicly to npm registry.
+
 ## Usage
 
-### General usage 
+All command below use `cloudybox`. You can also use `npx ts-node src/main.ts` without global installation.
+
+### General
 
 **Requirements**
 - [Pulumi account](https://www.pulumi.com/) or [self-managed Pulumi backend](https://www.pulumi.com/docs/concepts/state/#using-a-self-managed-backend)
 - [AWS](https://aws.amazon.com/) account
 
-Only local usage is possible for now. A full binary package will be implemented soon.
-
 ```sh
 # Show help
-npx ts-node src/main.ts --help
+cloudybox --help
 
 # Deploy a Box (provision + configure)
-npx ts-node src/main.ts deploy examples/gaming/wolf.yml
+cloudybox deploy examples/gaming/wolf.yml
 
 # Provision a Box
 # Only run infrastructure provisioning 
 # such as AWS resource management
-npx ts-node src/main.ts provision examples/gaming/wolf.yml
+cloudybox provision examples/gaming/wolf.yml
 
 # Configure a Box
 # Only run Box configuration such as NixOS rebuild
-npx ts-node src/main.ts configure examples/gaming/wolf.yml
+cloudybox configure examples/gaming/wolf.yml
 
 # Get a Box details
-npx ts-node src/main.ts get examples/gaming/wolf.yml
+cloudybox get examples/gaming/wolf.yml
 
 # Destroy a Box 
-npx ts-node src/main.ts destroy examples/gaming/wolf.yml
+cloudybox destroy examples/gaming/wolf.yml
 ```
 
 ### 🐺 Wolf 
@@ -55,11 +78,11 @@ Deploy a [Wolf](https://games-on-whales.github.io/wolf/stable/) Cloud instance:
 
 ```sh
 # Deploy instance (provision + configuration)
-npx ts-node src/main.ts deploy examples/gaming/wolf.yml
+cloudybox deploy examples/gaming/wolf.yml
 
 # Run only provision or configure steps
-# npx ts-node src/main.ts provision examples/gaming/wolf.yml
-# npx ts-node src/main.ts configure examples/gaming/wolf.yml
+# cloudybox provision examples/gaming/wolf.yml
+# cloudybox configure examples/gaming/wolf.yml
 ```
 
 Deployment will take care of everything: machine provisioning, configuration, driver installation...
@@ -81,20 +104,32 @@ Output shows something like:
 Alternatively get instance details with
 
 ```sh
-npx ts-node src/main.ts get examples/gaming/wolf.yml
+cloudybox get examples/gaming/wolf.yml
 ```
 
 Once deployed, run Moonlight and connect to instance. Open a browser to enter PIN with:
 
 ```sh
-npx ts-node src/main.ts utils wolf open-pin examples/gaming/wolf.yml
+cloudybox utils wolf open-pin examples/gaming/wolf.yml
 ```
 
 Destroy instance - _⚠️ All data will be lost !_
 
 ```sh
-npx ts-node src/main.ts destroy examples/gaming/wolf.yml
+cloudybox destroy examples/gaming/wolf.yml
 ```
+
+### ❄️ NixOS instance fleet
+
+Deploy a fleet of [NixOS](https://nixos.org/) instances for various use cases: development server with VSCode and Docker, database server, Wordpress website...
+
+```sh
+cloudybox deploy examples/nixos/replicated.yml
+```
+
+## Example configurations
+
+See [examples](./examples/)
 
 ## Development
 
