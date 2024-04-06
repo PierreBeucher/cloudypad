@@ -4,7 +4,7 @@
   "description": "CloudyBox - Collection of Cloud components and services",
   "main": "dist/main.js",
   "bin": {
-      "cloudybox": "./dist/main.js"
+    "cloudybox": "./dist/main.js"
   },
   "scripts": {
     "build": "tsc"
@@ -28,6 +28,7 @@
     "reflect-metadata": "^0.2.1",
     "sshpk": "^1.18.0",
     "ts-node": "^10.0.0",
+    "tslog": "^4.9.2",
     "typescript": "^4.0.0",
     "upath": "^2.0.1",
     "zod": "^3.22.4"

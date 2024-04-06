@@ -1,4 +1,3 @@
-import * as logging from "../../lib/logging.js"
 import { PortDefinition, SSHDefinitionZ, STANDARD_SSH_PORTS } from "../common/virtual-machine.js";
 import { parseSshPrivateKeyToPublic } from "../../utils.js";
 import { z } from "zod";
@@ -70,7 +69,7 @@ export class WolfBoxManager extends ReplicatedNixOSBoxManager {
         // Check for presence of /sys/module/nvidia/version
         // If not present, restart needed, otherwise we're good to go
         // If still absent after reboot, something went wrong
-        logging.ephemeralInfo("   Checking GPU drivers...")
+        this.logger.info("   Checking GPU drivers...")
 
         let nvidiaReady = false
         const cmdRes = await ssh.command(["cat", "/sys/module/nvidia/version"], { ignoreNonZeroExitCode: true})
@@ -78,16 +77,16 @@ export class WolfBoxManager extends ReplicatedNixOSBoxManager {
             nvidiaReady = true
         }
 
-        logging.ephemeralInfo(`Nvidia driver check result: ${JSON.stringify(cmdRes)}`)
+        this.logger.info(`Nvidia driver check result: ${JSON.stringify(cmdRes)}`)
 
         if(!nvidiaReady) {
-            logging.ephemeralInfo(`Nvidia driver version file not found, rebooting...`)
+            this.logger.info(`Nvidia driver version file not found, rebooting...`)
             await this.restart() 
-            logging.ephemeralInfo(`Waiting for instance to start after reboot...`)
+            this.logger.info(`Waiting for instance to start after reboot...`)
             await ssh.waitForConnection()
         }
 
-        logging.info("   GPU drivers ready !")
+        this.logger.info("   GPU drivers ready !")
     }
 
     async getWolfPinUrl(): Promise<string[]>{

@@ -1,7 +1,9 @@
 import { NodeSSH, SSHExecCommandResponse } from "node-ssh";
-import * as logging from "../logging.js"
+import { CloudyBoxLogObjI, boxLogger } from "../logging.js"
+import { Logger } from "tslog";
 
 export interface SSHClientArgs {
+    clientName: string
     host: string,
     port?: number,
     user: string,
@@ -40,12 +42,14 @@ export interface SSHCommandOpts {
  */
 export class SSHClient {
     
-    client: NodeSSH
-    args: SSHClientArgs
+    readonly client: NodeSSH
+    readonly args: SSHClientArgs
+    readonly logger: Logger<CloudyBoxLogObjI>
 
     constructor(args: SSHClientArgs){
         this.args = args
         this.client = new NodeSSH()
+        this.logger = boxLogger.getSubLogger({ name: `${this.args.clientName}` })
     }
 
     async command(cmd: string[], args?: SSHCommandOpts) : Promise<SSHExecCommandResponse>{
@@ -75,7 +79,7 @@ export class SSHClient {
             recursive: true,
             concurrency: 10,
             validate: (itemPath) => {
-                logging.ephemeralInfo(`Transferring ${itemPath}`)
+                this.logger.info(`Transferring ${itemPath}`)
                 return true;
             },
             tick:(localPath, remotePath, error) => {
@@ -99,13 +103,14 @@ export class SSHClient {
             throw new Error("No command provided.")
         }
         const command = exec[0]
+        const logger = this.logger
         const sshResp = await this.client.exec(command, exec.slice(1), {
             stream: "both",
             onStdout(chunk) {
-                logging.ephemeralInfo(`${logPrefix}: ${chunk.toString('utf8').trim()}`, )
+                logger.info(`${logPrefix}: ${chunk.toString('utf8').trim()}`, )
             },
             onStderr(chunk) {
-                logging.ephemeralInfo(`${stderrLogPefix || logPrefix}: ${chunk.toString('utf8').trim()}`)
+                logger.info(`${stderrLogPefix || logPrefix}: ${chunk.toString('utf8').trim()}`)
             }
         })
     
@@ -115,7 +120,7 @@ export class SSHClient {
     async waitForConnection(retries=12, delayMs=10000){
         for (let attempt = 1; attempt <= retries; attempt++){
             try {
-                logging.ephemeralInfo(`Trying SSH connect on ${this.args.host} (${attempt}/${retries})`)
+                this.logger.info(`Trying SSH connect on ${this.args.host} (${attempt}/${retries})`)
                 await this.doConnect()
                 return
             } catch (e){
@@ -138,7 +143,7 @@ export class SSHClient {
     }
     
     async connect() {
-        logging.ephemeralInfo(`Connecting via SSH to ${this.args.host}...`)
+        this.logger.info(`Connecting via SSH to ${this.args.host}...`)
     
         await this.doConnect()
     

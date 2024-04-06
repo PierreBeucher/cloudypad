@@ -10,8 +10,7 @@ export const { joinSafe } = upath;
 
 const CURRENT_DIR = path.dirname(fileURLToPath(import.meta.url))
 
-export const INFRA_DIR = joinSafe(CURRENT_DIR, "..", "..", "infra");
-export const CONFIGS_DIR = joinSafe(CURRENT_DIR, "..", "..", "configs");
+export const CONFIGS_DIR = joinSafe(CURRENT_DIR, "..", "configs");
 export const NIX_CONFIGS_DIR = joinSafe(CONFIGS_DIR, "nix")
 export const WOLF_CONFIGS_DIR = joinSafe(CONFIGS_DIR, "wolf")
 

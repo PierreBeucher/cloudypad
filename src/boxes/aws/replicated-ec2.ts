@@ -7,7 +7,8 @@ import { ReplicatedEC2instance } from '../../lib/infra/pulumi/components/aws/rep
 import { OutputMap } from '@pulumi/pulumi/automation/stack.js';
 import { pulumiOutputMapToPlainObject } from '../../lib/infra/pulumi/pulumi-client.js';
 import * as pulumi from "@pulumi/pulumi"
-import * as logging from "../../lib/logging.js"
+import { boxLogger, CloudyBoxLogObjI } from "../../lib/logging.js"
+import {  Logger } from 'tslog';
 
 export const ReplicatedEC2InstanceBoxManagerSpecZ = z.object({
     awsConfig: z.object({ // TODO need a better way to handle that
@@ -56,6 +57,8 @@ export class ReplicatedEC2BoxManager extends PulumiBoxManager<ReplicatedEC2Insta
 
     readonly awsClient: AwsClient
 
+    readonly logger: Logger<CloudyBoxLogObjI>
+
     constructor(name: string, args: ReplicatedEC2InstanceBoxManagerArgs) {
 
         const metadata : BoxMetadata = { name: name, kind: BOX_KIND_REPLICATED_EC2_INSTANCE }
@@ -92,7 +95,8 @@ export class ReplicatedEC2BoxManager extends PulumiBoxManager<ReplicatedEC2Insta
                 meta: { name: name, kind: BOX_KIND_REPLICATED_EC2_INSTANCE }
             },
         )
-
+        
+        this.logger = boxLogger.getSubLogger({ name: `${metadata.kind}:${metadata.name}` })
         this.awsClient = new AwsClient({ region: args.spec.awsConfig?.region })
     }
 
@@ -111,7 +115,7 @@ export class ReplicatedEC2BoxManager extends PulumiBoxManager<ReplicatedEC2Insta
     async stop() {
         const o = await this.get()
         const promises = o.replicas.map(r => {
-            logging.ephemeralInfo(`Stopping instance ${r.instanceId}`)
+            this.logger.info(`Stopping instance ${r.instanceId}`)
             return this.awsClient.stopInstance(r.instanceId)
         })
 
@@ -122,7 +126,7 @@ export class ReplicatedEC2BoxManager extends PulumiBoxManager<ReplicatedEC2Insta
     async start() {
         const o = await this.get()
         const promises = o.replicas.map(r => {
-            logging.ephemeralInfo(`Starting instance ${r.instanceId}`)
+            this.logger.info(`Starting instance ${r.instanceId}`)
             return this.awsClient.startInstance(r.instanceId)
         })
 
@@ -132,7 +136,7 @@ export class ReplicatedEC2BoxManager extends PulumiBoxManager<ReplicatedEC2Insta
     async restart() {
         const o = await this.get()
         const promises = o.replicas.map(r => {
-            logging.ephemeralInfo(`Restarting instance ${r.instanceId}`)
+            this.logger.info(`Restarting instance ${r.instanceId}`)
             return this.awsClient.rebootInstance(r.instanceId)
         })
 

@@ -1,4 +1,6 @@
 import { z } from "zod"
+import { CloudyBoxLogObjI, boxLogger } from "../../lib/logging.js"
+import { Logger } from "tslog";
 
 export const BoxSchemaBaseZ = z.object({
     kind: z.string(),
@@ -32,8 +34,11 @@ export interface BoxMetadata {
 export abstract class BoxBase {
     readonly metadata: BoxMetadata
 
+    readonly logger: Logger<CloudyBoxLogObjI>
+
     constructor(meta: BoxMetadata){
         this.metadata = meta
+        this.logger = boxLogger.getSubLogger({ name: `${meta.kind}:${meta.name}` })
     }
 
     async getMetadata() : Promise<BoxMetadata>{

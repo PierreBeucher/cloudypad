@@ -2,7 +2,6 @@ import { SSHClient, SSHCommandOpts } from "../../lib/ssh/client.js";
 import { BoxSchemaBaseZ, BoxBase, BoxConfigurator } from "../common/base.js";
 import { SSHDefinitionZ } from "../common/virtual-machine.js";
 import { z } from "zod";
-import * as logging from "../../lib/logging.js"
 import * as utils from "../../utils.js"
 
 export const NixOSBoxConfigZ = z.object({
@@ -86,9 +85,9 @@ export class NixOSBoxConfigurator extends BoxBase implements BoxConfigurator {
     public async configure() {
         const o = await this.get()
 
-        logging.info(`   Configuring NixOS instance ${this.metadata.name}`)
+        this.logger.info(`   Configuring NixOS instance ${this.metadata.name}`)
         await this.doConfigure()
-        logging.info(`   NixOS instance ${this.metadata.name} provisioned !`)
+        this.logger.info(`   NixOS instance ${this.metadata.name} provisioned !`)
 
         return o
     }
@@ -162,20 +161,21 @@ export class NixOSBoxConfigurator extends BoxBase implements BoxConfigurator {
      */
     private async ensureNixosConfig(ssh: SSHClient, nixosConfigName: string){
 
-        logging.ephemeralInfo("  Rebuilding NixOS config...")
+        this.logger.info("  Rebuilding NixOS config...")
 
         const configFile = utils.joinSafe(utils.NIX_CONFIGS_DIR, `${nixosConfigName}.nix`)
 
-        logging.ephemeralInfo("  Copying NixOS configuration...")
+        this.logger.info("  Copying NixOS configuration...")
         await ssh.putDirectory(utils.NIX_CONFIGS_DIR, '/etc/nixos/')
         await ssh.putFile(configFile, "/etc/nixos/configuration.nix",)
         
-        logging.ephemeralInfo("  Rebuilding NixOS configuration...")
+        this.logger.info("  Rebuilding NixOS configuration...")
         await ssh.command(["nixos-rebuild", "switch", "--upgrade"] )
     }
 
     private buildSshClient(){
         return new SSHClient({
+            clientName: `${this.metadata.kind}:${this.metadata.name}:ssh`,
             host: this.args.spec.hostname,
             user: this.args.spec.ssh.user || "root",
             sshKeyPath: this.args.spec.ssh.privateKeyPath
