@@ -10,5 +10,7 @@ parserOptions:
   sourceType: module
 plugins:
   - '@typescript-eslint'
-rules: {}
+rules: 
   # no-unused-vars: "warn"
+  "@typescript-eslint/no-explicit-any": "off"
+  

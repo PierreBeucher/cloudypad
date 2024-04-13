@@ -12,6 +12,8 @@ _This project is under heavy development and will have breaking changes. Feel fr
   - [❄️ NixOS instance fleet](#️-nixos-instance-fleet)
 - [Example configurations](#example-configurations)
 - [Development](#development)
+  - [Test NixOS config](#test-nixos-config)
+  - [Generate Paperspace client](#generate-paperspace-client)
 
 ## Features
 
@@ -133,7 +135,7 @@ See [examples](./examples/)
 
 ## Development
 
-Test NixOS config
+### Test NixOS config
 
 ```sh
 nix-instantiate '<nixpkgs/nixos>' -A config.system.build.toplevel -I nixpkgs=channel:nixos-23.05 --arg configuration ./configs/nix/wolf-aws.nix
@@ -146,4 +148,12 @@ pulumi stack ls -a
 pulumi destroy -s full-stack-name
 pulumi stack output -s full-stack-name
 pulumi stack rm full-stack-name
+```
+
+### Generate Paperspace client
+
+Paperspace client is generated from OpenAPI specifications:
+
+```sh
+task paperspace-client-gen
 ```
