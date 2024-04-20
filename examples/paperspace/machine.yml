@@ -1,0 +1,6 @@
+name: my-paper-plane
+kind: paperspace.Machine.Manager
+spec:
+  apiKeyFile: tmp/paperspace-apikey
+  machineType: C2
+  region: "Europe (AMS1)"

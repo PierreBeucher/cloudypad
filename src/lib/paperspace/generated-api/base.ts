@@ -13,7 +13,7 @@
  */
 
 
-import type { Configuration } from './configuration';
+import type { Configuration } from './configuration.js';
 // Some imports not used depending on template conditions
 // @ts-ignore
 import type { AxiosPromise, AxiosInstance, RawAxiosRequestConfig } from 'axios';

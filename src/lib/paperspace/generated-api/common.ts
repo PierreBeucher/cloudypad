@@ -13,10 +13,10 @@
  */
 
 
-import type { Configuration } from "./configuration";
-import type { RequestArgs } from "./base";
+import type { Configuration } from "./configuration.js";
+import type { RequestArgs } from "./base.js";
 import type { AxiosInstance, AxiosResponse } from 'axios';
-import { RequiredError } from "./base";
+import { RequiredError } from "./base.js";
 
 /**
  *
