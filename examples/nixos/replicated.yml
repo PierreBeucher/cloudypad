@@ -17,5 +17,5 @@ spec:
   network:
     ingressPorts:
       - from: 8080
-  provider:
+  provisioner:
     aws: {}

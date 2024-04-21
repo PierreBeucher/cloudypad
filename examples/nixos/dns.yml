@@ -7,5 +7,5 @@ spec:
     prefix: nixos-with-dns
   ssh:
     privateKeyPath: "/home/pbeucher/.ssh/id_ed25519"
-  provider:
+  provisioner:
     aws: {}

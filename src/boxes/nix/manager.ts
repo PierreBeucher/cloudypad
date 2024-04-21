@@ -16,7 +16,7 @@ export const ReplicatedNixOSBoxManagerSpecZ = z.object({
     replicas: z.union([z.array(z.string()), z.number()]).optional(),
     dns: DnsSchema.optional(),
     network: NetworkSchema.optional(),
-    provider: z.object({
+    provisioner: z.object({
         aws: ReplicatedEC2InstanceSchema.partial()
     })
 }).strict()
@@ -30,7 +30,7 @@ export type ReplicatedNixOSBoxManagerSchema = z.infer<typeof ReplicatedNixOSBoxM
 
 export interface ReplicatedNixOSBoxManagerArgs {
     spec: ReplicatedNixOSBoxManagerSpec
-    provider: ReplicatedEC2BoxManager
+    provisioner: ReplicatedEC2BoxManager
     additionalConfigSteps?: NixOSConfigStep[]
 }
 
@@ -63,7 +63,7 @@ export class ReplicatedNixOSBoxManager extends BoxBase implements BoxManager {
     }
 
     public async provision() {
-        return this.args.provider.provision()
+        return this.args.provisioner.provision()
     }
 
     public async configure() {
@@ -76,27 +76,27 @@ export class ReplicatedNixOSBoxManager extends BoxBase implements BoxManager {
     }
 
     public async destroy(): Promise<void> {
-        return this.args.provider.destroy()
+        return this.args.provisioner.destroy()
     }
 
     public async preview(): Promise<string> {
-        return this.args.provider.preview()
+        return this.args.provisioner.preview()
     }
 
     public async get() {
-        return this.args.provider.get()
+        return this.args.provisioner.get()
     }
 
     public async stop() {
-        return this.args.provider.stop()
+        return this.args.provisioner.stop()
     }
 
     public async start() {
-        return this.args.provider.start()
+        return this.args.provisioner.start()
     }
 
     public async restart() {
-        return this.args.provider.restart()
+        return this.args.provisioner.restart()
     }
 
     public async runSshCommand(cmd: string[], opts?: SSHCommandOpts): Promise<{ replica: ReplicatedEC2InstanceOutput, sshRes: SSHExecCommandResponse }[]> {
@@ -166,11 +166,11 @@ export async function parseReplicatedNixOSBoxManagerSpec(rawConfig: unknown) : P
         }
     }
 
-    const finalAwsConfig = merge(defaultAwsConfig, config.spec.provider.aws)
+    const finalAwsConfig = merge(defaultAwsConfig, config.spec.provisioner.aws)
     const awsBoxManager = new ReplicatedEC2BoxManager(`nixos-${config.name}`, finalAwsConfig)
 
     return new ReplicatedNixOSBoxManager(config.name, {
-        provider: awsBoxManager,
+        provisioner: awsBoxManager,
         spec: config.spec
     })
 }

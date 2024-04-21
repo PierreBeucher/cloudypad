@@ -50,7 +50,7 @@ export class PaperspaceBoxManager extends BoxBase implements BoxManager  {
     }
 
     async configure(): Promise<BoxOutputs> {
-        this.logger.info("Paperspace config not implemented.")
+        this.logger.debug("Paperspace configuration is no op.")
         return this.get()
     }
 

@@ -17,7 +17,7 @@ export const WolfBoxSchemaZ = BoxSchemaBaseZ.extend({
         ssh: SSHDefinitionZ,
         dns: DnsSchema.optional(),
         network: NetworkSchema.optional(),
-        provider: z.object({
+        provisioner: z.object({
             aws: ReplicatedEC2InstanceSchema.partial()
         })
     })
@@ -138,7 +138,7 @@ export async function parseWolfBoxSpec(rawConfig: unknown) : Promise<WolfBoxMana
         } 
     }
 
-    const finalAwsConfig = merge(defaultAwsConfig, config.spec.provider.aws)
+    const finalAwsConfig = merge(defaultAwsConfig, config.spec.provisioner.aws)
     const awsBoxManager = new ReplicatedEC2BoxManager(`${BOX_KIND_GAMING_WOLF}-${config.name}`, finalAwsConfig)
     
     const nixosConf : NixOSBoxConfig = {
@@ -150,12 +150,12 @@ export async function parseWolfBoxSpec(rawConfig: unknown) : Promise<WolfBoxMana
     const finalNixosConfig = merge(nixosConf, config.spec.nixos)
 
     return new WolfBoxManager(config.name, { 
-        provider: awsBoxManager,
+        provisioner: awsBoxManager,
         spec: {
             nixos: finalNixosConfig,
             replicas: [ "wolf" ], // single replica
             ssh: config.spec.ssh,
-            provider: config.spec.provider,
+            provisioner: config.spec.provisioner,
         }
     })
 }

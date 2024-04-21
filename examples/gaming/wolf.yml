@@ -3,6 +3,6 @@ kind: gaming.Wolf.Manager
 spec: 
   ssh:
     privateKeyPath: "/home/pbeucher/.ssh/id_ed25519"
-  provider:
+  provisioner:
     aws:
       region: eu-central-1
