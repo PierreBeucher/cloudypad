@@ -1,7 +1,8 @@
-name: simple-example
+name: simple-example-paperspace
 kind: Linux.NixOS.Manager
 spec:
   ssh:
     privateKeyPath: "/home/pbeucher/.ssh/id_ed25519"
   provisioner:
-    aws: {}
+    paperspace:
+      apiKeyPath: tmp/paperspace-apikey

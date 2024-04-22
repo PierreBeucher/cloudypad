@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { DnsSchema, InstanceSchema, NetworkSchema, VolumeSchema } from './common.js';
-import { BoxMetadata, BoxSchemaBaseZ } from '../common/base.js';
+import { BoxMetadata, BoxSchemaBaseZ, MachineBoxProvisioner, MachineBoxProvisionerOutput, MachineBoxProvisionerInstance, MachineBoxProvisionerOutputZ } from '../common/base.js';
 import { PulumiBoxManager } from '../pulumi/manager.js';
 import { AwsClient } from '../../lib/infra/aws/client.js';
 import { ReplicatedEC2instance } from '../../lib/infra/pulumi/components/aws/replicated-ec2.js';
@@ -27,20 +27,7 @@ export const ReplicatedEC2InstanceSchema = BoxSchemaBaseZ.extend({
     spec: ReplicatedEC2InstanceBoxManagerSpecZ,
 })
 
-export const ReplicatedEC2InstanceOutputZ = z.object({
-    name: z.string(),
-    publicIp: z.string(),
-    instanceId: z.string(),
-    fqdn: z.string().optional()
-})
-
-export const ReplicatedEC2InstanceOutputsZ = z.object({
-    replicas: z.array(ReplicatedEC2InstanceOutputZ)
-})
-
-export type ReplicatedEC2InstanceOutputs = z.infer<typeof ReplicatedEC2InstanceOutputsZ>
 export type ReplicatedEC2InstanceBoxManagerSpec = z.infer<typeof ReplicatedEC2InstanceBoxManagerSpecZ>
-export type ReplicatedEC2InstanceOutput = z.infer<typeof ReplicatedEC2InstanceOutputZ>
 
 export const BOX_KIND_REPLICATED_EC2_INSTANCE = "aws.ec2.ReplicatedInstance"
 
@@ -48,7 +35,7 @@ export interface ReplicatedEC2InstanceBoxManagerArgs {
     spec: ReplicatedEC2InstanceBoxManagerSpec
 }
 
-export class ReplicatedEC2BoxManager extends PulumiBoxManager<ReplicatedEC2InstanceOutputs> {
+export class ReplicatedEC2BoxManager extends PulumiBoxManager<MachineBoxProvisionerOutput> implements MachineBoxProvisioner {
     
     static async parseSpec(source: unknown) : Promise<ReplicatedEC2BoxManager> {
         const config = ReplicatedEC2InstanceSchema.parse(source)
@@ -69,20 +56,19 @@ export class ReplicatedEC2BoxManager extends PulumiBoxManager<ReplicatedEC2Insta
             const replicas = instances.replicas.map(r => pulumi.all([ 
                     r.instance.id,
                     r.publicIp,
-                    r.fqdn,
-                ]).apply(([instanceId, ip, fqdn]) : ReplicatedEC2InstanceOutput => {
+                    r.name,
+                ]).apply(([instanceId, ip, name]) : MachineBoxProvisionerInstance => {
                     return {
-                        publicIp: ip,
-                        instanceId: instanceId,
-                        fqdn: fqdn,
-                        name: r.name
+                        address: ip,
+                        id: instanceId,
+                        name: name
                     }
                 })
             )
 
-            return pulumi.all(replicas).apply( (reps) : ReplicatedEC2InstanceOutputs => {
+            return pulumi.all(replicas).apply( (reps) : MachineBoxProvisionerOutput => {
                 return {
-                    replicas: reps
+                    instances: reps
                 }
             })
         }
@@ -100,11 +86,11 @@ export class ReplicatedEC2BoxManager extends PulumiBoxManager<ReplicatedEC2Insta
         this.awsClient = new AwsClient({ region: args.spec.awsConfig?.region })
     }
 
-    async stackOuputToBoxOutput(o: OutputMap): Promise<ReplicatedEC2InstanceOutputs> {
+    async stackOuputToBoxOutput(o: OutputMap): Promise<MachineBoxProvisionerOutput> {
         const values = await pulumiOutputMapToPlainObject(o)
-        const result = ReplicatedEC2InstanceOutputsZ.safeParse(values)
+        const result = MachineBoxProvisionerOutputZ.safeParse(values)
         if(!result.success){
-            const err = `Pulumi stack output parse error. Expected ${JSON.stringify(ReplicatedEC2InstanceOutputsZ.shape)}, got ${JSON.stringify(values)}}`
+            const err = `Pulumi stack output parse error. Expected ${JSON.stringify(MachineBoxProvisionerOutputZ.shape)}, got ${JSON.stringify(values)}}`
             console.error(err)
             throw new Error(err)
         }
@@ -114,9 +100,9 @@ export class ReplicatedEC2BoxManager extends PulumiBoxManager<ReplicatedEC2Insta
 
     async stop() {
         const o = await this.get()
-        const promises = o.replicas.map(r => {
-            this.logger.info(`Stopping instance ${r.instanceId}`)
-            return this.awsClient.stopInstance(r.instanceId)
+        const promises = o.instances.map(r => {
+            this.logger.info(`Stopping instance ${r.id}`)
+            return this.awsClient.stopInstance(r.id)
         })
 
         await Promise.all(promises)
@@ -125,9 +111,9 @@ export class ReplicatedEC2BoxManager extends PulumiBoxManager<ReplicatedEC2Insta
 
     async start() {
         const o = await this.get()
-        const promises = o.replicas.map(r => {
-            this.logger.info(`Starting instance ${r.instanceId}`)
-            return this.awsClient.startInstance(r.instanceId)
+        const promises = o.instances.map(r => {
+            this.logger.info(`Starting instance ${r.id}`)
+            return this.awsClient.startInstance(r.id)
         })
 
         await Promise.all(promises)
@@ -135,9 +121,9 @@ export class ReplicatedEC2BoxManager extends PulumiBoxManager<ReplicatedEC2Insta
 
     async restart() {
         const o = await this.get()
-        const promises = o.replicas.map(r => {
-            this.logger.info(`Restarting instance ${r.instanceId}`)
-            return this.awsClient.rebootInstance(r.instanceId)
+        const promises = o.instances.map(r => {
+            this.logger.info(`Restarting instance ${r.id}`)
+            return this.awsClient.rebootInstance(r.id)
         })
 
         await Promise.all(promises)

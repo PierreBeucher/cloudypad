@@ -98,7 +98,7 @@ export class WolfBoxManager extends ReplicatedNixOSBoxManager {
             
             if (match) {
                 const url = match[0];
-                const replacedUrl = url.replace(/\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}/, res.replica.publicIp);
+                const replacedUrl = url.replace(/\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}/, res.replica.address);
     
                 return replacedUrl
             } else {

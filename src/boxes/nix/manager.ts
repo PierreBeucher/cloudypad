@@ -1,14 +1,16 @@
 import lodash from 'lodash';
 const { merge } = lodash;
 import { parseSshPrivateKeyToPublic } from "../../utils.js";
-import { BoxSchemaBaseZ, BoxBase, BoxManager } from "../common/base.js";
+import { BoxSchemaBaseZ, BoxBase, BoxManager, MachineBoxProvisioner, MachineBoxProvisionerInstanceWithAddress } from "../common/base.js";
 import { SSHDefinitionZ } from "../common/virtual-machine.js";
 import { z } from "zod";
 import { NixOSBoxConfig, NixOSBoxConfigZ, NixOSBoxConfigurator, NixOSBoxConfiguratorSpec, NixOSConfigStep } from './configurator.js';
 import { SSHCommandOpts } from '../../lib/ssh/client.js';
 import { DnsSchema, NetworkSchema } from '../aws/common.js';
-import { ReplicatedEC2BoxManager, ReplicatedEC2InstanceBoxManagerArgs, ReplicatedEC2InstanceOutput, ReplicatedEC2InstanceSchema } from '../aws/replicated-ec2.js';
+import { ReplicatedEC2BoxManager, ReplicatedEC2InstanceBoxManagerArgs, ReplicatedEC2InstanceSchema } from '../aws/replicated-ec2.js';
 import { SSHExecCommandResponse } from 'node-ssh';
+import { PaperspaceBoxManager, PaperspaceBoxManagerSpecZ } from '../paperspace/manager.js';
+import { mainLogger } from '../../lib/logging.js';
 
 export const ReplicatedNixOSBoxManagerSpecZ = z.object({
     nixos: NixOSBoxConfigZ.partial().optional(),
@@ -17,8 +19,10 @@ export const ReplicatedNixOSBoxManagerSpecZ = z.object({
     dns: DnsSchema.optional(),
     network: NetworkSchema.optional(),
     provisioner: z.object({
-        aws: ReplicatedEC2InstanceSchema.partial()
-    })
+        aws: ReplicatedEC2InstanceSchema.partial().optional(),
+        paperspace: PaperspaceBoxManagerSpecZ.partial().optional()
+    }),
+
 }).strict()
 
 export const ReplicatedNixOSBoxManagerSchemaZ = BoxSchemaBaseZ.extend({
@@ -30,7 +34,7 @@ export type ReplicatedNixOSBoxManagerSchema = z.infer<typeof ReplicatedNixOSBoxM
 
 export interface ReplicatedNixOSBoxManagerArgs {
     spec: ReplicatedNixOSBoxManagerSpec
-    provisioner: ReplicatedEC2BoxManager
+    provisioner: MachineBoxProvisioner
     additionalConfigSteps?: NixOSConfigStep[]
 }
 
@@ -99,7 +103,7 @@ export class ReplicatedNixOSBoxManager extends BoxBase implements BoxManager {
         return this.args.provisioner.restart()
     }
 
-    public async runSshCommand(cmd: string[], opts?: SSHCommandOpts): Promise<{ replica: ReplicatedEC2InstanceOutput, sshRes: SSHExecCommandResponse }[]> {
+    public async runSshCommand(cmd: string[], opts?: SSHCommandOpts): Promise<{ replica: MachineBoxProvisionerInstanceWithAddress, sshRes: SSHExecCommandResponse }[]> {
         const configurators = await this.getConfigurators()
 
         const result = configurators.map(async c => {
@@ -113,17 +117,25 @@ export class ReplicatedNixOSBoxManager extends BoxBase implements BoxManager {
     /**
      * Build NixOS configurators for this manager's replicas
      */
-    private async getConfigurators() : Promise<{ replica: ReplicatedEC2InstanceOutput, configurator: NixOSBoxConfigurator }[]> {
+    private async getConfigurators() : Promise<{ replica: MachineBoxProvisionerInstanceWithAddress, configurator: NixOSBoxConfigurator }[]> {
         const o = await this.get()
         
-        const result = o.replicas.map(r => {
+        const result: { replica: MachineBoxProvisionerInstanceWithAddress, configurator: NixOSBoxConfigurator }[] = o.instances.map(r => {
+            if (!r.address) {
+                throw new Error(`Couldn't get address for instance ${r.name} (${r.id}). Maybe it's not started?`)
+            }
+
             const configuratorSpec : NixOSBoxConfiguratorSpec = merge({
-                hostname: r.publicIp,
+                hostname: r.address,
                 nixos: DEFAULT_NIXOS_CONFIG,
             }, this.args.spec)
 
             return {
-                replica: r,
+                replica: {
+                    address: r.address,
+                    id: r.id,
+                    name: r.name
+                },
                 configurator: new NixOSBoxConfigurator(`${this.metadata.name}-${r.name}`, {
                     spec: configuratorSpec,
                     additionalSteps: this.args.additionalConfigSteps
@@ -137,41 +149,80 @@ export class ReplicatedNixOSBoxManager extends BoxBase implements BoxManager {
 }
 
 export async function parseReplicatedNixOSBoxManagerSpec(rawConfig: unknown) : Promise<ReplicatedNixOSBoxManager> {
-    const config = await ReplicatedNixOSBoxManagerSchemaZ.parseAsync(rawConfig)
 
-    // Default configuration for AWS
-    const defaultAwsConfig: ReplicatedEC2InstanceBoxManagerArgs = {
-        spec: {
-            replicas: config.spec.replicas,
-            awsConfig: {
-                region: "eu-central-1" // TODO default from user environment?
-            }, 
-            publicKey: await parseSshPrivateKeyToPublic(config.spec.ssh.privateKeyPath),
-            dns: config.spec.dns,
-            network: merge(
-                {
-                    ingressPorts: [{
-                        from: 22
-                    }]
-                }, 
-                config.spec.network
-            ),
-            instance: {
-                ami: "ami-024965d66b21fb7ab", // nixos/23.11.5060.617579a78725-x86_64-linux eu-central-1
-                type: "t3.small",
-                rootVolume: {
-                    sizeGb: 16 // NixOS needs generous amount of disk by default
-                }
-            },
-        }
+    const parsedConfig = ReplicatedNixOSBoxManagerSchemaZ.safeParse(rawConfig)
+    if (!parsedConfig.success) {
+        throw new Error(`Config parse errors: ${JSON.stringify(parsedConfig.error.issues, undefined, 2)}`)
     }
 
-    const finalAwsConfig = merge(defaultAwsConfig, config.spec.provisioner.aws)
-    const awsBoxManager = new ReplicatedEC2BoxManager(`nixos-${config.name}`, finalAwsConfig)
+    const config = parsedConfig.data
 
-    return new ReplicatedNixOSBoxManager(config.name, {
-        provisioner: awsBoxManager,
-        spec: config.spec
-    })
+    // Multiple providers can be used but exactly one must be set
+    // TODO Unit test !
+    const provKeys = Object.keys(config.spec.provisioner)
+
+    mainLogger.info(`Found provisioner(s): ${JSON.stringify(provKeys)}`)
+    if (provKeys.length != 1) {
+        throw new Error(`Exactly a single provisioner must be set. Got: ${provKeys}`)
+    }
+
+    const provisionerName = provKeys[0]
+
+    switch (provisionerName) {
+        case "aws": {
+            // Default configuration for AWS
+            const defaultAwsConfig: ReplicatedEC2InstanceBoxManagerArgs = {
+                spec: {
+                    replicas: config.spec.replicas,
+                    awsConfig: {
+                        region: "eu-central-1" // TODO default from user environment?
+                    }, 
+                    publicKey: await parseSshPrivateKeyToPublic(config.spec.ssh.privateKeyPath),
+                    dns: config.spec.dns,
+                    network: merge(
+                        {
+                            ingressPorts: [{
+                                from: 22
+                            }]
+                        }, 
+                        config.spec.network
+                    ),
+                    instance: {
+                        ami: "ami-024965d66b21fb7ab", // nixos/23.11.5060.617579a78725-x86_64-linux eu-central-1
+                        type: "t3.small",
+                        rootVolume: {
+                            sizeGb: 16 // NixOS needs generous amount of disk by default
+                        }
+                    },
+                }
+            }
+
+            const finalAwsConfig = merge(defaultAwsConfig, config.spec.provisioner.aws)
+            const awsBoxManager = new ReplicatedEC2BoxManager(`nixos-${config.name}`, finalAwsConfig)
+
+            return new ReplicatedNixOSBoxManager(config.name, {
+                provisioner: awsBoxManager,
+                spec: config.spec
+            })
+        }
+        case "paperspace": {
+            const ppProvisionerSpec = config.spec.provisioner.paperspace!
+            
+            const ppBoxManager = new PaperspaceBoxManager(`nixos-${config.name}`, {
+                apiKeyFile: ppProvisionerSpec.apiKeyFile,
+                machineType: ppProvisionerSpec.machineType || "C2",
+                region: ppProvisionerSpec.region || "Europe (AMS1)"
+            })
+
+            return new ReplicatedNixOSBoxManager(config.name, {
+                provisioner: ppBoxManager,
+                spec: config.spec
+            })
+        }
+        default:
+            throw new Error(`Provisioner not implemented: ${provisionerName}`)
+    }
+    
+    
 }
 

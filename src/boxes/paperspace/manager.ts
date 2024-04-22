@@ -1,8 +1,6 @@
 import { z } from 'zod';
-import { BoxOutputs, BoxBase, BoxSchemaBaseZ, BoxManager } from '../common/base.js';
+import { BoxBase, BoxSchemaBaseZ, MachineBoxProvisioner, MachineBoxProvisionerOutput } from '../common/base.js';
 import { PaperspaceClient } from '../../lib/paperspace/PaperspaceClient.js';
-import * as fs from "fs"
-import { MachinesList200ResponseItemsInner } from '../../lib/paperspace/generated-api/api.js';
 
 export const BOX_KIND_PAPERSPACE_MACHINE = "paperspace.Machine.Manager"
 
@@ -17,7 +15,7 @@ export const BOX_KIND_PAPERSPACE_MACHINE = "paperspace.Machine.Manager"
 export const DEFAULT_MACHINE_TEMPLATE_ID = "t0nspur5" // Ubuntu 22
 
 export const PaperspaceBoxManagerSpecZ = z.object({
-    apiKeyFile: z.string(),
+    apiKeyFile: z.string().optional(),
     machineType: z.string(),
     region: z.string(),
 });
@@ -28,7 +26,7 @@ export const PaperspaceBoxManagerSchemaZ = BoxSchemaBaseZ.extend({
 
 export type PaperspaceBoxManagerSpec = z.infer<typeof PaperspaceBoxManagerSpecZ>;
 
-export class PaperspaceBoxManager extends BoxBase implements BoxManager  {
+export class PaperspaceBoxManager extends BoxBase implements MachineBoxProvisioner  {
 
     private client: PaperspaceClient;
     private spec: PaperspaceBoxManagerSpec;
@@ -41,64 +39,83 @@ export class PaperspaceBoxManager extends BoxBase implements BoxManager  {
     constructor(name: string, spec: PaperspaceBoxManagerSpec) {
         super({ kind: BOX_KIND_PAPERSPACE_MACHINE, name: name })
         this.spec = spec;
-        this.client = new PaperspaceClient(fs.readFileSync(spec.apiKeyFile, { encoding: 'utf8' }));
+        this.client = new PaperspaceClient({ apiKeyFile: spec.apiKeyFile});
     }
 
-    async deploy(): Promise<BoxOutputs> {
+    async deploy() {
         await this.provision()
         return this.configure()
     }
 
-    async configure(): Promise<BoxOutputs> {
+    async configure() {
         this.logger.debug("Paperspace configuration is no op.")
         return this.get()
     }
 
-    async provision(): Promise<BoxOutputs> {
+    async provision() {
+        if (await this.client.machineWithNameExists(this.getMachineName())) {
+            this.logger.info(`Found existing machine ${this.getMachineName()}. No creation needed.`)
+            return this.get()
+        }
+        
+        this.logger.info(`Creating machine ${this.getMachineName()}. No creation needed.`)
         const machine = await this.client.createMachine({
             name: this.getMachineName(),
-            machineType: this.spec.machineType,
+            machineType: this.spec.machineType || "C2",
             region: this.spec.region || "Europe (AMS1)",
             templateId: DEFAULT_MACHINE_TEMPLATE_ID,
             diskSize: 50,
+            startOnCreate: true,
+            publicIpType: 'dynamic'
         });
-        return { machineId: machine.id, publicIp: machine.publicIp };
+
+        // Machine may not have an IP before being fully started
+        await this.client.waitForMachineState(machine.id, 'ready')
+        const startedMachine = await this.client.getMachine(machine.id)
+
+        return { machineId: startedMachine.id, publicIp: startedMachine.publicIp };
     }
 
-    async destroy(): Promise<void> {
-        const m = await this.get()
+    async destroy() {
+        const m = await this.getMachine()
         this.logger.info(`Destroying machine ${m.id}`)
         await this.client.deleteMachine(m.id);
     }
 
-    async preview(): Promise<string> {
-        return `This will provision a Paperspace machine in ${this.spec.region} with type ${this.spec.machineType}.`;
+    async preview() {
+        return `Will provision a Paperspace machine in ${this.spec.region} with type ${this.spec.machineType}.`;
     }
 
-    private getMachineName() : string{
+    private getMachineName(): string{
         return this.metadata.name
     }
 
-    private async getMachineId() : Promise<string>{
-        const m = await this.get()
-        return m.id
+    private async getMachine() {
+        return this.client.getMachineByName(this.getMachineName())
     }
 
-    async get(): Promise<MachinesList200ResponseItemsInner> {
+    async get(): Promise<MachineBoxProvisionerOutput> {
         const machine = await this.client.getMachineByName(this.getMachineName())
-        return machine
+        return { instances: [ {
+            address: machine.publicIp || undefined,
+            id: machine.id,
+            name: machine.name
+        } ] }
     }
 
     async stop(): Promise<void> {
-        await this.client.stopMachine(await this.getMachineId())
+        const m = await this.getMachine()
+        await this.client.stopMachine(m.id)
     }
     
     async start(): Promise<void> {
-        await this.client.startMachine(await this.getMachineId())
+        const m = await this.getMachine()
+        await this.client.startMachine(m.id)
     }
     
     async restart(): Promise<void> {
-        await this.client.restartMachine(await this.getMachineId())
+        const m = await this.getMachine()
+        await this.client.restartMachine(m.id)
     }
 
 }

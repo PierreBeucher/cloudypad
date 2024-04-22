@@ -69,6 +69,31 @@ export interface BoxProvisioner extends BoxBase {
 
 }
 
+export const MachineBoxProvisionerInstanceZ = z.object({
+    name: z.string().describe("Instance name. Notion of 'name' vary accross provider so this is only for informational purpose. Use ID for provider-specific pointer to instance."),
+    address: z.string().optional().describe("IP or hostname on which this machine is reachable"),
+    id: z.string().describe("Unique ID of the machine's instance within provider")
+})
+
+export const MachineBoxProvisionerInstanceWithAddressZ = MachineBoxProvisionerInstanceZ.merge(z.object({
+    address: z.string().describe("IP or hostname on which this machine is reachable"),
+}))
+
+export const MachineBoxProvisionerOutputZ = z.object({
+    instances: z.array(MachineBoxProvisionerInstanceZ)
+})
+export type MachineBoxProvisionerInstance = z.infer<typeof MachineBoxProvisionerInstanceZ>
+export type MachineBoxProvisionerOutput = z.infer<typeof MachineBoxProvisionerOutputZ>
+export type MachineBoxProvisionerInstanceWithAddress = z.infer<typeof MachineBoxProvisionerInstanceWithAddressZ>
+
+/**
+ * Box provisioner deploying more or one machines in the Cloud
+ */
+export interface MachineBoxProvisioner extends BoxProvisioner {
+
+    get() : Promise<MachineBoxProvisionerOutput>
+}
+
 /**
  * A Box Configurator configure a Box, typically a VM but not necessarily.
  * It uses underlying tool like NixOS or Ansible. 

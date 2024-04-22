@@ -2,6 +2,9 @@ import { RawAxiosRequestConfig } from 'axios'
 import * as paperspace from './generated-api/api.js'
 import lodash from 'lodash';
 const { merge } = lodash;
+import * as fs from 'fs'
+import { Logger } from 'tslog';
+import { boxLogger, CloudyBoxLogObjI } from '../logging.js';
 
 /**
  * Wrap a client error from Axios potential error
@@ -10,6 +13,11 @@ export interface PaperspaceClientError {
     message?: any
     status?: number
     source?: any
+}
+
+export interface PaperspaceClientArgs {
+    apiKey?: string
+    apiKeyFile?: string,
 }
 
 /**
@@ -21,13 +29,24 @@ export class PaperspaceClient {
     private apiKey: string
     private baseOptions: RawAxiosRequestConfig
     private client: paperspace.MachineApi
-
-    constructor(apiKey: string) {
-        this.apiKey = apiKey
+    readonly logger: Logger<CloudyBoxLogObjI>
+    
+    constructor(args?: PaperspaceClientArgs) {
+        if (args?.apiKey) {
+            this.apiKey = args.apiKey
+        } else if (args?.apiKeyFile) {
+            this.apiKey = fs.readFileSync(args.apiKeyFile, { encoding: 'utf8' })
+        } else if (process.env.PAPERSPACE_API_KEY) {
+            this.apiKey = process.env.PAPERSPACE_API_KEY
+        } else {
+            throw new Error("Paperspace requires an API key. You can use environment variable PAPERSPACE_API_KEY")
+        }
+        
         this.baseOptions = { headers: { 
             Authorization: `Bearer ${this.apiKey}`,
         }}
         this.client = new paperspace.MachineApi()
+        this.logger = boxLogger.getSubLogger({ name: `PaperspaceClient` })
     }
 
     async getMachine(machineId: string): Promise<paperspace.MachinesList200ResponseItemsInner> {
@@ -115,6 +134,11 @@ export class PaperspaceClient {
         }
     }
 
+    async machineWithNameExists(name: string) : Promise<boolean>{
+        const machines = await this.listMachines({ name: name})
+        return machines.length > 0
+    }
+
     async getMachineByName(name: string): Promise<paperspace.MachinesList200ResponseItemsInner> {
         const machines = await this.listMachines({ name: name})
         const filteredMachines = machines.filter(machine => machine.name === name)
@@ -138,12 +162,13 @@ export class PaperspaceClient {
 
     async waitForMachineState(machineId: string, state: paperspace.MachinesCreate200ResponseDataStateEnum, periodMs=5000, maxRetries=24): Promise<boolean> {
         let retryCount = 0
-
+        
         if (await this.isMachineInState(machineId, state)) {
             return true
         }
 
         do {
+            this.logger.info(`Waiting for state ${state} on ${machineId}`)
             await new Promise(resolve => setTimeout(resolve, periodMs));
             if (await this.isMachineInState(machineId, state)) {
                 return true
