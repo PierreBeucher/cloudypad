@@ -26,56 +26,74 @@ export type NixOSBoxConfig = z.infer<typeof NixOSBoxConfigZ>
 
 export interface NixOSBoxConfiguratorArgs {
     spec: NixOSBoxConfiguratorSpec
-    additionalSteps?: NixOSConfigStep[]
+
+    /**
+     * Install steps run before initial SSH connection to run NixOS rebuild..
+     */
+    additionalPreConfigSteps?: NixOSPreConfigStep[]
+
+    /**
+     * Install steps run after NixOS rebuild.
+     */
+    additionalConfigSteps?: NixOSConfigStep[]
 }
 
 export const NIXOS_BOX_CONFIGURATOR_KIND = "Linux.NixOS.Configurator"
 
-export declare type NixOSConfigStep = (ssh: SSHClient) => Promise<void>;
+export declare type NixOSPreConfigStep = (box: NixOSBoxConfigurator) => Promise<void>;
+export declare type NixOSConfigStep = (box: NixOSBoxConfigurator, ssh: SSHClient) => Promise<void>;
 
 /**
  * Manages an existing NixOS machine through SSH. 
  * 
  * NixOS configuration is done through modular steps. By default it will only copy configuration.nix and
- * run nixos-rebuild switch, but installation procedure can be customized with NixOSConfigStep.
- * 
- * Internal array configSteps[] represents the configurations steps. By default a single step exists
- * for nixos-rebuild, but you can customize it such as:
- * 
- * ```typescript
- * const steps = bm.getConfigSteps()
- * steps.push(async (ssh: SSHClient) => {
- *      await this.doSomething(ssh)
- * })
- * ```
+ * run nixos-rebuild switch, but installation steps can be customized:
+ * - preConfigSteps are run before SSH connection attempt to run NixOS config. 
+ *   It can be used to prepare the machine, eg. run nixos-infect.
+ * - additionalConfigSteps are run after configuration of NixOS (nixos-rebuild switch). It can be
+ *   used for additional, maybe non-Nix, config. 
  */
 export class NixOSBoxConfigurator extends BoxBase implements BoxConfigurator {
 
     readonly args: NixOSBoxConfiguratorArgs
 
+    private preConfigSteps: NixOSPreConfigStep[]
     private configSteps: NixOSConfigStep[]
 
     constructor(name: string, args: NixOSBoxConfiguratorArgs) {
         super({ name: name, kind: NIXOS_BOX_CONFIGURATOR_KIND})
         this.args = args
-        this.configSteps = [
-            async (ssh: SSHClient) => { 
+        
+        this.preConfigSteps = args.additionalPreConfigSteps || []
+        
+        this.configSteps = []
+        this.configSteps.push(
+            async (_: NixOSBoxConfigurator, ssh: SSHClient) => { 
                 await this.ensureNixChannel(ssh, this.args.spec.nixos.nixosChannel, this.args.spec.nixos.homeManagerRelease)
                 await this.ensureNixosConfig(ssh, this.args.spec.nixos.nixosConfigName)
             }
-        ]
-        this.configSteps.push(...args.additionalSteps || [])
+        )
+        this.configSteps.push(...args.additionalConfigSteps || [])
     }
 
     /**
      * Run each config step in order 
      */
     private async doConfigure(){
+        
+        this.logger.info(`Running ${this.preConfigSteps.length} preConfig steps...`)
+
+        for (const preStep of this.preConfigSteps){
+            await preStep(this)
+        }
+        
+        this.logger.info(`Running ${this.configSteps.length} config steps...`)
+
         const ssh = this.buildSshClient()
         try {
             await this.doWaitForSshConnection(ssh)
             for (const step of this.configSteps){
-                await step(ssh)
+                await step(this, ssh)
             }
         } finally {
             ssh.dispose()

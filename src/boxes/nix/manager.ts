@@ -4,13 +4,14 @@ import { parseSshPrivateKeyToPublic } from "../../utils.js";
 import { BoxSchemaBaseZ, BoxBase, BoxManager, MachineBoxProvisioner, MachineBoxProvisionerInstanceWithAddress } from "../common/base.js";
 import { SSHDefinitionZ } from "../common/virtual-machine.js";
 import { z } from "zod";
-import { NixOSBoxConfig, NixOSBoxConfigZ, NixOSBoxConfigurator, NixOSBoxConfiguratorSpec, NixOSConfigStep } from './configurator.js';
+import { NixOSBoxConfig, NixOSBoxConfigZ, NixOSBoxConfigurator, NixOSBoxConfiguratorArgs, NixOSBoxConfiguratorSpec } from './configurator.js';
 import { SSHCommandOpts } from '../../lib/ssh/client.js';
 import { DnsSchema, NetworkSchema } from '../aws/common.js';
 import { ReplicatedEC2BoxManager, ReplicatedEC2InstanceBoxManagerArgs, ReplicatedEC2InstanceSchema } from '../aws/replicated-ec2.js';
 import { SSHExecCommandResponse } from 'node-ssh';
 import { PaperspaceBoxManager, PaperspaceBoxManagerSpecZ } from '../paperspace/manager.js';
 import { mainLogger } from '../../lib/logging.js';
+import { nixOSInfect } from './configurator-steps.js';
 
 export const ReplicatedNixOSBoxManagerSpecZ = z.object({
     nixos: NixOSBoxConfigZ.partial().optional(),
@@ -35,7 +36,7 @@ export type ReplicatedNixOSBoxManagerSchema = z.infer<typeof ReplicatedNixOSBoxM
 export interface ReplicatedNixOSBoxManagerArgs {
     spec: ReplicatedNixOSBoxManagerSpec
     provisioner: MachineBoxProvisioner
-    additionalConfigSteps?: NixOSConfigStep[]
+    configuratorOverride?: Partial<NixOSBoxConfiguratorArgs>
 }
 
 export const BOX_KIND_LINUX_REPLICATED_NIXOS = "Linux.NixOS.Manager"
@@ -71,7 +72,7 @@ export class ReplicatedNixOSBoxManager extends BoxBase implements BoxManager {
     }
 
     public async configure() {
-        const configurators = await this.getConfigurators()
+        const configurators = await this.buildConfigurators()
         const configPromises = Array.from(configurators.values()).map(c => c.configurator.configure())
         await Promise.all(configPromises)
 
@@ -104,7 +105,7 @@ export class ReplicatedNixOSBoxManager extends BoxBase implements BoxManager {
     }
 
     public async runSshCommand(cmd: string[], opts?: SSHCommandOpts): Promise<{ replica: MachineBoxProvisionerInstanceWithAddress, sshRes: SSHExecCommandResponse }[]> {
-        const configurators = await this.getConfigurators()
+        const configurators = await this.buildConfigurators()
 
         const result = configurators.map(async c => {
             const sshRes = await c.configurator.runSshCommand(cmd, opts)
@@ -117,7 +118,7 @@ export class ReplicatedNixOSBoxManager extends BoxBase implements BoxManager {
     /**
      * Build NixOS configurators for this manager's replicas
      */
-    private async getConfigurators() : Promise<{ replica: MachineBoxProvisionerInstanceWithAddress, configurator: NixOSBoxConfigurator }[]> {
+    private async buildConfigurators() : Promise<{ replica: MachineBoxProvisionerInstanceWithAddress, configurator: NixOSBoxConfigurator }[]> {
         const o = await this.get()
         
         const result: { replica: MachineBoxProvisionerInstanceWithAddress, configurator: NixOSBoxConfigurator }[] = o.instances.map(r => {
@@ -130,16 +131,19 @@ export class ReplicatedNixOSBoxManager extends BoxBase implements BoxManager {
                 nixos: DEFAULT_NIXOS_CONFIG,
             }, this.args.spec)
 
+            const configuratorArgs = merge({
+                    spec: configuratorSpec,
+                }, 
+                this.args.configuratorOverride
+            )
+
             return {
                 replica: {
                     address: r.address,
                     id: r.id,
                     name: r.name
                 },
-                configurator: new NixOSBoxConfigurator(`${this.metadata.name}-${r.name}`, {
-                    spec: configuratorSpec,
-                    additionalSteps: this.args.additionalConfigSteps
-                })
+                configurator: new NixOSBoxConfigurator(`${this.metadata.name}`, configuratorArgs)
             }
         })
 
@@ -176,8 +180,8 @@ export async function parseReplicatedNixOSBoxManagerSpec(rawConfig: unknown) : P
                     replicas: config.spec.replicas,
                     awsConfig: {
                         region: "eu-central-1" // TODO default from user environment?
-                    }, 
-                    publicKey: await parseSshPrivateKeyToPublic(config.spec.ssh.privateKeyPath),
+                    },
+                    publicKeys: [ await parseSshPrivateKeyToPublic(config.spec.ssh.privateKeyPath) ],
                     dns: config.spec.dns,
                     network: merge(
                         {
@@ -202,7 +206,7 @@ export async function parseReplicatedNixOSBoxManagerSpec(rawConfig: unknown) : P
 
             return new ReplicatedNixOSBoxManager(config.name, {
                 provisioner: awsBoxManager,
-                spec: config.spec
+                spec: config.spec,
             })
         }
         case "paperspace": {
@@ -216,7 +220,11 @@ export async function parseReplicatedNixOSBoxManagerSpec(rawConfig: unknown) : P
 
             return new ReplicatedNixOSBoxManager(config.name, {
                 provisioner: ppBoxManager,
-                spec: config.spec
+                spec: config.spec,
+                configuratorOverride: {
+                    // Paperspace does not provide NixOS image... Let's infect !
+                    additionalPreConfigSteps: [nixOSInfect]
+                }
             })
         }
         default:

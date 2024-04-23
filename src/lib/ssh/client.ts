@@ -98,7 +98,7 @@ export class SSHClient {
         }
     }
     
-    private async sshExec(exec: string[], logPrefix: string, stderrLogPefix?: string) : Promise<SSHExecCommandResponse>{
+    private async sshExec(exec: string[], logPrefix: string) : Promise<SSHExecCommandResponse>{
         if (!exec.length){
             throw new Error("No command provided.")
         }
@@ -107,10 +107,10 @@ export class SSHClient {
         const sshResp = await this.client.exec(command, exec.slice(1), {
             stream: "both",
             onStdout(chunk) {
-                logger.info(`${logPrefix}: ${chunk.toString('utf8').trim()}`, )
+                logger.info(`(stdout) ${logPrefix}: ${chunk.toString('utf8').trim()}`, )
             },
             onStderr(chunk) {
-                logger.info(`${stderrLogPefix || logPrefix}: ${chunk.toString('utf8').trim()}`)
+                logger.info(`(stderr) ${logPrefix}: ${chunk.toString('utf8').trim()}`)
             }
         })
     
