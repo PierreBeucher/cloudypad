@@ -84,7 +84,7 @@ export class SSHClient {
             },
             tick:(localPath, remotePath, error) => {
                 if (error) {
-                    console.error(`Failed to copy ${localPath} to ${remotePath}: ${error}`)
+                    this.logger.error(`Failed to copy ${localPath} to ${remotePath}: ${JSON.stringify(error)}`)
                     fail.push(localPath)
                 } else {
                     ok.push(localPath)

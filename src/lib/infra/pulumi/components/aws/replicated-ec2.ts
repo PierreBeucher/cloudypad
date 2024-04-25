@@ -38,15 +38,6 @@ export interface NetworkArgs {
     ingressPorts?: PortDefinition[];
 }
 
-export interface CompositeEC2InstanceArgs {
-    publicKey: pulumi.Input<string>
-    instance: InstanceArgs;
-    volumes?: VolumeArgs[];
-    dns?: DnsArgs;
-    network?: NetworkArgs;
-    tags?: pulumi.Input<{ [key: string]: pulumi.Input<string> }>;
-}
-
 export interface ReplicatedEC2instanceArgs {
     publicKey: pulumi.Input<string>
     network?: NetworkArgs

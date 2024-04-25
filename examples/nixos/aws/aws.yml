@@ -1,0 +1,20 @@
+name: simple-example-aws
+kind: Linux.NixOS.Manager
+spec:
+  nixos:
+    nixosChannel: nixos-23.05
+    modules:
+    - path: examples/nixos/aws/code-server.nix
+    modulesDir: 
+    - path: examples/nixos/modules
+  ssh:
+    privateKeyPath: /home/pbeucher/.ssh/id_ed25519
+    authorizedKeys: 
+    - ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIGaNlYLbwtAmfcNjlOsP6Ryh3QxGn9qlhlQjPo5nbzBa
+    - ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIFCaDcbK5+r0s0cbl9RC1kKDr0p3vJfErE6RIOwNeXEP
+  provisioner:
+    aws:
+      network:
+        ingressPorts:
+          - from: 8080
+      

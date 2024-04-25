@@ -3,19 +3,19 @@
 //
 
 import { SSHClient } from "../../lib/ssh/client.js";
-import { NixOSBoxConfigurator, NixOSPreConfigStep } from "./configurator.js";
+import { NixOSConfigurator, NixOSPreConfigStep } from "./configurator.js";
 
 /**
  * Try to install NixOS via nixos-infect if not already done. 
  */
-export const nixOSInfect: NixOSPreConfigStep = async (box: NixOSBoxConfigurator) => {
+export const nixOSInfect: NixOSPreConfigStep = async (box: NixOSConfigurator) => {
     const boxDetails = await box.get()
 
     const rootClient = new SSHClient({
         clientName: `${box.metadata.name}-preconfig-root`,
         host: boxDetails.hostname,
         user: "root",
-        sshKeyPath: box.args.spec.ssh.privateKeyPath
+        sshKeyPath: box.args.ssh.privateKeyPath
     });
 
     // Attempt to connect as root
@@ -42,7 +42,7 @@ export const nixOSInfect: NixOSPreConfigStep = async (box: NixOSBoxConfigurator)
             clientName: `${box.metadata.name}-preconfig-paperspace`,
             host: boxDetails.hostname,
             user: "paperspace",
-            sshKeyPath: box.args.spec.ssh.privateKeyPath
+            sshKeyPath: box.args.ssh.privateKeyPath
         });
         try {
             

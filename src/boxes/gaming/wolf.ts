@@ -3,11 +3,11 @@ import { parseSshPrivateKeyToPublic } from "../../utils.js";
 import { z } from "zod";
 import { BoxSchemaBaseZ } from "../common/base.js";
 import lodash from 'lodash';
-import { NixOSBoxConfig, NixOSBoxConfigZ } from "../nix/configurator.js";
 import { SSHClient } from "../../lib/ssh/client.js";
-import { ReplicatedNixOSBoxManager, ReplicatedNixOSBoxManagerArgs } from "../nix/manager.js";
+import { NixOSBoxConfig, NixOSBoxConfigZ, ReplicatedNixOSBoxManager, ReplicatedNixOSBoxManagerArgs } from "../nix/manager.js";
 import { ReplicatedEC2BoxManager, ReplicatedEC2InstanceBoxManagerArgs, ReplicatedEC2InstanceSchema } from "../aws/replicated-ec2.js";
 import { DnsSchema, NetworkSchema } from "../aws/common.js";
+import { NixOSConfigurator } from "../nix/configurator.js";
 const { merge } = lodash;
 
 export const WolfBoxSchemaZ = BoxSchemaBaseZ.extend({
@@ -57,9 +57,11 @@ export class WolfBoxManager extends ReplicatedNixOSBoxManager {
     constructor(name: string, args: WolfBoxManagerArgs){
         super(name, { 
             ...args, 
-            additionalConfigSteps: [ async (ssh: SSHClient) => {
-                await this.configureWolf(ssh) 
-            }]
+            configuratorOverrides: {
+                additionalConfigSteps: [ async  (box: NixOSConfigurator, ssh: SSHClient) => {
+                    await this.configureWolf(ssh) 
+                }]
+            }
         }, BOX_KIND_GAMING_WOLF)
     }
 
@@ -144,7 +146,6 @@ export async function parseWolfBoxSpec(rawConfig: unknown) : Promise<WolfBoxMana
     const nixosConf : NixOSBoxConfig = {
         nixosChannel: config.spec.nixos?.nixosChannel || "nixos-23.05",
         homeManagerRelease: config.spec.nixos?.homeManagerRelease || "release-23.05",
-        nixosConfigName: "wolf-aws",
     }
 
     const finalNixosConfig = merge(nixosConf, config.spec.nixos)
@@ -156,6 +157,16 @@ export async function parseWolfBoxSpec(rawConfig: unknown) : Promise<WolfBoxMana
             replicas: [ "wolf" ], // single replica
             ssh: config.spec.ssh,
             provisioner: config.spec.provisioner,
+        },
+        configuratorOverrides: {
+            modules: [{
+                name: "wolf.nix",
+                path: "src/lib/nix/modules/wolf.nix"
+            }],
+            modulesDirs: [{
+                name: "wolf",
+                path: "src/lib/nix/modules/wolf"
+            }]
         }
     })
 }
