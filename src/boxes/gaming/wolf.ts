@@ -5,7 +5,7 @@ import { BoxSchemaBaseZ } from "../common/base.js";
 import lodash from 'lodash';
 import { SSHClient } from "../../lib/ssh/client.js";
 import { NixOSBoxConfig, NixOSBoxConfigZ, ReplicatedNixOSBoxManager, ReplicatedNixOSBoxManagerArgs } from "../nix/manager.js";
-import { ReplicatedEC2BoxManager, ReplicatedEC2InstanceBoxManagerArgs, ReplicatedEC2InstanceSchema } from "../aws/replicated-ec2.js";
+import { ReplicatedEC2BoxManager, ReplicatedEC2InstanceBoxManagerArgs, ReplicatedEC2InstanceBoxManagerSpecZ } from "../aws/replicated-ec2.js";
 import { DnsSchema, NetworkSchema } from "../aws/common.js";
 import { NixOSConfigurator } from "../nix/configurator.js";
 const { merge } = lodash;
@@ -18,7 +18,7 @@ export const WolfBoxSchemaZ = BoxSchemaBaseZ.extend({
         dns: DnsSchema.optional(),
         network: NetworkSchema.optional(),
         provisioner: z.object({
-            aws: ReplicatedEC2InstanceSchema.partial()
+            aws: ReplicatedEC2InstanceBoxManagerSpecZ.deepPartial(), 
         })
     })
 })

@@ -31,6 +31,7 @@ export abstract class PulumiBoxManager<T extends BoxOutputs>  extends BoxBase im
 
     async get() : Promise<T> {
         const o = await this.client.getOutputsRaw()
+        this.logger.info(`Got box details: ${JSON.stringify(o)}`)
         return this.stackOuputToBoxOutput(o)
     }  
 

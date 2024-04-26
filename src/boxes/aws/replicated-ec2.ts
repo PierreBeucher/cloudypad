@@ -89,11 +89,24 @@ export class ReplicatedEC2BoxManager extends PulumiBoxManager<MachineBoxProvisio
     async stackOuputToBoxOutput(o: OutputMap): Promise<MachineBoxProvisionerOutput> {
         const values = await pulumiOutputMapToPlainObject(o)
         const result = MachineBoxProvisionerOutputZ.safeParse(values)
+        
         if(!result.success){
             const err = `Pulumi stack output parse error. Expected ${JSON.stringify(MachineBoxProvisionerOutputZ.shape)}, got ${JSON.stringify(values)}}`
             console.error(err)
             throw new Error(err)
         }
+
+        // Pulumi may not return proper outputs even after refresh
+        // If instance has been stopped or restarted, public IP may be absent or different
+        // but it won't affect stack Outputs after refresh
+        // as another up is needed to update the stack
+        // See https://github.com/pulumi/pulumi/issues/2710
+        //
+        // Let's retrieve IP specifically for better UX
+        for (const instance of result.data.instances){
+            const details = await this.awsClient.getInstanceDetails(instance.id)
+            instance.address = details.PublicIpAddress
+        }        
     
         return result.data
     }
