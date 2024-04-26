@@ -1,4 +1,4 @@
-import { ConfigMap, DestroyResult, InlineProgramArgs, LocalWorkspace, OutputMap, PreviewResult, PulumiFn, Stack, StackSummary, UpResult } from "@pulumi/pulumi/automation/index.js"
+import { ConfigMap, DestroyResult, InlineProgramArgs, LocalWorkspace, OutputMap, PreviewResult, PulumiFn, RefreshResult, Stack, StackSummary, UpResult } from "@pulumi/pulumi/automation/index.js"
 import { boxLogger, CloudyBoxLogObjI } from "../../logging.js"
 import { Logger } from "tslog"
 
@@ -37,6 +37,10 @@ export class PulumiClient {
     
     public async destroy(): Promise<DestroyResult> {
         return this.doDestroy()
+    }
+
+    public async refresh(): Promise<RefreshResult> {
+        return this.doRefresh()
     }
 
     private async createOrSelectPulumiStackProgram() : Promise<Stack>{
@@ -84,6 +88,16 @@ export class PulumiClient {
     
         return destroyRes
     }
+
+    private async doRefresh(): Promise<RefreshResult>{
+        const stack = await this.createOrSelectPulumiStackProgram()
+        
+        const refreshRes = await stack.refresh({ onOutput: (m: string) => { this.logPulumi(m) } });
+        this.logger.info(`   Refresh summary: \n${JSON.stringify(refreshRes.summary.resourceChanges, null, 4)}`);
+    
+        return refreshRes
+    }
+
 
     private logPulumi(m: string){
         this.logger.info(m)

@@ -53,6 +53,11 @@ export abstract class PulumiBoxManager<T extends BoxOutputs>  extends BoxBase im
         return p.stdout
     }
 
+    async refresh() {
+        await this.client.refresh()
+        return this.get()
+    }
+
     async configure() : Promise<T> {
         // NO OP
         return this.get()

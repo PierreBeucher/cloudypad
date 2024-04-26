@@ -82,6 +82,11 @@ export class PaperspaceBoxManager extends BoxBase implements MachineBoxProvision
         await this.client.deleteMachine(m.id);
     }
 
+    public async refresh() {
+        // Nothing to refresh for Paperspace hasit has no state
+        return this.get
+    }
+
     async preview() {
         return `Will provision a Paperspace machine in ${this.spec.region} with type ${this.spec.machineType}.`;
     }

@@ -112,6 +112,10 @@ export class ReplicatedNixOSBoxManager extends BoxBase implements BoxManager {
         return this.args.provisioner.destroy()
     }
 
+    public async refresh() {
+        return this.args.provisioner.refresh()
+    }
+
     public async preview(): Promise<string> {
         return this.args.provisioner.preview()
     }

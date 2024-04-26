@@ -51,6 +51,12 @@ async function main(){
       await getBoxDetails(box)
     });
   
+  program.command('refresh <box>')
+    .description('Refresh a box state')
+    .action(async (box: string) => {
+      await refresh(box)
+    })
+
   program.command('stop <box>')
     .description('Stop an instance')
     .action(async (box: string) => {
@@ -137,6 +143,14 @@ async function destroy(box: string) {
   mainLogger.info(`${emoji.get("bomb")} Destroying ${meta.kind} box ${meta.name}...`)
   await bm.destroy()
   mainLogger.info(`${emoji.get("boom")} Destroyed ${meta.name}`)
+}
+
+async function refresh(box: string) {
+  const bm = await getBoxManager(box)
+  const meta = await bm.getMetadata()
+  mainLogger.info(`${emoji.find("🍹")} Refreshing ${meta.kind} box ${meta.name}...`)
+  await bm.refresh()
+  mainLogger.info(`${emoji.get("white_check_mark")} Refreshed ${meta.name}`)
 }
 
 async function restart(box: string) {

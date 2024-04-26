@@ -67,6 +67,7 @@ export interface BoxProvisioner extends BoxBase {
 
     preview() : Promise<string>
 
+    refresh() : Promise<BoxOutputs>
 }
 
 export const MachineBoxProvisionerInstanceZ = z.object({
