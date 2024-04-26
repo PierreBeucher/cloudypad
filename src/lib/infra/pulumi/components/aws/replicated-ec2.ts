@@ -46,6 +46,12 @@ export interface ReplicatedEC2instanceArgs {
     replicas?: string[] | number
     instance: InstanceArgs
     volumes?: VolumeArgs[]
+
+    /**
+     * Ignore changes to public key used to create instance.
+     * This allow to pass any value to public key without destroying instance
+     */
+    ignorePublicKeyChanges?: pulumi.Input<boolean>
 }
 
 export interface EC2instanceResult {
@@ -102,7 +108,10 @@ export class ReplicatedEC2instance extends pulumi.ComponentResource {
 
         const keyPair = new aws.ec2.KeyPair(`${pulumiResourceName}-keypair`, {
             publicKey: args.publicKey,
-        }, commonPulumiOpts)
+        }, {
+            ...commonPulumiOpts,
+            ignoreChanges: args.ignorePublicKeyChanges ? [ "publicKey" ] : []
+        })
 
         const replicaNames = this.computeReplicaNames(args.replicas)
         const replicas : EC2instanceResult[] = replicaNames.map(rname => {

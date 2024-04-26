@@ -15,7 +15,7 @@ export const nixOSInfect: NixOSPreConfigStep = async (box: NixOSConfigurator) =>
         clientName: `${box.metadata.name}-preconfig-root`,
         host: boxDetails.hostname,
         user: "root",
-        sshKeyPath: box.args.ssh.privateKeyPath
+        privateKeyPath: box.args.ssh.privateKeyPath
     });
 
     // Attempt to connect as root
@@ -42,7 +42,7 @@ export const nixOSInfect: NixOSPreConfigStep = async (box: NixOSConfigurator) =>
             clientName: `${box.metadata.name}-preconfig-paperspace`,
             host: boxDetails.hostname,
             user: "paperspace",
-            sshKeyPath: box.args.ssh.privateKeyPath
+            privateKeyPath: box.args.ssh.privateKeyPath
         });
         try {
             

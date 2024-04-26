@@ -21,6 +21,7 @@ export const ReplicatedEC2InstanceBoxManagerSpecZ = z.object({
     tags: z.record(z.string()).optional(),
     instance: InstanceSchema,
     volumes: z.array(VolumeSchema).optional(),
+    ignorePublicKeyChanges: z.boolean().optional()
 });
 
 export const ReplicatedEC2InstanceSchema = BoxSchemaBaseZ.extend({

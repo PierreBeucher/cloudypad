@@ -11,7 +11,7 @@ export const PortDefinitionZ = z.object({
 export type PortDefinition = z.infer<typeof PortDefinitionZ>
 
 export const SSHDefinitionZ = z.object({
-    privateKeyPath: z.string(),
+    privateKeyPath: z.string().optional(),
     port: z.optional(z.number()),
     user: z.optional(z.string()),
     authorizedKeys: z.optional(z.array(z.string())),

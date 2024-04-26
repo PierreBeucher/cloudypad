@@ -1,13 +1,14 @@
 import { NodeSSH, SSHExecCommandResponse } from "node-ssh";
 import { CloudyBoxLogObjI, boxLogger } from "../logging.js"
 import { Logger } from "tslog";
+import { getUserSSHPrivateKeyPath } from "./utils.js";
 
 export interface SSHClientArgs {
     clientName: string
     host: string,
     port?: number,
     user: string,
-    sshKeyPath?: string
+    privateKeyPath?: string
 }
 
 export class SSHExecError extends Error{
@@ -45,6 +46,7 @@ export class SSHClient {
     readonly client: NodeSSH
     readonly args: SSHClientArgs
     readonly logger: Logger<CloudyBoxLogObjI>
+    currentPrivateKeyPath: string | undefined
 
     constructor(args: SSHClientArgs){
         this.args = args
@@ -132,13 +134,23 @@ export class SSHClient {
         }
         
     }
-
     private async doConnect(){
+        // Look for a private key if one hasn't been found already
+        if (!this.currentPrivateKeyPath) {
+            if (this.args.privateKeyPath) {
+                this.currentPrivateKeyPath = this.args.privateKeyPath
+            } else {
+                this.logger.info("No private SSH key provided. Looking for one...")
+                this.currentPrivateKeyPath = await getUserSSHPrivateKeyPath()
+                this.logger.info(`Found private key: ${this.currentPrivateKeyPath}`)
+            }
+        }
+        
         return this.client.connect({
             host: this.args.host,
             port: this.args.port,
             username: this.args.user,
-            privateKeyPath: this.args.sshKeyPath
+            privateKeyPath: this.currentPrivateKeyPath
         });
     }
     

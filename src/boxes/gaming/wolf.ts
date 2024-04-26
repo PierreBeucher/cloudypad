@@ -1,5 +1,4 @@
 import { PortDefinition, SSHDefinitionZ, STANDARD_SSH_PORTS } from "../common/virtual-machine.js";
-import { parseSshPrivateKeyToPublic } from "../../utils.js";
 import { z } from "zod";
 import { BoxSchemaBaseZ } from "../common/base.js";
 import lodash from 'lodash';
@@ -8,6 +7,7 @@ import { NixOSBoxConfig, NixOSBoxConfigZ, ReplicatedNixOSBoxManager, ReplicatedN
 import { ReplicatedEC2BoxManager, ReplicatedEC2InstanceBoxManagerArgs, ReplicatedEC2InstanceBoxManagerSpecZ } from "../aws/replicated-ec2.js";
 import { DnsSchema, NetworkSchema } from "../aws/common.js";
 import { NixOSConfigurator } from "../nix/configurator.js";
+import { getUserSSHPublicKey } from "../../lib/ssh/utils.js";
 const { merge } = lodash;
 
 export const WolfBoxSchemaZ = BoxSchemaBaseZ.extend({
@@ -126,7 +126,7 @@ export async function parseWolfBoxSpec(rawConfig: unknown) : Promise<WolfBoxMana
     const defaultAwsConfig: ReplicatedEC2InstanceBoxManagerArgs = {
         spec: {
             awsConfig: { region: "eu-central-1" },
-            publicKey: await parseSshPrivateKeyToPublic(config.spec.ssh.privateKeyPath),
+            publicKey: await getUserSSHPublicKey(config.spec.ssh.privateKeyPath),
             instance: {
                 ami: "ami-024965d66b21fb7ab", // nixos/23.11.5060.617579a78725-x86_64-linux eu-central-1
                 type: "g5.xlarge",

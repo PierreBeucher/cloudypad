@@ -1,6 +1,5 @@
 import lodash from 'lodash';
 const { merge } = lodash;
-import { parseSshPrivateKeyToPublic } from "../../utils.js";
 import { BoxSchemaBaseZ, BoxBase, BoxManager, MachineBoxProvisioner, MachineBoxProvisionerInstanceWithAddress } from "../common/base.js";
 import { SSHDefinitionZ } from "../common/virtual-machine.js";
 import { z } from "zod";
@@ -12,7 +11,7 @@ import { SSHExecCommandResponse } from 'node-ssh';
 import { PaperspaceBoxManager, PaperspaceBoxManagerSpecZ } from '../paperspace/manager.js';
 import { mainLogger } from '../../lib/logging.js';
 import { nixOSInfect } from './configurator-steps.js';
-import { lookupSSHPrivateKey } from '../../lib/ssh/utils.js';
+import { getUserSSHPublicKey } from '../../lib/ssh/utils.js';
 import { NixOSModule, NixOSModuleDirectory } from '../../lib/nix/interfaces.js';
 import { authorizedKeys } from '../../lib/nix/modules/authorized-keys.nix.js';
 import { awsBase } from '../../lib/nix/modules/aws-base.nix.js';
@@ -200,18 +199,11 @@ export async function parseReplicatedNixOSBoxManagerSpec(rawConfig: unknown) : P
 
     const provisionerName = provKeys[0]
 
-    // Fetch user private key if not provided
-    let publicKey: string | undefined  = undefined
-    if (config.spec.ssh.privateKeyPath) {
-        publicKey = await parseSshPrivateKeyToPublic(config.spec.ssh.privateKeyPath)
-    } else {
-        const userPrivKey = await lookupSSHPrivateKey()
-        if (userPrivKey) {
-            publicKey = await parseSshPrivateKeyToPublic(userPrivKey)
-        } else {
-            throw new Error("You must specify a public or private key to provision instance.")
-        }
-    }
+    // Find or generate the public SSH key to provision instance in this order:
+    // - If private key is provided, use it 
+    // - Otherwise, find first available private key
+    // Then generate a public key out of it
+    const sshPubKey = await getUserSSHPublicKey(config.spec.ssh.privateKeyPath)
 
     //
     // Build NixOS configuration from spec
@@ -253,7 +245,7 @@ export async function parseReplicatedNixOSBoxManagerSpec(rawConfig: unknown) : P
                     awsConfig: {
                         region: "eu-central-1" // TODO default from user environment?
                     },
-                    publicKey: publicKey,
+                    publicKey: sshPubKey,
                     dns: config.spec.dns,
                     network: merge(
                         {
@@ -270,6 +262,9 @@ export async function parseReplicatedNixOSBoxManagerSpec(rawConfig: unknown) : P
                             sizeGb: 16 // NixOS needs generous amount of disk by default
                         }
                     },
+                    // Once an instance is prosivioned with a public key any change would cause instance to be recreated
+                    // Instead ignore changes to keep instance, letting user change authorized keys instead
+                    ignorePublicKeyChanges: true
                 }
             }
 

@@ -239,7 +239,7 @@ export class NixOSConfigurator extends BoxBase implements BoxConfigurator {
             clientName: `${this.metadata.kind}:${this.metadata.name}:ssh`,
             host: this.args.hostname,
             user: this.args.ssh.user || "root",
-            sshKeyPath: this.args.ssh.privateKeyPath
+            privateKeyPath: this.args.ssh.privateKeyPath
         })
     }
 }
