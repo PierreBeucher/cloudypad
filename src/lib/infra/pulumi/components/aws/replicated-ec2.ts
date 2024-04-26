@@ -128,9 +128,14 @@ export class ReplicatedEC2instance extends pulumi.ComponentResource {
                 },
                 subnetId: args.network?.subnetId,
                 associatePublicIpAddress: true,
-            }, commonPulumiOpts);
+            }, {
+                ...commonPulumiOpts,
+                ignoreChanges: [
+                    "associatePublicIpAddress" 
+                ]
+            });
         
-            
+
             const volumes = args.volumes?.map(v => {        
                 const vol = new aws.ebs.Volume(`${perReplicaPulumiResourceName}-volume-${v.deviceName}`, {
                     encrypted: v.encrypted || true,
