@@ -20,7 +20,7 @@ export interface NixOSModule {
     /**
      * Other modules on which this module depends. 
      */
-    modules?: NixOSModule[]
+    modules: NixOSModule[]
 }
 
 /**

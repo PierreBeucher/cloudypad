@@ -12,6 +12,7 @@ export function authorizedKeys(user: string, keys: string[]) : NixOSModule {
 
     return {
         content: nixConfig,
-        name: "authorized-keys.nix"
+        name: "authorized-keys.nix",
+        modules: [],
     }
 }

@@ -2,9 +2,9 @@
 
 import { Command } from 'commander';
 import * as emoji from "node-emoji"
-import { getBoxManager } from './lib/core.js';
+import { getManagerBox } from './lib/core.js';
 import * as logging from "./lib/logging.js"
-import { WolfBoxManager } from './boxes/gaming/wolf.js';
+import { WolfManagerBox } from './boxes/gaming/wolf.js';
 import open from 'open';
 import { mainLogger } from './lib/logging.js';
 
@@ -101,7 +101,7 @@ async function main(){
 }
 
 async function deploy(box: string) {
-  const bm = await getBoxManager(box)
+  const bm = await getManagerBox(box)
   const meta = await bm.getMetadata()
   mainLogger.info(`${emoji.get("rocket")} Deploying ${meta.kind} box ${meta.name}...`)
   const o = await bm.deploy()
@@ -110,7 +110,7 @@ async function deploy(box: string) {
 }
 
 async function provision(box: string) {
-    const bm = await getBoxManager(box)
+    const bm = await getManagerBox(box)
     const meta = await bm.getMetadata()
     mainLogger.info(`${emoji.get("rocket")} Provisioning ${meta.kind} box ${meta.name}...`)
     const o = await bm.provision()
@@ -119,7 +119,7 @@ async function provision(box: string) {
 }
 
 async function configure(box: string) {
-  const bm = await getBoxManager(box)
+  const bm = await getManagerBox(box)
   const meta = await bm.getMetadata()
 
   mainLogger.info(`${emoji.get("gear")} Configuring ${meta.kind} box ${meta.name}...`)
@@ -130,7 +130,7 @@ async function configure(box: string) {
 }
 
 async function preview(box: string) {
-  const bm = await getBoxManager(box)
+  const bm = await getManagerBox(box)
   const meta = await bm.getMetadata()
   mainLogger.info(`${emoji.get("cloud")} Previewing ${meta.kind} box ${meta.name}`)
   const result = await bm.preview()
@@ -138,7 +138,7 @@ async function preview(box: string) {
 }
 
 async function destroy(box: string) {
-  const bm = await getBoxManager(box)
+  const bm = await getManagerBox(box)
   const meta = await bm.getMetadata()
   mainLogger.info(`${emoji.get("bomb")} Destroying ${meta.kind} box ${meta.name}...`)
   await bm.destroy()
@@ -146,7 +146,7 @@ async function destroy(box: string) {
 }
 
 async function refresh(box: string) {
-  const bm = await getBoxManager(box)
+  const bm = await getManagerBox(box)
   const meta = await bm.getMetadata()
   mainLogger.info(`${emoji.find("🍹")} Refreshing ${meta.kind} box ${meta.name}...`)
   await bm.refresh()
@@ -154,7 +154,7 @@ async function refresh(box: string) {
 }
 
 async function restart(box: string) {
-  const bm = await getBoxManager(box)
+  const bm = await getManagerBox(box)
   const meta = await bm.getMetadata()
   mainLogger.info(`${emoji.get("recycle")} Restarting ${meta.kind} box ${meta.name}...`)
   await bm.restart()
@@ -162,7 +162,7 @@ async function restart(box: string) {
 }
 
 async function start(box: string) {
-  const bm = await getBoxManager(box)
+  const bm = await getManagerBox(box)
   const meta = await bm.getMetadata()
   mainLogger.info(`${emoji.get("rocket")} Starting ${meta.kind} box ${meta.name}...`)
   await bm.start()
@@ -170,7 +170,7 @@ async function start(box: string) {
 }
 
 async function stop(box: string) {
-  const bm = await getBoxManager(box)
+  const bm = await getManagerBox(box)
   const meta = await bm.getMetadata()
   mainLogger.info(`${emoji.get("stop_sign")} Stopping ${meta.kind} box ${meta.name}...`)
   await bm.stop()
@@ -178,8 +178,8 @@ async function stop(box: string) {
 }
 
 async function getWolfPin(box: string){
-  const bm = await getBoxManager(box)
-  if(bm instanceof WolfBoxManager){ 
+  const bm = await getManagerBox(box)
+  if(bm instanceof WolfManagerBox){ 
     const wolfPinUrls = await bm.getWolfPinUrl()
     wolfPinUrls.forEach(url => {
       mainLogger.info(`Opening ${url} in default browser...`)
@@ -191,7 +191,7 @@ async function getWolfPin(box: string){
 }
 
 async function getBoxDetails(box: string){
-    const bm = await getBoxManager(box)
+    const bm = await getManagerBox(box)
     const outputs = await bm.get()
     mainLogger.info(JSON.stringify(outputs, undefined, 2))
 }

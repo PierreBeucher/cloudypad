@@ -1,5 +1,5 @@
 import { ConfigMap, DestroyResult, InlineProgramArgs, LocalWorkspace, OutputMap, PreviewResult, PulumiFn, RefreshResult, Stack, StackSummary, UpResult } from "@pulumi/pulumi/automation/index.js"
-import { boxLogger, CloudyBoxLogObjI } from "../../logging.js"
+import { componentLogger, CloudyBoxLogObjI } from "../../logging.js"
 import { Logger } from "tslog"
 
 export interface PulumiClientArgs {
@@ -20,7 +20,7 @@ export class PulumiClient {
     
     constructor(args: PulumiClientArgs) {
         this.args = args
-        this.logger = boxLogger.getSubLogger({ name: "pulumi"})
+        this.logger = componentLogger.getSubLogger({ name: "pulumi"})
     }
 
     public async getOutputsRaw(): Promise<OutputMap> {

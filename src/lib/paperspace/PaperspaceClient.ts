@@ -4,7 +4,7 @@ import lodash from 'lodash';
 const { merge } = lodash;
 import * as fs from 'fs'
 import { Logger } from 'tslog';
-import { boxLogger, CloudyBoxLogObjI } from '../logging.js';
+import { componentLogger, CloudyBoxLogObjI } from '../logging.js';
 
 /**
  * Wrap a client error from Axios potential error
@@ -46,7 +46,7 @@ export class PaperspaceClient {
             Authorization: `Bearer ${this.apiKey}`,
         }}
         this.client = new paperspace.MachineApi()
-        this.logger = boxLogger.getSubLogger({ name: `PaperspaceClient` })
+        this.logger = componentLogger.getSubLogger({ name: `PaperspaceClient` })
     }
 
     async getMachine(machineId: string): Promise<paperspace.MachinesList200ResponseItemsInner> {

@@ -1,5 +1,5 @@
 import { z } from "zod"
-import { CloudyBoxLogObjI, boxLogger } from "../../lib/logging.js"
+import { CloudyBoxLogObjI, componentLogger } from "../../lib/logging.js"
 import { Logger } from "tslog";
 
 export const BoxSchemaBaseZ = z.object({
@@ -26,19 +26,29 @@ export interface BoxMetadata {
      * The type of box
      */
     readonly kind: string
+
+    /**
+     * Context in which this Box is used
+     */
+    readonly context: string
 }
+
+/**
+ * Arguments to pass to Box constructor.
+ */
+export type BoxConstructorMetadata = Omit<BoxMetadata, "kind">
 
 /**
  * Base Box implementation with Kind, Name and common functions
  */
-export abstract class BoxBase {
+export abstract class BaseBox {
     readonly metadata: BoxMetadata
 
     readonly logger: Logger<CloudyBoxLogObjI>
 
     constructor(meta: BoxMetadata){
         this.metadata = meta
-        this.logger = boxLogger.getSubLogger({ name: `${meta.kind}:${meta.name}` })
+        this.logger = componentLogger.getSubLogger({ name: `${meta.kind}:${meta.name}` })
     }
 
     async getMetadata() : Promise<BoxMetadata>{
@@ -59,7 +69,7 @@ export abstract class BoxBase {
  * A Box Provisioner manages resources via a Provider (eg. AWS, GCP, Azure...)
  * using underlying Infrastructure as Code tool. 
  */
-export interface BoxProvisioner extends BoxBase {
+export interface ProvisionerBox extends BaseBox {
 
     provision() : Promise<BoxOutputs>
 
@@ -90,7 +100,7 @@ export type MachineBoxProvisionerInstanceWithAddress = z.infer<typeof MachineBox
 /**
  * Box provisioner deploying more or one machines in the Cloud
  */
-export interface MachineBoxProvisioner extends BoxProvisioner {
+export interface MachineBoxProvisioner extends ProvisionerBox {
 
     get() : Promise<MachineBoxProvisionerOutput>
 }
@@ -99,7 +109,7 @@ export interface MachineBoxProvisioner extends BoxProvisioner {
  * A Box Configurator configure a Box, typically a VM but not necessarily.
  * It uses underlying tool like NixOS or Ansible. 
  */
-export interface BoxConfigurator {
+export interface ConfiguratorBox {
 
     configure() : Promise<BoxOutputs>
 
@@ -109,8 +119,15 @@ export interface BoxConfigurator {
  * A Box Manager manages both provision and configuration of resources. 
  * It typically deploy a cloud VM or resources and manage configurations. 
  */
-export interface BoxManager extends BoxBase, BoxProvisioner, BoxConfigurator {
+export interface ManagerBox extends BaseBox, ProvisionerBox, ConfiguratorBox {
 
    deploy() : Promise<BoxOutputs>
 
 }
+
+/**
+ * A DeepPartial type inspired from https://stackoverflow.com/questions/61132262/typescript-deep-partial
+ */
+export type DeepPartial<T> = T extends object ? {
+    [P in keyof T]?: DeepPartial<T[P]>;
+} : T

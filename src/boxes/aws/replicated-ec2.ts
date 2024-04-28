@@ -1,16 +1,16 @@
 import { z } from 'zod';
 import { DnsSchema, InstanceSchema, NetworkSchema, VolumeSchema } from './common.js';
 import { BoxMetadata, BoxSchemaBaseZ, MachineBoxProvisioner, MachineBoxProvisionerOutput, MachineBoxProvisionerInstance, MachineBoxProvisionerOutputZ } from '../common/base.js';
-import { PulumiBoxManager } from '../pulumi/manager.js';
+import { PulumiManagerBox } from '../pulumi/manager.js';
 import { AwsClient } from '../../lib/infra/aws/client.js';
 import { ReplicatedEC2instance } from '../../lib/infra/pulumi/components/aws/replicated-ec2.js';
 import { OutputMap } from '@pulumi/pulumi/automation/stack.js';
 import { pulumiOutputMapToPlainObject } from '../../lib/infra/pulumi/pulumi-client.js';
 import * as pulumi from "@pulumi/pulumi"
-import { boxLogger, CloudyBoxLogObjI } from "../../lib/logging.js"
+import { componentLogger, CloudyBoxLogObjI } from "../../lib/logging.js"
 import {  Logger } from 'tslog';
 
-export const ReplicatedEC2InstanceBoxManagerSpecZ = z.object({
+export const ReplicatedEC2InstanceManagerBoxSpecZ = z.object({
     awsConfig: z.object({ // TODO need a better way to handle that
         region: z.string()
     }),
@@ -25,34 +25,35 @@ export const ReplicatedEC2InstanceBoxManagerSpecZ = z.object({
 });
 
 export const ReplicatedEC2InstanceSchema = BoxSchemaBaseZ.extend({
-    spec: ReplicatedEC2InstanceBoxManagerSpecZ,
+    spec: ReplicatedEC2InstanceManagerBoxSpecZ,
 })
 
-export type ReplicatedEC2InstanceBoxManagerSpec = z.infer<typeof ReplicatedEC2InstanceBoxManagerSpecZ>
+export type ReplicatedEC2InstanceManagerBoxSpec = z.infer<typeof ReplicatedEC2InstanceManagerBoxSpecZ>
 
 export const BOX_KIND_REPLICATED_EC2_INSTANCE = "aws.ec2.ReplicatedInstance"
+export const BOX_CONTEXT_REPLICATED_EC2_INSTANCE = BOX_KIND_REPLICATED_EC2_INSTANCE
 
-export interface ReplicatedEC2InstanceBoxManagerArgs {
-    spec: ReplicatedEC2InstanceBoxManagerSpec
+export interface ReplicatedEC2InstanceManagerBoxArgs {
+    spec: ReplicatedEC2InstanceManagerBoxSpec
 }
 
-export class ReplicatedEC2BoxManager extends PulumiBoxManager<MachineBoxProvisionerOutput> implements MachineBoxProvisioner {
+export class ReplicatedEC2ManagerBox extends PulumiManagerBox<MachineBoxProvisionerOutput> implements MachineBoxProvisioner {
     
-    static async parseSpec(source: unknown) : Promise<ReplicatedEC2BoxManager> {
+    static async parseSpec(source: unknown) : Promise<ReplicatedEC2ManagerBox> {
         const config = ReplicatedEC2InstanceSchema.parse(source)
-        return new ReplicatedEC2BoxManager(config.name, config)
+        return new ReplicatedEC2ManagerBox({name: config.name, context: BOX_CONTEXT_REPLICATED_EC2_INSTANCE}, config)
     }
 
     readonly awsClient: AwsClient
 
     readonly logger: Logger<CloudyBoxLogObjI>
 
-    constructor(name: string, args: ReplicatedEC2InstanceBoxManagerArgs) {
+    constructor(meta: {name: string, context: string}, args: ReplicatedEC2InstanceManagerBoxArgs) {
 
-        const metadata : BoxMetadata = { name: name, kind: BOX_KIND_REPLICATED_EC2_INSTANCE }
+        const metadata : BoxMetadata = { name: meta.name, context: meta.context, kind: BOX_KIND_REPLICATED_EC2_INSTANCE }
 
         const pulumiFn = async ()  => {
-            const instances = new ReplicatedEC2instance(`${metadata.name}`, args.spec)
+            const instances = new ReplicatedEC2instance(`${metadata.context}-${metadata.name}`, args.spec)
 
             const replicas = instances.replicas.map(r => pulumi.all([ 
                     r.instance.id,
@@ -79,11 +80,11 @@ export class ReplicatedEC2BoxManager extends PulumiBoxManager<MachineBoxProvisio
                 config: {
                     "aws:region": { value: args.spec.awsConfig.region }
                 },
-                meta: { name: name, kind: BOX_KIND_REPLICATED_EC2_INSTANCE }
+                meta: metadata
             },
         )
         
-        this.logger = boxLogger.getSubLogger({ name: `${metadata.kind}:${metadata.name}` })
+        this.logger = componentLogger.getSubLogger({ name: `${metadata.kind}:${metadata.name}` })
         this.awsClient = new AwsClient({ region: args.spec.awsConfig?.region })
     }
 

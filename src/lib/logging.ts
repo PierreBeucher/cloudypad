@@ -58,14 +58,14 @@ function initLoggers(logMode: "simple" | "advanced"){
     
         // Box logger with ephemeral output
         // Write to tmp file 
-        const simpleBoxLogger = new Logger<CloudyBoxLogObjI>({ name: "box", type: "hidden" });
+        const simpleComponentLogger = new Logger<CloudyBoxLogObjI>({ name: "box", type: "hidden" });
     
-        simpleBoxLogger.attachTransport(logObj => {
+        simpleComponentLogger.attachTransport(logObj => {
             fs.appendFileSync(tmpLogFile, `${JSON.stringify(logObj)}\n`);   
             newEphemeralInfo(logObj[0])
         })
 
-        return {mainLogger: simpleMainLogger, boxLogger: simpleBoxLogger, detailedLogFile: tmpLogFile }
+        return {mainLogger: simpleMainLogger, componentLogger: simpleComponentLogger, detailedLogFile: tmpLogFile }
 
     } else if (logMode == "advanced") {
 
@@ -74,12 +74,12 @@ function initLoggers(logMode: "simple" | "advanced"){
             type: "pretty",
         })
 
-        const advancedBoxLogger = new Logger<CloudyBoxLogObjI>({ 
+        const advancedComponentLogger = new Logger<CloudyBoxLogObjI>({ 
             name: "box", 
             type: "pretty" 
         })
 
-        return {mainLogger: advancedMainLogger, boxLogger: advancedBoxLogger}
+        return {mainLogger: advancedMainLogger, componentLogger: advancedComponentLogger}
 
     } else {
         throw new Error(`Unknown log mode: ${logMode}`)
@@ -88,7 +88,7 @@ function initLoggers(logMode: "simple" | "advanced"){
 
 const loggers = initLoggers("advanced")
 export const mainLogger = loggers.mainLogger
-export const boxLogger = loggers.boxLogger
+export const componentLogger = loggers.componentLogger
 
 //
 // Ephemeral logging

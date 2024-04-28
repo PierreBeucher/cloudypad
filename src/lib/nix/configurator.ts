@@ -1,40 +1,54 @@
-import { SSHClient, SSHCommandOpts } from "../../lib/ssh/client.js";
-import { BoxBase, BoxConfigurator } from "../common/base.js";
-import { NixOSModule, NixOSModuleDirectory } from "../../lib/nix/interfaces.js";
+import { SSHClient, SSHCommandOpts } from "../ssh/client.js";
+import { NixOSModule, NixOSModuleDirectory } from "./interfaces.js";
 import * as fs from 'fs';
 import * as fsx from 'fs-extra';
 import * as path from 'path';
 import * as os from 'os';
-import { SSHDefinition } from "../common/virtual-machine.js";
-import { osFlake } from "../../lib/nix/modules/nixos-flake.nix.js";
+import { osFlake } from "./modules/nixos-flake.nix.js";
+import { Logger } from "tslog";
+import { CloudyBoxLogObjI, componentLogger } from "../logging.js";
+import { NixOSInstance } from "./fleet-configurator.js";
 
 export interface NixOSConfiguratorArgs {
 
-    hostname: string
-    ssh: SSHDefinition,
+    /**
+     * SSH config to access instance, overriding discovered system config.
+     */
+    ssh: {
+        user?: string,
+        port?: number,
+        privateKeyPath?: string
+    }
 
+    /**
+     * NixOS channel to use, eg. "nixos-23.11"
+     */
     nixosChannel: string
+
+    /**
+     * Home manager release to install, eg. "release-23.11"
+     */
     homeManagerRelease: string
 
     /**
      * Module to use as configuration.nix
      */
-    modules?: NixOSModule[]
+    modules: NixOSModule[]
 
     /**
      * 
      */
-    modulesDirs?: NixOSModuleDirectory[]
+    modulesDirs: NixOSModuleDirectory[]
 
     /**
      * Install steps run before initial SSH connection to run NixOS rebuild..
      */
-    additionalPreConfigSteps?: NixOSPreConfigStep[]
+    additionalPreConfigSteps: NixOSPreConfigStep[]
 
     /**
      * Install steps run after NixOS rebuild.
      */
-    additionalConfigSteps?: NixOSConfigStep[]
+    additionalConfigSteps: NixOSConfigStep[]
 }
 
 export const NIXOS_BOX_CONFIGURATOR_KIND = "Linux.NixOS.Configurator"
@@ -52,18 +66,21 @@ export declare type NixOSConfigStep = (box: NixOSConfigurator, ssh: SSHClient) =
  * - additionalConfigSteps are run after configuration of NixOS (nixos-rebuild switch). It can be
  *   used for additional, maybe non-Nix, config. 
  */
-export class NixOSConfigurator extends BoxBase implements BoxConfigurator {
+export class NixOSConfigurator {
 
+    readonly instance: NixOSInstance
     readonly args: NixOSConfiguratorArgs
+    readonly logger: Logger<CloudyBoxLogObjI>
 
     private preConfigSteps: NixOSPreConfigStep[]
     private configSteps: NixOSConfigStep[]
 
-    constructor(name: string, args: NixOSConfiguratorArgs) {
-        super({ name: name, kind: NIXOS_BOX_CONFIGURATOR_KIND})
+    constructor(instance: NixOSInstance, args: NixOSConfiguratorArgs) {
         this.args = args
-        
-        this.preConfigSteps = args.additionalPreConfigSteps || []
+        this.instance = instance
+        this.logger = componentLogger.getSubLogger({ name: instance.hostname })
+
+        this.preConfigSteps = args.additionalPreConfigSteps
         
         this.configSteps = []
         this.configSteps.push(
@@ -72,7 +89,7 @@ export class NixOSConfigurator extends BoxBase implements BoxConfigurator {
                 await this.ensureNixosConfig(ssh, this.args.modules, this.args.modulesDirs)
             }
         )
-        this.configSteps.push(...args.additionalConfigSteps || [])
+        this.configSteps.push(...args.additionalConfigSteps)
     }
 
     /**
@@ -102,16 +119,16 @@ export class NixOSConfigurator extends BoxBase implements BoxConfigurator {
     public async configure() {
         const o = await this.get()
 
-        this.logger.info(`   Configuring NixOS instance ${this.metadata.name}`)
+        this.logger.info(`   Configuring NixOS instance ${this.instance.hostname}`)
         await this.doConfigure()
-        this.logger.info(`   NixOS instance ${this.metadata.name} provisioned !`)
+        this.logger.info(`   NixOS instance ${this.instance.hostname} provisioned !`)
 
         return o
     }
 
     public async get() {
         return { 
-            hostname: this.args.hostname 
+            hostname: this.instance.hostname 
         }
     }
 
@@ -178,7 +195,7 @@ export class NixOSConfigurator extends BoxBase implements BoxConfigurator {
      */
     private async ensureNixosConfig(ssh: SSHClient, modules: NixOSModule[] = [], modulesDirs: NixOSModuleDirectory[] = []){
 
-        this.logger.info("  Preparing NixOS config...")
+        this.logger.info("Preparing NixOS config...")
 
         // Write will module file to destination:
         // - create empty build dir
@@ -186,7 +203,7 @@ export class NixOSConfigurator extends BoxBase implements BoxConfigurator {
         // - copy all modules dirs into build dir
         // - create a flake.nix aggregating modules and modules dirs into an OS config
         const tmpModuleDir = await fs.promises.mkdtemp(path.join(os.tmpdir(), "cloudybox-nixos-"))
-        this.logger.info(`  Building NixOS module in ${tmpModuleDir}...`)
+        this.logger.info(`Building NixOS module in ${tmpModuleDir}...`)
 
         // All modules to import in main NixOS flake.nix
         const mainModuleImports: string[] = modules.map(m => m.name)
@@ -203,10 +220,10 @@ export class NixOSConfigurator extends BoxBase implements BoxConfigurator {
             mainModuleImports.push(md.name)
         }
 
-        this.logger.info("  Copying NixOS configuration...")
+        this.logger.info("Copying NixOS configuration...")
         await ssh.putDirectory(tmpModuleDir, '/etc/nixos/')
         
-        this.logger.info("  Rebuilding NixOS configuration...")
+        this.logger.info("Rebuilding NixOS configuration...")
         await ssh.command(["nixos-rebuild", "switch", "--upgrade", "--flake", "/etc/nixos#cloudybox"] )
     }
 
@@ -221,8 +238,9 @@ export class NixOSConfigurator extends BoxBase implements BoxConfigurator {
         } else {
             throw new Error(`Module must have a path or a content: ${JSON.stringify(module)}`)
         }
-        
-        for (const subm of module.modules || []) {
+
+        this.logger.info(`Iterating over modules: ${module.modules}`)
+        for (const subm of module.modules) {
             await this.writeModulesTmp(tmpDir, subm);
         }
     }
@@ -236,8 +254,9 @@ export class NixOSConfigurator extends BoxBase implements BoxConfigurator {
 
     private buildSshClient(){
         return new SSHClient({
-            clientName: `${this.metadata.kind}:${this.metadata.name}:ssh`,
-            host: this.args.hostname,
+            clientName: `${this.instance.hostname}:ssh`,
+            host: this.instance.hostname,
+            port: this.args.ssh.port || 22,
             user: this.args.ssh.user || "root",
             privateKeyPath: this.args.ssh.privateKeyPath
         })

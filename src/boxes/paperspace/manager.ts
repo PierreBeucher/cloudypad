@@ -1,8 +1,9 @@
 import { z } from 'zod';
-import { BoxBase, BoxSchemaBaseZ, MachineBoxProvisioner, MachineBoxProvisionerOutput } from '../common/base.js';
+import { BaseBox, BoxConstructorMetadata, BoxSchemaBaseZ, MachineBoxProvisioner, MachineBoxProvisionerOutput } from '../common/base.js';
 import { PaperspaceClient } from '../../lib/paperspace/PaperspaceClient.js';
 
 export const BOX_KIND_PAPERSPACE_MACHINE = "paperspace.Machine.Manager"
+export const BOX_CONTEXT_PAPERSPACE_MACHINE = "paperspace.Machine"
 
 /**
  * Paperspace API requires a template ID to create machines.
@@ -14,30 +15,30 @@ export const BOX_KIND_PAPERSPACE_MACHINE = "paperspace.Machine.Manager"
 */
 export const DEFAULT_MACHINE_TEMPLATE_ID = "t0nspur5" // Ubuntu 22
 
-export const PaperspaceBoxManagerSpecZ = z.object({
+export const PaperspaceManagerBoxSpecZ = z.object({
     apiKeyFile: z.string().optional(),
     machineType: z.string(),
     region: z.string(),
 });
 
-export const PaperspaceBoxManagerSchemaZ = BoxSchemaBaseZ.extend({
-    spec: PaperspaceBoxManagerSpecZ
+export const PaperspaceManagerBoxSchemaZ = BoxSchemaBaseZ.extend({
+    spec: PaperspaceManagerBoxSpecZ
 })
 
-export type PaperspaceBoxManagerSpec = z.infer<typeof PaperspaceBoxManagerSpecZ>;
+export type PaperspaceManagerBoxSpec = z.infer<typeof PaperspaceManagerBoxSpecZ>;
 
-export class PaperspaceBoxManager extends BoxBase implements MachineBoxProvisioner  {
+export class PaperspaceManagerBox extends BaseBox implements MachineBoxProvisioner  {
 
     private client: PaperspaceClient;
-    private spec: PaperspaceBoxManagerSpec;
+    private spec: PaperspaceManagerBoxSpec;
 
-    static async parseSpec(source: unknown) : Promise<PaperspaceBoxManager> {
-        const config = PaperspaceBoxManagerSchemaZ.parse(source)
-        return new PaperspaceBoxManager(config.name, config.spec)
+    static async parseSpec(source: unknown) : Promise<PaperspaceManagerBox> {
+        const config = PaperspaceManagerBoxSchemaZ.parse(source)
+        return new PaperspaceManagerBox({ name: config.name, context: BOX_CONTEXT_PAPERSPACE_MACHINE}, config.spec)
     }
 
-    constructor(name: string, spec: PaperspaceBoxManagerSpec) {
-        super({ kind: BOX_KIND_PAPERSPACE_MACHINE, name: name })
+    constructor(meta: BoxConstructorMetadata, spec: PaperspaceManagerBoxSpec) {
+        super({ name: meta.name, context: meta.context, kind: BOX_KIND_PAPERSPACE_MACHINE })
         this.spec = spec;
         this.client = new PaperspaceClient({ apiKeyFile: spec.apiKeyFile});
     }

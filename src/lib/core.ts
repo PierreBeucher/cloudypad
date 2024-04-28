@@ -1,20 +1,20 @@
 import * as fs from 'fs'
 import * as yaml from "js-yaml"
-import { BoxSchemaBaseZ, BoxManager } from "../boxes/common/base.js"
-import { BOX_KIND_REPLICATED_EC2_INSTANCE, ReplicatedEC2BoxManager } from '../boxes/aws/replicated-ec2.js'
-import { BOX_KIND_GAMING_WOLF, WolfBoxManager } from '../boxes/gaming/wolf.js'
-import { BOX_KIND_LINUX_REPLICATED_NIXOS, ReplicatedNixOSBoxManager } from '../boxes/nix/manager.js'
-import { BOX_KIND_PAPERSPACE_MACHINE, PaperspaceBoxManager } from '../boxes/paperspace/manager.js';
+import { BoxSchemaBaseZ, ManagerBox } from "../boxes/common/base.js"
+import { BOX_KIND_REPLICATED_EC2_INSTANCE, ReplicatedEC2ManagerBox } from '../boxes/aws/replicated-ec2.js'
+import { BOX_KIND_GAMING_WOLF, WolfManagerBox } from '../boxes/gaming/wolf.js'
+import { BOX_KIND_LINUX_REPLICATED_NIXOS, NixOSManagerBox } from '../boxes/nix/manager.js'
+import { BOX_KIND_PAPERSPACE_MACHINE, PaperspaceManagerBox } from '../boxes/paperspace/manager.js';
 import { mainLogger } from './logging.js'
 
-export const KIND_TO_MANAGER_MAP = new Map<string, (s: unknown) => Promise<BoxManager>>([
-    [BOX_KIND_GAMING_WOLF, WolfBoxManager.parseSpec],
-    [BOX_KIND_REPLICATED_EC2_INSTANCE, ReplicatedEC2BoxManager.parseSpec],
-    [BOX_KIND_LINUX_REPLICATED_NIXOS, ReplicatedNixOSBoxManager.parseSpec],
-    [BOX_KIND_PAPERSPACE_MACHINE, PaperspaceBoxManager.parseSpec]
+export const KIND_TO_MANAGER_MAP = new Map<string, (s: unknown) => Promise<ManagerBox>>([
+    [BOX_KIND_GAMING_WOLF, WolfManagerBox.parseSpec],
+    [BOX_KIND_REPLICATED_EC2_INSTANCE, ReplicatedEC2ManagerBox.parseSpec],
+    [BOX_KIND_LINUX_REPLICATED_NIXOS, NixOSManagerBox.parseSpec],
+    [BOX_KIND_PAPERSPACE_MACHINE, PaperspaceManagerBox.parseSpec]
 ]);
 
-export async function getBoxManager(path: string) : Promise<BoxManager> {
+export async function getManagerBox(path: string) : Promise<ManagerBox> {
 
     const plainConfig = yaml.load(fs.readFileSync(path, "utf-8"))
     const baseConfig = await BoxSchemaBaseZ.parseAsync((plainConfig))

@@ -2,9 +2,9 @@ import { PulumiClient } from "../../lib/infra/pulumi/pulumi-client.js";
 import { OutputMap } from "@pulumi/pulumi/automation/stack.js";
 import { ConfigMap } from "@pulumi/pulumi/automation/config.js";
 import { PulumiFn } from "@pulumi/pulumi/automation/workspace.js";
-import { BoxOutputs, BoxMetadata, BoxBase, BoxManager } from "../common/base.js";
+import { BoxOutputs, BoxMetadata, BaseBox, ManagerBox } from "../common/base.js";
 
-export interface PulumiBoxManagerArgs  {
+export interface PulumiManagerBoxArgs  {
     program: PulumiFn
     config: ConfigMap
     meta: BoxMetadata
@@ -13,16 +13,16 @@ export interface PulumiBoxManagerArgs  {
 /**
  * A generic box manager using Pulumi. T is an interface matching Pulumi stack output.
  */
-export abstract class PulumiBoxManager<T extends BoxOutputs>  extends BoxBase implements BoxManager {
+export abstract class PulumiManagerBox<T extends BoxOutputs>  extends BaseBox implements ManagerBox {
 
-    readonly args: PulumiBoxManagerArgs
+    readonly args: PulumiManagerBoxArgs
     readonly client: PulumiClient
 
-    constructor(args: PulumiBoxManagerArgs) {
+    constructor(args: PulumiManagerBoxArgs) {
         super(args.meta)
         this.args = args
         this.client = new PulumiClient({
-            projectName: `CloudyBox-${args.meta.kind}`,
+            projectName: `CloudyBox-${args.meta.context}`,
             stackName: args.meta.name,
             config: args.config,
             program: args.program,

@@ -20,7 +20,7 @@ export function osFlake(modules: string[]) : NixOSModule {
 
   return {
     content: n,
-    // modules: modules,
-    name: "flake.nix"
+    name: "flake.nix",
+    modules: [],
   }
 }

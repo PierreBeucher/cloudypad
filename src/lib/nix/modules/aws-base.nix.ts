@@ -16,7 +16,8 @@ export function awsBase() : NixOSModule {
 
     return {
         content: nixConfig,
-        name: "aws-base.nix"
+        name: "aws-base.nix",
+        modules: [],
     }
 }
 

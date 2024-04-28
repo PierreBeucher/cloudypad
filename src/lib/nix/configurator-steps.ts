@@ -2,20 +2,20 @@
 // Re-usable config steps for NixOSBoxConfigurator 
 //
 
-import { SSHClient } from "../../lib/ssh/client.js";
+import { SSHClient } from "../ssh/client.js";
 import { NixOSConfigurator, NixOSPreConfigStep } from "./configurator.js";
 
 /**
  * Try to install NixOS via nixos-infect if not already done. 
  */
-export const nixOSInfect: NixOSPreConfigStep = async (box: NixOSConfigurator) => {
-    const boxDetails = await box.get()
+export const nixOSInfect: NixOSPreConfigStep = async (cfgtor: NixOSConfigurator) => {
+    const boxDetails = await cfgtor.get()
 
     const rootClient = new SSHClient({
-        clientName: `${box.metadata.name}-preconfig-root`,
+        clientName: `${cfgtor.instance.hostname}-preconfig-root`,
         host: boxDetails.hostname,
         user: "root",
-        privateKeyPath: box.args.ssh.privateKeyPath
+        privateKeyPath: cfgtor.args.ssh.privateKeyPath
     });
 
     // Attempt to connect as root
@@ -26,7 +26,7 @@ export const nixOSInfect: NixOSPreConfigStep = async (box: NixOSConfigurator) =>
         await rootClient.waitForConnection();
     } catch (error) {
         rootClient.dispose()
-        box.logger.error(`Couldn't connect to box: ${JSON.stringify(error)}`)
+        cfgtor.logger.error(`Couldn't connect to box: ${JSON.stringify(error)}`)
         throw error
     } 
 
@@ -34,19 +34,19 @@ export const nixOSInfect: NixOSPreConfigStep = async (box: NixOSConfigurator) =>
         await rootClient.command(["echo", "Can I run ?"])
     } catch (error) {
 
-        box.logger.error(`Caught an expected error in NixOS infect step: ${error}`)
+        cfgtor.logger.error(`Caught an expected error in NixOS infect step: ${error}`)
 
         // If root connection fails, try with 'paperspace' user
         // to run NixOS infect
         const paperspaceClient = new SSHClient({
-            clientName: `${box.metadata.name}-preconfig-paperspace`,
+            clientName: `${cfgtor.instance.hostname}-preconfig-paperspace`,
             host: boxDetails.hostname,
             user: "paperspace",
-            privateKeyPath: box.args.ssh.privateKeyPath
+            privateKeyPath: cfgtor.args.ssh.privateKeyPath
         });
         try {
             
-            box.logger.info("Installing NixOS via nixos-infect...")
+            cfgtor.logger.info("Installing NixOS via nixos-infect...")
 
             // Install NixOS via nixos-infect
             // No reboot to avoid error thrown by ssh client (reboot causes non-0 exit code)
@@ -57,7 +57,7 @@ export const nixOSInfect: NixOSPreConfigStep = async (box: NixOSConfigurator) =>
                 "curl -s -S https://raw.githubusercontent.com/elitak/nixos-infect/master/nixos-infect | sudo -E bash"
             ]);
             
-            box.logger.info("NixOS installed! Rebooting...")
+            cfgtor.logger.info("NixOS installed! Rebooting...")
 
             try {
                 await paperspaceClient.command(["sudo", "reboot"]);

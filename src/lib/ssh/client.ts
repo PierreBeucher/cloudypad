@@ -1,5 +1,5 @@
 import { NodeSSH, SSHExecCommandResponse } from "node-ssh";
-import { CloudyBoxLogObjI, boxLogger } from "../logging.js"
+import { CloudyBoxLogObjI, componentLogger } from "../logging.js"
 import { Logger } from "tslog";
 import { getUserSSHPrivateKeyPath } from "./utils.js";
 
@@ -51,7 +51,7 @@ export class SSHClient {
     constructor(args: SSHClientArgs){
         this.args = args
         this.client = new NodeSSH()
-        this.logger = boxLogger.getSubLogger({ name: `${this.args.clientName}` })
+        this.logger = componentLogger.getSubLogger({ name: `${this.args.clientName}` })
     }
 
     async command(cmd: string[], args?: SSHCommandOpts) : Promise<SSHExecCommandResponse>{
