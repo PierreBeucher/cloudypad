@@ -1,4 +1,4 @@
-import { ConfigMap, DestroyResult, InlineProgramArgs, LocalWorkspace, OutputMap, PreviewResult, PulumiFn, RefreshResult, Stack, StackSummary, UpResult } from "@pulumi/pulumi/automation/index.js"
+import { CommandError, ConfigMap, DestroyResult, InlineProgramArgs, LocalWorkspace, LocalWorkspaceOptions, OutputMap, PreviewResult, ProjectSettings, PulumiFn, RefreshResult, Stack, StackSummary, UpResult } from "@pulumi/pulumi/automation/index.js"
 import { componentLogger, CloudyBoxLogObjI } from "../../logging.js"
 import { Logger } from "tslog"
 
@@ -17,6 +17,8 @@ export class PulumiClient {
     readonly args: PulumiClientArgs
 
     readonly logger: Logger<CloudyBoxLogObjI>
+
+    private workspaceOptions?: LocalWorkspaceOptions | undefined
     
     constructor(args: PulumiClientArgs) {
         this.args = args
@@ -43,15 +45,87 @@ export class PulumiClient {
         return this.doRefresh()
     }
 
+    /**
+     * Build a LocalWorkspaceOptions in current context, allowing seamless UX for users:
+     * - If Pulumi CLI is not logged-in, use local backend by default
+     * - If a stack passphrase is not passed via PULUMI_CONFIG_PASSPHRASE, use empty string
+     * 
+     * Generated LocalWorkspaceOption is kept on first run as class field, any subsequent
+     * call will re-use the same LocalWorkspaceOption instance.
+     * 
+     * TODO UNIT TEST
+     */
+    private async getWorkspaceOptions() : Promise<LocalWorkspaceOptions> {
+        if (this.workspaceOptions) {
+            return this.workspaceOptions
+        }
+
+        const projectSettings: ProjectSettings = {
+            name: this.args.projectName,
+            runtime: {
+                name: "nodejs"
+            },
+        }
+
+        const envVars: {[key: string]: string} = {}
+
+        // Check with whoami if currently authenticated
+        // If not authenticate, set projectSettings to use local backend
+        const wk = await LocalWorkspace.create({})        
+        try{
+            const whoami = await wk.whoAmI()
+            this.logger.debug(`Pulumi already authenticated (${JSON.stringify(whoami)}), using existing backend.`)
+        } catch (error){
+            if(error instanceof CommandError) {
+                if(error.message.includes("PULUMI_ACCESS_TOKEN must be set")){
+                    this.logger.debug("Pulumi not authenticated, using local backend by default.")
+                    
+                    projectSettings.backend = {
+                        url: "file://~",
+                    }
+
+                } else {
+                    this.logger.error(`Unknwon Pulumi command error: ${error}`)
+                    throw error
+                }
+            } else {
+                this.logger.error(`Unkwnon error when checking Pulumi authencation status: ${error}`)
+                throw error
+            }
+        }
+
+        // If backend to use is local backend and no passphrase already set, set empty string by default
+        if(process.env["PULUMI_CONFIG_PASSPHRASE"] === undefined && process.env["PULUMI_CONFIG_PASSPHRASE_FILE"] === undefined){
+            this.logger.debug("Neither PULUMI_CONFIG_PASSPHRASE nor PULUMI_CONFIG_PASSPHRASE_FILE env variable is set, using empty string by default.")
+            envVars["PULUMI_CONFIG_PASSPHRASE"] = ""
+        }
+
+        const workspaceOpts: LocalWorkspaceOptions = {
+            projectSettings: projectSettings,
+            envVars: envVars
+        }
+
+        this.workspaceOptions = workspaceOpts
+
+        return workspaceOpts
+
+    }
+
     private async createOrSelectPulumiStackProgram() : Promise<Stack>{
-    
+        
+        const workspaceOpts = await this.getWorkspaceOptions()
+
+        // TODO hide sensible info like passphrase
+        this.logger.debug(`Using project settings: ${JSON.stringify(workspaceOpts)}`)
+
         const args: InlineProgramArgs = {
             stackName: this.args.stackName,
             projectName: this.args.projectName,
-            program: this.args.program
+            program: this.args.program,
         };
 
-        const stack = await LocalWorkspace.createOrSelectStack(args);        
+        const stack = await LocalWorkspace.createOrSelectStack(args, workspaceOpts);        
+        
         await stack.setAllConfig(this.args.config)
 
         this.logger.info(`Pulumi workdir: ${stack.workspace.workDir}`)
