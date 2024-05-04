@@ -1,16 +1,16 @@
 import { PortDefinition, SSHDefinitionZ, STANDARD_SSH_PORTS } from "../common/virtual-machine.js";
 import { z } from "zod";
-import { BaseBox, BoxConstructorMetadata, ManagerBox, BoxSchemaBaseZ, DeepPartial } from "../common/base.js";
+import { BaseBox, BoxConstructorMetadata, ManagerBox, BoxSchemaBaseZ, DeepPartial, buildMainBoxMeta } from "../common/base.js";
 import lodash from 'lodash';
 import { SSHClient } from "../../lib/ssh/client.js";
-import { NixOSBoxConfig, NixOSBoxConfigZ, NixOSManagerBox, NixOSManagerBoxBuilder, NixOSManagerBoxSpec } from "../nix/manager.js";
-import { ReplicatedEC2InstanceManagerBoxSpec, ReplicatedEC2InstanceManagerBoxSpecZ } from "../aws/replicated-ec2.js";
+import { NixOSBoxConfig, NixOSBoxConfigZ, NixOSManagerBox, NixOSManagerBoxBuilder, NixOSProjectSpec } from "../nix/manager.js";
+import { ReplicatedEC2InstanceProjectSpec, ReplicatedEC2InstanceProjectSpecZ } from "../aws/replicated-ec2.js";
 import { DnsSchema, NetworkSchema } from "../aws/common.js";
 import { NixOSConfigStep, NixOSConfigurator } from "../../lib/nix/configurator.js";
 import { parseProvisionerName } from "../common/provisioners.js";
 const { merge } = lodash;
 
-export const WolfBoxSchemaZ = BoxSchemaBaseZ.extend({
+export const WolfProjectSchemaZ = BoxSchemaBaseZ.extend({
     // Almost like NixOSManagerBoxSpecZ except most is optional
     spec: z.object({
         nixos: NixOSBoxConfigZ.optional(),
@@ -18,13 +18,15 @@ export const WolfBoxSchemaZ = BoxSchemaBaseZ.extend({
         dns: DnsSchema.optional(),
         network: NetworkSchema.optional(),
         provisioner: z.object({
-            aws: ReplicatedEC2InstanceManagerBoxSpecZ.deepPartial(), 
+            aws: ReplicatedEC2InstanceProjectSpecZ.deepPartial(), 
         })
     })
 })
 .strict()
 
-export type WolfBoxSchema = z.infer<typeof WolfBoxSchemaZ>
+export type WolfProjectSchema = z.infer<typeof WolfProjectSchemaZ>
+
+export const PROJECT_KIND_GAMING_WOLF = "gaming.Wolf"
 
 export interface WolfManagerBoxArgs {
     nixosManager: NixOSManagerBox
@@ -43,9 +45,6 @@ export const WOLF_PORTS : PortDefinition[] = [
     { from: 48200, to: 48210, protocol: "udp" }, // Audio (up to 10 users)
 ]
 
-export const BOX_KIND_GAMING_WOLF = "gaming.Wolf.Manager"
-export const BOX_CONTEXT_GAMING_WOLF = "gaming.Wolf"
-
 /**
  * Manages a Cloud VM and install Wolf on it. Use an underlying NixOSManagerBox. 
  */
@@ -58,7 +57,7 @@ export class WolfManagerBox extends BaseBox implements ManagerBox {
     readonly args: WolfManagerBoxArgs
 
     constructor(meta: BoxConstructorMetadata, args: WolfManagerBoxArgs){
-        super({ name: meta.name, context: meta.context, kind: BOX_KIND_GAMING_WOLF})
+        super({ name: meta.name, project: meta.project, type: PROJECT_KIND_GAMING_WOLF})
         this.args = args
     }
 
@@ -159,7 +158,7 @@ export const nixosWolfConfig: NixOSConfigStep = async (box: NixOSConfigurator, s
 
 export async function parseWolfBoxSpec(rawConfig: unknown) : Promise<WolfManagerBox> {
     
-    const parsedConfig = WolfBoxSchemaZ.safeParse(rawConfig)
+    const parsedConfig = WolfProjectSchemaZ.safeParse(rawConfig)
     if (!parsedConfig.success) {
         throw new Error(`Config parse errors: ${JSON.stringify(parsedConfig.error.issues, undefined, 2)}`)
     }
@@ -167,7 +166,7 @@ export async function parseWolfBoxSpec(rawConfig: unknown) : Promise<WolfManager
     const spec = parsedConfig.data.spec
 
     // NixOS specs based on Wolf spec
-    const nixosSpec: NixOSManagerBoxSpec = {
+    const nixosSpec: NixOSProjectSpec = {
         replicas: ["instance"],
         provisioner: spec.provisioner,
         dns: spec.dns,
@@ -185,7 +184,7 @@ export async function parseWolfBoxSpec(rawConfig: unknown) : Promise<WolfManager
     // Adapt provisioners for Wolf
     switch (provisionerName) {
         case "aws": {
-            const awsArgs: DeepPartial<ReplicatedEC2InstanceManagerBoxSpec> = {
+            const awsArgs: DeepPartial<ReplicatedEC2InstanceProjectSpec> = {
                 instance: {
                     // Need a GPU instance with generous disk
                     type: "g5.xlarge",
@@ -221,9 +220,7 @@ export async function parseWolfBoxSpec(rawConfig: unknown) : Promise<WolfManager
     nixosSpec.nixos = merge(nixosConf, nixosSpec.nixos)
 
     const nixosBuilder = new NixOSManagerBoxBuilder(nixosSpec)
-    const nixosManager = await nixosBuilder.buildManagerBox({name: parsedConfig.data.name, context: BOX_CONTEXT_GAMING_WOLF})
+    const nixosManager = await nixosBuilder.buildManagerBox(buildMainBoxMeta(parsedConfig.data))
     
-    return new WolfManagerBox({ name: parsedConfig.data.name, context: BOX_CONTEXT_GAMING_WOLF}, {
-        nixosManager: nixosManager
-    })
+    return new WolfManagerBox(buildMainBoxMeta(parsedConfig.data), { nixosManager: nixosManager })
 }

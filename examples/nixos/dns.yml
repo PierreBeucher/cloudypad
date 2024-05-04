@@ -1,5 +1,5 @@
 name: with-dns
-kind: Linux.NixOS.Manager
+kind: Linux.NixOS
 spec:
   # Generate DNS record nixos-with-dns.cloudybox.crafteo.io
   dns:

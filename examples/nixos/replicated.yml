@@ -1,5 +1,5 @@
 name: replicated-example
-kind: Linux.NixOS.Manager
+kind: Linux.NixOS
 spec:
   nixos:
     nixosConfigName: code-server

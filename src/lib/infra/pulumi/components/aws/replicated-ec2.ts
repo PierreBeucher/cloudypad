@@ -72,20 +72,18 @@ export class ReplicatedEC2instance extends pulumi.ComponentResource {
     constructor(name: string, args: ReplicatedEC2instanceArgs, opts? : pulumi.ComponentResourceOptions) {
         super("crafteo:cloudybox:aws:replicated-ec2-instance", name, args, opts);
 
-        const pulumiResourceName = `replicated-ec2-instance-${name}`
-
-        const resourceNameTagBase = `CloudyBox-${name}`
+        const awsResourceNamePrefix = `CloudyBox-${name}`
 
         const globalTags = {
             ...args.tags,
-            Name: resourceNameTagBase,
+            Name: awsResourceNamePrefix,
         }
 
         const commonPulumiOpts = {
             parent: this
         }
 
-        const sg = new aws.ec2.SecurityGroup(`${pulumiResourceName}-sg`, {
+        const sg = new aws.ec2.SecurityGroup(`${name}-sg`, {
             vpcId: args.network?.vpcId,
             ingress: args.network?.ingressPorts?.map(p => {
                 return { 
@@ -103,24 +101,26 @@ export class ReplicatedEC2instance extends pulumi.ComponentResource {
                 cidrBlocks: ["0.0.0.0/0"],
                 ipv6CidrBlocks: ["::/0"],
             }],
+            name: awsResourceNamePrefix,
             tags: globalTags
         }, commonPulumiOpts);
 
-        const keyPair = new aws.ec2.KeyPair(`${pulumiResourceName}-keypair`, {
+        const keyPair = new aws.ec2.KeyPair(`${name}-keypair`, {
             publicKey: args.publicKey,
+            keyName: awsResourceNamePrefix
         }, {
             ...commonPulumiOpts,
             ignoreChanges: args.ignorePublicKeyChanges ? [ "publicKey" ] : []
         })
 
         const replicaNames = this.computeReplicaNames(args.replicas)
-        const replicas : EC2instanceResult[] = replicaNames.map(rname => {
+        const replicas : EC2instanceResult[] = replicaNames.map(replicaName => {
 
             const perReplicaTags = {
                 ...args.tags,
-                Name: `${resourceNameTagBase}-${rname}`
+                Name: `${awsResourceNamePrefix}-${replicaName}`
             }
-            const perReplicaPulumiResourceName = `${pulumiResourceName}-${rname}`
+            const perReplicaPulumiResourceName = `${name}-${replicaName}`
 
             const ec2Instance = new aws.ec2.Instance(`${perReplicaPulumiResourceName}`, {
                 ami: args.instance.ami,
@@ -153,7 +153,7 @@ export class ReplicatedEC2instance extends pulumi.ComponentResource {
                     type: v.type,
                     iops: v.iops,
                     throughput: v.throughput,
-                    tags: args.tags
+                    tags: perReplicaTags
                 }, commonPulumiOpts);
         
                 new aws.ec2.VolumeAttachment(`${perReplicaPulumiResourceName}-volume-attach-${v.deviceName}`, {
@@ -169,7 +169,7 @@ export class ReplicatedEC2instance extends pulumi.ComponentResource {
             
             if (args.instance.staticIpEnable) {
                 eip = new aws.ec2.Eip(`${perReplicaPulumiResourceName}-eip`, {
-                    tags: args.tags
+                    tags: perReplicaTags
                 }, commonPulumiOpts);
                         
                 new aws.ec2.EipAssociation(`${perReplicaPulumiResourceName}-eipAssoc`, {
@@ -179,7 +179,7 @@ export class ReplicatedEC2instance extends pulumi.ComponentResource {
             }
 
             const result: EC2instanceResult = {
-                name: rname,
+                name: replicaName,
                 instance: ec2Instance,
                 volumes: volumes,
                 publicIp: eip?.publicIp || ec2Instance.publicIp
@@ -210,7 +210,7 @@ export class ReplicatedEC2instance extends pulumi.ComponentResource {
 
                 const fqdn = pulumi.interpolate`${r.name}.${fqdnSuffix}`
                 
-                new aws.route53.Record(`${pulumiResourceName}-${r.name}-dns-record`, {
+                new aws.route53.Record(`${name}-${r.name}-dns-record`, {
                     zoneId: dnsZone.id,
                     name: fqdn,
                     type: args.dns.type || "A",
@@ -227,7 +227,7 @@ export class ReplicatedEC2instance extends pulumi.ComponentResource {
             
             // do not name "global-dns-record" to avoid potential name conflicts
             // with `${pulumiResourceName}-${r.name}-dns-record`
-            new aws.route53.Record(`${pulumiResourceName}-dns-record-global`, { 
+            new aws.route53.Record(`${name}-dns-record-global`, { 
                 zoneId: dnsZone.id,
                 name: fqdnSuffix,
                 type: args.dns.type || "A",

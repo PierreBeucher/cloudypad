@@ -1,5 +1,5 @@
 name: my-paper-plane
-kind: paperspace.Machine.Manager
+kind: paperspace.Machine
 spec:
   apiKeyFile: tmp/paperspace-apikey
   machineType: C2

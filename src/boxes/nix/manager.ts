@@ -1,14 +1,14 @@
 import lodash from 'lodash';
 const { merge } = lodash;
-import { BoxSchemaBaseZ, BaseBox as BaseBox, ManagerBox as ManagerBox, MachineBoxProvisioner as MachineProvisionerBox, BoxConstructorMetadata } from "../common/base.js";
+import { BoxSchemaBaseZ as ProjectSchemaBaseZ, BaseBox as BaseBox, ManagerBox as ManagerBox, MachineBoxProvisioner as MachineProvisionerBox, BoxConstructorMetadata, buildMainBoxMeta } from "../common/base.js";
 import { SSHDefinitionZ } from "../common/virtual-machine.js";
 import { z } from "zod";
 import { NixOSConfigurator, NixOSConfiguratorArgs } from '../../lib/nix/configurator.js';
 import { SSHCommandOpts } from '../../lib/ssh/client.js';
 import { DnsSchema, NetworkSchema } from '../aws/common.js';
-import { ReplicatedEC2ManagerBox, ReplicatedEC2InstanceManagerBoxArgs, ReplicatedEC2InstanceManagerBoxSpecZ } from '../aws/replicated-ec2.js';
+import { ReplicatedEC2ManagerBox, ReplicatedEC2InstanceManagerBoxArgs, ReplicatedEC2InstanceProjectSpecZ } from '../aws/replicated-ec2.js';
 import { SSHExecCommandResponse } from 'node-ssh';
-import { PaperspaceManagerBox, PaperspaceManagerBoxSpecZ } from '../paperspace/manager.js';
+import { PaperspaceManagerBox, PaperspaceProjectSpecZ } from '../paperspace/manager.js';
 import { mainLogger } from '../../lib/logging.js';
 import { getUserSSHPublicKey } from '../../lib/ssh/utils.js';
 import { NixOSModule, NixOSModuleDirectory } from '../../lib/nix/interfaces.js';
@@ -30,25 +30,25 @@ export const NixOSBoxConfigZ = z.object({
     })).optional()
 }).strict()
 
-export const NixOSManagerBoxSpecZ = z.object({
+export const NixOSProjectSpecZ = z.object({
     nixos: NixOSBoxConfigZ.partial().optional(),
     ssh: SSHDefinitionZ,
     replicas: z.union([z.array(z.string()), z.number()]).optional(),
     dns: DnsSchema.optional(),
     network: NetworkSchema.optional(),
     provisioner: z.object({
-        aws: ReplicatedEC2InstanceManagerBoxSpecZ.deepPartial().optional(),
-        paperspace: PaperspaceManagerBoxSpecZ.deepPartial().optional()
+        aws: ReplicatedEC2InstanceProjectSpecZ.deepPartial().optional(),
+        paperspace: PaperspaceProjectSpecZ.deepPartial().optional()
     }),
 
 }).strict()
 
-export const NixOSManagerBoxSchemaZ = BoxSchemaBaseZ.extend({
-    spec: NixOSManagerBoxSpecZ
+export const NixOSProjectSchemaZ = ProjectSchemaBaseZ.extend({
+    spec: NixOSProjectSpecZ
 })
 
-export type NixOSManagerBoxSpec = z.infer<typeof NixOSManagerBoxSpecZ>
-export type NixOSManagerBoxSchema = z.infer<typeof NixOSManagerBoxSchemaZ>
+export type NixOSProjectSpec = z.infer<typeof NixOSProjectSpecZ>
+export type NixOSProjecSchema = z.infer<typeof NixOSProjectSchemaZ>
 export type NixOSBoxConfig = z.infer<typeof NixOSBoxConfigZ>
 
 export interface NixOSManagerBoxArgs {
@@ -63,8 +63,7 @@ export interface NixOSManagerBoxArgs {
     nixosConfiguratorArgs: NixOSConfiguratorArgs
 }
 
-export const BOX_KIND_LINUX_REPLICATED_NIXOS = "Linux.NixOS.Manager"
-export const BOX_CONTEXT_NIXOS_MANAGER = "Linux.NixOS"
+export const PROJECT_KIND_LINUX_REPLICATED_NIXOS = "Linux.NixOS"
 
 const DEFAULT_NIXOS_CONFIG = {
     nixosChannel: "nixos-23.11",
@@ -81,7 +80,7 @@ export class NixOSManagerBox extends BaseBox implements ManagerBox {
     readonly args: NixOSManagerBoxArgs
 
     constructor(meta: BoxConstructorMetadata, args: NixOSManagerBoxArgs) {
-        super({ name: meta.name, context: meta.context, kind: BOX_KIND_LINUX_REPLICATED_NIXOS})
+        super({ name: meta.name, project: meta.project, type: PROJECT_KIND_LINUX_REPLICATED_NIXOS})
         this.args = args  
     }
 
@@ -160,9 +159,9 @@ export class NixOSManagerBox extends BaseBox implements ManagerBox {
 
 export class NixOSManagerBoxBuilder {
 
-    readonly spec: NixOSManagerBoxSpec
+    readonly spec: NixOSProjectSpec
 
-    constructor(spec: NixOSManagerBoxSpec){
+    constructor(spec: NixOSProjectSpec){
         this.spec = spec
     }
     
@@ -303,11 +302,11 @@ export class NixOSManagerBoxBuilder {
 
 export async function parseNixOSManagerBoxSpec(rawConfig: unknown) : Promise<NixOSManagerBox> {
 
-    const parsedConfig = NixOSManagerBoxSchemaZ.safeParse(rawConfig)
+    const parsedConfig = NixOSProjectSchemaZ.safeParse(rawConfig)
     if (!parsedConfig.success) {
         throw new Error(`Config parse errors: ${JSON.stringify(parsedConfig.error.issues, undefined, 2)}`)
     }
 
-    return new NixOSManagerBoxBuilder(parsedConfig.data.spec).buildManagerBox({name: parsedConfig.data.name, context: BOX_CONTEXT_NIXOS_MANAGER})
+    return new NixOSManagerBoxBuilder(parsedConfig.data.spec).buildManagerBox(buildMainBoxMeta(parsedConfig.data))
 }
 

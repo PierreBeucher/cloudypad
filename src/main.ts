@@ -103,7 +103,7 @@ async function main(){
 async function deploy(box: string) {
   const bm = await getManagerBox(box)
   const meta = await bm.getMetadata()
-  mainLogger.info(`${emoji.get("rocket")} Deploying ${meta.kind} box ${meta.name}...`)
+  mainLogger.info(`${emoji.get("rocket")} Deploying ${meta.type} box ${meta.name}...`)
   const o = await bm.deploy()
   mainLogger.info(`${emoji.get("white_check_mark")} ${meta.name} Deployed !`)
   mainLogger.info(JSON.stringify(o, undefined, 2))
@@ -112,7 +112,7 @@ async function deploy(box: string) {
 async function provision(box: string) {
     const bm = await getManagerBox(box)
     const meta = await bm.getMetadata()
-    mainLogger.info(`${emoji.get("rocket")} Provisioning ${meta.kind} box ${meta.name}...`)
+    mainLogger.info(`${emoji.get("rocket")} Provisioning ${meta.type} box ${meta.name}...`)
     const o = await bm.provision()
     mainLogger.info(`${emoji.get("white_check_mark")} ${meta.name} Provisioned !`)
     mainLogger.info(JSON.stringify(o, undefined, 2))
@@ -122,7 +122,7 @@ async function configure(box: string) {
   const bm = await getManagerBox(box)
   const meta = await bm.getMetadata()
 
-  mainLogger.info(`${emoji.get("gear")} Configuring ${meta.kind} box ${meta.name}...`)
+  mainLogger.info(`${emoji.get("gear")} Configuring ${meta.type} box ${meta.name}...`)
 
   const o = await bm.configure()
   mainLogger.info(`${emoji.get("white_check_mark")} Configured: ${meta.name}...`)
@@ -132,7 +132,7 @@ async function configure(box: string) {
 async function preview(box: string) {
   const bm = await getManagerBox(box)
   const meta = await bm.getMetadata()
-  mainLogger.info(`${emoji.get("cloud")} Previewing ${meta.kind} box ${meta.name}`)
+  mainLogger.info(`${emoji.get("cloud")} Previewing ${meta.type} box ${meta.name}`)
   const result = await bm.preview()
   mainLogger.info(result)
 }
@@ -140,7 +140,7 @@ async function preview(box: string) {
 async function destroy(box: string) {
   const bm = await getManagerBox(box)
   const meta = await bm.getMetadata()
-  mainLogger.info(`${emoji.get("bomb")} Destroying ${meta.kind} box ${meta.name}...`)
+  mainLogger.info(`${emoji.get("bomb")} Destroying ${meta.type} box ${meta.name}...`)
   await bm.destroy()
   mainLogger.info(`${emoji.get("boom")} Destroyed ${meta.name}`)
 }
@@ -148,7 +148,7 @@ async function destroy(box: string) {
 async function refresh(box: string) {
   const bm = await getManagerBox(box)
   const meta = await bm.getMetadata()
-  mainLogger.info(`${emoji.find("🍹")} Refreshing ${meta.kind} box ${meta.name}...`)
+  mainLogger.info(`${emoji.find("🍹")} Refreshing ${meta.type} box ${meta.name}...`)
   await bm.refresh()
   mainLogger.info(`${emoji.get("white_check_mark")} Refreshed ${meta.name}`)
 }
@@ -156,7 +156,7 @@ async function refresh(box: string) {
 async function restart(box: string) {
   const bm = await getManagerBox(box)
   const meta = await bm.getMetadata()
-  mainLogger.info(`${emoji.get("recycle")} Restarting ${meta.kind} box ${meta.name}...`)
+  mainLogger.info(`${emoji.get("recycle")} Restarting ${meta.type} box ${meta.name}...`)
   await bm.restart()
   mainLogger.info(`${emoji.get("white_check_mark")} Restarted ${meta.name}`)
 }
@@ -164,7 +164,7 @@ async function restart(box: string) {
 async function start(box: string) {
   const bm = await getManagerBox(box)
   const meta = await bm.getMetadata()
-  mainLogger.info(`${emoji.get("rocket")} Starting ${meta.kind} box ${meta.name}...`)
+  mainLogger.info(`${emoji.get("rocket")} Starting ${meta.type} box ${meta.name}...`)
   await bm.start()
   mainLogger.info(`${emoji.get("white_check_mark")} Started ${meta.name}...`)
 }
@@ -172,7 +172,7 @@ async function start(box: string) {
 async function stop(box: string) {
   const bm = await getManagerBox(box)
   const meta = await bm.getMetadata()
-  mainLogger.info(`${emoji.get("stop_sign")} Stopping ${meta.kind} box ${meta.name}...`)
+  mainLogger.info(`${emoji.get("stop_sign")} Stopping ${meta.type} box ${meta.name}...`)
   await bm.stop()
   mainLogger.info(`${emoji.get("white_check_mark")} Stopped ${meta.name}`)
 }

@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { DnsSchema, InstanceSchema, NetworkSchema, VolumeSchema } from './common.js';
-import { BoxMetadata, BoxSchemaBaseZ, MachineBoxProvisioner, MachineBoxProvisionerOutput, MachineBoxProvisionerInstance, MachineBoxProvisionerOutputZ } from '../common/base.js';
+import { BoxSchemaBaseZ, MachineBoxProvisioner, MachineBoxProvisionerOutput, MachineBoxProvisionerInstance, MachineBoxProvisionerOutputZ, BoxConstructorMetadata, buildMainBoxMeta } from '../common/base.js';
 import { PulumiManagerBox } from '../pulumi/manager.js';
 import { AwsClient } from '../../lib/infra/aws/client.js';
 import { ReplicatedEC2instance } from '../../lib/infra/pulumi/components/aws/replicated-ec2.js';
@@ -10,7 +10,7 @@ import * as pulumi from "@pulumi/pulumi"
 import { componentLogger, CloudyBoxLogObjI } from "../../lib/logging.js"
 import {  Logger } from 'tslog';
 
-export const ReplicatedEC2InstanceManagerBoxSpecZ = z.object({
+export const ReplicatedEC2InstanceProjectSpecZ = z.object({
     awsConfig: z.object({ // TODO need a better way to handle that
         region: z.string()
     }),
@@ -24,36 +24,33 @@ export const ReplicatedEC2InstanceManagerBoxSpecZ = z.object({
     ignorePublicKeyChanges: z.boolean().optional()
 });
 
-export const ReplicatedEC2InstanceSchema = BoxSchemaBaseZ.extend({
-    spec: ReplicatedEC2InstanceManagerBoxSpecZ,
+export const ReplicatedEC2InstanceProjectSchemaZ = BoxSchemaBaseZ.extend({
+    spec: ReplicatedEC2InstanceProjectSpecZ,
 })
 
-export type ReplicatedEC2InstanceManagerBoxSpec = z.infer<typeof ReplicatedEC2InstanceManagerBoxSpecZ>
+export type ReplicatedEC2InstanceProjectSpec = z.infer<typeof ReplicatedEC2InstanceProjectSpecZ>
 
-export const BOX_KIND_REPLICATED_EC2_INSTANCE = "aws.ec2.ReplicatedInstance"
-export const BOX_CONTEXT_REPLICATED_EC2_INSTANCE = BOX_KIND_REPLICATED_EC2_INSTANCE
+export const PROJECT_KIND_REPLICATED_EC2_INSTANCE = "aws.ec2.ReplicatedInstance"
 
 export interface ReplicatedEC2InstanceManagerBoxArgs {
-    spec: ReplicatedEC2InstanceManagerBoxSpec
+    spec: ReplicatedEC2InstanceProjectSpec
 }
 
 export class ReplicatedEC2ManagerBox extends PulumiManagerBox<MachineBoxProvisionerOutput> implements MachineBoxProvisioner {
     
     static async parseSpec(source: unknown) : Promise<ReplicatedEC2ManagerBox> {
-        const config = ReplicatedEC2InstanceSchema.parse(source)
-        return new ReplicatedEC2ManagerBox({name: config.name, context: BOX_CONTEXT_REPLICATED_EC2_INSTANCE}, config)
+        const config = ReplicatedEC2InstanceProjectSchemaZ.parse(source)
+        return new ReplicatedEC2ManagerBox(buildMainBoxMeta(config), config)
     }
 
     readonly awsClient: AwsClient
 
     readonly logger: Logger<CloudyBoxLogObjI>
 
-    constructor(meta: {name: string, context: string}, args: ReplicatedEC2InstanceManagerBoxArgs) {
-
-        const metadata : BoxMetadata = { name: meta.name, context: meta.context, kind: BOX_KIND_REPLICATED_EC2_INSTANCE }
+    constructor(meta: BoxConstructorMetadata, args: ReplicatedEC2InstanceManagerBoxArgs) {
 
         const pulumiFn = async ()  => {
-            const instances = new ReplicatedEC2instance(`${metadata.context}-${metadata.name}`, args.spec)
+            const instances = new ReplicatedEC2instance(`${meta.project.kind}-${meta.name}`, args.spec)
 
             const replicas = instances.replicas.map(r => pulumi.all([ 
                     r.instance.id,
@@ -80,11 +77,11 @@ export class ReplicatedEC2ManagerBox extends PulumiManagerBox<MachineBoxProvisio
                 config: {
                     "aws:region": { value: args.spec.awsConfig.region }
                 },
-                meta: metadata
+                meta: {...meta, type: "aws.ec2.ReplicatedInstance"}
             },
         )
         
-        this.logger = componentLogger.getSubLogger({ name: `${metadata.kind}:${metadata.name}` })
+        this.logger = componentLogger.getSubLogger({ name: `${meta.project.kind}:${meta.name}` })
         this.awsClient = new AwsClient({ region: args.spec.awsConfig?.region })
     }
 

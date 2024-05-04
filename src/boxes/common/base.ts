@@ -25,18 +25,25 @@ export interface BoxMetadata {
     /**
      * The type of box
      */
-    readonly kind: string
+    readonly type: string
 
     /**
-     * Context in which this Box is used
+     * Project in which this Box is used
      */
-    readonly context: string
+    readonly project: Project
+}
+
+export interface Project {
+
+    readonly name: string
+
+    readonly kind: string
 }
 
 /**
  * Arguments to pass to Box constructor.
  */
-export type BoxConstructorMetadata = Omit<BoxMetadata, "kind">
+export type BoxConstructorMetadata = Omit<BoxMetadata, "type">
 
 /**
  * Base Box implementation with Kind, Name and common functions
@@ -48,7 +55,7 @@ export abstract class BaseBox {
 
     constructor(meta: BoxMetadata){
         this.metadata = meta
-        this.logger = componentLogger.getSubLogger({ name: `${meta.kind}:${meta.name}` })
+        this.logger = componentLogger.getSubLogger({ name: `${meta.type}:${meta.name}` })
     }
 
     async getMetadata() : Promise<BoxMetadata>{
@@ -131,3 +138,16 @@ export interface ManagerBox extends BaseBox, ProvisionerBox, ConfiguratorBox {
 export type DeepPartial<T> = T extends object ? {
     [P in keyof T]?: DeepPartial<T[P]>;
 } : T
+
+/**
+ * Build a BoxConstructorMetadata for a main Box from a project's Schema
+ */
+export function buildMainBoxMeta(s: BoxSchemaBase) : BoxConstructorMetadata{
+    return {
+        name: s.name,
+        project: {
+            name: s.name,
+            kind: s.kind
+        }
+    }
+}

@@ -26,7 +26,9 @@ export class PulumiClient {
     }
 
     public async getOutputsRaw(): Promise<OutputMap> {
-        return this.doGetStackOutput()
+        const o = await this.doGetStackOutput()
+        this.logger.debug(`Got outputs for project ${this.args.projectName} stack '${this.args.stackName}': ${JSON.stringify(o)}`)
+        return o
     }
 
     public async preview(): Promise<PreviewResult> {

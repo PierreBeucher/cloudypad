@@ -1,10 +1,10 @@
 import { z } from "zod"
-import { ReplicatedEC2InstanceManagerBoxSpecZ } from "../aws/replicated-ec2.js"
-import { PaperspaceManagerBoxSpecZ } from "../paperspace/manager.js"
+import { ReplicatedEC2InstanceProjectSpecZ } from "../aws/replicated-ec2.js"
+import { PaperspaceProjectSpecZ } from "../paperspace/manager.js"
 
 export const MachineProvisionerZ = z.object({
-    aws: ReplicatedEC2InstanceManagerBoxSpecZ.deepPartial().optional(),
-    paperspace: PaperspaceManagerBoxSpecZ.deepPartial().optional()
+    aws: ReplicatedEC2InstanceProjectSpecZ.deepPartial().optional(),
+    paperspace: PaperspaceProjectSpecZ.deepPartial().optional()
 })
 
 /**

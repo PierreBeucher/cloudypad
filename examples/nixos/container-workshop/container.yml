@@ -1,5 +1,5 @@
 name: container-workshop
-kind: Linux.NixOS.Manager
+kind: Linux.NixOS
 spec:
   nixos:
     nixosChannel: nixos-23.05

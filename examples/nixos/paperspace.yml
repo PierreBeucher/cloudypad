@@ -1,5 +1,5 @@
 name: simple-example-paperspace
-kind: Linux.NixOS.Manager
+kind: Linux.NixOS
 spec:
   ssh:
     privateKeyPath: "/home/pbeucher/.ssh/id_ed25519"

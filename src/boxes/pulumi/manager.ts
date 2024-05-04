@@ -22,7 +22,7 @@ export abstract class PulumiManagerBox<T extends BoxOutputs>  extends BaseBox im
         super(args.meta)
         this.args = args
         this.client = new PulumiClient({
-            projectName: `CloudyBox-${args.meta.context}`,
+            projectName: `CloudyBox-${args.meta.project.kind}`,
             stackName: args.meta.name,
             config: args.config,
             program: args.program,
@@ -65,7 +65,7 @@ export abstract class PulumiManagerBox<T extends BoxOutputs>  extends BaseBox im
     }
 
     async getMetadata(): Promise<BoxMetadata> {
-        return this.args.meta
+        return this.metadata
     }
 
     abstract stackOuputToBoxOutput(o: OutputMap): Promise<T>

@@ -1,5 +1,5 @@
 name: woof
-kind: gaming.Wolf.Manager
+kind: gaming.Wolf
 spec: 
   ssh:
     privateKeyPath: "/home/pbeucher/.ssh/id_ed25519"
