@@ -122,7 +122,7 @@ cloudypad utils wolf open-pin examples/gaming/wolf-aws.yml
 cloudypad stop examples/gaming/wolf-aws.yml
 ```
 
-Start insance later with:
+Start instance later with:
 
 ```sh
 cloudypad start examples/gaming/wolf-aws.yml
@@ -136,7 +136,7 @@ cloudypad destroy examples/gaming/wolf-aws.yml
 
 ## Usage and configuration
 
-Cloudy Pad use YAML configuration to manages your gaming box via CLI. See [examples](./examples/) configurations.
+Cloudy Pad uses YAML configuration to manage your gaming box via CLI. See [examples](./examples/) configurations.
 
 Basic commands:
 
@@ -197,7 +197,7 @@ spec:
 
 ### Connect via SSH on Box
 
-Get your bow details with:
+Get your box details with:
 
 ```sh
 cloudypad get examples/gaming/wolf-aws.yml
