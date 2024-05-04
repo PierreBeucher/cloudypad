@@ -1,14 +1,9 @@
 name: replicated-example
 kind: Linux.NixOS
 spec:
-  nixos:
-    nixosConfigName: code-server
   replicas:
   - pierre
   - emily
-  # Generate DNS like
-  # - pierre.nixos-example.cloudybox.crafteo.io
-  # - emily.nixos-example.cloudybox.crafteo.io
   dns:
     zoneName: cloudybox.crafteo.io
     prefix: nixos-example
