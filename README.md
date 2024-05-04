@@ -1,162 +1,378 @@
 # Cloudy Pad
 
-Your own gaming gear in the Cloud ! 🎮 ⛅ 
+Your own gaming box in the Cloud ! 🎮 ⛅ 
 
-- [Development status](#development-status)
+- [Development status 🧪](#development-status-)
 - [Features](#features)
-- [Installation](#installation)
-- [Usage](#usage)
-  - [General](#general)
-  - [🐺 Wolf](#-wolf)
-  - [❄️ NixOS instance fleet](#️-nixos-instance-fleet)
-- [Example configurations](#example-configurations)
-- [Development](#development)
-  - [Test NixOS config](#test-nixos-config)
-  - [Generate Paperspace client](#generate-paperspace-client)
+- [Getting started](#getting-started)
+  - [Installation](#installation)
+  - [Create your Cloud gaming gear !](#create-your-cloud-gaming-gear-)
+- [Usage and configuration](#usage-and-configuration)
+  - [Default configurations](#default-configurations)
+  - [Box configuration file](#box-configuration-file)
+  - [Advanced Box use and configuration](#advanced-box-use-and-configuration)
+    - [Connect via SSH on Box](#connect-via-ssh-on-box)
+    - [Set authorized SSH Keys](#set-authorized-ssh-keys)
+    - [Setup a DNS record](#setup-a-dns-record)
+- [Supported gaming servers and Cloud providers](#supported-gaming-servers-and-cloud-providers)
+  - [Cloud providers 🌥️](#cloud-providers-️)
+    - [AWS](#aws)
+    - [Azure (not yet implemented)](#azure-not-yet-implemented)
+    - [GCP (not yet implemented)](#gcp-not-yet-implemented)
+    - [Other Cloud providers ?](#other-cloud-providers-)
+  - [Gaming servers](#gaming-servers)
+    - [Wolf 🐺](#wolf-)
+    - [Sunshine 🌤️](#sunshine-️)
+    - [Other Gaming servers ?](#other-gaming-servers-)
+  - [FAQ](#faq)
+    - [How much will I pay ? 🫰](#how-much-will-i-pay--)
+    - [How does Cloudy Pad works?](#how-does-cloudy-pad-works)
+    - [Is it possible to deploy something else than Gaming servers ?](#is-it-possible-to-deploy-something-else-than-gaming-servers-)
+    - [Will Cloudy Pad become a paid product ?](#will-cloudy-pad-become-a-paid-product-)
+- [License](#license)
 
-## Development status
+## Development status 🧪
 
 This project is still at an experimental phase. While working and allowing you to play in the Cloud seamlessly, there may be breaking changes in the future. Feel free to contribute and provide feedback !
 
 ## Features
 
-**Gaming**
+Compatible with [Moonlight](https://moonlight-stream.org/) streaming client
 
-- 🐺 [Wolf](https://games-on-whales.github.io/wolf/stable/) Cloud instance
-- 🌤️ (soon) [Sunshine](https://github.com/LizardByte/Sunshine) Cloud instance
+Gaming servers:
 
-**❄️ NixOS**
+- 🐺 [Wolf](https://games-on-whales.github.io/wolf/stable/)
+- (available soon) 🌤️ [Sunshine](https://github.com/LizardByte/Sunshine)
 
-- [NixOS](https://nixos.org/) instance fleet for various usage: VSCode Server, Docker, etc. 
+Cloud providers:
 
-**Coming soon**
+- [AWS](https://aws.amazon.com/)
+- (available soon) [Azure](https://azure.microsoft.com)
+- (available soon) [Google Cloud](https://cloud.google.com)
 
-- Deploy a fleet of instances with various services (VSCode, GPU, databases, etc.)
-- Deploy Kubernetes clusters
+## Getting started
 
-## Installation
+Prerequisites:
+- A Clouder account (eg. [AWS](https://aws.amazon.com/))
+- Make sure you [understand the costs 💸](#how-much-will-i-pay) of running a gaming instance in the Cloud
 
-Clone this repository and install globally:
+### Installation
+
+_Note: installation is very basic for now, requiring to clone Git repo and build app. I'm actively working on npm and other distribution methods (eg. static binary, container image)._
+
+Clone this Git repository:
 
 ```sh
-npm i -g
+git clone https://github.com/PierreBeucher/Cloudy-Pad.git
+cd Cloudy-Pad
 ```
 
-Package will soon be published publicly to npm registry.
+Build Cloudy Pad `cloudypad` CLI with either:
 
-## Usage
+**🐳 Docker or Podman** 
 
-All command below use `cloudybox`. You can also use `npx ts-node src/main.ts` without global installation.
+Run :
 
-### General
+```sh
+docker compose run cloudypad
+podman-compose run cloudypad
+```
 
-**Requirements**
-- [Pulumi account](https://www.pulumi.com/) or [self-managed Pulumi backend](https://www.pulumi.com/docs/concepts/state/#using-a-self-managed-backend)
-- [AWS](https://aws.amazon.com/) account
+You'll be dropped into a shell with ready-to-use `cloudypad` CLI.
+
+**🖥️ Build locally**
+
+Make sure to have installed:
+- [Pulumi](https://www.pulumi.com/docs/install/) 3.x or anterior
+- [NodeJS](https://nodejs.org/en/download) 18.x or anterior
+- [Typescript](https://nodejs.org/en/download) 5.x or anterior
+
+Run:
+
+```sh
+npm install
+npm run build
+npm install -g
+```
+
+`cloudypad` CLI should now be available on path.
+
+### Create your Cloud gaming gear !
+
+Deploy a Wolf server on AWS:
+
+```sh
+cloudypad deploy examples/gaming/wolf-aws.yml
+```
+
+Once your instance is deployed and ready, use [Moonlight](https://moonlight-stream.org/) to access it. Get your instance IP or address with (it should be shown after deployment):
+
+```sh
+cloudypad get examples/gaming/wolf-aws.yml
+```
+
+Once Moonlight asks for PIN, open browser to PIN validation page with:
+
+```sh
+cloudypad utils wolf open-pin examples/gaming/wolf-aws.yml
+```
+
+**Remember to stop or destroy** your instance when done:
+
+```sh
+cloudypad stop examples/gaming/wolf-aws.yml
+```
+
+Start insance later with:
+
+```sh
+cloudypad start examples/gaming/wolf-aws.yml
+```
+
+Or destroy instance altogether (all data will be lost):
+
+```sh
+cloudypad destroy examples/gaming/wolf-aws.yml
+```
+
+## Usage and configuration
+
+Cloudy Pad use YAML configuration to manages your gaming box via CLI. See [examples](./examples/) configurations.
+
+Basic commands:
 
 ```sh
 # Show help
-cloudybox --help
+cloudypad --help
 
 # Deploy a Box (provision + configure)
-cloudybox deploy examples/gaming/wolf.yml
+cloudypad deploy examples/gaming/wolf-aws.yml
 
 # Provision a Box
 # Only run infrastructure provisioning 
 # such as AWS resource management
-cloudybox provision examples/gaming/wolf.yml
+cloudypad provision examples/gaming/wolf-aws.yml
 
 # Configure a Box
-# Only run Box configuration such as NixOS rebuild
-cloudybox configure examples/gaming/wolf.yml
+# Only run Box configuration (NixOS rebuild)
+cloudypad configure examples/gaming/wolf-aws.yml
 
 # Get a Box details
-cloudybox get examples/gaming/wolf.yml
+cloudypad get examples/gaming/wolf-aws.yml
 
 # Destroy a Box 
-cloudybox destroy examples/gaming/wolf.yml
+cloudypad destroy examples/gaming/wolf-aws.yml
 ```
 
-### 🐺 Wolf 
+### Default configurations
 
-Deploy a [Wolf](https://games-on-whales.github.io/wolf/stable/) Cloud instance:
+Default configuration per provider:
+
+- AWS: `g5.xlarge` instance (16Gb RAM, 4 CPU, NVIDIA A10G Tensor Core), 150Go Disk, dynamic IP allocation
+- Azure (available soon): 150Go Disk, dynamic IP allocation, instance type to be specified
+- GCP (available soon): 150Go Disk, dynamic IP allocation, instance type to be specified
+
+Boxes are customizable to specify instance types, disk size, DNS record, IP configuration and more ! (See below)
+
+### Box configuration file
+
+A box configuration is a YAML file looking like this:
+
+```yaml
+# Unique name for your Box
+name: cloud-gaming-gear
+
+# The box Kind 
+# Only gaming.Wolf is supported for now, but more will come gaming.Sunshine 
+kind: gaming.Wolf
+
+# Box specifications
+# A few technical details to know where and how to deploy your Box
+spec: 
+  ssh:
+    authorizedKeys: 
+    - ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIGaNlYLbwtAmfcNjlOsP6Ryh3QxGn9qlhlQjPo5nbzBa
+  provisioner:
+    aws: {}
+```
+
+### Advanced Box use and configuration
+
+#### Connect via SSH on Box
+
+Get your bow details with:
 
 ```sh
-# Deploy instance (provision + configuration)
-cloudybox deploy examples/gaming/wolf.yml
+cloudypad get examples/gaming/wolf-aws.yml
+# Output something like
 
-# Run only provision or configure steps
-# cloudybox provision examples/gaming/wolf.yml
-# cloudybox configure examples/gaming/wolf.yml
 ```
 
-Deployment will take care of everything: machine provisioning, configuration, driver installation...
-
-Output shows something like:
-
-```json
-{
-  "replicas": [
-    {
-      "name": "instance",
-      "publicIp": "3.73.159.77",
-      "instanceId": "i-08f25ac5ab47afa79"
-    }
-  ]
-}
-```
-
-Alternatively get instance details with
+Then use ssh:
 
 ```sh
-cloudybox get examples/gaming/wolf.yml
+ssh root@<address>
 ```
 
-Once deployed, run Moonlight and connect to instance. Open a browser to enter PIN with:
+#### Set authorized SSH Keys
 
-```sh
-cloudybox utils wolf open-pin examples/gaming/wolf.yml
+Specify authorized SSH keys:
+
+```yaml
+spec: 
+  ssh:
+    authorizedKeys: 
+    - ssh-ed25519 AAA123...
+    - ssh-ed25519 AAA456...
 ```
 
-Destroy instance - _⚠️ All data will be lost !_
+SSH keys will be added on next Box configuration.
 
-```sh
-cloudybox destroy examples/gaming/wolf.yml
+#### Setup a DNS record
+
+_Note: you must own an Hosted Zone on the cloud Provider and have it configured accordingly. See provider doc for details._
+
+```yaml
+spec: 
+  dns:
+    zoneName: gaming.crafteo.io
 ```
 
-### ❄️ NixOS instance fleet
+Will create a DNS A record pointing to your instance. 
 
-Deploy a fleet of [NixOS](https://nixos.org/) instances for various use cases: development server with VSCode and Docker, database server, Wordpress website...
+You can set detailed configuration:
 
-```sh
-cloudybox deploy examples/nixos/replicated.yml
+```yaml
+spec: 
+  dns:
+    zoneName: gaming.crafteo.io
+
+    # Will create record mybox.gaming.crafteo.io 
+    # instead of record at root on gaming.crafteo.io
+    prefix: mybox
+
+    # DNS Record Time-To-Live in seconds
+    # Default to 60
+    ttl: 3600
 ```
 
-## Example configurations
+## Supported gaming servers and Cloud providers
 
-See [examples](./examples/)
+### Cloud providers 🌥️
 
-## Development
+For now only AWS is supported, more will come soon !
 
-### Test NixOS config
+#### AWS
 
-```sh
-nix-instantiate '<nixpkgs/nixos>' -A config.system.build.toplevel -I nixpkgs=channel:nixos-23.05 --arg configuration ./configs/nix/wolf-aws.nix
+Set `aws` provisioner in your Box config:
+
+```yml
+spec: 
+  provisioner:
+    aws: {}
 ```
 
-Manage underlying Pulumi stacks:
+You can also override the underlying provisioner config:
 
-```sh
-pulumi stack ls -a
-pulumi destroy -s full-stack-name
-pulumi stack output -s full-stack-name
-pulumi stack rm full-stack-name
+```yml
+spec: 
+  provisioner:
+    aws:
+      # Set AWS region and other configs
+      config:
+        region: eu-central-1
+      
+      # Set instance details
+      instance:
+        staticIpEnable: true,
+        rootVolume: 
+          sizeGb: 500
+          type: g5.2xlarge
 ```
 
-### Generate Paperspace client
+#### Azure (not yet implemented)
 
-Paperspace client is generated from OpenAPI specifications:
+Set `azure` provisioner in your Box config:
 
-```sh
-task paperspace-client-gen
+```yml
+spec: 
+  provisioner:
+    azure: {}
 ```
+
+#### GCP (not yet implemented)
+
+Set `gcp` provisioner in your Box config:
+
+```yml
+spec: 
+  provisioner:
+    gcp: {}
+```
+
+#### Other Cloud providers ?
+
+I know, these major clouders are expensive for a gaming box. 
+
+I intend to support other less-known Cloud providers like [Paperspace](https://www.paperspace.com/) or [TensorFlow](https://www.tensordock.com/), but it's hard to provide a timeline yet (if you're curious you can find an experimental Paperspace box hidden in the code, though it's not fully working yet). Do not to hesitate to contribute or ⭐ the project, it will help move things forward !
+
+### Gaming servers
+
+#### Wolf 🐺
+
+[Wolf](https://games-on-whales.github.io/wolf/stable/index.html) is _an open source streaming server for Moonlight that allows you to share a single server with multiple remote clients in order to play videogames_. It works via containers to provide various services such as Steam Big Picture.
+
+#### Sunshine 🌤️
+
+[Sunshine](https://github.com/LizardByte/Sunshine) is a _self-hosted game stream host for Moonlight_. You can install anything on your instance (eg. Steam or other) and stream it with Moonlight.
+
+#### Other Gaming servers ?
+
+I intend to support [Parsed](https://parsec.app/) as well as Moonlight.
+
+### FAQ
+
+#### How much will I pay ? 🫰
+
+Cloudy-Pad is free and open-source, however charges may apply when using a Cloud provider. Here's an estimation:
+
+| Gaming time / month      | 15h        | 20h        | 20h        | 30h        |
+|--------------------------|------------|------------|------------|------------|
+| EC2 instance type        | g5.xlarge  | g5.xlarge  | g5.2xlarge | g5.2xlarge |
+| Disk size (gp3 SSD)      | 100 Go     | 100 Go     | 100 Go     | 100 Go     |
+| EC2 instance $           | $18.87     | $25.16     | $30.31     | $45.47     |
+| Route53 record $         | $0.00      | $0.00      | $0.00      | $0.00      |
+| EC2 volume (disk) $      | $9.52      | $9.52      | $9.52      | $9.52      |
+| EIP address $            | $3.53      | $3.50      | $3.50      | $3.45      |
+| **Est. TOTAL / month $** | **$31.92** | **$38.18** | **$43.33** | **$58.44** |
+
+**This project's goal is to allow for 20h / month for 20$** - [Paperspace](https://www.paperspace.com/pricing) and [TensorDock](https://www.tensordock.com/) are good bets, but not ready to use yet.  
+
+Equivalent estimation for other providers will be added as they become ready.
+
+#### How does Cloudy Pad works? 
+
+Deployment is divided in two phases:
+
+- Provisioning: manage Cloud resources (virtual machines, firewall, volumes disks, etc.)
+  - Currently managed via [Pulumi](https://www.pulumi.com/)
+- Configuration: install everything on instance (gaming server, GPU drivers, etc.)
+  - Currently managed via [NixOS](https://nixos.org/)
+
+A small framework, Cloudy Box, allow seamless integration of both technologies. 
+
+#### Is it possible to deploy something else than Gaming servers ?
+
+Yes ! Underlying Cloudy Box framework is actually designed for that: easy deployment of Cloud infrastructure with NixOS (or other configuration tools). In the future it will be merged-out of this project to become a more generic Cloudy Box CLI and/or API project which Cloudy Pad will use. 
+
+If you're interested in these features, do not hesitate to reach me directly - my email is on my GitHub account. 
+
+#### Will Cloudy Pad become a paid product ?
+
+Probably not in it's current form. Considering I'm really _not_ happy about the [enshittification of the internet](https://en.wikipedia.org/wiki/Enshittification), Cloudy Pad will remain FOSS - at least for personal use.
+
+However, the larger Cloudy Box scope may become a paid product for professional use cases, not necessarily linked to gaming.
+
+## License
+
+[GNU GENERAL PUBLIC LICENSE](./LICENSE.txt)
