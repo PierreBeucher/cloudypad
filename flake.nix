@@ -40,6 +40,8 @@
               gettext
               typescript
               plandex
+              podman
+              podman-compose
             ];
             
             shellHook = ''
