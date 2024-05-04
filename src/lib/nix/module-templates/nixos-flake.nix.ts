@@ -1,4 +1,4 @@
-import { NixOSModule } from "../interfaces.js";
+import { NixOSModule } from "../modules.js";
 
 export function osFlake(modules: string[]) : NixOSModule {
   const n = `
@@ -19,8 +19,8 @@ export function osFlake(modules: string[]) : NixOSModule {
   `
 
   return {
-    content: n,
+    sourceContent: n,
     name: "flake.nix",
-    modules: [],
+    dependsOn: [],
   }
 }

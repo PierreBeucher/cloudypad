@@ -3,7 +3,7 @@ const { merge } = lodash;
 import { BoxSchemaBaseZ as ProjectSchemaBaseZ, BaseBox as BaseBox, ManagerBox as ManagerBox, MachineBoxProvisioner as MachineProvisionerBox, BoxConstructorMetadata, buildMainBoxMeta } from "../common/base.js";
 import { SSHDefinitionZ } from "../common/virtual-machine.js";
 import { z } from "zod";
-import { NixOSConfigurator, NixOSConfiguratorArgs } from '../../lib/nix/configurator.js';
+import { NixOSConfigStep, NixOSConfigurator, NixOSConfiguratorArgs, NixOSPreConfigStep } from '../../lib/nix/configurator.js';
 import { SSHCommandOpts } from '../../lib/ssh/client.js';
 import { DnsSchema, NetworkSchema } from '../aws/common.js';
 import { ReplicatedEC2ManagerBox, ReplicatedEC2InstanceManagerBoxArgs, ReplicatedEC2InstanceProjectSpecZ } from '../aws/replicated-ec2.js';
@@ -11,10 +11,9 @@ import { SSHExecCommandResponse } from 'node-ssh';
 import { PaperspaceManagerBox, PaperspaceProjectSpecZ } from '../paperspace/manager.js';
 import { mainLogger } from '../../lib/logging.js';
 import { getUserSSHPublicKey } from '../../lib/ssh/utils.js';
-import { NixOSModule, NixOSModuleDirectory } from '../../lib/nix/interfaces.js';
-import { authorizedKeys } from '../../lib/nix/modules/authorized-keys.nix.js';
-import { awsBase } from '../../lib/nix/modules/aws-base.nix.js';
-import * as path from 'path';
+import { NixOSModule } from '../../lib/nix/modules.js';
+import { authorizedKeys } from '../../lib/nix/module-templates/authorized-keys.nix.js';
+import { awsBase } from '../../lib/nix/module-templates/aws-base.nix.js';
 import { NixOSFleetConfigurator, NixOSInstance } from '../../lib/nix/fleet-configurator.js';
 import { nixOSInfect } from '../../lib/nix/configurator-steps.js';
 import { parseProvisionerName } from '../common/provisioners.js';
@@ -23,11 +22,10 @@ export const NixOSBoxConfigZ = z.object({
     nixosChannel: z.string(),
     homeManagerRelease: z.optional(z.string()),
     modules: z.array(z.object({
+        name: z.string().optional(),
         path: z.string(),
-    })).optional(),
-    modulesDir: z.array(z.object({
-        path: z.string(),
-    })).optional()
+        skipImport: z.boolean().optional().describe("Do not import module in main NixOS configuration. Module's files will be copied on target host without being referenced directly in NixOS config.")
+    })).optional().describe("NixOS modules to import in NixOS flake.nix configuration. Can be a file or directory. Will be added directly as import [ ./xxx ] of flake.nix used for NixOS configuration."),
 }).strict()
 
 export const NixOSProjectSpecZ = z.object({
@@ -157,23 +155,29 @@ export class NixOSManagerBox extends BaseBox implements ManagerBox {
 
 }
 
-export class NixOSManagerBoxBuilder {
-
+export interface NixOSManagerBoxBuilderArgs {
     readonly spec: NixOSProjectSpec
+    readonly additionalPreConfigSteps?: NixOSPreConfigStep[]
+    readonly additionalConfigSteps?: NixOSConfigStep[]
+}
 
-    constructor(spec: NixOSProjectSpec){
-        this.spec = spec
+export class NixOSManagerBoxBuilder {
+    
+    readonly args: NixOSManagerBoxBuilderArgs
+
+    constructor(args: NixOSManagerBoxBuilderArgs){
+        this.args = args
     }
     
     async buildProvisioner(meta: BoxConstructorMetadata) : Promise<MachineProvisionerBox>{
 
-        const provisionerName = parseProvisionerName(this.spec.provisioner)
+        const provisionerName = parseProvisionerName(this.args.spec.provisioner)
     
         // Find or generate the public SSH key to provision instance in this order:
         // - If private key is provided, use it 
         // - Otherwise, find first available private key
         // Then generate a public key out of it
-        const sshPubKey = await getUserSSHPublicKey(this.spec.ssh.privateKeyPath)
+        const sshPubKey = await getUserSSHPublicKey(this.args.spec.ssh.privateKeyPath)
         
         switch (provisionerName) {
             case "aws": {
@@ -181,19 +185,19 @@ export class NixOSManagerBoxBuilder {
                 // Default configuration for AWS
                 const defaultAwsConfig: ReplicatedEC2InstanceManagerBoxArgs = {
                     spec: {
-                        replicas: this.spec.replicas,
+                        replicas: this.args.spec.replicas,
                         awsConfig: {
                             region: "eu-central-1" // TODO default from user environment?
                         },
                         publicKey: sshPubKey,
-                        dns: this.spec.dns,
+                        dns: this.args.spec.dns,
                         network: merge( // Always open port 22 for SSH (TODO add an option to change it)
                             {
                                 ingressPorts: [{
                                     from: 22
                                 }]
                             }, 
-                            this.spec.network
+                            this.args.spec.network
                         ),
                         instance: {
                             ami: "ami-024965d66b21fb7ab", // nixos/23.11.5060.617579a78725-x86_64-linux eu-central-1
@@ -211,7 +215,7 @@ export class NixOSManagerBoxBuilder {
     
                 // Provisioner
                 const finalAwsConfig: ReplicatedEC2InstanceManagerBoxArgs = merge(defaultAwsConfig, {
-                    spec: this.spec.provisioner.aws
+                    spec: this.args.spec.provisioner.aws
                 })
     
                 mainLogger.debug(`AWS config: ${JSON.stringify(finalAwsConfig, undefined, 2)}`)
@@ -220,7 +224,7 @@ export class NixOSManagerBoxBuilder {
     
             }
             case "paperspace": {
-                const ppProvisionerSpec = this.spec.provisioner.paperspace!
+                const ppProvisionerSpec = this.args.spec.provisioner.paperspace!
                 
                 return new PaperspaceManagerBox(meta, {
                     apiKeyFile: ppProvisionerSpec.apiKeyFile,
@@ -235,42 +239,33 @@ export class NixOSManagerBoxBuilder {
     
     async buildConfiguratorArgs() : Promise<NixOSConfiguratorArgs>{
        
-        const provisionerName = parseProvisionerName(this.spec.provisioner)
+        const provisionerName = parseProvisionerName(this.args.spec.provisioner)
     
         const modules: NixOSModule[] = []
-        const modulesDir: NixOSModuleDirectory[] = []
     
-        if(this.spec.ssh.authorizedKeys) {
-            const akm = authorizedKeys("root", this.spec.ssh.authorizedKeys)
+        if(this.args.spec.ssh.authorizedKeys) {
+            const akm = authorizedKeys("root", this.args.spec.ssh.authorizedKeys)
             modules.push(akm)
         }
     
-        for (const m of this.spec.nixos?.modules || []){
+        for (const m of this.args.spec.nixos?.modules || []){
             modules.push({
-                name: path.basename(m.path),
-                path: m.path,
-                modules: []
-            })
-        }
-    
-        for (const md of this.spec.nixos?.modulesDir || []){
-            modulesDir.push({
-                name: path.basename(md.path),
-                path: md.path
+                sourcePath: m.path,
+                name: m.name,
+                skipImport: m.skipImport
             })
         }
     
         const configuratorArgs : NixOSConfiguratorArgs = {
             nixosChannel: DEFAULT_NIXOS_CONFIG.nixosChannel,
             homeManagerRelease: DEFAULT_NIXOS_CONFIG.homeManagerRelease,
-            modulesDirs: modulesDir,
             modules: modules,
-            additionalConfigSteps: [],
-            additionalPreConfigSteps: [],
+            additionalConfigSteps: this.args.additionalConfigSteps || [],
+            additionalPreConfigSteps: this.args.additionalPreConfigSteps || [],
             ssh: {
-                port: this.spec.ssh.port,
-                user: this.spec.ssh.user,
-                privateKeyPath: this.spec.ssh.privateKeyPath,
+                port: this.args.spec.ssh.port,
+                user: this.args.spec.ssh.user,
+                privateKeyPath: this.args.spec.ssh.privateKeyPath,
             },
         }
     
@@ -307,6 +302,6 @@ export async function parseNixOSManagerBoxSpec(rawConfig: unknown) : Promise<Nix
         throw new Error(`Config parse errors: ${JSON.stringify(parsedConfig.error.issues, undefined, 2)}`)
     }
 
-    return new NixOSManagerBoxBuilder(parsedConfig.data.spec).buildManagerBox(buildMainBoxMeta(parsedConfig.data))
+    return new NixOSManagerBoxBuilder({ spec: parsedConfig.data.spec }).buildManagerBox(buildMainBoxMeta(parsedConfig.data))
 }
 

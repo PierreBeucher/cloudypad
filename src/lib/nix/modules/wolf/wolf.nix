@@ -17,11 +17,6 @@ let
 in
 {
 
-  virtualisation.docker = {
-    enable = true;
-    enableOnBoot = true;
-  }; 
-
   options.services.wolf = {
     enable = mkEnableOption "wolf service";
   };
@@ -44,6 +39,11 @@ in
           { from = 48200; to = 48210; } # Audio (up to 10 users)
       ];
     };
+    
+    virtualisation.docker = {
+      enable = true;
+      enableOnBoot = true;
+    }; 
 
     # Required to simulate input
     boot.kernelModules = [ "uinput" ];

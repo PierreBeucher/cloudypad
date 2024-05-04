@@ -1,4 +1,4 @@
-import { NixOSModule } from "../interfaces.js"
+import { NixOSModule } from "../modules.js"
 
 export function awsBase() : NixOSModule {
     const nixConfig = `
@@ -15,9 +15,9 @@ export function awsBase() : NixOSModule {
     `
 
     return {
-        content: nixConfig,
+        sourceContent: nixConfig,
         name: "aws-base.nix",
-        modules: [],
+        dependsOn: [],
     }
 }
 

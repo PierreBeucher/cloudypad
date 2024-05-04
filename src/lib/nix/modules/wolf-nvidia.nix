@@ -2,10 +2,8 @@
     
 in {
   imports = [ 
-        ./modules/nvidia.nix
-        ./modules/wolf.nix
-        ./modules/code-server.nix
-        ./modules/docker.nix
+        ./wolf/nvidia.nix
+        ./wolf/wolf.nix
     ];
 
     services.wolf = {

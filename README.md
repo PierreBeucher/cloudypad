@@ -1,9 +1,8 @@
-# Cloudy Box 
+# Cloudy Pad
 
-Collection of Cloud components and services
+Your own gaming gear in the Cloud ! 🎮 ⛅ 
 
-_This project is under heavy development and will have breaking changes. Feel free to ping me an email or create an issue !_
-
+- [Development status](#development-status)
 - [Features](#features)
 - [Installation](#installation)
 - [Usage](#usage)
@@ -14,6 +13,10 @@ _This project is under heavy development and will have breaking changes. Feel fr
 - [Development](#development)
   - [Test NixOS config](#test-nixos-config)
   - [Generate Paperspace client](#generate-paperspace-client)
+
+## Development status
+
+This project is still at an experimental phase. While working and allowing you to play in the Cloud seamlessly, there may be breaking changes in the future. Feel free to contribute and provide feedback !
 
 ## Features
 

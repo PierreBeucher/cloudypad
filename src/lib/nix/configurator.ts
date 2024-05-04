@@ -1,10 +1,5 @@
 import { SSHClient, SSHCommandOpts } from "../ssh/client.js";
-import { NixOSModule, NixOSModuleDirectory } from "./interfaces.js";
-import * as fs from 'fs';
-import * as fsx from 'fs-extra';
-import * as path from 'path';
-import * as os from 'os';
-import { osFlake } from "./modules/nixos-flake.nix.js";
+import { NixOSFlakeBuilder, NixOSModule } from "./modules.js";
 import { Logger } from "tslog";
 import { CloudyBoxLogObjI, componentLogger } from "../logging.js";
 import { NixOSInstance } from "./fleet-configurator.js";
@@ -34,11 +29,6 @@ export interface NixOSConfiguratorArgs {
      * Module to use as configuration.nix
      */
     modules: NixOSModule[]
-
-    /**
-     * 
-     */
-    modulesDirs: NixOSModuleDirectory[]
 
     /**
      * Install steps run before initial SSH connection to run NixOS rebuild..
@@ -86,7 +76,7 @@ export class NixOSConfigurator {
         this.configSteps.push(
             async (_: NixOSConfigurator, ssh: SSHClient) => { 
                 await this.ensureNixChannel(ssh, this.args.nixosChannel, this.args.homeManagerRelease)
-                await this.ensureNixosConfig(ssh, this.args.modules, this.args.modulesDirs)
+                await this.ensureNixosConfig(ssh, this.args.modules)
             }
         )
         this.configSteps.push(...args.additionalConfigSteps)
@@ -193,63 +183,24 @@ export class NixOSConfigurator {
     /**
      * Copy NixOS configuration and run nixos-rebuild --switch
      */
-    private async ensureNixosConfig(ssh: SSHClient, modules: NixOSModule[] = [], modulesDirs: NixOSModuleDirectory[] = []){
+    private async ensureNixosConfig(ssh: SSHClient, modules: NixOSModule[] = []){
 
         this.logger.info("Preparing NixOS config...")
 
-        // Write will module file to destination:
-        // - create empty build dir
-        // - copy all modules into build dir
-        // - copy all modules dirs into build dir
-        // - create a flake.nix aggregating modules and modules dirs into an OS config
-        const tmpModuleDir = await fs.promises.mkdtemp(path.join(os.tmpdir(), "cloudybox-nixos-"))
-        this.logger.info(`Building NixOS module in ${tmpModuleDir}...`)
-
-        // All modules to import in main NixOS flake.nix
-        const mainModuleImports: string[] = modules.map(m => m.name)
-        const mainModule = osFlake(mainModuleImports)
-
-        // Write all modules and submodules into build dir
-        for (const m of modules.concat(mainModule)){
-            await this.writeModulesTmp(tmpModuleDir, m)
-            mainModuleImports.push(m.name)
+        const builder = new NixOSFlakeBuilder()
+        for (const m of modules){
+            builder.add(m)
         }
 
-        for (const md of modulesDirs){
-            await this.writeModulesDirsTmp(tmpModuleDir, md)
-            mainModuleImports.push(md.name)
-        }
+        const tmpNixOSConfigDir = await builder.build()
+
+        this.logger.info(`Created temporary NixOS configuration in ${tmpNixOSConfigDir}`)
 
         this.logger.info("Copying NixOS configuration...")
-        await ssh.putDirectory(tmpModuleDir, '/etc/nixos/')
+        await ssh.putDirectory(tmpNixOSConfigDir, '/etc/nixos/')
         
         this.logger.info("Rebuilding NixOS configuration...")
         await ssh.command(["nixos-rebuild", "switch", "--upgrade", "--flake", "/etc/nixos#cloudybox"] )
-    }
-
-    private async writeModulesTmp(tmpDir: string, module: NixOSModule){
-        this.logger.info(`Copying module ${module.name}`)
-
-        const modulePath = path.join(tmpDir, `${module.name}`);
-        if (module.content) {
-            await fs.promises.writeFile(modulePath, module.content);
-        } else if (module.path) {
-            await fs.promises.copyFile(module.path, modulePath);
-        } else {
-            throw new Error(`Module must have a path or a content: ${JSON.stringify(module)}`)
-        }
-
-        this.logger.info(`Iterating over modules: ${module.modules}`)
-        for (const subm of module.modules) {
-            await this.writeModulesTmp(tmpDir, subm);
-        }
-    }
-
-    private async writeModulesDirsTmp(tmpDir: string, module: NixOSModuleDirectory){
-        this.logger.info(`Copying module dir ${module.name} (${module.path})`)
-
-        const newModuleDirPath = path.join(tmpDir, `${module.name}`);
-        await fsx.copy(module.path, newModuleDirPath)
     }
 
     private buildSshClient(){

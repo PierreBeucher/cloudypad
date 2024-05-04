@@ -1,4 +1,4 @@
-import { NixOSModule } from "../interfaces.js"
+import { NixOSModule } from "../modules.js"
 
 export function authorizedKeys(user: string, keys: string[]) : NixOSModule {
     const nixConfig = `
@@ -11,8 +11,8 @@ export function authorizedKeys(user: string, keys: string[]) : NixOSModule {
     `
 
     return {
-        content: nixConfig,
+        sourceContent: nixConfig,
         name: "authorized-keys.nix",
-        modules: [],
+        dependsOn: [],
     }
 }

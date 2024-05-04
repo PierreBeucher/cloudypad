@@ -210,16 +210,16 @@ export async function parseWolfBoxSpec(rawConfig: unknown) : Promise<WolfManager
     // Add Wolf modules
     const nixosConf: DeepPartial<NixOSBoxConfig> = {
         modules: [{
-            path: "src/lib/nix/modules/wolf.nix"
+            path: "src/lib/nix/modules/wolf-nvidia.nix",
+        }, {
+            path: "src/lib/nix/modules/wolf",
+            skipImport: true,
         }],
-        modulesDir: [{
-            path: "src/lib/nix/modules/wolf"
-        }]
     }
 
     nixosSpec.nixos = merge(nixosConf, nixosSpec.nixos)
 
-    const nixosBuilder = new NixOSManagerBoxBuilder(nixosSpec)
+    const nixosBuilder = new NixOSManagerBoxBuilder({ spec: nixosSpec, additionalConfigSteps: [ nixosWolfConfig ]})
     const nixosManager = await nixosBuilder.buildManagerBox(buildMainBoxMeta(parsedConfig.data))
     
     return new WolfManagerBox(buildMainBoxMeta(parsedConfig.data), { nixosManager: nixosManager })
