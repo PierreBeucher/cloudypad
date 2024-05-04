@@ -4,7 +4,7 @@ spec:
   replicas:
   - pierre
   - emily
-  awsConfig:
+  config:
     region: eu-central-1
   publicKey: ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIGaNlYLbwtAmfcNjlOsP6Ryh3QxGn9qlhlQjPo5nbzBa
   network:

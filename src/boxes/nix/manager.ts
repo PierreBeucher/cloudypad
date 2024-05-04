@@ -186,7 +186,7 @@ export class NixOSManagerBoxBuilder {
                 const defaultAwsConfig: ReplicatedEC2InstanceManagerBoxArgs = {
                     spec: {
                         replicas: this.args.spec.replicas,
-                        awsConfig: {
+                        config: {
                             region: "eu-central-1" // TODO default from user environment?
                         },
                         publicKey: sshPubKey,

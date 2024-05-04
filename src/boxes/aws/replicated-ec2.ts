@@ -11,7 +11,7 @@ import { componentLogger, CloudyBoxLogObjI } from "../../lib/logging.js"
 import {  Logger } from 'tslog';
 
 export const ReplicatedEC2InstanceProjectSpecZ = z.object({
-    awsConfig: z.object({ // TODO need a better way to handle that
+    config: z.object({ // TODO need a better way to handle that
         region: z.string()
     }),
     replicas: z.union([z.array(z.string()), z.number()]).optional(),
@@ -75,14 +75,14 @@ export class ReplicatedEC2ManagerBox extends PulumiManagerBox<MachineBoxProvisio
         super({ 
                 program: pulumiFn,
                 config: {
-                    "aws:region": { value: args.spec.awsConfig.region }
+                    "aws:region": { value: args.spec.config.region }
                 },
                 meta: {...meta, type: "aws.ec2.ReplicatedInstance"}
             },
         )
         
         this.logger = componentLogger.getSubLogger({ name: `${meta.project.kind}:${meta.name}` })
-        this.awsClient = new AwsClient({ region: args.spec.awsConfig?.region })
+        this.awsClient = new AwsClient({ region: args.spec.config?.region })
     }
 
     async stackOuputToBoxOutput(o: OutputMap): Promise<MachineBoxProvisionerOutput> {

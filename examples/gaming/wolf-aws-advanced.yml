@@ -5,6 +5,11 @@ spec:
     authorizedKeys: 
     - ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIGaNlYLbwtAmfcNjlOsP6Ryh3QxGn9qlhlQjPo5nbzBa
     - ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIFCaDcbK5+r0s0cbl9RC1kKDr0p3vJfErE6RIOwNeXEP
+  dns:
+    zoneName: cloudybox.crafteo.io
   provisioner:
     aws:
-      region: eu-central-1
+      config:
+        region: eu-central-1
+      instance:
+        type: g5.2xlarge

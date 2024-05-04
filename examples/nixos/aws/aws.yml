@@ -5,8 +5,8 @@ spec:
     nixosChannel: nixos-23.05
     modules:
     - path: examples/nixos/aws/code-server.nix
-    modulesDir: 
     - path: examples/nixos/modules
+      skipImport: true
   ssh:
     # privateKeyPath: /home/cloudybox/.ssh/id_ed25519
     authorizedKeys: 

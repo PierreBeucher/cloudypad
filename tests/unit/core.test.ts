@@ -5,7 +5,7 @@ import { NixOSManagerBox } from "../../src/boxes/nix/manager";
 import { getManagerBox } from "../../src/lib/core"
 
 const expectExamples = [
-    { path: "examples/gaming/wolf.yml", instanceOf: WolfManagerBox },
+    { path: "examples/gaming/wolf-aws.yml", instanceOf: WolfManagerBox },
 
     { path: "examples/nixos/dns.yml", instanceOf: NixOSManagerBox },
     { path: "examples/nixos/replicated.yml", instanceOf: NixOSManagerBox },
