@@ -3,17 +3,16 @@
 Your own gaming box in the Cloud ! 🎮 ⛅ 
 
 - [Development status 🧪](#development-status-)
-- [Features](#features)
-- [Getting started](#getting-started)
+- [Features ✨](#features-)
+- [Getting started 🚀](#getting-started-)
   - [Installation](#installation)
   - [Create your Cloud gaming gear !](#create-your-cloud-gaming-gear-)
 - [Usage and configuration](#usage-and-configuration)
-  - [Default configurations](#default-configurations)
-  - [Box configuration file](#box-configuration-file)
-  - [Advanced Box use and configuration](#advanced-box-use-and-configuration)
-    - [Connect via SSH on Box](#connect-via-ssh-on-box)
-    - [Set authorized SSH Keys](#set-authorized-ssh-keys)
-    - [Setup a DNS record](#setup-a-dns-record)
+  - [Default specs](#default-specs)
+  - [Box configuration format](#box-configuration-format)
+  - [Connect via SSH on Box](#connect-via-ssh-on-box)
+  - [Set authorized SSH Keys](#set-authorized-ssh-keys)
+  - [Setup a DNS record](#setup-a-dns-record)
 - [Supported gaming servers and Cloud providers](#supported-gaming-servers-and-cloud-providers)
   - [Cloud providers 🌥️](#cloud-providers-️)
     - [AWS](#aws)
@@ -24,18 +23,18 @@ Your own gaming box in the Cloud ! 🎮 ⛅
     - [Wolf 🐺](#wolf-)
     - [Sunshine 🌤️](#sunshine-️)
     - [Other Gaming servers ?](#other-gaming-servers-)
-  - [FAQ](#faq)
-    - [How much will I pay ? 🫰](#how-much-will-i-pay--)
-    - [How does Cloudy Pad works?](#how-does-cloudy-pad-works)
-    - [Is it possible to deploy something else than Gaming servers ?](#is-it-possible-to-deploy-something-else-than-gaming-servers-)
-    - [Will Cloudy Pad become a paid product ?](#will-cloudy-pad-become-a-paid-product-)
+- [FAQ](#faq)
+  - [How much will I pay ? 🫰](#how-much-will-i-pay--)
+  - [How does Cloudy Pad works?](#how-does-cloudy-pad-works)
+  - [Is it possible to deploy something else than Gaming servers ?](#is-it-possible-to-deploy-something-else-than-gaming-servers-)
+  - [Will Cloudy Pad become a paid product ?](#will-cloudy-pad-become-a-paid-product-)
 - [License](#license)
 
 ## Development status 🧪
 
 This project is still at an experimental phase. While working and allowing you to play in the Cloud seamlessly, there may be breaking changes in the future. Feel free to contribute and provide feedback !
 
-## Features
+## Features ✨
 
 Compatible with [Moonlight](https://moonlight-stream.org/) streaming client
 
@@ -50,11 +49,11 @@ Cloud providers:
 - (available soon) [Azure](https://azure.microsoft.com)
 - (available soon) [Google Cloud](https://cloud.google.com)
 
-## Getting started
+## Getting started 🚀
 
 Prerequisites:
 - A Clouder account (eg. [AWS](https://aws.amazon.com/))
-- Make sure you [understand the costs 💸](#how-much-will-i-pay) of running a gaming instance in the Cloud
+- Make sure you [understand the costs 💸](#how-much-will-i-pay--) of running a gaming instance in the Cloud
 
 ### Installation
 
@@ -164,7 +163,7 @@ cloudypad get examples/gaming/wolf-aws.yml
 cloudypad destroy examples/gaming/wolf-aws.yml
 ```
 
-### Default configurations
+### Default specs
 
 Default configuration per provider:
 
@@ -174,7 +173,7 @@ Default configuration per provider:
 
 Boxes are customizable to specify instance types, disk size, DNS record, IP configuration and more ! (See below)
 
-### Box configuration file
+### Box configuration format
 
 A box configuration is a YAML file looking like this:
 
@@ -196,9 +195,7 @@ spec:
     aws: {}
 ```
 
-### Advanced Box use and configuration
-
-#### Connect via SSH on Box
+### Connect via SSH on Box
 
 Get your bow details with:
 
@@ -214,7 +211,7 @@ Then use ssh:
 ssh root@<address>
 ```
 
-#### Set authorized SSH Keys
+### Set authorized SSH Keys
 
 Specify authorized SSH keys:
 
@@ -228,7 +225,7 @@ spec:
 
 SSH keys will be added on next Box configuration.
 
-#### Setup a DNS record
+### Setup a DNS record
 
 _Note: you must own an Hosted Zone on the cloud Provider and have it configured accordingly. See provider doc for details._
 
@@ -312,9 +309,9 @@ spec:
 
 #### Other Cloud providers ?
 
-I know, these major clouders are expensive for a gaming box. 
+Indeed, AWS/GCP/Azure are expensive for a gaming box. 
 
-I intend to support other less-known Cloud providers like [Paperspace](https://www.paperspace.com/) or [TensorFlow](https://www.tensordock.com/), but it's hard to provide a timeline yet (if you're curious you can find an experimental Paperspace box hidden in the code, though it's not fully working yet). Do not to hesitate to contribute or ⭐ the project, it will help move things forward !
+This project aim to support cheaper Cloud providers like [Paperspace](https://www.paperspace.com/) or [TensorDock](https://www.tensordock.com/) (if you're curious you can find an experimental Paperspace box hidden in the code, though it's not fully working yet). Do not to hesitate to contribute or ⭐ the project, it will help move things forward !
 
 ### Gaming servers
 
@@ -328,13 +325,13 @@ I intend to support other less-known Cloud providers like [Paperspace](https://w
 
 #### Other Gaming servers ?
 
-I intend to support [Parsed](https://parsec.app/) as well as Moonlight.
+This project intend to support [Parsec](https://parsec.app/). Feel free to propose other gaming servers !
 
-### FAQ
+## FAQ
 
-#### How much will I pay ? 🫰
+### How much will I pay ? 🫰
 
-Cloudy-Pad is free and open-source, however charges may apply when using a Cloud provider. Here's an estimation:
+Cloudy-Pad is free and open-source, however charges may apply when using a Cloud provider. Here's an estimation for AWS:
 
 | Gaming time / month      | 15h        | 20h        | 20h        | 30h        |
 |--------------------------|------------|------------|------------|------------|
@@ -343,14 +340,16 @@ Cloudy-Pad is free and open-source, however charges may apply when using a Cloud
 | EC2 instance $           | $18.87     | $25.16     | $30.31     | $45.47     |
 | Route53 record $         | $0.00      | $0.00      | $0.00      | $0.00      |
 | EC2 volume (disk) $      | $9.52      | $9.52      | $9.52      | $9.52      |
-| EIP address $            | $3.53      | $3.50      | $3.50      | $3.45      |
-| **Est. TOTAL / month $** | **$31.92** | **$38.18** | **$43.33** | **$58.44** |
+| EIP address $            | (no eip)   | $3.50      | (no eip)   | $3.45      |
+| **Est. TOTAL / month $** | **~$28** | **~$38** | **~$40** | **~$58** |
 
-**This project's goal is to allow for 20h / month for 20$** - [Paperspace](https://www.paperspace.com/pricing) and [TensorDock](https://www.tensordock.com/) are good bets, but not ready to use yet.  
+_*Estimation based on eu-central-1 (Frankfurt) pricing in December 2023. Exact prices vary with time and regions._
+
+**This project's goal is to provide 20h / month for 20$** - [Paperspace](https://www.paperspace.com/pricing) and [TensorDock](https://www.tensordock.com/) are good bets, but not ready to use yet.  
 
 Equivalent estimation for other providers will be added as they become ready.
 
-#### How does Cloudy Pad works? 
+### How does Cloudy Pad works? 
 
 Deployment is divided in two phases:
 
@@ -359,15 +358,15 @@ Deployment is divided in two phases:
 - Configuration: install everything on instance (gaming server, GPU drivers, etc.)
   - Currently managed via [NixOS](https://nixos.org/)
 
-A small framework, Cloudy Box, allow seamless integration of both technologies. 
+A small framework, **Cloudy Box**, allow seamless integration of both technologies. 
 
-#### Is it possible to deploy something else than Gaming servers ?
+### Is it possible to deploy something else than Gaming servers ?
 
 Yes ! Underlying Cloudy Box framework is actually designed for that: easy deployment of Cloud infrastructure with NixOS (or other configuration tools). In the future it will be merged-out of this project to become a more generic Cloudy Box CLI and/or API project which Cloudy Pad will use. 
 
 If you're interested in these features, do not hesitate to reach me directly - my email is on my GitHub account. 
 
-#### Will Cloudy Pad become a paid product ?
+### Will Cloudy Pad become a paid product ?
 
 Probably not in it's current form. Considering I'm really _not_ happy about the [enshittification of the internet](https://en.wikipedia.org/wiki/Enshittification), Cloudy Pad will remain FOSS - at least for personal use.
 
