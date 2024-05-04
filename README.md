@@ -364,7 +364,7 @@ A small framework, **Cloudy Box**, allow seamless integration of both technologi
 
 Yes ! Underlying Cloudy Box framework is actually designed for that: easy deployment of Cloud infrastructure with NixOS (or other configuration tools). In the future it will be merged-out of this project to become a more generic Cloudy Box CLI and/or API project which Cloudy Pad will use. 
 
-If you're interested in these features, do not hesitate to reach me directly - my email is on my GitHub account. 
+If you're interested in these features, do not hesitate to reach me directly - my email can be found easily on my website [crafteo.io](https://crafteo.io). 
 
 ### Will Cloudy Pad become a paid product ?
 
