@@ -1,0 +1,11 @@
+name: with-dns
+kind: Linux.NixOS
+spec:
+  # Generate DNS record nixos-with-dns.cloudybox.crafteo.io
+  dns:
+    zoneName: cloudybox.crafteo.io
+    prefix: nixos-with-dns
+  ssh:
+    privateKeyPath: "/home/pbeucher/.ssh/id_ed25519"
+  provisioner:
+    aws: {}

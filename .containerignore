@@ -1,0 +1,7 @@
+**/node_modules/
+tmp/
+dist/
+.plandex
+.containerignore
+Containerfile
+docker-compose.yml

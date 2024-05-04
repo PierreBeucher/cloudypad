@@ -18,6 +18,9 @@
               nodePackages.pnpm
               go-task
               gettext
+              typescript
+              podman
+              podman-compose
             ];
             
             shellHook = ''

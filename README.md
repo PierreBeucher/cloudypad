@@ -1,250 +1,377 @@
-# Cloudy Sunshine 
+# Cloudy Pad
 
-[Sunshine](https://github.com/LizardByte/Sunshine) in the Cloud !
+Your own gaming box in the Cloud ! 🎮 ⛅ 
 
-> Sunshine is a self-hosted game stream host for Moonlight. Offering low latency, cloud gaming server capabilities
-
----
-
-- [Requirements](#requirements)
-- [Usage](#usage)
-  - [Quickstart initial setup](#quickstart-initial-setup)
-  - [Advanced initial setup](#advanced-initial-setup)
-  - [Everyday usage](#everyday-usage)
-  - [Customizing installation](#customizing-installation)
-- [How much will I pay? 🫰](#how-much-will-i-pay-)
-- [Performance tweakings](#performance-tweakings)
-- [Maintenance](#maintenance)
-  - [Grow disk after resize](#grow-disk-after-resize)
-- [Development](#development)
+- [Development status 🧪](#development-status-)
+- [Features ✨](#features-)
+- [Getting started 🚀](#getting-started-)
+  - [Installation](#installation)
+  - [Create your Cloud gaming gear !](#create-your-cloud-gaming-gear-)
+- [Usage and configuration](#usage-and-configuration)
+  - [Default specs](#default-specs)
+  - [Box configuration format](#box-configuration-format)
+  - [Connect via SSH on Box](#connect-via-ssh-on-box)
+  - [Set authorized SSH Keys](#set-authorized-ssh-keys)
+  - [Setup a DNS record](#setup-a-dns-record)
+- [Supported gaming servers and Cloud providers](#supported-gaming-servers-and-cloud-providers)
+  - [Cloud providers 🌥️](#cloud-providers-️)
+    - [AWS](#aws)
+    - [Azure (not yet implemented)](#azure-not-yet-implemented)
+    - [GCP (not yet implemented)](#gcp-not-yet-implemented)
+    - [Other Cloud providers ?](#other-cloud-providers-)
+  - [Gaming servers](#gaming-servers)
+    - [Wolf 🐺](#wolf-)
+    - [Sunshine 🌤️](#sunshine-️)
+    - [Other Gaming servers ?](#other-gaming-servers-)
+- [FAQ](#faq)
+  - [How much will I pay ? 🫰](#how-much-will-i-pay--)
+  - [How does Cloudy Pad works?](#how-does-cloudy-pad-works)
+  - [Is it possible to deploy something else than Gaming servers ?](#is-it-possible-to-deploy-something-else-than-gaming-servers-)
+  - [Will Cloudy Pad become a paid product ?](#will-cloudy-pad-become-a-paid-product-)
 - [License](#license)
 
-## Requirements
+## Development status 🧪
 
-- [Nix](https://nixos.org/download)
-- Access to an AWS account with read/write permissions on EC2 & Route53
+This project is still at an experimental phase. While working and allowing you to play in the Cloud seamlessly, there may be breaking changes in the future. Feel free to contribute and provide feedback !
 
-That's all 😎 Nix will provide every tools and binaries: AWS CLI, NodeJS, Pulumi, etc. 
+## Features ✨
 
-## Usage
+Compatible with [Moonlight](https://moonlight-stream.org/) streaming client
 
-Every commands should be run under Nix shell, start it with:
+Gaming servers:
 
-```sh
-nix develop
-```
+- 🐺 [Wolf](https://games-on-whales.github.io/wolf/stable/)
+- (available soon) 🌤️ [Sunshine](https://github.com/LizardByte/Sunshine)
 
-### Quickstart initial setup
+Cloud providers:
 
-Follow the guide 🧙
+- [AWS](https://aws.amazon.com/)
+- (available soon) [Azure](https://azure.microsoft.com)
+- (available soon) [Google Cloud](https://cloud.google.com)
 
-```sh
-task quickstart
-```
+## Getting started 🚀
 
-You'll be able to choose interactively your instance config and follow setup. 
+Prerequisites:
+- A Clouder account (eg. [AWS](https://aws.amazon.com/))
+- Make sure you [understand the costs 💸](#how-much-will-i-pay--) of running a gaming instance in the Cloud
 
-### Advanced initial setup
+### Installation
 
-Cloudy Sunshine deploys a Pulumi stack with a Cloud server and use NixOS to configure Sunshine on deployed Cloud server. Nix shell provides required binaries to run deployment tasks (Node, Pulumi, etc.), you don't have to install anything appart Nix as listed above. 
+_Note: installation is very basic for now, requiring to clone Git repo and build app. I'm actively working on npm and other distribution methods (eg. static binary, container image)._
 
-Create Pulumi stack config file from template. Example below use a stack named `sunshine`
-
-```sh
-cp infra/Pulumi.template.yaml cp infra/Pulumi.sunshine.yaml
-```
-
-Update `Pulumi.sunshine.yaml` as needed and deploy infra. See comments in template for details and usage. 
-
-Once done, deploy infrastructure with:
+Clone this Git repository:
 
 ```sh
-task infra
+git clone https://github.com/PierreBeucher/Cloudy-Pad.git
+cd Cloudy-Pad
 ```
 
-Wait for instance to start (you can use `task wait-ssh`). Once started and ready, run NixOS configuration. **First run might take a while as lots of things will be downloaded and installed.** Subsequent runs (for update/upgrade) will run much faster. 
+Build Cloudy Pad `cloudypad` CLI with either:
+
+**🐳 Docker or Podman** 
+
+Run :
 
 ```sh
-task nix-config
+docker compose run cloudypad
+podman-compose run cloudypad
 ```
 
-Once NixOS is configured, reboot
+You'll be dropped into a shell with ready-to-use `cloudypad` CLI.
+
+**🖥️ Build locally**
+
+Make sure to have installed:
+- [Pulumi](https://www.pulumi.com/docs/install/) 3.x or anterior
+- [NodeJS](https://nodejs.org/en/download) 18.x or anterior
+- [Typescript](https://nodejs.org/en/download) 5.x or anterior
+
+Run:
 
 ```sh
-task reboot
+npm install
+npm run build
+npm install -g
 ```
 
-Sunshine server should now start with Sunshine service.
+`cloudypad` CLI should now be available on path.
 
-Access Sunshine via broswer on port 47990 using either task command, IP address or defined FQDN to setup password. Remote access is disabled by default, you'll need to open an SSH tunnel.
+### Create your Cloud gaming gear !
+
+Deploy a Wolf server on AWS:
 
 ```sh
-# Open SSH tunnel
-task ssh-tunnel
-
-# Open Sunshine on default browser
-task sunshine-browser
-
-# Show stack outputs and use IP address or FQDN directly in your browser
-task output
-# {
-#   ...
-#   "fqdn": "sunshine.devops.crafteo.io", # <== use IP or FQDN
-#   "ipAddress": "3.79.72.13"
-# }
+cloudypad deploy examples/gaming/wolf-aws.yml
 ```
 
-Congrats, your Cloudy Sunshine is ready ! 🥳
-
-Run Moonlight and connect to your instance. Usage is standard from now on: you'll need to validate PIN via Moonlight and maybe tweak Sunshine configs. 
+Once your instance is deployed and ready, use [Moonlight](https://moonlight-stream.org/) to access it. Get your instance IP or address with (it should be shown after deployment):
 
 ```sh
-moonlight
+cloudypad get examples/gaming/wolf-aws.yml
 ```
 
-**Important:** remember to `task stop` your instance to avoid unnecessary costs 💸 Even stopped, you may still be billed for disk usage and EIP usage. 
-
-### Everyday usage
-
-Start instance
+Once Moonlight asks for PIN, open browser to PIN validation page with:
 
 ```sh
-task start
+cloudypad utils wolf open-pin examples/gaming/wolf-aws.yml
 ```
 
-Run Moonlight and connect to your instance
+**Remember to stop or destroy** your instance when done:
 
 ```sh
-moonlight
+cloudypad stop examples/gaming/wolf-aws.yml
 ```
 
-Once finished, **remember to stop your instance to avoid unnecessary costs 💸**
+Start insance later with:
 
 ```sh
-task stop
+cloudypad start examples/gaming/wolf-aws.yml
 ```
 
-### Customizing installation
-
-You can leverage Nix modules to customize Sunshine installation by creating a Nix module at `provision/modules/custom-config.nix`. 
-
-Example: install Steam and change default keyboard layout
-
-```nix
-{ lib, pkgs, config, ... }: {
-    
-    # Enable Steam
-    programs.steam.enable = true;
-
-    # French layout
-    services.xserver = {
-        layout = "fr";
-        xkbVariant = "azerty";
-    };
-    console.keyMap = "fr";
-    time.timeZone = "Europe/Paris";
-}
-```
-
-See `provision/modules/custom-config.example.nix` for more examples.
-
-Apply your custom configs with:
+Or destroy instance altogether (all data will be lost):
 
 ```sh
-task nix-config 
+cloudypad destroy examples/gaming/wolf-aws.yml
 ```
 
-## How much will I pay? 🫰
+## Usage and configuration
 
-Depends on your usage and how long your instance will run. **You are responsible for your usage**, make sure to check services costs and have proper usage (eg. stop instance when not in use) to avoid unnecessary costs !
+Cloudy Pad use YAML configuration to manages your gaming box via CLI. See [examples](./examples/) configurations.
 
+Basic commands:
 
-Billable resources on AWS and related pricing page:
+```sh
+# Show help
+cloudypad --help
 
-- [EC2 instance](https://aws.amazon.com/ec2/pricing/on-demand/#On-Demand_Pricing) - The Sunshine server with GPU, free when stopped.
-- [Volume (disk)](https://aws.amazon.com/ebs/pricing/) - Disk storage for instance, billed even when EC2 instance is stopped.
-- [EIP address](https://aws.amazon.com/ec2/pricing/on-demand/#Elastic_IP_Addresses) - free while in use, [will cost 0.005$ / h starting 02/2024](https://aws.amazon.com/blogs/aws/new-aws-public-ipv4-address-charge-public-ip-insights/)
-- [Route53 record](https://aws.amazon.com/route53/pricing/) - mostly free, but you must bring your own Hosted Zone
+# Deploy a Box (provision + configure)
+cloudypad deploy examples/gaming/wolf-aws.yml
 
-Optimizing usage and cost:
+# Provision a Box
+# Only run infrastructure provisioning 
+# such as AWS resource management
+cloudypad provision examples/gaming/wolf-aws.yml
 
-- Always stop EC2 instance after usage (`task stop`) to avoid unnecessary costs
-- Only provision what you use. Eg. if your games are taking ~60 Go of disk, no need for a 500 Go disk.  
-- Avoid using a static IP (~3.72$ / month), but Sunshine IP will change every start/stop cycle (not on reboot)-
-- When not using your instance for a long time, maybe it's worth destroying it (`task destroy`) and re-install it later - **though you'll lose any content, make sure to make a backup** or use tools that will sync your saves (eg. Steam Cloud sync)
+# Configure a Box
+# Only run Box configuration (NixOS rebuild)
+cloudypad configure examples/gaming/wolf-aws.yml
 
-Example setups and pricing estimation*:
+# Get a Box details
+cloudypad get examples/gaming/wolf-aws.yml
 
-|                    | g5.xlarge instance 100 Go GP3 disk 15h / month | g5.xlarge instance 100 Go GP3 disk 20h / month | g5.2xlarge instance 100 Go GP3 disk 20h / month | g5.2xlarge instance 100 Go GP3 disk 30h / month | g5.2xlarge instance 100 Go GP3 disk 30h / month |
-|--------------------|------------------------------------------------|------------------------------------------------|-------------------------------------------------|-------------------------------------------------|-------------------------------------------------|
-| EC2 instance       |                                         $18.87 |                                         $25.16 |                                          $30.31 |                                          $45.47 |                                          $45.47 |
-| Route53 record     |                                          $0.00 |                                          $0.00 |                                           $0.00 |                                           $0.00 |                                           $0.00 |
-| EC2 volume (disk)  |                                          $9.52 |                                          $9.52 |                                           $9.52 |                                           $9.52 |                                           $9.52 |
-| EIP address        |                                          $3.53 |                                          $3.50 |                                           $3.50 |                                           $3.45 |                                           $3.45 |
-| Est. TOTAL / month |                                         $31.92 |                                         $38.18 |                                          $43.33 |                                          $58.44 |                                          $58.44 |
+# Destroy a Box 
+cloudypad destroy examples/gaming/wolf-aws.yml
+```
+
+### Default specs
+
+Default configuration per provider:
+
+- AWS: `g5.xlarge` instance (16Gb RAM, 4 CPU, NVIDIA A10G Tensor Core), 150Go Disk, dynamic IP allocation
+- Azure (available soon): 150Go Disk, dynamic IP allocation, instance type to be specified
+- GCP (available soon): 150Go Disk, dynamic IP allocation, instance type to be specified
+
+Boxes are customizable to specify instance types, disk size, DNS record, IP configuration and more ! (See below)
+
+### Box configuration format
+
+A box configuration is a YAML file looking like this:
+
+```yaml
+# Unique name for your Box
+name: cloud-gaming-gear
+
+# The box Kind 
+# Only gaming.Wolf is supported for now, but more will come gaming.Sunshine 
+kind: gaming.Wolf
+
+# Box specifications
+# A few technical details to know where and how to deploy your Box
+spec: 
+  ssh:
+    authorizedKeys: 
+    - ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIGaNlYLbwtAmfcNjlOsP6Ryh3QxGn9qlhlQjPo5nbzBa
+  provisioner:
+    aws: {}
+```
+
+### Connect via SSH on Box
+
+Get your bow details with:
+
+```sh
+cloudypad get examples/gaming/wolf-aws.yml
+# Output something like
+
+```
+
+Then use ssh:
+
+```sh
+ssh root@<address>
+```
+
+### Set authorized SSH Keys
+
+Specify authorized SSH keys:
+
+```yaml
+spec: 
+  ssh:
+    authorizedKeys: 
+    - ssh-ed25519 AAA123...
+    - ssh-ed25519 AAA456...
+```
+
+SSH keys will be added on next Box configuration.
+
+### Setup a DNS record
+
+_Note: you must own an Hosted Zone on the cloud Provider and have it configured accordingly. See provider doc for details._
+
+```yaml
+spec: 
+  dns:
+    zoneName: gaming.crafteo.io
+```
+
+Will create a DNS A record pointing to your instance. 
+
+You can set detailed configuration:
+
+```yaml
+spec: 
+  dns:
+    zoneName: gaming.crafteo.io
+
+    # Will create record mybox.gaming.crafteo.io 
+    # instead of record at root on gaming.crafteo.io
+    prefix: mybox
+
+    # DNS Record Time-To-Live in seconds
+    # Default to 60
+    ttl: 3600
+```
+
+## Supported gaming servers and Cloud providers
+
+### Cloud providers 🌥️
+
+For now only AWS is supported, more will come soon !
+
+#### AWS
+
+Set `aws` provisioner in your Box config:
+
+```yml
+spec: 
+  provisioner:
+    aws: {}
+```
+
+You can also override the underlying provisioner config:
+
+```yml
+spec: 
+  provisioner:
+    aws:
+      # Set AWS region and other configs
+      config:
+        region: eu-central-1
+      
+      # Set instance details
+      instance:
+        staticIpEnable: true,
+        rootVolume: 
+          sizeGb: 500
+          type: g5.2xlarge
+```
+
+#### Azure (not yet implemented)
+
+Set `azure` provisioner in your Box config:
+
+```yml
+spec: 
+  provisioner:
+    azure: {}
+```
+
+#### GCP (not yet implemented)
+
+Set `gcp` provisioner in your Box config:
+
+```yml
+spec: 
+  provisioner:
+    gcp: {}
+```
+
+#### Other Cloud providers ?
+
+Indeed, AWS/GCP/Azure are expensive for a gaming box. 
+
+This project aim to support cheaper Cloud providers like [Paperspace](https://www.paperspace.com/) or [TensorDock](https://www.tensordock.com/) (if you're curious you can find an experimental Paperspace box hidden in the code, though it's not fully working yet). Do not to hesitate to contribute or ⭐ the project, it will help move things forward !
+
+### Gaming servers
+
+#### Wolf 🐺
+
+[Wolf](https://games-on-whales.github.io/wolf/stable/index.html) is _an open source streaming server for Moonlight that allows you to share a single server with multiple remote clients in order to play videogames_. It works via containers to provide various services such as Steam Big Picture.
+
+#### Sunshine 🌤️
+
+[Sunshine](https://github.com/LizardByte/Sunshine) is a _self-hosted game stream host for Moonlight_. You can install anything on your instance (eg. Steam or other) and stream it with Moonlight.
+
+#### Other Gaming servers ?
+
+This project intend to support [Parsec](https://parsec.app/). Feel free to propose other gaming servers !
+
+## FAQ
+
+### How much will I pay ? 🫰
+
+Cloudy-Pad is free and open-source, however charges may apply when using a Cloud provider. Here's an estimation for AWS:
+
+| Gaming time / month      | 15h        | 20h        | 20h        | 30h        |
+|--------------------------|------------|------------|------------|------------|
+| EC2 instance type        | g5.xlarge  | g5.xlarge  | g5.2xlarge | g5.2xlarge |
+| Disk size (gp3 SSD)      | 100 Go     | 100 Go     | 100 Go     | 100 Go     |
+| EC2 instance $           | $18.87     | $25.16     | $30.31     | $45.47     |
+| Route53 record $         | $0.00      | $0.00      | $0.00      | $0.00      |
+| EC2 volume (disk) $      | $9.52      | $9.52      | $9.52      | $9.52      |
+| EIP address $            | (no eip)   | $3.50      | (no eip)   | $3.45      |
+| **Est. TOTAL / month $** | **~$28** | **~$38** | **~$40** | **~$58** |
 
 _*Estimation based on eu-central-1 (Frankfurt) pricing in December 2023. Exact prices vary with time and regions._
 
-## Performance tweakings
+**This project's goal is to provide 20h / month for 20$** - [Paperspace](https://www.paperspace.com/pricing) and [TensorDock](https://www.tensordock.com/) are good bets, but not ready to use yet.  
 
-- Reduce in-game quality
-- Reduce screen size
-- Sunshine: set lower quality encoder settings
+Equivalent estimation for other providers will be added as they become ready.
 
-## Maintenance
+### How does Cloudy Pad works? 
 
-### Grow disk after resize
+Deployment is divided in two phases:
 
-See [AWS doc for details](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/recognize-expanded-volume-linux.html)
+- Provisioning: manage Cloud resources (virtual machines, firewall, volumes disks, etc.)
+  - Currently managed via [Pulumi](https://www.pulumi.com/)
+- Configuration: install everything on instance (gaming server, GPU drivers, etc.)
+  - Currently managed via [NixOS](https://nixos.org/)
 
-SSH into instance and:
+A small framework, **Cloudy Box**, allow seamless integration of both technologies. 
 
-```
-# Check disk size to resize
-df -h
-lsblk -hT
+### Is it possible to deploy something else than Gaming servers ?
 
-# Grow partition
-growpart /dev/nvme0n1 2
+Yes ! Underlying Cloudy Box framework is actually designed for that: easy deployment of Cloud infrastructure with NixOS (or other configuration tools). In the future it will be merged-out of this project to become a more generic Cloudy Box CLI and/or API project which Cloudy Pad will use. 
 
-# Resize filesystem
-resize2fs /dev/nvme0n1p2
-```
+If you're interested in these features, do not hesitate to reach me directly - my email is on my GitHub account. 
 
-## Development
+### Will Cloudy Pad become a paid product ?
 
-Get Sunshine service status and logs 
- 
-```sh
-# Show sunshine user journal (e.g. sunshine server logs and other useful debug info)
-journalctl _UID=1000 -b
+Probably not in it's current form. Considering I'm really _not_ happy about the [enshittification of the internet](https://en.wikipedia.org/wiki/Enshittification), Cloudy Pad will remain FOSS - at least for personal use.
 
-# Get user systemd service status and logs 
-su sunshine
-journalctl --user -u sunshine
-systemctl --user status sunshine
-```
-
-Run Sunshine interactively via SSH
-
-```sh
-# Access display
-export DISPLAY=:0
-
-# Retrieve X authority file
-ps -ef | grep Xauthority
-cp /run/user/1000/gdm/Xauthority ~/.Xauthority
-
-# Get command used to start sunshine (wrapper script)
-cat /etc/systemd/user/sunshine.service 
-# ...
-# ExecStart=/run/wrappers/bin/sunshine /nix/store/pqyi3jwp47zsis33asq8hn2i01zdygcd-sunshine.conf/config/sunshine.conf
-# ...
-
-# Run sunshine with or without wrapper and conf
-/run/wrappers/bin/sunshine /nix/store/90vsycwg87c82jldkg0ssl0a19a884lp-sunshine.conf/config/sunshine.conf
-```
+However, the larger Cloudy Box scope may become a paid product for professional use cases, not necessarily linked to gaming.
 
 ## License
 
-[GNU General Public License v3.0](LICENSE.txt)
+[GNU GENERAL PUBLIC LICENSE](./LICENSE.txt)

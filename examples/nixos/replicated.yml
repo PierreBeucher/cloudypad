@@ -1,0 +1,16 @@
+name: replicated-example
+kind: Linux.NixOS
+spec:
+  replicas:
+  - pierre
+  - emily
+  dns:
+    zoneName: cloudybox.crafteo.io
+    prefix: nixos-example
+  ssh:
+    privateKeyPath: "/home/pbeucher/.ssh/id_ed25519"
+  network:
+    ingressPorts:
+      - from: 8080
+  provisioner:
+    aws: {}

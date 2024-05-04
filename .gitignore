@@ -1,8 +1,4 @@
-**/bin/
 **/node_modules/
-**/.ssh/
-tmp
-infra/Pulumi.*.yaml
-!infra/Pulumi.template.yaml
-provision/modules/custom-config.nix
-nix-config.log
+tmp/
+dist/
+.plandex
