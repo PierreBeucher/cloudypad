@@ -123,7 +123,7 @@ export class NixOSConfigurator {
     }
 
     async stop() {
-        throw new Error("Method not implemented.");
+        this.runSshCommand(["sudo", "shutdown", "0"])
     }
 
     async start() {
@@ -131,7 +131,7 @@ export class NixOSConfigurator {
     }
 
     async restart() {
-        throw new Error("Method not implemented.");
+        this.runSshCommand(["sudo", "reboot"])
     }
 
     public async runSshCommand(cmd: string[], opts?: SSHCommandOpts){
