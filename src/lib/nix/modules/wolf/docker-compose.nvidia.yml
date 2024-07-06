@@ -1,7 +1,7 @@
 # Wolf for Nvidia
 services:
   wolf:
-    image: ghcr.io/games-on-whales/wolf:stable@sha256:f33baf84771970653f730661a4ccef997bbfb2021b70588719936cefdaedba04
+    image: ghcr.io/games-on-whales/wolf:stable@sha256:36ce80055729876ece0445bdf859564b07e3522706544ffd4ca4e91e7107a855
     environment:
       XDG_RUNTIME_DIR: /tmp/sockets
       NVIDIA_DRIVER_VOLUME_NAME: ${NVIDIA_VOLUME_NAME}
@@ -13,13 +13,13 @@ services:
       - /etc/wolf/cfg:/etc/wolf/cfg:rw
       - /tmp/sockets:/tmp/sockets:rw
       - /var/run/docker.sock:/var/run/docker.sock:rw
-      - /dev/shm:/dev/shm:rw
-      - /dev/input:/dev/input:rw
+      - /dev/:/dev/:rw
       - /run/udev:/run/udev:rw
       - nvidia-driver-vol:/usr/nvidia:rw
     devices:
       - /dev/dri
       - /dev/uinput
+      - /dev/uhid
       - /dev/nvidia-uvm
       - /dev/nvidia-uvm-tools
       - /dev/nvidia-caps/nvidia-cap1
