@@ -14,7 +14,7 @@ describe('PaperspaceClient', () => {
 
     beforeEach(() => {
         const apiKey = fs.readFileSync("tmp/paperspace-apikey", "utf-8")
-        client = new PaperspaceClient(apiKey);
+        client = new PaperspaceClient({ apiKey: apiKey });
     });
 
     it('should create a machine', async () => {

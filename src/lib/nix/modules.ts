@@ -112,14 +112,15 @@ export class NixOSFlakeBuilder {
         const importedModules = this.modules.filter(m => !m.skipImport)
 
         const flakeContent = `{
-            inputs.nixpkgs.url = github:NixOS/nixpkgs/nixos-unstable;
-            inputs.home-manager.url = github:nix-community/home-manager;
+            inputs.nixpkgs.url = "github:NixOS/nixpkgs/nixos-24.05";
+            inputs.home-manager.url = "github:nix-community/home-manager/release-24.05";
             
             outputs = { self, nixpkgs, ... }@attrs: {
                 nixosConfigurations.cloudybox = nixpkgs.lib.nixosSystem {
                     system = "x86_64-linux";
                     specialArgs = attrs;
                     modules = [ 
+                        ./configuration.nix
                         ${importedModules.map(m => `./${m.targetSubDir}/${m.name}`).join("\n              ")}
                     ];
                 };

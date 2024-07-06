@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { BaseBox, BoxConstructorMetadata, BoxSchemaBaseZ, buildMainBoxMeta, MachineBoxProvisioner, MachineBoxProvisionerOutput } from '../common/base.js';
 import { PaperspaceClient } from '../../lib/paperspace/PaperspaceClient.js';
+import * as paperspace from '../../lib/paperspace/generated-api/api.js';
 
 export const PROJECT_KIND_PAPERSPACE_MACHINE = "paperspace.Machine"
 
@@ -58,8 +59,9 @@ export class PaperspaceManagerBox extends BaseBox implements MachineBoxProvision
             return this.get()
         }
         
-        this.logger.info(`Creating machine ${this.getMachineName()}. No creation needed.`)
-        const machine = await this.client.createMachine({
+        this.logger.info(`Creating machine ${this.getMachineName()}`)
+
+        const machineParams: paperspace.MachinesCreateRequest = {
             name: this.getMachineName(),
             machineType: this.spec.machineType || "C2",
             region: this.spec.region || "Europe (AMS1)",
@@ -67,7 +69,11 @@ export class PaperspaceManagerBox extends BaseBox implements MachineBoxProvision
             diskSize: 50,
             startOnCreate: true,
             publicIpType: 'dynamic'
-        });
+        }
+
+        this.logger.info(`Creating machine ${this.getMachineName()} with options$ ${JSON.stringify(machineParams)}`)
+
+        const machine = await this.client.createMachine(machineParams)
 
         // Machine may not have an IP before being fully started
         await this.client.waitForMachineState(machine.id, 'ready')

@@ -8,6 +8,7 @@ import { ReplicatedEC2InstanceProjectSpec, ReplicatedEC2InstanceProjectSpecZ } f
 import { DnsSchema, NetworkSchema } from "../aws/common.js";
 import { NixOSConfigStep, NixOSConfigurator } from "../../lib/nix/configurator.js";
 import { parseProvisionerName } from "../common/provisioners.js";
+import { PaperspaceProjectSpec, PaperspaceProjectSpecZ } from "../paperspace/manager.js";
 const { merge } = lodash;
 
 export const WolfProjectSchemaZ = BoxSchemaBaseZ.extend({
@@ -18,7 +19,8 @@ export const WolfProjectSchemaZ = BoxSchemaBaseZ.extend({
         dns: DnsSchema.optional(),
         network: NetworkSchema.optional(),
         provisioner: z.object({
-            aws: ReplicatedEC2InstanceProjectSpecZ.deepPartial(), 
+            aws: ReplicatedEC2InstanceProjectSpecZ.deepPartial().optional(), 
+            paperspace: PaperspaceProjectSpecZ.deepPartial().optional()
         })
     })
 })
@@ -202,7 +204,13 @@ export async function parseWolfBoxSpec(rawConfig: unknown) : Promise<WolfManager
             break
         }
         case "paperspace": {
-            //TODO additional ports and proper machine type
+            const paperspaceArgs: DeepPartial<PaperspaceProjectSpec> = {
+                machineType: "RTX4000",
+                region: "Europe (AMS1)",
+            }
+
+            nixosSpec.provisioner.paperspace = merge(paperspaceArgs, spec.provisioner.paperspace)
+
             break
         }
     }

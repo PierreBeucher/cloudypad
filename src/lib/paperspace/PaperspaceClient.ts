@@ -32,11 +32,16 @@ export class PaperspaceClient {
     readonly logger: Logger<CloudyBoxLogObjI>
     
     constructor(args?: PaperspaceClientArgs) {
+        this.logger = componentLogger.getSubLogger({ name: `PaperspaceClient` })
+
         if (args?.apiKey) {
             this.apiKey = args.apiKey
+            this.logger.debug("Using directly provided api key.")
         } else if (args?.apiKeyFile) {
+            this.logger.debug(`Using api key file ${args.apiKeyFile}`)
             this.apiKey = fs.readFileSync(args.apiKeyFile, { encoding: 'utf8' })
         } else if (process.env.PAPERSPACE_API_KEY) {
+            this.logger.debug(`Using api key env var PAPERSPACE_API_KEY`)
             this.apiKey = process.env.PAPERSPACE_API_KEY
         } else {
             throw new Error("Paperspace requires an API key. You can use environment variable PAPERSPACE_API_KEY")
@@ -46,7 +51,7 @@ export class PaperspaceClient {
             Authorization: `Bearer ${this.apiKey}`,
         }}
         this.client = new paperspace.MachineApi()
-        this.logger = componentLogger.getSubLogger({ name: `PaperspaceClient` })
+        
     }
 
     async getMachine(machineId: string): Promise<paperspace.MachinesList200ResponseItemsInner> {
