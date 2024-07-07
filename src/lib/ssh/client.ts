@@ -162,7 +162,11 @@ export class SSHClient {
     }
 
     dispose(){
-        this.client.dispose()
+        try {
+            this.client.dispose()
+        } catch (e) {
+            this.logger.error(`Disposing client ${this.args.clientName}: ${e}`, e)
+        }
     }
     
 }
