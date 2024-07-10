@@ -1,29 +1,3 @@
 version: '3'
 
 tasks:
-  # Generate Paperspace Typescript client from OpenAPI specs
-  # 
-  paperspace-client-gen:
-    cmds:
-    - curl https://api.paperspace.com/v1/openapi.json -o src/lib/paperspace/openapi/openapi.json
-    - >-
-      cat src/lib/paperspace/openapi/openapi.json | jq '{ openapi, info, servers, components, externalDocs, paths: { 
-        "/machines": .paths."/machines",
-        "/machines/{id}": .paths."/machines/{id}",
-        "/machines/{id}/restart": .paths."/machines/{id}/restart",
-        "/machines/{id}/start": .paths."/machines/{id}/start",
-        "/machines/{id}/stop": .paths."/machines/{id}/stop",
-      }}' > src/lib/paperspace/openapi/machines-only.json
-    - rm -r src/lib/paperspace/generated-api
-    # Use container to always get the latest version as Nix may be out of date
-    - >- 
-      podman run -it --rm -v $PWD:/local -w /local docker.io/openapitools/openapi-generator-cli:latest@sha256:6747991566e4c3e43a30d5982f21da08c1cad78e95093fab04f494687b341788 generate
-      -i src/lib/paperspace/openapi/machines-only.json
-      -g typescript-axios
-      -o src/lib/paperspace/generated-api
-
-    # Generate TS files are using import like `import xxx from './configuration';`
-    # But we need `import xxx from './configuration.js';`
-    # Replace accordingly 
-    - find src/lib/paperspace/generated-api -type f -exec sed -i -E "s/(['\"])\.\/(.*?)\1/\1\.\/\2.js\1/g" {} +
- 

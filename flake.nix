@@ -21,6 +21,7 @@
               typescript
               podman
               podman-compose
+              ansible
             ];
             
             shellHook = ''
