@@ -1,0 +1,13 @@
+services:
+  cloudypad:
+    image: cloudypad:local
+    build: .
+    entrypoint: bash
+    volumes:
+    - $PWD:/cloudypad
+    - $HOME/.ssh:/root/.ssh
+    - $HOME/.cloudypad:/root/.cloudypad
+    - paperspace-local-config:/root/.paperspace
+
+volumes:
+  paperspace-local-config:

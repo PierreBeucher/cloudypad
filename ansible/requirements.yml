@@ -1,0 +1,11 @@
+roles:
+  - name: geerlingguy.docker
+    version: "7.3.0"
+  - name: nvidia.nvidia_driver
+    version: "v2.3.0"
+
+collections:
+  - name: community.docker
+    version: "3.10.4"
+  - name: community.general
+    version: 9.1.0

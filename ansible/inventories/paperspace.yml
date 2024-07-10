@@ -1,0 +1,8 @@
+all:
+  hosts:
+    "172.83.9.94":
+      ansible_user: paperspace
+      vars:
+        docker_users:
+        - paperspace
+

@@ -1,0 +1,3 @@
+- name: Update GRUB and reboot
+  command: update-grub && reboot
+  become: true

@@ -1,0 +1,38 @@
+# Wolf for Nvidia
+services:
+  wolf:
+    image: ghcr.io/games-on-whales/wolf:stable@sha256:36ce80055729876ece0445bdf859564b07e3522706544ffd4ca4e91e7107a855
+    environment:
+      XDG_RUNTIME_DIR: /tmp/sockets
+      NVIDIA_DRIVER_VOLUME_NAME: "{{ nvidia_driver_volume_name }}"
+      HOST_APPS_STATE_FOLDER: /etc/wolf
+    volumes:
+      # Used by other containers created by wolf. Do not change
+      - /etc/wolf/:/etc/wolf:rw
+      - /etc/wolf/cfg:/etc/wolf/cfg:rw
+      - /tmp/sockets:/tmp/sockets:rw
+      - /var/run/docker.sock:/var/run/docker.sock:rw
+      - /dev/:/dev/:rw
+      - /run/udev:/run/udev:rw
+      - nvidia-driver-vol:/usr/nvidia:rw
+    devices:
+      - /dev/dri
+      - /dev/uinput
+      - /dev/uhid
+      - /dev/nvidia-uvm
+      - /dev/nvidia-uvm-tools
+      - /dev/nvidia-caps/nvidia-cap1
+      - /dev/nvidia-caps/nvidia-cap2
+      - /dev/nvidiactl
+      - /dev/nvidia0
+      - /dev/nvidia-modeset
+    device_cgroup_rules:
+      - 'c 13:* rmw'
+    network_mode: host
+    restart: unless-stopped
+
+volumes:
+  # Volume populated with nvidia drivers 
+  nvidia-driver-vol:
+    external: true
+    name: "{{ nvidia_driver_volume_name }}"

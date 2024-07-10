@@ -1,0 +1,13 @@
+- name: Install Docker, NVIDIA drivers and Wolf
+  hosts: all
+  roles:
+    - role: geerlingguy.docker
+      tags: [ docker ]
+      docker_users:
+      - "{{ ansible_user_id }}"
+      become: true
+    - role: nvidia.nvidia_driver
+      tags: [ nvidia ] 
+      become: true
+    - role: roles/wolf
+      tags: [ wolf ]
