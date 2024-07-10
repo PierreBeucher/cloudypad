@@ -6,12 +6,14 @@ import { PROJECT_KIND_GAMING_WOLF, WolfManagerBox } from '../boxes/gaming/wolf.j
 import { PROJECT_KIND_LINUX_REPLICATED_NIXOS, NixOSManagerBox } from '../boxes/nix/manager.js'
 import { PROJECT_KIND_PAPERSPACE_MACHINE, PaperspaceManagerBox } from '../boxes/paperspace/manager.js';
 import { mainLogger } from './logging.js'
+import { PROJECT_KIND_GAMING_SUNSHINE, SunshineManagerBox } from '../boxes/gaming/sunshine.js'
 
 export const KIND_TO_MANAGER_MAP = new Map<string, (s: unknown) => Promise<ManagerBox>>([
     [PROJECT_KIND_GAMING_WOLF, WolfManagerBox.parseSpec],
     [PROJECT_KIND_REPLICATED_EC2_INSTANCE, ReplicatedEC2ManagerBox.parseSpec],
     [PROJECT_KIND_LINUX_REPLICATED_NIXOS, NixOSManagerBox.parseSpec],
-    [PROJECT_KIND_PAPERSPACE_MACHINE, PaperspaceManagerBox.parseSpec]
+    [PROJECT_KIND_PAPERSPACE_MACHINE, PaperspaceManagerBox.parseSpec],
+    [PROJECT_KIND_GAMING_SUNSHINE, SunshineManagerBox.parseSpec]
 ]);
 
 export async function getManagerBox(path: string) : Promise<ManagerBox> {

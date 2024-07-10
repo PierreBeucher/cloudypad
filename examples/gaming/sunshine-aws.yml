@@ -1,5 +1,5 @@
 name: cloud-gaming-gear
-kind: gaming.Wolf
+kind: gaming.Sunshine
 spec: 
   ssh:
     authorizedKeys: 
