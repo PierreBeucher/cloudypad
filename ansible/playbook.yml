@@ -1,13 +1,22 @@
 - name: Install Docker, NVIDIA drivers and Wolf
   hosts: all
+  # TODO keeps asking SSH key verification, maybe we can obtain SSH footprint from instance before
   roles:
     - role: geerlingguy.docker
       tags: [ docker ]
       docker_users:
       - "{{ ansible_user_id }}"
       become: true
-    - role: nvidia.nvidia_driver
-      tags: [ nvidia ] 
+    - role: roles/nvidia-driver
+      tags: [ nvidia ]
+      vars:
+        nvidia_driver_module_params: |
+          # nvidia-drm module is required by Wolf
+          options nvidia-drm modeset=1
+
+          # Should be default for recent NVIDIA driver, required by Wolf to run
+          # See https://docs.nvidia.com/datacenter/tesla/mig-user-guide/index.html#device-nodes-devfs
+          options nvidia nv_cap_enable_devfs=1 
       become: true
     - role: roles/wolf
       tags: [ wolf ]
