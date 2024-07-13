@@ -41,11 +41,16 @@
     enabled: yes
   when: nvidia_driver_package_state != 'absent'
 
-- name: set module parameters
+- name: Set module parameters
+  register: nvidia_driver_module_file_result
   template:
     src: nvidia.conf.j2
     dest: "{{ nvidia_driver_module_file }}"
     mode: '0644'
+
+- name: Update initramfs after module parameters update
+  command: update-initramfs -u
+  when: nvidia_driver_module_file_result.changed
 
 # Setup a service running in userspace to ensure /dev/nvidia-caps/* devices are present on boot
 # See https://docs.nvidia.com/datacenter/tesla/mig-user-guide/index.html#device-nodes-devfs
@@ -54,18 +59,7 @@
   copy:
     dest: /usr/local/bin/nvidia-setup-caps.sh
     mode: '0755'
-    content: |
-      #!/usr/bin/env bash
-      #
-      # Ensure /dev/nvidia-caps/* devices are present
-      # Used by nvidia-setup-caps service to ensure MIG devices are present on boot
-      # See https://docs.nvidia.com/datacenter/tesla/mig-user-guide/index.html#device-nodes-devfs
-      echo "Running nvidia-modprobe to ensure /dev/nvidia-caps/* existence"
-      nvidia-modprobe -f /proc/driver/nvidia/capabilities/mig/config -f /proc/driver/nvidia/capabilities/mig/monitor
-
-- name: Run nvidia-caps startup script after change
-  when: nvidia_caps_script.changed
-  ansible.builtin.command: /usr/local/bin/nvidia-setup-caps.sh
+    src: files/nvidia-setup-caps.sh
 
 - name: Ensure nvidia-caps systemd script exists
   register: nvidia_caps_systemd_unit
@@ -90,6 +84,6 @@
     name: nvidia-setup-caps
     enabled: true
 
-- name: reboot after driver install
+- name: reboot after driver install or initramfs update
   reboot:
-  when: install_driver.changed and not nvidia_driver_skip_reboot
+  when: (install_driver.changed or nvidia_driver_module_file_result.changed) and not nvidia_driver_skip_reboot 

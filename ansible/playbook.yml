@@ -21,10 +21,6 @@
         nvidia_driver_module_params: |
           # nvidia-drm module is required by Wolf
           options nvidia-drm modeset=1
-
-          # Should be default for recent NVIDIA driver, required by Wolf to run
-          # See https://docs.nvidia.com/datacenter/tesla/mig-user-guide/index.html#device-nodes-devfs
-          options nvidia nv_cap_enable_devfs=1 
       become: true
     - role: roles/wolf
       tags: [ wolf ]
