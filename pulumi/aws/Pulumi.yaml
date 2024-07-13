@@ -1,0 +1,9 @@
+name: cloudypad-aws
+runtime: nodejs
+description: A minimal AWS TypeScript Pulumi program
+config:
+    aws:region: eu-central-1
+    cloudypad-aws:instanceType: g5.xlarge
+    # cloudypad-aws:sshPublicKey: ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIGaNlYLbwtAmfcNjlOsP6Ryh3QxGn9qlhlQjPo5nbzBa pierre@nixos 
+    cloudypad-aws:rootVolumeSizeGB: 100
+    cloudypad-aws:publicIpType: static

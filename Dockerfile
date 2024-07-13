@@ -33,9 +33,22 @@ RUN curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64-${AWS_CLI_VERSION
     && ./aws/install \
     && rm -rf awscliv2.zip aws
 
+# Pulumi + Node
+RUN curl -fsSL https://deb.nodesource.com/setup_22.x -o nodesource_setup.sh && \
+    sh nodesource_setup.sh && \
+    apt-get install -y nodejs
+    
+
+RUN curl https://get.pulumi.com/releases/sdk/pulumi-v3.124.0-linux-x64.tar.gz -o pulumi.tar.gz \
+    &&  tar -xzf pulumi.tar.gz -C /usr/local/bin \
+    && rm pulumi.tar.gz
+
+ENV PATH=$PATH:/usr/local/bin/pulumi
+
 #
 # Cloudy Pad 
 #
+
 
 WORKDIR /cloudypad
 
