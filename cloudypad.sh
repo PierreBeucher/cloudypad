@@ -14,7 +14,7 @@ source cli-sh/aws.sh
 source cli-sh/paperspace.sh
 
 usage() {
-    echo "Usage: $0 {init|update|start|stop|restart|get|list}"
+    echo "Usage: $0 {init|update|start|stop|restart|get|list|pair}"
     exit 1
 }
 
@@ -24,7 +24,7 @@ fi
 
 case "$1" in
     init)
-        init
+        init "${@:2}"
         ;;
     start)
         instance_stop_start_restart_get "${@:1}"
@@ -43,6 +43,9 @@ case "$1" in
         ;;
     update)
         update "${@:2}"
+        ;;
+    pair)
+        pair_moonlight "${@:2}"
         ;;
     *)
         usage

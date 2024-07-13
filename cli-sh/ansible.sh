@@ -34,3 +34,29 @@ run_update_ansible() {
 
     ansible-playbook -i $ansible_inventory ansible/playbook.yml
 }
+
+get_cloudypad_instance_dir() {
+    cloudypad_instance_name=$1
+    echo "$cloudypad_home/instances/$cloudypad_instance_name"
+}
+
+get_cloudypad_instance_ansible_inventory_path(){
+    cloudypad_instance_name=$1
+    echo "$(get_cloudypad_instance_dir $cloudypad_instance_name)/ansible-inventory"
+}
+
+# Fetch instance IP from inventory
+get_cloudypad_instance_host(){
+    cloudypad_instance_name=$1
+    local inventory_path="$(get_cloudypad_instance_ansible_inventory_path $cloudypad_instance_name)"
+
+    cat $inventory_path | yq ".all.hosts[\"$cloudypad_instance_name\"].ansible_host" -r
+}
+
+# Fetch instance IP from inventory
+get_cloudypad_instance_user(){
+    cloudypad_instance_name=$1
+    local inventory_path="$(get_cloudypad_instance_ansible_inventory_path $cloudypad_instance_name)"
+
+    cat $inventory_path | yq ".all.hosts[\"$cloudypad_instance_name\"].ansible_user" -r
+}

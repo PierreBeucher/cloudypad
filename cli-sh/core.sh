@@ -38,27 +38,28 @@ prompt_choice() {
 }
 
 #
-# Core
+# Core commands
+# These functions are called directly and check for parameters before using other sub-functions
 #
 
 # Initialize and configure a new instance
 # Prompt user for cloud provider to use and whether or not an existing shall be used 
 init() {
-
-    # Initialize home directory
-    mkdir -p $cloudypad_home
-
+    
     local cloudypad_instance_name
+
     # If available, use CLOUDYPAD_INSTANCE env var or first arg before prompting user
     if [[ -n "$CLOUDYPAD_INSTANCE" || -n "$1" ]]; then
         cloudypad_instance_name=${CLOUDYPAD_INSTANCE:-$1}
     else
-        cloudypad_instance_name_default="mycloudypad"
+        cloudypad_instance_name_default="cloudypad-$(whoami)"
         read -p "How shall we name your Cloudy Pad instance? (default: $cloudypad_instance_name_default) " cloudypad_instance_name
         cloudypad_instance_name=${cloudypad_instance_name:-$cloudypad_instance_name_default}
     fi
 
+
     cloudypad_instance_name=${cloudypad_instance_name:-$cloudypad_instance_name_default}
+    
     echo "Initializing Cloudy Pad instance '$cloudypad_instance_name'"
 
     local cloudypad_clouder=$(prompt_choice "Which cloud provider do you want to use?" ${cloudypad_supported_clouders[@]})
@@ -106,34 +107,29 @@ init() {
             exit 6
             ;;
     esac
-}
 
-CLOUDYPAD_INIT_CREATE='c'
-CLOUDYPAD_INIT_USE_EXISTING='e'
+    echo
+    echo "🥳 Your Cloudy Pad instance is ready !"
+    echo
 
-init_create_machine() {
-    cloudypad_clouder=$1
-    echo "Would create $cloudypad_clouder machine" # TODO
-}
+    local pair_now_input
+    read -p "Do you want to pair with Moonlight now? [Y/n] " pair_now_input
 
-get_cloudypad_instance_dir() {
-    cloudypad_instance_name=$1
-    echo "$cloudypad_home/instances/$cloudypad_instance_name"
-}
+    # Default to 'Y' if the user presses Enter without typing anything
+    pair_now_input=${pair_now_input:-Y}
 
-get_cloudypad_instance_ansible_inventory_path(){
-    cloudypad_instance_name=$1
-    echo "$(get_cloudypad_instance_dir $cloudypad_instance_name)/ansible-inventory"
-}
-
-check_instance_exists() {
-    cloudypad_instance_name=$1
-    cloudypad_instance_dir=$(get_cloudypad_instance_dir $cloudypad_instance_name)
-
-    # Check if the inventory path exists
-    if [ ! -d "$cloudypad_instance_dir" ]; then
-        echo "Error: Instance's directory not found: $cloudypad_instance_dir"
-        exit 1
+    if [[ "$pair_now_input" =~ ^[Yy]$ ]]; then
+        pair_moonlight $cloudypad_instance_name
+    else
+        echo "You can run"
+        echo
+        echo "  cloudypad pair $cloudypad_instance_name"
+        echo 
+        echo "or "
+        echo
+        echo "  cloudypad get $cloudypad_instance_name"
+        echo
+        echo "To pair your instance later"
     fi
 }
 
@@ -183,4 +179,76 @@ instance_stop_start_restart_get() {
             ;;
     esac
 }
+
+pair_moonlight() {
+     if [ $# -eq 0 ]; then
+        echo
+        echo "Pair requires exactly 1 argument: instance name to pair"
+        echo "Use 'list' subcommand to see existing instances"
+        exit 1
+    fi
+
+    local instance_name=$1
+    local instance_hostname=$(get_cloudypad_instance_host $instance_name)
+
+    echo
+    echo "Please run Moonlight and add computer: '$instance_hostname'"
+    echo
+    echo "Once PIN is shown, press ENTER to continue to verification page."
+    echo "(verification URL will be known after pairing is initialized by Moonlight)"
+    echo
+    read -p "Press ENTER to continue..."
+
+    local pin_url=$(get_wolf_pin_url $instance_name)
+
+    echo
+    echo "Open URL to validate PIN: $pin_url"
+    echo
+
+}
+
+#
+# Sub-functions and utils
+#
+
+get_wolf_pin_url() {
+
+    local instance_name=$1
+    local instance_host="$(get_cloudypad_instance_host $instance_name)"
+    local instance_user="$(get_cloudypad_instance_user $instance_name)"
+
+    # Fetch latest "insert pin" URL in Wolf logs
+    local pin_ssh_results=$(ssh $instance_user@$instance_host "sh -c 'docker logs wolf-wolf-1 2>&1 | grep -a \"Insert pin at\" | tail -n 1'")
+
+    # Replace private hostname by public hostname
+    local url_regex='(http://[0-9]{1,3}(\.[0-9]{1,3}){3}:[0-9]+/pin/#?[0-9A-F]+)'
+    if [[ $pin_ssh_results =~ $url_regex ]]; then
+        local url="${BASH_REMATCH[0]}"
+        local replaced_url=$(echo "$url" | sed -E "s/[0-9]{1,3}(\.[0-9]{1,3}){3}/$instance_host/")
+        echo "$replaced_url"
+    else
+        echo "PIN validation URL not found in Wolf logs." >&2
+        exit 1
+    fi
+}
+
+CLOUDYPAD_INIT_CREATE='c'
+CLOUDYPAD_INIT_USE_EXISTING='e'
+
+init_create_machine() {
+    cloudypad_clouder=$1
+    echo "Would create $cloudypad_clouder machine" # TODO
+}
+
+check_instance_exists() {
+    cloudypad_instance_name=$1
+    cloudypad_instance_dir=$(get_cloudypad_instance_dir $cloudypad_instance_name)
+
+    # Check if the inventory path exists
+    if [ ! -d "$cloudypad_instance_dir" ]; then
+        echo "Error: Instance's directory not found: $cloudypad_instance_dir"
+        exit 1
+    fi
+}
+
 

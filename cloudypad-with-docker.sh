@@ -1,8 +1,13 @@
 #!/usr/bin/env bash
 
-# CloudyPad run in a Docker container
-# Make sure we have a user matching current user's UID in container to prevent permission issue
-# Then run container
+# Wrapper around CloudyPad container in which most operations are performed 
+# so that no other dependency other than Docker or a container runtime is needed
+#
+# Build a container image with current user ID on the fly (to avoid permission issues)
+# and run instructions.
+# Only a few commands need to run directly for user (eg. moonlight setup)
+
+set -e
 
 # TODO fix on release
 CLOUDYPAD_IMAGE="cloudypad:local"
@@ -21,14 +26,15 @@ EOF
 docker build -t $CLOUDYPAD_TARGET_IMAGE - < /tmp/Dockerfile-cloudypad-run > /dev/null
 
 run_cloudypad_docker() {
-  docker run --rm -it \
-    -v $HOME/.ssh:$HOME/.ssh:ro \
-    -v $HOME/.aws:$HOME/.aws:ro \
-    -v $HOME/.cloudypad:$HOME/.cloudypad \
-    -v $HOME/.paperspace:$HOME/.paperspace \
-    -u "$(id -u)" \
-    $CLOUDYPAD_TARGET_IMAGE \
-    "$@"
+
+    docker run --rm -it \
+        -v $HOME/.ssh:$HOME/.ssh:ro \
+        -v $HOME/.aws:$HOME/.aws:ro \
+        -v $HOME/.cloudypad:$HOME/.cloudypad \
+        -v $HOME/.paperspace:$HOME/.paperspace \
+        -u "$(id -u)" \
+        $CLOUDYPAD_TARGET_IMAGE \
+        "$@"
 }
 
 run_cloudypad_docker "${@:1}"

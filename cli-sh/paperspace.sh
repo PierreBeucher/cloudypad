@@ -108,8 +108,6 @@ init_paperspace() {
                     \"startOnCreate\":\"true\"
                 }")
             
-            echo "Got Paperspace API response: $paperspace_api_response"
-
             local paperspace_machine_id=$(echo $paperspace_api_response | jq .data.id -r)
 
             
