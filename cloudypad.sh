@@ -29,10 +29,13 @@ prompt_choice() {
     options=("${@:2}")
 
     # If possible show most options on screen with max 10
-    fzf_length=$((${#options[@]} + 2))
+    fzf_length=$((${#options[@]} + 3))
     [ $fzf_length -gt 10 ] && fzf_length=10
 
-    choice=$(printf "%s\n" "${options[@]}" | fzf --height $fzf_length --prompt="$prompt")
+    echo "" >&2
+    echo "$prompt" >&2
+
+    choice=$(printf "%s\n" "${options[@]}" | fzf --height $fzf_length)
     echo "$choice"
 }
 
@@ -80,7 +83,7 @@ init() {
             machine_create_choice=$CLOUDYPAD_INIT_USE_EXISTING
             ;;
         *)
-            echo "Invalid choice $machine_create_choice_user. This is probably a bug, please file an issue."
+            echo "Invalid choice machine create or use existing choice '$machine_create_choice_user'. This is probably a bug, please file an issue."
             exit 3
             ;;
     esac
@@ -212,8 +215,64 @@ init_paperspace() {
             
             ;;
         "$CLOUDYPAD_INIT_CREATE")
-            echo "Sorry, creating Paperspace machine is not yet supported."
-            exit 4
+            
+            # Static machine types for now
+            # Most machines are not suitable for gaming usage (eg. CPU or bery expansive multi-GPU)
+            paperspace_machine_types_path="resources/paperspace/machine-types.json"
+            paperspace_machine_types=$(cat $paperspace_machine_types_path)
+            
+            echo "Known machine types and pricing:"
+            cat $paperspace_machine_types_path | jq -r '.[] | ["\(.type)", "\(.desc)", "\(.pricing)"] | @tsv' | column -t -s $'\t' -N "Type,Description,Pricing"
+
+            local pspace_machine_type=$(prompt_choice "Choose a machine type (recommended: 'P5000')" $(cat $paperspace_machine_types_path |  jq -r '.[] | .type' | paste -sd ' ' -))
+            
+            
+            # Create an Ubuntu 22.04 based on public template "t0nspur5"
+            # All Ubuntu templates can be listed with 
+            # $ pspace os-template list -j | jq '.items[] | select(.agentType == "LinuxHeadless" and (.operatingSystemLabel | tostring | contains("Ubuntu")))'
+            local pspace_os_template="t0nspur5"
+            
+            local pspace_public_ip_type=$(prompt_choice "Enter public IP type (recommended: static)" "static" "dynamic")
+
+            # Fetch available regions from JSON file
+            available_regions=$(cat resources/paperspace/regions.json)
+
+            echo "Available regions:"
+            echo "$available_regions" | jq -r '.[] | "\(.desc)"'
+
+            local pspace_region=$(prompt_choice "Choose a Paperspace region" $(echo "$available_regions" | jq -r '.[] | .code' | paste -sd ' ' -))
+
+            read -p "Enter disk size (GB) (default: 100) " pspace_disk_size
+            local pspace_disk_size=${pspace_disk_size:-100}
+            
+            echo "About to create Paperspace machine:"
+            echo "  Machine name: 'CloudyPad - $cloudypad_instance_name'"
+            echo "  Disk Size: ${pspace_disk_size}GB"
+            echo "  Public IP Type: $pspace_public_ip_type"
+            echo "  Region: $pspace_region"
+            echo "  OS Template: $pspace_os_template (Ubuntu 22.04)"
+            echo "  Machine Type: $pspace_machine_type"
+            echo 
+            echo "Be aware that you'll be billed for machine usage. Remember to turn it off when unused or delete it when you're done!"
+            echo
+            
+            read -p "Continue? (y/N): " pspace_create_confirm
+            if [[ "$pspace_create_confirm" != "y" && "$pspace_create_confirm" != "Y" ]]; then
+                echo "Aborting machine creation."
+                exit 8
+            fi
+
+            # Run the pspace machine create command with the provided inputs
+            pspace machine create \
+                --name "CloudyPad_$cloudypad_instance_name" \
+                --template-id $pspace_os_template \
+                --region $pspace_region \
+                --disk-size $pspace_disk_size \
+                --machine-type $pspace_machine_type \
+                --public-ip-type $pspace_public_ip_type
+
+            echo "Machine creation initiated."
+            exit 0
             ;;
         *)
             echo "Unknown Paperspace machine selection type $cloudypad_machine_choice. This is probably a bug, please report it."

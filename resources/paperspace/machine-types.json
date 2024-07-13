@@ -1,0 +1,58 @@
+
+[
+    {
+        "type": "P4000",
+        "desc": "NVIDIA Quadro P4000",
+        "pricing": "0.45"
+    },
+    {
+        "type": "P5000",
+        "desc": "NVIDIA Quadro P5000",
+        "pricing": "0.78"
+    },
+    {
+        "type": "P6000",
+        "desc": "NVIDIA Quadro P6000",
+        "pricing": "1.10"
+    },
+    {
+        "type": "RTX4000",
+        "desc": "NVIDIA Quadro RTX 4000",
+        "pricing": "0.56"
+    },
+    {
+        "type": "RTX5000",
+        "desc": "NVIDIA Quadro RTX 5000",
+        "pricing": "0.82"
+    },
+    {
+        "type": "V100-16GB",
+        "desc": "NVIDIA Tesla V100 16GB",
+        "pricing": "2.30"
+    },
+    {
+        "type": "V100-32GB",
+        "desc": "NVIDIA Tesla V100 32GB",
+        "pricing": "2.30"
+    },
+    {
+        "type": "A4000",
+        "desc": "NVIDIA RTX A4000",
+        "pricing": "0.76"
+    },
+    {
+        "type": "A5000",
+        "desc": "NVIDIA RTX A5000",
+        "pricing": "1.38"
+    },
+    {
+        "type": "A6000",
+        "desc": "NVIDIA RTX A6000",
+        "pricing": "1.89"
+    },
+    {
+        "type": "A100",
+        "desc": "NVIDIA A100 Tensor Core GPU",
+        "pricing": "3.09"
+    }
+]
