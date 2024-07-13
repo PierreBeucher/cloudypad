@@ -1,3 +1,11 @@
+- name: "Wait for machine to be reachable (timeout: 3min)"
+  hosts: all
+  gather_facts: false
+  tasks:
+    - wait_for_connection:
+        timeout: 180
+        sleep: 5
+
 - name: Install Docker, NVIDIA drivers and Wolf
   hosts: all
   # TODO keeps asking SSH key verification, maybe we can obtain SSH footprint from instance before
