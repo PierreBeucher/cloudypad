@@ -28,7 +28,7 @@ docker build -t $CLOUDYPAD_TARGET_IMAGE - < /tmp/Dockerfile-cloudypad-run > /dev
 run_cloudypad_docker() {
 
     docker run --rm -it \
-        -v $HOME/.ssh:$HOME/.ssh:ro \
+        -v $HOME/.ssh:$HOME/.ssh \
         -v $HOME/.aws:$HOME/.aws:ro \
         -v $HOME/.cloudypad:$HOME/.cloudypad \
         -v $HOME/.paperspace:$HOME/.paperspace \

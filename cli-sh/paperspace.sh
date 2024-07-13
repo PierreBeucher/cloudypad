@@ -16,17 +16,14 @@ init_paperspace() {
             # Check existing machines (TODO again, maybe we can optimize)
             # If only a single machine present, use it as default
             # Fetch the machine list and check if there's only one result
-            machine_list=$(pspace machine list --json)
-            machine_count=$(echo "$machine_list" | jq '.items | length')
+            local machine_list=$(pspace machine list --json | jq .items[].id -r)
 
-            if [ "$machine_count" -eq 1 ]; then
-                default_machine=$(echo "$machine_list" | jq -r '.items[0].id')
-                read -p "Enter machine ID to use (default: $default_machine):" paperspace_machine_id
-            else
-                read -p "Enter machine ID to use:" paperspace_machine_id
+            if [ -z "$machine_list" ]; then
+                echo "No Paperspace machine found."
+                exit 7
             fi
 
-            paperspace_machine_id=${paperspace_machine_id:-$default_machine}
+            local paperspace_machine_id=$(prompt_choice "Choose a machine" $machine_list)
             
             ;;
         "$CLOUDYPAD_INIT_CREATE")
@@ -134,7 +131,7 @@ init_paperspace() {
     echo "Please note:"
     echo " - Setup may take some time, especially GPU driver installation."
     echo " - Machine may reboot several time during process, this is expected and should not cause error."
-    echo " - You may be prompted multiple time to validate SSH key fingerprint."
+    echo
 
     local paperspace_install_confirm
     read -p "Do you want to continue? (y/N): " paperspace_install_confirm
@@ -147,11 +144,6 @@ init_paperspace() {
     mkdir -p $(get_cloudypad_instance_dir $cloudypad_instance_name)
 
     init_ansible_inventory $cloudypad_instance_name $cloudypad_instance_host $cloudypad_instance_user "paperspace" $paperspace_machine_id
-
-    run_update_ansible $cloudypad_instance_name
-
-    echo "Instance $cloudypad_instance_name has been initialized !"
-    echo "You can now run moonlight and connect via host $cloudypad_instance_host"
 }
 
 # Check if paperspace CLI is logged-in

@@ -16,13 +16,16 @@ init_aws() {
 
             # Fetch the instance list
             local instance_list=$(aws ec2 describe-instances --query 'Reservations[*].Instances[*].InstanceId' --output json | jq -r '.[][]')
-            local instance_count=$(echo "$instance_list" | wc -l)
 
-            if [ "$instance_count" -eq 1 ]; then
+            echo "Found instances: $instance_list"
+            
+            if [ -z "$instance_list" ]; then
                 echo "No AWS EC2 instance found. Are you using the correct profile or region ?"
                 echo "If needed, set profile or region with:"
                 echo "  export AWS_PROFILE=myprofile"
                 echo "  export AWS_REGION=eu-central-1"
+                echo 
+                echo "Or update your AWS config."
                 exit 7
             fi
 
@@ -58,8 +61,8 @@ init_aws() {
     echo "Please note:"
     echo " - Setup may take some time, especially GPU driver installation."
     echo " - Machine may reboot several time during process, this is expected and should not cause error."
-    echo " - You may be prompted multiple time to validate SSH key fingerprint."
-
+    echo
+    
     read -p "Do you want to continue? (y/N): " aws_install_confirm
 
     if [[ "$aws_install_confirm" != "y" && "$aws_install_confirm" != "Y" ]]; then
@@ -70,20 +73,12 @@ init_aws() {
     mkdir -p $(get_cloudypad_instance_dir $cloudypad_instance_name)
 
     init_ansible_inventory $cloudypad_instance_name $cloudypad_instance_host $cloudypad_instance_user "aws" $aws_instance_id
-
-    run_update_ansible $cloudypad_instance_name
-
-    echo "Instance $cloudypad_instance_name has been initialized!"
-    echo "You can now run moonlight and connect via host $cloudypad_instance_host"
 }
 
 init_aws_create_instance() {
     local cloudypad_instance_name=$1
 
-    local current_region=${AWS_REGION:-$(aws configure get region)}
-    local aws_region
-    read -p "Enter AWS region (default: $current_region): " aws_region
-    aws_region=${aws_region:-$current_region}
+    local aws_region=${AWS_REGION:-$(aws configure get region)}
 
     local instance_types=("g4dn.xlarge" "g4dn.2xlarge" "g4dn.4xlarge" "g4dn.8xlarge" "g5.xlarge" "g5.2xlarge" "g5.4xlarge" "g5.8xlarge")
     local aws_instance_type=$(prompt_choice "Choose an instance type" "${instance_types[@]}")

@@ -94,7 +94,7 @@ init() {
             ;;
     esac
 
-    # Other clouder may be supported
+    # Create/use existing machine and initialize Ansible inventory
     case "$cloudypad_clouder" in
         paperspace)
             init_paperspace $cloudypad_instance_name $machine_create_choice
@@ -107,6 +107,8 @@ init() {
             exit 6
             ;;
     esac
+
+    run_update_ansible $cloudypad_instance_name
 
     echo
     echo "🥳 Your Cloudy Pad instance is ready !"
@@ -250,5 +252,3 @@ check_instance_exists() {
         exit 1
     fi
 }
-
-
