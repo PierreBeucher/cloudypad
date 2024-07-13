@@ -14,7 +14,7 @@ source cli-sh/aws.sh
 source cli-sh/paperspace.sh
 
 usage() {
-    echo "Usage: $0 {init|update|start|stop|restart|get|list|pair}"
+    echo "Usage: $0 {init|update|start|stop|restart|get|list|pair|debug-container}"
     exit 1
 }
 
@@ -46,6 +46,9 @@ case "$1" in
         ;;
     pair)
         pair_moonlight "${@:2}"
+        ;;
+    debug-container)
+        bash
         ;;
     *)
         usage
