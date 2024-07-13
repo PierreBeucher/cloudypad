@@ -105,9 +105,11 @@ init_paperspace() {
                     \"region\": \"$pspace_region\",
                     \"templateId\": \"$pspace_os_template\",
                     \"publicIpType\": \"$pspace_public_ip_type\",
-                    \"startOnCreate\":\"true\",
+                    \"startOnCreate\":\"true\"
                 }")
             
+            echo "Got Paperspace API response: $paperspace_api_response"
+
             local paperspace_machine_id=$(echo $paperspace_api_response | jq .data.id -r)
 
             

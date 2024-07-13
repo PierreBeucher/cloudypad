@@ -3,6 +3,7 @@
 #
 cloudypad_home=${CLOUDYPAD_HOME:-$HOME/.cloudypad}
 mkdir -p $cloudypad_home
+mkdir -p $cloudypad_home/instances
 
 cloudypad_supported_clouders=("aws" "paperspace")
 

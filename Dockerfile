@@ -24,8 +24,8 @@ ENV ANSIBLE_STDOUT_CALLBACK=community.general.unixy
 
 # Paperspace CLI
 # TODO it seems possible to force version via script argument
+ENV PAPERSPACE_INSTALL="/usr/local"
 RUN curl -fsSL https://paperspace.com/install.sh | sh
-ENV PATH="$PATH:/root/.paperspace/bin"
 
 # AWS
 ARG AWS_CLI_VERSION="2.17.12"
@@ -50,10 +50,21 @@ ENV PATH=$PATH:/usr/local/bin/pulumi
 # Cloudy Pad 
 #
 
-
 WORKDIR /cloudypad
 
-COPY ansible ansible/
+# Ansible deps
+# Install globally under /etc/ansible
+COPY ansible/requirements.yml ansible/requirements.yml
+RUN ansible-galaxy role install -r ansible/requirements.yml -p /etc/ansible/roles
+RUN ansible-galaxy collection install -r ansible/requirements.yml -p /etc/ansible/collections
 
-RUN ansible-galaxy role install -r ansible/requirements.yml
-RUN ansible-galaxy collection install -r ansible/requirements.yml
+# Copy remaining files
+COPY ansible       ansible/
+COPY cli-sh        cli-sh/
+COPY resources     resources/
+COPY pulumi        pulumi/
+COPY cloudypad.sh  cloudypad.sh
+COPY LICENSE.txt   LICENSE.txt
+COPY README.md     README.md
+
+ENTRYPOINT  ["/cloudypad/cloudypad.sh"]
