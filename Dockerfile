@@ -11,6 +11,7 @@ RUN apt update && apt install -y \
     less \
     groff \
     fzf \
+    bsdmainutils \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 

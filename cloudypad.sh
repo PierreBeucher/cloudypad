@@ -17,7 +17,7 @@ usage() {
 # Variable and setup
 #
 cloudypad_home=${CLOUDYPAD_HOME:-$HOME/.cloudypad}
-mkdir -p $CLOUDYPAD_HOME
+mkdir -p $cloudypad_home
 
 cloudypad_supported_clouders=("aws" "paperspace")
 
@@ -282,16 +282,40 @@ init_paperspace() {
             fi
 
             # Run the pspace machine create command with the provided inputs
-            pspace machine create \
-                --name "CloudyPad_$cloudypad_instance_name" \
-                --template-id $pspace_os_template \
-                --region $pspace_region \
-                --disk-size $pspace_disk_size \
-                --machine-type $pspace_machine_type \
-                --public-ip-type $pspace_public_ip_type
+            
+            # pspace machine create \
+            #     --name "CloudyPad_$cloudypad_instance_name" \
+            #     --template-id $pspace_os_template \
+            #     --region $pspace_region \
+            #     --disk-size $pspace_disk_size \
+            #     --machine-type $pspace_machine_type \
+            #     --public-ip-type $pspace_public_ip_type
+            #
+            # Using curl for now as CLI has a bug preventing machine creation
+            # See https://github.com/Paperspace/cli/issues/78
+            # Fetch token from authenticated pspace
+            # Dirty but works as a workaround for now
+            local pspace_team=$(pspace config | grep 'team' | cut -d '"' -f 2)
+            local pspace_api_token=$(grep 'taekk107hp' ~/.paperspace/credentials.toml | cut -d '"' -f 2)
 
-            echo "Machine creation initiated."
-            exit 0
+            local paperspace_api_response=$(curl --request POST \
+                --url https://api.paperspace.com/v1/machines \
+                --header "Authorization: Bearer $pspace_api_token" \
+                --header 'Content-Type: application/json' \
+                --data "{
+                    \"diskSize\": $pspace_disk_size,
+                    \"machineType\": \"$pspace_machine_type\",
+                    \"name\": \"CloudyPad_$cloudypad_instance_name\",
+                    \"region\": \"$pspace_region\",
+                    \"templateId\": \"$pspace_os_template\",
+                    \"publicIpType\": \"$pspace_public_ip_type\",
+                    \"startOnCreate\":\"true\",
+                }")
+            
+            local paperspace_machine_id=$(echo $paperspace_api_response | jq .data.id -r)
+
+            
+            echo "Paperspace machine creation done (ID: $paperspace_machine_id)"
             ;;
         *)
             echo "Unknown Paperspace machine selection type $cloudypad_machine_choice. This is probably a bug, please report it."
@@ -305,6 +329,24 @@ init_paperspace() {
     
     cloudypad_instance_host=$(echo $paperspace_machine_json | jq '.publicIp' -r)
     cloudypad_instance_user=paperspace
+
+    echo "You're going to configure Cloudy Pad on Paperspace:"
+    echo "  Machine ID: $paperspace_machine_id"
+    echo "  Hostname: $cloudypad_instance_host"
+    echo "  SSH user: $cloudypad_instance_user"
+    echo
+    echo "Please note:"
+    echo " - Setup may take some time, especially GPU driver installation."
+    echo " - Machine may reboot several time during process, this is expected and should not cause error."
+    echo " - You may be prompted multiple time to validate SSH key fingerprint."
+
+    local paperspace_install_confirm
+    read -p "Do you want to continue? (y/N): " paperspace_install_confirm
+
+    if [[ "$paperspace_install_confirm" != "y" && "$paperspace_install_confirm" != "Y" ]]; then
+        echo "Aborting configuration."
+        exit 0
+    fi
 
     mkdir -p $(get_cloudypad_instance_dir $cloudypad_instance_name)
 
@@ -393,9 +435,9 @@ init_aws() {
     fi
 
     echo "You're going to configure Cloudy Pad on AWS EC2:"
-    echo "Instance ID: $aws_instance_id"
-    echo "Hostname: $cloudypad_instance_host"
-    echo "SSH user: $cloudypad_instance_user"
+    echo "  Instance ID: $aws_instance_id"
+    echo "  Hostname: $cloudypad_instance_host"
+    echo "  SSH user: $cloudypad_instance_user"
     echo
     echo "Please note:"
     echo " - Setup may take some time, especially GPU driver installation."
