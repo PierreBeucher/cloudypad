@@ -4,7 +4,9 @@ tasks:
 
   # Build and run a debug container
   run-debug:
-    cmd: docker compose --progress=plain build && docker compose run cloudypad
+    cmd: >-
+      docker build --progress=plain . -t cloudypad:local && 
+      CLOUDYPAD_IMAGE="cloudypad:local" ./cloudypad.sh debug-container
 
   build:
     cmd: docker compose --progress=plain build

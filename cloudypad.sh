@@ -7,7 +7,7 @@
 # and run instructions.
 # Only a few commands need to run directly for user (eg. moonlight setup)
 
-CLOUDYPAD_IMAGE="crafteo/cloudypad:0.0.1"
+CLOUDYPAD_IMAGE="${CLOUDYPAD_IMAGE:-'crafteo/cloudypad:0.0.1'}"
 CLOUDYPAD_TARGET_IMAGE="crafteo/cloudypad-local-runner:local"
 
 # Build Dockerfile on-the-fly
