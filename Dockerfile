@@ -59,12 +59,12 @@ RUN ansible-galaxy role install -r ansible/requirements.yml -p /etc/ansible/role
 RUN ansible-galaxy collection install -r ansible/requirements.yml -p /etc/ansible/collections
 
 # Copy remaining files
-COPY ansible       ansible/
-COPY cli-sh        cli-sh/
+COPY LICENSE.txt   LICENSE.txt
 COPY resources     resources/
 COPY pulumi        pulumi/
-COPY cloudypad.sh  cloudypad.sh
-COPY LICENSE.txt   LICENSE.txt
+COPY ansible       ansible/
+COPY cli-sh        cli-sh/
 COPY README.md     README.md
+COPY cloudypad-entrypoint.sh  cloudypad-entrypoint.sh
 
-ENTRYPOINT  ["/cloudypad/cloudypad.sh"]
+ENTRYPOINT  ["/cloudypad/cloudypad-entrypoint.sh"]

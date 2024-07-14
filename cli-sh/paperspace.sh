@@ -49,14 +49,15 @@ init_paperspace() {
             # Fetch available regions from JSON file
             available_regions=$(cat resources/paperspace/regions.json)
 
+            echo
             echo "Available regions:"
             echo "$available_regions" | jq -r '.[] | "\(.desc)"'
 
             local pspace_region=$(prompt_choice "Choose a Paperspace region" $(echo "$available_regions" | jq -r '.[] | .code' | paste -sd ' ' -))
 
-            read -p "Enter disk size (GB) (default: 100) " pspace_disk_size
-            local pspace_disk_size=${pspace_disk_size:-100}
+            local pspace_disk_size=$(prompt_choice "Choose a disk size (GB)" 50 100 250 500 1000 2000)
             
+            echo
             echo "About to create Paperspace machine:"
             echo "  Machine name: 'CloudyPad - $cloudypad_instance_name'"
             echo "  Disk Size: ${pspace_disk_size}GB"
@@ -70,7 +71,7 @@ init_paperspace() {
             
             read -p "Continue? (y/N): " pspace_create_confirm
             if [[ "$pspace_create_confirm" != "y" && "$pspace_create_confirm" != "Y" ]]; then
-                echo "Aborting machine creation."
+                echo "Aborting machine creation." >&2
                 exit 8
             fi
 
@@ -92,6 +93,7 @@ init_paperspace() {
             local pspace_api_token=$(grep 'taekk107hp' ~/.paperspace/credentials.toml | cut -d '"' -f 2)
 
             local paperspace_api_response=$(curl --request POST \
+                -sS \
                 --url https://api.paperspace.com/v1/machines \
                 --header "Authorization: Bearer $pspace_api_token" \
                 --header 'Content-Type: application/json' \
@@ -107,15 +109,25 @@ init_paperspace() {
             
             local paperspace_machine_id=$(echo $paperspace_api_response | jq .data.id -r)
 
+            if [ -z "$paperspace_machine_id" ] || [ "$paperspace_machine_id" == "null" ] ; then
+                echo >&2
+                echo "Error: Paperspace machine ID not found in API response" >&2
+                echo "API response: " >&2
+                echo >&2
+                echo "$paperspace_api_response" >&2
+                exit 1
+            fi
             
+            echo
             echo "Paperspace machine creation done (ID: $paperspace_machine_id)"
             ;;
         *)
-            echo "Unknown Paperspace machine selection type $cloudypad_machine_choice. This is probably a bug, please report it."
+            echo "Unknown Paperspace machine selection type $cloudypad_machine_choice. If you think this is a bug please report it." >&2
             exit 5
             ;;
     esac
 
+    echo
     echo "Configuring Paperspace machine $paperspace_machine_id."
 
     paperspace_machine_json=$(pspace machine get $paperspace_machine_id --json)
@@ -123,6 +135,7 @@ init_paperspace() {
     cloudypad_instance_host=$(echo $paperspace_machine_json | jq '.publicIp' -r)
     cloudypad_instance_user=paperspace
 
+    echo
     echo "You're going to configure Cloudy Pad on Paperspace:"
     echo "  Machine ID: $paperspace_machine_id"
     echo "  Hostname: $cloudypad_instance_host"
@@ -152,6 +165,7 @@ check_paperspace_login () {
     pspace_team_config=$(pspace config get team)
 
     if [ "$pspace_team_config" == "null" ]; then
+        echo
         echo "Please login to Paperspace..."
         pspace login
     fi

@@ -42,6 +42,9 @@ prompt_choice() {
 # These functions are called directly and check for parameters before using other sub-functions
 #
 
+CLOUDYPAD_INIT_CREATE='c'
+CLOUDYPAD_INIT_USE_EXISTING='e'
+
 # Initialize and configure a new instance
 # Prompt user for cloud provider to use and whether or not an existing shall be used 
 init() {
@@ -60,10 +63,12 @@ init() {
 
     cloudypad_instance_name=${cloudypad_instance_name:-$cloudypad_instance_name_default}
     
+    echo
     echo "Initializing Cloudy Pad instance '$cloudypad_instance_name'"
 
     local cloudypad_clouder=$(prompt_choice "Which cloud provider do you want to use?" ${cloudypad_supported_clouders[@]})
 
+    echo
     echo "Using provider: $cloudypad_clouder"
 
     echo
@@ -89,7 +94,7 @@ init() {
             machine_create_choice=$CLOUDYPAD_INIT_USE_EXISTING
             ;;
         *)
-            echo "Invalid choice machine create or use existing choice '$machine_create_choice_user'. This is probably a bug, please file an issue."
+            echo "Invalid choice machine create or use existing choice '$machine_create_choice_user'. If you think this is a bug please file an issue." >&2
             exit 3
             ;;
     esac
@@ -103,7 +108,7 @@ init() {
             init_aws $cloudypad_instance_name $machine_create_choice
             ;;
         *)
-            echo "Clouder $cloudypad_clouder is not supported. This is probably a bug, please file an issue."
+            echo "Clouder $cloudypad_clouder is not supported. If you think this is a bug please file an issue." >&2
             exit 6
             ;;
     esac
@@ -123,6 +128,7 @@ init() {
     if [[ "$pair_now_input" =~ ^[Yy]$ ]]; then
         pair_moonlight $cloudypad_instance_name
     else
+        echo
         echo "You can run"
         echo
         echo "  cloudypad pair $cloudypad_instance_name"
@@ -137,8 +143,9 @@ init() {
 
 update() {
     if [ $# -eq 0 ]; then
-        echo "Update requires at least 1 argument: instance to update"
-        echo "Use 'list' subcommand to see existing instances"
+        echo >&2
+        echo "Update requires at least 1 argument: instance to update" >&2
+        echo "Use 'list' subcommand to see existing instances" >&2
         exit 1
     fi
 
@@ -157,8 +164,9 @@ instance_stop_start_restart_get() {
     cloudypad_instance_name=$2
 
     if [ -z "$cloudypad_instance_name" ]; then
-        echo "$cloudypad_instance_action requires at least 1 argument: instance name"
-        echo "Use 'list' subcommand to see existing instances"
+        echo >&2
+        echo "$cloudypad_instance_action requires at least 1 argument: instance name" >&2
+        echo "Use 'list' subcommand to see existing instances" >&2
         exit 1
     fi
 
@@ -184,9 +192,9 @@ instance_stop_start_restart_get() {
 
 pair_moonlight() {
      if [ $# -eq 0 ]; then
-        echo
-        echo "Pair requires exactly 1 argument: instance name to pair"
-        echo "Use 'list' subcommand to see existing instances"
+        echo >&2
+        echo "Pair requires exactly 1 argument: instance name to pair" >&2
+        echo "Use 'list' subcommand to see existing instances" >&2
         exit 1
     fi
 
@@ -206,6 +214,22 @@ pair_moonlight() {
     echo
     echo "Open URL to validate PIN: $pin_url"
     echo
+
+}
+
+ssh_instance(){
+    if [ $# -eq 0 ]; then
+        echo >&2
+        echo "SSH requires exactly 1 argument: instance name to pair" >&2
+        echo "Use 'list' subcommand to see existing instances" >&2
+        exit 1
+    fi
+
+    local instance_name=$1
+    local ssh_user="paperspace"
+    local ssh_host="184.105.189.240"
+
+    ssh $ssh_user@$ssh_host
 
 }
 
@@ -229,17 +253,10 @@ get_wolf_pin_url() {
         local replaced_url=$(echo "$url" | sed -E "s/[0-9]{1,3}(\.[0-9]{1,3}){3}/$instance_host/")
         echo "$replaced_url"
     else
+        echo >&2
         echo "PIN validation URL not found in Wolf logs." >&2
         exit 1
     fi
-}
-
-CLOUDYPAD_INIT_CREATE='c'
-CLOUDYPAD_INIT_USE_EXISTING='e'
-
-init_create_machine() {
-    cloudypad_clouder=$1
-    echo "Would create $cloudypad_clouder machine" # TODO
 }
 
 check_instance_exists() {
@@ -248,7 +265,8 @@ check_instance_exists() {
 
     # Check if the inventory path exists
     if [ ! -d "$cloudypad_instance_dir" ]; then
-        echo "Error: Instance's directory not found: $cloudypad_instance_dir"
+        echo >&2
+        echo "Error: Instance's directory not found: $cloudypad_instance_dir" >&2
         exit 1
     fi
 }
