@@ -1,5 +1,14 @@
 init_paperspace() {
 
+    echo
+    echo "To create a Paperspace instance you'll need an SSH key configured on your account to reach the machine."
+    echo
+    echo "If you already have configured an SSH key and it's available locally, no further action is needed."
+    echo "Otherwise you can configure an SSH key here: https://console.paperspace.com/account/settings/ssh-keys"
+    echo "Or see Paperspace documentation: https://docs.digitalocean.com/products/paperspace/accounts-and-teams/add-ssh-keys/"
+    echo
+    read -p "Press enter continue..."
+
     cloudypad_instance_name=$1
     cloudypad_machine_choice=$2
 
@@ -89,8 +98,8 @@ init_paperspace() {
             # See https://github.com/Paperspace/cli/issues/78
             # Fetch token from authenticated pspace
             # Dirty but works as a workaround for now
-            local pspace_team=$(pspace config | grep 'team' | cut -d '"' -f 2)
-            local pspace_api_token=$(grep 'taekk107hp' ~/.paperspace/credentials.toml | cut -d '"' -f 2)
+            local pspace_team="$(paperspace_get_team)"
+            local pspace_api_token=$(paperspace_get_local_api_key)
 
             local paperspace_api_response=$(curl --request POST \
                 -sS \
@@ -162,12 +171,27 @@ init_paperspace() {
 # Check if paperspace CLI is logged-in
 # A bit hacky as CLI does not provide a "choami" feature
 check_paperspace_login () {
-    pspace_team_config=$(pspace config get team)
+    echo
+    echo "Checking Paperspace login..."
 
-    if [ "$pspace_team_config" == "null" ]; then
+    local pspace_team="$(paperspace_get_team)"
+    local pspace_api_token=$(paperspace_get_local_api_key)
+
+    local paperspace_api_response=$(curl -sS \
+        --url https://api.paperspace.com/v1/auth/session \
+        --header "Authorization: Bearer $pspace_api_token")
+
+    local auth_email=$(echo $paperspace_api_response | jq .user.email -r)
+
+    if [ "$pspace_team_config" == "null" ] || [ "$auth_email" == "null" ]; then
         echo
-        echo "Please login to Paperspace..."
+        echo "You must authenticate with Paperspace with an API Key."
+        echo "To generate an API Key go to your team settings > API Keys"
+        echo "Or see documentation https://docs.digitalocean.com/reference/paperspace/api-keys/"
+        echo
         pspace login
+    else
+        echo "Logged in with Paperspace team '$pspace_team' user '$auth_email'"
     fi
 }
 
@@ -178,4 +202,13 @@ paperspace_machine_action() {
 
     echo "Paperspace: $pspace_action $pspace_machine"
     pspace machine $pspace_action $pspace_machine
+}
+
+paperspace_get_team() {
+    pspace config get team
+}
+
+paperspace_get_local_api_key() {
+    local pspace_team=$(paperspace_get_team)
+    echo "$(grep "$pspace_team" ~/.paperspace/credentials.toml | cut -d '"' -f 2)"
 }

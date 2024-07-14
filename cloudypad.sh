@@ -7,15 +7,23 @@
 # and run instructions.
 # Only a few commands need to run directly for user (eg. moonlight setup)
 
-# TODO fix on release
-CLOUDYPAD_IMAGE="cloudypad:local"
-CLOUDYPAD_TARGET_IMAGE="cloudypad-run:local"
+CLOUDYPAD_IMAGE="crafteo/cloudypad:0.0.1"
+CLOUDYPAD_TARGET_IMAGE="crafteo/cloudypad-local-runner:local"
 
 # Build Dockerfile on-the-fly
+# make sure the container's user ID and group match host to prevent permission issue
 cat <<EOF > /tmp/Dockerfile-cloudypad-run
 FROM $CLOUDYPAD_IMAGE
 
-RUN useradd -u $(id -u) --home-dir $HOME --create-home $(whoami)
+# Check if main group exists, create if not
+RUN if ! getent group $(id -gn) >/dev/null; then \
+    groupadd -g $(id -g) $(id -gn); \
+fi
+
+# Check if user exists, create if not
+RUN if ! id -u $(whoami) >/dev/null 2>&1; then \
+    useradd -u $(id -u) -g $(id -g) --home-dir $HOME --create-home $(whoami); \
+fi
 
 USER $(whoami)
 EOF
@@ -26,6 +34,9 @@ container_build_result=$?
 if [ $container_build_result -ne 0 ]; then
     echo "Error: could not build CloudyPad container image, build exited with code: $container_build_result" >&2
     echo "Build command was: docker build --progress plain -t $CLOUDYPAD_TARGET_IMAGE - < /tmp/Dockerfile-cloudypad-run 2>&1" >&2
+    echo "Build output: "
+    echo "$container_build_output"
+    echo
     echo "If you think this is a bug, please file an issue." >&2
     exit 1
 fi
@@ -35,10 +46,17 @@ run_cloudypad_docker() {
     # List of directories to mount only if they exist
     local mounts=(
         "$HOME/.ssh"
-        "$HOME/.aws:ro"
+        "$HOME/.aws"
         "$HOME/.cloudypad"
         "$HOME/.paperspace"
     )
+
+    # Ensure this directory exists to be mounted in container
+    # And not create it from Docker volume mount as root
+    mkdir -p $HOME/.cloudypad
+
+    # Create Paperspace and directory if not already exists to keep it if user log-in from containr
+    mkdir -p $HOME/.paperspace
 
     # Build run command with proper directories
     local cmd="docker run --rm -it"

@@ -8,7 +8,6 @@
 
 - name: Install Docker, NVIDIA drivers and Wolf
   hosts: all
-  # TODO keeps asking SSH key verification, maybe we can obtain SSH footprint from instance before
   roles:
     - role: geerlingguy.docker
       tags: [ docker ]

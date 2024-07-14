@@ -8,7 +8,8 @@ init_ansible_inventory() {
     cloudypad_machine_id=$5
 
     ansible_inventory_path="$(get_cloudypad_instance_ansible_inventory_path $cloudypad_instance_name)"
-
+    
+    echo
     echo "Creating Ansible inventory for $cloudypad_instance_name in $ansible_inventory_path"
 
     cat << EOF > $ansible_inventory_path
@@ -30,7 +31,9 @@ run_update_ansible() {
 
     ansible_inventory=$(get_cloudypad_instance_ansible_inventory_path $cloudypad_instance_name)
 
+    echo
     echo "Running Cloudy Pad configuration for $cloudypad_instance_name..."
+    echo
 
     ansible-playbook -i $ansible_inventory ansible/playbook.yml
 }

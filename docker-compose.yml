@@ -5,10 +5,10 @@ services:
     entrypoint: bash
     volumes:
     - $PWD:/cloudypad
-    - $HOME/.ssh:/root/.ssh:ro
-    - $HOME/.aws:/root/.aws:ro
+    - $HOME/.ssh:/root/.ssh
+    - $HOME/.aws:/root/.aws
     - $HOME/.cloudypad:/root/.cloudypad
-    - paperspace-local-config:/root/.paperspace
+    - $HOME/.paperspace:/root/.paperspace
 
 volumes:
   paperspace-local-config:

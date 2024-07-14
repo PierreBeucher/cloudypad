@@ -1,4 +1,4 @@
-FROM python:3.12.4-bookworm
+FROM python:3.12.4-slim-bookworm
 
 #
 # Global tooling
@@ -6,10 +6,9 @@ FROM python:3.12.4-bookworm
 RUN apt update && apt install -y \
     jq \
     yq \
+    openssh-client \
     curl \
     unzip \
-    less \
-    groff \
     fzf \
     bsdmainutils \
     && apt-get clean \
@@ -23,9 +22,9 @@ RUN python3 -m pip install ansible=="${ANSIBLE_VERSION}"
 ENV ANSIBLE_STDOUT_CALLBACK=community.general.unixy
 
 # Paperspace CLI
-# TODO it seems possible to force version via script argument
 ENV PAPERSPACE_INSTALL="/usr/local"
-RUN curl -fsSL https://paperspace.com/install.sh | sh
+ENV PAPERSPACE_VERSION="1.10.1"
+RUN curl -fsSL https://paperspace.com/install.sh | sh -s -- $PAPERSPACE_VERSION
 
 # AWS
 ARG AWS_CLI_VERSION="2.17.12"
@@ -38,7 +37,6 @@ RUN curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64-${AWS_CLI_VERSION
 RUN curl -fsSL https://deb.nodesource.com/setup_22.x -o nodesource_setup.sh && \
     sh nodesource_setup.sh && \
     apt-get install -y nodejs
-    
 
 RUN curl https://get.pulumi.com/releases/sdk/pulumi-v3.124.0-linux-x64.tar.gz -o pulumi.tar.gz \
     &&  tar -xzf pulumi.tar.gz -C /usr/local/bin \
@@ -57,6 +55,12 @@ WORKDIR /cloudypad
 COPY ansible/requirements.yml ansible/requirements.yml
 RUN ansible-galaxy role install -r ansible/requirements.yml -p /etc/ansible/roles
 RUN ansible-galaxy collection install -r ansible/requirements.yml -p /etc/ansible/collections
+
+# Pulumi deps
+# TODO: maybe this can be done ONLY whe Pulumi is used or in a separate image
+COPY pulumi/aws/package-lock.json pulumi/aws/package-lock.json
+COPY pulumi/aws/package.json pulumi/aws/package.json
+RUN npm --prefix pulumi/aws ci
 
 # Copy remaining files
 COPY LICENSE.txt   LICENSE.txt
