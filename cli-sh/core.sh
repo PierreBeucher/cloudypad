@@ -226,8 +226,8 @@ ssh_instance(){
     fi
 
     local instance_name=$1
-    local ssh_user="paperspace"
-    local ssh_host="184.105.189.240"
+    local ssh_user="$(get_cloudypad_instance_user $instance_name)"
+    local ssh_host="$(get_cloudypad_instance_host $instance_name)"
 
     ssh $ssh_user@$ssh_host
 
