@@ -1,0 +1,117 @@
+---
+#
+# Generic configs
+#
+- name: Install linux-modules-extra package
+  become: true
+  apt:
+    name: "linux-modules-extra-{{ ansible_kernel }}"
+    state: present
+
+- name: Ensure uinput module enabled
+  community.general.modprobe:
+    name: uinput
+    state: present
+  loop:
+  - uinput
+  - uhid
+
+#
+# Virtual devices support
+#
+- name: Check if /dev/uinput exists
+  stat:
+    path: /dev/uinput
+  register: uinput_device
+
+- name: Fail if /dev/uinput is not present
+  fail:
+    msg: "/dev/uinput is not present on the host."
+  when: not uinput_device.stat.exists
+
+- name: Add user to input group
+  become: true
+  user:
+    name: "{{ ansible_user }}"
+    groups: input
+    append: yes
+
+- name: Create udev rules for Wolf virtual devices
+  become: true
+  register: udev_rule_virtual_input
+  copy:
+    dest: /etc/udev/rules.d/85-wolf-virtual-inputs.rules
+    content: |
+      # Allows Wolf to access /dev/uinput
+      KERNEL=="uinput", SUBSYSTEM=="misc", MODE="0660", GROUP="input", OPTIONS+="static_node=uinput"
+
+      # Allows Wolf to access /dev/uhid
+      KERNEL=="uhid", TAG+="uaccess"
+
+      # Move virtual keyboard and mouse into a different seat
+      SUBSYSTEMS=="input", ATTRS{id/vendor}=="ab00", MODE="0660", GROUP="input", ENV{ID_SEAT}="seat9"
+
+      # Joypads
+      SUBSYSTEMS=="input", ATTRS{name}=="Wolf X-Box One (virtual) pad", MODE="0660", GROUP="input"
+      SUBSYSTEMS=="input", ATTRS{name}=="Wolf PS5 (virtual) pad", MODE="0660", GROUP="input"
+      SUBSYSTEMS=="input", ATTRS{name}=="Wolf gamepad (virtual) motion sensors", MODE="0660", GROUP="input"
+      SUBSYSTEMS=="input", ATTRS{name}=="Wolf Nintendo (virtual) pad", MODE="0660", GROUP="input"
+
+- name: Reload udev rules
+  become: true
+  when: udev_rule_virtual_input.changed
+  ansible.builtin.command: 
+    cmd: udevadm control --reload-rules
+  
+- name: Run udevadm trigger
+  become: true
+  when: udev_rule_virtual_input.changed
+  ansible.builtin.command: 
+    cmd: udevadm trigger
+
+#
+# Wolf config
+#
+- name: ensure Wolf workind directory exists
+  ansible.builtin.file:
+    path: "{{ ansible_user_dir }}/wolf"
+    state: directory
+    mode: '0755'
+
+- name: Copy NVIDIA driver volume script
+  copy:
+    src: docker-nvidia-volume.sh
+    dest: "{{ ansible_user_dir }}/wolf/docker-nvidia-volume.sh"
+    mode: '0755'
+
+- name: Get NVIDIA driver version
+  ansible.builtin.slurp:
+    src: /sys/module/nvidia/version
+  register: nvidia_driver_version_file
+
+- name: Set NVIDIA driver vars
+  set_fact: 
+    nvidia_driver_version: "{{ nvidia_driver_version }}"
+    nvidia_driver_volume_name: "nvidia-driver-vol-{{ nvidia_driver_version }}"
+  vars:
+    nvidia_driver_version: "{{ nvidia_driver_version_file.content | b64decode | trim }}"
+
+- name: Show NVIDIA driver version
+  ansible.builtin.debug:
+    msg: "NVIDIA driver version: {{ nvidia_driver_version }}"
+
+# TODO make it show as not changed if possible
+# Maybe will have to rewrite it as plain Ansible...
+- name: Ensure NVIDIA driver volume exists
+  command: 
+    cmd: "{{ ansible_user_dir }}/wolf/docker-nvidia-volume.sh"
+
+- name: Copy docker-compose file
+  template:
+    src: docker-compose.nvidia.yml
+    dest: "{{ ansible_user_dir }}/wolf/docker-compose.nvidia.yml"
+
+- name: Run docker compose stack
+  community.docker.docker_compose_v2:
+    project_src: "{{ ansible_user_dir }}/wolf"
+    files: docker-compose.nvidia.yml

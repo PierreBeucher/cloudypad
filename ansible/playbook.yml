@@ -1,0 +1,25 @@
+- name: "Wait for machine to be reachable (timeout: 3min)"
+  hosts: all
+  gather_facts: false
+  tasks:
+    - wait_for_connection:
+        timeout: 180
+        sleep: 5
+
+- name: Install Docker, NVIDIA drivers and Wolf
+  hosts: all
+  roles:
+    - role: geerlingguy.docker
+      tags: [ docker ]
+      docker_users:
+      - "{{ ansible_user_id }}"
+      become: true
+    - role: roles/nvidia-driver
+      tags: [ nvidia ]
+      vars:
+        nvidia_driver_module_params: |
+          # nvidia-drm module is required by Wolf
+          options nvidia-drm modeset=1
+      become: true
+    - role: roles/wolf
+      tags: [ wolf ]

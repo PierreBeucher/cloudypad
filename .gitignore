@@ -1,4 +1,3 @@
-**/node_modules/
 tmp/
-dist/
-.plandex
+.pnpm-store
+pulumi/aws/Pulumi.*.yaml

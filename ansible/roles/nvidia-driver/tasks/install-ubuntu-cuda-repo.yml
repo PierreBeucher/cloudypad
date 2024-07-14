@@ -1,0 +1,43 @@
+---
+- name: remove ppa
+  apt_repository:
+    repo: ppa:graphics-drivers/ppa
+    state: absent
+
+- name: remove old signing key
+  apt_key:
+    id: "{{ old_nvidia_driver_ubuntu_cuda_repo_gpgkey_id }}"
+    state: absent
+  environment: "{{proxy_env if proxy_env is defined else {}}}"
+  when: nvidia_driver_add_repos | bool
+
+- name: add CUDA keyring
+  apt:
+    deb: "{{ nvidia_driver_ubuntu_cuda_keyring_url }}"
+    state: "present"
+  environment: "{{proxy_env if proxy_env is defined else {}}}"
+  when: nvidia_driver_add_repos | bool
+
+- name: force an apt update
+  apt:
+    update_cache: true
+  changed_when: false
+
+- name: ensure kmod is installed
+  apt:
+    name: "kmod"
+    state: "present"
+
+- name: blacklist nouveau
+  kernel_blacklist:
+    name: nouveau
+    state: present
+
+- name: install driver packages
+  apt:
+    name: "{{ nvidia_driver_package_version | ternary(nvidia_driver_ubuntu_cuda_package+'='+nvidia_driver_package_version, nvidia_driver_ubuntu_cuda_package) }}"
+    state: "{{ nvidia_driver_package_state }}"
+    autoremove: "{{ nvidia_driver_package_state == 'absent' }}"
+    purge: "{{ nvidia_driver_package_state == 'absent' }}"
+  register: install_driver
+  environment: "{{proxy_env if proxy_env is defined else {}}}"

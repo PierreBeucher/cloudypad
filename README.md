@@ -1,32 +1,19 @@
 # Cloudy Pad
 
-Your own gaming box in the Cloud ! 🎮 ⛅ 
+Your own gaming gear in the Cloud ! 🎮 ⛅ 
 
 - [Development status 🧪](#development-status-)
 - [Features ✨](#features-)
 - [Getting started 🚀](#getting-started-)
-  - [Installation](#installation)
-  - [Create your Cloud gaming gear !](#create-your-cloud-gaming-gear-)
-- [Usage and configuration](#usage-and-configuration)
-  - [Default specs](#default-specs)
-  - [Box configuration format](#box-configuration-format)
-  - [Connect via SSH on Box](#connect-via-ssh-on-box)
-  - [Set authorized SSH Keys](#set-authorized-ssh-keys)
-  - [Setup a DNS record](#setup-a-dns-record)
-- [Supported gaming servers and Cloud providers](#supported-gaming-servers-and-cloud-providers)
-  - [Cloud providers 🌥️](#cloud-providers-️)
-    - [AWS](#aws)
-    - [Azure (not yet implemented)](#azure-not-yet-implemented)
-    - [GCP (not yet implemented)](#gcp-not-yet-implemented)
-    - [Other Cloud providers ?](#other-cloud-providers-)
-  - [Gaming servers](#gaming-servers)
-    - [Wolf 🐺](#wolf-)
-    - [Sunshine 🌤️](#sunshine-️)
-    - [Other Gaming servers ?](#other-gaming-servers-)
+- [Usage](#usage)
+- [Known issues](#known-issues)
+  - [`cloudypad init` failure](#cloudypad-init-failure)
+  - [Found an bug ?](#found-an-bug-)
 - [FAQ](#faq)
   - [How much will I pay ? 🫰](#how-much-will-i-pay--)
-  - [How does Cloudy Pad works?](#how-does-cloudy-pad-works)
-  - [Is it possible to deploy something else than Gaming servers ?](#is-it-possible-to-deploy-something-else-than-gaming-servers-)
+  - [What are the recommended specs for my instance ?](#what-are-the-recommended-specs-for-my-instance-)
+  - [How to play game on Steam / Why does my Steam game doesn't launch ?](#how-to-play-game-on-steam--why-does-my-steam-game-doesnt-launch-)
+  - [How does all of this work?](#how-does-all-of-this-work)
   - [Will Cloudy Pad become a paid product ?](#will-cloudy-pad-become-a-paid-product-)
 - [License](#license)
 
@@ -38,339 +25,210 @@ This project is still at an experimental phase. While working and allowing you t
 
 Compatible with [Moonlight](https://moonlight-stream.org/) streaming client
 
-Gaming servers:
-
-- 🐺 [Wolf](https://games-on-whales.github.io/wolf/stable/)
-- (available soon) 🌤️ [Sunshine](https://github.com/LizardByte/Sunshine)
-
 Cloud providers:
 
+- [Paperspace](https://www.paperspace.com/)
 - [AWS](https://aws.amazon.com/)
+- (available soon) [TensorDock](https://www.tensordock.com/)
 - (available soon) [Azure](https://azure.microsoft.com)
 - (available soon) [Google Cloud](https://cloud.google.com)
 
 ## Getting started 🚀
 
+Cloudy Pad deploys a Cloud gaming gear using the provider of your choice. Before going further, please read:
+- 💸 While Cloudy Pad is free and open-source, charges may still incur for Cloud provider usage. Make sure you [understand the costs](#how-much-will-i-pay--) ;)
+- Using Steam may require [Proton](https://www.protondb.com/). You can check your game compatibility on [Proton website](https://www.protondb.com/) or see [how to play games on Steam](#how-to-play-game-on-steam--why-does-my-steam-game-doesnt-launch-).
+- Cloudy Pad deploys a Linux instance, not Windows. 
+
 Prerequisites:
-- A Clouder account (eg. [AWS](https://aws.amazon.com/))
-- Make sure you [understand the costs 💸](#how-much-will-i-pay--) of running a gaming instance in the Cloud
+- A Clouder account, one of:
+  - [Paperspace](https://www.paperspace.com/)
+  - [AWS](https://aws.amazon.com/)
+- [Moonlight](https://moonlight-stream.org/) streaming client
+- [Docker](https://docs.docker.com/engine/install/)
 
-### Installation
-
-_Note: installation is very basic for now, requiring to clone Git repo and build app. I'm actively working on npm and other distribution methods (eg. static binary, container image)._
-
-Clone this Git repository:
-
-```sh
-git clone https://github.com/PierreBeucher/Cloudy-Pad.git
-cd Cloudy-Pad
-```
-
-Build Cloudy Pad `cloudypad` CLI with either:
-
-**🐳 Docker or Podman** 
-
-Run :
+Install `cloudypad` CLI:
 
 ```sh
-docker compose run cloudypad
-podman-compose run cloudypad
+curl https://raw.githubusercontent.com/PierreBeucher/cloudypad/master/cloudypad.sh -o ./cloudypad.sh && \
+  chmod +x ./cloudypad.sh && \
+  sudo cp ./cloudypad.sh /usr/local/bin/cloudypad
 ```
 
-You'll be dropped into a shell with ready-to-use `cloudypad` CLI.
-
-**🖥️ Build locally**
-
-Make sure to have installed:
-- [Pulumi](https://www.pulumi.com/docs/install/) 3.x or anterior
-- [NodeJS](https://nodejs.org/en/download) 18.x or anterior
-- [Typescript](https://nodejs.org/en/download) 5.x or anterior
-
-Run:
+Let the CLI guide you through creation of your Cloudy Pad instance:
+- Create a new machine automatically or use an existing machine
+- Configure GPU drivers and [Wolf gaming server](https://games-on-whales.github.io/wolf/stable/)
+- Pair with Moonlight
 
 ```sh
-npm install
-npm run build
-npm install -g
+cloudypad init
+# How shall we name your Cloudy Pad instance? (default: mypad) 
+#
+# Initializing Cloudy Pad instance 'mypad'
+#
+# [...]
+#
+# 🥳 Your Cloudy Pad instance is ready !
 ```
 
-`cloudypad` CLI should now be available on path.
+_Note: a non interactive method such as `cloudypad init --provider paperspace --disk-size 200 ...` is in the work_
 
-### Create your Cloud gaming gear !
+😱 Something went wrong? See [Known issues](#known-issues), [FAQ](#faq) or [create an issue](https://github.com/PierreBeucher/cloudypad/issues)
 
-Deploy a Wolf server on AWS:
+**Remember to stop your instance when you're done to avoid unnecessary costs 💸**
 
 ```sh
-cloudypad deploy examples/gaming/wolf-aws.yml
+cloudypad stop mypad
 ```
 
-Once your instance is deployed and ready, use [Moonlight](https://moonlight-stream.org/) to access it. Get your instance IP or address with (it should be shown after deployment):
+## Usage
+
+_🧪 `cloudypad` CLI interface is still experimental and may change in the future_
+
+Available commands:
 
 ```sh
-cloudypad get examples/gaming/wolf-aws.yml
+cloudypad {init|update|start|stop|restart|get|list|pair|ssh|debug-container}
 ```
 
-Once Moonlight asks for PIN, open browser to PIN validation page with:
+List existing instances:
 
 ```sh
-cloudypad utils wolf open-pin examples/gaming/wolf-aws.yml
+cloudypad list
+# mypad
+# another-instance
+# super-powerful-pad
 ```
 
-**Remember to stop or destroy** your instance when done:
+Update instance configuration
 
 ```sh
-cloudypad stop examples/gaming/wolf-aws.yml
+cloudypad update [instance]
 ```
 
-Start instance later with:
+
+Start, stop or restart an instance
+```sh
+cloudypad start [instance]
+cloudypad stop [instance]
+cloudypad restart [instance]
+```
+
+Get details of a specific instance.
 
 ```sh
-cloudypad start examples/gaming/wolf-aws.yml
+cloudypad get [instance]
 ```
 
-Or destroy instance altogether (all data will be lost):
+Pair Moonlight with an existing instance:
 
 ```sh
-cloudypad destroy examples/gaming/wolf-aws.yml
+cloudypad pair [instance]
 ```
 
-## Usage and configuration
-
-Cloudy Pad uses YAML configuration to manage your gaming box via CLI. See [examples](./examples/) configurations.
-
-Basic commands:
+SSH into you Cloudy Pad instance
 
 ```sh
-# Show help
-cloudypad --help
-
-# Deploy a Box (provision + configure)
-cloudypad deploy examples/gaming/wolf-aws.yml
-
-# Provision a Box
-# Only run infrastructure provisioning 
-# such as AWS resource management
-cloudypad provision examples/gaming/wolf-aws.yml
-
-# Configure a Box
-# Only run Box configuration (NixOS rebuild)
-cloudypad configure examples/gaming/wolf-aws.yml
-
-# Get a Box details
-cloudypad get examples/gaming/wolf-aws.yml
-
-# Destroy a Box 
-cloudypad destroy examples/gaming/wolf-aws.yml
+cloudypad ssh [myinstance]
 ```
 
-### Default specs
-
-Default configuration per provider:
-
-- AWS: `g5.xlarge` instance (16Gb RAM, 4 CPU, NVIDIA A10G Tensor Core), 150Go Disk, dynamic IP allocation
-- Azure (available soon): 150Go Disk, dynamic IP allocation, instance type to be specified
-- GCP (available soon): 150Go Disk, dynamic IP allocation, instance type to be specified
-
-Boxes are customizable to specify instance types, disk size, DNS record, IP configuration and more ! (See below)
-
-### Box configuration format
-
-A box configuration is a YAML file looking like this:
-
-```yaml
-# Unique name for your Box
-name: cloud-gaming-gear
-
-# The box Kind 
-# Only gaming.Wolf is supported for now, but more will come gaming.Sunshine 
-kind: gaming.Wolf
-
-# Box specifications
-# A few technical details to know where and how to deploy your Box
-spec: 
-  ssh:
-    authorizedKeys: 
-    - ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIGaNlYLbwtAmfcNjlOsP6Ryh3QxGn9qlhlQjPo5nbzBa
-  provisioner:
-    aws: {}
-```
-
-### Connect via SSH on Box
-
-Get your box details with:
+Run a Cloudy Pad debug container (container used internally by the CLI with underlying binaries used to deploy instances)
 
 ```sh
-cloudypad get examples/gaming/wolf-aws.yml
-# Output something like
-
+cloudypad debug-container
 ```
 
-Then use ssh:
+## Known issues
+
+### `cloudypad init` failure
+
+`cloudypad init` may fail because of timeout or other intermittent error. You can simply restart the init process using the name initially provided, for example if you named your instance `mypad` you can run:
 
 ```sh
-ssh root@<address>
+cloudypad init mypad
 ```
 
-### Set authorized SSH Keys
+As `init` process is idempotent it restart but won't do again what's already done.
 
-Specify authorized SSH keys:
+Alternatively, you can run a specific part of the init process:
 
-```yaml
-spec: 
-  ssh:
-    authorizedKeys: 
-    - ssh-ed25519 AAA123...
-    - ssh-ed25519 AAA456...
+```sh
+cloudypad update mypad # Only run instance configuration
+cloudypad pair mypad   # Pair instance
 ```
 
-SSH keys will be added on next Box configuration.
+### Found an bug ?
 
-### Setup a DNS record
-
-_Note: you must own an Hosted Zone on the cloud Provider and have it configured accordingly. See provider doc for details._
-
-```yaml
-spec: 
-  dns:
-    zoneName: gaming.crafteo.io
-```
-
-Will create a DNS A record pointing to your instance. 
-
-You can set detailed configuration:
-
-```yaml
-spec: 
-  dns:
-    zoneName: gaming.crafteo.io
-
-    # Will create record mybox.gaming.crafteo.io 
-    # instead of record at root on gaming.crafteo.io
-    prefix: mybox
-
-    # DNS Record Time-To-Live in seconds
-    # Default to 60
-    ttl: 3600
-```
-
-## Supported gaming servers and Cloud providers
-
-### Cloud providers 🌥️
-
-For now only AWS is supported, more will come soon !
-
-#### AWS
-
-Set `aws` provisioner in your Box config:
-
-```yml
-spec: 
-  provisioner:
-    aws: {}
-```
-
-You can also override the underlying provisioner config:
-
-```yml
-spec: 
-  provisioner:
-    aws:
-      # Set AWS region and other configs
-      config:
-        region: eu-central-1
-      
-      # Set instance details
-      instance:
-        staticIpEnable: true,
-        rootVolume: 
-          sizeGb: 500
-          type: g5.2xlarge
-```
-
-#### Azure (not yet implemented)
-
-Set `azure` provisioner in your Box config:
-
-```yml
-spec: 
-  provisioner:
-    azure: {}
-```
-
-#### GCP (not yet implemented)
-
-Set `gcp` provisioner in your Box config:
-
-```yml
-spec: 
-  provisioner:
-    gcp: {}
-```
-
-#### Other Cloud providers ?
-
-Indeed, AWS/GCP/Azure are expensive for a gaming box. 
-
-This project aim to support cheaper Cloud providers like [Paperspace](https://www.paperspace.com/) or [TensorDock](https://www.tensordock.com/) (if you're curious you can find an experimental Paperspace box hidden in the code, though it's not fully working yet). Do not to hesitate to contribute or ⭐ the project, it will help move things forward !
-
-### Gaming servers
-
-#### Wolf 🐺
-
-[Wolf](https://games-on-whales.github.io/wolf/stable/index.html) is _an open source streaming server for Moonlight that allows you to share a single server with multiple remote clients in order to play videogames_. It works via containers to provide various services such as Steam Big Picture.
-
-#### Sunshine 🌤️
-
-[Sunshine](https://github.com/LizardByte/Sunshine) is a _self-hosted game stream host for Moonlight_. You can install anything on your instance (eg. Steam or other) and stream it with Moonlight.
-
-#### Other Gaming servers ?
-
-This project intend to support [Parsec](https://parsec.app/). Feel free to propose other gaming servers !
+If you found a bug, [please file an issue](https://github.com/PierreBeucher/cloudypad) !
 
 ## FAQ
 
 ### How much will I pay ? 🫰
 
-Cloudy-Pad is free and open-source, however charges may apply when using a Cloud provider. Here's an estimation for AWS:
+Cloudy-Pad is free and open-source, however charges may apply when using a Cloud provider. Typically billed resources:
+- Machine usage (GPU, CPU, RAM)
+- Disk storage
+- IP address reservation
 
-| Gaming time / month      | 15h        | 20h        | 20h        | 30h        |
-|--------------------------|------------|------------|------------|------------|
-| EC2 instance type        | g5.xlarge  | g5.xlarge  | g5.2xlarge | g5.2xlarge |
-| Disk size (gp3 SSD)      | 100 Go     | 100 Go     | 100 Go     | 100 Go     |
-| EC2 instance $           | $18.87     | $25.16     | $30.31     | $45.47     |
-| Route53 record $         | $0.00      | $0.00      | $0.00      | $0.00      |
-| EC2 volume (disk) $      | $9.52      | $9.52      | $9.52      | $9.52      |
-| EIP address $            | (no eip)   | $3.50      | (no eip)   | $3.45      |
-| **Est. TOTAL / month $** | **~$28** | **~$38** | **~$40** | **~$58** |
+Here's an estimation table for supported providers. Example: using Paperspace P4000 10 hours per month with a 50GB disk will cost approximatively 13.10$
 
-_*Estimation based on eu-central-1 (Frankfurt) pricing in December 2023. Exact prices vary with time and regions._
+**Paperspace**
 
-**This project's goal is to provide 20h / month for 20$** - [Paperspace](https://www.paperspace.com/pricing) and [TensorDock](https://www.tensordock.com/) are good bets, but not ready to use yet.  
+| Instance Type | 10h / month 50 GB disk | 10h / month 100 GB disk | 10h / month 250 GB disk | 20h / month 100 GB disk | 20h / month 250 GB disk | 30h / month 250 GB disk |
+|---------------|------------------------|-------------------------|-------------------------|-------------------------|-------------------------|-------------------------|
+| P4000         | $13.10                 | $15.10                  | $18.10                  | $20.20                  | $23.20                  | $28.30                  |
+| RTX4000       | $13.60                 | $15.60                  | $18.60                  | $21.20                  | $24.20                  | $29.80                  |
+| P5000         | $15.80                 | $17.80                  | $20.80                  | $25.60                  | $28.60                  | $36.40                  |
+| RTX5000       | $16.20                 | $18.20                  | $21.20                  | $26.40                  | $29.40                  | $37.60                  |
+| P6000         | $19.00                 | $21.00                  | $24.00                  | $32.00                  | $35.00                  | $46.00                  |
 
-Equivalent estimation for other providers will be added as they become ready.
+**AWS**
 
-### How does Cloudy Pad works? 
+| Instance Type | 10h / month 50 GB disk | 10h / month 100 GB disk | 10h / month 250 GB disk | 20h / month 100 GB disk | 20h / month 250 GB disk | 30h / month 250 GB disk |
+|---------------|------------------------|-------------------------|-------------------------|-------------------------|-------------------------|-------------------------|
+| **g5.xlarge** | $17.66                 | $21.66                  | $33.66                  | $31.72                  | $43.72                  | $53.78                  |
+| **g5.2xlarge**| $19.72                 | $23.72                  | $35.72                  | $35.84                  | $47.84                  | $59.96                  |
+| **g6.xlarge** | $15.65                 | $19.65                  | $31.65                  | $27.70                  | $39.70                  | $47.74                  |
+| **g6.2xlarge**| $17.38                 | $21.38                  | $33.38                  | $31.15                  | $43.15                  | $52.93                  |
 
-Deployment is divided in two phases:
 
-- Provisioning: manage Cloud resources (virtual machines, firewall, volumes disks, etc.)
-  - Currently managed via [Pulumi](https://www.pulumi.com/)
-- Configuration: install everything on instance (gaming server, GPU drivers, etc.)
-  - Currently managed via [NixOS](https://nixos.org/)
+_*Estimation based on AWS eu-east-1 and Paperspace pricing on July 2024. Exact prices vary with time and regions._
 
-A small framework, **Cloudy Box**, allow seamless integration of both technologies. 
+Estimation for other providers will be added as they are implemented. If you see a significant difference between this table and your observed cost do not hesitate to [report it or update it !](https://github.com/PierreBeucher/cloudypad)
 
-### Is it possible to deploy something else than Gaming servers ?
+### What are the recommended specs for my instance ?
 
-Yes ! Underlying Cloudy Box framework is actually designed for that: easy deployment of Cloud infrastructure with NixOS (or other configuration tools). In the future it will be merged-out of this project to become a more generic Cloudy Box CLI and/or API project which Cloudy Pad will use. 
+General recommandations:
+- Choose a location or region as close as possible to you to avoid too much latency (eg. if you live in the US don't create your instance in Europe)
+- Just provision what you need for: don't create a 1000 GB disk if you intend to play a game that will only use 50 GB. 
+- GPU / machine type depends on the game you play. For most game, Paperspace `RTX4000` or AWS `g5` should be sufficient - you can still update later !
 
-If you're interested in these features, do not hesitate to reach me directly - my email can be found easily on my website [crafteo.io](https://crafteo.io). 
+Otherwise it depends on the kind of game you aim to play.
+
+### How to play game on Steam / Why does my Steam game doesn't launch ?
+
+In order to play games on Steam you may need to enable Proton:
+
+- Go to game properties (_Gear button on the right > Properties_)
+- Enable Proton in the Compatibility menu
+
+See [ProtonDB](https://www.protondb.com/)
+
+### How does all of this work?
+
+`cloudypad` is a wrapper around a few technologies:
+
+- [Wolf](https://games-on-whales.github.io/wolf/stable/) gaming server
+- Clouder-specific tools and APIs to deploy and manage Cloud machines
+- When possible, [Pulumi](https://www.pulumi.com/) to deploy Cloud machines and resources
+- [Ansible](https://www.ansible.com/) to configure machines (drivers, gaming server, etc.)
+- 🧠 Brain juice from me and other awesome open-source community members
 
 ### Will Cloudy Pad become a paid product ?
 
 Probably not in it's current form. Considering I'm really _not_ happy about the [enshittification of the internet](https://en.wikipedia.org/wiki/Enshittification), Cloudy Pad will remain FOSS - at least for personal use.
 
-However, the larger Cloudy Box scope may become a paid product for professional use cases, not necessarily linked to gaming.
+Cloudy Pad may have a Premium or Pro offer in the future, but for a personal simple use it will remain FOSS. 
 
 ## License
 

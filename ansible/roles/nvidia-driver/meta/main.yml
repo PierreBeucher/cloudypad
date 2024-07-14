@@ -1,0 +1,24 @@
+galaxy_info:
+  namespace: nvidia
+  role_name: nvidia_driver
+  author: Luke Yeager
+  company: NVIDIA
+  description: Install the NVIDIA driver
+  license: 3-Clause BSD
+  min_ansible_version: 2.7
+
+  platforms:
+    - name: Ubuntu
+      versions:
+        - 'xenial'
+        - 'bionic'
+        - 'focal'
+    - name: EL
+      versions:
+        - '7'
+        - '8'
+
+  galaxy_tags:
+    - 'nvidia'
+    - 'cuda'
+    - 'driver'
