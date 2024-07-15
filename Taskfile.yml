@@ -2,11 +2,12 @@ version: '3'
 
 tasks:
 
-  # Build and run a debug container
-  run-debug:
+  # Build and run a debug container from local source code
+  # Example: task run-local -- list
+  run-local:
     cmd: >-
       docker build --progress=plain . -t cloudypad:local && 
-      CLOUDYPAD_IMAGE="cloudypad:local" ./cloudypad.sh debug-container
+      CLOUDYPAD_IMAGE="cloudypad:local" ./cloudypad.sh {{.CLI_ARGS}}
 
   build:
-    cmd: docker compose --progress=plain build
+    cmd: docker build . -t cloudypad:local
