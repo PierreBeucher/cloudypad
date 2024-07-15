@@ -74,6 +74,11 @@ run_cloudypad_docker() {
         fi
     done
 
+    # Add SSH agent volume and env var if it's installed locally
+    if [ -n "$SSH_AUTH_SOCK" ]; then
+        cmd+=" -v $SSH_AUTH_SOCK:/ssh-agent -e SSH_AUTH_SOCK=/ssh-agent"
+    fi
+
     cmd+="  $CLOUDYPAD_TARGET_IMAGE $@"
 
     $cmd
