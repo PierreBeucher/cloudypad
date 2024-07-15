@@ -8,6 +8,9 @@
 
 set -e
 
+# Trap the SIGINT signal (CTRL+C), not done properly with bash by default
+trap 'echo "Interrupted!"; exit 1' INT
+
 source cli-sh/core.sh
 source cli-sh/ansible.sh
 source cli-sh/aws.sh
