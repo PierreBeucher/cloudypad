@@ -7,8 +7,15 @@
 # and run instructions.
 # Only a few commands need to run directly for user (eg. moonlight setup)
 
-CLOUDYPAD_IMAGE="${CLOUDYPAD_IMAGE:-'crafteo/cloudypad:0.0.1'}"
+set -e
+
+CLOUDYPAD_IMAGE="${CLOUDYPAD_IMAGE:-"crafteo/cloudypad:0.0.1"}"
 CLOUDYPAD_TARGET_IMAGE="crafteo/cloudypad-local-runner:local"
+
+if ! docker image inspect $CLOUDYPAD_IMAGE > /dev/null 2>&1; then
+    echo "Please wait a moment while Cloudy Pad container image $CLOUDYPAD_IMAGE is being pulled... (This is a one time action)" >&2
+    docker pull $CLOUDYPAD_IMAGE >&2
+fi
 
 # Build Dockerfile on-the-fly
 # make sure the container's user ID and group match host to prevent permission issue
@@ -43,6 +50,13 @@ fi
 
 run_cloudypad_docker() {
 
+    # Ensure this directory exists to be mounted in container
+    # And not create it from Docker volume mount as root
+    mkdir -p $HOME/.cloudypad
+
+    # Create Paperspace and directory if not already exists to keep it if user log-in from containr
+    mkdir -p $HOME/.paperspace
+
     # List of directories to mount only if they exist
     local mounts=(
         "$HOME/.ssh"
@@ -50,13 +64,6 @@ run_cloudypad_docker() {
         "$HOME/.cloudypad"
         "$HOME/.paperspace"
     )
-
-    # Ensure this directory exists to be mounted in container
-    # And not create it from Docker volume mount as root
-    mkdir -p $HOME/.cloudypad
-
-    # Create Paperspace and directory if not already exists to keep it if user log-in from containr
-    mkdir -p $HOME/.paperspace
 
     # Build run command with proper directories
     local cmd="docker run --rm -it"
