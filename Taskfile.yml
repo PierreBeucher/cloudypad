@@ -11,3 +11,40 @@ tasks:
 
   build:
     cmd: docker build . -t cloudypad:local
+
+  # Generate Typescript Paperspace client from OpenAPI specifications
+  paperspace-client-gen:
+    vars:
+      PAPERSPACE_OPENAPI_DIR: "cli/src/providers/paperspace/client/openapi"
+      PAPERSPACE_GENERATED_DIR: "cli/src/providers/paperspace/client/generated-api"
+    cmds:
+    - curl https://api.paperspace.com/v1/openapi.json -o {{ .PAPERSPACE_OPENAPI_DIR }}/openapi.json
+
+    # Filter only machine-related operations
+    # Our client doesn't need the rest for now
+    - >-
+      cat {{ .PAPERSPACE_OPENAPI_DIR }}/openapi.json | jq '{ openapi, info, servers, components, externalDocs, paths: { 
+        "/auth/session": .paths."/auth/session",
+        "/machines": .paths."/machines",
+        "/machines/{id}": .paths."/machines/{id}",
+        "/machines/{id}/restart": .paths."/machines/{id}/restart",
+        "/machines/{id}/start": .paths."/machines/{id}/start",
+        "/machines/{id}/stop": .paths."/machines/{id}/stop",
+      }}' > {{ .PAPERSPACE_OPENAPI_DIR }}/machines-only.json
+    
+    # # Cleanup old files before generation
+    - rm -rf {{ .PAPERSPACE_GENERATED_DIR }} || true
+
+    # Run generator
+    - >- 
+      podman run -it --rm -v $PWD:/local -w /local docker.io/openapitools/openapi-generator-cli:latest@sha256:6747991566e4c3e43a30d5982f21da08c1cad78e95093fab04f494687b341788 generate
+      -i {{ .PAPERSPACE_OPENAPI_DIR }}/machines-only.json
+      --skip-validate-spec
+      -g typescript-axios
+      -o {{ .PAPERSPACE_GENERATED_DIR }}
+
+    # Generate TS files are using import like `import xxx from './configuration';`
+    # But we need `import xxx from './configuration.js';`
+    # Replace accordingly 
+    # - find cli/paperspace/generated-api -type f -exec sed -i -E "s/(['\"])\.\/(.*?)\1/\1\.\/\2.js\1/g" {} +
+ 

@@ -1,9 +1,9 @@
-- name: "Wait for machine to be reachable (timeout: 3min)"
+- name: "Wait for machine to be reachable (timeout: 10min)"
   hosts: all
   gather_facts: false
   tasks:
     - wait_for_connection:
-        timeout: 180
+        timeout: 600
         sleep: 5
 
 - name: Install Docker, NVIDIA drivers and Wolf

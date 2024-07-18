@@ -1,74 +1,60 @@
-FROM python:3.12.4-slim-bookworm
+FROM node:22.5.1-bookworm-slim AS build
+
+RUN apt update && apt install -y \
+    curl \
+    unzip 
 
 #
-# Global tooling
+# Pulumi (can be copied from /usr/local/bin/pulumi/)
 #
+FROM build AS pulumi
+
+ARG PULUMI_VERSION="v3.124.0"
+RUN curl "https://get.pulumi.com/releases/sdk/pulumi-${PULUMI_VERSION}-linux-x64.tar.gz" -o pulumi.tar.gz \
+    && tar -xzf pulumi.tar.gz -C /usr/local/bin \
+    && rm pulumi.tar.gz
+
+#
+# Cloudy Pad
+#
+FROM node:22.5.1-bookworm-slim
+
+# Global tooling
 RUN apt update && apt install -y \
-    jq \
-    yq \
-    openssh-client \
-    curl \
-    unzip \
-    fzf \
-    bsdmainutils \
+    python3 \
+    ansible \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
-# Ansible
-ARG ANSIBLE_VERSION="10.1.0"
-RUN python3 -m pip install ansible=="${ANSIBLE_VERSION}"
-
-# Shorter logs output
-ENV ANSIBLE_STDOUT_CALLBACK=community.general.unixy
-
-# Paperspace CLI
-ENV PAPERSPACE_INSTALL="/usr/local"
-ENV PAPERSPACE_VERSION="1.10.1"
-RUN curl -fsSL https://paperspace.com/install.sh | sh -s -- $PAPERSPACE_VERSION
-
-# AWS
-ARG AWS_CLI_VERSION="2.17.12"
-RUN curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64-${AWS_CLI_VERSION}.zip" -o "awscliv2.zip" \
-    && unzip awscliv2.zip \
-    && ./aws/install \
-    && rm -rf awscliv2.zip aws
-
-# Pulumi + Node
-RUN curl -fsSL https://deb.nodesource.com/setup_22.x -o nodesource_setup.sh && \
-    sh nodesource_setup.sh && \
-    apt-get install -y nodejs
-
-RUN curl https://get.pulumi.com/releases/sdk/pulumi-v3.124.0-linux-x64.tar.gz -o pulumi.tar.gz \
-    &&  tar -xzf pulumi.tar.gz -C /usr/local/bin \
-    && rm pulumi.tar.gz
-
+# Pulumi
+COPY --from=pulumi /usr/local/bin/pulumi /usr/local/bin/pulumi
 ENV PATH=$PATH:/usr/local/bin/pulumi
 
-#
-# Cloudy Pad 
-#
-
+# Build and install cloudypad CLI
 WORKDIR /cloudypad
 
 # Ansible deps
 # Install globally under /etc/ansible
 COPY ansible/requirements.yml ansible/requirements.yml
-RUN ansible-galaxy role install -r ansible/requirements.yml -p /etc/ansible/roles
-RUN ansible-galaxy collection install -r ansible/requirements.yml -p /etc/ansible/collections
+RUN ansible-galaxy role install -r ansible/requirements.yml -p /usr/share/ansible/roles
+RUN ansible-galaxy collection install -r ansible/requirements.yml -p /usr/share/ansible/collections
 
-# Pulumi deps
-# TODO: maybe this can be done ONLY whe Pulumi is used or in a separate image
-COPY pulumi/aws/package-lock.json pulumi/aws/package-lock.json
-COPY pulumi/aws/package.json pulumi/aws/package.json
-RUN npm --prefix pulumi/aws ci
+# Shorter Ansible logs output
+ENV ANSIBLE_STDOUT_CALLBACK=community.general.unixy
+
+# Deps
+COPY cli/package.json       cli/package.json
+COPY cli/package-lock.json   cli/package-lock.json
+RUN npm --prefix cli install
+
+# Install globally
+COPY cli/ cli/
+RUN npm --prefix cli run build
+RUN cd cli && npm install -g
 
 # Copy remaining files
 COPY LICENSE.txt   LICENSE.txt
-COPY resources     resources/
-COPY pulumi        pulumi/
 COPY ansible       ansible/
-COPY cli-sh        cli-sh/
 COPY README.md     README.md
-COPY cloudypad-entrypoint.sh  cloudypad-entrypoint.sh
 
-ENTRYPOINT  ["/cloudypad/cloudypad-entrypoint.sh"]
+ENTRYPOINT  ["cloudypad"]

@@ -9,7 +9,7 @@
 
 set -e
 
-CLOUDYPAD_IMAGE="${CLOUDYPAD_IMAGE:-"crafteo/cloudypad:0.0.1"}"
+CLOUDYPAD_IMAGE="${CLOUDYPAD_IMAGE:-"crafteo/cloudypad:0.1.0"}"
 CLOUDYPAD_TARGET_IMAGE="crafteo/cloudypad-local-runner:local"
 
 if ! docker image inspect $CLOUDYPAD_IMAGE > /dev/null 2>&1; then
@@ -50,11 +50,13 @@ fi
 
 run_cloudypad_docker() {
 
-    # Ensure this directory exists to be mounted in container
-    # And not create it from Docker volume mount as root
+    # Ensure Cloudy Pad home exists and is secure enough
+    # So as not to create it from Docker volume mount as root
+    # TODO check permission?
     mkdir -p $HOME/.cloudypad
+    chmod 0700 $HOME/.cloudypad
 
-    # Create Paperspace and directory if not already exists to keep it if user log-in from containr
+    # Create Paperspace and directory if not already exists to keep it if user log-in from container
     mkdir -p $HOME/.paperspace
 
     # List of directories to mount only if they exist
@@ -68,19 +70,27 @@ run_cloudypad_docker() {
     # Build run command with proper directories
     local cmd="docker run --rm -it"
 
+    # Only mount a directory if it exists on host
     for mount in "${mounts[@]}"; do
         if [ -d "$mount" ]; then
             cmd+=" -v $mount:$mount"
         fi
     done
 
-    # Add SSH agent volume and env var if it's installed locally
+    # Add SSH agent volume and env var if it's available locally
     if [ -n "$SSH_AUTH_SOCK" ]; then
         cmd+=" -v $SSH_AUTH_SOCK:/ssh-agent -e SSH_AUTH_SOCK=/ssh-agent"
     fi
 
-    cmd+="  $CLOUDYPAD_TARGET_IMAGE $@"
+    # If first arg is "debug-container" run a bash as entrypoint
+    # This is a hidden command for debugging :)
+    if [ "$1" == "debug-container" ]; then
+        cmd+=" --entrypoint /bin/bash $CLOUDYPAD_TARGET_IMAGE"
+    else
+        cmd+=" $CLOUDYPAD_TARGET_IMAGE $@"
+    fi
 
+    # Run docker command
     $cmd
 }
 

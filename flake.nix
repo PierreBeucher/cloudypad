@@ -27,6 +27,8 @@
             ];
             
             shellHook = ''
+              export PULUMI_BACKEND_URL="file://$HOME/.cloudypad/pulumi-backend"
+              export PULUMI_CONFIG_PASSPHRASE=""
             '';
           };
         };
