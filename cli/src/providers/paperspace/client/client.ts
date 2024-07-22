@@ -5,15 +5,7 @@ const { merge } = lodash;
 import * as fs from 'fs'
 import * as path from 'path';
 import * as toml from 'smol-toml'
-
-/**
- * Wrap a client error from Axios potential error
- */
-export interface PaperspaceClientError {
-    message?: any
-    status?: number
-    source?: any
-}
+import { buildAxiosError } from '../../../tools/axios';
 
 export interface PaperspaceClientArgs {
     apiKey: string
@@ -44,7 +36,7 @@ export class PaperspaceClient {
         try {
             resp = await this.authClient.authSession(this.baseOptions)
         } catch (e){
-            throw this.buildError(e)
+            throw buildAxiosError(e)
         }
 
         if(!resp.data){
@@ -60,7 +52,7 @@ export class PaperspaceClient {
             const resp = await this.machineClient.machinesGet(machineId, this.baseOptions)
             return resp.data
         } catch (e){
-            throw this.buildError(e)
+            throw buildAxiosError(e)
         }
     }
 
@@ -69,7 +61,7 @@ export class PaperspaceClient {
             const response = await this.machineClient.machinesCreate(params, this.baseOptions)
             return response.data.data
         } catch (e: unknown) {
-            throw this.buildError(e)
+            throw buildAxiosError(e)
         }
     }
 
@@ -78,7 +70,7 @@ export class PaperspaceClient {
             const response = await this.machineClient.machinesDelete(machineId, this.baseOptions)
             return response.data
         } catch (e: unknown) {
-            throw this.buildError(e)
+            throw buildAxiosError(e)
         }
     }
 
@@ -91,7 +83,7 @@ export class PaperspaceClient {
             ))
             return response.data
         } catch (e: unknown) {
-            throw this.buildError(e)
+            throw buildAxiosError(e)
         }
     }
 
@@ -104,7 +96,7 @@ export class PaperspaceClient {
             ))
             return response.data
         } catch (e: unknown) {
-            throw this.buildError(e)
+            throw buildAxiosError(e)
         }
     }
 
@@ -117,7 +109,7 @@ export class PaperspaceClient {
         }))
             return response.data
         } catch (e: unknown) {
-            throw this.buildError(e)
+            throw buildAxiosError(e)
         }
     }
 
@@ -188,35 +180,6 @@ export class PaperspaceClient {
 
         return false
 
-    }
-
-    // From doc https://axios-http.com/docs/handling_errors
-    private buildError(error: any) {
-
-        if (error.response) {
-            const finalError: PaperspaceClientError = {
-                message: error.response.data?.message,
-                status: error.response.status,
-                source: JSON.stringify(error)
-            }
-            return finalError
-        } else if (error.request) {
-            // The request was made but no response was received
-            // `error.request` is an instance of XMLHttpRequest in the browser and an instance of
-            // http.ClientRequest in node.js
-            const finalError: PaperspaceClientError = {
-                message: "No response from server",
-                source: JSON.stringify(error)
-            }
-            return finalError
-        } else {
-            // Something happened in setting up the request that triggered an Error
-            const finalError: PaperspaceClientError = {
-                message: error.message,
-                source: JSON.stringify(error)
-            }
-            return finalError
-        }
     }
 }
 

@@ -1,6 +1,13 @@
+import * as fs from 'fs'
 import { SSHClient, SSHClientArgs } from '../tools/ssh';
 import { input } from '@inquirer/prompts';
 import { InstanceState, StateManager } from './state';
+import Docker from 'dockerode';
+import axios from 'axios';
+import { URL } from 'url'
+import { buildAxiosError } from '../tools/axios';
+import * as DockerModem from "docker-modem";
+import { Readable } from 'stream';
 
 export interface InstanceDetails {
     name: string
@@ -24,7 +31,6 @@ export interface InstanceRunner {
     restart(): Promise<void>
     get(): Promise<InstanceState>
     
-    getWolfPinUrl(): Promise<string>
     pair(): Promise<void>
 }
 
@@ -37,7 +43,7 @@ export abstract class AbstractInstanceRunner implements InstanceRunner {
     }
  
     getStateManager(){
-        return this.stateManager    
+        return this.stateManager
     }
 
     abstract start(): Promise<void>
@@ -47,74 +53,135 @@ export abstract class AbstractInstanceRunner implements InstanceRunner {
         return this.stateManager.get()
     }
 
-    async getWolfPinUrl(): Promise<string> {
-        const state = await this.stateManager.get()
+    private async waitForPinURL(docker: Docker, host: string) {
+        const containerName = 'wolf';
+        const pinUrlLogMatch = 'Insert pin at';
+        const timeout = 600000; // 10min
+        const pollInterval = 1000; // 1s
+        const pollStartTime = Date.now()
+        
+        const container = docker.getContainer(containerName);
 
-        if(!state.ssh?.user || !state.ssh?.privateKeyPath) {
-            throw new Error("Can't configure instance via SSH: user or private key unknwon. Check instance state.")
-        }
+        // Fetch Wolf container logs since this function run until we find a PIN URL log line or timeout
+        const startTime = Date.now();
+        while (Date.now() - startTime < timeout) {
 
-        if(!state.host) {
-            throw new Error("Can't configure instance: unknown public hostname or IP address.")
-        }
+            const newLogs = (await container.logs({
+                stdout: true,
+                stderr: true,
+                // Actually use seconds and note UNX timestamp as documented by Docker API
+                since: (startTime / 1000), 
+            }))
+            .toString('utf-8')
+            .trim()
+            .split('\n')
+    
+            const maybePinLogsIndex = newLogs.find(l => l.includes(pinUrlLogMatch))
 
-        const sshArgs: SSHClientArgs = {
-            clientName: state.name,
-            host: state.host,
-            user: state.ssh.user,
-            privateKeyPath: state.ssh.privateKeyPath,
-        };
+            if (maybePinLogsIndex) {
+                // console.info(`Found PIN URL: ${maybePinLogsIndex}`)
+                const urlRegex = /(http:\/\/[0-9]{1,3}(\.[0-9]{1,3}){3}:[0-9]+\/pin\/#?[0-9A-F]+)/;
+                const match = maybePinLogsIndex.match(urlRegex);
     
-        const sshClient = new SSHClient(sshArgs);
-    
-        try {
-            await sshClient.connect();
-            const sshCommand = [
-                'sh',
-                '-c',
-                'docker logs wolf-wolf-1 2>&1 | grep -a "Insert pin at" | tail -n 1'
-            ];
-    
-            const result = await sshClient.command(sshCommand);
-            const pinSshResults = result.stdout;
-    
-            // Replace private hostname by public hostname
-            const urlRegex = /(http:\/\/[0-9]{1,3}(\.[0-9]{1,3}){3}:[0-9]+\/pin\/#?[0-9A-F]+)/;
-            const match = pinSshResults.match(urlRegex);
-    
-            if (match && match[0]) {
-                const url = match[0];
-                const replacedUrl = url.replace(/[0-9]{1,3}(\.[0-9]{1,3}){3}/, state.host);
-                return replacedUrl;
-            } else {
-                throw new Error("PIN validation URL not found in Wolf logs.");
+                if (match && match[0]) {
+                    const url = match[0];
+                    const replacedUrl = url.replace(/[0-9]{1,3}(\.[0-9]{1,3}){3}/, host);
+                    return replacedUrl;
+                } else {
+                    console.warn(`Found a line that looked like it contained a PIN URL but didn't: ${maybePinLogsIndex}`)
+                }
             }
-        } finally {
-            sshClient.dispose();
-        }
-    }
 
+            await new Promise(resolve => setTimeout(resolve, pollInterval))
+        }
+
+        throw new Error(`PIN validation URL not found in Wolf logs after ${Date.now() - startTime}ms`);
+    }
+    
+    private async sendPinData(publicPinUrl: string, pin: string): Promise<void> {
+        const secretUrlRegex = /#([0-9A-F]+)/;
+        const matchSecret = publicPinUrl.match(secretUrlRegex)
+    
+        if (!matchSecret || !matchSecret[1]) {
+            throw new Error("Secret not found in PIN URL.")
+        }
+    
+        const secret = matchSecret[1];
+        const postData = {
+            pin: pin,
+            secret: secret
+        }
+
+        const parsedUrl = new URL(publicPinUrl)
+        const postPinUrl = `http://${parsedUrl.hostname}:${parsedUrl.port}/pin/`
+
+        // console.debug(`Host: ${parsedUrl.hostname} port: ${parsedUrl.port}`)
+        // console.debug(`Posting ${JSON.stringify(postData)} to ${postPinUrl}`)
+         
+        try {
+            const result = await axios.post(postPinUrl, postData, {
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            })
+        } catch (e){
+            throw buildAxiosError(e)
+        }
+    
+        // console.debug(`Data posted to PIN URL: ${publicPinUrl}`)
+    }
+    
     async pair(){
-        const state = await this.stateManager.get()
+        const state = this.stateManager.get()
         
         if(!state.host) {
             throw new Error("Can't pair instance: unknown host.")
         }
 
-        console.info(`Run Moonlight and add computer:`);
-        console.info("")
+        if (!state.ssh?.user || !state.ssh?.privateKeyPath) {
+            throw new Error("Can't configure instance via SSH: user or private key unknown. Check instance state.")
+        }
+
+        if (!state.host) {
+            throw new Error("Can't configure instance: unknown public hostname or IP address.")
+        }
+
+        console.info(`Run Moonlight and add computer:`)
+        console.info()
         console.info(`  ${state.host}`)
-        console.info("")
-        console.info('Once PIN is shown, press ENTER to continue to verification page.');
-        console.info('(verification URL will be known after pairing is initialized by Moonlight)');
+        console.info()
+        console.info("Then click on the new machine to trigger pairing. It will generate a PIN we'll use to pair your instance.")
+        console.info()
+        console.info('Waiting for PIN URL to appear in Wolf logs...')
+
+        const privateKey = fs.readFileSync(state.ssh.privateKeyPath, 'utf-8')
+
+        const docker = new Docker({
+            host: state.host,
+            protocol: 'ssh',
+            port: 22,
+            username: state.ssh.user,
+            sshOptions: {
+                privateKey: privateKey
+            }
+        })
+
+        const publicPinUrl = await this.waitForPinURL(docker, state.host)
         
-        await input({ message: 'Press ENTER to continue...' })
-
-        const pinUrl = await this.getWolfPinUrl();
-
-        console.info("Open URL to validate PIN:")
+        // console.debug(`Found PIN URL in logs: ${publicPinUrl}`)
+        
+        console.info("PIN URL found in Wolf logs !")
         console.info("")
-        console.info(`  ${pinUrl}`)
+        
+        const pin = await input({
+            message: 'Enter PIN shown by Moonlight to finalize pairing:',
+        })
+
+        console.info("Sending PIN...")
+
+        await this.sendPinData(publicPinUrl, pin)
+
+        console.info(`Instance ${state.name} paired successfully 🤝 👍`)
     }    
 }
 

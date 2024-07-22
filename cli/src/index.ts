@@ -9,7 +9,7 @@ const program = new Command();
 
 program
   .name('cloudypad')
-  .description('CLI to manage cloud instances for gaming')
+  .description('Cloudy Pad CLI to manage your own gaming instance in the Cloud.')
   .version(version);
 
 program
