@@ -35,25 +35,25 @@ WORKDIR /cloudypad
 
 # Ansible deps
 # Install globally under /etc/ansible
-COPY cli/ansible/requirements.yml cli/ansible/requirements.yml
-RUN ansible-galaxy role install -r cli/ansible/requirements.yml -p /usr/share/ansible/roles
-RUN ansible-galaxy collection install -r cli/ansible/requirements.yml -p /usr/share/ansible/collections
+COPY ansible/requirements.yml ansible/requirements.yml
+RUN ansible-galaxy role install -r ansible/requirements.yml -p /usr/share/ansible/roles
+RUN ansible-galaxy collection install -r ansible/requirements.yml -p /usr/share/ansible/collections
 
 # Shorter Ansible logs output
 ENV ANSIBLE_STDOUT_CALLBACK=community.general.unixy
 
 # Deps
-COPY cli/package.json       cli/package.json
-COPY cli/package-lock.json   cli/package-lock.json
-RUN npm --prefix cli install
+COPY package.json       package.json
+COPY package-lock.json  package-lock.json
+RUN npm install
 
-# Install globally
-COPY cli/ cli/
-RUN npm --prefix cli run build
-RUN cd cli && npm install -g
+# Build and install globally
+COPY ansible ansible
+COPY src src
+COPY LICENSE.txt tsconfig.json . 
 
-# Copy remaining files
-COPY LICENSE.txt   LICENSE.txt
-COPY README.md     README.md
+
+RUN npm run build
+RUN npm install -g
 
 ENTRYPOINT  ["cloudypad"]

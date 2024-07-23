@@ -19,8 +19,8 @@ tasks:
   # Generate Typescript Paperspace client from OpenAPI specifications
   paperspace-client-gen:
     vars:
-      PAPERSPACE_OPENAPI_DIR: "cli/src/providers/paperspace/client/openapi"
-      PAPERSPACE_GENERATED_DIR: "cli/src/providers/paperspace/client/generated-api"
+      PAPERSPACE_OPENAPI_DIR: "src/providers/paperspace/client/openapi"
+      PAPERSPACE_GENERATED_DIR: "src/providers/paperspace/client/generated-api"
     cmds:
     - curl https://api.paperspace.com/v1/openapi.json -o {{ .PAPERSPACE_OPENAPI_DIR }}/openapi.json
 
@@ -50,5 +50,5 @@ tasks:
     # Generate TS files are using import like `import xxx from './configuration';`
     # But we need `import xxx from './configuration.js';`
     # Replace accordingly 
-    # - find cli/paperspace/generated-api -type f -exec sed -i -E "s/(['\"])\.\/(.*?)\1/\1\.\/\2.js\1/g" {} +
+    # - find paperspace/generated-api -type f -exec sed -i -E "s/(['\"])\.\/(.*?)\1/\1\.\/\2.js\1/g" {} +
  
