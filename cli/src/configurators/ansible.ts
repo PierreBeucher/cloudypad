@@ -27,7 +27,10 @@ export class AnsibleConfigurator implements InstanceConfigurator {
             throw new Error(`Can't configure instance: hostname or public IP unknwon in state: ${JSON.stringify(state)}`)
         }
 
-        const playbookPath = path.resolve(__dirname, "..", "..", "..", "..", "ansible", "playbook.yml"); // TODO more specific
+        // const playbookPath = path.resolve(__dirname,  "..", "..", "..", "ansible", "playbook.yml"); // TODO more specific
+        const playbookPath = path.resolve(__dirname, "..", "..", "ansible", "playbook.yml"); // TODO more specific
+
+        console.debug(`Using playbook ${playbookPath}`)
 
         const inventoryContent = {
             all: {
