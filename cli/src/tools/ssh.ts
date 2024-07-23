@@ -2,6 +2,7 @@ import { NodeSSH, SSHExecCommandResponse } from "node-ssh";
 import sshpk from 'sshpk';
 export const { parseKey, parsePrivateKey } = sshpk;
 import * as fs from 'fs'
+import { getLogger, Logger } from "../log/utils";
 
 export interface SSHClientArgs {
     clientName: string
@@ -45,18 +46,25 @@ export class SSHClient {
     
     readonly client: NodeSSH
     readonly args: SSHClientArgs
+    private readonly logger: Logger
 
     constructor(args: SSHClientArgs){
         this.args = args
         this.client = new NodeSSH()
+        this.logger = getLogger(args.clientName)
     }
 
     async command(cmd: string[], args?: SSHCommandOpts) : Promise<SSHExecCommandResponse>{
         if (cmd.length < 0){
             throw new Error("Command array length must be >0")
         }
-    
+
+        this.logger.debug(`Running SSH command: ${JSON.stringify(cmd)}`)
+
         const result = await this.sshExec(cmd, args?.logPrefix || cmd[0])
+
+        this.logger.debug(`SSH command response: ${JSON.stringify(result)}`)
+
         if (result.code != 0 && !args?.ignoreNonZeroExitCode){
             throw new SSHExecError(`Error running command: '${JSON.stringify(cmd)}'`, result)
         }
@@ -65,12 +73,19 @@ export class SSHClient {
     }
     
     async putFile(src: string, dest: string){
+        this.logger.debug(`Transferring file from ${src} to ${dest}`)
+
         await this.client.putFile(src, dest)
+        
+        this.logger.debug(`File transferred from ${src} to ${dest}`)
     }
 
     async putDirectory(src: string, dest: string){
         const ok: string[] = []
         const fail: string[] = []
+        
+        this.logger.debug(`Transferring directory from ${src} to ${dest}`)
+        
         const putStatus = await this.client.putDirectory(src, dest, {
             transferOptions: {
     
@@ -78,12 +93,12 @@ export class SSHClient {
             recursive: true,
             concurrency: 10,
             validate: (itemPath) => {
-                console.info(`Transferring ${itemPath}`)
+                this.logger.trace(`Transferring ${itemPath}`)
                 return true;
             },
             tick:(localPath, remotePath, error) => {
                 if (error) {
-                    console.error(`Failed to copy ${localPath} to ${remotePath}: ${JSON.stringify(error)}`)
+                    this.logger.error(`Failed to copy ${localPath} to ${remotePath}: ${JSON.stringify(error)}`)
                     fail.push(localPath)
                 } else {
                     ok.push(localPath)
@@ -95,6 +110,7 @@ export class SSHClient {
         if (!putStatus) {
             throw new SSHFileTransferError(`Some file(s) failed to transfer: ${JSON.stringify(fail)}`, ok, fail)
         }
+        this.logger.debug(`Directory transferred from ${src} to ${dest}`)
     }
     
     private async sshExec(exec: string[], logPrefix: string) : Promise<SSHExecCommandResponse>{
@@ -104,11 +120,11 @@ export class SSHClient {
         const command = exec[0]
         const sshResp = await this.client.exec(command, exec.slice(1), {
             stream: "both",
-            onStdout(chunk) {
-                // console.debug(`(stdout) ${logPrefix}: ${chunk.toString('utf8').trim()}`, )
+            onStdout: (chunk) => {
+                this.logger.trace(`(stdout) ${logPrefix}: ${chunk.toString('utf8').trim()}`)
             },
-            onStderr(chunk) {
-                // console.debug(`(stderr) ${logPrefix}: ${chunk.toString('utf8').trim()}`)
+            onStderr: (chunk) => {
+                this.logger.trace(`(stderr) ${logPrefix}: ${chunk.toString('utf8').trim()}`)
             }
         })
     
@@ -118,7 +134,7 @@ export class SSHClient {
     async waitForConnection(retries=12, delayMs=10000){
         for (let attempt = 1; attempt <= retries; attempt++){
             try {
-                console.info(`Trying SSH connect on ${this.args.host} (${attempt}/${retries})`)
+                this.logger.debug(`Trying SSH connect on ${this.args.host} (${attempt}/${retries})`)
                 await this.doConnect()
                 return
             } catch (e){
@@ -140,7 +156,7 @@ export class SSHClient {
     }
     
     async connect() {
-        console.info(`Connecting via SSH to ${this.args.host}...`)
+        this.logger.debug(`Connecting via SSH to ${this.args.host}...`)
         await this.doConnect()
     }
 
@@ -148,7 +164,7 @@ export class SSHClient {
         try {
             this.client.dispose()
         } catch (e) {
-            console.error(`Disposing client ${this.args.clientName}: ${e}`, e)
+            this.logger.error(`Disposing client ${this.args.clientName}: ${e}`, e)
         }
     }
     

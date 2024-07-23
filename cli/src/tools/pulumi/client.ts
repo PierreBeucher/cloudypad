@@ -3,6 +3,7 @@ import * as aws from "@pulumi/aws";
 import * as pulumi from "@pulumi/pulumi";
 import { ConfigMap, InlineProgramArgs, LocalWorkspace, LocalWorkspaceOptions, OutputMap, PulumiFn, Stack } from "@pulumi/pulumi/automation";
 import { CLOUDYPAD_HOME } from "../../core/const"
+import { getLogger, Logger } from '../../log/utils';
 
 // Force use of local backend unless environment configured otherwise
 export const CLOUDYPAD_LOCAL_PULUMI_BACKEND_DIR = `${CLOUDYPAD_HOME}/pulumi-backend` // Not a Pulumi built-in en var
@@ -23,13 +24,14 @@ export abstract class InstancePulumiClient<ConfigType, OutputType> {
     readonly program: PulumiFn
     readonly projectName: string
     readonly stackName: string
-    
+    protected readonly logger: Logger
     private stack: Stack | undefined
 
     constructor(args: InstancePulumiClientArgs){
         this.program = args.program
         this.projectName = args.projectName
         this.stackName = args.stackName
+        this.logger = getLogger(`${args.projectName}-${args.stackName}`)
     }
 
     protected async getStack(){
@@ -44,6 +46,8 @@ export abstract class InstancePulumiClient<ConfigType, OutputType> {
     protected abstract buildTypedOutput(outputs: OutputMap): Promise<OutputType>
 
     private async initStack(){
+        this.logger.debug(`Initializing stack and config`)
+        
         if(this.stack !== undefined) {
             throw new Error(`Stack ${this.stackName} for project ${this.projectName} has already been initialized. This is probably an internal bug.`)
         }
@@ -60,6 +64,9 @@ export abstract class InstancePulumiClient<ConfigType, OutputType> {
         if(PULUMI_BACKEND_URL.startsWith("file://")){
             const pulumiBackendDir = PULUMI_BACKEND_URL.slice("file://".length)
             if (!fs.existsSync(pulumiBackendDir)){
+                
+                this.logger.debug(`Creating File PULUMI_BACKEND_URL ${pulumiBackendDir}`)
+                
                 fs.mkdirSync(pulumiBackendDir, { recursive: true });
             }
         }
@@ -76,21 +83,29 @@ export abstract class InstancePulumiClient<ConfigType, OutputType> {
 
     async up(){
 
+        this.logger.debug(`Pulumi up`)
+
         const stack = await this.getStack()
 
-        console.debug(`Config before up: ${JSON.stringify(await stack.getAllConfig())}`)
+        this.logger.debug(`Config before up: ${JSON.stringify(await stack.getAllConfig())}`)
 
         const upRes = await stack.up({ onOutput: console.info, color: "auto", refresh: true });
-        console.debug(`Result: ${JSON.stringify(upRes)}`)
+        
+        this.logger.trace(`Up result: ${JSON.stringify(upRes)}`)
+        
 
         const outputs = await stack.outputs()
+
+        this.logger.debug(`Up outputs: ${JSON.stringify(outputs)}`)
+
         return this.buildTypedOutput(outputs)
     }
 
     async destroy(){
+        this.logger.debug(`Destroting stack`)
         const stack = await this.initStack()
         
         const destroyRes = await stack.destroy({ onOutput: console.info, color: "auto", remove: true });
-        console.debug(`Result: ${JSON.stringify(destroyRes)}`)
+        this.logger.trace(`Destroy result: ${JSON.stringify(destroyRes)}`)
    }
 }

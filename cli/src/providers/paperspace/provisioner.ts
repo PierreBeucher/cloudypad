@@ -1,5 +1,5 @@
 import { select, confirm } from '@inquirer/prompts';
-import { InstanceProvisioner } from '../../core/provisioner';
+import { BaseInstanceProvisioner, InstanceProvisioner } from '../../core/provisioner';
 import { InstanceState, StateManager } from '../../core/state';
 import { PaperspaceClient } from './client/client';
 import { MachinesCreateRequest } from './client/generated-api';
@@ -17,12 +17,10 @@ export interface PaperspaceProvisionArgs {
     }
 }
 
-export class PaperspaceProvisioner implements InstanceProvisioner {
+export class PaperspaceProvisioner extends BaseInstanceProvisioner implements InstanceProvisioner {
     
-    readonly sm: StateManager
-
     constructor(sm: StateManager){
-        this.sm = sm
+        super(sm)
     }
 
     private async buildPaperspaceClient(){
@@ -32,10 +30,10 @@ export class PaperspaceProvisioner implements InstanceProvisioner {
             throw new Error("Couldn't find Paperspace api key in state")
         }
 
-        const client = new PaperspaceClient({ apiKey: state.provider.paperspace.apiKey });
+        const client = new PaperspaceClient({ name: this.sm.name(), apiKey: state.provider.paperspace.apiKey });
 
         const authResult = await client.authSession()
-        console.debug(`Paperspace authenticated as ${authResult.user.email} (team: ${authResult.team.id})`)
+        this.logger.info(`Paperspace authenticated as ${authResult.user.email} (team: ${authResult.team.id})`)
 
         return client
     }
@@ -115,7 +113,7 @@ Do you want to proceed?`,
                 templateId: "t0nspur5"
             }
 
-            console.debug(`Creating Paperspace machine: ${JSON.stringify(createArgs)}`)
+            this.logger.debug(`Creating Paperspace machine: ${JSON.stringify(createArgs)}`)
 
             const createdMachine = await client.createMachine(createArgs);
 
@@ -127,7 +125,7 @@ Do you want to proceed?`,
                 }
             })
 
-            console.debug(`Created new Paperspace machine with ID: ${createdMachine.id}`);
+            this.logger.debug(`Created new Paperspace machine with ID: ${createdMachine.id}`);
 
             if (!createdMachine.publicIp) {
                 throw new Error(`Created machine does not have a public IP address. Got: ${JSON.stringify(createdMachine)}`)
@@ -144,6 +142,8 @@ Do you want to proceed?`,
 
     async destroy(){
         const state = this.sm.get()
+
+        this.logger.info(`Destroying Paperspace instance ${this.sm.name()}`)
 
         if(!state.provider?.paperspace){
             throw new Error(`Missing paperspace provider in state: ${state}`)

@@ -2,17 +2,20 @@ import { select, input, password } from '@inquirer/prompts';
 import { PartialDeep } from 'type-fest';
 import { PaperspaceProvisionArgs } from './provisioner';
 import { PaperspaceClient } from './client/client';
+import { getLogger } from '../../log/utils';
 
 export class PaperspaceInitializerPrompt {
     
+    protected readonly logger = getLogger(PaperspaceInitializerPrompt.name)
+
     async prompt(opts?: PartialDeep<PaperspaceProvisionArgs>) : Promise<{ apiKey: string, args: PaperspaceProvisionArgs}> {
         
         const apiKey = await this.apiKey()
 
-        const client = new PaperspaceClient({ apiKey: apiKey });
+        const client = new PaperspaceClient({ name: PaperspaceInitializerPrompt.name, apiKey: apiKey, });
         const authResult = await client.authSession()
 
-        console.debug(`Paperspace authenticated as ${authResult.user.email} (team: ${authResult.team.id})`)    
+        this.logger.info(`Paperspace authenticated as ${authResult.user.email} (team: ${authResult.team.id})`)
         
         let useExisting: boolean
         if (opts?.useExisting) {
@@ -156,9 +159,10 @@ export class PaperspaceInitializerPrompt {
 
     protected async apiKey(apiKey?: string): Promise<string>{
         if (apiKey) {
+            this.logger.debug(`Using provided API key via.`)
             return apiKey
         } else if (process.env.PAPERSPACE_API_KEY) {
-            console.debug(`Using Paperspace API key via environment variable PAPERSPACE_API_KEY`)
+            this.logger.debug(`Using Paperspace API key via environment variable PAPERSPACE_API_KEY.`)
             return process.env.PAPERSPACE_API_KEY
         } else {
             return await password({

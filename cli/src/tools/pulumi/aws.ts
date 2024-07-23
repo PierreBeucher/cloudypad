@@ -261,7 +261,7 @@ export class AwsPulumiClient extends InstancePulumiClient<PulumiStackConfigAws, 
     }
 
     async setConfig(config: PulumiStackConfigAws){
-        console.debug(`Setting stack ${this.stackName} config: ${JSON.stringify(config)}`)
+        this.logger.debug(`Setting stack ${this.stackName} config: ${JSON.stringify(config)}`)
 
         const stack = await this.getStack()
         await stack.setConfig("region", { value: config.region})
@@ -271,7 +271,7 @@ export class AwsPulumiClient extends InstancePulumiClient<PulumiStackConfigAws, 
         await stack.setConfig("publicIpType", { value: config.publicIpType})
 
         const allConfs = await stack.getAllConfig()
-        console.debug(`Config after update: ${JSON.stringify(allConfs)}`)
+        this.logger.debug(`Config after update: ${JSON.stringify(allConfs)}`)
 
     }
 

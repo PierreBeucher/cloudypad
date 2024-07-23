@@ -2,7 +2,7 @@ import { parseSshPrivateKeyFileToPublic } from '../../tools/ssh';
 import { confirm } from '@inquirer/prompts';
 import { STSClient, GetCallerIdentityCommand } from '@aws-sdk/client-sts';
 import { AwsPulumiClient, PulumiStackConfigAws } from '../../tools/pulumi/aws';
-import { InstanceProvisioner } from '../../core/provisioner';
+import { BaseInstanceProvisioner, InstanceProvisioner } from '../../core/provisioner';
 import { StateManager } from '../../core/state';
 
 export interface AWSProvisionArgs {
@@ -18,15 +18,15 @@ export interface AWSProvisionArgs {
     }
 }
 
-export class AwsProvisioner implements InstanceProvisioner {
-
-    readonly sm: StateManager
+export class AwsProvisioner extends BaseInstanceProvisioner implements InstanceProvisioner {
 
     constructor(sm: StateManager){
-        this.sm = sm
+        super(sm)
     }
 
     async provision() {
+
+        this.logger.info(`Provisioning AWS instance ${this.sm.name()}`)
 
         const state = this.sm.get()
         if(!state.provider?.aws) {
@@ -123,6 +123,8 @@ Do you want to proceed?`,
     async destroy(){
         const state = this.sm.get()
 
+        this.logger.info(`Destroying instance: ${this.sm.name()}`)
+
         const confirmCreation = await confirm({
             message: `You are about to destroy AWS instance '${state.name}'. Please confirm:`,
             default: false,
@@ -154,7 +156,7 @@ Do you want to proceed?`,
         const stsClient = new STSClient({});
         try {
             const callerIdentity = await stsClient.send(new GetCallerIdentityCommand({}));
-            console.info(`Currently authenticated as ${callerIdentity.UserId} on account ${callerIdentity.Account}`)
+            this.logger.info(`Currently authenticated as ${callerIdentity.UserId} on account ${callerIdentity.Account}`)
         } catch (e) {
             throw new Error(`Couldn't check AWS authentication: ${JSON.stringify(e)}`)
         }

@@ -9,7 +9,7 @@ export class AwsInitializerPrompt {
 
     private awsClient: AwsClient
     constructor(){
-        this.awsClient = new AwsClient()
+        this.awsClient = new AwsClient(AwsInitializerPrompt.name)
     }
 
     async prompt(opts?: PartialDeep<AWSProvisionArgs>): Promise<AWSProvisionArgs> {

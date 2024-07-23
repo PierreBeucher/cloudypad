@@ -9,11 +9,12 @@ import { AnsibleConfigurator } from '../configurators/ansible';
 import { AwsInstanceRunner } from '../providers/aws/runner';
 import { InstanceProvisioner } from './provisioner';
 import { InstanceState, StateManager } from './state';
-import { InstanceManager } from './manager';
+import { GlobalInstanceManager, InstanceManager } from './manager';
 import { PaperspaceProvisioner } from '../providers/paperspace/provisioner';
 import { PaperspaceInstanceRunner } from '../providers/paperspace/runner';
 import { PaperspaceInitializerPrompt } from '../providers/paperspace/initializer';
 import { AwsInitializerPrompt } from '../providers/aws/initializer';
+import { getLogger, Logger } from '../log/utils';
 
 /**
  * Instance initializer create the initial state of an instance 
@@ -27,9 +28,16 @@ import { AwsInitializerPrompt } from '../providers/aws/initializer';
  */
 export class InstanceInitializer {
 
+    protected readonly logger = getLogger(InstanceInitializer.name)
+
     public async initializeNew(defaultState?: Partial<InstanceState>) {
+        
+        this.logger.debug(`Initialzazing a new instance with default ${JSON.stringify(defaultState)}`)
+        
         const instanceName = await this.instanceName(defaultState?.name)
+        
         console.info(`Initializing instance: ${instanceName}`)
+        this.logger.info(`Initializing instance: ${instanceName}`)
 
         const privateSshKey = await this.privateSshKey(defaultState?.ssh?.privateKeyPath)
         const providerName = await this.provider()
@@ -50,10 +58,16 @@ export class InstanceInitializer {
             }
         }
 
+        this.logger.debug(`Initializing ${instanceName}: initial state is ${JSON.stringify(initialState)}`)
+
         const sm = new StateManager(initialState)
 
         // Create instance directory
-        fs.mkdirSync(InstanceManager.getInstanceDir(instanceName), { recursive: true });
+        const instanceDir = GlobalInstanceManager.get().getInstanceDir(instanceName)
+        this.logger.debug(`Initializing ${instanceName}: creating instance dir at ${instanceDir}`)
+        fs.mkdirSync(instanceDir, { recursive: true })
+
+        this.logger.debug(`Initializing ${instanceName}: using provider ${providerName}`)
 
         // TODO maybe merge prompt and provider together to prompt if provision args are missing
         // Maybe check for initalized and no provider object on run of provision to dynamically update it ?
@@ -90,10 +104,19 @@ export class InstanceInitializer {
             throw new Error(`Unknown Provider: ${providerName}`)
         }
 
+        this.logger.info(`Initializing ${instanceName}: provisionning...}`)
+        this.logger.debug(`Initializing ${instanceName}: starting provision with state ${sm.get()}`)
+        
         await provider.provision()
+
+        this.logger.info(`Initializing ${instanceName}: provision done.}`)
+
+        this.logger.info(`Initializing ${instanceName}: configuring...}`)
 
         const configurator = new AnsibleConfigurator(sm)
         await configurator.configure()
+
+        this.logger.info(`Initializing ${instanceName}: configuration done.}`)
 
         let runner: InstanceRunner
         if (providerName === CLOUDYPAD_PROVIDER_PAPERSPACE) {
@@ -107,10 +130,15 @@ export class InstanceInitializer {
         const doPair = await confirm({
             message: `Your instance is almost ready ! Do you want to pair Moonlight now?`,
             default: true,
-        });
+        })
 
         if (doPair) {
+            this.logger.info(`Initializing ${instanceName}: pairing...}`)
             await runner.pair()
+
+            this.logger.info(`Initializing ${instanceName}: pairing done.}`)
+        } else {
+            this.logger.info(`Initializing ${instanceName}: pairing skipped.}`)
         }
 
         console.info("")
@@ -128,19 +156,19 @@ export class InstanceInitializer {
         if (_instanceName) {
             instanceName = _instanceName
         } else {
-            const userInfo = os.userInfo();
+            const userInfo = os.userInfo()
             const defaultInstanceName = `${userInfo.username}`;
             instanceName = await input({
                 message: 'Enter instance name:',
                 default: defaultInstanceName,
-            });
+            })
         }
 
-        if(await InstanceManager.instanceExists(instanceName)){
+        if(await GlobalInstanceManager.get().instanceExists(instanceName)){
             const confirmAlreadyExists = await confirm({
                 message: `Instance ${instanceName} already exists. Do you want to overwrite existing instance config?`,
                 default: false,
-            });
+            })
             if (!confirmAlreadyExists) {
                 throw new Error("Won't overwrite existing instance. Initialization aborted.")
             }
@@ -160,7 +188,7 @@ export class InstanceInitializer {
                     { name: CLOUDYPAD_PROVIDER_AWS, value: CLOUDYPAD_PROVIDER_AWS },
                     { name: CLOUDYPAD_PROVIDER_PAPERSPACE, value: CLOUDYPAD_PROVIDER_PAPERSPACE }
                 ]
-            });
+            })
         }
 
         return provider
@@ -171,21 +199,27 @@ export class InstanceInitializer {
             return privateSshKey;
         }
 
-        const sshDir = path.join(os.homedir(), '.ssh');
-        const sshFiles = fs.readdirSync(sshDir);
+        const sshDir = path.join(os.homedir(), '.ssh')
+
+        this.logger.debug(`Looking for SSH keys in ${sshDir}`)
+
+        const sshFiles = fs.readdirSync(sshDir)
+
+        this.logger.debug(`Found SSH key files ${JSON.stringify(sshFiles)}`)
+
         const privateKeys = sshFiles
             .filter(file => file.startsWith('id_') && !file.endsWith('.pub')) // TODO A bit naive method. Maybe we can read all files and check if they are private keys
-            .map(file => path.join(sshDir, file));
+            .map(file => path.join(sshDir, file))
     
         const sshKeyChoices = privateKeys.map(k => ({
             name: k,
             value: k
-        }));
+        }))
     
         const privateKeyPath = await select({
             message: 'Choose an SSH private key to connect to instance:',
             choices: sshKeyChoices
-        });
+        })
     
         return privateKeyPath;
     }

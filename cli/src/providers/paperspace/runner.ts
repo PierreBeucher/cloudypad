@@ -8,8 +8,6 @@ export class PaperspaceInstanceRunner extends AbstractInstanceRunner {
 
     private machineId: string
 
-    private name: string
-
     constructor(stateManager: StateManager) {
         super(stateManager)
 
@@ -24,19 +22,21 @@ export class PaperspaceInstanceRunner extends AbstractInstanceRunner {
         }
 
         this.machineId = state.provider.paperspace.machineId
-        this.client = new PaperspaceClient({ apiKey: state.provider.paperspace.apiKey})
-        this.name = state.name
+        this.client = new PaperspaceClient({ name: state.name, apiKey: state.provider.paperspace.apiKey})
     }
     
     async start() {
+        await super.start()
         await this.client.startMachine(this.machineId)
     }
 
     async stop() {
+        await super.stop()
         await this.client.stopMachine(this.machineId)
     }
 
     async restart() {
+        await super.restart()
         await this.client.restartMachine(this.machineId)
     }
 

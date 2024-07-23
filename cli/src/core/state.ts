@@ -2,18 +2,10 @@ import * as fs from 'fs'
 import * as yaml from 'js-yaml'
 import { PartialDeep } from "type-fest"
 import lodash from 'lodash';
-import { CLOUDYPAD_INSTANCES_DIR, CLOUDYPAD_PROVIDER_AWS, CLOUDYPAD_PROVIDER_PAPERSPACE } from './const';
-import path from 'path';
-import { AwsInstanceRunner } from '../providers/aws/runner';
-import { AwsProvisioner } from '../providers/aws/provisioner';
-import { AnsibleConfigurator } from '../configurators/ansible';
-import { InstanceProvisioner } from './provisioner';
-import { InstanceRunner } from './runner';
-import { PaperspaceProvisioner } from '../providers/paperspace/provisioner';
-import { PaperspaceInstanceRunner } from '../providers/paperspace/runner';
 import { PaperspaceProviderState } from '../providers/paperspace/state';
 import { AwsProviderState } from '../providers/aws/state';
-import { InstanceManager } from './manager';
+import { GlobalInstanceManager, InstanceManager } from './manager';
+import { getLogger, Logger } from '../log/utils';
 
 /**
  * Current state of a CloudyPadInstance object. 
@@ -93,16 +85,29 @@ export interface InstanceState {
 export class StateManager {
     
     private state: InstanceState
+    protected readonly logger: Logger
     
     constructor(state: InstanceState){
         this.state = state
+        this.logger = getLogger(state.name)
     }
 
     get(){
         return this.state
     }
 
+    /**
+     * Shortcut for get().name
+     * @returns name of instance in state
+     */
+    name(){
+        return this.state.name
+    }
+
     async update(data: PartialDeep<InstanceState>){
+        this.logger.debug(`Updating state for ${this.state.name}`)
+        this.logger.trace(`Updating state for ${this.state.name} with ${data}`)
+
         lodash.merge(this.state, data)
         await this.persist()
     }
@@ -112,9 +117,10 @@ export class StateManager {
      * TODO use a lock mechanism to avoid concurrent writes 
      */
     async persist(){
-        const confPath = InstanceManager.getInstanceConfigPath(this.state.name)
+        
+        const confPath = GlobalInstanceManager.get().getInstanceConfigPath(this.state.name)
 
-        // console.debug(`Writing instance ${this.state.name} state to disk at ${confPath}`)
+        this.logger.debug(`Persisting state for ${this.state.name} at ${confPath}`)
 
         fs.writeFileSync(confPath, yaml.dump(this.state), 'utf-8')
     }

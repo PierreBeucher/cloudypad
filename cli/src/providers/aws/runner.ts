@@ -8,14 +8,14 @@ export class AwsInstanceRunner extends AbstractInstanceRunner {
 
     private awsClient: AwsClient
 
-    constructor(stateManager: StateManager) {
-        super(stateManager)
+    constructor(sm: StateManager) {
+        super(sm)
 
-        if(!stateManager.get().provider?.aws) {
-            throw new Error(`Invalidate state: provider must be AWS, got state ${stateManager.get()}`)
+        if(!sm.get().provider?.aws) {
+            throw new Error(`Invalidate state: provider must be AWS, got state ${sm.get()}`)
         }
 
-        this.awsClient = new AwsClient()
+        this.awsClient = new AwsClient(sm.name())
     }
 
     private getInstanceId(){
@@ -28,16 +28,19 @@ export class AwsInstanceRunner extends AbstractInstanceRunner {
     }
 
     async start() {
-        const instanceId = await this.getInstanceId()
+        await super.start()
+        const instanceId = this.getInstanceId()
         this.awsClient.startInstance(instanceId)
     }
 
     async stop() {
+        await super.stop()
         const instanceId = this.getInstanceId()
         this.awsClient.stopInstance(instanceId)
     }
 
     async restart() {
+        await super.restart()
         const instanceId = this.getInstanceId()
         this.awsClient.restartInstance(instanceId)
     }

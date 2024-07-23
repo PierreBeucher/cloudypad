@@ -6,10 +6,16 @@ import * as fs from 'fs'
 import * as path from 'path';
 import * as toml from 'smol-toml'
 import { buildAxiosError } from '../../../tools/axios';
+import { getLogger, Logger } from '../../../log/utils';
+import { machine } from 'os';
 
 export interface PaperspaceClientArgs {
+    name: string
     apiKey: string
 }
+
+const staticLogger = getLogger("PaperspaceClientStatic")
+
 
 /**
  * Client wrapping generated Paperspace API code
@@ -17,10 +23,12 @@ export interface PaperspaceClientArgs {
  */
 export class PaperspaceClient {
 
-    private baseOptions: RawAxiosRequestConfig
-    private machineClient: paperspace.MachineApi
-    private authClient: paperspace.AuthenticationApi
-    
+    private readonly baseOptions: RawAxiosRequestConfig
+    private readonly machineClient: paperspace.MachineApi
+    private readonly authClient: paperspace.AuthenticationApi
+    private readonly name: string
+    private readonly logger: Logger
+
     constructor(args: PaperspaceClientArgs) {
         
         this.baseOptions = { headers: { 
@@ -28,13 +36,20 @@ export class PaperspaceClient {
         }}
         this.machineClient = new paperspace.MachineApi()
         this.authClient = new paperspace.AuthenticationApi()
-        
+        this.name = args.name
+        this.logger = getLogger(args.name)
     }
 
     async authSession() : Promise<paperspace.AuthSession200Response>{
+
+        this.logger.trace(`Authenticating session...`)
+
         let resp;
         try {
             resp = await this.authClient.authSession(this.baseOptions)
+
+            this.logger.debug(`Auth ession response: ${JSON.stringify(resp.data)}`)
+
         } catch (e){
             throw buildAxiosError(e)
         }
@@ -49,7 +64,12 @@ export class PaperspaceClient {
 
     async getMachine(machineId: string): Promise<paperspace.MachinesList200ResponseItemsInner> {
         try {
+            this.logger.trace(`Get machine: ${machineId}`)
+
             const resp = await this.machineClient.machinesGet(machineId, this.baseOptions)
+
+            this.logger.trace(`Get machine response: ${resp.status}`)
+
             return resp.data
         } catch (e){
             throw buildAxiosError(e)
@@ -58,7 +78,12 @@ export class PaperspaceClient {
 
     async createMachine(params: paperspace.MachinesCreateRequest): Promise<paperspace.MachinesCreate200ResponseData> {
         try {
+            this.logger.trace(`Creating machine: ${JSON.stringify(params)}`)
+
             const response = await this.machineClient.machinesCreate(params, this.baseOptions)
+
+            this.logger.trace(`Creating machine ${params.name} response: ${JSON.stringify(response.status)}`)
+
             return response.data.data
         } catch (e: unknown) {
             throw buildAxiosError(e)
@@ -67,7 +92,12 @@ export class PaperspaceClient {
 
     async deleteMachine(machineId: string): Promise<paperspace.MachinesCreate200Response> {
         try {
+            this.logger.trace(`Deleting machine: ${JSON.stringify(machineId)}`)
+
             const response = await this.machineClient.machinesDelete(machineId, this.baseOptions)
+
+            this.logger.trace(`Deleting machine ${machineId} response: ${JSON.stringify(response.status)}`)
+
             return response.data
         } catch (e: unknown) {
             throw buildAxiosError(e)
@@ -76,11 +106,17 @@ export class PaperspaceClient {
 
     async stopMachine(machineId: string): Promise<paperspace.MachinesCreate200Response> {
         try {
+            
+            this.logger.trace(`Stopping machine: ${JSON.stringify(machineId)}`)
+
             const response = await this.machineClient.machinesStop(machineId, merge(this.baseOptions, { 
                 headers: {
                     "Content-Type": "text/plain" // Need this header otherwise API fails
                 }}
             ))
+
+            this.logger.trace(`Stopping machine ${machineId} response: ${JSON.stringify(response.status)}`)
+
             return response.data
         } catch (e: unknown) {
             throw buildAxiosError(e)
@@ -89,11 +125,16 @@ export class PaperspaceClient {
 
     async startMachine(machineId: string): Promise<paperspace.MachinesCreate200Response> {
         try {
+            this.logger.trace(`Starting machine: ${JSON.stringify(machineId)}`)
+
             const response = await this.machineClient.machinesStart(machineId, merge(this.baseOptions, { 
                 headers: {
                     "Content-Type": "text/plain" // Need this header otherwise API fails
                 }}
             ))
+
+            this.logger.trace(`Starting machine ${machineId} response: ${JSON.stringify(response.status)}`)
+
             return response.data
         } catch (e: unknown) {
             throw buildAxiosError(e)
@@ -102,11 +143,16 @@ export class PaperspaceClient {
 
     async restartMachine(machineId: string): Promise<paperspace.MachinesCreate200Response> {
         try {
+            this.logger.trace(`Restarting machine: ${JSON.stringify(machineId)}`)
+
             const response = await this.machineClient.machinesRestart(machineId, merge(this.baseOptions, {
                 headers: {
                     "Content-Type": "text/plain" // Need this header otherwise API fails
                 }
-        }))
+            }))
+
+            this.logger.trace(`Restarting machine ${machineId} response: ${JSON.stringify(response.status)}`)
+
             return response.data
         } catch (e: unknown) {
             throw buildAxiosError(e)
@@ -118,6 +164,18 @@ export class PaperspaceClient {
             order?: paperspace.MachinesListOrderEnum, name?: string, region?: string, 
             agentType?: string, machineType?: string}): Promise<paperspace.MachinesList200ResponseItemsInner[]> {
         try {
+
+            this.logger.trace(`Listing machines with params: ${JSON.stringify([ 
+                largs?.after, 
+                largs?.limit, 
+                largs?.orderBy, 
+                largs?.order, 
+                largs?.name, 
+                largs?.region, 
+                largs?.agentType, 
+                largs?.machineType,
+            ])}`)
+
             const response = await this.machineClient.machinesList(
                 largs?.after, 
                 largs?.limit, 
@@ -128,10 +186,11 @@ export class PaperspaceClient {
                 largs?.agentType, 
                 largs?.machineType,
                 this.baseOptions
-            );
+            )
+
             return response.data.items;
         } catch (error) {
-            console.error('Error listing machines:', error)
+            this.logger.error('Error listing machines:', error)
             throw new Error('Failed to list machines')
         }
     }
@@ -163,6 +222,9 @@ export class PaperspaceClient {
     }
 
     async waitForMachineState(machineId: string, state: paperspace.MachinesCreate200ResponseDataStateEnum, periodMs=5000, maxRetries=24): Promise<boolean> {
+
+        this.logger.trace(`Waiting for machine ${machine} state: ${state} (period: ${periodMs}, maxRetries: ${maxRetries})`)
+
         let retryCount = 0
         
         if (await this.isMachineInState(machineId, state)) {
@@ -170,7 +232,8 @@ export class PaperspaceClient {
         }
 
         do {
-            console.info(`Waiting for state ${state} on ${machineId}`)
+            this.logger.trace(`Waiting for machine ${machineId} state ${state} (retry count: ${retryCount})`)
+
             await new Promise(resolve => setTimeout(resolve, periodMs));
             if (await this.isMachineInState(machineId, state)) {
                 return true
@@ -193,15 +256,23 @@ export class PaperspaceClient {
  */
 export function fetchApiKeyFromEnvironment(_paperspaceHome?: string): string[] {
 
+    staticLogger.trace(`Fetching Paperspace API key from environment (provided optional Paperspace home: ${_paperspaceHome})`)
+    
     const paperspaceHome = path.join(_paperspaceHome ?? (process.env.HOME ?? "", '.paperspace'));
 
+    staticLogger.trace(`Fetching Paperspace API key from environment, Paperspace home: ${paperspaceHome}`)
+
     if (process.env.PAPERSPACE_API_KEY) {
+        staticLogger.trace(`Found Paperspace API key as environment variable ${process.env.PAPERSPACE_API_KEY}`)
         return [ process.env.PAPERSPACE_API_KEY ];
     }
 
     if (process.env.PAPERSPACE_API_KEY_FILE) {
+        staticLogger.trace(`Checking Paperspace API key in file ${process.env.PAPERSPACE_API_KEY_FILE}`)
+
         const filePath = process.env.PAPERSPACE_API_KEY_FILE;
         if (fs.existsSync(filePath)) {
+            staticLogger.trace(`Found Paperspace API key in file ${process.env.PAPERSPACE_API_KEY_FILE}`)
             return [ fs.readFileSync(filePath, 'utf-8').trim() ]
         } else {
             throw new Error(`PAPERSPACE_API_KEY_FILE points to non-existing file ${process.env.PAPERSPACE_API_KEY_FILE}`)
@@ -210,15 +281,23 @@ export function fetchApiKeyFromEnvironment(_paperspaceHome?: string): string[] {
 
     const credentialsFile = path.join(paperspaceHome, 'credentials.toml');
 
+    staticLogger.trace(`Checking Paperspace API credentials file ${credentialsFile}`)
+
     if (fs.existsSync(credentialsFile)) {
         const fileContent = fs.readFileSync(credentialsFile, 'utf-8');
         const parsed = toml.parse(fileContent);
         if (parsed.keys) {
             const apiKeys = Object.values(parsed.keys).filter(key => typeof key === 'string') as string[];
+            
+            staticLogger.trace(`Reading Paperspace API credentials file: found ${apiKeys.length} keys`)
+            
             if (apiKeys.length > 0) {
                 return apiKeys;
             }
         }
     }
+
+    staticLogger.trace(`No Paperspace API key found in environment.`)
+
     return [];
 }

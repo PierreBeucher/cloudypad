@@ -1,13 +1,11 @@
 import * as fs from 'fs'
-import { SSHClient, SSHClientArgs } from '../tools/ssh';
 import { input } from '@inquirer/prompts';
 import { InstanceState, StateManager } from './state';
 import Docker from 'dockerode';
 import axios from 'axios';
 import { URL } from 'url'
 import { buildAxiosError } from '../tools/axios';
-import * as DockerModem from "docker-modem";
-import { Readable } from 'stream';
+import { getLogger, Logger } from '../log/utils';
 
 export interface InstanceDetails {
     name: string
@@ -37,19 +35,32 @@ export interface InstanceRunner {
 export abstract class AbstractInstanceRunner implements InstanceRunner {
     
     readonly stateManager: StateManager
-    
-    constructor(stateManager: StateManager) {
-        this.stateManager = stateManager
+    protected readonly logger: Logger
+
+    constructor(sm: StateManager) {
+        this.stateManager = sm
+        this.logger = getLogger(sm.name()) 
     }
  
     getStateManager(){
         return this.stateManager
     }
 
-    abstract start(): Promise<void>
-    abstract stop(): Promise<void>
-    abstract restart(): Promise<void>
+    async start(): Promise<void> {
+        this.logger.info(`Starting instance ${this.getStateManager().name()}`)
+    }
+
+    async stop(): Promise<void> {
+        this.logger.info(`Stopping instance ${this.getStateManager().name()}`)
+    }
+
+    async restart(): Promise<void> {
+        this.logger.info(`Restarting instance ${this.getStateManager().name()}`)
+    }
+
     async get(): Promise<InstanceState> {
+        
+        this.logger.debug(`Getting instance ${this.stateManager.get().name}`)
         return this.stateManager.get()
     }
 
@@ -75,11 +86,13 @@ export abstract class AbstractInstanceRunner implements InstanceRunner {
             .toString('utf-8')
             .trim()
             .split('\n')
+
+            this.logger.trace(`Checking logs for PIN: ${JSON.stringify(newLogs)}`)
     
             const maybePinLogsIndex = newLogs.find(l => l.includes(pinUrlLogMatch))
 
             if (maybePinLogsIndex) {
-                // console.info(`Found PIN URL: ${maybePinLogsIndex}`)
+                this.logger.debug(`Found PIN URL: ${maybePinLogsIndex}`)
                 const urlRegex = /(http:\/\/[0-9]{1,3}(\.[0-9]{1,3}){3}:[0-9]+\/pin\/#?[0-9A-F]+)/;
                 const match = maybePinLogsIndex.match(urlRegex);
     
@@ -88,7 +101,7 @@ export abstract class AbstractInstanceRunner implements InstanceRunner {
                     const replacedUrl = url.replace(/[0-9]{1,3}(\.[0-9]{1,3}){3}/, host);
                     return replacedUrl;
                 } else {
-                    console.warn(`Found a line that looked like it contained a PIN URL but didn't: ${maybePinLogsIndex}`)
+                    this.logger.warn(`Found a line that looked like it contained a PIN URL but didn't: ${maybePinLogsIndex}. Please report a bug with this log.`)
                 }
             }
 
@@ -99,6 +112,9 @@ export abstract class AbstractInstanceRunner implements InstanceRunner {
     }
     
     private async sendPinData(publicPinUrl: string, pin: string): Promise<void> {
+
+        this.logger.info(`Sending PIN to ${publicPinUrl}`)
+
         const secretUrlRegex = /#([0-9A-F]+)/;
         const matchSecret = publicPinUrl.match(secretUrlRegex)
     
@@ -115,8 +131,7 @@ export abstract class AbstractInstanceRunner implements InstanceRunner {
         const parsedUrl = new URL(publicPinUrl)
         const postPinUrl = `http://${parsedUrl.hostname}:${parsedUrl.port}/pin/`
 
-        // console.debug(`Host: ${parsedUrl.hostname} port: ${parsedUrl.port}`)
-        // console.debug(`Posting ${JSON.stringify(postData)} to ${postPinUrl}`)
+        this.logger.debug(`Posting ${JSON.stringify(postData)} to ${postPinUrl}`)
          
         try {
             const result = await axios.post(postPinUrl, postData, {
@@ -127,8 +142,6 @@ export abstract class AbstractInstanceRunner implements InstanceRunner {
         } catch (e){
             throw buildAxiosError(e)
         }
-    
-        // console.debug(`Data posted to PIN URL: ${publicPinUrl}`)
     }
     
     async pair(){
@@ -168,7 +181,7 @@ export abstract class AbstractInstanceRunner implements InstanceRunner {
 
         const publicPinUrl = await this.waitForPinURL(docker, state.host)
         
-        // console.debug(`Found PIN URL in logs: ${publicPinUrl}`)
+        this.logger.info(`Found PIN URL in logs: ${publicPinUrl}`)
         
         console.info("PIN URL found in Wolf logs !")
         console.info("")
