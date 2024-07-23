@@ -90,7 +90,7 @@ program
             const m = await GlobalInstanceManager.get().createInstanceManager(name)
             const r = await m.getInstanceRunner()
             const details = await r.get()
-            console.info(JSON.stringify(details))
+            console.info(JSON.stringify(details, null, 2))
         } catch (error) {
             console.error(`Error getting details of instance ${name}:`, error);
         }
