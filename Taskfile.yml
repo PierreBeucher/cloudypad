@@ -9,6 +9,10 @@ tasks:
       docker build --progress=plain . -t cloudypad:local && 
       CLOUDYPAD_IMAGE="cloudypad:local" ./cloudypad.sh {{.CLI_ARGS}}
 
+  run-local-no-build:
+    cmd: >-
+      CLOUDYPAD_IMAGE="cloudypad:local" ./cloudypad.sh {{.CLI_ARGS}}
+
   build:
     cmd: docker build . -t cloudypad:local
 
