@@ -5,7 +5,7 @@ import { PaperspaceClient } from './client/client';
 
 export class PaperspaceInitializerPrompt {
     
-    async prompt(opts?: PartialDeep<PaperspaceProvisionArgs>) : Promise<PaperspaceProvisionArgs> {
+    async prompt(opts?: PartialDeep<PaperspaceProvisionArgs>) : Promise<{ apiKey: string, args: PaperspaceProvisionArgs}> {
         
         const apiKey = await this.apiKey()
 
@@ -33,11 +33,13 @@ export class PaperspaceInitializerPrompt {
         if (useExisting) {
             const [machineId, publicIp] = await this.existingMachineId(client, opts?.useExisting?.machineId);
             
-            return  {
+            return  { 
                 apiKey: apiKey,
-                useExisting: {
-                    machineId: machineId,
-                    publicIp: publicIp
+                args: {
+                    useExisting: {
+                        machineId: machineId,
+                        publicIp: publicIp
+                    }
                 }
             }
             
@@ -49,11 +51,13 @@ export class PaperspaceInitializerPrompt {
             
             return {
                 apiKey: apiKey,
-                create: {
-                    diskSize: diskSize,
-                    machineType: machineType,
-                    publicIpType: publicIpType,
-                    region: region
+                args: {
+                    create: {
+                        diskSize: diskSize,
+                        machineType: machineType,
+                        publicIpType: publicIpType,
+                        region: region
+                    }
                 }
             }
         }

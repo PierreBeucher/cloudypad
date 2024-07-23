@@ -60,12 +60,17 @@ export class InstanceInitializer {
         let provider: InstanceProvisioner;
         if (providerName === CLOUDYPAD_PROVIDER_PAPERSPACE) {
             
-            const args = await new PaperspaceInitializerPrompt().prompt()
+            const promptResult = await new PaperspaceInitializerPrompt().prompt()
             sm.update({ 
                 ssh: {
                     user: "paperspace"
                 },
-                provider: { paperspace: { provisionArgs: args }}
+                provider: { 
+                    paperspace: { 
+                        apiKey: promptResult.apiKey,
+                        provisionArgs: promptResult.args
+                    }
+                }
             })
 
             provider = new PaperspaceProvisioner(sm)

@@ -5,7 +5,6 @@ import { PaperspaceClient } from './client/client';
 import { MachinesCreateRequest } from './client/generated-api';
 
 export interface PaperspaceProvisionArgs {
-    apiKey: string,
     useExisting?: {
         machineId: string
         publicIp: string
@@ -66,7 +65,6 @@ export class PaperspaceProvisioner implements InstanceProvisioner {
                 host: args.useExisting.publicIp, 
                 provider: {
                     paperspace: {
-                        apiKey: args.apiKey,
                         machineId: args.useExisting.machineId
                     }
                 }
@@ -98,7 +96,7 @@ Do you want to proceed?`,
                 },
                 provider: {
                     paperspace: {
-                        apiKey: args.apiKey,
+                        provisionArgs: args
                     }
                 }
             })
