@@ -36,8 +36,8 @@ export class InstanceInitializer {
         
         const instanceName = await this.instanceName(defaultState?.name)
         
-        console.info(`Initializing instance: ${instanceName}`)
-        this.logger.info(`Initializing instance: ${instanceName}`)
+        console.info(`Creating instance: ${instanceName}`)
+        this.logger.info(`Creating instance: ${instanceName}`)
 
         const privateSshKey = await this.privateSshKey(defaultState?.ssh?.privateKeyPath)
         const providerName = await this.provider()
@@ -58,16 +58,16 @@ export class InstanceInitializer {
             }
         }
 
-        this.logger.debug(`Initializing ${instanceName}: initial state is ${JSON.stringify(initialState)}`)
+        this.logger.debug(`Creating ${instanceName}: initial state is ${JSON.stringify(initialState)}`)
 
         const sm = new StateManager(initialState)
 
         // Create instance directory
         const instanceDir = GlobalInstanceManager.get().getInstanceDir(instanceName)
-        this.logger.debug(`Initializing ${instanceName}: creating instance dir at ${instanceDir}`)
+        this.logger.debug(`Creating ${instanceName}: creating instance dir at ${instanceDir}`)
         fs.mkdirSync(instanceDir, { recursive: true })
 
-        this.logger.debug(`Initializing ${instanceName}: using provider ${providerName}`)
+        this.logger.debug(`Creating ${instanceName}: using provider ${providerName}`)
 
         // TODO maybe merge prompt and provider together to prompt if provision args are missing
         // Maybe check for initalized and no provider object on run of provision to dynamically update it ?
@@ -104,19 +104,19 @@ export class InstanceInitializer {
             throw new Error(`Unknown Provider: ${providerName}`)
         }
 
-        this.logger.info(`Initializing ${instanceName}: provisionning...}`)
-        this.logger.debug(`Initializing ${instanceName}: starting provision with state ${sm.get()}`)
+        this.logger.info(`Creating ${instanceName}: provisionning...}`)
+        this.logger.debug(`Creating ${instanceName}: starting provision with state ${sm.get()}`)
         
         await provider.provision()
 
-        this.logger.info(`Initializing ${instanceName}: provision done.}`)
+        this.logger.info(`Creating ${instanceName}: provision done.}`)
 
-        this.logger.info(`Initializing ${instanceName}: configuring...}`)
+        this.logger.info(`Creating ${instanceName}: configuring...}`)
 
         const configurator = new AnsibleConfigurator(sm)
         await configurator.configure()
 
-        this.logger.info(`Initializing ${instanceName}: configuration done.}`)
+        this.logger.info(`Creating ${instanceName}: configuration done.}`)
 
         let runner: InstanceRunner
         if (providerName === CLOUDYPAD_PROVIDER_PAPERSPACE) {
@@ -133,12 +133,12 @@ export class InstanceInitializer {
         })
 
         if (doPair) {
-            this.logger.info(`Initializing ${instanceName}: pairing...}`)
+            this.logger.info(`Creating ${instanceName}: pairing...}`)
             await runner.pair()
 
-            this.logger.info(`Initializing ${instanceName}: pairing done.}`)
+            this.logger.info(`Creating ${instanceName}: pairing done.}`)
         } else {
-            this.logger.info(`Initializing ${instanceName}: pairing skipped.}`)
+            this.logger.info(`Creating ${instanceName}: pairing skipped.}`)
         }
 
         console.info("")

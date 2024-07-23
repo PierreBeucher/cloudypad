@@ -46,7 +46,7 @@ export abstract class InstancePulumiClient<ConfigType, OutputType> {
     protected abstract buildTypedOutput(outputs: OutputMap): Promise<OutputType>
 
     private async initStack(){
-        this.logger.debug(`Initializing stack and config`)
+        this.logger.debug(`Cnitializing stack and config`)
         
         if(this.stack !== undefined) {
             throw new Error(`Stack ${this.stackName} for project ${this.projectName} has already been initialized. This is probably an internal bug.`)
@@ -89,11 +89,10 @@ export abstract class InstancePulumiClient<ConfigType, OutputType> {
 
         this.logger.debug(`Config before up: ${JSON.stringify(await stack.getAllConfig())}`)
 
-        const upRes = await stack.up({ onOutput: console.info, color: "auto", refresh: true });
+        const upRes = await stack.up({ onOutput: (msg) => { console.info(msg.trim()) }, color: "auto", refresh: true });
         
         this.logger.trace(`Up result: ${JSON.stringify(upRes)}`)
         
-
         const outputs = await stack.outputs()
 
         this.logger.debug(`Up outputs: ${JSON.stringify(outputs)}`)

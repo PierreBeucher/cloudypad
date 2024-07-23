@@ -33,22 +33,22 @@ program
     })
 
 program
-    .command('init [name]')
-    .description('Initialize a new instance.')
+    .command('create [name]')
+    .description('Create a new instance')
     .action(async (name) => {
         try {
-            await GlobalInstanceManager.get().initializeInstance({ name: name });
+            await GlobalInstanceManager.get().createInstance({ name: name });
         } catch (error) {
-            console.error('Error initializing new instance:', error);
+            console.error('Error creating new instance:', error);
         }
     })
 
 program
     .command('start <name>')
-    .description('Start an instance with the given name')
+    .description('Start an instance')
     .action(async (name) => {
         try {
-            const m = await GlobalInstanceManager.get().createInstanceManager(name)
+            const m = await GlobalInstanceManager.get().getInstanceManager(name)
             const r = await m.getInstanceRunner()
             await r.start()
         } catch (error) {
@@ -58,10 +58,10 @@ program
 
 program
     .command('stop <name>')
-    .description('Stop an instance with the given name')
+    .description('Stop an instance')
     .action(async (name) => {
         try {
-            const m = await GlobalInstanceManager.get().createInstanceManager(name)
+            const m = await GlobalInstanceManager.get().getInstanceManager(name)
             const r = await m.getInstanceRunner()
             await r.stop()
         } catch (error) {
@@ -71,10 +71,10 @@ program
 
 program
     .command('restart <name>')
-    .description('Restart an instance with the given name')
+    .description('Restart an instance')
     .action(async (name) => {
         try {
-            const m = await GlobalInstanceManager.get().createInstanceManager(name)
+            const m = await GlobalInstanceManager.get().getInstanceManager(name)
             const r = await m.getInstanceRunner()
             await r.restart()
         } catch (error) {
@@ -84,10 +84,10 @@ program
 
 program
     .command('get <name>')
-    .description('Get details of an instance with the given name')
+    .description('Get details of an instance')
     .action(async (name) => {
         try {
-            const m = await GlobalInstanceManager.get().createInstanceManager(name)
+            const m = await GlobalInstanceManager.get().getInstanceManager(name)
             const r = await m.getInstanceRunner()
             const details = await r.get()
             console.info(JSON.stringify(details, null, 2))
@@ -98,10 +98,10 @@ program
 
 program
     .command('provision <name>')
-    .description('Provision an instance with the given name')
+    .description('Provision an instance (deploy or update Cloud resources)')
     .action(async (name) => {
         try {
-            const m = await GlobalInstanceManager.get().createInstanceManager(name)
+            const m = await GlobalInstanceManager.get().getInstanceManager(name)
             const p = await m.getInstanceProvisioner()
             await p.provision()
         } catch (error) {
@@ -111,10 +111,10 @@ program
 
 program
     .command('configure <name>')
-    .description('Configure an instance with the given name')
+    .description('Configure an instance (connect to instance and install drivers, packages, etc.)')
     .action(async (name) => {
         try {
-            const m = await GlobalInstanceManager.get().createInstanceManager(name)
+            const m = await GlobalInstanceManager.get().getInstanceManager(name)
             const p = await m.getInstanceConfigurator()
             await p.configure()
         } catch (error) {
@@ -124,10 +124,10 @@ program
 
 program
     .command('destroy <name>')
-    .description('Destroy an instance with the given name')
+    .description('Destroy an instance')
     .action(async (name) => {
         try {
-            const m = await GlobalInstanceManager.get().createInstanceManager(name)
+            const m = await GlobalInstanceManager.get().getInstanceManager(name)
 
             if (m.isProvisioned()) {
                 const p = await m.getInstanceProvisioner()
@@ -141,15 +141,15 @@ program
         }
     })
 
-program.command('pair [name]')
-    .description('Pair an instance with Moonlight.')
+program.command('pair <name>')
+    .description('Pair an instance with Moonlight')
     .action(async (name: string) => {
         try {
-            const m = await GlobalInstanceManager.get().createInstanceManager(name)
+            const m = await GlobalInstanceManager.get().getInstanceManager(name)
             const r = await m.getInstanceRunner()
             await r.pair()
         } catch (error) {
-            console.error('Error initializing new instance:', error);
+            console.error('Error creating new instance:', error);
         }
     })
 

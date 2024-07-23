@@ -78,12 +78,12 @@ export class GlobalInstanceManager {
         return new StateManager(state)
     }
 
-    async initializeInstance(defaultState?: Partial<InstanceState>){
+    async createInstance(defaultState?: Partial<InstanceState>){
         const initializer = new InstanceInitializer()
         await initializer.initializeNew(defaultState)
     }
 
-    async createInstanceManager(instanceName: string){
+    async getInstanceManager(instanceName: string){
         const sm = await this.loadInstanceState(instanceName)
         return new InstanceManager(sm)
     }
