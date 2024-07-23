@@ -51,6 +51,7 @@ program
             const m = await GlobalInstanceManager.get().getInstanceManager(name)
             const r = await m.getInstanceRunner()
             await r.start()
+            console.info(`Started instance ${name}`)
         } catch (error) {
             console.error(`Error starting instance ${name}:`, error);
         }
@@ -63,6 +64,7 @@ program
         try {
             const m = await GlobalInstanceManager.get().getInstanceManager(name)
             const r = await m.getInstanceRunner()
+            console.info(`Stopped instance ${name}`)
             await r.stop()
         } catch (error) {
             console.error(`Error stopping instance ${name}:`, error);
@@ -77,6 +79,7 @@ program
             const m = await GlobalInstanceManager.get().getInstanceManager(name)
             const r = await m.getInstanceRunner()
             await r.restart()
+            console.info(`Restarted instance ${name}`)
         } catch (error) {
             console.error(`Error restarting instance ${name}:`, error);
         }
@@ -104,6 +107,8 @@ program
             const m = await GlobalInstanceManager.get().getInstanceManager(name)
             const p = await m.getInstanceProvisioner()
             await p.provision()
+            console.info("")
+            console.info(`Provisioned instance ${name}`)
         } catch (error) {
             console.error(`Error provisioning instance ${name}:`, error);
         }
@@ -117,6 +122,8 @@ program
             const m = await GlobalInstanceManager.get().getInstanceManager(name)
             const p = await m.getInstanceConfigurator()
             await p.configure()
+            console.info("")
+            console.info(`Configured instance ${name}`)
         } catch (error) {
             console.error(`Error configuring instance ${name}:`, error);
         }
@@ -135,6 +142,9 @@ program
             }
 
             await m.destroyInstance()
+
+            console.info("")
+            console.info(`Destroyed instance ${name}`)
 
         } catch (error) {
             console.error(`Error destroying instance ${name}:`, error);
