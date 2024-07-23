@@ -67,7 +67,9 @@ curl https://raw.githubusercontent.com/PierreBeucher/cloudypad/master/cloudypad.
   sudo cp ./cloudypad.sh /usr/local/bin/cloudypad
 ```
 
-Create your instance with `cloudypad` CLI:
+You may need to setup a few things on your Cloud provider (eg. API key or SSH key). Checkout [per-Clouder setup specifities](#detailed-setup-per-clouder).
+
+Once ready, create your instance with `cloudypad` CLI:
 
 ```sh
 cloudypad create
