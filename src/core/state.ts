@@ -8,8 +8,11 @@ import { GlobalInstanceManager, InstanceManager } from './manager';
 import { getLogger, Logger } from '../log/utils';
 
 /**
- * Current state of a CloudyPadInstance object. 
- * Instance state is loaded from and written to disk from this state. 
+ * Current state of a Cloudy Pad instance. It contains every data
+ * about an instance: Cloud provider used, how to access, etc.
+ * 
+ * These data are persisted on disk and loaded in memory. This class
+ * thus represent the interface between filesystem and running program data.
  */
 export interface InstanceState {
     /**
@@ -82,6 +85,9 @@ export interface InstanceState {
     }
 }
 
+/**
+ * Manage an instance State and its disk persistence
+ */
 export class StateManager {
     
     private state: InstanceState

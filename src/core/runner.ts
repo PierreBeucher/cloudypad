@@ -7,17 +7,6 @@ import { URL } from 'url'
 import { buildAxiosError } from '../tools/axios';
 import { getLogger, Logger } from '../log/utils';
 
-export interface InstanceDetails {
-    name: string
-    provider: string 
-    host: string
-    ssh: {
-        user: string
-    }
-    providerMachineID: string,
-
-}
-
 /**
  * Instance Runner manages running time lifecycle of instances: start/stop/restart
  * and utility functions like pairing and fetching Moonlight PIN

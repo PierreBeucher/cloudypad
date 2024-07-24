@@ -14,6 +14,11 @@ import { PaperspaceProvisioner } from '../providers/paperspace/provisioner';
 import { InstanceConfigurator } from './configurator';
 import { getLogger } from '../log/utils';
 
+/**
+ * Utility class to manage instances globally. Instance state
+ * are saved under CLOUDYPAD_INSTANCES_DIR, this class function
+ * allow to manipulate the content of this directory. 
+ */
 export class GlobalInstanceManager {
 
     private static instance: GlobalInstanceManager
@@ -89,6 +94,12 @@ export class GlobalInstanceManager {
     }
 }
 
+/**
+ * Manage an instance. Delegate specifities to sub-manager:
+ * - InstanceRunner for managing instance running status (stopping, starting, etc)
+ * - InstanceProvisioner to manage Cloud resources
+ * - InstanceConfigurator to manage instance OS and system packages
+ */
 export class InstanceManager {
 
     protected readonly logger

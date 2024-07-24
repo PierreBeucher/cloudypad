@@ -2,7 +2,7 @@ import { getLogger, Logger } from "../log/utils"
 import { StateManager } from "./state"
 
 /**
- * An initializer to provision an instance for a specific Provider
+ * Provision instance Cloud resources. 
  */
 export interface InstanceProvisioner {
     provision(): Promise<void>

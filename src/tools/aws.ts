@@ -19,6 +19,9 @@ export class AwsClient {
             const callerIdentity = await this.stsClient.send(new GetCallerIdentityCommand({}));
             this.logger.debug(`Currently authenticated as ${callerIdentity.UserId} on account ${callerIdentity.Account}`)
         } catch (e) {
+            this.logger.error(`Couldn't check AWS authentication: ${JSON.stringify(e)}`)
+            this.logger.error(`Is your local AWS authentication configured ?`)
+            
             throw new Error(`Couldn't check AWS authentication: ${JSON.stringify(e)}`)
         }
     }

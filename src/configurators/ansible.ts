@@ -49,11 +49,7 @@ export class AnsibleConfigurator implements InstanceConfigurator {
             },
         }
 
-        this.logger.trace(`Inventory: ${JSON.stringify(inventoryContent)}`)
-    
-        console.info("Inventory:")
-        console.info(JSON.stringify(inventoryContent))
-        console.info("---")
+        this.logger.debug(`Inventory: ${JSON.stringify(inventoryContent)}`)
 
         const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'cloudypad-'));
         const inventoryPath = path.join(tmpDir, 'inventory.yml');

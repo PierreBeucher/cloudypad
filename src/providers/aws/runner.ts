@@ -1,6 +1,4 @@
-import { EC2Client, StartInstancesCommand, StopInstancesCommand, RebootInstancesCommand, DescribeInstancesCommand } from '@aws-sdk/client-ec2';
-import { CLOUDYPAD_PROVIDER_AWS } from '../../core/const';
-import { AbstractInstanceRunner, InstanceDetails } from '../../core/runner';
+import { AbstractInstanceRunner } from '../../core/runner';
 import { StateManager } from '../../core/state';
 import { AwsClient } from '../../tools/aws';
 
