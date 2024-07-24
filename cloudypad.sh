@@ -9,11 +9,19 @@
 
 set -e
 
-CLOUDYPAD_IMAGE="${CLOUDYPAD_IMAGE:-"crafteo/cloudypad:0.1.0"}"
+CLOUDYPAD_VERSION=0.1.0-rc1
+CLOUDYPAD_IMAGE="${CLOUDYPAD_IMAGE:-"crafteo/cloudypad:$CLOUDYPAD_VERSION"}"
 CLOUDYPAD_TARGET_IMAGE="crafteo/cloudypad-local-runner:local"
 
+# Hidden command used during installation to setup Docker image locally
+if [ "$1" == "download-container-images" ]; then
+    docker pull $CLOUDYPAD_IMAGE >&2
+    exit 0
+fi
+
 if ! docker image inspect $CLOUDYPAD_IMAGE > /dev/null 2>&1; then
-    echo "Please wait a moment while Cloudy Pad container image $CLOUDYPAD_IMAGE is being pulled... (This is a one time action)" >&2
+    echo "Please wait a moment while Cloudy Pad container image $CLOUDYPAD_IMAGE is being pulled..." >&2
+    echo "This is normally done once during installation but may happen again if you deleted or cleaned-up your local Docker images." >&2
     docker pull $CLOUDYPAD_IMAGE >&2
 fi
 

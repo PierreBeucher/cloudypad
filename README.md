@@ -53,7 +53,7 @@ Cloudy Pad deploys a Cloud gaming gear using a Cloud provider of your choice:
 - Cloudy Pad lets you play on Linux. Using Steam may require [Proton](https://www.protondb.com/). You can check your game compatibility on [Proton website](https://www.protondb.com/) or see [how to play games on Steam](#how-to-play-game-on-steam--why-does-my-steam-game-doesnt-launch-).
 
 Prerequisites:
-- A Clouder account, one of:
+- A Cloud provider account, one of:
   - [Paperspace](https://www.paperspace.com/)
   - [AWS](https://aws.amazon.com/)
 - [Moonlight](https://moonlight-stream.org/) streaming client
@@ -62,9 +62,7 @@ Prerequisites:
 Install `cloudypad` CLI:
 
 ```sh
-curl https://raw.githubusercontent.com/PierreBeucher/cloudypad/master/cloudypad.sh -o ./cloudypad.sh && \
-  chmod +x ./cloudypad.sh && \
-  sudo cp ./cloudypad.sh /usr/local/bin/cloudypad
+curl -fsSL https://raw.githubusercontent.com/PierreBeucher/cloudypad/master/install.sh | sh
 ```
 
 You may need to setup a few things on your Cloud provider (eg. API key or SSH key). Checkout [per-Clouder setup specifities](#detailed-setup-per-clouder).
