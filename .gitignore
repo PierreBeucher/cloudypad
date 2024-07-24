@@ -1,3 +1,5 @@
 tmp/
 .pnpm-store
 pulumi/aws/Pulumi.*.yaml
+**/node_modules
+**/dist

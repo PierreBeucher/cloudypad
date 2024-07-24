@@ -2,6 +2,7 @@
 services:
   wolf:
     image: ghcr.io/games-on-whales/wolf:stable@sha256:36ce80055729876ece0445bdf859564b07e3522706544ffd4ca4e91e7107a855
+    container_name: wolf
     environment:
       XDG_RUNTIME_DIR: /tmp/sockets
       NVIDIA_DRIVER_VOLUME_NAME: "{{ nvidia_driver_volume_name }}"
