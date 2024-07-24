@@ -87,7 +87,7 @@ if [ -n "${STARTUP_FILE}" ]; then
     LINE_TO_ADD="export PATH=\$PATH:${INSTALL_DIR}"
     if ! grep -q "# add CloudyPad CLI PATH" "${STARTUP_FILE}"; then
         echo "Adding ${INSTALL_DIR} to \$PATH in ${STARTUP_FILE}"
-        printf "\\n# add CloudyPad CLI PATH\\n%s\\necho "SOURCED"\\n" "${LINE_TO_ADD}" >> "${STARTUP_FILE}"
+        printf "\\n# add CloudyPad CLI PATH\\n%s\\n\\n" "${LINE_TO_ADD}" >> "${STARTUP_FILE}"
     fi
 fi
 
