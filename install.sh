@@ -5,9 +5,8 @@ set -e
 # Installation arguments
 # Override by setting related environment variable
 CLOUDYPAD_HOME=${CLOUDYPAD_HOME:-"$HOME/.cloudypad"}
-
-# TODO use tagged/fixed version
-CLOUDYPAD_SCRIPT_URL="https://raw.githubusercontent.com/PierreBeucher/cloudypad/fixes-and-improvements/cloudypad.sh"
+CLOUDYPAD_VERSION=0.1.0
+CLOUDYPAD_SCRIPT_URL="https://raw.githubusercontent.com/PierreBeucher/cloudypad/$CLOUDYPAD_VERSION/cloudypad.sh"
 # ===
 
 # Constants, do not override

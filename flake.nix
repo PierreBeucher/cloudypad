@@ -13,7 +13,7 @@
           default = cloudypad;
           cloudypad  = pkgs.stdenv.mkDerivation {
             pname = "cloudypad";
-            version = "0.1.0-rc1";
+            version = "0.1.0";
 
             src = pkgs.fetchurl {
               url = "https://raw.githubusercontent.com/PierreBeucher/cloudypad/fixes-and-improvements/cloudypad.sh";

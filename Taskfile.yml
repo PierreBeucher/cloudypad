@@ -47,8 +47,10 @@ tasks:
       -g typescript-axios
       -o {{ .PAPERSPACE_GENERATED_DIR }}
 
-    # Generate TS files are using import like `import xxx from './configuration';`
-    # But we need `import xxx from './configuration.js';`
-    # Replace accordingly 
-    # - find paperspace/generated-api -type f -exec sed -i -E "s/(['\"])\.\/(.*?)\1/\1\.\/\2.js\1/g" {} +
- 
+  release-prepare:
+    cmd: ./hack/prepare-release.sh
+  
+  release-build-image:
+    cmd: ./hack/build-release.sh
+
+  
