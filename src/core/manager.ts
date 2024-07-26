@@ -111,11 +111,11 @@ export class InstanceManager {
     }
 
     isProvisioned(): boolean{
-        return this.sm.get().status.initalized &&this.sm.get().status.provision.provisioned
+        return this.sm.get().status.initalized && this.sm.get().status.provision.provisioned
     }
 
     isConfigured(): boolean{
-        return this.sm.get().status.initalized &&this.sm.get().status.configuration.configured
+        return this.sm.get().status.initalized && this.sm.get().status.configuration.configured
     }
 
     private getCurrentProviderName(): string {
