@@ -195,6 +195,16 @@ export class PaperspaceClient {
         }
     }
 
+    async machineExists(machineId: string) : Promise<boolean>{
+        const machines = await this.listMachines()
+        for(const m of machines){
+            if(m.id === machineId){
+                return true
+            }
+        }
+        return false
+    }
+
     async machineWithNameExists(name: string) : Promise<boolean>{
         const machines = await this.listMachines({ name: name})
         return machines.length > 0

@@ -50,6 +50,11 @@ export class PaperspaceProvisioner extends BaseInstanceProvisioner implements In
             throw new Error(`Missing provision args in state: ${state}`)
         }
 
+        if(state.provider.paperspace.machineId){
+            this.logger.info(`Paperspaced machine ${state.provider.paperspace.machineId} already provisioned for ${state.name}. Nothing to do.`)
+            return 
+        }
+
         const client = await this.buildPaperspaceClient()
 
         const args = state.provider.paperspace.provisionArgs
@@ -117,10 +122,18 @@ Do you want to proceed?`,
 
             const createdMachine = await client.createMachine(createArgs);
 
+            console.info(`Creating Paperspace machine ${createdMachine.id} named ${createdMachine.name}`)
+
             this.sm.update({
                 provider: {
                     paperspace: {
                         machineId: createdMachine.id
+                    }
+                },
+                status: {
+                    provision: {
+                        provisioned: true,
+                        lastUpdate: Date.now()
                     }
                 }
             })
@@ -155,16 +168,36 @@ Do you want to proceed?`,
 
         const client = await this.buildPaperspaceClient()
 
-        const confirmCreation = await confirm({
+        const confirmDeletion = await confirm({
             message: `You are about to destroy Paperspace instance ${state.name} (machine ${state.provider?.paperspace?.machineId}). Please confirm:`,
             default: false,
         })
 
-        if (!confirmCreation) {
+        if (!confirmDeletion) {
             throw new Error('Destroy aborted.');
         }
 
-        client.deleteMachine(state.provider.paperspace.machineId)
+        const machineExists = await client.machineExists(state.provider.paperspace.machineId)
+
+        if(!machineExists){
+            this.logger.warn(`Machine ${state.provider.paperspace.machineId} not found. Was it already deleted ?`)
+        } else {
+            await client.deleteMachine(state.provider.paperspace.machineId)
+        }
+
+        this.sm.update({
+            provider: {
+                paperspace: {
+                    machineId: undefined
+                }
+            },
+            status: {
+                provision: {
+                    provisioned: false,
+                    lastUpdate: Date.now()
+                }
+            }
+        })
 
     }
 

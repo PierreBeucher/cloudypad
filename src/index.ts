@@ -107,7 +107,6 @@ program
             const m = await GlobalInstanceManager.get().getInstanceManager(name)
             const p = await m.getInstanceProvisioner()
             await p.provision()
-            console.info("")
             console.info(`Provisioned instance ${name}`)
         } catch (error) {
             console.error(`Error provisioning instance ${name}:`, error);
@@ -137,6 +136,7 @@ program
             const m = await GlobalInstanceManager.get().getInstanceManager(name)
 
             if (m.isProvisioned()) {
+
                 const p = await m.getInstanceProvisioner()
                 await p.destroy()
             }
