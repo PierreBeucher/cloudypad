@@ -4,19 +4,6 @@ import { InstanceState, StateManager } from '../../core/state';
 import { PaperspaceClient } from './client/client';
 import { MachinesCreateRequest } from './client/generated-api';
 
-export interface PaperspaceProvisionArgs {
-    useExisting?: {
-        machineId: string
-        publicIp: string
-    }
-    create?: {
-        machineType: string
-        diskSize: number
-        publicIpType: 'static' | 'dynamic'
-        region: string
-    }
-}
-
 export class PaperspaceProvisioner extends BaseInstanceProvisioner implements InstanceProvisioner {
     
     constructor(sm: StateManager){

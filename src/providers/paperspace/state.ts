@@ -1,4 +1,4 @@
-import { PaperspaceProvisionArgs } from "./provisioner"
+import { PaperspaceProvisionArgs } from "./initializer"
 
 export interface PaperspaceProviderState {
     machineId?: string,

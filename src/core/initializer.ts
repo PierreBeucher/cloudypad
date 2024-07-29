@@ -2,50 +2,74 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';
 import { input, select, confirm } from '@inquirer/prompts';
-import { InstanceRunner } from './runner';
-import { CLOUDYPAD_PROVIDER, CLOUDYPAD_PROVIDER_AWS, CLOUDYPAD_PROVIDER_PAPERSPACE } from './const';
-import { AwsProvisioner } from '../providers/aws/provisioner';
 import { AnsibleConfigurator } from '../configurators/ansible';
-import { AwsInstanceRunner } from '../providers/aws/runner';
-import { InstanceProvisioner } from './provisioner';
 import { InstanceState, StateManager } from './state';
 import { GlobalInstanceManager, InstanceManager } from './manager';
-import { PaperspaceProvisioner } from '../providers/paperspace/provisioner';
-import { PaperspaceInstanceRunner } from '../providers/paperspace/runner';
-import { PaperspaceInitializerPrompt } from '../providers/paperspace/initializer';
-import { AwsInitializerPrompt } from '../providers/aws/initializer';
-import { getLogger, Logger } from '../log/utils';
+import { getLogger } from '../log/utils';
+import { PartialDeep } from 'type-fest';
+
+export interface GenericInitializationArgs {
+    instanceName: string,
+    sshKey: string
+}
 
 /**
- * Instance initializer create the initial state of an instance 
- * and pass it through various initialization phases, updating state as it goes:
- * - Initial creation
+ * Instance initializer create the initial state of an instance and
+ * pass through various initialization phases, updating instance state as it goes:
+ * - Initial state creation
  * - Provisioning
  * - Configuration
  * - Pairing
  * 
- * Initializer can take arguments directly or will prompt for missing arguments. 
+ * Helper prompts by provider are used to gather user inputs, either
+ * from CLI flags or by letting user choose interactively. 
  */
-export class InstanceInitializer {
+export abstract class InstanceInitializer {
 
-    protected readonly logger = getLogger(InstanceInitializer.name)
+    private readonly logger = getLogger(InstanceInitializer.name)
 
-    public async initializeNew(defaultState?: Partial<InstanceState>) {
-        
-        this.logger.debug(`Initialzazing a new instance with default ${JSON.stringify(defaultState)}`)
-        
-        const instanceName = await this.instanceName(defaultState?.name)
-        
-        console.info(`Creating instance: ${instanceName}`)
-        this.logger.info(`Creating instance: ${instanceName}`)
+    private readonly defaultArgs: PartialDeep<GenericInitializationArgs>
 
-        const privateSshKey = await this.privateSshKey(defaultState?.ssh?.privateKeyPath)
-        const providerName = await this.provider()
+    constructor(defaultGenericArgs?: PartialDeep<GenericInitializationArgs>){
+        this.defaultArgs = defaultGenericArgs ?? {}
+    }
+
+    protected async getGenericInitArgs(): Promise<GenericInitializationArgs> {
+
+        this.logger.debug(`Creating instance: default generic arguments ${JSON.stringify(this.defaultArgs)}`)
+        
+        const genericPromt = new GenericInitializerPrompt()
+        const name = await genericPromt.instanceName(this.defaultArgs?.instanceName)
+        const sshKey = await genericPromt.privateSshKey(this.defaultArgs?.sshKey)
+
+        return {
+            instanceName: name,
+            sshKey: sshKey
+        }
+    }
+
+    protected abstract runProvisioning(sm: StateManager): Promise<void>
+
+    protected abstract runPairing(sm: StateManager): Promise<void>
+    
+    protected async runConfiguration(sm: StateManager){
+        const configurator = new AnsibleConfigurator(sm)
+        await configurator.configure()
+    }
+
+    public async initializeInstance(){
+
+        const genericArgs = await this.getGenericInitArgs()
+
+        this.logger.debug(`Initializing a new instance with args ${JSON.stringify(genericArgs)}`)
+        
+        console.info(`Creating instance ${genericArgs.instanceName}`)
+        this.logger.info(`Creating instance ${genericArgs.instanceName}²`)
         
         const initialState: InstanceState = {
-            name: instanceName,
+            name: genericArgs.instanceName,
             ssh: {
-                privateKeyPath: privateSshKey,
+                privateKeyPath: genericArgs.sshKey,
             },
             status: {
                 initalized: false,
@@ -58,74 +82,29 @@ export class InstanceInitializer {
             }
         }
 
-        this.logger.debug(`Creating ${instanceName}: initial state is ${JSON.stringify(initialState)}`)
+        this.logger.debug(`Creating ${genericArgs.instanceName}: initial state is ${JSON.stringify(initialState)}`)
 
         const sm = new StateManager(initialState)
 
-        // Create instance directory
-        const instanceDir = GlobalInstanceManager.get().getInstanceDir(instanceName)
-        this.logger.debug(`Creating ${instanceName}: creating instance dir at ${instanceDir}`)
+        // Create instance directory in which to persist state
+        const instanceDir = GlobalInstanceManager.get().getInstanceDir(genericArgs.instanceName)
+
+        this.logger.debug(`Creating ${genericArgs.instanceName}: creating instance dir at ${instanceDir}`)
+
         fs.mkdirSync(instanceDir, { recursive: true })
-
-        this.logger.debug(`Creating ${instanceName}: using provider ${providerName}`)
-
-        // TODO maybe merge prompt and provider together to prompt if provision args are missing
-        // Maybe check for initalized and no provider object on run of provision to dynamically update it ?
-        let provider: InstanceProvisioner;
-        if (providerName === CLOUDYPAD_PROVIDER_PAPERSPACE) {
-            
-            const promptResult = await new PaperspaceInitializerPrompt().prompt()
-            sm.update({ 
-                ssh: {
-                    user: "paperspace"
-                },
-                provider: { 
-                    paperspace: { 
-                        apiKey: promptResult.apiKey,
-                        provisionArgs: promptResult.args
-                    }
-                }
-            })
-
-            provider = new PaperspaceProvisioner(sm)
-
-        } else if (providerName === CLOUDYPAD_PROVIDER_AWS) {
-            
-            const args = await new AwsInitializerPrompt().prompt()
-            sm.update({ 
-                ssh: {
-                    user: "ubuntu"
-                },
-                provider: { aws: { provisionArgs: args }}
-            })
-
-            provider = new AwsProvisioner(sm)
-        } else {
-            throw new Error(`Unknown Provider: ${providerName}`)
-        }
-
-        this.logger.info(`Creating ${instanceName}: provisionning...}`)
-        this.logger.debug(`Creating ${instanceName}: starting provision with state ${sm.get()}`)
         
-        await provider.provision()
+        this.logger.info(`Creating ${genericArgs.instanceName}: provisionning...}`)
+        this.logger.debug(`Creating ${genericArgs.instanceName}: starting provision with state ${sm.get()}`)
+        
+        await this.runProvisioning(sm)
+        
+        this.logger.info(`Creating ${genericArgs.instanceName}: provision done.}`)
 
-        this.logger.info(`Creating ${instanceName}: provision done.}`)
-
-        this.logger.info(`Creating ${instanceName}: configuring...}`)
-
-        const configurator = new AnsibleConfigurator(sm)
-        await configurator.configure()
-
-        this.logger.info(`Creating ${instanceName}: configuration done.}`)
-
-        let runner: InstanceRunner
-        if (providerName === CLOUDYPAD_PROVIDER_PAPERSPACE) {
-            runner = new PaperspaceInstanceRunner(sm)
-        } else if (providerName === CLOUDYPAD_PROVIDER_AWS) {
-            runner= new AwsInstanceRunner(sm)
-        } else {
-            throw new Error(`Unknown Provider: ${providerName}`)
-        }
+        this.logger.info(`Creating ${genericArgs.instanceName}: configuring...}`)
+        
+        await this.runConfiguration(sm)
+        
+        this.logger.info(`Creating ${genericArgs.instanceName}: configuration done.}`)
 
         const doPair = await confirm({
             message: `Your instance is almost ready ! Do you want to pair Moonlight now?`,
@@ -133,24 +112,30 @@ export class InstanceInitializer {
         })
 
         if (doPair) {
-            this.logger.info(`Creating ${instanceName}: pairing...}`)
-            await runner.pair()
+            this.logger.info(`Creating ${genericArgs.instanceName}: pairing...}`)
 
-            this.logger.info(`Creating ${instanceName}: pairing done.}`)
+            await this.runPairing(sm)
+
+            this.logger.info(`Creating ${genericArgs.instanceName}: pairing done.}`)
         } else {
-            this.logger.info(`Creating ${instanceName}: pairing skipped.}`)
+            this.logger.info(`Creating ${genericArgs.instanceName}: pairing skipped.}`)
         }
 
         console.info("")
-        console.info("Instead has been initialized successfully 🥳")
+        console.info("Instance has been initialized successfully 🥳")
         console.info("")
         console.info("If you like Cloudy Pad please leave us a star ⭐ https://github.com/PierreBeucher/cloudypad")
         console.info("")
         console.info("🐛 A bug ? Some feedback ? Do not hesitate to file an issue: https://github.com/PierreBeucher/cloudypad/issues")
         
     }
+}
 
-    protected async instanceName(_instanceName?: string): Promise<string> {
+export class GenericInitializerPrompt {
+
+    private readonly logger = getLogger(GenericInitializerPrompt.name)
+
+    async instanceName(_instanceName?: string): Promise<string> {
         let instanceName: string
         
         if (_instanceName) {
@@ -177,24 +162,7 @@ export class InstanceInitializer {
         return instanceName
     }
 
-    protected async provider(_provider?: CLOUDYPAD_PROVIDER): Promise<CLOUDYPAD_PROVIDER>{
-        let provider: CLOUDYPAD_PROVIDER
-        if (_provider) {
-            provider = _provider;
-        } else {
-            provider = await select({
-                message: 'Select Cloud provider:',
-                choices: [
-                    { name: CLOUDYPAD_PROVIDER_AWS, value: CLOUDYPAD_PROVIDER_AWS },
-                    { name: CLOUDYPAD_PROVIDER_PAPERSPACE, value: CLOUDYPAD_PROVIDER_PAPERSPACE }
-                ]
-            })
-        }
-
-        return provider
-    }
-
-    protected async privateSshKey(privateSshKey?: string): Promise<string> {
+    async privateSshKey(privateSshKey?: string): Promise<string> {
         if (privateSshKey) {
             return privateSshKey;
         }
@@ -238,7 +206,3 @@ export class InstanceInitializer {
         return privateKeyPath;
     }
 }
-
-
-
-

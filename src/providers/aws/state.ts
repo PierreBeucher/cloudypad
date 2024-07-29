@@ -1,6 +1,6 @@
-import { AwsInitializationArgs } from "./initializer";
+import { AwsProvisionArgs } from "./initializer";
 
 export interface AwsProviderState {
     instanceId?: string,
-    provisionArgs?: AwsInitializationArgs
+    provisionArgs?: AwsProvisionArgs
 }

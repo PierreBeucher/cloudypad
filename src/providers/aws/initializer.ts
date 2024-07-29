@@ -3,8 +3,13 @@ import { loadConfig } from "@smithy/node-config-provider";
 import { NODE_REGION_CONFIG_FILE_OPTIONS, NODE_REGION_CONFIG_OPTIONS } from "@smithy/config-resolver";
 import { PartialDeep } from 'type-fest';
 import { AwsClient } from '../../tools/aws';
+import { InstanceInitializer, GenericInitializationArgs } from '../../core/initializer';
+import { StateManager } from '../../core/state';
+import { CLOUDYPAD_PROVIDER_AWS } from '../../core/const';
+import { AwsProvisioner } from './provisioner';
+import { AwsInstanceRunner } from './runner';
 
-export interface AwsInitializationArgs {
+export interface AwsProvisionArgs {
     create?: {
         instanceType: string
         diskSize: number
@@ -13,14 +18,42 @@ export interface AwsInitializationArgs {
     }
 }
 
-export class AwsInitializerPrompt {
+export class AwsInstanceInitializer extends InstanceInitializer {
+
+    private readonly defaultAwsArgs: PartialDeep<AwsProvisionArgs>
+
+    constructor(genericArgs?: PartialDeep<Omit<GenericInitializationArgs, "provider">>, defaultAwsArgs?: PartialDeep<AwsProvisionArgs>){
+        super(genericArgs)
+        this.defaultAwsArgs = defaultAwsArgs ?? {}
+    }
+
+    protected async runProvisioning(sm: StateManager) {
+        const args = await new AwsInitializerPrompt().prompt(this.defaultAwsArgs)
+        
+        sm.update({ 
+            ssh: {
+                user: "ubuntu"
+            },
+            provider: { aws: { provisionArgs: args }}
+        })
+
+        await new AwsProvisioner(sm).provision()
+    }
+
+    protected async runPairing(sm: StateManager) {
+        await new AwsInstanceRunner(sm).pair()
+    }
+    
+}
+
+class AwsInitializerPrompt {
 
     private awsClient: AwsClient
     constructor(){
         this.awsClient = new AwsClient(AwsInitializerPrompt.name)
     }
 
-    async prompt(opts?: PartialDeep<AwsInitializationArgs>): Promise<AwsInitializationArgs> {
+    async prompt(opts?: PartialDeep<AwsProvisionArgs>): Promise<AwsProvisionArgs> {
 
         await this.awsClient.checkAwsAuth()
         const instanceType = await this.instanceType(opts?.create?.instanceType);

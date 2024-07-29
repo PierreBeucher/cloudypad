@@ -1,9 +1,13 @@
 #! /usr/bin/env node
 
 import { version } from '../package.json';
-import { Command } from 'commander';
+import { Command, createOption } from 'commander';
 import { GlobalInstanceManager } from './core/manager';
 import { setDefaultVerbosity } from './log/utils';
+import { AwsProvisionArgs, AwsInstanceInitializer } from './providers/aws/initializer';
+import { PartialDeep } from 'type-fest';
+import { PaperspaceInstanceInitializer, PaperspaceProvisionArgs } from './providers/paperspace/initializer';
+import * as fs from 'fs'
 
 const program = new Command();
 
@@ -15,6 +19,91 @@ program
         (v) => { setDefaultVerbosity(Number.parseInt(v)) })
     .configureHelp({ showGlobalOptions: true})
     .version(version);
+    
+const createNameOpt = createOption('--name <name>', 'Instance name')
+const createSshKeyOpt = createOption('--private-ssh-key <path>', 'Path to private SSH key to use to connect to instance.')
+
+const createCmd = program
+    .command('create')
+    .description('Create a new instance, prompting for details. Use `create <provider> for provider-specific creation commands.`')
+    .action(async (opts) => {
+        try {
+            await GlobalInstanceManager.get().promptInstanceInitializer({
+                instanceName: opts.name,
+                sshKey: opts.privateSshKey,
+            })
+        } catch (error) {
+            console.error('Error creating new instance:', error);
+        }
+    })
+
+createCmd
+    .command('aws')
+    .description('Create a new Cloudy Pad instance using AWS Cloud provider')
+    .option('--name <name>', 'Instance name')
+    .option('--private-ssh-key <path>', 'Path to private SSH key to use to connect to instance')
+    .option('--instance-type <type>', 'EC2 instance type')
+    .option('--disk-size <size>', 'Disk size in GB', parseInt)
+    .option('--public-ip-type <type>', 'Public IP type. Either "static" or "dynamic"')
+    .option('--region <region>', 'Region in which to deploy instance')
+    .action(async (options) => {
+        try {
+            const genericArgs = {
+                instanceName: options.name,
+                sshKey: options.privateSshKey,
+            }
+
+            const awsArgs: PartialDeep<AwsProvisionArgs> = {
+                create: {
+                    instanceType: options.instanceType,
+                    diskSize: options.diskSize,
+                    publicIpType: options.publicIpType,
+                    region: options.region,
+                }
+            }
+ 
+            await new AwsInstanceInitializer(genericArgs, awsArgs).initializeInstance()
+            
+        } catch (error) {
+            console.error('Error creating AWS instance:', error);
+        }
+    })
+
+createCmd
+    .command('paperspace')
+    .description('Create a new Cloudy Pad instance using Paperspace Cloud provider')
+    .option('--name <name>', 'Instance name')
+    .option('--private-ssh-key <path>', 'Path to private SSH key to use to connect to instance')
+    .option('--api-key-file <apikeyfile>', 'Path to Paperspace API key file')
+    .option('--machine-type <type>', 'Machine type')
+    .option('--disk-size <size>', 'Disk size in GB', parseInt)
+    .option('--public-ip-type <type>', 'Public IP type. Either "static" or "dynamic"')
+    .option('--region <region>', 'Region in which to deploy instance')
+    .action(async (options) => {
+        try {
+            const genericArgs = {
+                instanceName: options.name,
+                sshKey: options.privateSshKey,
+            }
+
+            const apiKey = options.apiKeyFile ? fs.readFileSync(options.apiKeyFile, 'utf-8') : undefined
+            const pspaceArgs: PartialDeep<PaperspaceProvisionArgs> = {
+                apiKey: apiKey,
+                create: {
+                    machineType: options.machineType,
+                    diskSize: options.diskSize,
+                    publicIpType: options.publicIpType,
+                    region: options.region,
+                }
+            }
+ 
+            await new PaperspaceInstanceInitializer(genericArgs, pspaceArgs).initializeInstance()
+            
+        } catch (error) {
+            console.error('Error creating Paperspace instance:', error);
+        }
+    })
+
 
 program
     .command('list')
@@ -29,17 +118,6 @@ program
             console.info(instanceNames.join("\n"))
         } catch (error) {
             console.error('Error listing instances:', error);
-        }
-    })
-
-program
-    .command('create [name]')
-    .description('Create a new instance')
-    .action(async (name) => {
-        try {
-            await GlobalInstanceManager.get().createInstance({ name: name });
-        } catch (error) {
-            console.error('Error creating new instance:', error);
         }
     })
 

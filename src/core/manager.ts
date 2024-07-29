@@ -1,18 +1,21 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import * as yaml from 'js-yaml'
-import { CLOUDYPAD_INSTANCES_DIR, CLOUDYPAD_PROVIDER_AWS, CLOUDYPAD_PROVIDER_PAPERSPACE } from './const';
+import { CLOUDYPAD_INSTANCES_DIR, CLOUDYPAD_PROVIDER, CLOUDYPAD_PROVIDER_AWS, CLOUDYPAD_PROVIDER_PAPERSPACE } from './const';
 import { InstanceState, StateManager } from './state';
 import { InstanceRunner } from './runner';
 import { AwsInstanceRunner } from '../providers/aws/runner';
 import { InstanceProvisioner } from './provisioner';
 import { AwsProvisioner } from '../providers/aws/provisioner';
 import { AnsibleConfigurator } from '../configurators/ansible';
-import { InstanceInitializer } from './initializer';
 import { PaperspaceInstanceRunner } from '../providers/paperspace/runner';
 import { PaperspaceProvisioner } from '../providers/paperspace/provisioner';
 import { InstanceConfigurator } from './configurator';
 import { getLogger } from '../log/utils';
+import { GenericInitializationArgs, InstanceInitializer } from './initializer';
+import { AwsInstanceInitializer } from '../providers/aws/initializer';
+import { PaperspaceInstanceInitializer } from '../providers/paperspace/initializer';
+import { select } from '@inquirer/prompts';
 
 /**
  * Utility class to manage instances globally. Instance state
@@ -83,9 +86,20 @@ export class GlobalInstanceManager {
         return new StateManager(state)
     }
 
-    async createInstance(defaultState?: Partial<InstanceState>){
-        const initializer = new InstanceInitializer()
-        await initializer.initializeNew(defaultState)
+    /**
+     * Let user select a provider and return the related InstanceInitializer object
+     * @param args 
+     * @returns 
+     */
+    async promptInstanceInitializer(args?: GenericInitializationArgs): Promise<InstanceInitializer>{
+
+        return await select<InstanceInitializer>({
+            message: 'Select Cloud provide:',
+            choices: [
+                { name: CLOUDYPAD_PROVIDER_AWS, value: new AwsInstanceInitializer(args) },
+                { name: CLOUDYPAD_PROVIDER_PAPERSPACE, value: new PaperspaceInstanceInitializer(args) }
+            ]
+        })
     }
 
     async getInstanceManager(instanceName: string){
