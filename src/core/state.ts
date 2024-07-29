@@ -112,7 +112,7 @@ export class StateManager {
 
     async update(data: PartialDeep<InstanceState>){
         this.logger.debug(`Updating state for ${this.state.name}`)
-        this.logger.trace(`Updating state for ${this.state.name} with ${data}`)
+        this.logger.trace(`Updating state for ${this.state.name} with ${JSON.stringify(data)}`)
 
         lodash.merge(this.state, data)
         await this.persist()

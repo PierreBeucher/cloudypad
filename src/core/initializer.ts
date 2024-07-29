@@ -53,7 +53,11 @@ export abstract class InstanceInitializer {
     protected abstract runPairing(sm: StateManager): Promise<void>
     
     protected async runConfiguration(sm: StateManager){
-        const configurator = new AnsibleConfigurator(sm)
+        // Ignore host key checking only during initialization to bypass host key checking
+        // which will be unkwown anyway as it's a new cloud machine
+        // This will persist host key in known_hosts for subsequent runs
+        const additionalAnsibleArgs = ['-e', '\'ansible_ssh_common_args="-o StrictHostKeyChecking=no"\'']
+        const configurator = new AnsibleConfigurator(sm, additionalAnsibleArgs)
         await configurator.configure()
     }
 
