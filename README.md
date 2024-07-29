@@ -343,7 +343,7 @@ In order to play games on Steam you may need to enable Proton:
 - Go to game properties (_Gear button on the right > Properties_)
 - Enable Proton in the Compatibility menu
 
-It's recommended to check your game Proton compatibility [ProtonDB](https://www.protondb.com/). You may need to add a few Launch options (_Game properties > General > Launch options_).
+It's recommended to check your game Proton compatibility on [ProtonDB](https://www.protondb.com/). You may need to add a few Launch options (_Game properties > General > Launch options_).
 
 ### Using Steam, why does my game take forever to "cache Vulkan shader" ?
 
