@@ -264,7 +264,7 @@ export class AwsPulumiClient extends InstancePulumiClient<PulumiStackConfigAws, 
         this.logger.debug(`Setting stack ${this.stackName} config: ${JSON.stringify(config)}`)
 
         const stack = await this.getStack()
-        await stack.setConfig("region", { value: config.region})
+        await stack.setConfig("aws:region", { value: config.region})
         await stack.setConfig("instanceType", { value: config.instanceType})
         await stack.setConfig("rootVolumeSizeGB", { value: config.rootVolumeSizeGB.toString()})
         await stack.setConfig("publicSshKeyContent", { value: config.publicSshKeyContent})
