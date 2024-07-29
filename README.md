@@ -12,6 +12,8 @@ Your own gaming gear in the Cloud ! 🎮 ⛅
 - [Detailed setup per Clouder](#detailed-setup-per-clouder)
   - [Paperspace](#paperspace)
   - [AWS](#aws)
+    - [Quotas](#quotas)
+    - [Profile and environment variables](#profile-and-environment-variables)
 - [FAQ](#faq)
   - [How much will I pay ? 🫰](#how-much-will-i-pay--)
     - [Paperspace](#paperspace-1)
@@ -253,13 +255,25 @@ You're good to go ! Create your instance with
 cloudypad create
 ```
 
-Note: you may need to increase quota to create the related instance type. If you get an error related to quota:
+#### Quotas
+
+You may need to increase quota to create the related instance type. If you get an error related to quota:
 - Go to AWS console and open "Service Quotas" service
 - Go to _AWS Services_ > search for _Amazon Elastic Compute Cloud (Amazon EC2)_ and open it
 - Search for _Running On-Demand G and VT instances_ (or the related instance type) and request a quota increase
 - Use a quota value according to the instance type you want to use. For example, `2xlarge` requires at least 8 vCPU.
 
 See [AWS service quotas](https://docs.aws.amazon.com/general/latest/gr/aws_service_limits.html) for details.
+
+#### Profile and environment variables 
+
+If you want to use an AWS Profile or specific AWS credentials, use environment variables such as:
+
+```sh
+export AWS_PROFILE=myprofile
+```
+
+See [AWS environment variable list](https://docs.aws.amazon.com/sdkref/latest/guide/settings-reference.html#EVarSettings) for existing variables. Not there are certain limitations as most Cloudy Pad workflow run in a container which may cause some variables to misbehave. Please create an issue if you encounter a problem. 
 
 ## FAQ
 

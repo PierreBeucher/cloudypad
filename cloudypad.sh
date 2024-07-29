@@ -89,6 +89,19 @@ run_cloudypad_docker() {
         fi
     done
 
+    # Local environment variables to pass-through in container
+    local env_vars=(
+        "AWS_PROFILE" "AWS_ACCESS_KEY_ID" "AWS_SECRET_ACCESS_KEY" "AWS_SESSION_TOKEN" 
+        "AWS_DEFAULT_REGION" "AWS_REGION" "AWS_ENDPOINT_URL" "AWS_PROFILE" 
+        "AWS_ROLE_ARN" "AWS_ROLE_SESSION_NAME"
+    )
+
+    for env_var in "${env_vars[@]}"; do
+        if [ -n "${!env_var}" ]; then
+            cmd+=" -e $env_var=${!env_var}"
+        fi
+    done
+
     # Add SSH agent volume and env var if it's available locally
     if [ -n "$SSH_AUTH_SOCK" ]; then
         cmd+=" -v $SSH_AUTH_SOCK:/ssh-agent -e SSH_AUTH_SOCK=/ssh-agent"
