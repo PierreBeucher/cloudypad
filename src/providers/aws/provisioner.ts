@@ -5,19 +5,6 @@ import { AwsPulumiClient, PulumiStackConfigAws } from '../../tools/pulumi/aws';
 import { BaseInstanceProvisioner, InstanceProvisioner } from '../../core/provisioner';
 import { StateManager } from '../../core/state';
 
-export interface AWSProvisionArgs {
-    useExisting?: {
-        instanceId: string
-        publicIp: string
-    }
-    create?: {
-        instanceType: string
-        diskSize: number
-        publicIpType: string
-        region: string
-    }
-}
-
 export class AwsProvisioner extends BaseInstanceProvisioner implements InstanceProvisioner {
 
     constructor(sm: StateManager){
@@ -45,19 +32,7 @@ export class AwsProvisioner extends BaseInstanceProvisioner implements InstanceP
 
         await this.checkAwsAuth()
 
-        if (args.useExisting) { 
-            await this.sm.update({
-                status: {
-                    initalized: true
-                },
-                host: args.useExisting.publicIp,
-                provider: {
-                    aws: {
-                        instanceId: args.useExisting.instanceId
-                    }
-                }
-            })
-        } else if (args.create){
+        if (args.create){
 
             const confirmCreation = await confirm({
                 message: `
@@ -107,7 +82,7 @@ Do you want to proceed?`,
                 }
             })
         } else {
-            throw new Error(`Provisioning AWS requires at least create or useExisting, got ${JSON.stringify(args)}`)
+            throw new Error(`Provisioning AWS requires creation of new instance, got ${JSON.stringify(args)}`)
         }
 
         await this.sm.update({
