@@ -21,6 +21,7 @@ Your own gaming gear in the Cloud ! 🎮 ⛅
   - [What are the recommended GPU and specs for my instance ?](#what-are-the-recommended-gpu-and-specs-for-my-instance-)
     - [AWS](#aws-2)
     - [Paperspace](#paperspace-2)
+  - [How can I log-in to Steam?](#how-can-i-log-in-to-steam)
   - [How to play game on Steam / Why does my Steam game doesn't launch ?](#how-to-play-game-on-steam--why-does-my-steam-game-doesnt-launch-)
   - [Using Steam, why does my game take forever to "cache Vulkan shader" ?](#using-steam-why-does-my-game-take-forever-to-cache-vulkan-shader-)
   - [I have a black screen when I connect to my instance](#i-have-a-black-screen-when-i-connect-to-my-instance)
@@ -71,7 +72,7 @@ Not familiar with terms like _"Cloud gaming"_, _"Moonlight"_, _"Cloud Provider"_
 
 Cloudy Pad deploys a Cloud gaming gear using a Cloud provider of your choice:
 - 💸 While Cloudy Pad itself is free and open-source, charges may incur for Cloud provider usage. Make sure you [understand the costs](#how-much-will-i-pay--) 
-- Cloudy Pad lets you play on Linux. Using Steam may require [Proton](https://www.protondb.com/). You can check your game compatibility on [Proton website](https://www.protondb.com/) or see [how to play games on Steam](#how-to-play-game-on-steam--why-does-my-steam-game-doesnt-launch-).
+- Cloudy Pad lets you play on Linux. Using Steam may require [Proton](https://github.com/ValveSoftware/Proton). You can check your game compatibility on [ProtonDB website](https://www.protondb.com/) or see [how to play games on Steam](#how-to-play-game-on-steam--why-does-my-steam-game-doesnt-launch-).
 
 Prerequisites:
 - A Cloud provider account, one of:
@@ -327,6 +328,13 @@ General recommendations:
 Paperspace `RTX4000` or `P4000` or `M4000` are relatively cheap and powerful enough for most use. A `P4000` can run Baldur's Gate 3 in Ultra with 60 FPS 1080 without issues.
 
 Use higher-tier instance if you have latency related to resource consumption.
+
+### How can I log-in to Steam?
+
+When you run Steam, you'll be prompted to login either via QR code or login/password. You can either:
+
+- Enter your login / password manually
+- Use the Steam app to login via QR code: download and login with the Steam app on your smartphone, then click on the Steam Guard icon (shield icon at the bottom) and scan the QR code shown. 
 
 ### How to play game on Steam / Why does my Steam game doesn't launch ?
 
