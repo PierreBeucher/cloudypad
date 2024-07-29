@@ -25,6 +25,8 @@ Your own gaming gear in the Cloud ! 🎮 ⛅
   - [I Found an bug or I have a suggestion](#i-found-an-bug-or-i-have-a-suggestion)
   - [How does all of this work?](#how-does-all-of-this-work)
   - [Will Cloudy Pad become a paid product ?](#will-cloudy-pad-become-a-paid-product-)
+- [Known issues](#known-issues)
+  - [Docker for MacOS and VirtioFS](#docker-for-macos-and-virtiofs)
 - [License](#license)
 
 ## What is Cloudy Pad ?
@@ -348,6 +350,21 @@ If you found a bug or have a suggestion, [please report an issue](https://github
 Probably not in its current form. Considering I'm really _not_ happy about the [enshittification of the internet](https://en.wikipedia.org/wiki/Enshittification), Cloudy Pad will remain FOSS - at least for personal use.
 
 Cloudy Pad may have a Premium or Pro offer in the future, but for a personal simple use it will remain FOSS.
+
+## Known issues
+
+### Docker for MacOS and VirtioFS 
+
+For MacOS, if your Docker installation use VirtioFS, Cloudy Pad may fail with a Docker-related error such as: 
+
+```
+Error response from daemon: error while creating mount source path '/private/tmp/com.apple.launchd.ABCDEF/Listeners': mkdir /private/tmp/com.apple.launchd.ABCDEF/Listeners: operation not supported
+```
+
+This is a bug when using Docker for Mac VirtioFS file sharing with SSH agent. The bug is still being worked on, as a workaround you can either:
+
+- Disable SSH agent before running Cloudy Pad, eg. `unset SSH_AUTH_SOCK`
+- Switch Docker for Mac config to non-VirtioFS (eg. gRPC FUSE): go to _config > Resources > File Sharing_ and update config. 
 
 ## License
 
