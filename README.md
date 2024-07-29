@@ -2,6 +2,7 @@
 
 Your own gaming gear in the Cloud ! 🎮 ⛅ 
 
+- [What is Cloudy Pad ?](#what-is-cloudy-pad-)
 - [Development status 🧪](#development-status-)
 - [Features ✨](#features-)
 - [Getting started 🚀](#getting-started-)
@@ -26,9 +27,23 @@ Your own gaming gear in the Cloud ! 🎮 ⛅
   - [Will Cloudy Pad become a paid product ?](#will-cloudy-pad-become-a-paid-product-)
 - [License](#license)
 
+## What is Cloudy Pad ?
+
+![](docs/assets/cloudypad-overview.png)
+
+Cloudy Pad lets you deploy a Cloud gaming server anywhere in the world and play your own games - without requiring a powerful gaming machine or a costly subscription:
+
+- Only pay what you play for ! No subscription or long-term commitment.
+- Occasional player? Pay less than $10 / month ! 
+- Play up to 40h / month for less than $40 
+- Use your own game library. Don't be limited to titles that you may lose access to.
+- Pick the machine and GPU suitable for your needs. 
+
+**Not familiar with Cloud Gaming ?** See [What's Cloud Gaming and how is Cloudy Pad useful ?](./docs/what-is-cloudy-pad.md)
+
 ## Development status 🧪
 
-This project is still at an experimental phase. While working and allowing you to play in the Cloud seamlessly, there may be breaking changes in the future. **Your feedback, bug reports and and contribution will be greatly appreciated !**
+This project is still at an experimental phase. While working and allowing you to play in the Cloud seamlessly, there may be breaking changes in the future. **Your feedback, bug reports and contribution will be greatly appreciated !**
 
 ## Features ✨
 
@@ -48,8 +63,10 @@ Potential future Cloud providers - upvote them on their GitHub issues!
 
 ## Getting started 🚀
 
+Not familiar with terms like _"Cloud gaming"_, _"Moonlight"_, _"Cloud Provider"_ _"terminal"_ or _"CLI" ? Visit [What's Cloud Gaming and how is Cloudy Pad useful ?](./docs/what-is-cloudy-pad.md) first 😉
+
 Cloudy Pad deploys a Cloud gaming gear using a Cloud provider of your choice:
-- 💸 While Cloudy Pad itself is free and open-source, charges may incur for Cloud provider usage. Make sure you [understand the costs](#how-much-will-i-pay--) 😉
+- 💸 While Cloudy Pad itself is free and open-source, charges may incur for Cloud provider usage. Make sure you [understand the costs](#how-much-will-i-pay--) 
 - Cloudy Pad lets you play on Linux. Using Steam may require [Proton](https://www.protondb.com/). You can check your game compatibility on [Proton website](https://www.protondb.com/) or see [how to play games on Steam](#how-to-play-game-on-steam--why-does-my-steam-game-doesnt-launch-).
 
 Prerequisites:
@@ -112,15 +129,15 @@ Options:
 
 Commands:
   list              List all instances
-  init [name]       Initialize a new instance.
-  start <name>      Start an instance with the given name
-  stop <name>       Stop an instance with the given name
-  restart <name>    Restart an instance with the given name
-  get <name>        Get details of an instance with the given name
-  provision <name>  Provision an instance with the given name
-  configure <name>  Configure an instance with the given name
-  destroy <name>    Destroy an instance with the given name
-  pair <name>       Pair an instance with Moonlight.
+  create [name]     Create a new instance
+  start <name>      Start an instance
+  stop <name>       Stop an instance
+  restart <name>    Restart an instance
+  get <name>        Get details of an instance
+  provision <name>  Provision an instance (deploy or update Cloud resources)
+  configure <name>  Configure an instance (connect to instance and install drivers, packages, etc.)
+  destroy <name>    Destroy an instance
+  pair <name>       Pair an instance with Moonlight
   help [command]    display help for command
 ```
 
