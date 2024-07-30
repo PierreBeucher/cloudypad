@@ -12,7 +12,7 @@ VERSION_REGEX="[0-9]\+\.[0-9]\+\.[0-9]\+\([-a-zA-Z0-9]*\)\?"
 
 # Replace CLOUDYPAD_VERSION in cloudypad.sh with any semantic version including those with additional characters
 sed -i "s/CLOUDYPAD_VERSION=$VERSION_REGEX/CLOUDYPAD_VERSION=$NEW_VERSION/" cloudypad.sh
-sed -i "s/CLOUDYPAD_VERSION=$VERSION_REGEX/CLOUDYPAD_VERSION=$NEW_VERSION/" install.sh
+sed -i "s/DEFAULT_CLOUDYPAD_VERSION=$VERSION_REGEX/DEFAULT_CLOUDYPAD_VERSION=$NEW_VERSION/" install.sh
 
 # Replace version in flake.nix with any semantic version including those with additional characters
 sed -i "s/version = \"$VERSION_REGEX\";/version = \"$NEW_VERSION\";/" flake.nix
