@@ -27,20 +27,26 @@ fi
 
 # Build Dockerfile on-the-fly
 # make sure the container's user ID and group match host to prevent permission issue
+HOST_UID=$(id -u)
+HOST_USER_NAME=$(id -un)
+HOST_GID=$(id -g)
+HOST_GROUP_NAME=$(id -gn)
 cat <<EOF > /tmp/Dockerfile-cloudypad-run
 FROM $CLOUDYPAD_IMAGE
 
-# Check if main group exists, create if not
-RUN if ! getent group $(id -gn) >/dev/null; then \
-    groupadd -g $(id -g) $(id -gn); \
-fi
+# Ensure the host user matches user in container:
+# - Delete user matching host's user ID if already exists
+# - Create group if not exists
+# - Create user
+RUN if id -u $HOST_UID >/dev/null 2>&1; then \
+        deluser \$(id -un $HOST_UID); \
+    fi && \
+    if ! getent group $HOST_GID >/dev/null; then \
+        groupadd -g $HOST_GID $HOST_GROUP_NAME; \
+    fi && \
+    useradd -u $HOST_UID -g $HOST_GID --home-dir $HOME --create-home $HOST_USER_NAME
 
-# Check if user exists, create if not
-RUN if ! id -u $(whoami) >/dev/null 2>&1; then \
-    useradd -u $(id -u) -g $(id -g) --home-dir $HOME --create-home $(whoami); \
-fi
-
-USER $(whoami)
+USER $HOST_UID
 EOF
 
 container_build_output=$(docker build --progress plain -t $CLOUDYPAD_TARGET_IMAGE - < /tmp/Dockerfile-cloudypad-run 2>&1)
