@@ -7,8 +7,6 @@
 # and run instructions.
 # Only a few commands need to run directly for user (eg. moonlight setup)
 
-set -e
-
 CLOUDYPAD_VERSION=0.1.0
 CLOUDYPAD_IMAGE="${CLOUDYPAD_IMAGE:-"crafteo/cloudypad:$CLOUDYPAD_VERSION"}"
 CLOUDYPAD_TARGET_IMAGE="crafteo/cloudypad-local-runner:local"
