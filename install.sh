@@ -28,13 +28,13 @@ if [ -n "$(which cloudypad)" ]; then
   fi
 fi
 
-echo "Downloading Cloudy Pad CLI..."
-
 # Create secure directory for Cloudy Pad home as it may contain sensitive data
 mkdir -p "$CLOUDYPAD_HOME"
 chmod 0700 $CLOUDYPAD_HOME
 
 mkdir -p "$INSTALL_DIR"
+
+echo "Downloading $CLOUDYPAD_SCRIPT_URL..."
 
 if command -v curl >/dev/null 2>&1; then
   curl --fail -sSL -o "$SCRIPT_PATH" "$CLOUDYPAD_SCRIPT_URL"

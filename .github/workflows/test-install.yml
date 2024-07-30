@@ -1,0 +1,60 @@
+name: Test installation script
+
+on:
+  push:
+    branches:
+      - "master"
+  pull_request:
+    branches:
+      - master
+
+jobs:
+  test-install:
+    name: Test install.sh
+    runs-on: "${{ matrix.os }}"
+    strategy:
+      matrix:
+        os:
+        - ubuntu-24.04
+        - ubuntu-22.04
+        - ubuntu-20.04
+        # - macos-14 # Docker install suported yet
+        # - macos-13 # Couldn't have a stable install of Docker on Mac yet, docker build keeps failing as if command is not recognized...
+        # - macos-12
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      - name: (MacOS) Setup Docker
+        if: startsWith(matrix.os, 'macos')
+        # uses: docker-practice/actions-setup-docker@master
+        # timeout-minutes: 12
+        # uses: douglascamata/setup-docker-macos-action@main
+        uses: crazy-max/ghaction-setup-docker@v3
+        
+      # Test the install script and cloudypad.sh for current commit
+      - name: Run install script
+        run: |
+          curl -fsSL https://raw.githubusercontent.com/PierreBeucher/cloudypad/${{ github.sha }}/install.sh | CLOUDYPAD_VERSION=${{ github.sha }} sh
+
+      - name: Check version
+        run: |
+          export PATH=$PATH:$HOME/.cloudypad/bin
+          export CLOUDYPAD_CONTAINER_NO_TTY=true
+          export CLOUDYPAD_CLI_LAUNCHER_DEBUG=true
+          cloudypad --version
+  
+  test-install-container:
+    name: Test install.sh in containers
+    runs-on: ubuntu-22.04
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      - name: Test install.sh script
+        run: test/shell/test-install.sh
+        
+      - name: Test cloudypad.sh script
+        run: test/shell/test-cloudypad.sh

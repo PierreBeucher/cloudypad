@@ -7,6 +7,10 @@
 # and run instructions.
 # Only a few commands need to run directly for user (eg. moonlight setup)
 
+if [ -n "$CLOUDYPAD_CLI_LAUNCHER_DEBUG" ]; then
+  set -x
+fi
+
 CLOUDYPAD_VERSION=0.1.1
 CLOUDYPAD_IMAGE="${CLOUDYPAD_IMAGE:-"crafteo/cloudypad:$CLOUDYPAD_VERSION"}"
 CLOUDYPAD_TARGET_IMAGE="crafteo/cloudypad-local-runner:local"
@@ -47,12 +51,12 @@ RUN if id -u $HOST_UID >/dev/null 2>&1; then \
 USER $HOST_UID
 EOF
 
-container_build_output=$(docker build --progress plain -t $CLOUDYPAD_TARGET_IMAGE - < /tmp/Dockerfile-cloudypad-run 2>&1)
+container_build_output=$(docker buildx build -t $CLOUDYPAD_TARGET_IMAGE - < /tmp/Dockerfile-cloudypad-run 2>&1)
 container_build_result=$?
 
 if [ $container_build_result -ne 0 ]; then
     echo "Error: could not build CloudyPad container image, build exited with code: $container_build_result" >&2
-    echo "Build command was: docker build --progress plain -t $CLOUDYPAD_TARGET_IMAGE - < /tmp/Dockerfile-cloudypad-run 2>&1" >&2
+    echo "Build command was: docker buildx build -t $CLOUDYPAD_TARGET_IMAGE - < /tmp/Dockerfile-cloudypad-run 2>&1" >&2
     echo "Build output: "
     echo "$container_build_output"
     echo
@@ -80,7 +84,15 @@ run_cloudypad_docker() {
     )
 
     # Build run command with proper directories
-    local cmd="docker run --rm -it"
+    local cmd="docker run --rm"
+
+    # Set interactive+tty by default
+    # no tty if CLOUDYPAD_CONTAINER_NO_TTY is set (for CI)
+    if [ -n "$CLOUDYPAD_CONTAINER_NO_TTY" ]; then
+        cmd="$cmd -t"
+    else
+        cmd="$cmd -it"
+    fi
 
     # Only mount a directory if it exists on host
     for mount in "${mounts[@]}"; do
