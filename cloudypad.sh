@@ -54,12 +54,12 @@ RUN if [ "$(id -u $HOST_UID)" -ne 0 ] >/dev/null 2>&1; then \
 USER $HOST_UID
 EOF
 
-container_build_output=$(docker buildx build -t $CLOUDYPAD_TARGET_IMAGE - < /tmp/Dockerfile-cloudypad-run 2>&1)
+container_build_output=$(docker build -t $CLOUDYPAD_TARGET_IMAGE - < /tmp/Dockerfile-cloudypad-run 2>&1)
 container_build_result=$?
 
 if [ $container_build_result -ne 0 ]; then
     echo "Error: could not build CloudyPad container image, build exited with code: $container_build_result" >&2
-    echo "Build command was: docker buildx build -t $CLOUDYPAD_TARGET_IMAGE - < /tmp/Dockerfile-cloudypad-run 2>&1" >&2
+    echo "Build command was: docker build -t $CLOUDYPAD_TARGET_IMAGE - < /tmp/Dockerfile-cloudypad-run 2>&1" >&2
     echo "Build output: "
     echo "$container_build_output"
     echo

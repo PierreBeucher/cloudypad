@@ -19,8 +19,8 @@ jobs:
         - ubuntu-22.04
         - ubuntu-20.04
         # - macos-14 # Docker install suported yet
-        # - macos-13 # Couldn't have a stable install of Docker on Mac yet, docker build keeps failing as if command is not recognized...
-        # - macos-12
+        - macos-13
+        - macos-12
 
     steps:
       - name: Checkout repository
