@@ -10,7 +10,7 @@ on:
 
 jobs:
   test-install:
-    name: Test install.sh
+    name: Test scripts
     runs-on: "${{ matrix.os }}"
     strategy:
       matrix:
@@ -46,7 +46,7 @@ jobs:
           cloudypad --version
   
   test-install-container:
-    name: Test install.sh in containers
+    name: Test scripts in containers
     runs-on: ubuntu-22.04
 
     steps:
