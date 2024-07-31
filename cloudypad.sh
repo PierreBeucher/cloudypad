@@ -36,17 +36,20 @@ HOST_GROUP_NAME=$(id -gn)
 cat <<EOF > /tmp/Dockerfile-cloudypad-run
 FROM $CLOUDYPAD_IMAGE
 
-# Ensure the host user matches user in container:
+# Ensure the host user matches user in container.
+# If host user is root, do nothing and run container as root, otherwise:
 # - Delete user matching host's user ID if already exists
 # - Create group if not exists
 # - Create user
-RUN if id -u $HOST_UID >/dev/null 2>&1; then \
-        deluser \$(id -un $HOST_UID); \
-    fi && \
-    if ! getent group $HOST_GID >/dev/null; then \
-        groupadd -g $HOST_GID $HOST_GROUP_NAME; \
-    fi && \
-    useradd -u $HOST_UID -g $HOST_GID --home-dir $HOME --create-home $HOST_USER_NAME
+RUN if [ "$(id -u $HOST_UID)" -ne 0 ] >/dev/null 2>&1; then \
+        if id -u $HOST_UID >/dev/null 2>&1; then \
+            deluser \$(id -un $HOST_UID); \
+        fi && \
+        if ! getent group $HOST_GID >/dev/null; then \
+            groupadd -g $HOST_GID $HOST_GROUP_NAME; \
+        fi && \
+        useradd -u $HOST_UID -g $HOST_GID --home-dir $HOME --create-home $HOST_USER_NAME; \
+    fi
 
 USER $HOST_UID
 EOF
