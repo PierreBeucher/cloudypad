@@ -87,7 +87,13 @@ export abstract class InstancePulumiClient<ConfigType, OutputType> {
 
         this.logger.debug(`Config before up: ${JSON.stringify(await stack.getAllConfig())}`)
 
-        const upRes = await stack.up({ onOutput: (msg) => { console.info(msg.trim()) }, color: "auto", refresh: true });
+        // Always cancel in case command was interrupted before
+        // Considering use case it's unlikely a parallel update might occur
+        // But it's likely that user will interrupt leaving stack with a lock which would stuck otherwise
+        // Might become a flag later
+        await stack.cancel()
+
+        const upRes = await stack.up({ onOutput: (msg) => { console.info(msg.trim()) }, color: "auto", refresh: true })
         
         this.logger.trace(`Up result: ${JSON.stringify(upRes)}`)
         

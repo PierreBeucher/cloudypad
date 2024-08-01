@@ -31,7 +31,8 @@ const createCmd = program
                 sshKey: opts.privateSshKey,
             })
         } catch (error) {
-            console.error('Error creating new instance:', error);
+            console.error('Error creating new instance:', error)
+            process.exit(1)
         }
     })
 
@@ -70,7 +71,8 @@ createCmd
             await new AwsInstanceInitializer(genericArgs, awsArgs).initializeInstance(opts)
             
         } catch (error) {
-            console.error('Error creating AWS instance:', error);
+            console.error('Error creating AWS instance:', error)
+            process.exit(1)
         }
     })
 
@@ -112,7 +114,8 @@ createCmd
             await new PaperspaceInstanceInitializer(genericArgs, pspaceArgs).initializeInstance(opts)
             
         } catch (error) {
-            console.error('Error creating Paperspace instance:', error);
+            console.error('Error creating Paperspace instance:', error)
+            process.exit(1)
         }
     })
 
@@ -129,7 +132,8 @@ program
             }
             console.info(instanceNames.join("\n"))
         } catch (error) {
-            console.error('Error listing instances:', error);
+            console.error('Error listing instances:', error)
+            process.exit(1)
         }
     })
 
@@ -143,7 +147,8 @@ program
             await r.start()
             console.info(`Started instance ${name}`)
         } catch (error) {
-            console.error(`Error starting instance ${name}:`, error);
+            console.error(`Error starting instance ${name}:`, error)
+            process.exit(1)
         }
     })
 
@@ -157,7 +162,8 @@ program
             console.info(`Stopped instance ${name}`)
             await r.stop()
         } catch (error) {
-            console.error(`Error stopping instance ${name}:`, error);
+            console.error(`Error stopping instance ${name}:`, error)
+            process.exit(1)
         }
     })
 
@@ -171,7 +177,8 @@ program
             await r.restart()
             console.info(`Restarted instance ${name}`)
         } catch (error) {
-            console.error(`Error restarting instance ${name}:`, error);
+            console.error(`Error restarting instance ${name}:`, error)
+            process.exit(1)
         }
     })
 
@@ -185,7 +192,8 @@ program
             const details = await r.get()
             console.info(JSON.stringify(details, null, 2))
         } catch (error) {
-            console.error(`Error getting details of instance ${name}:`, error);
+            console.error(`Error getting details of instance ${name}:`, error)
+            process.exit(1)
         }
     })
 
@@ -200,7 +208,8 @@ program
             await p.provision()
             console.info(`Provisioned instance ${name}`)
         } catch (error) {
-            console.error(`Error provisioning instance ${name}:`, error);
+            console.error(`Error provisioning instance ${name}:`, error)
+            process.exit(1)
         }
     })
 
@@ -215,7 +224,8 @@ program
             console.info("")
             console.info(`Configured instance ${name}`)
         } catch (error) {
-            console.error(`Error configuring instance ${name}:`, error);
+            console.error(`Error configuring instance ${name}:`, error)
+            process.exit(1)
         }
     })
 
@@ -238,7 +248,8 @@ program
             console.info(`Destroyed instance ${name}`)
 
         } catch (error) {
-            console.error(`Error destroying instance ${name}:`, error);
+            console.error(`Error destroying instance ${name}:`, error)
+            process.exit(1)
         }
     })
 
@@ -250,7 +261,8 @@ program.command('pair <name>')
             const r = await m.getInstanceRunner()
             await r.pair()
         } catch (error) {
-            console.error('Error creating new instance:', error);
+            console.error('Error creating new instance:', error)
+            process.exit(1)
         }
     })
 
