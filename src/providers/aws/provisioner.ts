@@ -30,7 +30,9 @@ export class AwsProvisioner extends BaseInstanceProvisioner implements InstanceP
             throw new Error(`Provisioning AWS instance requires a private SSH key. Got state: ${JSON.stringify(state)}`)
         }
 
-        await this.checkAwsAuth()
+        if(!args.skipAuthCheck){
+            await this.checkAwsAuth()
+        }
 
         if (args.create){
 

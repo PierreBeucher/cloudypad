@@ -70,7 +70,8 @@ export class AwsInitializerPrompt {
                 instanceType: instanceType,
                 publicIpType: publicIpType,
                 region: region
-            }
+            },
+            skipAuthCheck: opts?.skipAuthCheck ?? false
         }
     }
 

@@ -15,7 +15,6 @@
   "license": "ISC",
   "devDependencies": {
     "@eslint/js": "^9.8.0",
-    "@types/chai": "^4.3.17",
     "@types/eslint__js": "^8.42.3",
     "@types/inquirer": "^9.0.7",
     "@types/js-yaml": "^4.0.9",

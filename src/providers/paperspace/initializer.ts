@@ -13,6 +13,7 @@ export interface PaperspaceProvisionArgs {
         publicIp: string
     }
     apiKey?: string
+    skipAuthCheck?: boolean
     create?: {
         machineType: string
         diskSize: number
@@ -40,7 +41,7 @@ export class PaperspaceInstanceInitializer extends InstanceInitializer {
             provider: { 
                 paperspace: { 
                     apiKey: promptResult.apiKey,
-                    provisionArgs: promptResult.args
+                    provisionArgs: promptResult
                 }
             }
         })
@@ -58,17 +59,24 @@ export class PaperspaceInitializerPrompt {
     
     protected readonly logger = getLogger(PaperspaceInitializerPrompt.name)
 
-    async prompt(opts?: PartialDeep<PaperspaceProvisionArgs>) : Promise<{ apiKey: string, args: PaperspaceProvisionArgs}> {
+    async prompt(opts?: PartialDeep<PaperspaceProvisionArgs>) : Promise<PaperspaceProvisionArgs> {
         
         const apiKey = await this.apiKey(opts?.apiKey)
 
         const client = new PaperspaceClient({ name: PaperspaceInitializerPrompt.name, apiKey: apiKey, });
-        const authResult = await client.authSession()
-
-        this.logger.info(`Paperspace authenticated as ${authResult.user.email} (team: ${authResult.team.id})`)
         
+        if(!opts?.skipAuthCheck){
+            const authResult = await client.authSession()
+            this.logger.info(`Paperspace authenticated as ${authResult.user.email} (team: ${authResult.team.id})`)
+        }
+
+        // If create is not empty (eg. a create parameter is passed)
         let useExisting: boolean
-        if (opts?.useExisting) {
+        if (opts?.create && opts?.useExisting) {
+            throw new Error("Only one of create or useExisting can be passed during Paperspace initialization")
+        } else if (opts?.create) {
+            useExisting = false
+        } else if (opts?.useExisting) {
             useExisting = true
         } else {
             useExisting = await select({
@@ -86,13 +94,10 @@ export class PaperspaceInitializerPrompt {
         if (useExisting) {
             const [machineId, publicIp] = await this.existingMachineId(client, opts?.useExisting?.machineId);
             
-            return  { 
-                apiKey: apiKey,
-                args: {
-                    useExisting: {
-                        machineId: machineId,
-                        publicIp: publicIp
-                    }
+            return {
+                useExisting: {
+                    machineId: machineId,
+                    publicIp: publicIp
                 }
             }
             
@@ -103,14 +108,13 @@ export class PaperspaceInitializerPrompt {
             const region = await this.region(opts?.create?.region);
             
             return {
-                apiKey: apiKey,
-                args: {
-                    create: {
-                        diskSize: diskSize,
-                        machineType: machineType,
-                        publicIpType: publicIpType,
-                        region: region
-                    }
+                apiKey: opts?.apiKey,
+                skipAuthCheck: opts?.skipAuthCheck,
+                create: {
+                    diskSize: diskSize,
+                    machineType: machineType,
+                    publicIpType: publicIpType,
+                    region: region
                 }
             }
         }
@@ -191,8 +195,6 @@ export class PaperspaceInitializerPrompt {
             return publicIpType;
         }
         
-        // Use static for now
-        // TODO let user choose ?
         return 'static';
     }
 
