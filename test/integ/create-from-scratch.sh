@@ -14,6 +14,7 @@ export CLOUDYPAD_IMAGE="crafteo/cloudypad:local"
 task build
 
 cloudypad_cmd="./cloudypad.sh"
+# cloudypad_cmd="npx ts-node src/index.ts"
 
 $cloudypad_cmd list
 
