@@ -1,8 +1,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
-import * as yaml from 'js-yaml'
 import { CLOUDYPAD_INSTANCES_DIR, CLOUDYPAD_PROVIDER_AWS, CLOUDYPAD_PROVIDER_PAPERSPACE } from './const';
-import { InstanceState, StateManager } from './state';
+import { StateManager, StateUtils } from './state';
 import { InstanceRunner } from './runner';
 import { AwsInstanceRunner } from '../providers/aws/runner';
 import { InstanceProvisioner } from './provisioner';
@@ -24,22 +23,11 @@ import { select } from '@inquirer/prompts';
  */
 export class GlobalInstanceManager {
 
-    private static instance: GlobalInstanceManager
-
-    static get() : GlobalInstanceManager {
-        if(GlobalInstanceManager.instance){
-            return GlobalInstanceManager.instance
-        }
-
-        GlobalInstanceManager.instance = new GlobalInstanceManager()
-        return GlobalInstanceManager.instance
-    }
-
-    private readonly logger = getLogger(GlobalInstanceManager.name)
+    private static readonly logger = getLogger(GlobalInstanceManager.name)
 
     private constructor() {}
 
-    getAllInstances(): string[] {
+    static getAllInstances(): string[] {
         
         try {
             this.logger.debug(`Listing all instances from ${CLOUDYPAD_INSTANCES_DIR}`)
@@ -52,46 +40,13 @@ export class GlobalInstanceManager {
             return [];
         }
     }
-    
-    async instanceExists(instanceName: string): Promise<boolean>{
-        const instanceDir = this.getInstanceDir(instanceName)
-        
-        this.logger.debug(`Checking instance ${instanceName} exists at ${instanceDir}`)
-        
-        return fs.existsSync(instanceDir)
-    }
-    
-    getInstanceDir(instanceName: string){
-        return path.join(CLOUDYPAD_INSTANCES_DIR, instanceName);
-    }
-    
-    getInstanceConfigPath(instanceName: string){
-        return path.join(this.getInstanceDir(instanceName), "config.yml");
-    }
-
-    async loadInstanceState(instanceName: string): Promise<StateManager>{
-
-        this.logger.debug(`Loading instance state ${instanceName}`)
-
-        if(!await this.instanceExists(instanceName)){
-            throw new Error("Instance does not exist.")
-        }
-
-        const configPath = this.getInstanceConfigPath(instanceName)
-
-        this.logger.debug(`Loading instance state ${instanceName} from ${configPath}`)
-
-        const state = yaml.load(fs.readFileSync(configPath, 'utf8')) as InstanceState; // TODO use Zod
-    
-        return new StateManager(state)
-    }
 
     /**
      * Let user select a provider and return the related InstanceInitializer object
      * @param args 
      * @returns 
      */
-    async promptInstanceInitializer(args?: GenericInitializationArgs): Promise<InstanceInitializer>{
+    static async promptInstanceInitializer(args?: GenericInitializationArgs): Promise<InstanceInitializer>{
 
         return await select<InstanceInitializer>({
             message: 'Select Cloud provide:',
@@ -102,8 +57,8 @@ export class GlobalInstanceManager {
         })
     }
 
-    async getInstanceManager(instanceName: string){
-        const sm = await this.loadInstanceState(instanceName)
+    static async getInstanceManager(instanceName: string){
+        const sm = await StateUtils.loadInstanceState(instanceName)
         return new InstanceManager(sm)
     }
 }
@@ -178,7 +133,7 @@ export class InstanceManager {
             throw new Error(`Can't destroy instance ${state.name} as it's still provisioned. This is probably an internal bug.`)
         }
 
-        const confDir = GlobalInstanceManager.get().getInstanceDir(state.name)
+        const confDir = StateUtils.getInstanceDir(state.name)
 
         this.logger.debug(`Removing instance config directory ${state.name}: '${confDir}'`)
 

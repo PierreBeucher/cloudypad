@@ -3,8 +3,7 @@ import * as path from 'path';
 import * as os from 'os';
 import { input, select, confirm } from '@inquirer/prompts';
 import { AnsibleConfigurator } from '../configurators/ansible';
-import { InstanceState, StateManager } from './state';
-import { GlobalInstanceManager } from './manager';
+import { InstanceState, StateManager, StateUtils } from './state';
 import { getLogger } from '../log/utils';
 import { PartialDeep } from 'type-fest';
 
@@ -91,7 +90,7 @@ export abstract class InstanceInitializer {
         const sm = new StateManager(initialState)
 
         // Create instance directory in which to persist state
-        const instanceDir = GlobalInstanceManager.get().getInstanceDir(genericArgs.instanceName)
+        const instanceDir = StateUtils.getInstanceDir(genericArgs.instanceName)
 
         this.logger.debug(`Creating ${genericArgs.instanceName}: creating instance dir at ${instanceDir}`)
 
@@ -153,7 +152,7 @@ export class GenericInitializerPrompt {
             })
         }
 
-        if(await GlobalInstanceManager.get().instanceExists(instanceName)){
+        if(await StateUtils.instanceExists(instanceName)){
             const confirmAlreadyExists = await confirm({
                 message: `Instance ${instanceName} already exists. Do you want to overwrite existing instance config?`,
                 default: false,

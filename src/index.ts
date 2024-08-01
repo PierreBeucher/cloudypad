@@ -25,7 +25,7 @@ const createCmd = program
     .description('Create a new instance, prompting for details. Use `create <provider> for provider-specific creation commands.`')
     .action(async (opts) => {
         try {
-            await GlobalInstanceManager.get().promptInstanceInitializer({
+            await GlobalInstanceManager.promptInstanceInitializer({
                 instanceName: opts.name,
                 sshKey: opts.privateSshKey,
             })
@@ -107,7 +107,7 @@ program
     .description('List all instances')
     .action(async () => {
         try {
-            const instanceNames = GlobalInstanceManager.get().getAllInstances();
+            const instanceNames = GlobalInstanceManager.getAllInstances();
             if (instanceNames.length === 0) {
                 console.info('No instances found.');
                 return;
@@ -123,7 +123,7 @@ program
     .description('Start an instance')
     .action(async (name) => {
         try {
-            const m = await GlobalInstanceManager.get().getInstanceManager(name)
+            const m = await GlobalInstanceManager.getInstanceManager(name)
             const r = await m.getInstanceRunner()
             await r.start()
             console.info(`Started instance ${name}`)
@@ -137,7 +137,7 @@ program
     .description('Stop an instance')
     .action(async (name) => {
         try {
-            const m = await GlobalInstanceManager.get().getInstanceManager(name)
+            const m = await GlobalInstanceManager.getInstanceManager(name)
             const r = await m.getInstanceRunner()
             console.info(`Stopped instance ${name}`)
             await r.stop()
@@ -151,7 +151,7 @@ program
     .description('Restart an instance')
     .action(async (name) => {
         try {
-            const m = await GlobalInstanceManager.get().getInstanceManager(name)
+            const m = await GlobalInstanceManager.getInstanceManager(name)
             const r = await m.getInstanceRunner()
             await r.restart()
             console.info(`Restarted instance ${name}`)
@@ -165,7 +165,7 @@ program
     .description('Get details of an instance')
     .action(async (name) => {
         try {
-            const m = await GlobalInstanceManager.get().getInstanceManager(name)
+            const m = await GlobalInstanceManager.getInstanceManager(name)
             const r = await m.getInstanceRunner()
             const details = await r.get()
             console.info(JSON.stringify(details, null, 2))
@@ -179,7 +179,7 @@ program
     .description('Provision an instance (deploy or update Cloud resources)')
     .action(async (name) => {
         try {
-            const m = await GlobalInstanceManager.get().getInstanceManager(name)
+            const m = await GlobalInstanceManager.getInstanceManager(name)
             const p = await m.getInstanceProvisioner()
             await p.provision()
             console.info(`Provisioned instance ${name}`)
@@ -193,7 +193,7 @@ program
     .description('Configure an instance (connect to instance and install drivers, packages, etc.)')
     .action(async (name) => {
         try {
-            const m = await GlobalInstanceManager.get().getInstanceManager(name)
+            const m = await GlobalInstanceManager.getInstanceManager(name)
             const p = await m.getInstanceConfigurator()
             await p.configure()
             console.info("")
@@ -208,7 +208,7 @@ program
     .description('Destroy an instance')
     .action(async (name) => {
         try {
-            const m = await GlobalInstanceManager.get().getInstanceManager(name)
+            const m = await GlobalInstanceManager.getInstanceManager(name)
 
             if (m.isProvisioned()) {
 
@@ -230,7 +230,7 @@ program.command('pair <name>')
     .description('Pair an instance with Moonlight')
     .action(async (name: string) => {
         try {
-            const m = await GlobalInstanceManager.get().getInstanceManager(name)
+            const m = await GlobalInstanceManager.getInstanceManager(name)
             const r = await m.getInstanceRunner()
             await r.pair()
         } catch (error) {
