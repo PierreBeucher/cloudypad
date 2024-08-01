@@ -14,7 +14,6 @@ describe('AwsInitializerPrompt', () => {
                 publicIpType: "static",
                 region: "us-west-2"
             },
-            skipAuthCheck: true
         };
 
         const result = await awsInitializerPrompt.prompt(opts);

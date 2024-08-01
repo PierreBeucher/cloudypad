@@ -9,7 +9,6 @@ describe('PaperspaceInitializerPrompt', () => {
 
         const opts: PaperspaceProvisionArgs = {
             apiKey: "xxxSecret",
-            skipAuthCheck: true,
             create: {
                 machineType: "P5000",
                 diskSize: 100,
