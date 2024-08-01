@@ -13,8 +13,27 @@ tasks:
     cmd: >-
       CLOUDYPAD_IMAGE="cloudypad:local" ./cloudypad.sh {{.CLI_ARGS}}
 
+  #
+  # Build and test
+  #
+
+  test-unit:
+    cmd: npx mocha ./test/unit/**/*.spec.ts
+
   build:
-    cmd: docker build . -t cloudypad:local
+    cmd: docker build -t cloudypad:local .
+
+  build-smoke-test:
+    cmds:
+    - task: build
+    - docker run cloudypad:local --version
+    - >-
+      [ $(docker run cloudypad:local --version) = $(cat package.json | jq .version -r) ] 
+      || echo "Version in container image doesn't match package.json version"
+
+  #
+  # Utils
+  #
 
   # Generate Typescript Paperspace client from OpenAPI specifications
   paperspace-client-gen:
@@ -46,6 +65,10 @@ tasks:
       --skip-validate-spec
       -g typescript-axios
       -o {{ .PAPERSPACE_GENERATED_DIR }}
+
+  #
+  # Release
+  #
 
   release-prepare:
     cmd: ./hack/prepare-release.sh
