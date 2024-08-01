@@ -44,7 +44,7 @@ export abstract class InstancePulumiClient<ConfigType, OutputType> {
     protected abstract buildTypedOutput(outputs: OutputMap): Promise<OutputType>
 
     private async initStack(){
-        this.logger.debug(`Cnitializing stack and config`)
+        this.logger.debug(`Initializing stack and config`)
         
         if(this.stack !== undefined) {
             throw new Error(`Stack ${this.stackName} for project ${this.projectName} has already been initialized. This is probably an internal bug.`)

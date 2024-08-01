@@ -2,7 +2,7 @@ import { parseSshPrivateKeyFileToPublic } from '../../tools/ssh';
 import { confirm } from '@inquirer/prompts';
 import { STSClient, GetCallerIdentityCommand } from '@aws-sdk/client-sts';
 import { AwsPulumiClient, PulumiStackConfigAws } from '../../tools/pulumi/aws';
-import { BaseInstanceProvisioner, InstanceProvisioner } from '../../core/provisioner';
+import { BaseInstanceProvisioner, InstanceProvisioner, InstanceProvisionOptions } from '../../core/provisioner';
 import { StateManager } from '../../core/state';
 
 export class AwsProvisioner extends BaseInstanceProvisioner implements InstanceProvisioner {
@@ -11,7 +11,7 @@ export class AwsProvisioner extends BaseInstanceProvisioner implements InstanceP
         super(sm)
     }
 
-    async provision() {
+    async provision(opts: InstanceProvisionOptions) {
 
         this.logger.info(`Provisioning AWS instance ${this.sm.name()}`)
 
@@ -30,25 +30,32 @@ export class AwsProvisioner extends BaseInstanceProvisioner implements InstanceP
             throw new Error(`Provisioning AWS instance requires a private SSH key. Got state: ${JSON.stringify(state)}`)
         }
 
-        if(!args.skipAuthCheck){
+        if(!opts.skipAuthCheck){
             await this.checkAwsAuth()
         }
 
-        if (args.create){
+        this.logger.debug(`Provisioning AWS instance with ${JSON.stringify(state)}`)
 
-            const confirmCreation = await confirm({
-                message: `
-You are about to provision AWS machine with the following details:
-    Instance name: ${state.name}
-    SSH key: ${state.ssh.privateKeyPath}
-    AWS Region: ${args.create.region}
-    Instance Type: ${args.create.instanceType}
-    Public IP Type: ${args.create.publicIpType}
-    Disk size: ${args.create.diskSize}
-    
-Do you want to proceed?`,
-                default: true,
-            });
+        if (args.create){
+            
+            let confirmCreation: boolean
+            if(opts.autoApprove){
+                confirmCreation = opts.autoApprove
+            } else {
+                confirmCreation = await confirm({
+                    message: `
+    You are about to provision AWS machine with the following details:
+        Instance name: ${state.name}
+        SSH key: ${state.ssh.privateKeyPath}
+        AWS Region: ${args.create.region}
+        Instance Type: ${args.create.instanceType}
+        Public IP Type: ${args.create.publicIpType}
+        Disk size: ${args.create.diskSize}
+        
+    Do you want to proceed?`,
+                    default: true,
+                })
+            }
 
             if (!confirmCreation) {
                 throw new Error('AWS provision aborted.');

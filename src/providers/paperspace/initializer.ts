@@ -6,6 +6,7 @@ import { InstanceInitializer, GenericInitializationArgs } from '../../core/initi
 import { StateManager } from '../../core/state';
 import { PaperspaceProvisioner } from './provisioner';
 import { PaperspaceInstanceRunner } from './runner';
+import { InstanceProvisionOptions } from '../../core/provisioner';
 
 export interface PaperspaceProvisionArgs {
     useExisting?: {
@@ -13,7 +14,6 @@ export interface PaperspaceProvisionArgs {
         publicIp: string
     }
     apiKey?: string
-    skipAuthCheck?: boolean
     create?: {
         machineType: string
         diskSize: number
@@ -31,7 +31,7 @@ export class PaperspaceInstanceInitializer extends InstanceInitializer {
         this.defaultPaperspaceArgs = defaultAwsArgs ?? {}
     }
 
-    protected async runProvisioning(sm: StateManager) {
+    protected async runProvisioning(sm: StateManager, opts: InstanceProvisionOptions) {
         const promptResult = await new PaperspaceInitializerPrompt().prompt(this.defaultPaperspaceArgs)
 
         sm.update({ 
@@ -46,7 +46,7 @@ export class PaperspaceInstanceInitializer extends InstanceInitializer {
             }
         })
 
-        await new PaperspaceProvisioner(sm).provision()
+        await new PaperspaceProvisioner(sm).provision(opts)
     }
 
     protected async runPairing(sm: StateManager) {
@@ -64,11 +64,6 @@ export class PaperspaceInitializerPrompt {
         const apiKey = await this.apiKey(opts?.apiKey)
 
         const client = new PaperspaceClient({ name: PaperspaceInitializerPrompt.name, apiKey: apiKey, });
-        
-        if(!opts?.skipAuthCheck){
-            const authResult = await client.authSession()
-            this.logger.info(`Paperspace authenticated as ${authResult.user.email} (team: ${authResult.team.id})`)
-        }
 
         // If create is not empty (eg. a create parameter is passed)
         let useExisting: boolean
@@ -109,7 +104,6 @@ export class PaperspaceInitializerPrompt {
             
             return {
                 apiKey: opts?.apiKey,
-                skipAuthCheck: opts?.skipAuthCheck,
                 create: {
                     diskSize: diskSize,
                     machineType: machineType,

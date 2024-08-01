@@ -1,5 +1,5 @@
 import { confirm } from '@inquirer/prompts';
-import { BaseInstanceProvisioner, InstanceProvisioner } from '../../core/provisioner';
+import { BaseInstanceProvisioner, InstanceProvisioner, InstanceProvisionOptions } from '../../core/provisioner';
 import { StateManager } from '../../core/state';
 import { PaperspaceClient } from './client/client';
 import { MachinesCreateRequest } from './client/generated-api';
@@ -19,13 +19,10 @@ export class PaperspaceProvisioner extends BaseInstanceProvisioner implements In
 
         const client = new PaperspaceClient({ name: this.sm.name(), apiKey: state.provider.paperspace.apiKey });
 
-        const authResult = await client.authSession()
-        this.logger.info(`Paperspace authenticated as ${authResult.user.email} (team: ${authResult.team.id})`)
-
         return client
     }
 
-    async provision() {
+    async provision(opts: InstanceProvisionOptions) {
 
         const state = this.sm.get()
 
@@ -44,6 +41,11 @@ export class PaperspaceProvisioner extends BaseInstanceProvisioner implements In
 
         const client = await this.buildPaperspaceClient()
 
+        if(!opts.skipAuthCheck){
+            const authResult = await client.authSession()
+            this.logger.info(`Paperspace authenticated as ${authResult.user.email} (team: ${authResult.team.id})`)
+        }
+        
         const args = state.provider.paperspace.provisionArgs
     
         if (args.useExisting) {
@@ -63,18 +65,24 @@ export class PaperspaceProvisioner extends BaseInstanceProvisioner implements In
         } else if (args.create) {
            
             const state = this.sm.get()
-            const confirmCreation = await confirm({
-                message: `
-You are about to provision Paperspace instance with the following details:
-    Instance name: ${state.name}
-    SSH key: ${state.ssh?.privateKeyPath}
-    Region: ${args.create.region}
-    Machine Type: ${args.create.machineType}
-    Disk Size: ${args.create.diskSize} GB
-    Public IP Type: ${args.create.publicIpType}
-Do you want to proceed?`,
-                default: true,
-            });
+
+            let confirmCreation: boolean
+            if(opts.autoApprove !== undefined){
+                confirmCreation = opts.autoApprove
+            } else {
+                confirmCreation = await confirm({
+                    message: `
+    You are about to provision Paperspace instance with the following details:
+        Instance name: ${state.name}
+        SSH key: ${state.ssh?.privateKeyPath}
+        Region: ${args.create.region}
+        Machine Type: ${args.create.machineType}
+        Disk Size: ${args.create.diskSize} GB
+        Public IP Type: ${args.create.publicIpType}
+    Do you want to proceed?`,
+                    default: true,
+                })
+            }
 
             if (!confirmCreation) {
                 throw new Error('Machine creation aborted.');

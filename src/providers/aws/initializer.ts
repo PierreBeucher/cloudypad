@@ -7,6 +7,8 @@ import { InstanceInitializer, GenericInitializationArgs } from '../../core/initi
 import { StateManager } from '../../core/state';
 import { AwsProvisioner } from './provisioner';
 import { AwsInstanceRunner } from './runner';
+import { getLogger } from '../../log/utils';
+import { InstanceProvisionOptions } from '../../core/provisioner';
 
 export interface AwsProvisionArgs {
     create?: {
@@ -15,7 +17,6 @@ export interface AwsProvisionArgs {
         publicIpType: string
         region: string
     }
-    skipAuthCheck?: boolean
 }
 
 export class AwsInstanceInitializer extends InstanceInitializer {
@@ -27,8 +28,10 @@ export class AwsInstanceInitializer extends InstanceInitializer {
         this.defaultAwsArgs = defaultAwsArgs ?? {}
     }
 
-    protected async runProvisioning(sm: StateManager) {
+    protected async runProvisioning(sm: StateManager, opts: InstanceProvisionOptions) {
         const args = await new AwsInitializerPrompt().prompt(this.defaultAwsArgs)
+
+        this.logger.debug(`Running AWS provision with args: ${JSON.stringify(args)}`)
         
         sm.update({ 
             ssh: {
@@ -37,7 +40,7 @@ export class AwsInstanceInitializer extends InstanceInitializer {
             provider: { aws: { provisionArgs: args }}
         })
 
-        await new AwsProvisioner(sm).provision()
+        await new AwsProvisioner(sm).provision(opts)
     }
 
     protected async runPairing(sm: StateManager) {
@@ -48,21 +51,21 @@ export class AwsInstanceInitializer extends InstanceInitializer {
 
 export class AwsInitializerPrompt {
 
+    private logger = getLogger(AwsInitializerPrompt.name)
+
     private awsClient: AwsClient
     constructor(){
         this.awsClient = new AwsClient(AwsInitializerPrompt.name)
     }
 
-    async prompt(opts?: PartialDeep<AwsProvisionArgs>): Promise<AwsProvisionArgs> {
+    async prompt(args?: PartialDeep<AwsProvisionArgs>): Promise<AwsProvisionArgs> {
 
-        if(!opts?.skipAuthCheck) {
-            await this.awsClient.checkAwsAuth()
-        }
+        this.logger.debug(`Starting AWS prompt with default opts: ${JSON.stringify(args)}`)
 
-        const instanceType = await this.instanceType(opts?.create?.instanceType);
-        const diskSize = await this.diskSize(opts?.create?.diskSize);
-        const publicIpType = await this.publicIpType(opts?.create?.publicIpType);
-        const region = await this.region(opts?.create?.region);
+        const instanceType = await this.instanceType(args?.create?.instanceType);
+        const diskSize = await this.diskSize(args?.create?.diskSize);
+        const publicIpType = await this.publicIpType(args?.create?.publicIpType);
+        const region = await this.region(args?.create?.region);
 
         return {
             create: {
@@ -70,8 +73,7 @@ export class AwsInitializerPrompt {
                 instanceType: instanceType,
                 publicIpType: publicIpType,
                 region: region
-            },
-            skipAuthCheck: opts?.skipAuthCheck ?? false
+            }
         }
     }
 

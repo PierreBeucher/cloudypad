@@ -8,6 +8,13 @@ import { buildAxiosError } from '../tools/axios';
 import { getLogger, Logger } from '../log/utils';
 
 /**
+ * Options that may be passed to InstanceRunner functions
+ */
+export interface InstanceRunnerOptions  {
+    autoApprove?: boolean
+}
+
+/**
  * Instance Runner manages running time lifecycle of instances: start/stop/restart
  * and utility functions like pairing and fetching Moonlight PIN
  */

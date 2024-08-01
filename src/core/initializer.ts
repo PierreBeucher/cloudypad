@@ -6,10 +6,15 @@ import { AnsibleConfigurator } from '../configurators/ansible';
 import { InstanceState, StateManager, StateUtils } from './state';
 import { getLogger } from '../log/utils';
 import { PartialDeep } from 'type-fest';
+import { InstanceProvisionOptions } from './provisioner';
 
 export interface GenericInitializationArgs {
     instanceName: string,
     sshKey: string
+}
+
+export interface InstanceInitializationOptions {
+    autoApprove?: boolean
 }
 
 /**
@@ -25,7 +30,7 @@ export interface GenericInitializationArgs {
  */
 export abstract class InstanceInitializer {
 
-    private readonly logger = getLogger(InstanceInitializer.name)
+    protected readonly logger = getLogger(InstanceInitializer.name)
 
     private readonly defaultArgs: PartialDeep<GenericInitializationArgs>
 
@@ -47,7 +52,7 @@ export abstract class InstanceInitializer {
         }
     }
 
-    protected abstract runProvisioning(sm: StateManager): Promise<void>
+    protected abstract runProvisioning(sm: StateManager, opts: InstanceProvisionOptions): Promise<void>
 
     protected abstract runPairing(sm: StateManager): Promise<void>
     
@@ -60,7 +65,7 @@ export abstract class InstanceInitializer {
         await configurator.configure()
     }
 
-    public async initializeInstance(){
+    public async initializeInstance(opts: InstanceInitializationOptions){
 
         const genericArgs = await this.getGenericInitArgs()
 
@@ -96,10 +101,10 @@ export abstract class InstanceInitializer {
 
         fs.mkdirSync(instanceDir, { recursive: true })
         
-        this.logger.info(`Creating ${genericArgs.instanceName}: provisionning...}`)
+        this.logger.info(`Creating ${genericArgs.instanceName}: provisionning...`)
         this.logger.debug(`Creating ${genericArgs.instanceName}: starting provision with state ${sm.get()}`)
         
-        await this.runProvisioning(sm)
+        await this.runProvisioning(sm, opts)
         
         this.logger.info(`Creating ${genericArgs.instanceName}: provision done.}`)
 
@@ -109,7 +114,7 @@ export abstract class InstanceInitializer {
         
         this.logger.info(`Creating ${genericArgs.instanceName}: configuration done.}`)
 
-        const doPair = await confirm({
+        const doPair = opts.autoApprove ? true : await confirm({
             message: `Your instance is almost ready ! Do you want to pair Moonlight now?`,
             default: true,
         })

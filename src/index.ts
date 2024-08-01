@@ -8,6 +8,7 @@ import { AwsProvisionArgs, AwsInstanceInitializer } from './providers/aws/initia
 import { PartialDeep } from 'type-fest';
 import { PaperspaceInstanceInitializer, PaperspaceProvisionArgs } from './providers/paperspace/initializer';
 import * as fs from 'fs'
+import { InstanceInitializationOptions } from './core/initializer';
 
 const program = new Command();
 
@@ -43,6 +44,8 @@ createCmd
     .option('--disk-size <size>', 'Disk size in GB', parseInt)
     .option('--public-ip-type <type>', 'Public IP type. Either "static" or "dynamic"')
     .option('--region <region>', 'Region in which to deploy instance')
+    .option('--yes', 'Do not prompt for approval, automatically approve and continue')
+    .option('--overwrite-existing', 'If an instance with the same name already exists, override without warning promp')
     .action(async (options) => {
         try {
             const genericArgs = {
@@ -58,8 +61,12 @@ createCmd
                     region: options.region,
                 }
             }
- 
-            await new AwsInstanceInitializer(genericArgs, awsArgs).initializeInstance()
+
+            const opts: InstanceInitializationOptions = {
+                autoApprove: options.yes,
+            }
+
+            await new AwsInstanceInitializer(genericArgs, awsArgs).initializeInstance(opts)
             
         } catch (error) {
             console.error('Error creating AWS instance:', error);
@@ -76,6 +83,8 @@ createCmd
     .option('--disk-size <size>', 'Disk size in GB', parseInt)
     .option('--public-ip-type <type>', 'Public IP type. Either "static" or "dynamic"')
     .option('--region <region>', 'Region in which to deploy instance')
+    .option('--yes', 'Do not prompt for approval, automatically approve and continue')
+    .option('--overwrite-existing', 'If an instance with the same name already exists, override without warning promp')
     .action(async (options) => {
         try {
             const genericArgs = {
@@ -93,8 +102,12 @@ createCmd
                     region: options.region,
                 }
             }
+
+            const opts: InstanceInitializationOptions = {
+                autoApprove: options.yes,
+            }
  
-            await new PaperspaceInstanceInitializer(genericArgs, pspaceArgs).initializeInstance()
+            await new PaperspaceInstanceInitializer(genericArgs, pspaceArgs).initializeInstance(opts)
             
         } catch (error) {
             console.error('Error creating Paperspace instance:', error);
@@ -177,6 +190,7 @@ program
 program
     .command('provision <name>')
     .description('Provision an instance (deploy or update Cloud resources)')
+    .option('--yes', 'Do not prompt for approval, automatically approve and continue')
     .action(async (name) => {
         try {
             const m = await GlobalInstanceManager.getInstanceManager(name)
