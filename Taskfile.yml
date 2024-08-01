@@ -6,12 +6,12 @@ tasks:
   # Example: task run-local -- list
   run-local:
     cmd: >-
-      docker build --progress=plain . -t cloudypad:local && 
-      CLOUDYPAD_IMAGE="cloudypad:local" ./cloudypad.sh {{.CLI_ARGS}}
+      docker build --progress=plain . -t crafteo/cloudypad:local && 
+      CLOUDYPAD_IMAGE="crafteo/cloudypad:local" ./cloudypad.sh {{.CLI_ARGS}}
 
   run-local-no-build:
     cmd: >-
-      CLOUDYPAD_IMAGE="cloudypad:local" ./cloudypad.sh {{.CLI_ARGS}}
+      CLOUDYPAD_IMAGE="crafteo/cloudypad:local" ./cloudypad.sh {{.CLI_ARGS}}
 
   #
   # Build and test
@@ -21,16 +21,19 @@ tasks:
     cmd: npx mocha ./test/unit/**/*.spec.ts
 
   build:
-    cmd: docker build -t cloudypad:local .
+    cmd: docker build -t crafteo/cloudypad:local .
 
   build-smoke-test:
     cmds:
     - task: build
-    - docker run cloudypad:local --version
+    - docker run crafteo/cloudypad:local --version
     - >-
-      [ $(docker run cloudypad:local --version) = $(cat package.json | jq .version -r) ] 
+      [ $(docker run crafteo/cloudypad:local --version) = $(cat package.json | jq .version -r) ] 
       || echo "Version in container image doesn't match package.json version"
 
+  test-create-from-scratch:
+    cmd: test/integ/create-from-scratch.sh
+    
   #
   # Utils
   #
