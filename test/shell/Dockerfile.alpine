@@ -1,0 +1,11 @@
+FROM alpine:3
+
+# Install Docker client on Alpine
+RUN apk update && \
+    apk add --no-cache \
+    sudo \
+    curl \
+    openrc \
+    bash \
+    docker && \
+    rm -rf /var/cache/apk/*

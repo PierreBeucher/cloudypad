@@ -1,8 +1,7 @@
-import * as fs from 'fs'
 import * as aws from "@pulumi/aws";
 import * as pulumi from "@pulumi/pulumi";
-import { ConfigMap, InlineProgramArgs, LocalWorkspace, LocalWorkspaceOptions, OutputMap, PulumiFn, Stack } from "@pulumi/pulumi/automation";
-import { InstancePulumiClient, PULUMI_BACKEND_URL, PULUMI_CONFIG_PASSPHRASE } from "./client";
+import { OutputMap } from "@pulumi/pulumi/automation";
+import { InstancePulumiClient } from "./client";
 
 interface PortDefinition {
     from: pulumi.Input<number>,
@@ -186,6 +185,8 @@ class CloudyPadEC2Instance extends pulumi.ComponentResource {
     }
 }
 
+/* eslint-disable  @typescript-eslint/no-explicit-any */
+// Interface is set by Pulumi
 async function awsPulumiProgram(): Promise<Record<string, any> | void> {
 
     const config = new pulumi.Config();
@@ -264,7 +265,7 @@ export class AwsPulumiClient extends InstancePulumiClient<PulumiStackConfigAws, 
         this.logger.debug(`Setting stack ${this.stackName} config: ${JSON.stringify(config)}`)
 
         const stack = await this.getStack()
-        await stack.setConfig("region", { value: config.region})
+        await stack.setConfig("aws:region", { value: config.region})
         await stack.setConfig("instanceType", { value: config.instanceType})
         await stack.setConfig("rootVolumeSizeGB", { value: config.rootVolumeSizeGB.toString()})
         await stack.setConfig("publicSshKeyContent", { value: config.publicSshKeyContent})

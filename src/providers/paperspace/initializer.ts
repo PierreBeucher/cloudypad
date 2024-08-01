@@ -1,24 +1,82 @@
 import { select, input, password } from '@inquirer/prompts';
 import { PartialDeep } from 'type-fest';
-import { PaperspaceProvisionArgs } from './provisioner';
 import { PaperspaceClient } from './client/client';
 import { getLogger } from '../../log/utils';
+import { InstanceInitializer, GenericInitializationArgs } from '../../core/initializer';
+import { StateManager } from '../../core/state';
+import { PaperspaceProvisioner } from './provisioner';
+import { PaperspaceInstanceRunner } from './runner';
+
+export interface PaperspaceProvisionArgs {
+    useExisting?: {
+        machineId: string
+        publicIp: string
+    }
+    apiKey?: string
+    skipAuthCheck?: boolean
+    create?: {
+        machineType: string
+        diskSize: number
+        publicIpType: 'static' | 'dynamic'
+        region: string
+    }
+}
+
+export class PaperspaceInstanceInitializer extends InstanceInitializer {
+
+    private readonly defaultPaperspaceArgs: PartialDeep<PaperspaceProvisionArgs>
+
+    constructor(genericArgs?: PartialDeep<Omit<GenericInitializationArgs, "provider">>, defaultAwsArgs?: PartialDeep<PaperspaceProvisionArgs>){
+        super(genericArgs)
+        this.defaultPaperspaceArgs = defaultAwsArgs ?? {}
+    }
+
+    protected async runProvisioning(sm: StateManager) {
+        const promptResult = await new PaperspaceInitializerPrompt().prompt(this.defaultPaperspaceArgs)
+
+        sm.update({ 
+            ssh: {
+                user: "paperspace"
+            },
+            provider: { 
+                paperspace: { 
+                    apiKey: promptResult.apiKey,
+                    provisionArgs: promptResult
+                }
+            }
+        })
+
+        await new PaperspaceProvisioner(sm).provision()
+    }
+
+    protected async runPairing(sm: StateManager) {
+        await new PaperspaceInstanceRunner(sm).pair()
+    }
+    
+}
 
 export class PaperspaceInitializerPrompt {
     
     protected readonly logger = getLogger(PaperspaceInitializerPrompt.name)
 
-    async prompt(opts?: PartialDeep<PaperspaceProvisionArgs>) : Promise<{ apiKey: string, args: PaperspaceProvisionArgs}> {
+    async prompt(opts?: PartialDeep<PaperspaceProvisionArgs>) : Promise<PaperspaceProvisionArgs> {
         
-        const apiKey = await this.apiKey()
+        const apiKey = await this.apiKey(opts?.apiKey)
 
         const client = new PaperspaceClient({ name: PaperspaceInitializerPrompt.name, apiKey: apiKey, });
-        const authResult = await client.authSession()
-
-        this.logger.info(`Paperspace authenticated as ${authResult.user.email} (team: ${authResult.team.id})`)
         
+        if(!opts?.skipAuthCheck){
+            const authResult = await client.authSession()
+            this.logger.info(`Paperspace authenticated as ${authResult.user.email} (team: ${authResult.team.id})`)
+        }
+
+        // If create is not empty (eg. a create parameter is passed)
         let useExisting: boolean
-        if (opts?.useExisting) {
+        if (opts?.create && opts?.useExisting) {
+            throw new Error("Only one of create or useExisting can be passed during Paperspace initialization")
+        } else if (opts?.create) {
+            useExisting = false
+        } else if (opts?.useExisting) {
             useExisting = true
         } else {
             useExisting = await select({
@@ -36,13 +94,10 @@ export class PaperspaceInitializerPrompt {
         if (useExisting) {
             const [machineId, publicIp] = await this.existingMachineId(client, opts?.useExisting?.machineId);
             
-            return  { 
-                apiKey: apiKey,
-                args: {
-                    useExisting: {
-                        machineId: machineId,
-                        publicIp: publicIp
-                    }
+            return {
+                useExisting: {
+                    machineId: machineId,
+                    publicIp: publicIp
                 }
             }
             
@@ -53,14 +108,13 @@ export class PaperspaceInitializerPrompt {
             const region = await this.region(opts?.create?.region);
             
             return {
-                apiKey: apiKey,
-                args: {
-                    create: {
-                        diskSize: diskSize,
-                        machineType: machineType,
-                        publicIpType: publicIpType,
-                        region: region
-                    }
+                apiKey: opts?.apiKey,
+                skipAuthCheck: opts?.skipAuthCheck,
+                create: {
+                    diskSize: diskSize,
+                    machineType: machineType,
+                    publicIpType: publicIpType,
+                    region: region
                 }
             }
         }
@@ -141,8 +195,6 @@ export class PaperspaceInitializerPrompt {
             return publicIpType;
         }
         
-        // Use static for now
-        // TODO let user choose ?
         return 'static';
     }
 
@@ -159,7 +211,7 @@ export class PaperspaceInitializerPrompt {
 
     protected async apiKey(apiKey?: string): Promise<string>{
         if (apiKey) {
-            this.logger.debug(`Using provided API key via.`)
+            this.logger.debug(`Using provided API key`)
             return apiKey
         } else if (process.env.PAPERSPACE_API_KEY) {
             this.logger.debug(`Using Paperspace API key via environment variable PAPERSPACE_API_KEY.`)

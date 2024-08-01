@@ -10,12 +10,14 @@ import { getLogger, Logger } from '../log/utils';
 
 export class AnsibleConfigurator implements InstanceConfigurator {
 
-    readonly sm: StateManager
+    private readonly sm: StateManager
     protected readonly logger: Logger
+    private readonly additionalAnsibleArgs: string[]
 
-    constructor(sm: StateManager){
+    constructor(sm: StateManager, additionalAnsibleArgs?: string[]){
         this.sm = sm
         this.logger = getLogger(sm.name())
+        this.additionalAnsibleArgs = additionalAnsibleArgs ?? []
     }
 
     async configure() {
@@ -68,8 +70,9 @@ export class AnsibleConfigurator implements InstanceConfigurator {
         })
 
         const ansibleCommand = 'ansible-playbook'
-        const ansibleArgs = ['-i', inventoryPath, playbookPath]
-        this.logger.debug(`Ansible command: ${playbookPath} ${JSON.stringify(ansibleArgs)}`)
+        const ansibleArgs = ['-i', inventoryPath, playbookPath].concat(this.additionalAnsibleArgs)
+
+        this.logger.debug(`Ansible command: ${ansibleCommand} ${JSON.stringify(ansibleArgs)}`)
 
         const ansibleProcess = spawnSync(ansibleCommand, ansibleArgs, { stdio: 'inherit', shell: true });
 

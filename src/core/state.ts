@@ -1,12 +1,53 @@
 import * as fs from 'fs'
 import * as yaml from 'js-yaml'
+import * as path from 'path';
 import { PartialDeep } from "type-fest"
 import lodash from 'lodash';
 import { PaperspaceProviderState } from '../providers/paperspace/state';
 import { AwsProviderState } from '../providers/aws/state';
-import { GlobalInstanceManager, InstanceManager } from './manager';
 import { getLogger, Logger } from '../log/utils';
+import { CLOUDYPAD_INSTANCES_DIR } from './const';
 
+/**
+ * State utils functions to manage instance state
+ */
+export class StateUtils {
+
+    private static readonly logger = getLogger(StateUtils.name)
+
+    static getInstanceDir(instanceName: string){
+        return path.join(CLOUDYPAD_INSTANCES_DIR, instanceName);
+    }
+    
+    static getInstanceConfigPath(instanceName: string){
+        return path.join(this.getInstanceDir(instanceName), "config.yml");
+    }
+
+    static async instanceExists(instanceName: string): Promise<boolean>{
+        const instanceDir = StateUtils.getInstanceDir(instanceName)
+        
+        StateUtils.logger.debug(`Checking instance ${instanceName} exists at ${instanceDir}`)
+        
+        return fs.existsSync(instanceDir)
+    }
+
+    static async loadInstanceState(instanceName: string): Promise<StateManager>{
+
+        StateUtils.logger.debug(`Loading instance state ${instanceName}`)
+
+        if(!await StateUtils.instanceExists(instanceName)){
+            throw new Error("Instance does not exist.")
+        }
+
+        const configPath = this.getInstanceConfigPath(instanceName)
+
+        this.logger.debug(`Loading instance state ${instanceName} from ${configPath}`)
+
+        const state = yaml.load(fs.readFileSync(configPath, 'utf8')) as InstanceState; // TODO use Zod
+    
+        return new StateManager(state)
+    }
+}
 /**
  * Current state of a Cloudy Pad instance. It contains every data
  * about an instance: Cloud provider used, how to access, etc.
@@ -112,7 +153,7 @@ export class StateManager {
 
     async update(data: PartialDeep<InstanceState>){
         this.logger.debug(`Updating state for ${this.state.name}`)
-        this.logger.trace(`Updating state for ${this.state.name} with ${data}`)
+        this.logger.trace(`Updating state for ${this.state.name} with ${JSON.stringify(data)}`)
 
         lodash.merge(this.state, data)
         await this.persist()
@@ -124,7 +165,7 @@ export class StateManager {
      */
     async persist(){
         
-        const confPath = GlobalInstanceManager.get().getInstanceConfigPath(this.state.name)
+        const confPath = StateUtils.getInstanceConfigPath(this.state.name)
 
         this.logger.debug(`Persisting state for ${this.state.name} at ${confPath}`)
 

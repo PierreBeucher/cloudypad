@@ -4,8 +4,12 @@ set -e
 
 # Installation arguments
 # Override by setting related environment variable
+DEFAULT_CLOUDYPAD_VERSION=0.1.1
 CLOUDYPAD_HOME=${CLOUDYPAD_HOME:-"$HOME/.cloudypad"}
-CLOUDYPAD_VERSION=0.1.1
+CLOUDYPAD_VERSION=${CLOUDYPAD_VERSION:-$DEFAULT_CLOUDYPAD_VERSION}
+
+echo "Installing Cloudy Pad version $CLOUDYPAD_VERSION"
+
 CLOUDYPAD_SCRIPT_URL="https://raw.githubusercontent.com/PierreBeucher/cloudypad/$CLOUDYPAD_VERSION/cloudypad.sh"
 # ===
 
@@ -24,16 +28,16 @@ if [ -n "$(which cloudypad)" ]; then
   fi
 fi
 
-echo "Downloading Cloudy Pad CLI..."
-
 # Create secure directory for Cloudy Pad home as it may contain sensitive data
 mkdir -p "$CLOUDYPAD_HOME"
 chmod 0700 $CLOUDYPAD_HOME
 
 mkdir -p "$INSTALL_DIR"
 
+echo "Downloading $CLOUDYPAD_SCRIPT_URL..."
+
 if command -v curl >/dev/null 2>&1; then
-  curl -sSL -o "$SCRIPT_PATH" "$CLOUDYPAD_SCRIPT_URL"
+  curl --fail -sSL -o "$SCRIPT_PATH" "$CLOUDYPAD_SCRIPT_URL"
 elif command -v wget >/dev/null 2>&1; then
   wget -O "$SCRIPT_PATH" "$CLOUDYPAD_SCRIPT_URL"
 else

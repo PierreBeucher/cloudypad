@@ -4,6 +4,10 @@ import { version } from '../package.json';
 import { Command } from 'commander';
 import { GlobalInstanceManager } from './core/manager';
 import { setDefaultVerbosity } from './log/utils';
+import { AwsProvisionArgs, AwsInstanceInitializer } from './providers/aws/initializer';
+import { PartialDeep } from 'type-fest';
+import { PaperspaceInstanceInitializer, PaperspaceProvisionArgs } from './providers/paperspace/initializer';
+import * as fs from 'fs'
 
 const program = new Command();
 
@@ -16,12 +20,94 @@ program
     .configureHelp({ showGlobalOptions: true})
     .version(version);
 
+const createCmd = program
+    .command('create')
+    .description('Create a new instance, prompting for details. Use `create <provider> for provider-specific creation commands.`')
+    .action(async (opts) => {
+        try {
+            await GlobalInstanceManager.promptInstanceInitializer({
+                instanceName: opts.name,
+                sshKey: opts.privateSshKey,
+            })
+        } catch (error) {
+            console.error('Error creating new instance:', error);
+        }
+    })
+
+createCmd
+    .command('aws')
+    .description('Create a new Cloudy Pad instance using AWS Cloud provider')
+    .option('--name <name>', 'Instance name')
+    .option('--private-ssh-key <path>', 'Path to private SSH key to use to connect to instance')
+    .option('--instance-type <type>', 'EC2 instance type')
+    .option('--disk-size <size>', 'Disk size in GB', parseInt)
+    .option('--public-ip-type <type>', 'Public IP type. Either "static" or "dynamic"')
+    .option('--region <region>', 'Region in which to deploy instance')
+    .action(async (options) => {
+        try {
+            const genericArgs = {
+                instanceName: options.name,
+                sshKey: options.privateSshKey,
+            }
+
+            const awsArgs: PartialDeep<AwsProvisionArgs> = {
+                create: {
+                    instanceType: options.instanceType,
+                    diskSize: options.diskSize,
+                    publicIpType: options.publicIpType,
+                    region: options.region,
+                }
+            }
+ 
+            await new AwsInstanceInitializer(genericArgs, awsArgs).initializeInstance()
+            
+        } catch (error) {
+            console.error('Error creating AWS instance:', error);
+        }
+    })
+
+createCmd
+    .command('paperspace')
+    .description('Create a new Cloudy Pad instance using Paperspace Cloud provider')
+    .option('--name <name>', 'Instance name')
+    .option('--private-ssh-key <path>', 'Path to private SSH key to use to connect to instance')
+    .option('--api-key-file <apikeyfile>', 'Path to Paperspace API key file')
+    .option('--machine-type <type>', 'Machine type')
+    .option('--disk-size <size>', 'Disk size in GB', parseInt)
+    .option('--public-ip-type <type>', 'Public IP type. Either "static" or "dynamic"')
+    .option('--region <region>', 'Region in which to deploy instance')
+    .action(async (options) => {
+        try {
+            const genericArgs = {
+                instanceName: options.name,
+                sshKey: options.privateSshKey,
+            }
+
+            const apiKey = options.apiKeyFile ? fs.readFileSync(options.apiKeyFile, 'utf-8') : undefined
+            const pspaceArgs: PartialDeep<PaperspaceProvisionArgs> = {
+                apiKey: apiKey,
+                create: {
+                    machineType: options.machineType,
+                    diskSize: options.diskSize,
+                    publicIpType: options.publicIpType,
+                    region: options.region,
+                }
+            }
+ 
+            await new PaperspaceInstanceInitializer(genericArgs, pspaceArgs).initializeInstance()
+            
+        } catch (error) {
+            console.error('Error creating Paperspace instance:', error);
+        }
+    })
+
+
 program
     .command('list')
     .description('List all instances')
     .action(async () => {
         try {
-            const instanceNames = GlobalInstanceManager.get().getAllInstances();
+            const instanceNames = GlobalInstanceManager.getAllInstances();
             if (instanceNames.length === 0) {
                 console.info('No instances found.');
                 return;
@@ -33,22 +119,11 @@ program
     })
 
 program
-    .command('create [name]')
-    .description('Create a new instance')
-    .action(async (name) => {
-        try {
-            await GlobalInstanceManager.get().createInstance({ name: name });
-        } catch (error) {
-            console.error('Error creating new instance:', error);
-        }
-    })
-
-program
     .command('start <name>')
     .description('Start an instance')
     .action(async (name) => {
         try {
-            const m = await GlobalInstanceManager.get().getInstanceManager(name)
+            const m = await GlobalInstanceManager.getInstanceManager(name)
             const r = await m.getInstanceRunner()
             await r.start()
             console.info(`Started instance ${name}`)
@@ -62,7 +137,7 @@ program
     .description('Stop an instance')
     .action(async (name) => {
         try {
-            const m = await GlobalInstanceManager.get().getInstanceManager(name)
+            const m = await GlobalInstanceManager.getInstanceManager(name)
             const r = await m.getInstanceRunner()
             console.info(`Stopped instance ${name}`)
             await r.stop()
@@ -76,7 +151,7 @@ program
     .description('Restart an instance')
     .action(async (name) => {
         try {
-            const m = await GlobalInstanceManager.get().getInstanceManager(name)
+            const m = await GlobalInstanceManager.getInstanceManager(name)
             const r = await m.getInstanceRunner()
             await r.restart()
             console.info(`Restarted instance ${name}`)
@@ -90,7 +165,7 @@ program
     .description('Get details of an instance')
     .action(async (name) => {
         try {
-            const m = await GlobalInstanceManager.get().getInstanceManager(name)
+            const m = await GlobalInstanceManager.getInstanceManager(name)
             const r = await m.getInstanceRunner()
             const details = await r.get()
             console.info(JSON.stringify(details, null, 2))
@@ -104,7 +179,7 @@ program
     .description('Provision an instance (deploy or update Cloud resources)')
     .action(async (name) => {
         try {
-            const m = await GlobalInstanceManager.get().getInstanceManager(name)
+            const m = await GlobalInstanceManager.getInstanceManager(name)
             const p = await m.getInstanceProvisioner()
             await p.provision()
             console.info(`Provisioned instance ${name}`)
@@ -118,7 +193,7 @@ program
     .description('Configure an instance (connect to instance and install drivers, packages, etc.)')
     .action(async (name) => {
         try {
-            const m = await GlobalInstanceManager.get().getInstanceManager(name)
+            const m = await GlobalInstanceManager.getInstanceManager(name)
             const p = await m.getInstanceConfigurator()
             await p.configure()
             console.info("")
@@ -133,7 +208,7 @@ program
     .description('Destroy an instance')
     .action(async (name) => {
         try {
-            const m = await GlobalInstanceManager.get().getInstanceManager(name)
+            const m = await GlobalInstanceManager.getInstanceManager(name)
 
             if (m.isProvisioned()) {
 
@@ -155,7 +230,7 @@ program.command('pair <name>')
     .description('Pair an instance with Moonlight')
     .action(async (name: string) => {
         try {
-            const m = await GlobalInstanceManager.get().getInstanceManager(name)
+            const m = await GlobalInstanceManager.getInstanceManager(name)
             const r = await m.getInstanceRunner()
             await r.pair()
         } catch (error) {

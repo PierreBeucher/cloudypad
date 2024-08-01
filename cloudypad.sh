@@ -7,6 +7,10 @@
 # and run instructions.
 # Only a few commands need to run directly for user (eg. moonlight setup)
 
+if [ -n "$CLOUDYPAD_CLI_LAUNCHER_DEBUG" ]; then
+  set -x
+fi
+
 CLOUDYPAD_VERSION=0.1.1
 CLOUDYPAD_IMAGE="${CLOUDYPAD_IMAGE:-"crafteo/cloudypad:$CLOUDYPAD_VERSION"}"
 CLOUDYPAD_TARGET_IMAGE="crafteo/cloudypad-local-runner:local"
@@ -32,27 +36,30 @@ HOST_GROUP_NAME=$(id -gn)
 cat <<EOF > /tmp/Dockerfile-cloudypad-run
 FROM $CLOUDYPAD_IMAGE
 
-# Ensure the host user matches user in container:
+# Ensure the host user matches user in container.
+# If host user is root, do nothing and run container as root, otherwise:
 # - Delete user matching host's user ID if already exists
 # - Create group if not exists
 # - Create user
-RUN if id -u $HOST_UID >/dev/null 2>&1; then \
-        deluser \$(id -un $HOST_UID); \
-    fi && \
-    if ! getent group $HOST_GID >/dev/null; then \
-        groupadd -g $HOST_GID $HOST_GROUP_NAME; \
-    fi && \
-    useradd -u $HOST_UID -g $HOST_GID --home-dir $HOME --create-home $HOST_USER_NAME
+RUN if [ "$(id -u $HOST_UID)" -ne 0 ] >/dev/null 2>&1; then \
+        if id -u $HOST_UID >/dev/null 2>&1; then \
+            deluser \$(id -un $HOST_UID); \
+        fi && \
+        if ! getent group $HOST_GID >/dev/null; then \
+            groupadd -g $HOST_GID $HOST_GROUP_NAME; \
+        fi && \
+        useradd -u $HOST_UID -g $HOST_GID --home-dir $HOME --create-home $HOST_USER_NAME; \
+    fi
 
 USER $HOST_UID
 EOF
 
-container_build_output=$(docker build --progress plain -t $CLOUDYPAD_TARGET_IMAGE - < /tmp/Dockerfile-cloudypad-run 2>&1)
+container_build_output=$(docker build -t $CLOUDYPAD_TARGET_IMAGE - < /tmp/Dockerfile-cloudypad-run 2>&1)
 container_build_result=$?
 
 if [ $container_build_result -ne 0 ]; then
     echo "Error: could not build CloudyPad container image, build exited with code: $container_build_result" >&2
-    echo "Build command was: docker build --progress plain -t $CLOUDYPAD_TARGET_IMAGE - < /tmp/Dockerfile-cloudypad-run 2>&1" >&2
+    echo "Build command was: docker build -t $CLOUDYPAD_TARGET_IMAGE - < /tmp/Dockerfile-cloudypad-run 2>&1" >&2
     echo "Build output: "
     echo "$container_build_output"
     echo
@@ -80,12 +87,33 @@ run_cloudypad_docker() {
     )
 
     # Build run command with proper directories
-    local cmd="docker run --rm -it"
+    local cmd="docker run --rm"
+
+    # Set interactive+tty by default
+    # no tty if CLOUDYPAD_CONTAINER_NO_TTY is set (for CI)
+    if [ -n "$CLOUDYPAD_CONTAINER_NO_TTY" ]; then
+        cmd="$cmd -t"
+    else
+        cmd="$cmd -it"
+    fi
 
     # Only mount a directory if it exists on host
     for mount in "${mounts[@]}"; do
         if [ -d "$mount" ]; then
             cmd+=" -v $mount:$mount"
+        fi
+    done
+
+    # Local environment variables to pass-through in container
+    local env_vars=(
+        "AWS_PROFILE" "AWS_ACCESS_KEY_ID" "AWS_SECRET_ACCESS_KEY" "AWS_SESSION_TOKEN" 
+        "AWS_DEFAULT_REGION" "AWS_REGION" "AWS_ENDPOINT_URL" "AWS_PROFILE" 
+        "AWS_ROLE_ARN" "AWS_ROLE_SESSION_NAME"
+    )
+
+    for env_var in "${env_vars[@]}"; do
+        if [ -n "${!env_var}" ]; then
+            cmd+=" -e $env_var=${!env_var}"
         fi
     done
 

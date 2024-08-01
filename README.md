@@ -12,6 +12,8 @@ Your own gaming gear in the Cloud ! 🎮 ⛅
 - [Detailed setup per Clouder](#detailed-setup-per-clouder)
   - [Paperspace](#paperspace)
   - [AWS](#aws)
+    - [Quotas](#quotas)
+    - [Profile and environment variables](#profile-and-environment-variables)
 - [FAQ](#faq)
   - [How much will I pay ? 🫰](#how-much-will-i-pay--)
     - [Paperspace](#paperspace-1)
@@ -19,12 +21,15 @@ Your own gaming gear in the Cloud ! 🎮 ⛅
   - [What are the recommended GPU and specs for my instance ?](#what-are-the-recommended-gpu-and-specs-for-my-instance-)
     - [AWS](#aws-2)
     - [Paperspace](#paperspace-2)
+  - [How can I log-in to Steam?](#how-can-i-log-in-to-steam)
   - [How to play game on Steam / Why does my Steam game doesn't launch ?](#how-to-play-game-on-steam--why-does-my-steam-game-doesnt-launch-)
   - [Using Steam, why does my game take forever to "cache Vulkan shader" ?](#using-steam-why-does-my-game-take-forever-to-cache-vulkan-shader-)
   - [I have a black screen when I connect to my instance](#i-have-a-black-screen-when-i-connect-to-my-instance)
   - [I Found an bug or I have a suggestion](#i-found-an-bug-or-i-have-a-suggestion)
   - [How does all of this work?](#how-does-all-of-this-work)
   - [Will Cloudy Pad become a paid product ?](#will-cloudy-pad-become-a-paid-product-)
+- [Known issues](#known-issues)
+  - [Docker for MacOS and VirtioFS](#docker-for-macos-and-virtiofs)
 - [License](#license)
 
 ## What is Cloudy Pad ?
@@ -67,7 +72,7 @@ Not familiar with terms like _"Cloud gaming"_, _"Moonlight"_, _"Cloud Provider"_
 
 Cloudy Pad deploys a Cloud gaming gear using a Cloud provider of your choice:
 - 💸 While Cloudy Pad itself is free and open-source, charges may incur for Cloud provider usage. Make sure you [understand the costs](#how-much-will-i-pay--) 
-- Cloudy Pad lets you play on Linux. Using Steam may require [Proton](https://www.protondb.com/). You can check your game compatibility on [Proton website](https://www.protondb.com/) or see [how to play games on Steam](#how-to-play-game-on-steam--why-does-my-steam-game-doesnt-launch-).
+- Cloudy Pad lets you play on Linux. Using Steam may require [Proton](https://github.com/ValveSoftware/Proton). You can check your game compatibility on [ProtonDB website](https://www.protondb.com/) or see [how to play games on Steam](#how-to-play-game-on-steam--why-does-my-steam-game-doesnt-launch-).
 
 Prerequisites:
 - A Cloud provider account, one of:
@@ -76,10 +81,16 @@ Prerequisites:
 - [Moonlight](https://moonlight-stream.org/) streaming client
 - [Docker](https://docs.docker.com/engine/install/) (other container engine support will come soon)
 
-Install `cloudypad` CLI:
+Install latest version of `cloudypad` CLI:
 
 ```sh
 curl -fsSL https://raw.githubusercontent.com/PierreBeucher/cloudypad/master/install.sh | sh
+```
+
+Living on the edge? Install directly from a branch or a Git commit:
+
+```sh
+curl -fsSL https://raw.githubusercontent.com/PierreBeucher/cloudypad/master/install.sh | CLOUDYPAD_VERSION="master" sh
 ```
 
 You may need to setup a few things on your Cloud provider (eg. API key or SSH key). Checkout [per-Clouder setup specifities](#detailed-setup-per-clouder).
@@ -251,6 +262,26 @@ You're good to go ! Create your instance with
 cloudypad create
 ```
 
+#### Quotas
+
+You may need to increase quota to create the related instance type. If you get an error related to quota:
+- Go to AWS console and open "Service Quotas" service
+- Go to _AWS Services_ > search for _Amazon Elastic Compute Cloud (Amazon EC2)_ and open it
+- Search for _Running On-Demand G and VT instances_ (or the related instance type) and request a quota increase
+- Use a quota value according to the instance type you want to use. For example, `2xlarge` requires at least 8 vCPU.
+
+See [AWS service quotas](https://docs.aws.amazon.com/general/latest/gr/aws_service_limits.html) for details.
+
+#### Profile and environment variables 
+
+If you want to use an AWS Profile or specific AWS credentials, use environment variables such as:
+
+```sh
+export AWS_PROFILE=myprofile
+```
+
+See [AWS environment variable list](https://docs.aws.amazon.com/sdkref/latest/guide/settings-reference.html#EVarSettings) for existing variables. Not there are certain limitations as most Cloudy Pad workflow run in a container which may cause some variables to misbehave. Please create an issue if you encounter a problem. 
+
 ## FAQ
 
 ### How much will I pay ? 🫰
@@ -304,6 +335,13 @@ Paperspace `RTX4000` or `P4000` or `M4000` are relatively cheap and powerful eno
 
 Use higher-tier instance if you have latency related to resource consumption.
 
+### How can I log-in to Steam?
+
+When you run Steam, you'll be prompted to login either via QR code or login/password. You can either:
+
+- Enter your login / password manually
+- Use the Steam app to login via QR code: download and login with the Steam app on your smartphone, then click on the Steam Guard icon (shield icon at the bottom) and scan the QR code shown. 
+
 ### How to play game on Steam / Why does my Steam game doesn't launch ?
 
 In order to play games on Steam you may need to enable Proton:
@@ -311,7 +349,7 @@ In order to play games on Steam you may need to enable Proton:
 - Go to game properties (_Gear button on the right > Properties_)
 - Enable Proton in the Compatibility menu
 
-It's recommended to check your game Proton compatibility [ProtonDB](https://www.protondb.com/). You may need to add a few Launch options (_Game properties > General > Launch options_).
+It's recommended to check your game Proton compatibility on [ProtonDB](https://www.protondb.com/). You may need to add a few Launch options (_Game properties > General > Launch options_).
 
 ### Using Steam, why does my game take forever to "cache Vulkan shader" ?
 
@@ -340,6 +378,21 @@ If you found a bug or have a suggestion, [please report an issue](https://github
 Probably not in its current form. Considering I'm really _not_ happy about the [enshittification of the internet](https://en.wikipedia.org/wiki/Enshittification), Cloudy Pad will remain FOSS - at least for personal use.
 
 Cloudy Pad may have a Premium or Pro offer in the future, but for a personal simple use it will remain FOSS.
+
+## Known issues
+
+### Docker for MacOS and VirtioFS 
+
+For MacOS, if your Docker installation use VirtioFS, Cloudy Pad may fail with a Docker-related error such as: 
+
+```
+Error response from daemon: error while creating mount source path '/private/tmp/com.apple.launchd.ABCDEF/Listeners': mkdir /private/tmp/com.apple.launchd.ABCDEF/Listeners: operation not supported
+```
+
+This is a bug when using Docker for Mac VirtioFS file sharing with SSH agent. The bug is still being worked on, as a workaround you can either:
+
+- Disable SSH agent before running Cloudy Pad, eg. `unset SSH_AUTH_SOCK`
+- Switch Docker for Mac config to non-VirtioFS (eg. gRPC FUSE): go to _config > Resources > File Sharing_ and update config. 
 
 ## License
 

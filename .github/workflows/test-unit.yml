@@ -1,0 +1,108 @@
+name: Build and Test
+
+on:
+  push:
+    branches:
+      - "master"
+  pull_request:
+    branches:
+      - master
+
+jobs:
+  unit-test:
+    name: Unit tests
+    runs-on: ubuntu-24.04
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      - uses: nixbuild/nix-quick-install-action@v27
+
+      - uses: nix-community/cache-nix-action@v5
+        with:
+          primary-key: nix-${{ runner.os }}-${{ hashFiles('**/*.nix') }}
+          restore-prefixes-first-match: nix-${{ runner.os }}-
+      
+      - uses: actions/cache@v3
+        with:
+          path: ~/.npm
+          key: ${{ runner.os }}-npm-${{ hashFiles('**/package*.json') }}
+          restore-keys: |
+            ${{ runner.os }}-npm-
+      
+      - run: nix develop -c npm i
+
+      - name: Run unit tests
+        run: nix develop -c task test-unit
+
+  build:
+    name: Build
+    runs-on: ubuntu-24.04
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      - uses: nixbuild/nix-quick-install-action@v27
+
+      - uses: nix-community/cache-nix-action@v5
+        with:
+          primary-key: nix-${{ runner.os }}-${{ hashFiles('**/*.nix') }}
+          restore-prefixes-first-match: nix-${{ runner.os }}-
+  
+      - name: Build container image
+        run: nix develop -c task build
+      
+      - name: Smoke test container image
+        run: nix develop -c task build-smoke-test
+
+  test-install:
+    name: Test install/run
+    runs-on: "${{ matrix.os }}"
+    strategy:
+      matrix:
+        os:
+        - ubuntu-24.04
+        - ubuntu-22.04
+        - ubuntu-20.04
+        # - macos-14 # Docker install suported yet
+        - macos-13
+        - macos-12
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      - name: (MacOS) Setup Docker
+        if: startsWith(matrix.os, 'macos')
+        # uses: docker-practice/actions-setup-docker@master
+        # timeout-minutes: 12
+        # uses: douglascamata/setup-docker-macos-action@main
+        uses: crazy-max/ghaction-setup-docker@v3
+        
+      # Test the install script and cloudypad.sh for current commit
+      - name: Run install script
+        run: |
+          curl -fsSL https://raw.githubusercontent.com/PierreBeucher/cloudypad/${{ github.sha }}/install.sh | CLOUDYPAD_VERSION=${{ github.sha }} sh
+
+      - name: Check version
+        run: |
+          export PATH=$PATH:$HOME/.cloudypad/bin
+          export CLOUDYPAD_CONTAINER_NO_TTY=true
+          export CLOUDYPAD_CLI_LAUNCHER_DEBUG=true
+          cloudypad --version
+  
+  test-install-container:
+    name: Test install/run in containers
+    runs-on: ubuntu-22.04
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      - name: Test install.sh script
+        run: test/shell/test-install.sh
+        
+      - name: Test cloudypad.sh script
+        run: test/shell/test-cloudypad.sh
