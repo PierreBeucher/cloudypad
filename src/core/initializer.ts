@@ -4,7 +4,7 @@ import * as os from 'os';
 import { input, select, confirm } from '@inquirer/prompts';
 import { AnsibleConfigurator } from '../configurators/ansible';
 import { InstanceState, StateManager } from './state';
-import { GlobalInstanceManager, InstanceManager } from './manager';
+import { GlobalInstanceManager } from './manager';
 import { getLogger } from '../log/utils';
 import { PartialDeep } from 'type-fest';
 

@@ -1,7 +1,5 @@
 import * as fs from 'fs'
-import * as aws from "@pulumi/aws";
-import * as pulumi from "@pulumi/pulumi";
-import { ConfigMap, InlineProgramArgs, LocalWorkspace, LocalWorkspaceOptions, OutputMap, PulumiFn, Stack } from "@pulumi/pulumi/automation";
+import { InlineProgramArgs, LocalWorkspace, LocalWorkspaceOptions, OutputMap, PulumiFn, Stack } from "@pulumi/pulumi/automation";
 import { CLOUDYPAD_HOME } from "../../core/const"
 import { getLogger, Logger } from '../../log/utils';
 

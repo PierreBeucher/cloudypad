@@ -58,7 +58,6 @@ export abstract class AbstractInstanceRunner implements InstanceRunner {
         const pinUrlLogMatch = 'Insert pin at';
         const timeout = 600000; // 10min
         const pollInterval = 1000; // 1s
-        const pollStartTime = Date.now()
         
         const container = docker.getContainer(containerName);
 
@@ -123,7 +122,7 @@ export abstract class AbstractInstanceRunner implements InstanceRunner {
         this.logger.debug(`Posting ${JSON.stringify(postData)} to ${postPinUrl}`)
          
         try {
-            const result = await axios.post(postPinUrl, postData, {
+            await axios.post(postPinUrl, postData, {
                 headers: {
                     'Content-Type': 'application/json'
                 }

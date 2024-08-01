@@ -1,7 +1,7 @@
 #! /usr/bin/env node
 
 import { version } from '../package.json';
-import { Command, createOption } from 'commander';
+import { Command } from 'commander';
 import { GlobalInstanceManager } from './core/manager';
 import { setDefaultVerbosity } from './log/utils';
 import { AwsProvisionArgs, AwsInstanceInitializer } from './providers/aws/initializer';
@@ -19,9 +19,6 @@ program
         (v) => { setDefaultVerbosity(Number.parseInt(v)) })
     .configureHelp({ showGlobalOptions: true})
     .version(version);
-    
-const createNameOpt = createOption('--name <name>', 'Instance name')
-const createSshKeyOpt = createOption('--private-ssh-key <path>', 'Path to private SSH key to use to connect to instance.')
 
 const createCmd = program
     .command('create')

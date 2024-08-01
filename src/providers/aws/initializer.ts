@@ -1,11 +1,10 @@
-import { input, select, confirm } from '@inquirer/prompts';
+import { input, select } from '@inquirer/prompts';
 import { loadConfig } from "@smithy/node-config-provider";
 import { NODE_REGION_CONFIG_FILE_OPTIONS, NODE_REGION_CONFIG_OPTIONS } from "@smithy/config-resolver";
 import { PartialDeep } from 'type-fest';
 import { AwsClient } from '../../tools/aws';
 import { InstanceInitializer, GenericInitializationArgs } from '../../core/initializer';
 import { StateManager } from '../../core/state';
-import { CLOUDYPAD_PROVIDER_AWS } from '../../core/const';
 import { AwsProvisioner } from './provisioner';
 import { AwsInstanceRunner } from './runner';
 
@@ -16,6 +15,7 @@ export interface AwsProvisionArgs {
         publicIpType: string
         region: string
     }
+    skipAuthCheck?: boolean
 }
 
 export class AwsInstanceInitializer extends InstanceInitializer {
@@ -46,7 +46,7 @@ export class AwsInstanceInitializer extends InstanceInitializer {
     
 }
 
-class AwsInitializerPrompt {
+export class AwsInitializerPrompt {
 
     private awsClient: AwsClient
     constructor(){
@@ -55,7 +55,10 @@ class AwsInitializerPrompt {
 
     async prompt(opts?: PartialDeep<AwsProvisionArgs>): Promise<AwsProvisionArgs> {
 
-        await this.awsClient.checkAwsAuth()
+        if(!opts?.skipAuthCheck) {
+            await this.awsClient.checkAwsAuth()
+        }
+
         const instanceType = await this.instanceType(opts?.create?.instanceType);
         const diskSize = await this.diskSize(opts?.create?.diskSize);
         const publicIpType = await this.publicIpType(opts?.create?.publicIpType);

@@ -4,6 +4,7 @@ import { Logger as InternalLogger } from "tslog";
 // Logging utility used globally
 //
 
+/* eslint-disable @typescript-eslint/no-empty-object-type */
 interface ILogObj {
 
 }

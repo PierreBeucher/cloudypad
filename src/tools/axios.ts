@@ -1,3 +1,6 @@
+/* eslint-disable  @typescript-eslint/no-explicit-any */
+// Axios don't leave much choice but to allow any
+
 /**
  * Wrap a client error from Axios potential error
  */

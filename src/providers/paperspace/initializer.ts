@@ -54,7 +54,7 @@ export class PaperspaceInstanceInitializer extends InstanceInitializer {
     
 }
 
-class PaperspaceInitializerPrompt {
+export class PaperspaceInitializerPrompt {
     
     protected readonly logger = getLogger(PaperspaceInitializerPrompt.name)
 

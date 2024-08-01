@@ -1,7 +1,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import * as yaml from 'js-yaml'
-import { CLOUDYPAD_INSTANCES_DIR, CLOUDYPAD_PROVIDER, CLOUDYPAD_PROVIDER_AWS, CLOUDYPAD_PROVIDER_PAPERSPACE } from './const';
+import { CLOUDYPAD_INSTANCES_DIR, CLOUDYPAD_PROVIDER_AWS, CLOUDYPAD_PROVIDER_PAPERSPACE } from './const';
 import { InstanceState, StateManager } from './state';
 import { InstanceRunner } from './runner';
 import { AwsInstanceRunner } from '../providers/aws/runner';

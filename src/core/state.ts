@@ -4,7 +4,7 @@ import { PartialDeep } from "type-fest"
 import lodash from 'lodash';
 import { PaperspaceProviderState } from '../providers/paperspace/state';
 import { AwsProviderState } from '../providers/aws/state';
-import { GlobalInstanceManager, InstanceManager } from './manager';
+import { GlobalInstanceManager } from './manager';
 import { getLogger, Logger } from '../log/utils';
 
 /**
