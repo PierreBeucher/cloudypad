@@ -46,7 +46,7 @@ createCmd
     .option('--public-ip-type <type>', 'Public IP type. Either "static" or "dynamic"')
     .option('--region <region>', 'Region in which to deploy instance')
     .option('--yes', 'Do not prompt for approval, automatically approve and continue')
-    .option('--overwrite-existing', 'If an instance with the same name already exists, override without warning promp')
+    .option('--overwrite-existing', 'If an instance with the same name already exists, override without warning prompt')
     .action(async (options) => {
         try {
             const genericArgs = {
@@ -87,7 +87,7 @@ createCmd
     .option('--public-ip-type <type>', 'Public IP type. Either "static" or "dynamic"')
     .option('--region <region>', 'Region in which to deploy instance')
     .option('--yes', 'Do not prompt for approval, automatically approve and continue')
-    .option('--overwrite-existing', 'If an instance with the same name already exists, override without warning promp')
+    .option('--overwrite-existing', 'If an instance with the same name already exists, override without warning prompt')
     .action(async (options) => {
         try {
             const genericArgs = {
