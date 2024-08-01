@@ -64,6 +64,7 @@ createCmd
 
             const opts: InstanceInitializationOptions = {
                 autoApprove: options.yes,
+                overwriteExisting: options.overwriteExisting
             }
 
             await new AwsInstanceInitializer(genericArgs, awsArgs).initializeInstance(opts)
@@ -105,6 +106,7 @@ createCmd
 
             const opts: InstanceInitializationOptions = {
                 autoApprove: options.yes,
+                overwriteExisting: options.overwriteExisting
             }
  
             await new PaperspaceInstanceInitializer(genericArgs, pspaceArgs).initializeInstance(opts)

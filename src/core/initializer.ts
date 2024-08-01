@@ -15,6 +15,7 @@ export interface GenericInitializationArgs {
 
 export interface InstanceInitializationOptions {
     autoApprove?: boolean
+    overwriteExisting?: boolean
 }
 
 /**
@@ -68,6 +69,17 @@ export abstract class InstanceInitializer {
     public async initializeInstance(opts: InstanceInitializationOptions){
 
         const genericArgs = await this.getGenericInitArgs()
+
+        if(await StateUtils.instanceExists(genericArgs.instanceName) && !opts.overwriteExisting){
+            const confirmAlreadyExists = await confirm({
+                message: `Instance ${genericArgs.instanceName} already exists. Do you want to overwrite existing instance config?`,
+                default: false,
+            })
+            
+            if (!confirmAlreadyExists) {
+                throw new Error("Won't overwrite existing instance. Initialization aborted.")
+            }
+        }
 
         this.logger.debug(`Initializing a new instance with args ${JSON.stringify(genericArgs)}`)
         
@@ -155,16 +167,6 @@ export class GenericInitializerPrompt {
                 message: 'Enter instance name:',
                 default: defaultInstanceName,
             })
-        }
-
-        if(await StateUtils.instanceExists(instanceName)){
-            const confirmAlreadyExists = await confirm({
-                message: `Instance ${instanceName} already exists. Do you want to overwrite existing instance config?`,
-                default: false,
-            })
-            if (!confirmAlreadyExists) {
-                throw new Error("Won't overwrite existing instance. Initialization aborted.")
-            }
         }
 
         return instanceName
