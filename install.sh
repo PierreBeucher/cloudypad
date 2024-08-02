@@ -4,7 +4,7 @@ set -e
 
 # Installation arguments
 # Override by setting related environment variable
-DEFAULT_CLOUDYPAD_VERSION=0.1.1
+DEFAULT_CLOUDYPAD_VERSION=0.2.0
 CLOUDYPAD_HOME=${CLOUDYPAD_HOME:-"$HOME/.cloudypad"}
 CLOUDYPAD_VERSION=${CLOUDYPAD_VERSION:-$DEFAULT_CLOUDYPAD_VERSION}
 
