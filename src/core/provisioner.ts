@@ -1,13 +1,18 @@
 import { getLogger, Logger } from "../log/utils"
 import { StateManager } from "./state"
 
+export interface InstanceProvisionOptions  {
+    autoApprove?: boolean
+    skipAuthCheck?: boolean
+}
+
 /**
  * Provision instance Cloud resources. 
  */
 export interface InstanceProvisioner {
-    provision(): Promise<void>
+    provision(opts?: InstanceProvisionOptions): Promise<void>
 
-    destroy(): Promise<void>
+    destroy(opts?: InstanceProvisionOptions): Promise<void>
 }
 
 export class BaseInstanceProvisioner {
