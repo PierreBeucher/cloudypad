@@ -1,5 +1,9 @@
 #!/usr/bin/env bash
 
+#
+# Build and push container image for release
+#
+
 set -e
 
 NEW_VERSION=$(cat package.json | jq -r .version)
@@ -14,8 +18,8 @@ read -p "Push images $REPO:$NEW_VERSION and $REPO:latest ? (yN) " PUSH
 
 if [[ $PUSH =~ ^[Yy]$ ]]; then
   docker buildx build \
-  -t $REPO:$NEW_VERSION -t $REPO:latest \
-  --platform=linux/amd64,linux/arm64 \
-  --push \
-  .
+    -t $REPO:$NEW_VERSION -t $REPO:latest \
+    --platform=linux/amd64,linux/arm64 \
+    --push \
+    .
 fi
