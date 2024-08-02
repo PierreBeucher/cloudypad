@@ -17,5 +17,5 @@ sed -i "s/DEFAULT_CLOUDYPAD_VERSION=$VERSION_REGEX/DEFAULT_CLOUDYPAD_VERSION=$NE
 # Replace version in flake.nix with any semantic version including those with additional characters
 sed -i "s/version = \"$VERSION_REGEX\";/version = \"$NEW_VERSION\";/" flake.nix
 
-# Replace version in package.json with any semantic version including those with additional characters
-sed -i "s/\"version\": \"$VERSION_REGEX\"/\"version\": \"$NEW_VERSION\"/" package.json
+# package*.json done by release please
+# sed -i "s/\"version\": \"$VERSION_REGEX\"/\"version\": \"$NEW_VERSION\"/" package.json

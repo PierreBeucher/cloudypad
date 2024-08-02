@@ -73,10 +73,18 @@ tasks:
   # Release
   #
 
-  release-prepare:
-    cmd: ./hack/prepare-release.sh
-  
-  release-build-image:
-    cmd: ./hack/build-release.sh
+  release-update-version:
+    cmd: ./hack/release-update-version.sh
 
+  release-build-image:
+    cmd: ./hack/release-build-image.sh
+
+  release-pr:
+    cmd: >-
+      npx release-please release-pr 
+      --repo-url https://github.com/PierreBeucher/cloudypad 
+      --token $GITHUB_TOKEN
+    
+  release-tag:
+    cmd: ./hack/release-tag.sh
   
