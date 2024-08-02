@@ -88,3 +88,5 @@ tasks:
   release-tag:
     cmd: ./hack/release-tag.sh
   
+  release-flake-update:
+    cmd: ./hack/release-flake-update.sh  

@@ -21,3 +21,7 @@
     ```sh
     task release-tag
     ```
+6. Update `flake.nix` with latest release:
+   ```sh
+   task release-flake-update
+   ```
