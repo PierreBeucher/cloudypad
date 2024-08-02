@@ -87,12 +87,6 @@ Install latest version of `cloudypad` CLI:
 curl -fsSL https://raw.githubusercontent.com/PierreBeucher/cloudypad/master/install.sh | sh
 ```
 
-Living on the edge? Install directly from a branch or a Git commit:
-
-```sh
-curl -fsSL https://raw.githubusercontent.com/PierreBeucher/cloudypad/master/install.sh | CLOUDYPAD_VERSION="master" sh
-```
-
 You may need to setup a few things on your Cloud provider (eg. API key or SSH key). Checkout [per-Clouder setup specifities](#detailed-setup-per-clouder).
 
 Once ready, create your instance with `cloudypad` CLI:
