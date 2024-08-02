@@ -326,6 +326,459 @@
         }
       }
     },
+    "/public-ips": {
+      "get": {
+        "operationId": "publicIps-list",
+        "summary": "List public IPs",
+        "description": "Fetches a list of public IPs.",
+        "tags": [
+          "Public IPs"
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "after",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Fetch the next page of results after this cursor."
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 120
+            },
+            "description": "The number of items to fetch after this page."
+          },
+          {
+            "name": "orderBy",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "dtCreated"
+              ],
+              "default": "dtCreated"
+            },
+            "description": "Order results by one of these fields."
+          },
+          {
+            "name": "order",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "asc",
+                "desc"
+              ],
+              "default": "desc"
+            },
+            "description": "The order to sort the results by."
+          },
+          {
+            "name": "region",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "enum": [
+                    "ny2"
+                  ]
+                },
+                {
+                  "type": "string",
+                  "enum": [
+                    "ca1"
+                  ]
+                },
+                {
+                  "type": "string",
+                  "enum": [
+                    "ams1"
+                  ]
+                },
+                {
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "hasMore": {
+                      "type": "boolean",
+                      "description": "Whether there are more pages of results available."
+                    },
+                    "nextPage": {
+                      "type": "string",
+                      "description": "The cursor required to fetch the next page of results. i.e. `?after=nextPage`. This is `null` when there is no next page."
+                    },
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "ip": {
+                            "type": "string",
+                            "description": "The IP address of the public IP."
+                          },
+                          "region": {
+                            "anyOf": [
+                              {
+                                "type": "string",
+                                "enum": [
+                                  "ny2"
+                                ]
+                              },
+                              {
+                                "type": "string",
+                                "enum": [
+                                  "ca1"
+                                ]
+                              },
+                              {
+                                "type": "string",
+                                "enum": [
+                                  "ams1"
+                                ]
+                              },
+                              {
+                                "type": "string"
+                              }
+                            ],
+                            "description": "The region of the public IP."
+                          },
+                          "assignedMachineId": {
+                            "type": "string",
+                            "description": "The ID of the machine the public IP is assigned to."
+                          },
+                          "dtCreated": {
+                            "type": "string",
+                            "format": "date-time",
+                            "description": "The date the public IP was claimed."
+                          }
+                        },
+                        "required": [
+                          "ip",
+                          "region",
+                          "dtCreated"
+                        ],
+                        "additionalProperties": false
+                      },
+                      "description": "The items on this page."
+                    }
+                  },
+                  "required": [
+                    "hasMore",
+                    "items"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "default": {
+            "$ref": "#/components/responses/error"
+          }
+        }
+      },
+      "post": {
+        "operationId": "publicIps-claim",
+        "summary": "Claim a public IP",
+        "description": "Claims a public IP.",
+        "tags": [
+          "Public IPs"
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "region": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "enum": [
+                          "ny2"
+                        ]
+                      },
+                      {
+                        "type": "string",
+                        "enum": [
+                          "ca1"
+                        ]
+                      },
+                      {
+                        "type": "string",
+                        "enum": [
+                          "ams1"
+                        ]
+                      },
+                      {
+                        "type": "string"
+                      }
+                    ],
+                    "description": "The region of the public IP."
+                  }
+                },
+                "required": [
+                  "region"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "ip": {
+                      "type": "string",
+                      "description": "The IP address of the public IP."
+                    },
+                    "region": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "enum": [
+                            "ny2"
+                          ]
+                        },
+                        {
+                          "type": "string",
+                          "enum": [
+                            "ca1"
+                          ]
+                        },
+                        {
+                          "type": "string",
+                          "enum": [
+                            "ams1"
+                          ]
+                        },
+                        {
+                          "type": "string"
+                        }
+                      ],
+                      "description": "The region of the public IP."
+                    },
+                    "assignedMachineId": {
+                      "type": "string",
+                      "description": "The ID of the machine the public IP is assigned to."
+                    },
+                    "dtCreated": {
+                      "type": "string",
+                      "format": "date-time",
+                      "description": "The date the public IP was claimed."
+                    }
+                  },
+                  "required": [
+                    "ip",
+                    "region",
+                    "dtCreated"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "default": {
+            "$ref": "#/components/responses/error"
+          }
+        }
+      }
+    },
+    "/public-ips/{ip}": {
+      "put": {
+        "operationId": "publicIps-assign",
+        "summary": "Assign a public IP",
+        "description": "Assigns a public IP to a machine.",
+        "tags": [
+          "Public IPs"
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "machineId": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "The ID of the machine to assign the public IP to."
+                  }
+                },
+                "required": [
+                  "machineId"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "ip",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "The IP address of the public IP."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "ip": {
+                      "type": "string",
+                      "description": "The IP address of the public IP."
+                    },
+                    "region": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "enum": [
+                            "ny2"
+                          ]
+                        },
+                        {
+                          "type": "string",
+                          "enum": [
+                            "ca1"
+                          ]
+                        },
+                        {
+                          "type": "string",
+                          "enum": [
+                            "ams1"
+                          ]
+                        },
+                        {
+                          "type": "string"
+                        }
+                      ],
+                      "description": "The region of the public IP."
+                    },
+                    "assignedMachineId": {
+                      "type": "string",
+                      "description": "The ID of the machine the public IP is assigned to."
+                    },
+                    "dtCreated": {
+                      "type": "string",
+                      "format": "date-time",
+                      "description": "The date the public IP was claimed."
+                    }
+                  },
+                  "required": [
+                    "ip",
+                    "region",
+                    "dtCreated"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "default": {
+            "$ref": "#/components/responses/error"
+          }
+        }
+      },
+      "delete": {
+        "operationId": "publicIps-release",
+        "summary": "Release a public IP",
+        "description": "Releases a public IP.",
+        "tags": [
+          "Public IPs"
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "ip",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "The IP address of the public IP."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "ip": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "ip"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "default": {
+            "$ref": "#/components/responses/error"
+          }
+        }
+      }
+    },
     "/machines": {
       "post": {
         "operationId": "machines-create",

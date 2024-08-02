@@ -1177,13 +1177,6 @@ export interface MachinesList200ResponseItemsInnerReservation {
 /**
  * 
  * @export
- * @interface MachinesListRegionParameter
- */
-export interface MachinesListRegionParameter {
-}
-/**
- * 
- * @export
  * @interface MachinesUpdate200Response
  */
 export interface MachinesUpdate200Response {
@@ -1313,6 +1306,115 @@ export const MachinesUpdateRequestRestorePointFrequencyEnum = {
 
 export type MachinesUpdateRequestRestorePointFrequencyEnum = typeof MachinesUpdateRequestRestorePointFrequencyEnum[keyof typeof MachinesUpdateRequestRestorePointFrequencyEnum];
 
+/**
+ * 
+ * @export
+ * @interface PublicIpsAssignRequest
+ */
+export interface PublicIpsAssignRequest {
+    /**
+     * The ID of the machine to assign the public IP to.
+     * @type {string}
+     * @memberof PublicIpsAssignRequest
+     */
+    'machineId': string | null;
+}
+/**
+ * 
+ * @export
+ * @interface PublicIpsClaimRequest
+ */
+export interface PublicIpsClaimRequest {
+    /**
+     * 
+     * @type {PublicIpsList200ResponseItemsInnerRegion}
+     * @memberof PublicIpsClaimRequest
+     */
+    'region': PublicIpsList200ResponseItemsInnerRegion;
+}
+/**
+ * 
+ * @export
+ * @interface PublicIpsList200Response
+ */
+export interface PublicIpsList200Response {
+    /**
+     * Whether there are more pages of results available.
+     * @type {boolean}
+     * @memberof PublicIpsList200Response
+     */
+    'hasMore': boolean;
+    /**
+     * The cursor required to fetch the next page of results. i.e. `?after=nextPage`. This is `null` when there is no next page.
+     * @type {string}
+     * @memberof PublicIpsList200Response
+     */
+    'nextPage'?: string;
+    /**
+     * The items on this page.
+     * @type {Array<PublicIpsList200ResponseItemsInner>}
+     * @memberof PublicIpsList200Response
+     */
+    'items': Array<PublicIpsList200ResponseItemsInner>;
+}
+/**
+ * 
+ * @export
+ * @interface PublicIpsList200ResponseItemsInner
+ */
+export interface PublicIpsList200ResponseItemsInner {
+    /**
+     * The IP address of the public IP.
+     * @type {string}
+     * @memberof PublicIpsList200ResponseItemsInner
+     */
+    'ip': string;
+    /**
+     * 
+     * @type {PublicIpsList200ResponseItemsInnerRegion}
+     * @memberof PublicIpsList200ResponseItemsInner
+     */
+    'region': PublicIpsList200ResponseItemsInnerRegion;
+    /**
+     * The ID of the machine the public IP is assigned to.
+     * @type {string}
+     * @memberof PublicIpsList200ResponseItemsInner
+     */
+    'assignedMachineId'?: string;
+    /**
+     * The date the public IP was claimed.
+     * @type {string}
+     * @memberof PublicIpsList200ResponseItemsInner
+     */
+    'dtCreated': string;
+}
+/**
+ * The region of the public IP.
+ * @export
+ * @interface PublicIpsList200ResponseItemsInnerRegion
+ */
+export interface PublicIpsList200ResponseItemsInnerRegion {
+}
+/**
+ * 
+ * @export
+ * @interface PublicIpsListRegionParameter
+ */
+export interface PublicIpsListRegionParameter {
+}
+/**
+ * 
+ * @export
+ * @interface PublicIpsRelease200Response
+ */
+export interface PublicIpsRelease200Response {
+    /**
+     * 
+     * @type {string}
+     * @memberof PublicIpsRelease200Response
+     */
+    'ip': string;
+}
 
 /**
  * AuthenticationApi - axios parameter creator
@@ -1549,13 +1651,13 @@ export const MachineApiAxiosParamCreator = function (configuration?: Configurati
          * @param {MachinesListOrderByEnum} [orderBy] Order results by one of these fields.
          * @param {MachinesListOrderEnum} [order] The order to sort the results by.
          * @param {string} [name] 
-         * @param {MachinesListRegionParameter} [region] 
+         * @param {PublicIpsListRegionParameter} [region] 
          * @param {string} [agentType] 
          * @param {string} [machineType] 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        machinesList: async (after?: string, limit?: number, orderBy?: MachinesListOrderByEnum, order?: MachinesListOrderEnum, name?: string, region?: MachinesListRegionParameter, agentType?: string, machineType?: string, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+        machinesList: async (after?: string, limit?: number, orderBy?: MachinesListOrderByEnum, order?: MachinesListOrderEnum, name?: string, region?: PublicIpsListRegionParameter, agentType?: string, machineType?: string, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
             const localVarPath = `/machines`;
             // use dummy base URL string because the URL constructor only accepts absolute URLs.
             const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
@@ -1832,13 +1934,13 @@ export const MachineApiFp = function(configuration?: Configuration) {
          * @param {MachinesListOrderByEnum} [orderBy] Order results by one of these fields.
          * @param {MachinesListOrderEnum} [order] The order to sort the results by.
          * @param {string} [name] 
-         * @param {MachinesListRegionParameter} [region] 
+         * @param {PublicIpsListRegionParameter} [region] 
          * @param {string} [agentType] 
          * @param {string} [machineType] 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async machinesList(after?: string, limit?: number, orderBy?: MachinesListOrderByEnum, order?: MachinesListOrderEnum, name?: string, region?: MachinesListRegionParameter, agentType?: string, machineType?: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<MachinesList200Response>> {
+        async machinesList(after?: string, limit?: number, orderBy?: MachinesListOrderByEnum, order?: MachinesListOrderEnum, name?: string, region?: PublicIpsListRegionParameter, agentType?: string, machineType?: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<MachinesList200Response>> {
             const localVarAxiosArgs = await localVarAxiosParamCreator.machinesList(after, limit, orderBy, order, name, region, agentType, machineType, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['MachineApi.machinesList']?.[localVarOperationServerIndex]?.url;
@@ -1945,13 +2047,13 @@ export const MachineApiFactory = function (configuration?: Configuration, basePa
          * @param {MachinesListOrderByEnum} [orderBy] Order results by one of these fields.
          * @param {MachinesListOrderEnum} [order] The order to sort the results by.
          * @param {string} [name] 
-         * @param {MachinesListRegionParameter} [region] 
+         * @param {PublicIpsListRegionParameter} [region] 
          * @param {string} [agentType] 
          * @param {string} [machineType] 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        machinesList(after?: string, limit?: number, orderBy?: MachinesListOrderByEnum, order?: MachinesListOrderEnum, name?: string, region?: MachinesListRegionParameter, agentType?: string, machineType?: string, options?: any): AxiosPromise<MachinesList200Response> {
+        machinesList(after?: string, limit?: number, orderBy?: MachinesListOrderByEnum, order?: MachinesListOrderEnum, name?: string, region?: PublicIpsListRegionParameter, agentType?: string, machineType?: string, options?: any): AxiosPromise<MachinesList200Response> {
             return localVarFp.machinesList(after, limit, orderBy, order, name, region, agentType, machineType, options).then((request) => request(axios, basePath));
         },
         /**
@@ -2049,14 +2151,14 @@ export class MachineApi extends BaseAPI {
      * @param {MachinesListOrderByEnum} [orderBy] Order results by one of these fields.
      * @param {MachinesListOrderEnum} [order] The order to sort the results by.
      * @param {string} [name] 
-     * @param {MachinesListRegionParameter} [region] 
+     * @param {PublicIpsListRegionParameter} [region] 
      * @param {string} [agentType] 
      * @param {string} [machineType] 
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof MachineApi
      */
-    public machinesList(after?: string, limit?: number, orderBy?: MachinesListOrderByEnum, order?: MachinesListOrderEnum, name?: string, region?: MachinesListRegionParameter, agentType?: string, machineType?: string, options?: RawAxiosRequestConfig) {
+    public machinesList(after?: string, limit?: number, orderBy?: MachinesListOrderByEnum, order?: MachinesListOrderEnum, name?: string, region?: PublicIpsListRegionParameter, agentType?: string, machineType?: string, options?: RawAxiosRequestConfig) {
         return MachineApiFp(this.configuration).machinesList(after, limit, orderBy, order, name, region, agentType, machineType, options).then((request) => request(this.axios, this.basePath));
     }
 
@@ -2127,5 +2229,397 @@ export const MachinesListOrderEnum = {
     Desc: 'desc'
 } as const;
 export type MachinesListOrderEnum = typeof MachinesListOrderEnum[keyof typeof MachinesListOrderEnum];
+
+
+/**
+ * PublicIPsApi - axios parameter creator
+ * @export
+ */
+export const PublicIPsApiAxiosParamCreator = function (configuration?: Configuration) {
+    return {
+        /**
+         * Assigns a public IP to a machine.
+         * @summary Assign a public IP
+         * @param {string} ip The IP address of the public IP.
+         * @param {PublicIpsAssignRequest} publicIpsAssignRequest 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        publicIpsAssign: async (ip: string, publicIpsAssignRequest: PublicIpsAssignRequest, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'ip' is not null or undefined
+            assertParamExists('publicIpsAssign', 'ip', ip)
+            // verify required parameter 'publicIpsAssignRequest' is not null or undefined
+            assertParamExists('publicIpsAssign', 'publicIpsAssignRequest', publicIpsAssignRequest)
+            const localVarPath = `/public-ips/{ip}`
+                .replace(`{${"ip"}}`, encodeURIComponent(String(ip)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'PUT', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication BearerAuth required
+            // http bearer authentication required
+            await setBearerAuthToObject(localVarHeaderParameter, configuration)
+
+
+    
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.data = serializeDataIfNeeded(publicIpsAssignRequest, localVarRequestOptions, configuration)
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * Claims a public IP.
+         * @summary Claim a public IP
+         * @param {PublicIpsClaimRequest} publicIpsClaimRequest 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        publicIpsClaim: async (publicIpsClaimRequest: PublicIpsClaimRequest, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'publicIpsClaimRequest' is not null or undefined
+            assertParamExists('publicIpsClaim', 'publicIpsClaimRequest', publicIpsClaimRequest)
+            const localVarPath = `/public-ips`;
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'POST', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication BearerAuth required
+            // http bearer authentication required
+            await setBearerAuthToObject(localVarHeaderParameter, configuration)
+
+
+    
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.data = serializeDataIfNeeded(publicIpsClaimRequest, localVarRequestOptions, configuration)
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * Fetches a list of public IPs.
+         * @summary List public IPs
+         * @param {string} [after] Fetch the next page of results after this cursor.
+         * @param {number} [limit] The number of items to fetch after this page.
+         * @param {PublicIpsListOrderByEnum} [orderBy] Order results by one of these fields.
+         * @param {PublicIpsListOrderEnum} [order] The order to sort the results by.
+         * @param {PublicIpsListRegionParameter} [region] 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        publicIpsList: async (after?: string, limit?: number, orderBy?: PublicIpsListOrderByEnum, order?: PublicIpsListOrderEnum, region?: PublicIpsListRegionParameter, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            const localVarPath = `/public-ips`;
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication BearerAuth required
+            // http bearer authentication required
+            await setBearerAuthToObject(localVarHeaderParameter, configuration)
+
+            if (after !== undefined) {
+                localVarQueryParameter['after'] = after;
+            }
+
+            if (limit !== undefined) {
+                localVarQueryParameter['limit'] = limit;
+            }
+
+            if (orderBy !== undefined) {
+                localVarQueryParameter['orderBy'] = orderBy;
+            }
+
+            if (order !== undefined) {
+                localVarQueryParameter['order'] = order;
+            }
+
+            if (region !== undefined) {
+                for (const [key, value] of Object.entries(region)) {
+                    localVarQueryParameter[key] = value;
+                }
+            }
+
+
+    
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * Releases a public IP.
+         * @summary Release a public IP
+         * @param {string} ip The IP address of the public IP.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        publicIpsRelease: async (ip: string, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'ip' is not null or undefined
+            assertParamExists('publicIpsRelease', 'ip', ip)
+            const localVarPath = `/public-ips/{ip}`
+                .replace(`{${"ip"}}`, encodeURIComponent(String(ip)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'DELETE', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication BearerAuth required
+            // http bearer authentication required
+            await setBearerAuthToObject(localVarHeaderParameter, configuration)
+
+
+    
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+    }
+};
+
+/**
+ * PublicIPsApi - functional programming interface
+ * @export
+ */
+export const PublicIPsApiFp = function(configuration?: Configuration) {
+    const localVarAxiosParamCreator = PublicIPsApiAxiosParamCreator(configuration)
+    return {
+        /**
+         * Assigns a public IP to a machine.
+         * @summary Assign a public IP
+         * @param {string} ip The IP address of the public IP.
+         * @param {PublicIpsAssignRequest} publicIpsAssignRequest 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async publicIpsAssign(ip: string, publicIpsAssignRequest: PublicIpsAssignRequest, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<PublicIpsList200ResponseItemsInner>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.publicIpsAssign(ip, publicIpsAssignRequest, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['PublicIPsApi.publicIpsAssign']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         * Claims a public IP.
+         * @summary Claim a public IP
+         * @param {PublicIpsClaimRequest} publicIpsClaimRequest 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async publicIpsClaim(publicIpsClaimRequest: PublicIpsClaimRequest, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<PublicIpsList200ResponseItemsInner>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.publicIpsClaim(publicIpsClaimRequest, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['PublicIPsApi.publicIpsClaim']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         * Fetches a list of public IPs.
+         * @summary List public IPs
+         * @param {string} [after] Fetch the next page of results after this cursor.
+         * @param {number} [limit] The number of items to fetch after this page.
+         * @param {PublicIpsListOrderByEnum} [orderBy] Order results by one of these fields.
+         * @param {PublicIpsListOrderEnum} [order] The order to sort the results by.
+         * @param {PublicIpsListRegionParameter} [region] 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async publicIpsList(after?: string, limit?: number, orderBy?: PublicIpsListOrderByEnum, order?: PublicIpsListOrderEnum, region?: PublicIpsListRegionParameter, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<PublicIpsList200Response>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.publicIpsList(after, limit, orderBy, order, region, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['PublicIPsApi.publicIpsList']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         * Releases a public IP.
+         * @summary Release a public IP
+         * @param {string} ip The IP address of the public IP.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async publicIpsRelease(ip: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<PublicIpsRelease200Response>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.publicIpsRelease(ip, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['PublicIPsApi.publicIpsRelease']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+    }
+};
+
+/**
+ * PublicIPsApi - factory interface
+ * @export
+ */
+export const PublicIPsApiFactory = function (configuration?: Configuration, basePath?: string, axios?: AxiosInstance) {
+    const localVarFp = PublicIPsApiFp(configuration)
+    return {
+        /**
+         * Assigns a public IP to a machine.
+         * @summary Assign a public IP
+         * @param {string} ip The IP address of the public IP.
+         * @param {PublicIpsAssignRequest} publicIpsAssignRequest 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        publicIpsAssign(ip: string, publicIpsAssignRequest: PublicIpsAssignRequest, options?: any): AxiosPromise<PublicIpsList200ResponseItemsInner> {
+            return localVarFp.publicIpsAssign(ip, publicIpsAssignRequest, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * Claims a public IP.
+         * @summary Claim a public IP
+         * @param {PublicIpsClaimRequest} publicIpsClaimRequest 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        publicIpsClaim(publicIpsClaimRequest: PublicIpsClaimRequest, options?: any): AxiosPromise<PublicIpsList200ResponseItemsInner> {
+            return localVarFp.publicIpsClaim(publicIpsClaimRequest, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * Fetches a list of public IPs.
+         * @summary List public IPs
+         * @param {string} [after] Fetch the next page of results after this cursor.
+         * @param {number} [limit] The number of items to fetch after this page.
+         * @param {PublicIpsListOrderByEnum} [orderBy] Order results by one of these fields.
+         * @param {PublicIpsListOrderEnum} [order] The order to sort the results by.
+         * @param {PublicIpsListRegionParameter} [region] 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        publicIpsList(after?: string, limit?: number, orderBy?: PublicIpsListOrderByEnum, order?: PublicIpsListOrderEnum, region?: PublicIpsListRegionParameter, options?: any): AxiosPromise<PublicIpsList200Response> {
+            return localVarFp.publicIpsList(after, limit, orderBy, order, region, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * Releases a public IP.
+         * @summary Release a public IP
+         * @param {string} ip The IP address of the public IP.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        publicIpsRelease(ip: string, options?: any): AxiosPromise<PublicIpsRelease200Response> {
+            return localVarFp.publicIpsRelease(ip, options).then((request) => request(axios, basePath));
+        },
+    };
+};
+
+/**
+ * PublicIPsApi - object-oriented interface
+ * @export
+ * @class PublicIPsApi
+ * @extends {BaseAPI}
+ */
+export class PublicIPsApi extends BaseAPI {
+    /**
+     * Assigns a public IP to a machine.
+     * @summary Assign a public IP
+     * @param {string} ip The IP address of the public IP.
+     * @param {PublicIpsAssignRequest} publicIpsAssignRequest 
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof PublicIPsApi
+     */
+    public publicIpsAssign(ip: string, publicIpsAssignRequest: PublicIpsAssignRequest, options?: RawAxiosRequestConfig) {
+        return PublicIPsApiFp(this.configuration).publicIpsAssign(ip, publicIpsAssignRequest, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * Claims a public IP.
+     * @summary Claim a public IP
+     * @param {PublicIpsClaimRequest} publicIpsClaimRequest 
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof PublicIPsApi
+     */
+    public publicIpsClaim(publicIpsClaimRequest: PublicIpsClaimRequest, options?: RawAxiosRequestConfig) {
+        return PublicIPsApiFp(this.configuration).publicIpsClaim(publicIpsClaimRequest, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * Fetches a list of public IPs.
+     * @summary List public IPs
+     * @param {string} [after] Fetch the next page of results after this cursor.
+     * @param {number} [limit] The number of items to fetch after this page.
+     * @param {PublicIpsListOrderByEnum} [orderBy] Order results by one of these fields.
+     * @param {PublicIpsListOrderEnum} [order] The order to sort the results by.
+     * @param {PublicIpsListRegionParameter} [region] 
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof PublicIPsApi
+     */
+    public publicIpsList(after?: string, limit?: number, orderBy?: PublicIpsListOrderByEnum, order?: PublicIpsListOrderEnum, region?: PublicIpsListRegionParameter, options?: RawAxiosRequestConfig) {
+        return PublicIPsApiFp(this.configuration).publicIpsList(after, limit, orderBy, order, region, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * Releases a public IP.
+     * @summary Release a public IP
+     * @param {string} ip The IP address of the public IP.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof PublicIPsApi
+     */
+    public publicIpsRelease(ip: string, options?: RawAxiosRequestConfig) {
+        return PublicIPsApiFp(this.configuration).publicIpsRelease(ip, options).then((request) => request(this.axios, this.basePath));
+    }
+}
+
+/**
+ * @export
+ */
+export const PublicIpsListOrderByEnum = {
+    DtCreated: 'dtCreated'
+} as const;
+export type PublicIpsListOrderByEnum = typeof PublicIpsListOrderByEnum[keyof typeof PublicIpsListOrderByEnum];
+/**
+ * @export
+ */
+export const PublicIpsListOrderEnum = {
+    Asc: 'asc',
+    Desc: 'desc'
+} as const;
+export type PublicIpsListOrderEnum = typeof PublicIpsListOrderEnum[keyof typeof PublicIpsListOrderEnum];
 
 
