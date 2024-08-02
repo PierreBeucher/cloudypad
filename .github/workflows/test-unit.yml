@@ -106,3 +106,17 @@ jobs:
         
       - name: Test cloudypad.sh script
         run: test/shell/test-cloudypad.sh
+
+  test-flake-package:
+    name: Test Flake package
+    runs-on: ubuntu-22.04
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      - uses: nixbuild/nix-quick-install-action@v27
+      
+      - run: nix build .#
+      
+      - run: CLOUDYPAD_CONTAINER_NO_TTY=true nix run .# -- --version

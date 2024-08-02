@@ -3,3 +3,4 @@ tmp/
 pulumi/aws/Pulumi.*.yaml
 **/node_modules
 **/dist
+result 
