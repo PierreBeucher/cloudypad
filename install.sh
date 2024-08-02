@@ -79,7 +79,9 @@ case "${SHELL_NAME}" in
     *)
         echo
         echo "WARNING: Couldn't identiy startup file to use (such as .bashrc or .zshrc) for your current shell."
-        echo "         To finalize installation please ensure $INSTALL_DIR is on your \$PATH."
+        echo "         To finalize installation please ensure $INSTALL_DIR is on your \$PATH"
+        echo "         Otherwise you may not be able to run Cloudy Pad CLI."
+        echo "         Alternatively, use directly $SCRIPT_PATH to run Cloudy Pad CLI."
         echo "         If you think this is a bug, please create an issue: https://github.com/PierreBeucher/cloudypad/issues"
         ;;
 esac
@@ -93,14 +95,15 @@ if [ -n "${STARTUP_FILE}" ]; then
         echo "Adding ${INSTALL_DIR} to \$PATH in ${STARTUP_FILE}"
         printf "\\n# add CloudyPad CLI PATH\\n%s\\n\\n" "${LINE_TO_ADD}" >> "${STARTUP_FILE}"
     fi
+
+    echo "Successfully installed Cloudy Pad 🥳"
+    echo
+    echo "Restart your shell to add cloudypad on your PATH or run:"
+    echo
+    echo "  source $STARTUP_FILE"
+    echo
 fi
 
-echo "Successfully installed Cloudy Pad "
-
-echo
-echo "Restart your shell to add cloudypad on your PATH or run:"
-echo
-echo "  source $STARTUP_FILE"
 echo
 echo "Get started by creating a Cloudy Pad instance:"
 echo
