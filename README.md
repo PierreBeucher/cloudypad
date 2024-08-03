@@ -6,6 +6,10 @@ Your own gaming gear in the Cloud ! 🎮 ⛅
 - [Development status 🧪](#development-status-)
 - [Features ✨](#features-)
 - [Getting started 🚀](#getting-started-)
+- [Installation](#installation)
+  - [Linux \& MacOS](#linux--macos)
+  - [Windows](#windows)
+  - [Nix / NixOS](#nix--nixos)
 - [Usage](#usage)
   - [`cloudypad` CLI](#cloudypad-cli)
   - [Connect via SSH to instance](#connect-via-ssh-to-instance)
@@ -87,6 +91,8 @@ Install latest version of `cloudypad` CLI:
 curl -fsSL https://raw.githubusercontent.com/PierreBeucher/cloudypad/master/install.sh | sh
 ```
 
+For other installation methods, see [Installation](#installation)
+
 You may need to setup a few things on your Cloud provider (eg. API key or SSH key). Checkout [per-Clouder setup specifities](#detailed-setup-per-clouder).
 
 Once ready, create your instance with `cloudypad` CLI:
@@ -116,6 +122,33 @@ cloudypad stop mypad
 ```
 
 😱 Something went wrong? See [Known issues](#known-issues), [FAQ](#faq) or [create an issue](https://github.com/PierreBeucher/cloudypad/issues)
+
+## Installation
+
+### Linux & MacOS
+
+Install latest version of `cloudypad` CLI:
+
+```sh
+curl -fsSL https://raw.githubusercontent.com/PierreBeucher/cloudypad/master/install.sh | sh
+```
+
+### Windows
+
+Running Cloudy Pad on Windows [requires WSL to be installed](https://learn.microsoft.com/en-us/windows/wsl/install). 
+
+Once WSL is installed, run a Linux shell and follow [Linux installation steps](#linux--macos). 
+
+### Nix / NixOS
+
+Cloudy Pad is packaged as a [Nix Flake](https://nixos.wiki/wiki/flakes), see [`flake.nix`](./flake.nix)
+
+You can include it in your NixOS config or run directly with `nix run`:
+
+```sh
+nix run github:PierreBeucher/cloudypad create
+nix run github:PierreBeucher/cloudypad -- --version
+```
 
 ## Usage
 
