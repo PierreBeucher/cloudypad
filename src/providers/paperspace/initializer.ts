@@ -34,6 +34,8 @@ export class PaperspaceInstanceInitializer extends InstanceInitializer {
     protected async runProvisioning(sm: StateManager, opts: InstanceProvisionOptions) {
         const promptResult = await new PaperspaceInitializerPrompt().prompt(this.defaultPaperspaceArgs)
 
+        this.logger.debug(`Paperspace prompt result: ${JSON.stringify(promptResult)}`)
+
         sm.update({ 
             ssh: {
                 user: "paperspace"
@@ -103,7 +105,7 @@ export class PaperspaceInitializerPrompt {
             const region = await this.region(opts?.create?.region);
             
             return {
-                apiKey: opts?.apiKey,
+                apiKey: apiKey,
                 create: {
                     diskSize: diskSize,
                     machineType: machineType,
@@ -204,6 +206,7 @@ export class PaperspaceInitializerPrompt {
     }
 
     protected async apiKey(apiKey?: string): Promise<string>{
+        // const envApiKey = fetchApiKeyFromEnvironment() // TODO
         if (apiKey) {
             this.logger.debug(`Using provided API key`)
             return apiKey

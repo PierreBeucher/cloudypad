@@ -164,7 +164,7 @@ export class PaperspaceProvisioner extends BaseInstanceProvisioner implements In
         const client = await this.buildPaperspaceClient()
 
         const confirmDeletion = await confirm({
-            message: `You are about to destroy Paperspace instance ${state.name} (machine ${state.provider?.paperspace?.machineId}). Please confirm:`,
+            message: `You are about to destroy Paperspace instance ${state.name} and any associated public IP (machine ${state.provider?.paperspace?.machineId}). Please confirm:`,
             default: false,
         })
 
@@ -177,7 +177,7 @@ export class PaperspaceProvisioner extends BaseInstanceProvisioner implements In
         if(!machineExists){
             this.logger.warn(`Machine ${state.provider.paperspace.machineId} not found. Was it already deleted ?`)
         } else {
-            await client.deleteMachine(state.provider.paperspace.machineId)
+            await client.deleteMachine(state.provider.paperspace.machineId, true)
         }
 
         this.sm.update({

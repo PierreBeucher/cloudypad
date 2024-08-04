@@ -51,6 +51,8 @@ tasks:
     - >-
       cat {{ .PAPERSPACE_OPENAPI_DIR }}/openapi.json | jq '{ openapi, info, servers, components, externalDocs, paths: { 
         "/auth/session": .paths."/auth/session",
+        "/public-ips": .paths."/public-ips",
+        "/public-ips/{ip}": .paths."/public-ips/{ip}",
         "/machines": .paths."/machines",
         "/machines/{id}": .paths."/machines/{id}",
         "/machines/{id}/restart": .paths."/machines/{id}/restart",
