@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.4.0](https://github.com/PierreBeucher/cloudypad/compare/v0.3.0...v0.4.0) (2024-08-04)
+
+
+### Features
+
+* cloudypad list output format (json, plain) ([61800c6](https://github.com/PierreBeucher/cloudypad/commit/61800c6afff7462394fe6a1d484bd3ee046c98d5))
+
 ## [0.3.0](https://github.com/PierreBeucher/cloudypad/compare/v0.2.0...v0.3.0) (2024-08-04)
 
 
