@@ -16,27 +16,13 @@ if [ -z ${GITHUB_TOKEN+x} ]; then
     exit 1
 fi
 
-echo "Current commit message:"
-echo "---"
-git log -1 --pretty=%B | cat
-echo "---"
-echo
+GIT_CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
+read -p "Creating release tag for branch '${GIT_CURRENT_BRANCH}' ? (yN)" CONFIRM_TAG
 
-echo "Create release for from current commit?"
-read -p "'yes' to continue: " answer
+if [[ $CONFIRM_TAG =~ ^[Yy]$ ]]; then
 
-case ${answer:-N} in
-    yes ) echo "🚀";;
-    * ) echo "Type 'yes' to continue"; exit 1;;
-esac
-
-# Create draft release
-npx release-please github-release --repo-url https://github.com/PierreBeucher/cloudypad --token=${GITHUB_TOKEN} --draft
-
-# current_release=$(gh release list -L 1 | cut -d$'\t' -f1)
-
-# # make sure release is draft (normally done with release-please --draft)
-# # gh release edit "${current_release}" --draft
-
-# # Finalize it !
-# gh release edit "${current_release}" --latest --draft=false
+    npx release-please github-release \
+        --repo-url https://github.com/PierreBeucher/cloudypad \
+        --token=${GITHUB_TOKEN} \
+        --target-branch $GIT_CURRENT_BRANCH
+fi
