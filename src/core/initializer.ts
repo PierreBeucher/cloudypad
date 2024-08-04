@@ -114,7 +114,7 @@ export abstract class InstanceInitializer {
         fs.mkdirSync(instanceDir, { recursive: true })
         
         this.logger.info(`Creating ${genericArgs.instanceName}: provisionning...`)
-        this.logger.debug(`Creating ${genericArgs.instanceName}: starting provision with state ${sm.get()}`)
+        this.logger.debug(`Creating ${genericArgs.instanceName}: starting provision with state ${JSON.stringify(sm.get())}`)
         
         await this.runProvisioning(sm, opts)
         
