@@ -56,6 +56,8 @@
             shellHook = ''
               export PULUMI_BACKEND_URL="file://$HOME/.cloudypad/pulumi-backend"
               export PULUMI_CONFIG_PASSPHRASE=""
+
+              export PAPERSPACE_API_KEY_FILE=$PWD/tmp/paperspace_api_key
             '';
           };
         };

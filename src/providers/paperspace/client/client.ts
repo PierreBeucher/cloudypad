@@ -5,7 +5,7 @@ const { merge } = lodash;
 import * as fs from 'fs'
 import * as path from 'path';
 import * as toml from 'smol-toml'
-import { buildAxiosError } from '../../../tools/axios';
+import { buildAxiosError, isAxios404NotFound } from '../../../tools/axios';
 import { getLogger, Logger } from '../../../log/utils';
 import { machine } from 'os';
 
@@ -26,8 +26,9 @@ export class PaperspaceClient {
     private readonly baseOptions: RawAxiosRequestConfig
     private readonly machineClient: paperspace.MachineApi
     private readonly authClient: paperspace.AuthenticationApi
+    private readonly publicIpClient: paperspace.PublicIPsApi 
     private readonly name: string
-    private readonly logger: Logger
+    private readonly logger: Logger 
 
     constructor(args: PaperspaceClientArgs) {
         
@@ -36,13 +37,14 @@ export class PaperspaceClient {
         }}
         this.machineClient = new paperspace.MachineApi()
         this.authClient = new paperspace.AuthenticationApi()
+        this.publicIpClient = new paperspace.PublicIPsApi()
         this.name = args.name
         this.logger = getLogger(args.name)
     }
 
     async authSession() : Promise<paperspace.AuthSession200Response>{
 
-        this.logger.trace(`Authenticating session...`)
+        this.logger.debug(`Authenticating session...`)
 
         let resp;
         try {
@@ -64,11 +66,61 @@ export class PaperspaceClient {
 
     async getMachine(machineId: string): Promise<paperspace.MachinesList200ResponseItemsInner> {
         try {
-            this.logger.trace(`Get machine: ${machineId}`)
+            this.logger.debug(`Get machine: ${machineId}`)
 
             const resp = await this.machineClient.machinesGet(machineId, this.baseOptions)
 
-            this.logger.trace(`Get machine response: ${resp.status}`)
+            this.logger.debug(`Get machine response: ${resp.status}`)
+
+            return resp.data
+        } catch (e){
+            throw buildAxiosError(e)
+        }
+    }
+
+    async listPublicIps(args?: { after?: string, limit?: number, orderBy?: paperspace.PublicIpsListOrderByEnum, 
+            order?: paperspace.PublicIpsListOrderEnum, region?: paperspace.PublicIpsListRegionParameter }): Promise<paperspace.PublicIpsList200ResponseItemsInner[]>{
+            
+        const allIps: paperspace.PublicIpsList200ResponseItemsInner[] = []
+        const result = await this.publicIpClient.publicIpsList(
+            args?.after,
+            args?.limit,
+            args?.orderBy,
+            args?.order,
+            args?.region,
+            this.baseOptions
+        )
+
+        allIps.push(...result.data.items)
+
+        if(result.data.hasMore) {
+            const moreIps = await this.listPublicIps({ ...args, after: result.data.nextPage})
+            allIps.push(...moreIps)
+        }
+
+        return allIps
+    }
+
+    /**
+     * Try to get a Public IP. 
+     * @param ip 
+     * @returns IP or undefined if IP not found
+     */
+    async getPublicIp(ip: string): Promise<paperspace.PublicIpsList200ResponseItemsInner | undefined>{
+
+        // GET:public-ips/{ip} not available on Paperspace API
+        // Searching with list instead
+        const ips = await this.listPublicIps()
+        return ips.find(item => item.ip == ip)
+    }
+
+    async releasePublicIp(ip: string): Promise<paperspace.PublicIpsRelease200Response>{
+        try {
+            this.logger.debug(`Release Public IP: ${ip}`)
+
+            const resp = await this.publicIpClient.publicIpsRelease(ip, this.baseOptions)
+
+            this.logger.debug(`Release public IP '${ip}' response: ${resp.status}`)
 
             return resp.data
         } catch (e){
@@ -78,11 +130,11 @@ export class PaperspaceClient {
 
     async createMachine(params: paperspace.MachinesCreateRequest): Promise<paperspace.MachinesCreate200ResponseData> {
         try {
-            this.logger.trace(`Creating machine: ${JSON.stringify(params)}`)
+            this.logger.debug(`Creating machine: ${JSON.stringify(params)}`)
 
             const response = await this.machineClient.machinesCreate(params, this.baseOptions)
 
-            this.logger.trace(`Creating machine ${params.name} response: ${JSON.stringify(response.status)}`)
+            this.logger.debug(`Creating machine ${params.name} response: ${JSON.stringify(response.status)}`)
 
             return response.data.data
         } catch (e: unknown) {
@@ -90,13 +142,31 @@ export class PaperspaceClient {
         }
     }
 
-    async deleteMachine(machineId: string): Promise<paperspace.MachinesCreate200Response> {
+    /**
+     * Delete a Paperspace machine. If machine has a static public IP and releasePublicIp is true, static IP is released as well.
+     * Otherwise public IP (if any) attached to machine is left untouched. 
+     * @param machineId 
+     * @param releasePublicIp
+     * @returns 
+     */
+    async deleteMachine(machineId: string, releasePublicIp?: boolean): Promise<paperspace.MachinesCreate200Response> {
         try {
-            this.logger.trace(`Deleting machine: ${JSON.stringify(machineId)}`)
+
+            if(releasePublicIp){
+                const m = await this.getMachine(machineId)
+                if(m.publicIp && m.publicIpType == paperspace.MachinesList200ResponseItemsInnerPublicIpTypeEnum.Static) {
+                    this.logger.debug(`Deleting machine ${machineId}: Releasing static public IP ${m.publicIp}`)
+                    await this.releasePublicIp(m.publicIp)
+                } else {
+                    this.logger.debug(`Deleting machine ${machineId}: no static public IP on machine, no need to release it.`)
+                }
+            }
+            
+            this.logger.debug(`Deleting machine: ${JSON.stringify(machineId)}`)
 
             const response = await this.machineClient.machinesDelete(machineId, this.baseOptions)
 
-            this.logger.trace(`Deleting machine ${machineId} response: ${JSON.stringify(response.status)}`)
+            this.logger.debug(`Deleting machine ${machineId} response: ${JSON.stringify(response.status)}`)
 
             return response.data
         } catch (e: unknown) {
@@ -107,7 +177,7 @@ export class PaperspaceClient {
     async stopMachine(machineId: string): Promise<paperspace.MachinesCreate200Response> {
         try {
             
-            this.logger.trace(`Stopping machine: ${JSON.stringify(machineId)}`)
+            this.logger.debug(`Stopping machine: ${JSON.stringify(machineId)}`)
 
             const response = await this.machineClient.machinesStop(machineId, merge(this.baseOptions, { 
                 headers: {
@@ -115,7 +185,7 @@ export class PaperspaceClient {
                 }}
             ))
 
-            this.logger.trace(`Stopping machine ${machineId} response: ${JSON.stringify(response.status)}`)
+            this.logger.debug(`Stopping machine ${machineId} response: ${JSON.stringify(response.status)}`)
 
             return response.data
         } catch (e: unknown) {
@@ -125,7 +195,7 @@ export class PaperspaceClient {
 
     async startMachine(machineId: string): Promise<paperspace.MachinesCreate200Response> {
         try {
-            this.logger.trace(`Starting machine: ${JSON.stringify(machineId)}`)
+            this.logger.debug(`Starting machine: ${JSON.stringify(machineId)}`)
 
             const response = await this.machineClient.machinesStart(machineId, merge(this.baseOptions, { 
                 headers: {
@@ -133,7 +203,7 @@ export class PaperspaceClient {
                 }}
             ))
 
-            this.logger.trace(`Starting machine ${machineId} response: ${JSON.stringify(response.status)}`)
+            this.logger.debug(`Starting machine ${machineId} response: ${JSON.stringify(response.status)}`)
 
             return response.data
         } catch (e: unknown) {
@@ -143,7 +213,7 @@ export class PaperspaceClient {
 
     async restartMachine(machineId: string): Promise<paperspace.MachinesCreate200Response> {
         try {
-            this.logger.trace(`Restarting machine: ${JSON.stringify(machineId)}`)
+            this.logger.debug(`Restarting machine: ${JSON.stringify(machineId)}`)
 
             const response = await this.machineClient.machinesRestart(machineId, merge(this.baseOptions, {
                 headers: {
@@ -151,7 +221,7 @@ export class PaperspaceClient {
                 }
             }))
 
-            this.logger.trace(`Restarting machine ${machineId} response: ${JSON.stringify(response.status)}`)
+            this.logger.debug(`Restarting machine ${machineId} response: ${JSON.stringify(response.status)}`)
 
             return response.data
         } catch (e: unknown) {
@@ -165,7 +235,7 @@ export class PaperspaceClient {
             agentType?: string, machineType?: string}): Promise<paperspace.MachinesList200ResponseItemsInner[]> {
         try {
 
-            this.logger.trace(`Listing machines with params: ${JSON.stringify([ 
+            this.logger.debug(`Listing machines with params: ${JSON.stringify([ 
                 largs?.after, 
                 largs?.limit, 
                 largs?.orderBy, 
@@ -196,13 +266,34 @@ export class PaperspaceClient {
     }
 
     async machineExists(machineId: string) : Promise<boolean>{
-        const machines = await this.listMachines()
-        for(const m of machines){
-            if(m.id === machineId){
-                return true
+        try {
+            this.logger.debug(`Checking machine ${machineId} existence`)
+            const machine = await this.getMachine(machineId)
+            this.logger.debug(`Machine ${machineId} exists with name ${machine.name}`)
+        } catch (e){
+
+            if(isAxios404NotFound(e)) {
+                return false
             }
+            
+            this.logger.error(`Error checking machine ${machineId} existence:`, e)
+            throw e
+        }   
+        return true
+    }
+
+    async publicIpExists(ip: string){
+        try {
+            this.logger.debug(`Checking public IP ${ip} existence`)
+            const foundIp = await this.getPublicIp(ip)
+            this.logger.debug(`Public IP ${ip} exists: ${JSON.stringify(foundIp)}`)
+
+            return foundIp !== undefined
+        } catch (e){
+            
+            this.logger.error(`Error checking public IP ${ip} existence:`, e)
+            throw e 
         }
-        return false
     }
 
     async machineWithNameExists(name: string) : Promise<boolean>{
@@ -233,7 +324,7 @@ export class PaperspaceClient {
 
     async waitForMachineState(machineId: string, state: paperspace.MachinesCreate200ResponseDataStateEnum, periodMs=5000, maxRetries=24): Promise<boolean> {
 
-        this.logger.trace(`Waiting for machine ${machine} state: ${state} (period: ${periodMs}, maxRetries: ${maxRetries})`)
+        this.logger.debug(`Waiting for machine ${machine} state: ${state} (period: ${periodMs}, maxRetries: ${maxRetries})`)
 
         let retryCount = 0
         
@@ -242,7 +333,7 @@ export class PaperspaceClient {
         }
 
         do {
-            this.logger.trace(`Waiting for machine ${machineId} state ${state} (retry count: ${retryCount})`)
+            this.logger.debug(`Waiting for machine ${machineId} state ${state} (retry count: ${retryCount})`)
 
             await new Promise(resolve => setTimeout(resolve, periodMs));
             if (await this.isMachineInState(machineId, state)) {
