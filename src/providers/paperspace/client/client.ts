@@ -357,11 +357,7 @@ export class PaperspaceClient {
  */
 export function fetchApiKeyFromEnvironment(_paperspaceHome?: string): string[] {
 
-    staticLogger.trace(`Fetching Paperspace API key from environment (provided optional Paperspace home: ${_paperspaceHome})`)
-    
-    const paperspaceHome = path.join(_paperspaceHome ?? (process.env.HOME ?? "", '.paperspace'));
-
-    staticLogger.trace(`Fetching Paperspace API key from environment, Paperspace home: ${paperspaceHome}`)
+    staticLogger.trace(`Fetching Paperspace API key from environment.`)
 
     if (process.env.PAPERSPACE_API_KEY) {
         staticLogger.trace(`Found Paperspace API key as environment variable ${process.env.PAPERSPACE_API_KEY}`)
@@ -380,6 +376,20 @@ export function fetchApiKeyFromEnvironment(_paperspaceHome?: string): string[] {
         }
     }
 
+    const paperspaceHomeKeys = fetchApiKeyFromPaperspaceHome(_paperspaceHome)
+    if(paperspaceHomeKeys.length > 0){
+        return paperspaceHomeKeys
+    }
+
+    staticLogger.trace(`No Paperspace API key found in environment.`)
+
+    return [];
+}
+
+export function fetchApiKeyFromPaperspaceHome(_paperspaceHome?: string): string[] {
+    staticLogger.trace(`Fetching Paperspace API key from environment (provided optional Paperspace home: ${_paperspaceHome})`)
+    
+    const paperspaceHome = path.join(_paperspaceHome ?? (process.env.HOME ?? "", '.paperspace'));
     const credentialsFile = path.join(paperspaceHome, 'credentials.toml');
 
     staticLogger.trace(`Checking Paperspace API credentials file ${credentialsFile}`)
@@ -398,7 +408,7 @@ export function fetchApiKeyFromEnvironment(_paperspaceHome?: string): string[] {
         }
     }
 
-    staticLogger.trace(`No Paperspace API key found in environment.`)
+    staticLogger.trace(`No Paperspace API key found in Paperspace home ${paperspaceHome}.`)
 
-    return [];
+    return []
 }

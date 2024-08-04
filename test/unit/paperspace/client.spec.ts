@@ -2,9 +2,9 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';
 import * as assert from 'assert';
-import { fetchApiKeyFromEnvironment } from '../../../src/providers/paperspace/client/client';
+import { fetchApiKeyFromPaperspaceHome } from '../../../src/providers/paperspace/client/client';
 
-describe('fetchApiKeyFromEnvironment should find keys', () => {
+describe('fetchApiKeyFromPaperspaceHome should find keys', () => {
 
     const scenarios = [
         {
@@ -48,7 +48,7 @@ describe('fetchApiKeyFromEnvironment should find keys', () => {
             fs.mkdirSync(paperspaceHome);
             fs.writeFileSync(credentialsFilePath, credentialsContent);
 
-            const apiKeys = fetchApiKeyFromEnvironment(paperspaceHome);
+            const apiKeys = fetchApiKeyFromPaperspaceHome(paperspaceHome);
             assert.deepEqual(apiKeys, expected);
         });
     });
