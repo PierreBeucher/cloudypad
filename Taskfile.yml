@@ -82,13 +82,7 @@ tasks:
     cmd: ./hack/release-build-image.sh
 
   release-pr:
-    cmd: >-
-      npx release-please release-pr 
-      --repo-url https://github.com/PierreBeucher/cloudypad 
-      --token $GITHUB_TOKEN
+    cmd: ./hack/release-pr.sh
     
   release-tag:
     cmd: ./hack/release-tag.sh
-  
-  release-flake-update:
-    cmd: ./hack/release-flake-update.sh  

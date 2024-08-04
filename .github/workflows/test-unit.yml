@@ -59,6 +59,7 @@ jobs:
 
   test-install:
     name: Test install/run
+    if: "!startsWith(github.head_ref, 'release/')" # Install test will fail on release branch as version won't mach
     runs-on: "${{ matrix.os }}"
     strategy:
       matrix:
@@ -95,6 +96,7 @@ jobs:
   
   test-install-container:
     name: Test install/run in containers
+    if: "!startsWith(github.head_ref, 'release/')" # Install test will fail on release branch as version won't mach
     runs-on: ubuntu-22.04
 
     steps:

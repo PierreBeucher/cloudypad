@@ -123,14 +123,23 @@ createCmd
 program
     .command('list')
     .description('List all instances')
-    .action(async () => {
+    .option('--format <format>', 'Output format, one of [plain|json] ', 'plain')
+    .action(async (options) => {
         try {
             const instanceNames = GlobalInstanceManager.getAllInstances();
             if (instanceNames.length === 0) {
                 console.info('No instances found.');
                 return;
             }
-            console.info(instanceNames.join("\n"))
+
+            const outputFormat = options.format
+
+            if(outputFormat == 'json'){
+                console.info(JSON.stringify(instanceNames))
+            } else if (outputFormat == 'plain') {
+                console.info(instanceNames.join("\n"))
+            }
+            
         } catch (error) {
             console.error('Error listing instances:', error)
             process.exit(1)
