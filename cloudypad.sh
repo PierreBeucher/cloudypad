@@ -109,6 +109,9 @@ run_cloudypad_docker() {
         "AWS_PROFILE" "AWS_ACCESS_KEY_ID" "AWS_SECRET_ACCESS_KEY" "AWS_SESSION_TOKEN" 
         "AWS_DEFAULT_REGION" "AWS_REGION" "AWS_ENDPOINT_URL" "AWS_PROFILE" 
         "AWS_ROLE_ARN" "AWS_ROLE_SESSION_NAME"
+
+        # Not yet "PAPERSPACE_API_KEY_FILE" as it's likely file won't exist in container as not bind-mounted
+        "PAPERSPACE_API_KEY"
     )
 
     for env_var in "${env_vars[@]}"; do
