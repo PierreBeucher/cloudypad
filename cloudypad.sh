@@ -109,6 +109,9 @@ run_cloudypad_docker() {
         "AWS_PROFILE" "AWS_ACCESS_KEY_ID" "AWS_SECRET_ACCESS_KEY" "AWS_SESSION_TOKEN" 
         "AWS_DEFAULT_REGION" "AWS_REGION" "AWS_ENDPOINT_URL" "AWS_PROFILE" 
         "AWS_ROLE_ARN" "AWS_ROLE_SESSION_NAME"
+
+        # Not yet "PAPERSPACE_API_KEY_FILE" as it's likely file won't exist in container as not bind-mounted
+        "PAPERSPACE_API_KEY"
     )
 
     for env_var in "${env_vars[@]}"; do
@@ -127,11 +130,11 @@ run_cloudypad_docker() {
     if [ "$1" == "debug-container" ]; then
         cmd+=" --entrypoint /bin/bash $CLOUDYPAD_TARGET_IMAGE"
     else
-        cmd+=" $CLOUDYPAD_TARGET_IMAGE $@"
+        cmd+=" $CLOUDYPAD_TARGET_IMAGE"
     fi
 
     # Run docker command
-    $cmd
+    $cmd "${@}"
 }
 
 run_cloudypad_docker "${@:1}"

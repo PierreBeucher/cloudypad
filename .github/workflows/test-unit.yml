@@ -52,7 +52,7 @@ jobs:
           restore-prefixes-first-match: nix-${{ runner.os }}-
   
       - name: Build container image
-        run: nix develop -c task build
+        run: nix develop -c task build-local
       
       - name: Smoke test container image
         run: nix develop -c task build-smoke-test

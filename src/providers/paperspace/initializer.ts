@@ -1,6 +1,6 @@
 import { select, input, password } from '@inquirer/prompts';
 import { PartialDeep } from 'type-fest';
-import { PaperspaceClient } from './client/client';
+import { fetchApiKeyFromEnvironment, PaperspaceClient } from './client/client';
 import { getLogger } from '../../log/utils';
 import { InstanceInitializer, GenericInitializationArgs } from '../../core/initializer';
 import { StateManager } from '../../core/state';
@@ -206,17 +206,19 @@ export class PaperspaceInitializerPrompt {
     }
 
     protected async apiKey(apiKey?: string): Promise<string>{
-        // const envApiKey = fetchApiKeyFromEnvironment() // TODO
-        if (apiKey) {
-            this.logger.debug(`Using provided API key`)
-            return apiKey
-        } else if (process.env.PAPERSPACE_API_KEY) {
-            this.logger.debug(`Using Paperspace API key via environment variable PAPERSPACE_API_KEY.`)
-            return process.env.PAPERSPACE_API_KEY
-        } else {
+        if (apiKey) return apiKey
+
+        const envApiKey = fetchApiKeyFromEnvironment() 
+
+        if(envApiKey.length == 0) {
             return await password({
-                message: 'No Paperspace API Key found. Restart with environment variable PAPERSPACE_API_KEY=<key> or enter API Key:'
+                message: 'No Paperspace API Key found. Restart with environment variable PAPERSPACE_API_KEY or enter API Key:'
             });
+        } else if(envApiKey.length == 1){
+            return envApiKey[0]
+        } else {
+            throw new Error("Found multiple keys in your Paperspace home config. Please specify a single key suing either PAPERSPACE_API_KEY." +
+                "(Later version will support multiple keys and let you specify a team to choose from)")
         }
     }
 
