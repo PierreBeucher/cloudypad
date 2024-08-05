@@ -20,12 +20,12 @@ tasks:
   test-unit:
     cmd: npx mocha ./test/unit/**/*.spec.ts
 
-  build:
+  build-local:
     cmd: docker build -t crafteo/cloudypad:local .
 
   build-smoke-test:
     cmds:
-    - task: build
+    - task: build-local
     - docker run crafteo/cloudypad:local --version
     - >-
       [ $(docker run crafteo/cloudypad:local --version) = $(cat package.json | jq .version -r) ] 
