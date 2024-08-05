@@ -130,11 +130,11 @@ run_cloudypad_docker() {
     if [ "$1" == "debug-container" ]; then
         cmd+=" --entrypoint /bin/bash $CLOUDYPAD_TARGET_IMAGE"
     else
-        cmd+=" $CLOUDYPAD_TARGET_IMAGE $@"
+        cmd+=" $CLOUDYPAD_TARGET_IMAGE"
     fi
 
     # Run docker command
-    $cmd
+    $cmd "${@}"
 }
 
 run_cloudypad_docker "${@:1}"
