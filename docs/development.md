@@ -46,3 +46,29 @@ task test-unit
 Most integ tests are manual for now as they require Cloud accounts may create Cloud resource which would persist in case of failure.
 
 ### Scripts
+
+## Adding a new provider
+
+This section outlines how to add a new provider. It's still scarce but provides a basic entrypoint to help implemented a new provider. 
+
+Implement all provider objects:
+
+- [ ] Initializer
+- [ ] Provisioner
+- [ ] Runner
+- [ ] State
+
+Along with clients and others as required.
+
+Add new provider to Manager:
+
+- [ ] `CLOUDYPAD_PROVIDER_XXX` in `src/core/const.ts`
+- [ ] `promptInstanceInitializer` prompt
+- [ ] `getCurrentProviderName`
+- [ ] `getInstanceRunner`
+- [ ] `getInstanceProvisioner`
+
+Finalize:
+- [ ] Add `create PROVIDER` command in `src/index.ts`
+- [ ] Add proper bind mounts and environment variables in `cloudypad.sh`
+- [ ] Add test case in `test/integ/created-and-destroy.sh`

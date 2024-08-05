@@ -9,6 +9,7 @@ import { PartialDeep } from 'type-fest';
 import { PaperspaceInstanceInitializer, PaperspaceProvisionArgs } from './providers/paperspace/initializer';
 import * as fs from 'fs'
 import { InstanceInitializationOptions } from './core/initializer';
+import { AzureInstanceInitializer, AzureProvisionArgs } from './providers/azure/initializer';
 
 const program = new Command();
 
@@ -120,6 +121,48 @@ createCmd
     })
 
 
+createCmd
+    .command('azure')
+    .description('Create a new Cloudy Pad instance using Azure Cloud provider')
+    .option('--name <name>', 'Instance name')
+    .option('--private-ssh-key <path>', 'Path to private SSH key to use to connect to instance')
+    .option('--api-key-file <apikeyfile>', 'Path to Paperspace API key file')
+    .option('--vm-size <vmsize>', 'Virtual machine size')
+    .option('--disk-size <size>', 'Disk size in GB', parseInt)
+    .option('--public-ip-type <type>', 'Public IP type. Either "static" or "dynamic"')
+    .option('--location <location>', 'Location in which to deploy instance')
+    .option('--subscription-id <subscriptionid>', 'Subscription ID in which to deploy resources')
+    .option('--yes', 'Do not prompt for approval, automatically approve and continue')
+    .option('--overwrite-existing', 'If an instance with the same name already exists, override without warning prompt')
+    .action(async (options) => {
+        try {
+            const genericArgs = {
+                instanceName: options.name,
+                sshKey: options.privateSshKey,
+            }
+
+            const azArgs: PartialDeep<AzureProvisionArgs> = {
+                create: {
+                    vmSize: options.vmSize,
+                    diskSize: options.diskSize,
+                    publicIpType: options.publicIpType,
+                    location: options.location,
+                    subscriptionId: options.subscriptionId
+                }
+            }
+
+            const opts: InstanceInitializationOptions = {
+                autoApprove: options.yes,
+                overwriteExisting: options.overwriteExisting
+            }
+ 
+            await new AzureInstanceInitializer(genericArgs, azArgs).initializeInstance(opts)
+            
+        } catch (error) {
+            console.error('Error creating Azure instance:', error)
+            process.exit(1)
+        }
+    })
 program
     .command('list')
     .description('List all instances')
@@ -168,8 +211,8 @@ program
         try {
             const m = await GlobalInstanceManager.getInstanceManager(name)
             const r = await m.getInstanceRunner()
-            console.info(`Stopped instance ${name}`)
             await r.stop()
+            console.info(`Stopped instance ${name}`)
         } catch (error) {
             console.error(`Error stopping instance ${name}:`, error)
             process.exit(1)
@@ -245,11 +288,8 @@ program
         try {
             const m = await GlobalInstanceManager.getInstanceManager(name)
 
-            if (m.isProvisioned()) {
-
-                const p = await m.getInstanceProvisioner()
-                await p.destroy()
-            }
+            const p = await m.getInstanceProvisioner()
+            await p.destroy()
 
             await m.destroyInstance()
 

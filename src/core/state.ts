@@ -7,6 +7,7 @@ import { PaperspaceProviderState } from '../providers/paperspace/state';
 import { AwsProviderState } from '../providers/aws/state';
 import { getLogger, Logger } from '../log/utils';
 import { CLOUDYPAD_INSTANCES_DIR } from './const';
+import { AzureProviderState } from '../providers/azure/state';
 
 /**
  * State utils functions to manage instance state
@@ -67,6 +68,7 @@ export interface InstanceState {
     provider?: {
         aws?: AwsProviderState
         paperspace?: PaperspaceProviderState
+        azure?: AzureProviderState
     },
 
     /**
