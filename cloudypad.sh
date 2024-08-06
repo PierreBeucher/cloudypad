@@ -67,6 +67,13 @@ if [ $container_build_result -ne 0 ]; then
     exit 1
 fi
 
+# Create and run a container for Cloudy Pad
+# Builds a docker command with required volumes and env vars so that
+# running container matches host:
+# - user (uid and main group)
+# - mount important directories (such as home and ssh)
+# - mount Cloud credentials if available
+# - add environment variable matching host
 run_cloudypad_docker() {
 
     # Ensure Cloudy Pad home exists and is secure enough
@@ -80,11 +87,12 @@ run_cloudypad_docker() {
 
     # List of directories to mount only if they exist
     local mounts=(
+        "$HOME/.cloudypad"
         "$HOME/.ssh"
         "$HOME/.aws"
-        "$HOME/.cloudypad"
         "$HOME/.paperspace"
         "$HOME/.azure"
+        "$HOME/.config/gcloud"
     )
 
     # Build run command with proper directories
@@ -119,6 +127,12 @@ run_cloudypad_docker() {
         # Azure
         "AZURE_LOCATION" "AZURE_SUBSCRIPTION_ID" "AZURE_CLIENT_ID" "AZURE_SECRET" "AZURE_TENANT"
         "ARM_SUBSCRIPTION_ID" "ARM_CLIENT_ID" "ARM_CLIENT_SECRET" "ARM_TENANT_ID"
+
+        # Google
+        "GOOGLE_PROJECT" "GOOGLE_CLOUD_PROJECT" "GCLOUD_PROJECT" "CLOUDSDK_CORE_PROJECT" 
+        "GOOGLE_REGION" "GCLOUD_REGION" "CLOUDSDK_COMPUTE_REGION"
+        "GOOGLE_ZONE" "GCLOUD_ZONE" "CLOUDSDK_COMPUTE_ZONE"
+        "GOOGLE_IMPERSONATE_SERVICE_ACCOUNT"
     )
 
     for env_var in "${env_vars[@]}"; do

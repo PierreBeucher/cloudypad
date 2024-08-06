@@ -1,6 +1,6 @@
 import * as fs from 'fs';
 import * as path from 'path';
-import { CLOUDYPAD_INSTANCES_DIR, CLOUDYPAD_PROVIDER_AWS, CLOUDYPAD_PROVIDER_AZURE, CLOUDYPAD_PROVIDER_PAPERSPACE } from './const';
+import { CLOUDYPAD_INSTANCES_DIR, CLOUDYPAD_PROVIDER_AWS, CLOUDYPAD_PROVIDER_AZURE, CLOUDYPAD_PROVIDER_GCP, CLOUDYPAD_PROVIDER_PAPERSPACE } from './const';
 import { StateManager, StateUtils } from './state';
 import { InstanceRunner } from './runner';
 import { AwsInstanceRunner } from '../providers/aws/runner';
@@ -18,6 +18,9 @@ import { select } from '@inquirer/prompts';
 import { AzureInstanceInitializer } from '../providers/azure/initializer';
 import { AzureInstanceRunner } from '../providers/azure/runner';
 import { AzureProvisioner } from '../providers/azure/provisioner';
+import { GcpInstanceInitializer } from '../providers/gcp/initializer';
+import { GcpInstanceRunner } from '../providers/gcp/runner';
+import { GcpProvisioner } from '../providers/gcp/provisioner';
 
 /**
  * Utility class to manage instances globally. Instance state
@@ -56,7 +59,8 @@ export class GlobalInstanceManager {
             choices: [
                 { name: CLOUDYPAD_PROVIDER_AWS, value: new AwsInstanceInitializer(args) },
                 { name: CLOUDYPAD_PROVIDER_PAPERSPACE, value: new PaperspaceInstanceInitializer(args) },
-                { name: CLOUDYPAD_PROVIDER_AZURE, value: new AzureInstanceInitializer(args) }
+                { name: CLOUDYPAD_PROVIDER_AZURE, value: new AzureInstanceInitializer(args) },
+                { name: CLOUDYPAD_PROVIDER_GCP, value: new GcpInstanceInitializer(args)}
             ]
         })
     }
@@ -99,8 +103,10 @@ export class InstanceManager {
             return CLOUDYPAD_PROVIDER_PAPERSPACE
         } else if (state.provider?.azure){
             return CLOUDYPAD_PROVIDER_AZURE
+        } else if (state.provider?.gcp){
+            return CLOUDYPAD_PROVIDER_GCP
         } else {
-            throw new Error(`Unknown provider in state: ${state}`)
+            throw new Error(`Unknown provider in state: ${JSON.stringify(state)}`)
         }
     }
     
@@ -112,6 +118,8 @@ export class InstanceManager {
             return new PaperspaceInstanceRunner(this.sm)
         } else if (provider === CLOUDYPAD_PROVIDER_AZURE){
             return new AzureInstanceRunner(this.sm)
+        } else if (provider === CLOUDYPAD_PROVIDER_GCP){
+            return new GcpInstanceRunner(this.sm)
         } else {
             throw new Error(`Unknown provider: ${provider}`)
         }
@@ -125,6 +133,8 @@ export class InstanceManager {
             return new PaperspaceProvisioner(this.sm)
         } else if (provider === CLOUDYPAD_PROVIDER_AZURE){
             return new AzureProvisioner(this.sm)
+        } else if (provider === CLOUDYPAD_PROVIDER_GCP){
+            return new GcpProvisioner(this.sm)
         } else {
             throw new Error(`Unknown provider: ${provider}`)
         }

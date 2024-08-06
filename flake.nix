@@ -51,6 +51,8 @@
               yq
               jq
               gh
+
+              google-cloud-sdk
             ];
             
             shellHook = ''
