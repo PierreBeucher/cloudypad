@@ -27,10 +27,14 @@ const createCmd = program
     .description('Create a new instance, prompting for details. Use `create <provider> for provider-specific creation commands.`')
     .action(async (opts) => {
         try {
-            await GlobalInstanceManager.promptInstanceInitializer({
+            const instanceInitializer = await GlobalInstanceManager.promptInstanceInitializer({
                 instanceName: opts.name,
                 sshKey: opts.privateSshKey,
             })
+
+            // No default option for generic initializer
+            instanceInitializer.initializeInstance({})
+
         } catch (error) {
             console.error('Error creating new instance:', error)
             process.exit(1)
