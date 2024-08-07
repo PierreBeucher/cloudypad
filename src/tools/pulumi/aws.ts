@@ -226,6 +226,8 @@ async function awsPulumiProgram(): Promise<Record<string, any> | void> {
         ignorePublicKeyChanges: true,
         ingressPorts: [ // SSH + Wolf ports
             { from: 22, protocol: "tcp" }, // HTTP
+            { from: 80, protocol: "Tcp" }, // HTTP
+            { from: 443, protocol: "Tcp" }, // HTTPS
             { from: 47984, protocol: "tcp" }, // HTTP
             { from: 47989, protocol: "tcp" }, // HTTPS
             { from: 48010, protocol: "tcp" }, // RTSP

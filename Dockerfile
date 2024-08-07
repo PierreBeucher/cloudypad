@@ -23,8 +23,12 @@ FROM node:22.5.1-bookworm-slim
 RUN apt update && apt install -y \
     python3 \
     ansible \
+    curl \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
+
+# Required for Azure DefaultAzureCredential
+RUN curl -sL https://aka.ms/InstallAzureCLIDeb -o install.sh && chmod +x install.sh && ./install.sh -y
 
 # Pulumi
 COPY --from=pulumi /usr/local/bin/pulumi /usr/local/bin/pulumi

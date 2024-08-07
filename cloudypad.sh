@@ -84,6 +84,7 @@ run_cloudypad_docker() {
         "$HOME/.aws"
         "$HOME/.cloudypad"
         "$HOME/.paperspace"
+        "$HOME/.azure"
     )
 
     # Build run command with proper directories
@@ -106,12 +107,18 @@ run_cloudypad_docker() {
 
     # Local environment variables to pass-through in container
     local env_vars=(
+        # AWS
         "AWS_PROFILE" "AWS_ACCESS_KEY_ID" "AWS_SECRET_ACCESS_KEY" "AWS_SESSION_TOKEN" 
         "AWS_DEFAULT_REGION" "AWS_REGION" "AWS_ENDPOINT_URL" "AWS_PROFILE" 
         "AWS_ROLE_ARN" "AWS_ROLE_SESSION_NAME"
-
+        
+        # Paperspace
         # Not yet "PAPERSPACE_API_KEY_FILE" as it's likely file won't exist in container as not bind-mounted
         "PAPERSPACE_API_KEY"
+
+        # Azure
+        "AZURE_LOCATION" "AZURE_SUBSCRIPTION_ID" "AZURE_CLIENT_ID" "AZURE_SECRET" "AZURE_TENANT"
+        "ARM_SUBSCRIPTION_ID" "ARM_CLIENT_ID" "ARM_CLIENT_SECRET" "ARM_TENANT_ID"
     )
 
     for env_var in "${env_vars[@]}"; do
@@ -129,12 +136,11 @@ run_cloudypad_docker() {
     # This is a hidden command for debugging :)
     if [ "$1" == "debug-container" ]; then
         cmd+=" --entrypoint /bin/bash $CLOUDYPAD_TARGET_IMAGE"
+        $cmd
     else
         cmd+=" $CLOUDYPAD_TARGET_IMAGE"
+        $cmd "${@}"
     fi
-
-    # Run docker command
-    $cmd "${@}"
 }
 
 run_cloudypad_docker "${@:1}"

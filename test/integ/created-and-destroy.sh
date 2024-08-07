@@ -62,6 +62,29 @@ function create_destroy_paperspace() {
     $cloudypad_cmd destroy $instance_name
 }
 
+function create_destroy_azure() {
+    
+    instance_name="test-create-destroy-azure"
+
+    $cloudypad_cmd create azure \
+        --name $instance_name \
+        --private-ssh-key ~/.ssh/id_ed25519 \
+        --vm-size Standard_NC8as_T4_v3 \
+        --disk-size 100 \
+        --public-ip-type static \
+        --location "francecentral" \
+        --subscription-id 0dceb5ed-9096-4db7-b430-2609e7cc6a15 \
+        --overwrite-existing
+
+    $cloudypad_cmd get $instance_name
+
+    $cloudypad_cmd list | grep $instance_name
+
+    $cloudypad_cmd stop $instance_name
+
+    $cloudypad_cmd destroy $instance_name
+}
+
 case "$1" in
     aws)
         create_destroy_aws
@@ -69,8 +92,11 @@ case "$1" in
     paperspace)
         create_destroy_paperspace
         ;;
+    azure)
+        create_destroy_azure
+        ;;
     *)
-        echo "Usage: $0 {aws|paperspace}"
+        echo "Usage: $0 {aws|paperspace|azure}"
         ;;
 esac
 

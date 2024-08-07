@@ -28,18 +28,18 @@ export class AwsInstanceRunner extends AbstractInstanceRunner {
     async start() {
         await super.start()
         const instanceId = this.getInstanceId()
-        this.awsClient.startInstance(instanceId)
+        await this.awsClient.startInstance(instanceId)
     }
 
     async stop() {
         await super.stop()
         const instanceId = this.getInstanceId()
-        this.awsClient.stopInstance(instanceId)
+        await this.awsClient.stopInstance(instanceId)
     }
 
     async restart() {
         await super.restart()
         const instanceId = this.getInstanceId()
-        this.awsClient.restartInstance(instanceId)
+        await this.awsClient.restartInstance(instanceId)
     }
 }

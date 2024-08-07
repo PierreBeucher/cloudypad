@@ -17,14 +17,18 @@ Your own gaming gear in the Cloud ! 🎮 ⛅
   - [Paperspace](#paperspace)
   - [AWS](#aws)
     - [Quotas](#quotas)
+  - [Azure](#azure)
+    - [Quotas](#quotas-1)
     - [Profile and environment variables](#profile-and-environment-variables)
 - [FAQ](#faq)
   - [How much will I pay ? 🫰](#how-much-will-i-pay--)
     - [Paperspace](#paperspace-1)
     - [AWS](#aws-1)
+    - [Azure](#azure-1)
   - [What are the recommended GPU and specs for my instance ?](#what-are-the-recommended-gpu-and-specs-for-my-instance-)
     - [AWS](#aws-2)
     - [Paperspace](#paperspace-2)
+    - [Azure](#azure-2)
   - [How can I log-in to Steam?](#how-can-i-log-in-to-steam)
   - [How to play game on Steam / Why does my Steam game doesn't launch ?](#how-to-play-game-on-steam--why-does-my-steam-game-doesnt-launch-)
   - [Using Steam, why does my game take forever to "cache Vulkan shader" ?](#using-steam-why-does-my-game-take-forever-to-cache-vulkan-shader-)
@@ -72,7 +76,7 @@ Potential future Cloud providers - upvote them on their GitHub issues!
 
 ## Getting started 🚀
 
-Not familiar with terms like _"Cloud gaming"_, _"Moonlight"_, _"Cloud Provider"_ _"terminal"_ or _"CLI" ? Visit [What's Cloud Gaming and how is Cloudy Pad useful ?](./docs/what-is-cloudy-pad.md) first 😉
+Not familiar with terms like _"Cloud gaming"_, _"Moonlight"_, _"Cloud Provider"_ _"terminal"_ or _"CLI"_ ? Visit [What's Cloud Gaming and how is Cloudy Pad useful ?](./docs/what-is-cloudy-pad.md) first 😉
 
 Cloudy Pad deploys a Cloud gaming gear using a Cloud provider of your choice:
 - 💸 While Cloudy Pad itself is free and open-source, charges may incur for Cloud provider usage. Make sure you [understand the costs](#how-much-will-i-pay--) 
@@ -299,6 +303,44 @@ You may need to increase quota to create the related instance type. If you get a
 
 See [AWS service quotas](https://docs.aws.amazon.com/general/latest/gr/aws_service_limits.html) for details.
 
+### Azure
+
+If you don't already have an Azure account, [create an account](https://account.azure.com/signup?showCatalog%20=%20True) or use an existing account.
+
+Configure your credentials locally ([see official documentation](https://learn.microsoft.com/en-us/cli/azure/authenticate-azure-cli-interactively))
+
+Check your configuration:
+
+```sh
+$ az account list
+[
+  {
+    "cloudName": "AzureCloud",
+    "homeTenantId": "xxx",
+    "id": "xxx",
+    "isDefault": true,
+    "managedByTenants": [],
+    "name": "My Azure Subcription",
+    "state": "Enabled",
+    "tenantId": "xxx",
+    "user": {
+      "name": "you@example.com",
+      "type": "user"
+    }
+  }
+]
+```
+
+#### Quotas
+
+You may need to increase quota to create the desired instance type. If you get an error related to quota:
+- Go to Azure console and open "Quotas" service
+- Go to _Compute_ > filter for your Subscription / Location and search for _NC_, _NC_ or the instance type prefix you want to use
+- Click on quota name and _New Quota Request_
+- Fill-out the quota request and submit
+
+Quota is usually accepted within 24 to 48h.
+
 #### Profile and environment variables 
 
 If you want to use an AWS Profile or specific AWS credentials, use environment variables such as:
@@ -345,6 +387,10 @@ _*Estimations based on AWS eu-east-1 and Paperspace pricing as of July 2024. Exa
 
 Estimations for other providers will be added as they are implemented. If you see a significant difference between this table and your observed cost do not hesitate to [report it or update it !](https://github.com/PierreBeucher/cloudypad)
 
+#### Azure
+
+Coming soon.
+
 ### What are the recommended GPU and specs for my instance ?
 
 General recommendations:
@@ -361,6 +407,10 @@ General recommendations:
 Paperspace `RTX4000` or `P4000` or `M4000` are relatively cheap and powerful enough for most use. A `P4000` can run Baldur's Gate 3 in Ultra with 60 FPS 1080 without issues.
 
 Use higher-tier instance if you have latency related to resource consumption.
+
+#### Azure
+
+Coming soon.
 
 ### How can I log-in to Steam?
 
