@@ -1,5 +1,20 @@
 # Changelog
 
+## [0.5.0](https://github.com/PierreBeucher/cloudypad/compare/v0.4.0...v0.5.0) (2024-08-09)
+
+
+### Features
+
+* Azure Cloud provider support ([057c1db](https://github.com/PierreBeucher/cloudypad/commit/057c1dbe0b58f567839d7872e6c2a97fb0805ac2))
+* Google Cloud Platform (GCP) provider support ([4688933](https://github.com/PierreBeucher/cloudypad/commit/4688933146f42079e910f6b2a5af10ed0ad246e3))
+
+
+### Bug Fixes
+
+* noop generic create command ([e58594b](https://github.com/PierreBeucher/cloudypad/commit/e58594baeb1adc0d219dc0cb773d7ba60c689077))
+* properly expand parameters in script ([5431456](https://github.com/PierreBeucher/cloudypad/commit/54314569d051a64284b4353ec24a1c5f942f8e1a))
+* properly pass PAPERSPACE_API_KEY env var to internal container ([06b1dc9](https://github.com/PierreBeucher/cloudypad/commit/06b1dc9db7dcabf0fca05ef9ae62d9b1ea3e40ff))
+
 ## [0.4.0](https://github.com/PierreBeucher/cloudypad/compare/v0.3.0...v0.4.0) (2024-08-04)
 
 
