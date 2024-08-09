@@ -20,15 +20,19 @@ Your own gaming gear in the Cloud ! 🎮 ⛅
   - [Azure](#azure)
     - [Quotas](#quotas-1)
     - [Profile and environment variables](#profile-and-environment-variables)
+  - [Google Cloud](#google-cloud)
+    - [Quotas](#quotas-2)
 - [FAQ](#faq)
   - [How much will I pay ? 🫰](#how-much-will-i-pay--)
     - [Paperspace](#paperspace-1)
     - [AWS](#aws-1)
     - [Azure](#azure-1)
+    - [Google Cloud](#google-cloud-1)
   - [What are the recommended GPU and specs for my instance ?](#what-are-the-recommended-gpu-and-specs-for-my-instance-)
     - [AWS](#aws-2)
     - [Paperspace](#paperspace-2)
     - [Azure](#azure-2)
+    - [Google Cloud](#google-cloud-2)
   - [How can I log-in to Steam?](#how-can-i-log-in-to-steam)
   - [How to play game on Steam / Why does my Steam game doesn't launch ?](#how-to-play-game-on-steam--why-does-my-steam-game-doesnt-launch-)
   - [Using Steam, why does my game take forever to "cache Vulkan shader" ?](#using-steam-why-does-my-game-take-forever-to-cache-vulkan-shader-)
@@ -65,14 +69,14 @@ Compatible with [Moonlight](https://moonlight-stream.org/) streaming client
 Available Cloud providers:
 
 - [Paperspace](https://www.paperspace.com/)
+- [Google Cloud](https://cloud.google.com)
+- [Azure](https://azure.microsoft.com)
 - [AWS](https://aws.amazon.com/)
 
 Potential future Cloud providers - upvote them on their GitHub issues!
 - [Oblivus](https://oblivus.com/pricing/) - [👍 on GitHub issue](https://github.com/PierreBeucher/cloudypad/issues/4) if you want it implemented
 - [TensorDock](https://www.tensordock.com/) - [👍 on GitHub issue](https://github.com/PierreBeucher/cloudypad/issues/5) if you want it implemented
 - [Vulture](https://www.vultr.com/pricing/#cloud-gpu) - [👍 on GitHub issue](https://github.com/PierreBeucher/cloudypad/issues/3) if you want it implemented
-- [Azure](https://azure.microsoft.com) - [👍 on GitHub issue](https://github.com/PierreBeucher/cloudypad/issues/6) if you want it implemented
-- [Google Cloud](https://cloud.google.com)  - [👍 on GitHub issue](https://github.com/PierreBeucher/cloudypad/issues/7) if you want it implemented
 
 ## Getting started 🚀
 
@@ -351,6 +355,26 @@ export AWS_PROFILE=myprofile
 
 See [AWS environment variable list](https://docs.aws.amazon.com/sdkref/latest/guide/settings-reference.html#EVarSettings) for existing variables. Not there are certain limitations as most Cloudy Pad workflow run in a container which may cause some variables to misbehave. Please create an issue if you encounter a problem. 
 
+### Google Cloud
+
+If you don't already have a Google Cloud account, [create an account](https://console.cloud.google.com/) or use an existing account.
+
+Configure your credentials locally ([see official documentation](https://cloud.google.com/sdk/docs/install))
+
+Check your configuration:
+
+```sh
+$ gcloud auth list
+
+Credentialed Accounts
+ACTIVE  ACCOUNT
+*       your_email@gmail.com
+```
+
+#### Quotas
+
+You may need to increase quota to create the desired instance type. If you get an error related to quota, see [Google Cloud Quota doc](https://cloud.google.com/docs/quotas/view-manage) to update your quotas.
+
 ## FAQ
 
 ### How much will I pay ? 🫰
@@ -360,17 +384,21 @@ Cloudy-Pad is free and open-source; however, charges may apply when using a Clou
 - Disk storage
 - IP address reservation
 
-Here are estimation tables for supported providers. For example, using Paperspace `P4000` instance for 10 hours / month with a 50GB disk will cost approximatively 13.10$
+Here are estimation tables for supported providers. For example, using Paperspace `P4000` instance for 10 hours / month with a 50GB disk will cost approximatively 13.10$.
+
+_These pricing are estimations from actual prices but may be outdated. If you see a significant difference between these tables and your observed cost do not hesitate to [report it or update it !](https://github.com/PierreBeucher/cloudypad)_
 
 #### Paperspace
 
 | Instance Type | 10h / month 50 GB disk | 10h / month 100 GB disk | 10h / month 250 GB disk | 20h / month 100 GB disk | 20h / month 250 GB disk | 30h / month 250 GB disk |
 |---------------|------------------------|-------------------------|-------------------------|-------------------------|-------------------------|-------------------------|
-| P4000         | $13.10                 | $15.10                  | $18.10                  | $20.20                  | $23.20                  | $28.30                  |
-| RTX4000       | $13.60                 | $15.60                  | $18.60                  | $21.20                  | $24.20                  | $29.80                  |
-| P5000         | $15.80                 | $17.80                  | $20.80                  | $25.60                  | $28.60                  | $36.40                  |
-| RTX5000       | $16.20                 | $18.20                  | $21.20                  | $26.40                  | $29.40                  | $37.60                  |
-| P6000         | $19.00                 | $21.00                  | $24.00                  | $32.00                  | $35.00                  | $46.00                  |
+| **P4000**         | $13.10                 | $15.10                  | $18.10                  | $20.20                  | $23.20                  | $28.30                  |
+| **RTX4000**       | $13.60                 | $15.60                  | $18.60                  | $21.20                  | $24.20                  | $29.80                  |
+| **P5000**         | $15.80                 | $17.80                  | $20.80                  | $25.60                  | $28.60                  | $36.40                  |
+| **RTX5000**       | $16.20                 | $18.20                  | $21.20                  | $26.40                  | $29.40                  | $37.60                  |
+| **P6000**         | $19.00                 | $21.00                  | $24.00                  | $32.00                  | $35.00                  | $46.00                  |
+
+_*Estimations based on Paperspace pricing as of July 2024. Exact prices may vary over time and by region._
 
 #### AWS
 
@@ -383,13 +411,27 @@ Here are estimation tables for supported providers. For example, using Paperspac
 | **g6.xlarge**   | $15.65                 | $19.65                  | $31.65                  | $27.70                  | $39.70                  | $47.74                  |
 | **g6.2xlarge**  | $17.38                 | $21.38                  | $33.38                  | $31.15                  | $43.15                  | $52.93                  |
 
-_*Estimations based on AWS eu-east-1 and Paperspace pricing as of July 2024. Exact prices may vary over time and by region._
-
-Estimations for other providers will be added as they are implemented. If you see a significant difference between this table and your observed cost do not hesitate to [report it or update it !](https://github.com/PierreBeucher/cloudypad)
+_*Estimations based on AWS eu-east-1 pricing as of July 2024. Exact prices may vary over time and by region._
 
 #### Azure
 
-Coming soon.
+| Azure                            | 10h / month 50 GB disk | 10h / month 100 GB disk | 10h / month 250 GB disk | 20h / month 100 GB disk | 20h / month 250 GB disk | 30h / month 250 GB disk |
+|----------------------------------|------------------------|-------------------------|-------------------------|-------------------------|-------------------------|-------------------------|
+| NV6ads A10 v5 (6 CPU, 55GB RAM)   | $8.59                  | $12.64                  | $24.79                  | $17.18                  | $29.33                  | $33.87                  |
+| NC8as T4 v3 (8 CPU, 56GB RAM)     | $11.57                 | $15.62                  | $27.77                  | $23.14                  | $35.29                  | $42.81                  |
+
+_*Estimations based on Azure US pricing as of August 2024. Exact prices may vary over time and by region._
+
+#### Google Cloud
+
+| Google Cloud                     | 10h / month 50 GB disk | 10h / month 100 GB disk | 10h / month 250 GB disk | 20h / month 100 GB disk | 20h / month 250 GB disk | 30h / month 250 GB disk |
+|----------------------------------|------------------------|-------------------------|-------------------------|-------------------------|-------------------------|-------------------------|
+| **4 CPU / 15GB RAM / Tesla T4**       | $6.77                  | $12.77                  | $30.77                  | $13.54                  | $31.54                  | $32.31                  |
+| **4 CPU / 15GB RAM / Tesla P4**       | $7.32                  | $13.32                  | $31.32                  | $14.64                  | $32.64                  | $33.96                  |
+| **8 CPU / 30GB RAM / Tesla T4**       | $7.54                  | $13.54                  | $31.54                  | $15.08                  | $33.08                  | $34.62                  |
+| **8 CPU / 30GB RAM / Tesla P4**       | $8.64                  | $14.64                  | $32.64                  | $17.28                  | $35.28                  | $37.92                  |
+
+_Instances used for estimation: N1 Standard. Estimations based on Google Cloud us-central-1 as of August 2024. Exact prices may vary over time and by region._
 
 ### What are the recommended GPU and specs for my instance ?
 
@@ -410,7 +452,19 @@ Use higher-tier instance if you have latency related to resource consumption.
 
 #### Azure
 
-Coming soon.
+Use NC or NV instances with 4 to 8 CPUs, eg. one of:
+
+- NC4as T4 v3 (4 CPU, 28 GB RAM)
+- NC8as T4 v3 (8 CPU, 56 GB RAM)
+- NV6ads A10 v5 (6 CPU, 55GB RAM)
+
+Azure provide more opwerful instance but they are likely too expansive (providing lots of memory and ephemeral storage which is likely unused for gaming but expensive).
+
+Azure gaming instances NG are not yet supported (they use AMD GPU while only NVIDIA is supported for now)
+
+#### Google Cloud
+
+Use N1 Standard instances with 4 to 16 CPUs with T4 or P4 GPUs. They are the cheapest while providing a good experience, eg. a P4 with 15GB RAM and 8 CPU can run Baldur's Gate 3 in Ultra with 60 FPS.
 
 ### How can I log-in to Steam?
 
