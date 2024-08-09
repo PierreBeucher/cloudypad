@@ -25,10 +25,12 @@ Your own gaming gear in the Cloud ! 🎮 ⛅
     - [Paperspace](#paperspace-1)
     - [AWS](#aws-1)
     - [Azure](#azure-1)
+    - [Google Cloud](#google-cloud)
   - [What are the recommended GPU and specs for my instance ?](#what-are-the-recommended-gpu-and-specs-for-my-instance-)
     - [AWS](#aws-2)
     - [Paperspace](#paperspace-2)
     - [Azure](#azure-2)
+    - [Google Cloud](#google-cloud-1)
   - [How can I log-in to Steam?](#how-can-i-log-in-to-steam)
   - [How to play game on Steam / Why does my Steam game doesn't launch ?](#how-to-play-game-on-steam--why-does-my-steam-game-doesnt-launch-)
   - [Using Steam, why does my game take forever to "cache Vulkan shader" ?](#using-steam-why-does-my-game-take-forever-to-cache-vulkan-shader-)
@@ -65,14 +67,14 @@ Compatible with [Moonlight](https://moonlight-stream.org/) streaming client
 Available Cloud providers:
 
 - [Paperspace](https://www.paperspace.com/)
+- [Google Cloud](https://cloud.google.com)
+- [Azure](https://azure.microsoft.com)
 - [AWS](https://aws.amazon.com/)
 
 Potential future Cloud providers - upvote them on their GitHub issues!
 - [Oblivus](https://oblivus.com/pricing/) - [👍 on GitHub issue](https://github.com/PierreBeucher/cloudypad/issues/4) if you want it implemented
 - [TensorDock](https://www.tensordock.com/) - [👍 on GitHub issue](https://github.com/PierreBeucher/cloudypad/issues/5) if you want it implemented
 - [Vulture](https://www.vultr.com/pricing/#cloud-gpu) - [👍 on GitHub issue](https://github.com/PierreBeucher/cloudypad/issues/3) if you want it implemented
-- [Azure](https://azure.microsoft.com) - [👍 on GitHub issue](https://github.com/PierreBeucher/cloudypad/issues/6) if you want it implemented
-- [Google Cloud](https://cloud.google.com)  - [👍 on GitHub issue](https://github.com/PierreBeucher/cloudypad/issues/7) if you want it implemented
 
 ## Getting started 🚀
 
@@ -391,6 +393,10 @@ Estimations for other providers will be added as they are implemented. If you se
 
 Coming soon.
 
+#### Google Cloud
+
+Coming soon.
+
 ### What are the recommended GPU and specs for my instance ?
 
 General recommendations:
@@ -409,6 +415,10 @@ Paperspace `RTX4000` or `P4000` or `M4000` are relatively cheap and powerful eno
 Use higher-tier instance if you have latency related to resource consumption.
 
 #### Azure
+
+Coming soon.
+
+#### Google Cloud
 
 Coming soon.
 
