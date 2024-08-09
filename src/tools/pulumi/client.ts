@@ -107,8 +107,19 @@ export abstract class InstancePulumiClient<ConfigType, OutputType> {
     async destroy(){
         this.logger.debug(`Destroting stack`)
         const stack = await this.initStack()
+
+        // Always cancel in case command was interrupted before
+        // Considering use case it's unlikely a parallel update might occur
+        // But it's likely that user will interrupt leaving stack with a lock which would stuck otherwise
+        // Might become a flag later
+        await stack.cancel()
         
-        const destroyRes = await stack.destroy({ onOutput: console.info, color: "auto", remove: true });
+        this.logger.debug(`Refreshing stack ${stack.name} before destroy result`)
+
+        const refreshRes = await stack.refresh({ onOutput: console.info, color: "auto" })
+        this.logger.trace(`Refresh result: ${JSON.stringify(refreshRes)}`)
+
+        const destroyRes = await stack.destroy({ onOutput: console.info, color: "auto", remove: true })
         this.logger.trace(`Destroy result: ${JSON.stringify(destroyRes)}`)
    }
 }

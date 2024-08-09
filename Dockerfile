@@ -1,4 +1,5 @@
-FROM node:22.5.1-bookworm-slim AS build
+ARG NODE_VERSION="20.16.0-bookworm-slim"
+FROM node:${NODE_VERSION} AS build
 
 RUN apt update && apt install -y \
     curl \
@@ -17,7 +18,27 @@ RUN curl "https://get.pulumi.com/releases/sdk/pulumi-${PULUMI_VERSION}-linux-x64
 #
 # Cloudy Pad
 #
-FROM node:22.5.1-bookworm-slim
+
+# Compile Typescript code in dedicated image to avoid dev dependencies in final image
+FROM build AS tsc
+
+WORKDIR /build
+
+COPY package.json       package.json
+COPY package-lock.json  package-lock.json
+RUN npm install
+
+# ansible required for build as packaged with node code
+COPY ansible ansible
+COPY src src
+COPY LICENSE.txt tsconfig.json . 
+
+RUN npm run build
+
+# 
+# Final Cloudypad image
+#
+FROM node:${NODE_VERSION}
 
 # Global tooling
 RUN apt update && apt install -y \
@@ -47,17 +68,15 @@ RUN ansible-galaxy collection install -r ansible/requirements.yml -p /usr/share/
 ENV ANSIBLE_STDOUT_CALLBACK=community.general.unixy
 
 # Deps
+ENV NODE_ENV=production
 COPY package.json       package.json
 COPY package-lock.json  package-lock.json
-RUN npm install
+RUN npm ci --omit dev
 
-# Build and install globally
-COPY ansible ansible
-COPY src src
-COPY LICENSE.txt tsconfig.json . 
+# Copy built app directly
+COPY --from=tsc /build/dist dist/
+COPY LICENSE.txt .
 
-
-RUN npm run build
-RUN npm install -g
+RUN npm install --global
 
 ENTRYPOINT  ["cloudypad"]

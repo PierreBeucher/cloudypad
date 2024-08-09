@@ -10,6 +10,7 @@ import { PaperspaceInstanceInitializer, PaperspaceProvisionArgs } from './provid
 import * as fs from 'fs'
 import { InstanceInitializationOptions } from './core/initializer';
 import { AzureInstanceInitializer, AzureProvisionArgs } from './providers/azure/initializer';
+import { GcpInstanceInitializer, GcpProvisionArgs } from './providers/gcp/initializer';
 
 const program = new Command();
 
@@ -124,6 +125,51 @@ createCmd
         }
     })
 
+createCmd
+    .command('gcp')
+    .description('Create a new Cloudy Pad instance using Google Cloud provider')
+    .option('--name <name>', 'Instance name')
+    .option('--private-ssh-key <path>', 'Path to private SSH key to use to connect to instance')
+    .option('--machine-type <type>', 'Machine type')
+    .option('--gpu-type <type>', 'GPU type (accelerator type)')
+    .option('--project-id <project>', 'Project ID to use.')
+    .option('--disk-size <size>', 'Disk size in GB', parseInt)
+    .option('--public-ip-type <type>', 'Public IP type. Either "static" or "dynamic"')
+    .option('--region <region>', 'Region in which to deploy instance')
+    .option('--zone <zone>', 'Zone in which to deploy instance')
+    .option('--yes', 'Do not prompt for approval, automatically approve and continue')
+    .option('--overwrite-existing', 'If an instance with the same name already exists, override without warning prompt')
+    .action(async (options) => {
+        try {
+            const genericArgs = {
+                instanceName: options.name,
+                sshKey: options.privateSshKey,
+            }
+
+            const gcpArgs: PartialDeep<GcpProvisionArgs> = {
+                create: {
+                    machineType: options.machineType,
+                    diskSize: options.diskSize,
+                    publicIpType: options.publicIpType,
+                    region: options.region,
+                    zone: options.zone,
+                    acceleratorType: options.gpuType,
+                    projectId: options.projectId,
+                }
+            }
+
+            const opts: InstanceInitializationOptions = {
+                autoApprove: options.yes,
+                overwriteExisting: options.overwriteExisting
+            }
+ 
+            await new GcpInstanceInitializer(genericArgs, gcpArgs).initializeInstance(opts)
+            
+        } catch (error) {
+            console.error('Error creating Google Cloud instance:', error)
+            process.exit(1)
+        }
+    })
 
 createCmd
     .command('azure')

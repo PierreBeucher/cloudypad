@@ -85,6 +85,31 @@ function create_destroy_azure() {
     $cloudypad_cmd destroy $instance_name
 }
 
+function create_destroy_google() {
+    
+    instance_name="test-create-destroy-gcp"
+
+    $cloudypad_cmd create gcp \
+        --name $instance_name \
+        --private-ssh-key ~/.ssh/id_ed25519 \
+        --machine-type n1-standard-8 \
+        --disk-size 100 \
+        --public-ip-type static \
+        --region "europe-west4" \
+        --zone "europe-west4-b" \
+        --gpu-type "nvidia-tesla-p4" \
+        --project-id crafteo-sandbox \
+        --yes --overwrite-existing
+
+    $cloudypad_cmd get $instance_name
+
+    $cloudypad_cmd list | grep $instance_name
+
+    $cloudypad_cmd stop $instance_name
+
+    $cloudypad_cmd destroy $instance_name
+}
+
 case "$1" in
     aws)
         create_destroy_aws
@@ -95,8 +120,11 @@ case "$1" in
     azure)
         create_destroy_azure
         ;;
+    google)
+        create_destroy_google
+        ;;
     *)
-        echo "Usage: $0 {aws|paperspace|azure}"
+        echo "Usage: $0 {aws|paperspace|azure|google}"
         ;;
 esac
 
