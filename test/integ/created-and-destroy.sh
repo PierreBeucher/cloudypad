@@ -75,6 +75,14 @@ function create_destroy_azure() {
         --location "francecentral" \
         --subscription-id 0dceb5ed-9096-4db7-b430-2609e7cc6a15 \
         --overwrite-existing
+
+    $cloudypad_cmd get $instance_name
+
+    $cloudypad_cmd list | grep $instance_name
+
+    $cloudypad_cmd stop $instance_name
+
+    $cloudypad_cmd destroy $instance_name
 }
 
 function create_destroy_google() {
