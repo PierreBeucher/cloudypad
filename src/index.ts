@@ -3,7 +3,7 @@
 import { version } from '../package.json';
 import { Command } from 'commander';
 import { GlobalInstanceManager } from './core/manager';
-import { setDefaultVerbosity } from './log/utils';
+import { setLogVerbosity } from './log/utils';
 import { AwsProvisionArgs, AwsInstanceInitializer } from './providers/aws/initializer';
 import { PartialDeep } from 'type-fest';
 import { PaperspaceInstanceInitializer, PaperspaceProvisionArgs } from './providers/paperspace/initializer';
@@ -18,8 +18,8 @@ program
     .name('cloudypad')
     .description('Cloudy Pad CLI to manage your own gaming instance in the Cloud.')
     .option("--verbose, -v",
-        "Verbosity level (0: silly, 1: trace, 2: debug, 3: info, 4: warn, 5: error, 6: fatal)", 
-        (v) => { setDefaultVerbosity(Number.parseInt(v)) })
+        "Verbosity level (0: silly, 1: trace, 2: debug, 3: info, 4: warn, 5: error, 6: fatal). Alternatively, use CLOUDYPAD_LOG_LEVEL environment variable.", 
+        (v) => { setLogVerbosity(Number.parseInt(v)) })
     .configureHelp({ showGlobalOptions: true})
     .version(version);
 
