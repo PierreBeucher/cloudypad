@@ -42,7 +42,7 @@ export class PaperspaceProvisioner extends BaseInstanceProvisioner implements In
         const client = await this.buildPaperspaceClient()
 
         if(!opts?.skipAuthCheck){
-            const authResult = await client.authSession()
+            const authResult = await client.checkAuth()
             this.logger.info(`Paperspace authenticated as ${authResult.user.email} (team: ${authResult.team.id})`)
         }
         
