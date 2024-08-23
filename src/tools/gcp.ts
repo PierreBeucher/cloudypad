@@ -38,7 +38,7 @@ export class GcpClient {
         this.projectId = projectId
     }
 
-    async checkGcpAuth() {
+    async checkAuth() {
         this.logger.debug("Checking Google Cloud authentication")
         try {
             const creds = await this.auth.getApplicationDefault()

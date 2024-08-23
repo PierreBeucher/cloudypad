@@ -143,6 +143,6 @@ export class GcpProvisioner extends BaseInstanceProvisioner implements InstanceP
 
     private async checkGcpAuth(projectId: string) {
         const client = new GcpClient(this.sm.name(), projectId)
-        await client.checkGcpAuth()
+        await client.checkAuth()
     }
 }

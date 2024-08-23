@@ -162,12 +162,12 @@ export interface PulumiStackConfigGcp {
     publicIpType: string
 }
 
-export interface PulumiOutputGcp {
+export interface GcpPulumiOutput {
     instanceName: string
     publicIp: string
 }
 
-export class GcpPulumiClient extends InstancePulumiClient<PulumiStackConfigGcp, PulumiOutputGcp> {
+export class GcpPulumiClient extends InstancePulumiClient<PulumiStackConfigGcp, GcpPulumiOutput> {
 
     constructor(stackName: string){
         super({ program: gcpPulumiProgram, projectName: "CloudyPad-GCP", stackName: stackName})
@@ -192,7 +192,7 @@ export class GcpPulumiClient extends InstancePulumiClient<PulumiStackConfigGcp, 
 
     }
 
-    protected async buildTypedOutput(outputs: OutputMap): Promise<PulumiOutputGcp>{
+    protected async buildTypedOutput(outputs: OutputMap): Promise<GcpPulumiOutput>{
         return {
             instanceName: outputs["instanceName"].value as string,
             publicIp: outputs["publicIp"].value as string
