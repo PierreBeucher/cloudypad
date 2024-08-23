@@ -21,7 +21,7 @@ export class AzureClient {
 
     }
 
-    static async checkAzureAuth() {
+    static async checkAuth() {
         AzureClient.staticLogger.debug("Checking Azure authentication")
         try {
             const creds = new DefaultAzureCredential()

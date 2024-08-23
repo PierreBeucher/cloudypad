@@ -3,7 +3,6 @@ import { AwsInitializerPrompt, AwsInstanceInitializer, AwsProvisionArgs } from "
 import { InstanceInitializationOptions } from '../../../src/core/initializer';
 import sinon from 'sinon';
 import { AwsInstanceRunner } from '../../../src/providers/aws/runner';
-import { setDefaultVerbosity } from '../../../src/log/utils';
 import { AwsPulumiClient, AwsPulumiOutput } from '../../../src/tools/pulumi/aws';
 import { StateUtils } from '../../../src/core/state';
 import { AnsibleClient } from '../../../src/tools/ansible';
@@ -30,8 +29,6 @@ describe('AwsInitializerPrompt', () => {
 
 
     it('should initialize instance state with provided arguments', async () => {
-
-        setDefaultVerbosity(1)
 
         const genericArgs = {
             instanceName: "aws-dummy",

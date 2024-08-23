@@ -31,7 +31,7 @@ export class AzureProvisioner extends BaseInstanceProvisioner implements Instanc
         }
 
         if (!opts?.skipAuthCheck) {
-            await AzureClient.checkAzureAuth()
+            await AzureClient.checkAuth()
         }
 
         this.logger.debug(`Provisioning Azure instance with ${JSON.stringify(state)}`)

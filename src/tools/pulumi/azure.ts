@@ -203,14 +203,14 @@ export interface PulumiStackConfigAzure {
     publicIpType: string
 }
 
-export interface PulumiOutputAzure {
+export interface AzurePulumiOutput {
     vmName: string
     publicIp: string
     resourceGroupName: string
 }
 
 
-export class AzurePulumiClient extends InstancePulumiClient<PulumiStackConfigAzure, PulumiOutputAzure> {
+export class AzurePulumiClient extends InstancePulumiClient<PulumiStackConfigAzure, AzurePulumiOutput> {
 
     constructor(stackName: string){
         super({ program: azurePulumiProgram, projectName: "CloudyPad-Azure", stackName: stackName})
@@ -233,7 +233,7 @@ export class AzurePulumiClient extends InstancePulumiClient<PulumiStackConfigAzu
 
     }
 
-    protected async buildTypedOutput(outputs: OutputMap) : Promise<PulumiOutputAzure>{
+    protected async buildTypedOutput(outputs: OutputMap) : Promise<AzurePulumiOutput>{
         return {
             vmName: outputs["vmName"].value as string, // TODO validate with Zod
             publicIp: outputs["publicIp"].value as string,
