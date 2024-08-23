@@ -11,7 +11,7 @@ export class GcpProvisioner extends BaseInstanceProvisioner implements InstanceP
         super(sm)
     }
 
-    async provision(opts: InstanceProvisionOptions) {
+    async provision(opts?: InstanceProvisionOptions) {
 
         this.logger.info(`Provisioning Google Cloud instance ${this.sm.name()}`)
 
@@ -30,7 +30,7 @@ export class GcpProvisioner extends BaseInstanceProvisioner implements InstanceP
             throw new Error(`Provisioning Google Cloud instance requires a private SSH key. Got state: ${JSON.stringify(state)}`)
         }
 
-        if(!opts.skipAuthCheck){
+        if(!opts?.skipAuthCheck){
             await this.checkGcpAuth(state.provider.gcp.provisionArgs.create.projectId)
         }
 
@@ -39,7 +39,7 @@ export class GcpProvisioner extends BaseInstanceProvisioner implements InstanceP
         if (args.create){
             
             let confirmCreation: boolean
-            if(opts.autoApprove){
+            if(opts?.autoApprove){
                 confirmCreation = opts.autoApprove
             } else {
                 confirmCreation = await confirm({

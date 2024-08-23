@@ -11,7 +11,7 @@ export class AwsProvisioner extends BaseInstanceProvisioner implements InstanceP
         super(sm)
     }
 
-    async provision(opts: InstanceProvisionOptions) {
+    async provision(opts?: InstanceProvisionOptions) {
 
         this.logger.info(`Provisioning AWS instance ${this.sm.name()}`)
 
@@ -30,7 +30,7 @@ export class AwsProvisioner extends BaseInstanceProvisioner implements InstanceP
             throw new Error(`Provisioning AWS instance requires a private SSH key. Got state: ${JSON.stringify(state)}`)
         }
 
-        if(!opts.skipAuthCheck){
+        if(!opts?.skipAuthCheck){
             await this.checkAwsAuth()
         }
 
@@ -39,7 +39,7 @@ export class AwsProvisioner extends BaseInstanceProvisioner implements InstanceP
         if (args.create){
             
             let confirmCreation: boolean
-            if(opts.autoApprove){
+            if(opts?.autoApprove){
                 confirmCreation = opts.autoApprove
             } else {
                 confirmCreation = await confirm({

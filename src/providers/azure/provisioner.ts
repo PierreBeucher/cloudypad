@@ -11,7 +11,7 @@ export class AzureProvisioner extends BaseInstanceProvisioner implements Instanc
         super(sm)
     }
 
-    async provision(opts: InstanceProvisionOptions) {
+    async provision(opts?: InstanceProvisionOptions) {
 
         this.logger.info(`Provisioning Azure instance ${this.sm.name()}`)
 
@@ -30,7 +30,7 @@ export class AzureProvisioner extends BaseInstanceProvisioner implements Instanc
             throw new Error(`Provisioning Azure instance requires a private SSH key. Got state: ${JSON.stringify(state)}`)
         }
 
-        if (!opts.skipAuthCheck) {
+        if (!opts?.skipAuthCheck) {
             await AzureClient.checkAzureAuth()
         }
 
@@ -39,7 +39,7 @@ export class AzureProvisioner extends BaseInstanceProvisioner implements Instanc
         if (args.create) {
 
             let confirmCreation: boolean
-            if (opts.autoApprove) {
+            if (opts?.autoApprove) {
                 confirmCreation = opts.autoApprove
             } else {
                 confirmCreation = await confirm({
