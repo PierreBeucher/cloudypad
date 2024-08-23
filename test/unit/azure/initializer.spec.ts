@@ -31,9 +31,8 @@ describe('Azure initializer', () => {
     }
 
     it('should return provided options without prompting for user input', async () => {
-
-        const promt = new AzureInitializerPrompt();
-        const result = await promt.prompt(provArgs);
+        const promt = new AzureInitializerPrompt()
+        const result = await promt.prompt(provArgs)
         assert.deepEqual(result, provArgs)
     })
 
@@ -42,7 +41,7 @@ describe('Azure initializer', () => {
 
         // Stub everything interacting with Azure and VM
         // We just need to check state written on disk and overall process works
-        const azureClientStub = sinon.stub(AzureClient, 'checkAuth').resolves();
+        const azureClientStub = sinon.stub(AzureClient, 'checkAuth').resolves()
         const dummyPulumiOutput: AzurePulumiOutput = { vmName: "dummy-az", publicIp: "127.0.0.1", resourceGroupName: "dummy-rg"}
         const pulumiClientConfigStub = sinon.stub(AzurePulumiClient.prototype, 'setConfig').resolves()
         const pulumiClientUpStub = sinon.stub(AzurePulumiClient.prototype, 'up').resolves(dummyPulumiOutput)

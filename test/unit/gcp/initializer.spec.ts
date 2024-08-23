@@ -44,7 +44,7 @@ describe('GCP initializer', () => {
 
         // Stub everything interacting with GCP and VM
         // We just need to check state written on disk and overall process works
-        const gcpClientStub = sinon.stub(GcpClient.prototype, 'checkAuth').resolves();
+        const gcpClientStub = sinon.stub(GcpClient.prototype, 'checkAuth').resolves()
         const dummyPulumiOutput: GcpPulumiOutput = { instanceName: "dummy-gcp", publicIp: "127.0.0.1"}
         const pulumiClientConfigStub = sinon.stub(GcpPulumiClient.prototype, 'setConfig').resolves()
         const pulumiClientUpStub = sinon.stub(GcpPulumiClient.prototype, 'up').resolves(dummyPulumiOutput)

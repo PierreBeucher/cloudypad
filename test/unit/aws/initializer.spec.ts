@@ -21,9 +21,9 @@ describe('AwsInitializerPrompt', () => {
 
     it('should return provided options without prompting for user input', async () => {
 
-        const awsInitializerPrompt = new AwsInitializerPrompt();
+        const awsInitializerPrompt = new AwsInitializerPrompt()
 
-        const result = await awsInitializerPrompt.prompt(provArgs);
+        const result = await awsInitializerPrompt.prompt(provArgs)
         assert.deepEqual(result, provArgs)
     })
 
@@ -42,7 +42,7 @@ describe('AwsInitializerPrompt', () => {
 
         // Stub everything interacting with AWS and VM
         // We just need to check state written on disk and overall process works
-        const awsClientStub = sinon.stub(AwsClient.prototype, 'checkAuth').resolves();
+        const awsClientStub = sinon.stub(AwsClient.prototype, 'checkAuth').resolves()
         const dummyPulumiOutput: AwsPulumiOutput = { instanceId: "i-0123456789", publicIp: "127.0.0.1"}
         const pulumiClientConfigStub = sinon.stub(AwsPulumiClient.prototype, 'setConfig').resolves()
         const pulumiClientUpStub = sinon.stub(AwsPulumiClient.prototype, 'up').resolves(dummyPulumiOutput)
