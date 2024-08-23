@@ -3,10 +3,10 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';
 import * as yaml from 'js-yaml';
-import { spawnSync } from 'child_process';
 import { StateManager } from '../core/state';
 import { InstanceConfigurator } from '../core/configurator';
 import { getLogger, Logger } from '../log/utils';
+import { AnsibleClient } from '../tools/ansible';
 
 export class AnsibleConfigurator implements InstanceConfigurator {
 
@@ -69,23 +69,7 @@ export class AnsibleConfigurator implements InstanceConfigurator {
             }
         })
 
-        const ansibleCommand = 'ansible-playbook'
-        const ansibleArgs = ['-i', inventoryPath, playbookPath].concat(this.additionalAnsibleArgs)
-
-        this.logger.debug(`Ansible command: ${ansibleCommand} ${JSON.stringify(ansibleArgs)}`)
-
-        const ansibleProcess = spawnSync(ansibleCommand, ansibleArgs, { stdio: 'inherit', shell: true });
-
-        this.logger.debug(`Ansible finished with status: ${ansibleProcess.status}`)
-
-        if (ansibleProcess.status != 0) {
-            
-            this.logger.error(`Ansible run failure: ${JSON.stringify(ansibleProcess)}`)
-
-            throw new Error(`Ansible run failed, exit code ${ansibleProcess.status}`)
-        }
-
-        this.logger.trace(`Ansible finished: ${JSON.stringify(ansibleProcess)}`)
-
+        const ansible = new AnsibleClient()
+        await ansible.runAnsible(inventoryPath, playbookPath, this.additionalAnsibleArgs)
     }
 }

@@ -1,9 +1,9 @@
 import { parseSshPrivateKeyFileToPublic } from '../../tools/ssh';
 import { confirm } from '@inquirer/prompts';
-import { STSClient, GetCallerIdentityCommand } from '@aws-sdk/client-sts';
 import { AwsPulumiClient, PulumiStackConfigAws } from '../../tools/pulumi/aws';
 import { BaseInstanceProvisioner, InstanceProvisioner, InstanceProvisionOptions } from '../../core/provisioner';
 import { StateManager } from '../../core/state';
+import { AwsClient } from '../../tools/aws';
 
 export class AwsProvisioner extends BaseInstanceProvisioner implements InstanceProvisioner {
 
@@ -136,13 +136,8 @@ export class AwsProvisioner extends BaseInstanceProvisioner implements InstanceP
 
     }
 
-    private async checkAwsAuth() {
-        const stsClient = new STSClient({});
-        try {
-            const callerIdentity = await stsClient.send(new GetCallerIdentityCommand({}));
-            this.logger.info(`Currently authenticated as ${callerIdentity.UserId} on account ${callerIdentity.Account}`)
-        } catch (e) {
-            throw new Error(`Couldn't check AWS authentication: ${JSON.stringify(e)}`)
-        }
+    async checkAwsAuth() {
+        const client = new AwsClient(this.sm.name())
+        await client.checkAuth()
     }
 }

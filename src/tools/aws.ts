@@ -13,7 +13,7 @@ export class AwsClient {
         this.ec2Client = new EC2Client({});
         this.stsClient = new STSClient({});
     }
-    async checkAwsAuth() {
+    async checkAuth() {
         this.logger.debug("Checking AWS authentication")
         try {
             const callerIdentity = await this.stsClient.send(new GetCallerIdentityCommand({}));
