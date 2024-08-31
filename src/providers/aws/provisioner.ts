@@ -46,6 +46,7 @@ export class AwsProvisioner extends BaseInstanceProvisioner implements InstanceP
                     message: `
     You are about to provision AWS machine with the following details:
         Instance name: ${state.name}
+        Spot instance: ${args.create.useSpot}
         SSH key: ${state.ssh.privateKeyPath}
         AWS Region: ${args.create.region}
         Instance Type: ${args.create.instanceType}
@@ -76,7 +77,8 @@ export class AwsProvisioner extends BaseInstanceProvisioner implements InstanceP
                 publicIpType: args.create.publicIpType,
                 region: args.create.region,
                 rootVolumeSizeGB: args.create.diskSize,
-                publicSshKeyContent: await parseSshPrivateKeyFileToPublic(state.ssh.privateKeyPath)
+                publicSshKeyContent: await parseSshPrivateKeyFileToPublic(state.ssh.privateKeyPath),
+                useSpot: args.create.useSpot,
             }
 
             await pulumiClient.setConfig(pulumiConfig)

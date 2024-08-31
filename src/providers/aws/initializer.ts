@@ -3,7 +3,7 @@ import { loadConfig } from "@smithy/node-config-provider";
 import { NODE_REGION_CONFIG_FILE_OPTIONS, NODE_REGION_CONFIG_OPTIONS } from "@smithy/config-resolver";
 import { PartialDeep } from 'type-fest';
 import { AwsClient } from '../../tools/aws';
-import { InstanceInitializer, GenericInitializationArgs } from '../../core/initializer';
+import { InstanceInitializer, GenericInitializationArgs, StaticInitializerPrompts } from '../../core/initializer';
 import { StateManager } from '../../core/state';
 import { AwsProvisioner } from './provisioner';
 import { AwsInstanceRunner } from './runner';
@@ -16,6 +16,7 @@ export interface AwsProvisionArgs {
         diskSize: number
         publicIpType: string
         region: string
+        useSpot: boolean
     }
 }
 
@@ -62,17 +63,19 @@ export class AwsInitializerPrompt {
 
         this.logger.debug(`Starting AWS prompt with default opts: ${JSON.stringify(args)}`)
 
-        const instanceType = await this.instanceType(args?.create?.instanceType);
-        const diskSize = await this.diskSize(args?.create?.diskSize);
-        const publicIpType = await this.publicIpType(args?.create?.publicIpType);
-        const region = await this.region(args?.create?.region);
+        const instanceType = await this.instanceType(args?.create?.instanceType)
+        const useSpot = await StaticInitializerPrompts.useSpotInstance(args?.create?.useSpot)
+        const diskSize = await this.diskSize(args?.create?.diskSize)
+        const publicIpType = await this.publicIpType(args?.create?.publicIpType)
+        const region = await this.region(args?.create?.region)
 
         return {
             create: {
                 diskSize: diskSize,
                 instanceType: instanceType,
                 publicIpType: publicIpType,
-                region: region
+                region: region,
+                useSpot: useSpot,
             }
         }
     }

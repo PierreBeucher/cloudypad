@@ -48,6 +48,7 @@ createCmd
     .option('--name <name>', 'Instance name')
     .option('--private-ssh-key <path>', 'Path to private SSH key to use to connect to instance')
     .option('--instance-type <type>', 'EC2 instance type')
+    .option('--spot', 'Enable Spot instance. Spot instances are cheaper (usually 20% to 70% off) but may be restarted any time.')
     .option('--disk-size <size>', 'Disk size in GB', parseInt)
     .option('--public-ip-type <type>', 'Public IP type. Either "static" or "dynamic"')
     .option('--region <region>', 'Region in which to deploy instance')
@@ -66,6 +67,7 @@ createCmd
                     diskSize: options.diskSize,
                     publicIpType: options.publicIpType,
                     region: options.region,
+                    useSpot: options.spot,
                 }
             }
 

@@ -15,7 +15,8 @@ describe('AwsInitializerPrompt', () => {
             instanceType: "g5.2xlarge",
             diskSize: 200,
             publicIpType: "static",
-            region: "us-west-2"
+            region: "us-west-2",
+            useSpot: true,
         },
     }
 

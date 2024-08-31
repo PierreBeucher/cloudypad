@@ -216,3 +216,22 @@ export class GenericInitializerPrompt {
         return privateKeyPath;
     }
 }
+
+/**
+ * Static initialization methods which can be used by other initializers
+ */
+export class StaticInitializerPrompts {
+    
+    static async useSpotInstance(useSpot?: boolean): Promise<boolean>{
+        if (useSpot) {
+            return useSpot;
+        }
+
+        const useSpotChoice = await confirm({
+            message: `Do you want to use spot instances ? Spot instances are cheaper (usually 20% to 70% off) but may be restarted any time.`,
+            default: false,
+        })
+    
+        return useSpotChoice;
+    }
+}
