@@ -1,10 +1,15 @@
 # May conflict with NVIDIA drivers loading during boot
 - name: Blacklist nouveau drivers
+  register: nvidia_nouveau_driver_blacklist
   copy:
     dest: /etc/modprobe.d/blacklist-nouveau.conf
     content: |
       blacklist nouveau
       options nouveau modeset=0
+
+- name: Reboot after nouveau driver blacklist update
+  when: nvidia_nouveau_driver_blacklist.changed
+  reboot:
 
 - name: install driver required packages
   apt:
