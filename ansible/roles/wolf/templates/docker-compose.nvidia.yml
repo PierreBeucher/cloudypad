@@ -5,7 +5,7 @@ services:
     container_name: wolf
     environment:
       XDG_RUNTIME_DIR: /tmp/sockets
-      NVIDIA_DRIVER_VOLUME_NAME: "{{ nvidia_driver_volume_name }}"
+      NVIDIA_DRIVER_VOLUME_NAME: "{{ wolf_nvidia_driver_volume_name }}"
       HOST_APPS_STATE_FOLDER: /etc/wolf
     volumes:
       # Used by other containers created by wolf. Do not change
@@ -36,4 +36,4 @@ volumes:
   # Volume populated with nvidia drivers 
   nvidia-driver-vol:
     external: true
-    name: "{{ nvidia_driver_volume_name }}"
+    name: "{{ wolf_nvidia_driver_volume_name }}"

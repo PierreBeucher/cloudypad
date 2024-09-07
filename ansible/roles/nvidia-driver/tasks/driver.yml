@@ -15,7 +15,7 @@
     - gcc-multilib
     - dkms
 
-- name: Get current NVIDIA driver version
+- name: Get current NVIDIA driver version (error expected and ignored if driver not installed yet)
   slurp:
     src: /sys/module/nvidia/version
   register: nvidia_driver_version_file
