@@ -1,10 +1,10 @@
-# TODO baclklist nouveau
-# https://www.baeldung.com/linux/nvidia-drivers-latest-install-run
-# $ cd /etc/modprobe.d
-# $ sudo touch blacklist-nouveau.conf
-# $ sudo nano blacklist-nouveau.conf
-# blacklist nouveau
-# options nouveau modeset=0
+# May conflict with NVIDIA drivers loading during boot
+- name: Blacklist nouveau drivers
+  copy:
+    dest: /etc/modprobe.d/blacklist-nouveau.conf
+    content: |
+      blacklist nouveau
+      options nouveau modeset=0
 
 - name: install driver required packages
   apt:
