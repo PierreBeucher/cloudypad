@@ -87,14 +87,14 @@
 - name: Get NVIDIA driver version
   ansible.builtin.slurp:
     src: /sys/module/nvidia/version
-  register: nvidia_driver_version_file
+  register: nvidia_driver_version_file_wolf
 
 - name: Set NVIDIA driver vars
   set_fact: 
     nvidia_driver_version: "{{ nvidia_driver_version }}"
     nvidia_driver_volume_name: "nvidia-driver-vol-{{ nvidia_driver_version }}"
   vars:
-    nvidia_driver_version: "{{ nvidia_driver_version_file.content | b64decode | trim }}"
+    nvidia_driver_version: "{{ nvidia_driver_version_file_wolf.content | b64decode | trim }}"
 
 - name: Show NVIDIA driver version
   ansible.builtin.debug:

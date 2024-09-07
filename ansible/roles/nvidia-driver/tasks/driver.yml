@@ -53,6 +53,7 @@
 - name: Verify SHA256 checksum
   when: nvidia_driver_version != nvidia_driver_dotrun_install_version
   command:
+    chdir: /tmp
     cmd: "sha256sum -c /tmp/NVIDIA-Linux-x86_64-{{ nvidia_driver_dotrun_install_version }}.run.sha256sum"
   register: sha256_check
   failed_when: sha256_check.rc != 0
@@ -60,10 +61,7 @@
 - name: Install NVIDIA driver
   when: nvidia_driver_version != nvidia_driver_dotrun_install_version
   command: /tmp/NVIDIA-Linux-x86_64-{{ nvidia_driver_dotrun_install_version }}.run --no-questions --ui=none
-  register: install_dotrun_driver
 
-- name: Update container runtime
-  command: nvidia-ctk runtime configure --runtime=docker
-
-- name: Restart Docker daemon
-  command: systemctl restart docker
+- name: Reboot after dotrun driver install
+  when: nvidia_driver_version != nvidia_driver_dotrun_install_version
+  reboot:

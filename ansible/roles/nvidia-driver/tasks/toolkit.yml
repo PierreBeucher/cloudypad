@@ -20,3 +20,9 @@
   ansible.builtin.apt:
     name: nvidia-container-toolkit
     state: present
+
+- name: Update container runtime
+  command: nvidia-ctk runtime configure --runtime=docker
+
+- name: Restart Docker daemon
+  command: systemctl restart docker

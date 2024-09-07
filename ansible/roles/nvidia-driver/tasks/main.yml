@@ -27,6 +27,10 @@
     state: absent
     update_cache: true
 
+- name: reboot after old driver package removal
+  reboot:
+  when: install_driver.changed
+
 # required on some system to create /dev/nvidia-caps* automatically, see https://docs.nvidia.com/cuda/cuda-installation-guide-linux/index.html#device-node-verification
 - name: install nvidia-modprobe 
   apt:
@@ -53,35 +57,35 @@
 # Setup a service running in userspace to ensure /dev/nvidia-caps/* devices are present on boot
 # See https://docs.nvidia.com/datacenter/tesla/mig-user-guide/index.html#device-nodes-devfs
 - name: Ensure nvidia-caps startup script exists
-  register: nvidia_caps_script
+  register: nvidia_dev_script
   copy:
-    dest: /usr/local/bin/nvidia-setup-caps.sh
+    dest: /usr/local/bin/nvidia-setup-devices.sh
     mode: '0755'
-    src: files/nvidia-setup-caps.sh
+    src: files/nvidia-setup-devices.sh
 
 - name: Ensure nvidia-caps systemd script exists
-  register: nvidia_caps_systemd_unit
+  register: nvidia_dev_systemd_unit
   copy:
-    dest: /etc/systemd/system/nvidia-setup-caps.service
+    dest: /etc/systemd/system/nvidia-setup-devices.service
     content: |
       [Unit]
-      Description=Setup NVIDIA capabilities
+      Description=Setup NVIDIA devices
 
       [Service]
-      ExecStart=/usr/local/bin/nvidia-setup-caps.sh
+      ExecStart=/usr/local/bin/nvidia-setup-devices.sh
 
       [Install]
       WantedBy=multi-user.target
 
 - name: Reload systemd for nvidia-caps
   ansible.builtin.command: systemctl daemon-reload
-  when: nvidia_caps_systemd_unit.changed or nvidia_caps_script.changed
+  when: nvidia_dev_systemd_unit.changed or nvidia_dev_script.changed
 
-- name: Enable nvidia-setup-caps service
+- name: Enable nvidia-setup-devices service
   ansible.builtin.systemd_service:
-    name: nvidia-setup-caps
+    name: nvidia-setup-devices
     enabled: true
 
-- name: reboot after driver install or initramfs update
+- name: reboot after initramfs or NVIDIA devices script update
   reboot:
-  when: (install_dotrun_driver.changed or install_driver.changed or nvidia_driver_module_file_result.changed) and not nvidia_driver_skip_reboot 
+  when: nvidia_driver_module_file_result.changed or nvidia_dev_systemd_unit.changed or nvidia_dev_script.changed
