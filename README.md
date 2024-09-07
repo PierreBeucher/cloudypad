@@ -91,7 +91,8 @@ Prerequisites:
   - [Paperspace](https://www.paperspace.com/)
   - [AWS](https://aws.amazon.com/)
 - [Moonlight](https://moonlight-stream.org/) streaming client
-- [Docker](https://docs.docker.com/engine/install/) (other container engine support will come soon)
+- [Docker](https://docs.docker.com/engine/install/) 
+  - Note: rootless Docker is not supported yet
 
 Install latest version of `cloudypad` CLI:
 
@@ -141,11 +142,15 @@ Install latest version of `cloudypad` CLI:
 curl -fsSL https://raw.githubusercontent.com/PierreBeucher/cloudypad/master/install.sh | sh
 ```
 
+Note: for MacOS, [OrbStack](https://orbstack.dev/) is recommended over Docker Desktop as it's more compatible for Cloudy Pad usage. 
+
 ### Windows
 
-Running Cloudy Pad on Windows [requires WSL to be installed](https://learn.microsoft.com/en-us/windows/wsl/install). 
+Running Cloudy Pad on Windows [requires WSL to be installed](https://learn.microsoft.com/en-us/windows/wsl/install).
 
 Once WSL is installed, run a Linux shell and follow [Linux installation steps](#linux--macos). 
+
+Note: If you are using SSH keys mounted from Windows host, make sure they have proper permissions: `chmod 0600 ~/.ssh/<key>`
 
 ### Nix / NixOS
 
