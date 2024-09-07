@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.6.0](https://github.com/PierreBeucher/cloudypad/compare/v0.5.0...v0.6.0) (2024-09-07)
+
+
+### Features
+
+* upgrade Wolf to latest stable version ([fabfaba](https://github.com/PierreBeucher/cloudypad/commit/fabfaba3535ba9921703af6af6df8cd81bae778b))
+
+
+### Bug Fixes
+
+* ensure NVIDIA driver install reproducibility ([b1ae764](https://github.com/PierreBeucher/cloudypad/commit/b1ae764f76cd3e2cf2eca48c90ddfc259efeb62d))
+
 ## [0.5.0](https://github.com/PierreBeucher/cloudypad/compare/v0.4.0...v0.5.0) (2024-08-09)
 
 
