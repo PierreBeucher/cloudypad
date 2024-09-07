@@ -31,8 +31,8 @@ tasks:
       [ $(docker run crafteo/cloudypad:local --version) = $(cat package.json | jq .version -r) ] 
       || echo "Version in container image doesn't match package.json version"
 
-  test-create-from-scratch:
-    cmd: test/integ/create-from-scratch.sh
+  test-create-and-destroy:
+    cmd: test/integ/create-and-destroy.sh
     
   #
   # Utils
