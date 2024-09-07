@@ -1,7 +1,7 @@
 # Wolf for Nvidia
 services:
   wolf:
-    image: ghcr.io/games-on-whales/wolf:stable@sha256:36ce80055729876ece0445bdf859564b07e3522706544ffd4ca4e91e7107a855
+    image: ghcr.io/games-on-whales/wolf:stable@sha256:810981dada768381f4bfa846dd703c893ea2da8b286654dbba12e8cf84d5f6b2
     container_name: wolf
     environment:
       XDG_RUNTIME_DIR: /tmp/sockets
