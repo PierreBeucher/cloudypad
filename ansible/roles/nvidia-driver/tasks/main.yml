@@ -5,41 +5,39 @@
     state: absent
   ignore_errors: true
 
-- name: ubuntu install tasks (canonical repos)
-  include_tasks: install-ubuntu.yml
-  when: ansible_distribution == 'Ubuntu' and (not nvidia_driver_ubuntu_install_from_cuda_repo)
+# Remove apt packages in favor of .run file
+# Using .run file provides better reproducibility as we're certain about version installed
+- name: remove unused nvidia-*-server driver packages
+  apt:
+    name: "{{ nvidia_driver_package_version | ternary(item + '=' + nvidia_driver_package_version, item) }}"
+    state: 'absent'
+    autoremove: true
+    purge: true
+  loop:
+    - "nvidia-headless-{{ nvidia_driver_ubuntu_branch }}{{ nvidia_driver_ubuntu_packages_suffix }}"
+    - "nvidia-utils-{{ nvidia_driver_ubuntu_branch }}{{ nvidia_driver_ubuntu_packages_suffix }}"
+    - "nvidia-headless-no-dkms-{{ nvidia_driver_ubuntu_branch }}{{ nvidia_driver_ubuntu_packages_suffix }}"
+    - "nvidia-kernel-source-{{ nvidia_driver_ubuntu_branch }}{{ nvidia_driver_ubuntu_packages_suffix }}"
+  register: install_driver
+  environment: "{{proxy_env if proxy_env is defined else {}}}"
 
-- name: ubuntu install tasks (CUDA repo)
-  include_tasks: install-ubuntu-cuda-repo.yml
-  when: ansible_distribution == 'Ubuntu' and nvidia_driver_ubuntu_install_from_cuda_repo
-
-- name: redhat family install tasks
-  include_tasks: install-redhat.yml
-  when: ansible_os_family == 'RedHat'
-
-- name: create persistenced override dir
-  file:
-    path: /etc/systemd/system/nvidia-persistenced.service.d/
-    state: directory
-    recurse: yes
-
-- name: configure persistenced service to turn on persistence mode
-  copy:
-    src: nvidia-persistenced-override.conf
-    dest: /etc/systemd/system/nvidia-persistenced.service.d/override.conf
-  when: nvidia_driver_persistence_mode_on
-
-- name: remove persistenced service override
-  file:
-    path: /etc/systemd/system/nvidia-persistenced.service.d/override.conf
+- name: remove Ubuntu graphics ppa
+  apt_repository:
+    repo: ppa:graphics-drivers/ppa
     state: absent
-  when: not nvidia_driver_persistence_mode_on
+    update_cache: true
 
-- name: enable persistenced
-  systemd:
-    name: nvidia-persistenced
-    enabled: yes
-  when: nvidia_driver_package_state != 'absent'
+# required on some system to create /dev/nvidia-caps* automatically, see https://docs.nvidia.com/cuda/cuda-installation-guide-linux/index.html#device-node-verification
+- name: install nvidia-modprobe 
+  apt:
+    name: nvidia-modprobe
+
+- name: install NVIDIA drivers
+  import_tasks: driver.yml
+  tags: [ driver ]
+
+- name: install NVIDIA Container Toolkit
+  import_tasks: toolkit.yml
 
 - name: Set module parameters
   register: nvidia_driver_module_file_result
@@ -86,4 +84,4 @@
 
 - name: reboot after driver install or initramfs update
   reboot:
-  when: (install_driver.changed or nvidia_driver_module_file_result.changed) and not nvidia_driver_skip_reboot 
+  when: (install_dotrun_driver.changed or install_driver.changed or nvidia_driver_module_file_result.changed) and not nvidia_driver_skip_reboot 

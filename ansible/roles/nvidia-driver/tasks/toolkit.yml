@@ -1,0 +1,22 @@
+# Install Nvidia Container Toolkit via apt
+# From https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html
+- name: Add NVIDIA GPG key for the Container Toolkit
+  ansible.builtin.apt_key:
+    url: https://nvidia.github.io/libnvidia-container/gpgkey
+    state: present
+    keyring: /usr/share/keyrings/nvidia-container-toolkit-keyring.gpg
+
+- name: Add NVIDIA container toolkit repository
+  ansible.builtin.apt_repository:
+    repo: "deb [signed-by=/usr/share/keyrings/nvidia-container-toolkit-keyring.gpg] https://nvidia.github.io/libnvidia-container/stable/deb/$(ARCH) /"
+    filename: "nvidia-container-toolkit.list"
+    state: present
+
+- name: Update apt cache
+  ansible.builtin.apt:
+    update_cache: yes
+
+- name: Install NVIDIA Container Toolkit
+  ansible.builtin.apt:
+    name: nvidia-container-toolkit
+    state: present

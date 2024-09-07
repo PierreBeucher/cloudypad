@@ -1,0 +1,69 @@
+# TODO baclklist nouveau
+# https://www.baeldung.com/linux/nvidia-drivers-latest-install-run
+# $ cd /etc/modprobe.d
+# $ sudo touch blacklist-nouveau.conf
+# $ sudo nano blacklist-nouveau.conf
+# blacklist nouveau
+# options nouveau modeset=0
+
+- name: install driver required packages
+  apt:
+    name: "{{ item }}"
+    state: present
+  loop:
+    - build-essential
+    - gcc-multilib
+    - dkms
+
+- name: Get current NVIDIA driver version
+  slurp:
+    src: /sys/module/nvidia/version
+  register: nvidia_driver_version_file
+  ignore_errors: true # fail may not yet exist if driver not installed
+
+- name: Set NVIDIA driver version var
+  when: nvidia_driver_version_file is success
+  set_fact:
+    nvidia_driver_version: "{{ nvidia_driver_version_file.content | b64decode | trim }}"
+
+- name: Set NVIDIA driver version var (not installed)
+  when: nvidia_driver_version_file is not success
+  set_fact:
+    nvidia_driver_version: "none"
+
+- name: Show NVIDIA driver version
+  ansible.builtin.debug:
+    msg: "Current NVIDIA driver version: {{ nvidia_driver_version }}"
+
+# Install driver only if version do not match
+# .run file should uninstall any existing version
+- name: Download NVIDIA driver installer
+  when: nvidia_driver_version != nvidia_driver_dotrun_install_version
+  get_url:
+    url: https://download.nvidia.com/XFree86/Linux-x86_64/{{ nvidia_driver_dotrun_install_version }}/NVIDIA-Linux-x86_64-{{ nvidia_driver_dotrun_install_version }}.run
+    dest: /tmp/NVIDIA-Linux-x86_64-{{ nvidia_driver_dotrun_install_version }}.run
+    mode: '0755'
+
+- name: Download NVIDIA driver SHA256 checksum
+  when: nvidia_driver_version != nvidia_driver_dotrun_install_version
+  get_url:
+    url: https://download.nvidia.com/XFree86/Linux-x86_64/{{ nvidia_driver_dotrun_install_version }}/NVIDIA-Linux-x86_64-{{ nvidia_driver_dotrun_install_version }}.run.sha256sum
+    dest: /tmp/NVIDIA-Linux-x86_64-{{ nvidia_driver_dotrun_install_version }}.run.sha256sum
+
+- name: Verify SHA256 checksum
+  when: nvidia_driver_version != nvidia_driver_dotrun_install_version
+  command:
+    cmd: "sha256sum -c /tmp/NVIDIA-Linux-x86_64-{{ nvidia_driver_dotrun_install_version }}.run.sha256sum"
+  register: sha256_check
+  failed_when: sha256_check.rc != 0
+
+- name: Install NVIDIA driver
+  when: nvidia_driver_version != nvidia_driver_dotrun_install_version
+  command: /tmp/NVIDIA-Linux-x86_64-{{ nvidia_driver_dotrun_install_version }}.run --no-questions --ui=none
+  register: install_dotrun_driver
+
+- name: Update container runtime
+  command: nvidia-ctk runtime configure --runtime=docker
+
+- name: Restart Docker daemon
+  command: systemctl restart docker
