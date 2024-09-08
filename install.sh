@@ -1,4 +1,4 @@
-#/usr/env/bin bash
+#/usr/env/bin sh
 
 set -e
 
@@ -21,7 +21,10 @@ SCRIPT_PATH="$INSTALL_DIR/cloudypad"
 # Check if cloudypad is already in PATH
 if [ -n "$(which cloudypad)" ]; then
   CURRENT_PATH=$(which cloudypad)
-  read -p "cloudypad is already installed at ${CURRENT_CLOUDYPAD}. Do you want to overwrite it? (y/n): " CONFIRM
+
+  # Read from /dev/tty to ensure read will work even if script is piped to shell such as install.sh | sh
+  read -p "cloudypad is already installed at ${CURRENT_CLOUDYPAD}. Do you want to overwrite it? (y/N): " CONFIRM < /dev/tty
+
   if [[ "$CONFIRM" != "y" ]]; then
     echo "Installation aborted."
     exit 1
@@ -48,9 +51,17 @@ fi
 chmod +x "$SCRIPT_PATH"
 
 echo "Downloading Cloudy Pad container images..."
-$SCRIPT_PATH download-container-images
 
-# Identify shell to update *.rc file with PATh update
+if [ ! -n "$(which docker)" ]; then
+  echo
+  echo "WARNING: Docker CLI not found. Cloudy Pad will still get installed but you'll need Docker to run it."
+  echo "         See https://docs.docker.com/engine/install/ for Docker installation instructions."
+  echo
+else 
+  $SCRIPT_PATH download-container-images
+fi
+
+# Identify shell to update *.rc file with PATH update
 SHELL_NAME=$(basename "${SHELL}")
 STARTUP_FILE=""
 
@@ -78,7 +89,8 @@ case "${SHELL_NAME}" in
         ;;
     *)
         echo
-        echo "WARNING: Couldn't identiy startup file to use (such as .bashrc or .zshrc) for your current shell."
+        echo "WARNING: Couldn't identify startup file to use (such as .bashrc or .zshrc) for your current shell."
+        echo "         Detected shell from \$SHELL=$SHELL environment variable: '$SHELL_NAME'"
         echo "         To finalize installation please ensure $INSTALL_DIR is on your \$PATH"
         echo "         Otherwise you may not be able to run Cloudy Pad CLI."
         echo "         Alternatively, use directly $SCRIPT_PATH to run Cloudy Pad CLI."
