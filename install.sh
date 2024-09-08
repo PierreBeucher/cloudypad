@@ -21,7 +21,10 @@ SCRIPT_PATH="$INSTALL_DIR/cloudypad"
 # Check if cloudypad is already in PATH
 if [ -n "$(which cloudypad)" ]; then
   CURRENT_PATH=$(which cloudypad)
-  read -p "cloudypad is already installed at ${CURRENT_CLOUDYPAD}. Do you want to overwrite it? (y/n): " CONFIRM
+
+  # Read from /dev/tty to ensure read will work even if script is piped to shell such as install.sh | sh
+  read -p "cloudypad is already installed at ${CURRENT_CLOUDYPAD}. Do you want to overwrite it? (y/N): " CONFIRM < /dev/tty
+
   if [[ "$CONFIRM" != "y" ]]; then
     echo "Installation aborted."
     exit 1
