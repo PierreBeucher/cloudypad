@@ -90,6 +90,7 @@ case "${SHELL_NAME}" in
     *)
         echo
         echo "WARNING: Couldn't identiy startup file to use (such as .bashrc or .zshrc) for your current shell."
+        echo "         Detected shell from \$SHELL=$SHELL environment variable: '$SHELL_NAME'"
         echo "         To finalize installation please ensure $INSTALL_DIR is on your \$PATH"
         echo "         Otherwise you may not be able to run Cloudy Pad CLI."
         echo "         Alternatively, use directly $SCRIPT_PATH to run Cloudy Pad CLI."
