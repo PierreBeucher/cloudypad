@@ -52,7 +52,14 @@ chmod +x "$SCRIPT_PATH"
 
 echo "Downloading Cloudy Pad container images..."
 
-$SCRIPT_PATH download-container-images
+if [ ! -n "$(which docker)" ]; then
+  echo
+  echo "WARNING: Docker CLI not found. Cloudy Pad will still get installed but you'll need Docker to run it."
+  echo "         See https://docs.docker.com/engine/install/ for Docker installation instructions."
+  echo
+else 
+  $SCRIPT_PATH download-container-images
+fi
 
 # Identify shell to update *.rc file with PATh update
 SHELL_NAME=$(basename "${SHELL}")
