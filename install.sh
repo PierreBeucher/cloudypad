@@ -1,4 +1,4 @@
-#/usr/env/bin bash
+#/usr/env/bin sh
 
 set -e
 
@@ -51,6 +51,7 @@ fi
 chmod +x "$SCRIPT_PATH"
 
 echo "Downloading Cloudy Pad container images..."
+
 $SCRIPT_PATH download-container-images
 
 # Identify shell to update *.rc file with PATh update
