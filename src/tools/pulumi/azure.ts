@@ -23,6 +23,8 @@ interface CloudyPadVMArgs {
     vmSize: pulumi.Input<string>
     osDisk: VolumeArgs
     publicIpType?: pulumi.Input<string>
+    priority?: pulumi.Input<string>
+    evictionPolicy?: pulumi.Input<string>
 }
 
 class CloudyPadAzureInstance extends pulumi.ComponentResource {
@@ -138,6 +140,8 @@ class CloudyPadAzureInstance extends pulumi.ComponentResource {
                     name: `${name}-osdisk`,
                 },
             },
+            priority: args.priority,
+            evictionPolicy: args.evictionPolicy,
             tags: globalTags
         }, commonPulumiOpts)
 
@@ -162,6 +166,7 @@ async function azurePulumiProgram(): Promise<Record<string, any> | void> {
     const publicKeyContent = config.require("publicSshKeyContent")
     const rootDiskSizeGB = config.requireNumber("rootDiskSizeGB")
     const publicIpType = config.require("publicIpType")
+    const useSpot = config.requireBoolean("useSpot")
 
     const instanceName = pulumi.getStack()
 
@@ -184,7 +189,11 @@ async function azurePulumiProgram(): Promise<Record<string, any> | void> {
             { from: 47999, protocol: "udp" }, // Control
             { from: 48100, to: 48110, protocol: "udp" }, // Video (up to 10 users)
             { from: 48200, to: 48210, protocol: "udp" }, // Audio (up to 10 users)
-        ]
+        ],
+        
+        // Spot config if enabled
+        priority: useSpot ? "Spot" : undefined,
+        evictionPolicy: useSpot ? "Deallocate" : undefined,
     })
 
     return {
@@ -201,6 +210,7 @@ export interface PulumiStackConfigAzure {
     rootDiskSizeGB: number
     publicSshKeyContent: string
     publicIpType: string
+    useSpot: boolean
 }
 
 export interface AzurePulumiOutput {
@@ -227,6 +237,7 @@ export class AzurePulumiClient extends InstancePulumiClient<PulumiStackConfigAzu
         await stack.setConfig("rootDiskSizeGB", { value: config.rootDiskSizeGB.toString()})
         await stack.setConfig("publicSshKeyContent", { value: config.publicSshKeyContent})
         await stack.setConfig("publicIpType", { value: config.publicIpType})
+        await stack.setConfig("useSpot", { value: config.useSpot.toString()})
 
         const allConfs = await stack.getAllConfig()
         this.logger.debug(`Config after update: ${JSON.stringify(allConfs)}`)

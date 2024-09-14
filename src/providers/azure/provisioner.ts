@@ -50,6 +50,7 @@ export class AzureProvisioner extends BaseInstanceProvisioner implements Instanc
         Instance name: ${state.name}
         SSH key: ${state.ssh.privateKeyPath}
         VM Size: ${args.create.vmSize}
+        Spot instance: ${args.create.useSpot}
         Public IP Type: ${args.create.publicIpType}
         Disk size: ${args.create.diskSize}
         
@@ -78,7 +79,8 @@ export class AzureProvisioner extends BaseInstanceProvisioner implements Instanc
                 vmSize: args.create.vmSize,
                 publicIpType: args.create.publicIpType,
                 rootDiskSizeGB: args.create.diskSize,
-                publicSshKeyContent: await parseSshPrivateKeyFileToPublic(state.ssh.privateKeyPath)
+                publicSshKeyContent: await parseSshPrivateKeyFileToPublic(state.ssh.privateKeyPath),
+                useSpot: args.create.useSpot,
             }
 
             await pulumiClient.setConfig(pulumiConfig)

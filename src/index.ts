@@ -184,6 +184,7 @@ createCmd
     .option('--public-ip-type <type>', 'Public IP type. Either "static" or "dynamic"')
     .option('--location <location>', 'Location in which to deploy instance')
     .option('--subscription-id <subscriptionid>', 'Subscription ID in which to deploy resources')
+    .option('--spot', 'Enable Spot instance. Spot instances are cheaper (usually 20% to 70% off) but may be restarted any time.')
     .option('--yes', 'Do not prompt for approval, automatically approve and continue')
     .option('--overwrite-existing', 'If an instance with the same name already exists, override without warning prompt')
     .action(async (options) => {
@@ -199,7 +200,8 @@ createCmd
                     diskSize: options.diskSize,
                     publicIpType: options.publicIpType,
                     location: options.location,
-                    subscriptionId: options.subscriptionId
+                    subscriptionId: options.subscriptionId,
+                    useSpot: options.spot,
                 }
             }
 
