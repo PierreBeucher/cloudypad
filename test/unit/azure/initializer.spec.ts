@@ -16,7 +16,8 @@ describe('Azure initializer', () => {
             vmSize: "Standard_NC8as_T4_v3",
             diskSize: 200,
             publicIpType: "static",
-            location: "francecentral"
+            location: "francecentral",
+            useSpot: true,
         },
     }
     

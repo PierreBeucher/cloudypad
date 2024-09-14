@@ -74,8 +74,9 @@ function create_destroy_azure() {
         --disk-size 100 \
         --public-ip-type static \
         --location "francecentral" \
+        --spot \
         --subscription-id 0dceb5ed-9096-4db7-b430-2609e7cc6a15 \
-        --overwrite-existing
+        --yes --overwrite-existing
 
     $cloudypad_cmd get $instance_name
 
