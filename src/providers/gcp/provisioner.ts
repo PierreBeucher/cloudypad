@@ -50,6 +50,7 @@ export class GcpProvisioner extends BaseInstanceProvisioner implements InstanceP
         Region: ${args.create.region}
         Project ID: ${args.create.projectId}
         Machine Type: ${args.create.machineType}
+        Use Spot: ${args.create.useSpot}
         GPU Type: ${args.create.acceleratorType}
         Public IP Type: ${args.create.publicIpType}
         Disk size: ${args.create.diskSize}
@@ -81,7 +82,8 @@ export class GcpProvisioner extends BaseInstanceProvisioner implements InstanceP
                 region: args.create.region,
                 zone: args.create.zone,
                 rootDiskSize: args.create.diskSize,
-                publicSshKeyContent: await parseSshPrivateKeyFileToPublic(state.ssh.privateKeyPath)
+                publicSshKeyContent: await parseSshPrivateKeyFileToPublic(state.ssh.privateKeyPath),
+                useSpot: args.create.useSpot,
             }
 
             await pulumiClient.setConfig(pulumiConfig)

@@ -19,6 +19,7 @@ describe('GCP initializer', () => {
             zone: "europe-west4-b",
             acceleratorType: "nvidia-tesla-p4",
             projectId: "crafteo-sandbox",
+            useSpot: true,
         },
     }
     

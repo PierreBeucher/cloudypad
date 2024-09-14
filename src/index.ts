@@ -135,6 +135,7 @@ createCmd
     .option('--machine-type <type>', 'Machine type')
     .option('--gpu-type <type>', 'GPU type (accelerator type)')
     .option('--project-id <project>', 'Project ID to use.')
+    .option('--spot', 'Enable Spot instance. Spot instances are cheaper (usually 60% to 90% off) but may be restarted any time.')
     .option('--disk-size <size>', 'Disk size in GB', parseInt)
     .option('--public-ip-type <type>', 'Public IP type. Either "static" or "dynamic"')
     .option('--region <region>', 'Region in which to deploy instance')
@@ -157,6 +158,7 @@ createCmd
                     zone: options.zone,
                     acceleratorType: options.gpuType,
                     projectId: options.projectId,
+                    useSpot: options.spot,
                 }
             }
 

@@ -100,6 +100,7 @@ function create_destroy_google() {
         --zone "europe-west4-b" \
         --gpu-type "nvidia-tesla-p4" \
         --project-id crafteo-sandbox \
+        --spot \
         --yes --overwrite-existing
 
     $cloudypad_cmd get $instance_name

@@ -18,6 +18,7 @@ interface CloudyPadGCEInstanceArgs {
     bootDisk?: {
         sizeGb?: pulumi.Input<number>
     }
+    useSpot?: pulumi.Input<boolean>
 }
 
 /**
@@ -38,12 +39,12 @@ class CloudyPadGCEInstance extends pulumi.ComponentResource {
         }
 
         const network = new gcp.compute.Network(`${name}-network`, {
-            name: `${name}-network`,
+            name: `${name}-network`.toLowerCase(),
             autoCreateSubnetworks: false,
         }, commonPulumiOpts);
         
         const subnet = new gcp.compute.Subnetwork(`${name}-subnetwork`, {
-            name: `${name}-subnet`,
+            name: `${name}-subnet`.toLowerCase(),
             network: network.id,
             ipCidrRange: "10.0.0.0/24",
         }, commonPulumiOpts);
@@ -92,8 +93,11 @@ class CloudyPadGCEInstance extends pulumi.ComponentResource {
                 count: 1,
             }],
             scheduling: {
-                automaticRestart: true,
+                automaticRestart: args.useSpot ? false : true, // Must be false for spot
                 onHostMaintenance: "TERMINATE",
+                provisioningModel: args.useSpot ? "SPOT" : "STANDARD",
+                instanceTerminationAction: "STOP",
+                preemptible: args.useSpot ?? false
             },
         }, commonPulumiOpts)
 
@@ -122,6 +126,7 @@ async function gcpPulumiProgram(): Promise<Record<string, any> | void> {
     const bootDiskSizeGB = config.requireNumber("bootDiskSizeGB")
     const publicIpType = config.require("publicIpType")
     const publicKeyContent = config.require("publicSshKeyContent")
+    const useSpot = config.requireBoolean("useSpot")
 
     const instanceName = pulumi.getStack()
 
@@ -141,7 +146,8 @@ async function gcpPulumiProgram(): Promise<Record<string, any> | void> {
             { from: 47999, protocol: "udp" }, 
             { from: 48100, to: 48110, protocol: "udp" }, 
             { from: 48200, to: 48210, protocol: "udp" }, 
-        ]
+        ],
+        useSpot: useSpot,
     })
 
     return {
@@ -160,6 +166,7 @@ export interface PulumiStackConfigGcp {
     rootDiskSize: number
     publicSshKeyContent: string
     publicIpType: string
+    useSpot: boolean
 }
 
 export interface GcpPulumiOutput {
@@ -186,6 +193,7 @@ export class GcpPulumiClient extends InstancePulumiClient<PulumiStackConfigGcp, 
         await stack.setConfig("bootDiskSizeGB", { value: config.rootDiskSize.toString() })
         await stack.setConfig("publicSshKeyContent", { value: config.publicSshKeyContent })
         await stack.setConfig("publicIpType", { value: config.publicIpType })
+        await stack.setConfig("useSpot", { value: config.useSpot.toString() })
 
         const allConfs = await stack.getAllConfig()
         this.logger.debug(`Config after update: ${JSON.stringify(allConfs)}`)
