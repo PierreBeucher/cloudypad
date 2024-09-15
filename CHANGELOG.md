@@ -1,5 +1,24 @@
 # Changelog
 
+## [0.7.0](https://github.com/PierreBeucher/cloudypad/compare/v0.6.0...v0.7.0) (2024-09-15)
+
+
+### Features
+
+* detect missing Docker on install ([1c68dc1](https://github.com/PierreBeucher/cloudypad/commit/1c68dc1e48b9abef87538f3de42fd9b650cfe8a1))
+* log level environment variable CLOUDYPAD_LOG_LEVEL ([59699fb](https://github.com/PierreBeucher/cloudypad/commit/59699fbb0969201003e9a971d1a95cc53e649d99))
+* more explicit pricing examples - show GPU/CPU/RAM, Spot usage and use closer to reality setups ([3b7bace](https://github.com/PierreBeucher/cloudypad/commit/3b7bacebdcd9d8f08697648463eb3184ca1c4b57))
+* option to use AWS Spot instances ([532d1b7](https://github.com/PierreBeucher/cloudypad/commit/532d1b71219b4c9effcf05215058bf54a64b165e))
+* option to use Azure Spot instances ([63847cc](https://github.com/PierreBeucher/cloudypad/commit/63847cc7b254dfcfdce43f01c94ba0b6d0f0b847))
+* option to use Google Cloud Spot instances ([94480f1](https://github.com/PierreBeucher/cloudypad/commit/94480f1c0eea429a394747f425e99b665a6d97ff))
+
+
+### Bug Fixes
+
+* **install.sh:** read from /dev/tty to ensure piped script content works as expected ([3e25fae](https://github.com/PierreBeucher/cloudypad/commit/3e25faec14c63838c78df1b7d16994745b74c550))
+* **install.sh:** use sh instead of bash to install in user default shell ([571c6f5](https://github.com/PierreBeucher/cloudypad/commit/571c6f5dcb87012b743e7a496b6ce9f46bb65ff5))
+* provision() optional argument ([8a25c71](https://github.com/PierreBeucher/cloudypad/commit/8a25c711cd8d21a893b537cb7ff94f9c4765b663))
+
 ## [0.6.0](https://github.com/PierreBeucher/cloudypad/compare/v0.5.0...v0.6.0) (2024-09-07)
 
 
