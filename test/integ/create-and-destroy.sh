@@ -13,9 +13,10 @@ set -e
 export CLOUDYPAD_IMAGE="crafteo/cloudypad:local"
 export CLOUDYPAD_CLI_LAUNCHER_DEBUG=true
 
-task build-local
+# Use container image or local script directly
+# Faster with local script but may miss container image issue
 
-cloudypad_cmd="./cloudypad.sh"
+task build-local && cloudypad_cmd="./cloudypad.sh"
 # cloudypad_cmd="npx ts-node src/index.ts"
 
 function create_destroy_aws() {
