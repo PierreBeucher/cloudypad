@@ -1,13 +1,13 @@
 import { RawAxiosRequestConfig } from 'axios'
 import * as paperspace from './generated-api/api'
-import lodash from 'lodash';
-const { merge } = lodash;
+import lodash from 'lodash'
+const { merge } = lodash
 import * as fs from 'fs'
-import * as path from 'path';
+import * as path from 'path'
 import * as toml from 'smol-toml'
-import { buildAxiosError, isAxios404NotFound } from '../../../tools/axios';
-import { getLogger, Logger } from '../../../log/utils';
-import { machine } from 'os';
+import { buildAxiosError, isAxios404NotFound } from '../../../tools/axios'
+import { getLogger, Logger } from '../../../log/utils'
+import { machine } from 'os'
 
 export interface PaperspaceClientArgs {
     name: string
@@ -16,7 +16,34 @@ export interface PaperspaceClientArgs {
 
 const staticLogger = getLogger("PaperspaceClientStatic")
 
+/**
+ * Paperspace machine representation.
+ */
+export interface PaperspaceMachine {
+    id: string
+    name: string
+    state: string
+    machineType: string
+    privateIp?: string
+    publicIp?: string
+    publicIpType: string
+}
 
+export interface PaperspaceIp {
+    ip: string
+    assignedMachineId?: string
+}
+
+export interface PaperspaceAuthResponse {
+    user: {
+        email: string,
+        id: string
+    }
+    team: {
+        namespace: string
+        id: string
+    }
+}
 /**
  * Client wrapping generated Paperspace API code
  * See Taskfile.yml paperspace-client-gen to update underlying code 
@@ -42,11 +69,11 @@ export class PaperspaceClient {
         this.logger = getLogger(args.name)
     }
 
-    async authSession() : Promise<paperspace.AuthSession200Response>{
+    async checkAuth() : Promise<PaperspaceAuthResponse>{
 
         this.logger.debug(`Authenticating session...`)
 
-        let resp;
+        let resp
         try {
             resp = await this.authClient.authSession(this.baseOptions)
 
@@ -60,28 +87,37 @@ export class PaperspaceClient {
             throw new Error(`Paperspace authentication error, got response data '${resp.data}' with status ${resp.status} from /auth/session. (a null response with 200 is expected as "failure" for authentication on /auth/session)`)
         }
 
-        return resp.data
+        return {
+            team: {
+                id: resp.data.team.id,
+                namespace: resp.data.team.namespace,
+            }, 
+            user: {
+                email: resp.data.user.email,
+                id: resp.data.user.id,
+            }
+        }
 
     }
 
-    async getMachine(machineId: string): Promise<paperspace.MachinesList200ResponseItemsInner> {
+    async getMachine(machineId: string): Promise<PaperspaceMachine> {
         try {
             this.logger.debug(`Get machine: ${machineId}`)
 
             const resp = await this.machineClient.machinesGet(machineId, this.baseOptions)
 
             this.logger.debug(`Get machine response: ${resp.status}`)
-
-            return resp.data
+                        
+            return this.innerInterfaceToMachine(resp.data)
         } catch (e){
             throw buildAxiosError(e)
         }
     }
 
     async listPublicIps(args?: { after?: string, limit?: number, orderBy?: paperspace.PublicIpsListOrderByEnum, 
-            order?: paperspace.PublicIpsListOrderEnum, region?: paperspace.PublicIpsListRegionParameter }): Promise<paperspace.PublicIpsList200ResponseItemsInner[]>{
+            order?: paperspace.PublicIpsListOrderEnum, region?: paperspace.PublicIpsListRegionParameter }): Promise<PaperspaceIp[]>{
             
-        const allIps: paperspace.PublicIpsList200ResponseItemsInner[] = []
+        const allIps: PaperspaceIp[] = []
         const result = await this.publicIpClient.publicIpsList(
             args?.after,
             args?.limit,
@@ -91,7 +127,9 @@ export class PaperspaceClient {
             this.baseOptions
         )
 
-        allIps.push(...result.data.items)
+        for (const ipData of result.data.items){
+            allIps.push(this.innerInterfaceToIp(ipData))
+        }
 
         if(result.data.hasMore) {
             const moreIps = await this.listPublicIps({ ...args, after: result.data.nextPage})
@@ -106,7 +144,7 @@ export class PaperspaceClient {
      * @param ip 
      * @returns IP or undefined if IP not found
      */
-    async getPublicIp(ip: string): Promise<paperspace.PublicIpsList200ResponseItemsInner | undefined>{
+    async getPublicIp(ip: string): Promise<PaperspaceIp | undefined>{
 
         // GET:public-ips/{ip} not available on Paperspace API
         // Searching with list instead
@@ -114,21 +152,19 @@ export class PaperspaceClient {
         return ips.find(item => item.ip == ip)
     }
 
-    async releasePublicIp(ip: string): Promise<paperspace.PublicIpsRelease200Response>{
+    async releasePublicIp(ip: string): Promise<void>{
         try {
             this.logger.debug(`Release Public IP: ${ip}`)
 
             const resp = await this.publicIpClient.publicIpsRelease(ip, this.baseOptions)
 
             this.logger.debug(`Release public IP '${ip}' response: ${resp.status}`)
-
-            return resp.data
         } catch (e){
             throw buildAxiosError(e)
         }
     }
 
-    async createMachine(params: paperspace.MachinesCreateRequest): Promise<paperspace.MachinesCreate200ResponseData> {
+    async createMachine(params: paperspace.MachinesCreateRequest): Promise<PaperspaceMachine> {
         try {
             this.logger.debug(`Creating machine: ${JSON.stringify(params)}`)
 
@@ -136,7 +172,7 @@ export class PaperspaceClient {
 
             this.logger.debug(`Creating machine ${params.name} response: ${JSON.stringify(response.status)}`)
 
-            return response.data.data
+            return this.innerInterfaceToMachine(response.data.data)
         } catch (e: unknown) {
             throw buildAxiosError(e)
         }
@@ -149,7 +185,7 @@ export class PaperspaceClient {
      * @param releasePublicIp
      * @returns 
      */
-    async deleteMachine(machineId: string, releasePublicIp?: boolean): Promise<paperspace.MachinesCreate200Response> {
+    async deleteMachine(machineId: string, releasePublicIp?: boolean): Promise<void> {
         try {
 
             if(releasePublicIp){
@@ -167,14 +203,12 @@ export class PaperspaceClient {
             const response = await this.machineClient.machinesDelete(machineId, this.baseOptions)
 
             this.logger.debug(`Deleting machine ${machineId} response: ${JSON.stringify(response.status)}`)
-
-            return response.data
         } catch (e: unknown) {
             throw buildAxiosError(e)
         }
     }
 
-    async stopMachine(machineId: string): Promise<paperspace.MachinesCreate200Response> {
+    async stopMachine(machineId: string): Promise<void> {
         try {
             
             this.logger.debug(`Stopping machine: ${JSON.stringify(machineId)}`)
@@ -186,14 +220,12 @@ export class PaperspaceClient {
             ))
 
             this.logger.debug(`Stopping machine ${machineId} response: ${JSON.stringify(response.status)}`)
-
-            return response.data
         } catch (e: unknown) {
             throw buildAxiosError(e)
         }
     }
 
-    async startMachine(machineId: string): Promise<paperspace.MachinesCreate200Response> {
+    async startMachine(machineId: string): Promise<void> {
         try {
             this.logger.debug(`Starting machine: ${JSON.stringify(machineId)}`)
 
@@ -205,13 +237,12 @@ export class PaperspaceClient {
 
             this.logger.debug(`Starting machine ${machineId} response: ${JSON.stringify(response.status)}`)
 
-            return response.data
         } catch (e: unknown) {
             throw buildAxiosError(e)
         }
     }
 
-    async restartMachine(machineId: string): Promise<paperspace.MachinesCreate200Response> {
+    async restartMachine(machineId: string): Promise<void> {
         try {
             this.logger.debug(`Restarting machine: ${JSON.stringify(machineId)}`)
 
@@ -223,7 +254,6 @@ export class PaperspaceClient {
 
             this.logger.debug(`Restarting machine ${machineId} response: ${JSON.stringify(response.status)}`)
 
-            return response.data
         } catch (e: unknown) {
             throw buildAxiosError(e)
         }
@@ -232,7 +262,7 @@ export class PaperspaceClient {
     async listMachines(largs?: {
             after?: string, limit?: number, orderBy?: paperspace.MachinesListOrderByEnum, 
             order?: paperspace.MachinesListOrderEnum, name?: string, region?: string, 
-            agentType?: string, machineType?: string}): Promise<paperspace.MachinesList200ResponseItemsInner[]> {
+            agentType?: string, machineType?: string}): Promise<PaperspaceMachine[]> {
         try {
 
             this.logger.debug(`Listing machines with params: ${JSON.stringify([ 
@@ -258,7 +288,12 @@ export class PaperspaceClient {
                 this.baseOptions
             )
 
-            return response.data.items;
+            const result: PaperspaceMachine[] = []
+            for(const m of response.data.items){
+                result.push(this.innerInterfaceToMachine(m))
+            }
+            return result
+
         } catch (error) {
             this.logger.error('Error listing machines:', error)
             throw new Error('Failed to list machines')
@@ -301,12 +336,12 @@ export class PaperspaceClient {
         return machines.length > 0
     }
 
-    async getMachineByName(name: string): Promise<paperspace.MachinesList200ResponseItemsInner> {
+    async getMachineByName(name: string): Promise<PaperspaceMachine> {
         const machines = await this.listMachines({ name: name})
         const filteredMachines = machines.filter(machine => machine.name === name)
 
         if (filteredMachines.length === 1) {
-            return filteredMachines[0];
+            return filteredMachines[0]
         } else if (filteredMachines.length === 0) {
             throw new Error(`No machine found with the name ${name}.`)
         } else {
@@ -315,7 +350,7 @@ export class PaperspaceClient {
     }
 
     async isMachineInState(machineId: string, state: paperspace.MachinesCreate200ResponseDataStateEnum) {
-        const machine = await this.getMachine(machineId);
+        const machine = await this.getMachine(machineId)
         if (machine.state.toLowerCase() === state) {
             return true
         }
@@ -335,7 +370,7 @@ export class PaperspaceClient {
         do {
             this.logger.debug(`Waiting for machine ${machineId} state ${state} (retry count: ${retryCount})`)
 
-            await new Promise(resolve => setTimeout(resolve, periodMs));
+            await new Promise(resolve => setTimeout(resolve, periodMs))
             if (await this.isMachineInState(machineId, state)) {
                 return true
             }
@@ -344,6 +379,24 @@ export class PaperspaceClient {
 
         return false
 
+    }
+
+    private innerInterfaceToIp(data: paperspace.PublicIpsList200ResponseItemsInner): PaperspaceIp {
+        return { ip: data.ip, assignedMachineId: data.assignedMachineId}
+    }
+
+    private innerInterfaceToMachine(inner: paperspace.MachinesList200ResponseItemsInner): PaperspaceMachine {
+        const machine: PaperspaceMachine = {
+            id: inner.id,
+            name: inner.name,
+            state: inner.state,
+            machineType: inner.machineType,
+            privateIp: inner.privateIp ?? undefined,
+            publicIp: inner.publicIp ?? undefined,
+            publicIpType: inner.publicIpType
+        }
+
+        return machine
     }
 }
 
@@ -361,13 +414,13 @@ export function fetchApiKeyFromEnvironment(_paperspaceHome?: string): string[] {
 
     if (process.env.PAPERSPACE_API_KEY) {
         staticLogger.trace(`Found Paperspace API key as environment variable ${process.env.PAPERSPACE_API_KEY}`)
-        return [ process.env.PAPERSPACE_API_KEY ];
+        return [ process.env.PAPERSPACE_API_KEY ]
     }
 
     if (process.env.PAPERSPACE_API_KEY_FILE) {
         staticLogger.trace(`Checking Paperspace API key in file ${process.env.PAPERSPACE_API_KEY_FILE}`)
 
-        const filePath = process.env.PAPERSPACE_API_KEY_FILE;
+        const filePath = process.env.PAPERSPACE_API_KEY_FILE
         if (fs.existsSync(filePath)) {
             staticLogger.trace(`Found Paperspace API key in file ${process.env.PAPERSPACE_API_KEY_FILE}`)
             return [ fs.readFileSync(filePath, 'utf-8').trim() ]
@@ -383,27 +436,27 @@ export function fetchApiKeyFromEnvironment(_paperspaceHome?: string): string[] {
 
     staticLogger.trace(`No Paperspace API key found in environment.`)
 
-    return [];
+    return []
 }
 
 export function fetchApiKeyFromPaperspaceHome(_paperspaceHome?: string): string[] {
     staticLogger.trace(`Fetching Paperspace API key from environment (provided optional Paperspace home: ${_paperspaceHome})`)
     
-    const paperspaceHome = path.join(_paperspaceHome ?? (process.env.HOME ?? "", '.paperspace'));
-    const credentialsFile = path.join(paperspaceHome, 'credentials.toml');
+    const paperspaceHome = path.join(_paperspaceHome ?? (process.env.HOME ?? "", '.paperspace'))
+    const credentialsFile = path.join(paperspaceHome, 'credentials.toml')
 
     staticLogger.trace(`Checking Paperspace API credentials file ${credentialsFile}`)
 
     if (fs.existsSync(credentialsFile)) {
-        const fileContent = fs.readFileSync(credentialsFile, 'utf-8');
-        const parsed = toml.parse(fileContent);
+        const fileContent = fs.readFileSync(credentialsFile, 'utf-8')
+        const parsed = toml.parse(fileContent)
         if (parsed.keys) {
-            const apiKeys = Object.values(parsed.keys).filter(key => typeof key === 'string') as string[];
+            const apiKeys = Object.values(parsed.keys).filter(key => typeof key === 'string') as string[]
             
             staticLogger.trace(`Reading Paperspace API credentials file: found ${apiKeys.length} keys`)
             
             if (apiKeys.length > 0) {
-                return apiKeys;
+                return apiKeys
             }
         }
     }

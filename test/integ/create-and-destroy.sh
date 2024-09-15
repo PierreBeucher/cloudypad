@@ -13,9 +13,10 @@ set -e
 export CLOUDYPAD_IMAGE="crafteo/cloudypad:local"
 export CLOUDYPAD_CLI_LAUNCHER_DEBUG=true
 
-task build-local
+# Use container image or local script directly
+# Faster with local script but may miss container image issue
 
-cloudypad_cmd="./cloudypad.sh"
+task build-local && cloudypad_cmd="./cloudypad.sh"
 # cloudypad_cmd="npx ts-node src/index.ts"
 
 function create_destroy_aws() {
@@ -29,6 +30,7 @@ function create_destroy_aws() {
         --disk-size 100 \
         --public-ip-type static \
         --region eu-central-1 \
+        --spot \
         --yes --overwrite-existing
 
     $cloudypad_cmd get $instance_name
@@ -73,8 +75,9 @@ function create_destroy_azure() {
         --disk-size 100 \
         --public-ip-type static \
         --location "francecentral" \
+        --spot \
         --subscription-id 0dceb5ed-9096-4db7-b430-2609e7cc6a15 \
-        --overwrite-existing
+        --yes --overwrite-existing
 
     $cloudypad_cmd get $instance_name
 
@@ -99,6 +102,7 @@ function create_destroy_google() {
         --zone "europe-west4-b" \
         --gpu-type "nvidia-tesla-p4" \
         --project-id crafteo-sandbox \
+        --spot \
         --yes --overwrite-existing
 
     $cloudypad_cmd get $instance_name

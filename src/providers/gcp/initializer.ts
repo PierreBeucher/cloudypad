@@ -1,5 +1,5 @@
 import { input, select } from '@inquirer/prompts'
-import { InstanceInitializer, GenericInitializationArgs } from '../../core/initializer'
+import { InstanceInitializer, GenericInitializationArgs, StaticInitializerPrompts } from '../../core/initializer'
 import { StateManager } from '../../core/state'
 import { GcpProvisioner } from './provisioner'
 import { GcpInstanceRunner } from './runner'
@@ -17,6 +17,7 @@ export interface GcpProvisionArgs {
         publicIpType: string
         region: string
         zone: string
+        useSpot: boolean
     }
 }
 
@@ -65,9 +66,11 @@ export class GcpInitializerPrompt {
         const region = await this.region(client, args?.create?.region)
         const zone = await this.zone(client, region, args?.create?.zone)
         const machineType = await this.machineType(client, zone, args?.create?.machineType)
+        const useSpot = await StaticInitializerPrompts.useSpotInstance(args?.create?.useSpot)
         const diskSize = await this.diskSize(args?.create?.diskSize)
         const publicIpType = await this.publicIpType(args?.create?.publicIpType)
         const acceleratorType = await this.acceleratorType(client, zone, args?.create?.acceleratorType)
+        
 
         return {
             create: {
@@ -77,7 +80,8 @@ export class GcpInitializerPrompt {
                 publicIpType: publicIpType,
                 region: region,
                 zone: zone,
-                acceleratorType: acceleratorType
+                acceleratorType: acceleratorType,
+                useSpot: useSpot,
             }
         }
     }
@@ -169,7 +173,7 @@ export class GcpInitializerPrompt {
             message: 'Select region to use:',
             choices: regions
                 .filter(r => r.name && r.id)
-                .map(r => ({ name: r.name!, value: r.name!}))
+                .map(r => ({ name: `${r.name!} (${r.description})`, value: r.name!}))
         })
 
         return selected.toString()

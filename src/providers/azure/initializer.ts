@@ -1,6 +1,6 @@
 import { input, select } from '@inquirer/prompts'
 import { PartialDeep } from 'type-fest'
-import { InstanceInitializer, GenericInitializationArgs } from '../../core/initializer'
+import { InstanceInitializer, GenericInitializationArgs, StaticInitializerPrompts } from '../../core/initializer'
 import { StateManager } from '../../core/state'
 import { getLogger } from '../../log/utils'
 import { InstanceProvisionOptions } from '../../core/provisioner'
@@ -15,6 +15,7 @@ export interface AzureProvisionArgs {
         publicIpType: string
         subscriptionId: string
         location: string
+        useSpot: boolean
     }
 }
 
@@ -58,6 +59,7 @@ export class AzureInitializerPrompt {
         this.logger.debug(`Starting Azure prompt with default opts: ${JSON.stringify(args)}`)
 
         const subscriptionId = await this.subscriptionId(args?.create?.subscriptionId)
+        const useSpot = await StaticInitializerPrompts.useSpotInstance(args?.create?.useSpot)
         const location = await this.location(subscriptionId, args?.create?.location)
         const vmSize = await this.instanceType(subscriptionId, location, args?.create?.vmSize)
         const diskSize = await this.diskSize(args?.create?.diskSize)
@@ -69,7 +71,8 @@ export class AzureInitializerPrompt {
                 vmSize: vmSize,
                 publicIpType: publicIpType,
                 location: location,
-                subscriptionId: subscriptionId
+                subscriptionId: subscriptionId,
+                useSpot: useSpot,
             }
         }
     }

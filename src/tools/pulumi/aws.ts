@@ -30,13 +30,24 @@ interface CloudyPadEC2instanceArgs {
     tags?: pulumi.Input<{ [key: string]: pulumi.Input<string> }>
     ami: pulumi.Input<string>;
     type: pulumi.Input<string>;
-    publicIpType?: pulumi.Input<string>;
+    publicIpType?: pulumi.Input<string>
     rootVolume?: {
-        sizeGb?: pulumi.Input<number>;
-        type?: pulumi.Input<string>;
-        encrypted?: pulumi.Input<boolean>;
+        sizeGb?: pulumi.Input<number>
+        type?: pulumi.Input<string>
+        encrypted?: pulumi.Input<boolean>
     }
     additionalVolumes?: VolumeArgs[]
+
+    /**
+     * Spot instance usage configuration
+     */
+    spot?: {
+
+        /**
+         * Whether to use spot instance
+         */
+        enabled?: pulumi.Input<boolean>
+    }
 
     /**
      * Ignore changes to public key used to create instance.
@@ -119,6 +130,17 @@ class CloudyPadEC2Instance extends pulumi.ComponentResource {
             throw new Error("One of publicKeyContent or existingKeyPair is required")
         }
         
+        let instanceMarketOptions: pulumi.Input<aws.types.input.ec2.InstanceInstanceMarketOptions> | undefined = undefined
+        if(args.spot?.enabled){
+            instanceMarketOptions =  {
+                marketType: "spot",
+                spotOptions:  {
+                    instanceInterruptionBehavior: "stop",
+                    spotInstanceType: "persistent",
+                }
+            }
+        }
+
 
         this.ec2Instance = new aws.ec2.Instance(`${name}-ec2-instance`, {
             ami: args.ami,
@@ -135,6 +157,7 @@ class CloudyPadEC2Instance extends pulumi.ComponentResource {
                 volumeSize: args.rootVolume?.sizeGb,
                 volumeType: args.rootVolume?.type
             },
+            instanceMarketOptions: instanceMarketOptions,
             subnetId: args.subnetId,
             associatePublicIpAddress: true,
         }, {
@@ -194,6 +217,7 @@ async function awsPulumiProgram(): Promise<Record<string, any> | void> {
     const rootVolumeSizeGB = config.requireNumber("rootVolumeSizeGB");
     const publicIpType = config.require("publicIpType");
     const publicKeyContent = config.require("publicSshKeyContent");
+    const useSpot = config.requireBoolean("useSpot");
 
     const instanceName = pulumi.getStack()
 
@@ -224,6 +248,9 @@ async function awsPulumiProgram(): Promise<Record<string, any> | void> {
         },
         publicIpType: publicIpType,
         ignorePublicKeyChanges: true,
+        spot: {
+            enabled: useSpot
+        },
         ingressPorts: [ // SSH + Wolf ports
             { from: 22, protocol: "tcp" }, // HTTP
             { from: 80, protocol: "Tcp" }, // HTTP
@@ -250,6 +277,7 @@ export interface PulumiStackConfigAws {
     rootVolumeSizeGB: number
     publicSshKeyContent: string
     publicIpType: string
+    useSpot: boolean
 }
 
 export interface AwsPulumiOutput {
@@ -272,6 +300,7 @@ export class AwsPulumiClient extends InstancePulumiClient<PulumiStackConfigAws, 
         await stack.setConfig("rootVolumeSizeGB", { value: config.rootVolumeSizeGB.toString()})
         await stack.setConfig("publicSshKeyContent", { value: config.publicSshKeyContent})
         await stack.setConfig("publicIpType", { value: config.publicIpType})
+        await stack.setConfig("useSpot", { value: config.useSpot.toString()})
 
         const allConfs = await stack.getAllConfig()
         this.logger.debug(`Config after update: ${JSON.stringify(allConfs)}`)

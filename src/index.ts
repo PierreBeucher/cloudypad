@@ -3,7 +3,7 @@
 import { version } from '../package.json';
 import { Command } from 'commander';
 import { GlobalInstanceManager } from './core/manager';
-import { setDefaultVerbosity } from './log/utils';
+import { setLogVerbosity } from './log/utils';
 import { AwsProvisionArgs, AwsInstanceInitializer } from './providers/aws/initializer';
 import { PartialDeep } from 'type-fest';
 import { PaperspaceInstanceInitializer, PaperspaceProvisionArgs } from './providers/paperspace/initializer';
@@ -18,8 +18,8 @@ program
     .name('cloudypad')
     .description('Cloudy Pad CLI to manage your own gaming instance in the Cloud.')
     .option("--verbose, -v",
-        "Verbosity level (0: silly, 1: trace, 2: debug, 3: info, 4: warn, 5: error, 6: fatal)", 
-        (v) => { setDefaultVerbosity(Number.parseInt(v)) })
+        "Verbosity level (0: silly, 1: trace, 2: debug, 3: info, 4: warn, 5: error, 6: fatal). Alternatively, use CLOUDYPAD_LOG_LEVEL environment variable.", 
+        (v) => { setLogVerbosity(Number.parseInt(v)) })
     .configureHelp({ showGlobalOptions: true})
     .version(version);
 
@@ -48,6 +48,7 @@ createCmd
     .option('--name <name>', 'Instance name')
     .option('--private-ssh-key <path>', 'Path to private SSH key to use to connect to instance')
     .option('--instance-type <type>', 'EC2 instance type')
+    .option('--spot', 'Enable Spot instance. Spot instances are cheaper (usually 20% to 70% off) but may be restarted any time.')
     .option('--disk-size <size>', 'Disk size in GB', parseInt)
     .option('--public-ip-type <type>', 'Public IP type. Either "static" or "dynamic"')
     .option('--region <region>', 'Region in which to deploy instance')
@@ -66,6 +67,7 @@ createCmd
                     diskSize: options.diskSize,
                     publicIpType: options.publicIpType,
                     region: options.region,
+                    useSpot: options.spot,
                 }
             }
 
@@ -133,6 +135,7 @@ createCmd
     .option('--machine-type <type>', 'Machine type')
     .option('--gpu-type <type>', 'GPU type (accelerator type)')
     .option('--project-id <project>', 'Project ID to use.')
+    .option('--spot', 'Enable Spot instance. Spot instances are cheaper (usually 60% to 90% off) but may be restarted any time.')
     .option('--disk-size <size>', 'Disk size in GB', parseInt)
     .option('--public-ip-type <type>', 'Public IP type. Either "static" or "dynamic"')
     .option('--region <region>', 'Region in which to deploy instance')
@@ -155,6 +158,7 @@ createCmd
                     zone: options.zone,
                     acceleratorType: options.gpuType,
                     projectId: options.projectId,
+                    useSpot: options.spot,
                 }
             }
 
@@ -182,6 +186,7 @@ createCmd
     .option('--public-ip-type <type>', 'Public IP type. Either "static" or "dynamic"')
     .option('--location <location>', 'Location in which to deploy instance')
     .option('--subscription-id <subscriptionid>', 'Subscription ID in which to deploy resources')
+    .option('--spot', 'Enable Spot instance. Spot instances are cheaper (usually 20% to 70% off) but may be restarted any time.')
     .option('--yes', 'Do not prompt for approval, automatically approve and continue')
     .option('--overwrite-existing', 'If an instance with the same name already exists, override without warning prompt')
     .action(async (options) => {
@@ -197,7 +202,8 @@ createCmd
                     diskSize: options.diskSize,
                     publicIpType: options.publicIpType,
                     location: options.location,
-                    subscriptionId: options.subscriptionId
+                    subscriptionId: options.subscriptionId,
+                    useSpot: options.spot,
                 }
             }
 

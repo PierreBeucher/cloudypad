@@ -6,6 +6,7 @@ describe('PaperspaceClient', function () {
     const machineName = "TestMachine"
     let machineId: string
     let publicIp: string
+    const machineType = "C2" // no need for GPU for this test, use cheapest instance
 
     // global template for Ubuntu 22
     // List via https://api.paperspace.io/templates/getTemplates x-api-key: xxx
@@ -40,7 +41,7 @@ describe('PaperspaceClient', function () {
 
         const resp = await client.createMachine({
             diskSize: 50,
-            machineType: "C2", // no need for GPU for this test, use cheapest instance
+            machineType: machineType,
             name: machineName,
             region: "Europe (AMS1)",
             templateId: templateId,
@@ -69,14 +70,15 @@ describe('PaperspaceClient', function () {
         console.info(`Trying to get machine by id: ${machineId}`)
 
         const resp = await client.getMachine(machineId)
-        assert.equal(resp.region, "Europe (AMS1)");
+        assert.equal(resp.name, machineName);
     })
 
     it('should list machines', async () => {
         console.info(`Trying to list machines`)
 
         const resp = await client.listMachines()
-        assert.equal(resp[0].region, "Europe (AMS1)");
+        const foundMachine = resp.find( (m) => m.name == machineName)
+        assert.equal(foundMachine?.name, machineName);
     })
 
     it('should get machine by name', async () => {

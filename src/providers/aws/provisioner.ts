@@ -1,9 +1,9 @@
 import { parseSshPrivateKeyFileToPublic } from '../../tools/ssh';
 import { confirm } from '@inquirer/prompts';
-import { STSClient, GetCallerIdentityCommand } from '@aws-sdk/client-sts';
 import { AwsPulumiClient, PulumiStackConfigAws } from '../../tools/pulumi/aws';
 import { BaseInstanceProvisioner, InstanceProvisioner, InstanceProvisionOptions } from '../../core/provisioner';
 import { StateManager } from '../../core/state';
+import { AwsClient } from '../../tools/aws';
 
 export class AwsProvisioner extends BaseInstanceProvisioner implements InstanceProvisioner {
 
@@ -11,7 +11,7 @@ export class AwsProvisioner extends BaseInstanceProvisioner implements InstanceP
         super(sm)
     }
 
-    async provision(opts: InstanceProvisionOptions) {
+    async provision(opts?: InstanceProvisionOptions) {
 
         this.logger.info(`Provisioning AWS instance ${this.sm.name()}`)
 
@@ -30,7 +30,7 @@ export class AwsProvisioner extends BaseInstanceProvisioner implements InstanceP
             throw new Error(`Provisioning AWS instance requires a private SSH key. Got state: ${JSON.stringify(state)}`)
         }
 
-        if(!opts.skipAuthCheck){
+        if(!opts?.skipAuthCheck){
             await this.checkAwsAuth()
         }
 
@@ -39,13 +39,14 @@ export class AwsProvisioner extends BaseInstanceProvisioner implements InstanceP
         if (args.create){
             
             let confirmCreation: boolean
-            if(opts.autoApprove){
+            if(opts?.autoApprove){
                 confirmCreation = opts.autoApprove
             } else {
                 confirmCreation = await confirm({
                     message: `
     You are about to provision AWS machine with the following details:
         Instance name: ${state.name}
+        Spot instance: ${args.create.useSpot}
         SSH key: ${state.ssh.privateKeyPath}
         AWS Region: ${args.create.region}
         Instance Type: ${args.create.instanceType}
@@ -76,7 +77,8 @@ export class AwsProvisioner extends BaseInstanceProvisioner implements InstanceP
                 publicIpType: args.create.publicIpType,
                 region: args.create.region,
                 rootVolumeSizeGB: args.create.diskSize,
-                publicSshKeyContent: await parseSshPrivateKeyFileToPublic(state.ssh.privateKeyPath)
+                publicSshKeyContent: await parseSshPrivateKeyFileToPublic(state.ssh.privateKeyPath),
+                useSpot: args.create.useSpot,
             }
 
             await pulumiClient.setConfig(pulumiConfig)
@@ -136,13 +138,8 @@ export class AwsProvisioner extends BaseInstanceProvisioner implements InstanceP
 
     }
 
-    private async checkAwsAuth() {
-        const stsClient = new STSClient({});
-        try {
-            const callerIdentity = await stsClient.send(new GetCallerIdentityCommand({}));
-            this.logger.info(`Currently authenticated as ${callerIdentity.UserId} on account ${callerIdentity.Account}`)
-        } catch (e) {
-            throw new Error(`Couldn't check AWS authentication: ${JSON.stringify(e)}`)
-        }
+    async checkAwsAuth() {
+        const client = new AwsClient(this.sm.name())
+        await client.checkAuth()
     }
 }

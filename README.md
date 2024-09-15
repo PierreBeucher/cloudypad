@@ -24,10 +24,10 @@ Your own gaming gear in the Cloud ! 🎮 ⛅
     - [Quotas](#quotas-2)
 - [FAQ](#faq)
   - [How much will I pay ? 🫰](#how-much-will-i-pay--)
-    - [Paperspace](#paperspace-1)
-    - [AWS](#aws-1)
-    - [Azure](#azure-1)
-    - [Google Cloud](#google-cloud-1)
+      - [Paperspace](#paperspace-1)
+      - [AWS](#aws-1)
+      - [Azure](#azure-1)
+      - [Google Cloud](#google-cloud-1)
   - [What are the recommended GPU and specs for my instance ?](#what-are-the-recommended-gpu-and-specs-for-my-instance-)
     - [AWS](#aws-2)
     - [Paperspace](#paperspace-2)
@@ -64,7 +64,10 @@ This project is still at an experimental phase. While working and allowing you t
 
 ## Features ✨
 
-Compatible with [Moonlight](https://moonlight-stream.org/) streaming client
+Main features:
+- Compatible with [Moonlight](https://moonlight-stream.org/) streaming client
+- Use Spot instances for up to 90% cheaper instances with some Clouders
+- Play your own Steam (and other) games
 
 Available Cloud providers:
 
@@ -389,54 +392,74 @@ Cloudy-Pad is free and open-source; however, charges may apply when using a Clou
 - Disk storage
 - IP address reservation
 
-Here are estimation tables for supported providers. For example, using Paperspace `P4000` instance for 10 hours / month with a 50GB disk will cost approximatively 13.10$.
+**💸 It's recommenced to use Spot instances as they are 30% to 90% cheaper !** As Spot instances interrupton is generally low, you probably won't get interruped during your session. However, make sure to save often nonetheless 😉
+
+Quick examples for a setup with 8 CPUs, ~30GB RAM, 100GB Disk for 30 hours
+
+- Google Cloud: **$15.68** (n1-standard-8 with NVIDIA T4000)
+- AWS: **$15.67** (g4dn.2xlarge with NVIDIA T4000)
+- Azure: **$11.06** (NC8as T4 v3 with NVIDIA T4000)
+- Paperspace: **$22.30** (NVIDIA P4000, a bit more powerful than T4000)
+
+Below are estimation tables for supported providers. For example, using Paperspace `P4000` instance for 30 hours / month with a 100GB disk will cost approximatively 22.30$.
 
 _These pricing are estimations from actual prices but may be outdated. If you see a significant difference between these tables and your observed cost do not hesitate to [report it or update it !](https://github.com/PierreBeucher/cloudypad)_
 
-#### Paperspace
+##### Paperspace
 
-| Instance Type | 10h / month 50 GB disk | 10h / month 100 GB disk | 10h / month 250 GB disk | 20h / month 100 GB disk | 20h / month 250 GB disk | 30h / month 250 GB disk |
-|---------------|------------------------|-------------------------|-------------------------|-------------------------|-------------------------|-------------------------|
-| **P4000**         | $13.10                 | $15.10                  | $18.10                  | $20.20                  | $23.20                  | $28.30                  |
-| **RTX4000**       | $13.60                 | $15.60                  | $18.60                  | $21.20                  | $24.20                  | $29.80                  |
-| **P5000**         | $15.80                 | $17.80                  | $20.80                  | $25.60                  | $28.60                  | $36.40                  |
-| **RTX5000**       | $16.20                 | $18.20                  | $21.20                  | $26.40                  | $29.40                  | $37.60                  |
-| **P6000**         | $19.00                 | $21.00                  | $24.00                  | $32.00                  | $35.00                  | $46.00                  |
+| Instance type | RAM (GB) | CPUs | Disk size (GB) | Instance $ / h | h / month | Disk / month $ | Total $ / month |
+|:-------------:|:--------:|:----:|:--------------:|:--------------:|:---------:|:--------------:|:---------------:|
+|     P4000     |    30    |   8  |       100      |     $0.510     |     10    |      $7.00     |      $12.10     |
+|     P4000     |    30    |   8  |       100      |     $0.510     |     30    |      $7.00     |      $22.30     |
+|    RTX4000    |    30    |   8  |       100      |     $0.560     |     30    |      $7.00     |      $23.80     |
+|     P5000     |    30    |   8  |       250      |     $0.780     |     30    |     $10.00     |      $33.40     |
+|    RTX5000    |    30    |   8  |       250      |     $0.820     |     30    |     $10.00     |      $34.60     |
 
-_*Estimations based on Paperspace pricing as of July 2024. Exact prices may vary over time and by region._
+_*Estimations based on Paperspace pricing as of September 2024. Exact prices may vary over time and by region._
 
-#### AWS
+##### AWS
 
-| Instance Type   | 10h / month 50 GB disk | 10h / month 100 GB disk | 10h / month 250 GB disk | 20h / month 100 GB disk | 20h / month 250 GB disk | 30h / month 250 GB disk |
-|-----------------|------------------------|-------------------------|-------------------------|-------------------------|-------------------------|-------------------------|
-| **g4dn.xlarge** | $12.86                 | $16.86                  | $28.86                  | $22.12                  | $34.12                  | $39.38                  |
-| **g4dn.2xlarge**| $15.12                 | $19.12                  | $31.12                  | $26.64                  | $38.64                  | $46.16                  |
-| **g5.xlarge**   | $17.66                 | $21.66                  | $33.66                  | $31.72                  | $43.72                  | $53.78                  |
-| **g5.2xlarge**  | $19.72                 | $23.72                  | $35.72                  | $35.84                  | $47.84                  | $59.96                  |
-| **g6.xlarge**   | $15.65                 | $19.65                  | $31.65                  | $27.70                  | $39.70                  | $47.74                  |
-| **g6.2xlarge**  | $17.38                 | $21.38                  | $33.38                  | $31.15                  | $43.15                  | $52.93                  |
+| Instance type | RAM (GB) | CPUs |     GPU     | Spot ? | Disk size | Instance $ / h | h /  month | Compute $ / month | Disk / month $ | Total $ / month |
+|:-------------:|:--------:|:----:|:-----------:|:------:|:---------:|:--------------:|:----------:|:-----------------:|:--------------:|:---------------:|
+|  g4dn.xlarge  |    16    |   4  |  NVIDIA T4  |   Yes  |    100    |     $0.163     |     10     |       $1.63       |      $8.00     |      $9.63      |
+|  g4dn.2xlarge |    32    |   8  |  NVIDIA T4  |   Yes  |    100    |     $0.256     |     30     |       $7.67       |      $8.00     |      $15.67     |
+|   g5.2xlarge  |    32    |   8  | NVIDIA A10G |   Yes  |    250    |     $0.412     |     30     |       $12.36      |     $20.00     |      $32.36     |
+|   g6.2xlarge  |    32    |   8  |  NVIDIA L4  |   Yes  |    250    |     $0.391     |     30     |       $11.73      |     $20.00     |      $31.73     |
+|  g4dn.xlarge  |    16    |   4  |  NVIDIA T4  |   No   |    100    |     $0.526     |     10     |       $5.26       |      $8.00     |      $13.26     |
+|  g4dn.2xlarge |    32    |   8  |  NVIDIA T4  |   No   |    100    |     $0.752     |     30     |       $22.56      |      $8.00     |      $30.56     |
+|   g5.2xlarge  |    32    |   8  | NVIDIA A10G |   No   |    250    |     $1.212     |     30     |       $36.36      |     $20.00     |      $56.36     |
+|   g6.2xlarge  |    32    |   8  |  NVIDIA L4  |   No   |    250    |     $0.978     |     30     |       $29.33      |     $20.00     |      $49.33     |
 
-_*Estimations based on AWS eu-east-1 pricing as of July 2024. Exact prices may vary over time and by region._
+_*Estimations based on AWS eu-east-1 pricing as of September 2024. Exact prices may vary over time and by region._
 
-#### Azure
+##### Azure
 
-| Azure                            | 10h / month 50 GB disk | 10h / month 100 GB disk | 10h / month 250 GB disk | 20h / month 100 GB disk | 20h / month 250 GB disk | 30h / month 250 GB disk |
-|----------------------------------|------------------------|-------------------------|-------------------------|-------------------------|-------------------------|-------------------------|
-| NV6ads A10 v5 (6 CPU, 55GB RAM)   | $8.59                  | $12.64                  | $24.79                  | $17.18                  | $29.33                  | $33.87                  |
-| NC8as T4 v3 (8 CPU, 56GB RAM)     | $11.57                 | $15.62                  | $27.77                  | $23.14                  | $35.29                  | $42.81                  |
+| Instance type | RAM (GB) | CPUs |       GPU      | Spot ? | Disk size | Instance $ / h | h /  month | Compute $ / month | Disk / month $ | Total $ / month |
+|:-------------:|:--------:|:----:|:--------------:|:------:|:---------:|:--------------:|:----------:|:-----------------:|:--------------:|:---------------:|
+| NV6ads A10 v5 |    55    |   6  | 1/6 NVIDIA A10 |   Yes  |    100    |     $0.114     |     10     |       $1.14       |      $8.10     |      $9.24      |
+|  NC8as T4 v3  |    56    |   8  |    NVIDIA T4   |   Yes  |    100    |     $0.099     |     30     |       $2.96       |      $8.10     |      $11.06     |
+|  NC16as T4 v3 |    110   |  16  |    NVIDIA T4   |   Yes  |    250    |     $0.158     |     30     |       $4.73       |     $20.25     |      $24.98     |
+| NV6ads A10 v5 |    55    |   6  | 1/6 NVIDIA A10 |   No   |    100    |     $0.454     |     30     |       $13.62      |      $8.10     |      $21.72     |
+|  NC8as T4 v3  |    56    |   8  |    NVIDIA T4   |   No   |    100    |     $0.752     |     30     |       $22.56      |      $8.10     |      $30.66     |
+|  NC16as T4 v3 |    110   |  16  |    NVIDIA T4   |   No   |    250    |     $1.200     |     30     |       $36.00      |     $20.25     |      $56.25     |
+_*Estimations based on Azure US pricing as of September 2024. Exact prices may vary over time and by region._
 
-_*Estimations based on Azure US pricing as of August 2024. Exact prices may vary over time and by region._
+##### Google Cloud
 
-#### Google Cloud
+| Instance type | RAM (GB) | CPUs |    GPU    | Spot ? | Disk size | Instance $ / h | GPU $ / h | h /  month | Compute $ / month | Disk $ / month | Total $ / month |
+|:-------------:|:--------:|:----:|:---------:|:------:|:---------:|:--------------:|:---------:|:----------:|:-----------------:|:--------------:|:---------------:|
+| n1-standard-4 |    15    |   4  | NVIDIA T4 |   Yes  |    100    |     $0.035     |   0.119   |     10     |       $1.54       |     $10.00     |      $11.54     |
+| n1-standard-8 |    30    |   8  | NVIDIA T4 |   Yes  |    100    |     $0.070     |   0.119   |     30     |       $5.68       |     $10.00     |      $15.68     |
+| n1-standard-8 |    30    |   8  | NVIDIA T4 |   Yes  |    250    |     $0.070     |   0.119   |     30     |       $5.68       |     $25.00     |      $30.68     |
+| n1-standard-8 |    30    |   8  | NVIDIA P4 |   Yes  |    100    |     $0.070     |   0.240   |     30     |       $9.31       |     $10.00     |      $19.31     |
+| n1-standard-8 |    30    |   8  | NVIDIA P4 |   Yes  |    250    |     $0.070     |   0.240   |     30     |       $9.31       |     $25.00     |      $34.31     |
+| n1-standard-4 |    15    |   4  | NVIDIA T4 |   No   |    100    |     $0.220     |   0.350   |     10     |       $5.70       |     $10.00     |      $15.70     |
+| n1-standard-8 |    30    |   8  | NVIDIA T4 |   No   |    100    |     $0.440     |   0.350   |     30     |       $23.70      |     $10.00     |      $33.70     |
+| n1-standard-8 |    30    |   8  | NVIDIA T4 |   No   |    250    |     $0.440     |   0.350   |     30     |       $23.70      |     $25.00     |      $48.70     |
+| n1-standard-8 |    30    |   8  | NVIDIA P4 |   No   |    100    |     $0.440     |   0.600   |     30     |       $31.20      |     $10.00     |      $41.20     |
+| n1-standard-8 |    30    |   8  | NVIDIA P4 |   No   |    250    |     $0.440     |   0.600   |     30     |       $31.20      |     $25.00     |      $56.20     |
 
-| Google Cloud                     | 10h / month 50 GB disk | 10h / month 100 GB disk | 10h / month 250 GB disk | 20h / month 100 GB disk | 20h / month 250 GB disk | 30h / month 250 GB disk |
-|----------------------------------|------------------------|-------------------------|-------------------------|-------------------------|-------------------------|-------------------------|
-| **4 CPU / 15GB RAM / Tesla T4**       | $6.77                  | $12.77                  | $30.77                  | $13.54                  | $31.54                  | $32.31                  |
-| **4 CPU / 15GB RAM / Tesla P4**       | $7.32                  | $13.32                  | $31.32                  | $14.64                  | $32.64                  | $33.96                  |
-| **8 CPU / 30GB RAM / Tesla T4**       | $7.54                  | $13.54                  | $31.54                  | $15.08                  | $33.08                  | $34.62                  |
-| **8 CPU / 30GB RAM / Tesla P4**       | $8.64                  | $14.64                  | $32.64                  | $17.28                  | $35.28                  | $37.92                  |
-
-_Instances used for estimation: N1 Standard. Estimations based on Google Cloud us-central-1 as of August 2024. Exact prices may vary over time and by region._
+_Instances used for estimation: N1 Standard. Estimations based on Google Cloud us-central-1 as of September 2024. Exact prices may vary over time and by region._
 
 ### What are the recommended GPU and specs for my instance ?
 

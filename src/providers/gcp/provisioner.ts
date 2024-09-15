@@ -11,7 +11,7 @@ export class GcpProvisioner extends BaseInstanceProvisioner implements InstanceP
         super(sm)
     }
 
-    async provision(opts: InstanceProvisionOptions) {
+    async provision(opts?: InstanceProvisionOptions) {
 
         this.logger.info(`Provisioning Google Cloud instance ${this.sm.name()}`)
 
@@ -30,7 +30,7 @@ export class GcpProvisioner extends BaseInstanceProvisioner implements InstanceP
             throw new Error(`Provisioning Google Cloud instance requires a private SSH key. Got state: ${JSON.stringify(state)}`)
         }
 
-        if(!opts.skipAuthCheck){
+        if(!opts?.skipAuthCheck){
             await this.checkGcpAuth(state.provider.gcp.provisionArgs.create.projectId)
         }
 
@@ -39,7 +39,7 @@ export class GcpProvisioner extends BaseInstanceProvisioner implements InstanceP
         if (args.create){
             
             let confirmCreation: boolean
-            if(opts.autoApprove){
+            if(opts?.autoApprove){
                 confirmCreation = opts.autoApprove
             } else {
                 confirmCreation = await confirm({
@@ -50,6 +50,7 @@ export class GcpProvisioner extends BaseInstanceProvisioner implements InstanceP
         Region: ${args.create.region}
         Project ID: ${args.create.projectId}
         Machine Type: ${args.create.machineType}
+        Use Spot: ${args.create.useSpot}
         GPU Type: ${args.create.acceleratorType}
         Public IP Type: ${args.create.publicIpType}
         Disk size: ${args.create.diskSize}
@@ -81,7 +82,8 @@ export class GcpProvisioner extends BaseInstanceProvisioner implements InstanceP
                 region: args.create.region,
                 zone: args.create.zone,
                 rootDiskSize: args.create.diskSize,
-                publicSshKeyContent: await parseSshPrivateKeyFileToPublic(state.ssh.privateKeyPath)
+                publicSshKeyContent: await parseSshPrivateKeyFileToPublic(state.ssh.privateKeyPath),
+                useSpot: args.create.useSpot,
             }
 
             await pulumiClient.setConfig(pulumiConfig)
@@ -143,6 +145,6 @@ export class GcpProvisioner extends BaseInstanceProvisioner implements InstanceP
 
     private async checkGcpAuth(projectId: string) {
         const client = new GcpClient(this.sm.name(), projectId)
-        await client.checkGcpAuth()
+        await client.checkAuth()
     }
 }

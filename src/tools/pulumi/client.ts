@@ -32,7 +32,7 @@ export abstract class InstancePulumiClient<ConfigType, OutputType> {
         this.logger = getLogger(`${args.projectName}-${args.stackName}`)
     }
 
-    protected async getStack(){
+    protected async getStack(): Promise<Stack>{
         if(this.stack === undefined) {
             this.stack = await this.initStack()
         }
@@ -81,10 +81,9 @@ export abstract class InstancePulumiClient<ConfigType, OutputType> {
 
     async up(){
 
-        this.logger.debug(`Pulumi up`)
-
         const stack = await this.getStack()
 
+        this.logger.debug(`Running Pulumi up: ${stack.name}`)
         this.logger.debug(`Config before up: ${JSON.stringify(await stack.getAllConfig())}`)
 
         // Always cancel in case command was interrupted before
@@ -104,9 +103,28 @@ export abstract class InstancePulumiClient<ConfigType, OutputType> {
         return this.buildTypedOutput(outputs)
     }
 
+    async preview(){
+        const stack = await this.getStack()
+
+        this.logger.debug(`Running Pulumi preview: ${stack.name}`)
+        this.logger.debug(`Config before up: ${JSON.stringify(await stack.getAllConfig())}`)
+
+        // Always cancel in case command was interrupted before
+        // Considering use case it's unlikely a parallel update might occur
+        // But it's likely that user will interrupt leaving stack with a lock which would stuck otherwise
+        // Might become a flag later
+        await stack.cancel()
+
+        const prevRes = await stack.preview({ onOutput: (msg) => { console.info(msg.trim()) }, color: "auto", refresh: true })
+        
+        this.logger.trace(`Preview result: ${JSON.stringify(prevRes)}`)
+
+        return prevRes
+    }
+
     async destroy(){
-        this.logger.debug(`Destroting stack`)
-        const stack = await this.initStack()
+        this.logger.debug(`Destroying stack`)
+        const stack = await this.getStack()
 
         // Always cancel in case command was interrupted before
         // Considering use case it's unlikely a parallel update might occur

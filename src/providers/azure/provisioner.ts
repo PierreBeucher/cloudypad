@@ -11,7 +11,7 @@ export class AzureProvisioner extends BaseInstanceProvisioner implements Instanc
         super(sm)
     }
 
-    async provision(opts: InstanceProvisionOptions) {
+    async provision(opts?: InstanceProvisionOptions) {
 
         this.logger.info(`Provisioning Azure instance ${this.sm.name()}`)
 
@@ -30,8 +30,8 @@ export class AzureProvisioner extends BaseInstanceProvisioner implements Instanc
             throw new Error(`Provisioning Azure instance requires a private SSH key. Got state: ${JSON.stringify(state)}`)
         }
 
-        if (!opts.skipAuthCheck) {
-            await AzureClient.checkAzureAuth()
+        if (!opts?.skipAuthCheck) {
+            await AzureClient.checkAuth()
         }
 
         this.logger.debug(`Provisioning Azure instance with ${JSON.stringify(state)}`)
@@ -39,7 +39,7 @@ export class AzureProvisioner extends BaseInstanceProvisioner implements Instanc
         if (args.create) {
 
             let confirmCreation: boolean
-            if (opts.autoApprove) {
+            if (opts?.autoApprove) {
                 confirmCreation = opts.autoApprove
             } else {
                 confirmCreation = await confirm({
@@ -50,6 +50,7 @@ export class AzureProvisioner extends BaseInstanceProvisioner implements Instanc
         Instance name: ${state.name}
         SSH key: ${state.ssh.privateKeyPath}
         VM Size: ${args.create.vmSize}
+        Spot instance: ${args.create.useSpot}
         Public IP Type: ${args.create.publicIpType}
         Disk size: ${args.create.diskSize}
         
@@ -78,7 +79,8 @@ export class AzureProvisioner extends BaseInstanceProvisioner implements Instanc
                 vmSize: args.create.vmSize,
                 publicIpType: args.create.publicIpType,
                 rootDiskSizeGB: args.create.diskSize,
-                publicSshKeyContent: await parseSshPrivateKeyFileToPublic(state.ssh.privateKeyPath)
+                publicSshKeyContent: await parseSshPrivateKeyFileToPublic(state.ssh.privateKeyPath),
+                useSpot: args.create.useSpot,
             }
 
             await pulumiClient.setConfig(pulumiConfig)

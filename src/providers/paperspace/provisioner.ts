@@ -22,7 +22,7 @@ export class PaperspaceProvisioner extends BaseInstanceProvisioner implements In
         return client
     }
 
-    async provision(opts: InstanceProvisionOptions) {
+    async provision(opts?: InstanceProvisionOptions) {
 
         const state = this.sm.get()
 
@@ -41,8 +41,8 @@ export class PaperspaceProvisioner extends BaseInstanceProvisioner implements In
 
         const client = await this.buildPaperspaceClient()
 
-        if(!opts.skipAuthCheck){
-            const authResult = await client.authSession()
+        if(!opts?.skipAuthCheck){
+            const authResult = await client.checkAuth()
             this.logger.info(`Paperspace authenticated as ${authResult.user.email} (team: ${authResult.team.id})`)
         }
         
@@ -67,7 +67,7 @@ export class PaperspaceProvisioner extends BaseInstanceProvisioner implements In
             const state = this.sm.get()
 
             let confirmCreation: boolean
-            if(opts.autoApprove !== undefined){
+            if(opts?.autoApprove !== undefined){
                 confirmCreation = opts.autoApprove
             } else {
                 confirmCreation = await confirm({
