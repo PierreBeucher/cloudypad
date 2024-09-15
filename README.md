@@ -442,6 +442,7 @@ _*Estimations based on AWS eu-east-1 pricing as of September 2024. Exact prices 
 | NV6ads A10 v5 |    55    |   6  | 1/6 NVIDIA A10 |   No   |    100    |     $0.454     |     30     |       $13.62      |      $8.10     |      $21.72     |
 |  NC8as T4 v3  |    56    |   8  |    NVIDIA T4   |   No   |    100    |     $0.752     |     30     |       $22.56      |      $8.10     |      $30.66     |
 |  NC16as T4 v3 |    110   |  16  |    NVIDIA T4   |   No   |    250    |     $1.200     |     30     |       $36.00      |     $20.25     |      $56.25     |
+
 _*Estimations based on Azure US pricing as of September 2024. Exact prices may vary over time and by region._
 
 ##### Google Cloud
