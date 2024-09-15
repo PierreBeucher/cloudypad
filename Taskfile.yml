@@ -75,14 +75,5 @@ tasks:
   # Release
   #
 
-  release-update-version:
-    cmd: ./hack/release-update-version.sh
-
-  release-build-image:
-    cmd: ./hack/release-build-image.sh
-
-  release-pr:
-    cmd: ./hack/release-pr.sh
-    
-  release-tag:
-    cmd: ./hack/release-tag.sh
+  release-create:
+    cmd: ./hack/release-create.sh
