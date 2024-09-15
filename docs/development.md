@@ -20,8 +20,10 @@ git push
 # Create release PR for release-xxx branch
 task release-pr
 
-# Review and merge release PR
+# Review and merge release PR into release-xxx branch
+# and git pull locally
 # TODO automate this step
+git pull
 ...
 
 # Create release container image
@@ -43,7 +45,25 @@ task test-unit
 
 ### Integration tests
 
-Most integ tests are manual for now as they require Cloud accounts may create Cloud resource which would persist in case of failure.
+Integration tests are manual for now:
+- They require real Cloud accounts
+- They create real Cloud resources which are billed and may persist in case of failure, requiring manual cleanup and knowing about underlying tools
+
+**Do NOT run these integration tests if you're not sure about what you're doing to avoid being billed for Cloud resources.**
+
+Integration tests using CLI
+
+```
+test/integ/create-and-destroy.sh
+```
+
+Using Mocha
+
+```
+npx mocha test/integ/pulumi/preview.spec.ts
+npx mocha test/integ/pulumi/up.spec.ts
+npx mocha test/integ/paperspace/client.spec.ts
+```
 
 ### Scripts
 
