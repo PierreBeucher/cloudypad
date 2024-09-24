@@ -1,5 +1,12 @@
 # What's Cloud Gaming ? How is Cloudy Pad useful ?
 
+- [Cloud Gaming](#cloud-gaming)
+- [Moonlight](#moonlight)
+- [Cloud Provider](#cloud-provider)
+- [CLI and console](#cli-and-console)
+- [Docker](#docker)
+- [How does it all fit in ?](#how-does-it-all-fit-in-)
+
 This page is aimed at non-technical people or those unfamiliar with Cloud Gaming who wants a better understand of what Cloudy Pad can provide. We'll explain:
 
 - What's _"Cloud gaming"_ ?
@@ -9,13 +16,6 @@ This page is aimed at non-technical people or those unfamiliar with Cloud Gaming
 - What is the `cloudypad` CLI ?
 
 Cloud Gaming is the act of playing play video games directly from a server on the internet. This is called "Cloud Gaming". Our goal is to make Cloudy Pad usable by even non-tech savy users. While we're not there yet, we hope this page will help you have a better understanding.
-
-- [Cloud Gaming](#cloud-gaming)
-- [Moonlight](#moonlight)
-- [Cloud Provider](#cloud-provider)
-- [CLI and console](#cli-and-console)
-- [Docker](#docker)
-- [How does it all fit in ?](#how-does-it-all-fit-in-)
 
 ## Cloud Gaming
 
