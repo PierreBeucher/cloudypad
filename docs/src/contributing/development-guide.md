@@ -1,5 +1,12 @@
 # Development guide
 
+- [Release](#release)
+- [Tests](#tests)
+  - [Unit tests](#unit-tests)
+  - [Integration tests](#integration-tests)
+  - [Scripts](#scripts)
+- [Adding a new provider](#adding-a-new-provider)
+
 ## Release
 
 Set `export GITHUB_TOKEN=xxx` variable and run:

@@ -38,6 +38,10 @@ tasks:
   # Utils
   #
 
+  mdbook-serve:
+    dir: docs
+    cmd: mdbook serve
+
   # Generate Typescript Paperspace client from OpenAPI specifications
   paperspace-client-gen:
     vars:

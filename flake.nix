@@ -51,6 +51,7 @@
               yq
               jq
               gh
+              mdbook
 
               google-cloud-sdk
             ];
