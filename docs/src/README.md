@@ -3,11 +3,14 @@
 
 Cloudy Pad lets you deploy a Cloud gaming server anywhere in the world and play your own games - without requiring a powerful gaming machine or a costly subscription:
 
-- Compatible with **[Moonlight](https://moonlight-stream.org/)** streaming client
+## Features ✨
+
+- Run any application (**Steam**, Pegasus, Firefox...) thanks to [Wolf streaming server](https://games-on-whales.github.io/wolf/stable/)
+- Deploy on **AWS**, **Google Cloud**, **Azure** or **Paperspace**
 - Use **Spot instances** for up to **90% cheaper** instances with some Clouders
 - Play **30 hours per month** for **~15$ / month or less**
-- **Pay by the hour** on various Cloud providers (AWS, Google, Azure...)
-- Play your own **Steam** (and other) games
+- **Pay by the hour, no subscription** required
+- Compatible with **[Moonlight](https://moonlight-stream.org/)** streaming client
 
 ![](assets/cloudypad-overview.png)
 

@@ -1,12 +1,16 @@
 # Cloudy Pad
+[![Discord](https://img.shields.io/discord/856434175455133727?style=for-the-badge&logo=discord&logoColor=ffffff&label=Chat%20with%20us&labelColor=6A7EC2&color=7389D8)
+](https://discord.gg/kCDTvx2r)[![GitHub License](https://img.shields.io/github/license/PierreBeucher/cloudypad?style=for-the-badge&color=00d4c4)](./LICENSE.txt)
+
 
 Cloudy Pad lets you deploy a Cloud gaming server anywhere in the world and play your own games - without requiring a powerful gaming machine or a costly subscription:
 
-- Compatible with **[Moonlight](https://moonlight-stream.org/)** streaming client
+- Run any application (**Steam**, Pegasus, Firefox...) thanks to [Wolf streaming server](https://games-on-whales.github.io/wolf/stable/)
+- Deploy on **AWS**, **Google Cloud**, **Azure** or **Paperspace**
 - Use **Spot instances** for up to **90% cheaper** instances with some Clouders
 - Play **30 hours per month** for **~15$ / month or less**
-- **Pay by the hour** on various Cloud providers (AWS, Google, Azure...)
-- Play your own **Steam** (and other) games
+- **Pay by the hour, no subscription** required
+- Compatible with **[Moonlight](https://moonlight-stream.org/)** streaming client
 
 ![](docs/src/assets/cloudypad-overview.png)
 
@@ -17,7 +21,6 @@ Cloudy Pad lets you deploy a Cloud gaming server anywhere in the world and play 
 ---
 
 - [Development status 🧪](#development-status-)
-- [Features ✨](#features-)
 - [Getting started 🚀](#getting-started-)
   - [Prerequisites](#prerequisites)
   - [Installation](#installation)
@@ -33,23 +36,6 @@ Cloudy Pad lets you deploy a Cloud gaming server anywhere in the world and play 
 ## Development status 🧪
 
 This project is still at an experimental phase. While working and allowing you to play in the Cloud seamlessly, there may be breaking changes in the future. **Your feedback, bug reports and contribution will be greatly appreciated !**
-
-## Features ✨
-
-Main features:
-
-- Compatible with **[Moonlight](https://moonlight-stream.org/)** streaming client
-- Use **Spot instances** for up to **90% cheaper** instances with some Clouders
-- Play **30 hours per month** for **~15$ / month or less**
-- **Pay by the hour** on various Cloud providers (AWS, Google, Azure...)
-- Play your own **Steam** (and other) games
-
-Available Cloud providers:
-
-- [Paperspace](https://www.paperspace.com/)
-- [Google Cloud](https://cloud.google.com)
-- [Azure](https://azure.microsoft.com)
-- [AWS](https://aws.amazon.com/)
 
 ## Getting started 🚀
 
