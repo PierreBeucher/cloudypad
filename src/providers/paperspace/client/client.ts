@@ -77,7 +77,7 @@ export class PaperspaceClient {
         try {
             resp = await this.authClient.authSession(this.baseOptions)
 
-            this.logger.debug(`Auth ession response: ${JSON.stringify(resp.data)}`)
+            this.logger.debug(`Auth session response: ${JSON.stringify(resp.data)}`)
 
         } catch (e){
             throw buildAxiosError(e)
