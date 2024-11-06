@@ -9,11 +9,16 @@ export class AwsInstanceRunner extends AbstractInstanceRunner {
     constructor(sm: StateManager) {
         super(sm)
 
-        if(!sm.get().provider?.aws) {
+        const state = sm.get()
+        if(!state.provider?.aws) {
             throw new Error(`Invalidate state: provider must be AWS, got state ${sm.get()}`)
         }
 
-        this.awsClient = new AwsClient(sm.name())
+        if(!state.provider?.aws?.provisionArgs || !sm.get().provider?.aws?.provisionArgs?.create) {
+            throw new Error(`Invalidate state: missing AWS provison args, got state ${sm.get()}`)
+        }
+
+        this.awsClient = new AwsClient(sm.name(), state.provider.aws?.provisionArgs?.create.region)
     }
 
     private getInstanceId(){
