@@ -1,5 +1,5 @@
 import * as fs from 'fs'
-import { input } from '@inquirer/prompts';
+import { input, select } from '@inquirer/prompts';
 import { InstanceState, StateManager } from './state';
 import Docker from 'dockerode';
 import axios from 'axios';
@@ -110,6 +110,8 @@ export abstract class AbstractInstanceRunner implements InstanceRunner {
 
         this.logger.info(`Sending PIN to ${publicPinUrl}`)
 
+        this.logger.debug(`Sending PIN ${pin} to ${publicPinUrl}`)
+
         const secretUrlRegex = /#([0-9A-F]+)/;
         const matchSecret = publicPinUrl.match(secretUrlRegex)
     
@@ -154,14 +156,6 @@ export abstract class AbstractInstanceRunner implements InstanceRunner {
             throw new Error("Can't configure instance: unknown public hostname or IP address.")
         }
 
-        console.info(`Run Moonlight and add computer:`)
-        console.info()
-        console.info(`  ${state.host}`)
-        console.info()
-        console.info("Then click on the new machine to trigger pairing. It will generate a PIN we'll use to pair your instance.")
-        console.info()
-        console.info('Waiting for PIN URL to appear in Wolf logs...')
-
         const privateKey = fs.readFileSync(state.ssh.privateKeyPath, 'utf-8')
 
         const docker = new Docker({
@@ -174,22 +168,81 @@ export abstract class AbstractInstanceRunner implements InstanceRunner {
             }
         })
 
-        const publicPinUrl = await this.waitForPinURL(docker, state.host)
-        
-        this.logger.info(`Found PIN URL in logs: ${publicPinUrl}`)
-        
-        console.info("PIN URL found in Wolf logs !")
+        const pairManual = "manual"
+        const pairAuto = "auto"
+
+        const pairMethod = await select({
+            message: 'Pair Moonlight automatically or run Moonlight yourself to pair manually ?',
+            choices: [{
+                name: "manual: run Moonlight yourself and add your instance.",
+                value: pairManual
+            }, {
+                name: "automatic: run a single command to pair your instance.",
+                value: pairAuto
+            }],
+            loop: false,
+        })
+
+        if(pairMethod === pairManual) {
+            await this.pairManual(docker, state.host)
+        } else if (pairMethod === pairAuto){
+            await this.pairAuto(docker, state.host)
+        } else {
+            throw new Error(`Unrecognized pair method '${pairMethod}'. This is probably an internal bug.`)
+        }
+
+        console.info(`Instance ${state.name} paired successfully 🤝 👍`)
+        console.info(`You can now run Moonlight to connect and play with your instance 🎮`)
         console.info("")
+        console.info("Enjoy Cloudy Pad ? Please give a star on GitHub ⭐ https://github.com/PierreBeucher/cloudypad")
         
+    }
+
+    private async pairManual(docker: Docker, host: string) {
+        
+        console.info(`Run Moonlight and add instance manually (top right '+' button):`)
+        console.info()
+        console.info(`  ${host}`)
+        console.info()
+        console.info("Then click on the new machine (with a lock icon). It will generate a PIN we'll use to pair your instance.")
+        console.info()
+        console.info('Waiting for PIN URL to appear in Wolf logs...')
+        
+        const publicPinUrl = await this.waitForPinURL(docker, host)
+
         const pin = await input({
             message: 'Enter PIN shown by Moonlight to finalize pairing:',
         })
 
-        console.info("Sending PIN...")
-
+        console.info("Sending PIN to Wolf...")
+ 
         await this.sendPinData(publicPinUrl, pin)
+    }
 
-        console.info(`Instance ${state.name} paired successfully 🤝 👍`)
-    }    
+    private async pairAuto(docker: Docker, host: string) {
+
+        const pin = this.makePin()
+
+        console.info(`Run this command to pair your instance:`)
+        console.info()
+        console.info(`  moonlight pair ${host} --pin ${pin}`)
+        console.info()
+        console.info('Waiting for PIN URL to appear in Wolf logs...')
+        
+        const publicPinUrl = await this.waitForPinURL(docker, host)
+
+        console.info("Sending PIN to Wolf...")
+ 
+        await this.sendPinData(publicPinUrl, pin)
+    }
+
+    private makePin(){
+        let result = '';
+        const charSet = '0123456789';
+        for (let i = 0; i < 4; i++) {
+            result += charSet.charAt(Math.floor(Math.random() * charSet.length));
+        }
+        return result;
+    }
 }
 
