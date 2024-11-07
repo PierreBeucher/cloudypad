@@ -41,6 +41,7 @@
               gnumake
               pulumi
               pulumiPackages.pulumi-language-nodejs
+              nodejs
               nodePackages.pnpm
               go-task
               gettext
