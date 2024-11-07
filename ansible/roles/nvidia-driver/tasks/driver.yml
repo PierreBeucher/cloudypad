@@ -11,20 +11,64 @@
   when: nvidia_nouveau_driver_blacklist.changed
   reboot:
 
-- name: install driver required packages
+# NVIDIA driver install require gcc and make
+# and that gcc version matches the one used to compile kernel
+# Identify gcc version used for kernel and install expected gcc version
+- name: remove packages used by previous install methods
+  register: previous_install_method_package_remove
   apt:
     name: "{{ item }}"
-    state: present
+    state: absent
+    purge: true
   loop:
     - build-essential
     - gcc-multilib
     - dkms
 
+- name: Reboot after previous install method package removal
+  when: previous_install_method_package_remove.changed
+  reboot:
+
+- name: install driver required packages
+  apt:
+    name: "{{ item }}"
+    state: present
+  loop:
+    - make
+
+- name: Get GCC version used to compile the kernel
+  command: cat /proc/version
+  register: kernel_version_output
+
+- name: Extract GCC version from kernel version output
+  set_fact:
+    gcc_version: "{{ kernel_version_output.stdout | regex_search('gcc-([1-9]+)',  '\\1') | first }}"
+
+- debug:
+    msg: Found kernel compiled with GCC version '{{ gcc_version }}'
+
+- name: Install matching GCC version
+  apt:
+    name: "gcc-{{ gcc_version }}"
+    state: present
+
+- name: Set installed GCC version as default
+  alternatives:
+    name: gcc
+    link: /usr/bin/gcc
+    path: /usr/bin/gcc-{{ gcc_version }}
+
+- name: Set CC as GCC
+  alternatives:
+    name: cc
+    link: /usr/bin/cc
+    path: /usr/bin/gcc
+
 - name: Get current NVIDIA driver version (error expected and ignored if driver not installed yet)
   slurp:
     src: /sys/module/nvidia/version
   register: nvidia_driver_version_file
-  ignore_errors: true # fail may not yet exist if driver not installed
+  ignore_errors: true # expected that version file may not yet exist if driver not installed
 
 - name: Set NVIDIA driver version var
   when: nvidia_driver_version_file is success

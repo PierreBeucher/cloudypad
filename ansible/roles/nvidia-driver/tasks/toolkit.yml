@@ -18,7 +18,7 @@
 
 - name: Install NVIDIA Container Toolkit
   ansible.builtin.apt:
-    name: nvidia-container-toolkit
+    name: nvidia-container-toolkit={{ nvidia_container_toolkit_version }}
     state: present
 
 - name: Update container runtime
