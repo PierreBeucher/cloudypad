@@ -50,8 +50,8 @@ Not familiar with terms like _"Cloud gaming"_, _"Moonlight"_, _"Cloud Provider"_
   - Paperspace
 - [Moonlight](https://moonlight-stream.org/) streaming client
 - [Docker](https://docs.docker.com/engine/install/) 
-  - Rootless Docker is not supported yet
   - For MacOS, [OrbStack](https://orbstack.dev/) is recommended over Docker Desktop
+  - Rootless Docker and non-Docker engines like Podman are not supported yet
 
 ### Installation 
 
