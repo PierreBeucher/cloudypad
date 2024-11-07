@@ -1,12 +1,16 @@
+# Old variables, to be removed in V1
+# Used to remove potential old NVIDIA driver installation
 nvidia_driver_package_version: ''
 nvidia_driver_persistence_mode_on: yes
-nvidia_driver_module_file: /etc/modprobe.d/nvidia.conf
-nvidia_driver_module_params: ''
 nvidia_driver_branch: "535"
-
-# Driver which were installed with Ubuntu
 nvidia_driver_ubuntu_branch: "{{ nvidia_driver_branch }}"
 nvidia_driver_ubuntu_packages_suffix: "-server"
+# END Old variables, to be removed in V1
+
+nvidia_driver_module_file: /etc/modprobe.d/nvidia.conf
+nvidia_driver_module_params: ''
 
 # Install version from .run file
-nvidia_driver_dotrun_install_version: "535.183.01"
+nvidia_driver_dotrun_install_version: "550.127.05"
+
+nvidia_container_toolkit_version: "1.17.0-1"

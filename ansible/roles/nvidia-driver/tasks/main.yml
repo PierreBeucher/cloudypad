@@ -35,6 +35,7 @@
 - name: install nvidia-modprobe 
   apt:
     name: nvidia-modprobe
+    update_cache: true
 
 - name: install NVIDIA drivers
   import_tasks: driver.yml
