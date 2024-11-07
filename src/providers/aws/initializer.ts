@@ -1,6 +1,4 @@
 import { input, select } from '@inquirer/prompts';
-import { loadConfig } from "@smithy/node-config-provider";
-import { NODE_REGION_CONFIG_FILE_OPTIONS, NODE_REGION_CONFIG_OPTIONS } from "@smithy/config-resolver";
 import { PartialDeep } from 'type-fest';
 import { AwsClient } from '../../tools/aws';
 import { InstanceInitializer, GenericInitializationArgs, StaticInitializerPrompts } from '../../core/initializer';
@@ -11,7 +9,7 @@ import { getLogger } from '../../log/utils';
 import { InstanceProvisionOptions } from '../../core/provisioner';
 
 export interface AwsProvisionArgs {
-    create?: {
+    create: {
         instanceType: string
         diskSize: number
         publicIpType: string
@@ -54,9 +52,8 @@ export class AwsInitializerPrompt {
 
     private logger = getLogger(AwsInitializerPrompt.name)
 
-    private awsClient: AwsClient
     constructor(){
-        this.awsClient = new AwsClient(AwsInitializerPrompt.name)
+        
     }
 
     async prompt(args?: PartialDeep<AwsProvisionArgs>): Promise<AwsProvisionArgs> {
@@ -146,18 +143,18 @@ export class AwsInitializerPrompt {
             return region;
         }
 
-        const currentAwsRegion = await this.getCurrentRegion()
+        const currentAwsRegion = await AwsClient.getCurrentRegion()
+        const regions = await AwsClient.listRegions()
 
-        return await input({
-            message: 'Enter AWS region to use:',
+        return await select({
+            message: 'Select an AWS region to deploy instance:',
+            choices: regions.map(r => ({
+                name: r,
+                value: r,
+            })),
+            loop: false,
             default: currentAwsRegion,
-        });
-    }
-
-    private async getCurrentRegion(): Promise<string> {
-        // AWS SDK V3 does not provide an easy way to get current region
-        // Use this method taken from https://github.com/aws/aws-sdk-js-v3/discussions/4488
-        return await loadConfig(NODE_REGION_CONFIG_OPTIONS, NODE_REGION_CONFIG_FILE_OPTIONS)()
+        })
     }
 
 }

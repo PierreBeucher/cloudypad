@@ -30,71 +30,70 @@ export class AwsProvisioner extends BaseInstanceProvisioner implements InstanceP
             throw new Error(`Provisioning AWS instance requires a private SSH key. Got state: ${JSON.stringify(state)}`)
         }
 
+        if(!args.create){
+            throw new Error(`Missing AWS provisioning parameter. Got state: ${JSON.stringify(state)}`)
+        }
+
         if(!opts?.skipAuthCheck){
-            await this.checkAwsAuth()
+            await this.checkAwsAuth(args.create.region)
         }
 
         this.logger.debug(`Provisioning AWS instance with ${JSON.stringify(state)}`)
 
-        if (args.create){
-            
-            let confirmCreation: boolean
-            if(opts?.autoApprove){
-                confirmCreation = opts.autoApprove
-            } else {
-                confirmCreation = await confirm({
-                    message: `
-    You are about to provision AWS machine with the following details:
-        Instance name: ${state.name}
-        Spot instance: ${args.create.useSpot}
-        SSH key: ${state.ssh.privateKeyPath}
-        AWS Region: ${args.create.region}
-        Instance Type: ${args.create.instanceType}
-        Public IP Type: ${args.create.publicIpType}
-        Disk size: ${args.create.diskSize}
-        
-    Do you want to proceed?`,
-                    default: true,
-                })
-            }
-
-            if (!confirmCreation) {
-                throw new Error('AWS provision aborted.');
-            }
-
-            await this.sm.update({
-                status: {
-                    initalized: true
-                },
-                provider: {
-                    aws: {}
-                }
-            })
-
-            const pulumiClient = new AwsPulumiClient(state.name)
-            const pulumiConfig: PulumiStackConfigAws = {
-                instanceType: args.create.instanceType,
-                publicIpType: args.create.publicIpType,
-                region: args.create.region,
-                rootVolumeSizeGB: args.create.diskSize,
-                publicSshKeyContent: await parseSshPrivateKeyFileToPublic(state.ssh.privateKeyPath),
-                useSpot: args.create.useSpot,
-            }
-
-            await pulumiClient.setConfig(pulumiConfig)
-            const pulumiOutputs = await pulumiClient.up()
-
-            await this.sm.update({
-                host: pulumiOutputs.publicIp,
-                provider: {
-                    aws: {
-                        instanceId: pulumiOutputs.instanceId
-                    }
-                }
-            })
+        let confirmCreation: boolean
+        if(opts?.autoApprove){
+            confirmCreation = opts.autoApprove
         } else {
-            throw new Error(`Provisioning AWS requires creation of new instance, got ${JSON.stringify(args)}`)
+            confirmCreation = await confirm({
+                message: `
+You are about to provision AWS machine with the following details:
+    Instance name: ${state.name}
+    Spot instance: ${args.create.useSpot}
+    SSH key: ${state.ssh.privateKeyPath}
+    AWS Region: ${args.create.region}
+    Instance Type: ${args.create.instanceType}
+    Public IP Type: ${args.create.publicIpType}
+    Disk size: ${args.create.diskSize}
+    
+Do you want to proceed?`,
+                default: true,
+            })
         }
+
+        if (!confirmCreation) {
+            throw new Error('AWS provision aborted.');
+        }
+
+        await this.sm.update({
+            status: {
+                initalized: true
+            },
+            provider: {
+                aws: {}
+            }
+        })
+
+        const pulumiClient = new AwsPulumiClient(state.name)
+        const pulumiConfig: PulumiStackConfigAws = {
+            instanceType: args.create.instanceType,
+            publicIpType: args.create.publicIpType,
+            region: args.create.region,
+            rootVolumeSizeGB: args.create.diskSize,
+            publicSshKeyContent: await parseSshPrivateKeyFileToPublic(state.ssh.privateKeyPath),
+            useSpot: args.create.useSpot,
+        }
+
+        await pulumiClient.setConfig(pulumiConfig)
+        const pulumiOutputs = await pulumiClient.up()
+
+        await this.sm.update({
+            host: pulumiOutputs.publicIp,
+            provider: {
+                aws: {
+                    instanceId: pulumiOutputs.instanceId
+                }
+            }
+        })
 
         await this.sm.update({
             status: {
@@ -138,8 +137,8 @@ export class AwsProvisioner extends BaseInstanceProvisioner implements InstanceP
 
     }
 
-    async checkAwsAuth() {
-        const client = new AwsClient(this.sm.name())
+    async checkAwsAuth(region: string) {
+        const client = new AwsClient(this.sm.name(), region)
         await client.checkAuth()
     }
 }
