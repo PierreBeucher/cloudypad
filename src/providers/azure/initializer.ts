@@ -1,6 +1,6 @@
 import { input, select } from '@inquirer/prompts'
 import { PartialDeep } from 'type-fest'
-import { InstanceInitializer, GenericInitializationArgs, StaticInitializerPrompts } from '../../core/initializer'
+import { InstanceInitializer, CommonInitConfig, StaticInitializerPrompts } from '../../core/initializer'
 import { StateManager } from '../../core/state'
 import { getLogger } from '../../log/utils'
 import { InstanceProvisionOptions } from '../../core/provisioner'
@@ -8,7 +8,7 @@ import { AzureProvisioner } from './provisioner'
 import { AzureInstanceRunner } from './runner'
 import { AzureClient } from '../../tools/azure'
 
-export interface AzureProvisionArgs {
+export interface AzureProvisionArgsV0 {
     create: {
         vmSize: string
         diskSize: number
@@ -19,11 +19,20 @@ export interface AzureProvisionArgs {
     }
 }
 
+export interface AzureProvisionArgsV1 {
+    vmSize: string
+    diskSize: number
+    publicIpType: string
+    subscriptionId: string
+    location: string
+    useSpot: boolean
+}
+
 export class AzureInstanceInitializer extends InstanceInitializer {
 
-    private readonly defaultAzureArgs: PartialDeep<AzureProvisionArgs>
+    private readonly defaultAzureArgs: PartialDeep<AzureProvisionArgsV0>
 
-    constructor(genericArgs?: PartialDeep<Omit<GenericInitializationArgs, "provider">>, defaultAzureArgs?: PartialDeep<AzureProvisionArgs>){
+    constructor(genericArgs?: PartialDeep<Omit<CommonInitConfig, "provider">>, defaultAzureArgs?: PartialDeep<AzureProvisionArgsV0>){
         super(genericArgs)
         this.defaultAzureArgs = defaultAzureArgs ?? {}
     }
@@ -54,7 +63,7 @@ export class AzureInitializerPrompt {
     private logger = getLogger(AzureInitializerPrompt.name)
 
 
-    async prompt(args?: PartialDeep<AzureProvisionArgs>): Promise<AzureProvisionArgs> {
+    async prompt(args?: PartialDeep<AzureProvisionArgsV0>): Promise<AzureProvisionArgsV0> {
 
         this.logger.debug(`Starting Azure prompt with default opts: ${JSON.stringify(args)}`)
 

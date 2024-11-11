@@ -3,14 +3,14 @@ import { InstanceInitializationOptions } from '../../../src/core/initializer';
 import sinon from 'sinon';
 import { StateUtils } from '../../../src/core/state';
 import { AnsibleClient } from '../../../src/tools/ansible';
-import { AzureInitializerPrompt, AzureInstanceInitializer, AzureProvisionArgs } from '../../../src/providers/azure/initializer';
+import { AzureInitializerPrompt, AzureInstanceInitializer, AzureProvisionArgsV0 } from '../../../src/providers/azure/initializer';
 import { AzureClient } from '../../../src/tools/azure';
 import { AzurePulumiClient, AzurePulumiOutput } from '../../../src/tools/pulumi/azure';
 import { AzureInstanceRunner } from '../../../src/providers/azure/runner';
 
 describe('Azure initializer', () => {
 
-    const provArgs: AzureProvisionArgs = {
+    const provArgs: AzureProvisionArgsV0 = {
         create: {
             subscriptionId: "1234-5689-0000",
             vmSize: "Standard_NC8as_T4_v3",

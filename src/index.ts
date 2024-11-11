@@ -4,13 +4,14 @@ import { version } from '../package.json';
 import { Command } from 'commander';
 import { GlobalInstanceManager } from './core/manager';
 import { setLogVerbosity } from './log/utils';
-import { AwsProvisionArgs, AwsInstanceInitializer } from './providers/aws/initializer';
+import { AwsInstanceInitializer } from './providers/aws/initializer';
 import { PartialDeep } from 'type-fest';
-import { PaperspaceInstanceInitializer, PaperspaceProvisionArgs } from './providers/paperspace/initializer';
+import { PaperspaceInstanceInitializer, PaperspaceProvisionArgsV0 } from './providers/paperspace/initializer';
 import * as fs from 'fs'
 import { InstanceInitializationOptions } from './core/initializer';
-import { AzureInstanceInitializer, AzureProvisionArgs } from './providers/azure/initializer';
-import { GcpInstanceInitializer, GcpProvisionArgs } from './providers/gcp/initializer';
+import { AzureInstanceInitializer, AzureProvisionArgsV0 } from './providers/azure/initializer';
+import { GcpInstanceInitializer, GcpProvisionArgsV0 } from './providers/gcp/initializer';
+import { AwsProviderConfigV1 } from './providers/aws/state';
 
 const program = new Command();
 
@@ -26,12 +27,9 @@ program
 const createCmd = program
     .command('create')
     .description('Create a new instance, prompting for details. Use `create <provider> for provider-specific creation commands.`')
-    .action(async (opts) => {
+    .action(async () => {
         try {
-            const instanceInitializer = await GlobalInstanceManager.promptInstanceInitializer({
-                instanceName: opts.name,
-                sshKey: opts.privateSshKey,
-            })
+            const instanceInitializer = await GlobalInstanceManager.promptInstanceInitializer()
 
             // No default option for generic initializer
             instanceInitializer.initializeInstance({})
@@ -61,14 +59,12 @@ createCmd
                 sshKey: options.privateSshKey,
             }
 
-            const awsArgs: PartialDeep<AwsProvisionArgs> = {
-                create: {
-                    instanceType: options.instanceType,
-                    diskSize: options.diskSize,
-                    publicIpType: options.publicIpType,
-                    region: options.region,
-                    useSpot: options.spot,
-                }
+            const awsArgs: PartialDeep<AwsProviderConfigV1> = {
+                instanceType: options.instanceType,
+                diskSize: options.diskSize,
+                publicIpType: options.publicIpType,
+                region: options.region,
+                useSpot: options.spot,
             }
 
             const opts: InstanceInitializationOptions = {
@@ -104,7 +100,7 @@ createCmd
             }
 
             const apiKey = options.apiKeyFile ? fs.readFileSync(options.apiKeyFile, 'utf-8') : undefined
-            const pspaceArgs: PartialDeep<PaperspaceProvisionArgs> = {
+            const pspaceArgs: PartialDeep<PaperspaceProvisionArgsV0> = {
                 apiKey: apiKey,
                 create: {
                     machineType: options.machineType,
@@ -149,7 +145,7 @@ createCmd
                 sshKey: options.privateSshKey,
             }
 
-            const gcpArgs: PartialDeep<GcpProvisionArgs> = {
+            const gcpArgs: PartialDeep<GcpProvisionArgsV0> = {
                 create: {
                     machineType: options.machineType,
                     diskSize: options.diskSize,
@@ -196,7 +192,7 @@ createCmd
                 sshKey: options.privateSshKey,
             }
 
-            const azArgs: PartialDeep<AzureProvisionArgs> = {
+            const azArgs: PartialDeep<AzureProvisionArgsV0> = {
                 create: {
                     vmSize: options.vmSize,
                     diskSize: options.diskSize,
@@ -296,8 +292,7 @@ program
     .action(async (name) => {
         try {
             const m = await GlobalInstanceManager.getInstanceManager(name)
-            const r = await m.getInstanceRunner()
-            const details = await r.get()
+            const details = await m.getState()
             console.info(JSON.stringify(details, null, 2))
         } catch (error) {
             console.error(`Error getting details of instance ${name}:`, error)

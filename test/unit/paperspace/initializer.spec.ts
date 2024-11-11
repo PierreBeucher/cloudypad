@@ -1,5 +1,5 @@
 import * as assert from 'assert';
-import { PaperspaceInitializerPrompt, PaperspaceInstanceInitializer, PaperspaceProvisionArgs } from "../../../src/providers/paperspace/initializer"
+import { PaperspaceInitializerPrompt, PaperspaceInstanceInitializer, PaperspaceProvisionArgsV0 } from "../../../src/providers/paperspace/initializer"
 import sinon from 'sinon';
 import { PaperspaceAuthResponse, PaperspaceClient, PaperspaceMachine } from '../../../src/providers/paperspace/client/client';
 import { PaperspaceInstanceRunner } from '../../../src/providers/paperspace/runner';
@@ -9,7 +9,7 @@ import { InstanceInitializationOptions } from '../../../src/core/initializer';
 
 describe('PaperspaceInitializerPrompt', () => {
 
-    const provArgs: PaperspaceProvisionArgs = {
+    const provArgs: PaperspaceProvisionArgsV0 = {
         apiKey: "xxxSecret",
         create: {
             machineType: "P5000",

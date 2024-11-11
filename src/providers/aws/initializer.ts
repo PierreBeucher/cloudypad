@@ -1,51 +1,41 @@
 import { input, select } from '@inquirer/prompts';
 import { PartialDeep } from 'type-fest';
 import { AwsClient } from '../../tools/aws';
-import { InstanceInitializer, GenericInitializationArgs, StaticInitializerPrompts } from '../../core/initializer';
-import { StateManager } from '../../core/state';
-import { AwsProvisioner } from './provisioner';
-import { AwsInstanceRunner } from './runner';
+import { InstanceInitializer, CommonInitConfig, StaticInitializerPrompts } from '../../core/initializer';
+import { InstanceStateV1 } from '../../core/state';
 import { getLogger } from '../../log/utils';
-import { InstanceProvisionOptions } from '../../core/provisioner';
-
-export interface AwsProvisionArgs {
-    create: {
-        instanceType: string
-        diskSize: number
-        publicIpType: string
-        region: string
-        useSpot: boolean
-    }
-}
+import { AwsProviderConfigV1 } from './state';
+import { CLOUDYPAD_PROVIDER_AWS } from '../../core/const';
 
 export class AwsInstanceInitializer extends InstanceInitializer {
 
-    private readonly defaultAwsArgs: PartialDeep<AwsProvisionArgs>
+    private readonly defaultAwsConfig: PartialDeep<AwsProviderConfigV1>
 
-    constructor(genericArgs?: PartialDeep<Omit<GenericInitializationArgs, "provider">>, defaultAwsArgs?: PartialDeep<AwsProvisionArgs>){
+    constructor(genericArgs?: PartialDeep<Omit<CommonInitConfig, "provider">>, defaultAwsConfig?: PartialDeep<AwsProviderConfigV1>){
         super(genericArgs)
-        this.defaultAwsArgs = defaultAwsArgs ?? {}
+        this.defaultAwsConfig = defaultAwsConfig ?? {}
     }
 
-    protected async runProvisioning(sm: StateManager, opts: InstanceProvisionOptions) {
-        const args = await new AwsInitializerPrompt().prompt(this.defaultAwsArgs)
+    protected async promptProviderConfig(commonConfig: CommonInitConfig): Promise<InstanceStateV1> {
+        const awsConfig = await new AwsInitializerPrompt().prompt(this.defaultAwsConfig)
 
-        this.logger.debug(`Running AWS provision with args: ${JSON.stringify(args)}`)
-        
-        sm.update({ 
-            ssh: {
-                user: "ubuntu"
-            },
-            provider: { aws: { provisionArgs: args }}
-        })
+        return {
+            name: commonConfig.instanceName,
+            version: "1",
+            provision: {
+                provider: CLOUDYPAD_PROVIDER_AWS,
+                common: {
+                    config: {
+                        ssh: commonConfig.provisionConfig.ssh,
+                    }
+                },
+                aws: {
+                    config: awsConfig
+                }
+            }
+        }
 
-        await new AwsProvisioner(sm).provision(opts)
     }
-
-    protected async runPairing(sm: StateManager) {
-        await new AwsInstanceRunner(sm).pair()
-    }
-    
 }
 
 export class AwsInitializerPrompt {
@@ -56,24 +46,22 @@ export class AwsInitializerPrompt {
         
     }
 
-    async prompt(args?: PartialDeep<AwsProvisionArgs>): Promise<AwsProvisionArgs> {
+    async prompt(args?: PartialDeep<AwsProviderConfigV1>): Promise<AwsProviderConfigV1> {
 
         this.logger.debug(`Starting AWS prompt with default opts: ${JSON.stringify(args)}`)
 
-        const instanceType = await this.instanceType(args?.create?.instanceType)
-        const useSpot = await StaticInitializerPrompts.useSpotInstance(args?.create?.useSpot)
-        const diskSize = await this.diskSize(args?.create?.diskSize)
-        const publicIpType = await this.publicIpType(args?.create?.publicIpType)
-        const region = await this.region(args?.create?.region)
+        const instanceType = await this.instanceType(args?.instanceType)
+        const useSpot = await StaticInitializerPrompts.useSpotInstance(args?.useSpot)
+        const diskSize = await this.diskSize(args?.diskSize)
+        const publicIpType = await this.publicIpType(args?.publicIpType)
+        const region = await this.region(args?.region)
 
         return {
-            create: {
-                diskSize: diskSize,
-                instanceType: instanceType,
-                publicIpType: publicIpType,
-                region: region,
-                useSpot: useSpot,
-            }
+            diskSize: diskSize,
+            instanceType: instanceType,
+            publicIpType: publicIpType,
+            region: region,
+            useSpot: useSpot,
         }
     }
 

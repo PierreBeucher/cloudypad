@@ -1,7 +1,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import { CLOUDYPAD_INSTANCES_DIR, CLOUDYPAD_PROVIDER_AWS, CLOUDYPAD_PROVIDER_AZURE, CLOUDYPAD_PROVIDER_GCP, CLOUDYPAD_PROVIDER_PAPERSPACE } from './const';
-import { StateManager, StateUtils } from './state';
+import { InstanceStateV1, StateManager, StateUtils } from './state';
 import { InstanceRunner } from './runner';
 import { AwsInstanceRunner } from '../providers/aws/runner';
 import { InstanceProvisioner } from './provisioner';
@@ -11,7 +11,7 @@ import { PaperspaceInstanceRunner } from '../providers/paperspace/runner';
 import { PaperspaceProvisioner } from '../providers/paperspace/provisioner';
 import { InstanceConfigurator } from './configurator';
 import { getLogger } from '../log/utils';
-import { GenericInitializationArgs, InstanceInitializer } from './initializer';
+import { CommonInitConfig, InstanceInitializer } from './initializer';
 import { AwsInstanceInitializer } from '../providers/aws/initializer';
 import { PaperspaceInstanceInitializer } from '../providers/paperspace/initializer';
 import { select } from '@inquirer/prompts';
@@ -21,6 +21,7 @@ import { AzureProvisioner } from '../providers/azure/provisioner';
 import { GcpInstanceInitializer } from '../providers/gcp/initializer';
 import { GcpInstanceRunner } from '../providers/gcp/runner';
 import { GcpProvisioner } from '../providers/gcp/provisioner';
+import { PartialDeep } from 'type-fest';
 
 /**
  * Utility class to manage instances globally. Instance state
@@ -52,7 +53,7 @@ export class GlobalInstanceManager {
      * @param args 
      * @returns 
      */
-    static async promptInstanceInitializer(args?: GenericInitializationArgs): Promise<InstanceInitializer>{
+    static async promptInstanceInitializer(args?: PartialDeep<CommonInitConfig>): Promise<InstanceInitializer>{
 
         return await select<InstanceInitializer>({
             message: 'Select Cloud provider:',
@@ -87,33 +88,36 @@ export class InstanceManager {
         this.logger = getLogger(sm.name())
     }
 
-    isProvisioned(): boolean{
-        return this.sm.get().status.initalized && this.sm.get().status.provision.provisioned
-    }
-
-    isConfigured(): boolean{
-        return this.sm.get().status.initalized && this.sm.get().status.configuration.configured
-    }
-
     private getCurrentProviderName(): string {
         const state = this.sm.get()
-        if(state.provider?.aws){
-            return CLOUDYPAD_PROVIDER_AWS
-        } else if (state.provider?.paperspace){
-            return CLOUDYPAD_PROVIDER_PAPERSPACE
-        } else if (state.provider?.azure){
-            return CLOUDYPAD_PROVIDER_AZURE
-        } else if (state.provider?.gcp){
-            return CLOUDYPAD_PROVIDER_GCP
-        } else {
-            throw new Error(`Unknown provider in state: ${JSON.stringify(state)}`)
-        }
+        return state.provision.provider
     }
     
     async getInstanceRunner(): Promise<InstanceRunner>{
         const provider = this.getCurrentProviderName()
+        const state = this.sm.get()
+
+        if(!state.provision.common.state) {
+            throw new Error("Missing common state. Was instance fully initialized ?")
+        }
+
+        const commonRunnerArgs = {
+            instanceName: state.name,
+            commonArgs: state.provision.common.config,
+            commonState: state.provision.common.state,
+        }
+
         if(provider === CLOUDYPAD_PROVIDER_AWS){
-            return new AwsInstanceRunner(this.sm)
+            if(!state.provision.aws?.state) {
+                throw new Error("Missing AWS state. Was instance fully initialized ?")
+            }
+
+            return new AwsInstanceRunner({
+                ...commonRunnerArgs,
+                awsConfig: state.provision.aws.config,
+                awsState: state.provision.aws.state,
+            })
+
         } else if (provider === CLOUDYPAD_PROVIDER_PAPERSPACE){
             return new PaperspaceInstanceRunner(this.sm)
         } else if (provider === CLOUDYPAD_PROVIDER_AZURE){
@@ -149,7 +153,7 @@ export class InstanceManager {
         
         this.logger.debug(`Destroying instance ${state.name}`)
 
-        if(state.status.provision.provisioned){
+        if(state.provision.common.state){
             throw new Error(`Can't destroy instance ${state.name} as it's still provisioned. This is probably an internal bug.`)
         }
 
@@ -158,5 +162,9 @@ export class InstanceManager {
         this.logger.debug(`Removing instance config directory ${state.name}: '${confDir}'`)
 
         fs.rmSync(confDir, { recursive: true })
+    }
+
+    async getState(): Promise<InstanceStateV1>{
+        return this.sm.get()
     }
 }

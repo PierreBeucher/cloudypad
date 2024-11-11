@@ -3,14 +3,14 @@ import { InstanceInitializationOptions } from '../../../src/core/initializer';
 import sinon from 'sinon';
 import { StateUtils } from '../../../src/core/state';
 import { AnsibleClient } from '../../../src/tools/ansible';
-import { GcpInitializerPrompt, GcpInstanceInitializer, GcpProvisionArgs } from '../../../src/providers/gcp/initializer';
+import { GcpInitializerPrompt, GcpInstanceInitializer, GcpProvisionArgsV0 } from '../../../src/providers/gcp/initializer';
 import { GcpClient } from '../../../src/tools/gcp';
 import { GcpPulumiClient, GcpPulumiOutput } from '../../../src/tools/pulumi/gcp';
 import { GcpInstanceRunner } from '../../../src/providers/gcp/runner';
 
 describe('GCP initializer', () => {
 
-    const provArgs: GcpProvisionArgs = {
+    const provArgs: GcpProvisionArgsV0 = {
         create: {
             machineType: "n1-standard-8",
             diskSize: 200,

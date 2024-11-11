@@ -3,19 +3,19 @@ import * as path from 'path';
 import * as os from 'os';
 import { input, select, confirm } from '@inquirer/prompts';
 import { AnsibleConfigurator } from '../configurators/ansible';
-import { InstanceState, StateManager, StateUtils } from './state';
+import { CommonProvisionConfigV1, InstanceStateV1, StateManager, StateUtils } from './state';
 import { getLogger } from '../log/utils';
 import { PartialDeep } from 'type-fest';
-import { InstanceProvisionOptions } from './provisioner';
-
-export interface GenericInitializationArgs {
-    instanceName: string,
-    sshKey: string
-}
+import { InstanceManager } from './manager';
 
 export interface InstanceInitializationOptions {
     autoApprove?: boolean
     overwriteExisting?: boolean
+}
+
+export interface CommonInitConfig {
+    instanceName: string,
+    provisionConfig: CommonProvisionConfigV1
 }
 
 /**
@@ -33,30 +33,38 @@ export abstract class InstanceInitializer {
 
     protected readonly logger = getLogger(InstanceInitializer.name)
 
-    private readonly defaultArgs: PartialDeep<GenericInitializationArgs>
+    private readonly initConfig?: PartialDeep<CommonInitConfig>
 
-    constructor(defaultGenericArgs?: PartialDeep<GenericInitializationArgs>){
-        this.defaultArgs = defaultGenericArgs ?? {}
+    constructor(initConfig?: PartialDeep<CommonInitConfig>){
+        this.initConfig = initConfig
     }
 
-    protected async getGenericInitArgs(): Promise<GenericInitializationArgs> {
+    private async promptCommonConfig(): Promise<CommonInitConfig> {
 
-        this.logger.debug(`Creating instance: default generic arguments ${JSON.stringify(this.defaultArgs)}`)
+        this.logger.debug(`Initializing instance with default config ${JSON.stringify(this.initConfig)}`)
         
         const genericPromt = new GenericInitializerPrompt()
-        const name = await genericPromt.instanceName(this.defaultArgs?.instanceName)
-        const sshKey = await genericPromt.privateSshKey(this.defaultArgs?.sshKey)
+        const name = await genericPromt.instanceName(this.initConfig?.instanceName)
+        const sshKey = await genericPromt.privateSshKey(this.initConfig?.provisionConfig?.ssh?.privateKeyPath)
+        const sshUser = "ubuntu"
 
         return {
             instanceName: name,
-            sshKey: sshKey
+            provisionConfig: {
+                ssh: {
+                    privateKeyPath: sshKey,
+                    user: sshUser
+                }
+            }
         }
     }
 
-    protected abstract runProvisioning(sm: StateManager, opts: InstanceProvisionOptions): Promise<void>
+    /**
+     * Prompt user for additional provider-specific configurations.
+     * Returns a fully valid state for instance initialization. 
+     */
+    protected abstract promptProviderConfig(commonConfig: CommonInitConfig): Promise<InstanceStateV1>
 
-    protected abstract runPairing(sm: StateManager): Promise<void>
-    
     protected async runConfiguration(sm: StateManager){
         // Ignore host key checking only during initialization to bypass host key checking
         // which will be unkwown anyway as it's a new cloud machine
@@ -66,13 +74,22 @@ export abstract class InstanceInitializer {
         await configurator.configure()
     }
 
+    /**
+     * Initialize instance:
+     * - Prompt for common and provisioner-specific configs
+     * - Initialize state
+     * - Run provision
+     * - Run configuration
+     * - Optionally pair instance
+     * @param opts 
+     */
     public async initializeInstance(opts: InstanceInitializationOptions){
 
-        const genericArgs = await this.getGenericInitArgs()
+        const commonConfig = await this.promptCommonConfig()
 
-        if(await StateUtils.instanceExists(genericArgs.instanceName) && !opts.overwriteExisting){
+        if(await StateUtils.instanceExists(commonConfig.instanceName) && !opts.overwriteExisting){
             const confirmAlreadyExists = await confirm({
-                message: `Instance ${genericArgs.instanceName} already exists. Do you want to overwrite existing instance config?`,
+                message: `Instance ${commonConfig.instanceName} already exists. Do you want to overwrite existing instance config?`,
                 default: false,
             })
             
@@ -81,50 +98,38 @@ export abstract class InstanceInitializer {
             }
         }
 
-        this.logger.debug(`Initializing a new instance with args ${JSON.stringify(genericArgs)}`)
+
+        const initialState = await this.promptProviderConfig(commonConfig)
+
+        this.logger.debug(`Initializing a new instance with state ${JSON.stringify(initialState)}`)
         
-        console.info(`Creating instance ${genericArgs.instanceName}`)
-        this.logger.info(`Creating instance ${genericArgs.instanceName}²`)
-        
-        const initialState: InstanceState = {
-            name: genericArgs.instanceName,
-            ssh: {
-                privateKeyPath: genericArgs.sshKey,
-            },
-            status: {
-                initalized: false,
-                configuration: {
-                    configured: false
-                },
-                provision: {
-                    provisioned: false
-                }
-            }
-        }
+        console.info(`Initializing instance ${commonConfig.instanceName}`)
 
-        this.logger.debug(`Creating ${genericArgs.instanceName}: initial state is ${JSON.stringify(initialState)}`)
+        // Create instance directory and ersist state
+        const instanceDir = StateUtils.getInstanceDir(commonConfig.instanceName)
 
-        const sm = new StateManager(initialState)
-
-        // Create instance directory in which to persist state
-        const instanceDir = StateUtils.getInstanceDir(genericArgs.instanceName)
-
-        this.logger.debug(`Creating ${genericArgs.instanceName}: creating instance dir at ${instanceDir}`)
+        this.logger.debug(`Initializing ${commonConfig.instanceName}: creating instance dir at ${instanceDir}`)
 
         fs.mkdirSync(instanceDir, { recursive: true })
-        
-        this.logger.info(`Creating ${genericArgs.instanceName}: provisionning...`)
-        this.logger.debug(`Creating ${genericArgs.instanceName}: starting provision with state ${JSON.stringify(sm.get())}`)
-        
-        await this.runProvisioning(sm, opts)
-        
-        this.logger.info(`Creating ${genericArgs.instanceName}: provision done.}`)
+                
+        const stateManager = new StateManager(initialState)
+        await stateManager.persist()
 
-        this.logger.info(`Creating ${genericArgs.instanceName}: configuring...}`)
+        this.logger.info(`Initializing ${commonConfig.instanceName}: provisioning...`)
+
+        const instanceManager = new InstanceManager(stateManager)
+
+        const provisioner = await instanceManager.getInstanceProvisioner()
+        await provisioner.provision(opts)
+
+        this.logger.info(`Initializing ${commonConfig.instanceName}: provision done.}`)
+
+        this.logger.info(`Initializing ${commonConfig.instanceName}: configuring...}`)
         
-        await this.runConfiguration(sm)
-        
-        this.logger.info(`Creating ${genericArgs.instanceName}: configuration done.}`)
+        const configurator = await instanceManager.getInstanceConfigurator()
+        await configurator.configure()
+
+        this.logger.info(`Initializing ${commonConfig.instanceName}: configuration done.}`)
 
         const doPair = opts.autoApprove ? true : await confirm({
             message: `Your instance is almost ready ! Do you want to pair Moonlight now?`,
@@ -132,13 +137,14 @@ export abstract class InstanceInitializer {
         })
 
         if (doPair) {
-            this.logger.info(`Creating ${genericArgs.instanceName}: pairing...}`)
+            this.logger.info(`Initializing ${commonConfig.instanceName}: pairing...}`)
 
-            await this.runPairing(sm)
-
-            this.logger.info(`Creating ${genericArgs.instanceName}: pairing done.}`)
+            const runner = await instanceManager.getInstanceRunner()
+            await runner.pair()
+    
+            this.logger.info(`Initializing ${commonConfig.instanceName}: pairing done.}`)
         } else {
-            this.logger.info(`Creating ${genericArgs.instanceName}: pairing skipped.}`)
+            this.logger.info(`Initializing ${commonConfig.instanceName}: pairing skipped.}`)
         }
 
         console.info("")

@@ -2,13 +2,13 @@ import { select, input, password } from '@inquirer/prompts';
 import { PartialDeep } from 'type-fest';
 import { fetchApiKeyFromEnvironment, PaperspaceClient } from './client/client';
 import { getLogger } from '../../log/utils';
-import { InstanceInitializer, GenericInitializationArgs } from '../../core/initializer';
+import { InstanceInitializer, CommonInitConfig } from '../../core/initializer';
 import { StateManager } from '../../core/state';
 import { PaperspaceProvisioner } from './provisioner';
 import { PaperspaceInstanceRunner } from './runner';
 import { InstanceProvisionOptions } from '../../core/provisioner';
 
-export interface PaperspaceProvisionArgs {
+export interface PaperspaceProvisionArgsV0 {
     useExisting?: {
         machineId: string
         publicIp: string
@@ -22,11 +22,18 @@ export interface PaperspaceProvisionArgs {
     }
 }
 
+export interface PaperspaceProvisionArgsV1 {
+    machineType: string
+    diskSize: number
+    publicIpType: 'static' | 'dynamic'
+    region: string
+}
+
 export class PaperspaceInstanceInitializer extends InstanceInitializer {
 
-    private readonly defaultPaperspaceArgs: PartialDeep<PaperspaceProvisionArgs>
+    private readonly defaultPaperspaceArgs: PartialDeep<PaperspaceProvisionArgsV0>
 
-    constructor(genericArgs?: PartialDeep<Omit<GenericInitializationArgs, "provider">>, defaultAwsArgs?: PartialDeep<PaperspaceProvisionArgs>){
+    constructor(genericArgs?: PartialDeep<Omit<CommonInitConfig, "provider">>, defaultAwsArgs?: PartialDeep<PaperspaceProvisionArgsV0>){
         super(genericArgs)
         this.defaultPaperspaceArgs = defaultAwsArgs ?? {}
     }
@@ -61,7 +68,7 @@ export class PaperspaceInitializerPrompt {
     
     protected readonly logger = getLogger(PaperspaceInitializerPrompt.name)
 
-    async prompt(opts?: PartialDeep<PaperspaceProvisionArgs>) : Promise<PaperspaceProvisionArgs> {
+    async prompt(opts?: PartialDeep<PaperspaceProvisionArgsV0>) : Promise<PaperspaceProvisionArgsV0> {
         
         const apiKey = await this.apiKey(opts?.apiKey)
 

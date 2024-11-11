@@ -1,5 +1,5 @@
 import * as assert from 'assert';
-import { AwsInitializerPrompt, AwsInstanceInitializer, AwsProvisionArgs } from "../../../src/providers/aws/initializer"
+import { AwsInitializerPrompt, AwsInstanceInitializer, AwsProvisionArgsV0 } from "../../../src/providers/aws/initializer"
 import { InstanceInitializationOptions } from '../../../src/core/initializer';
 import sinon from 'sinon';
 import { AwsInstanceRunner } from '../../../src/providers/aws/runner';
@@ -10,7 +10,7 @@ import { AwsClient } from '../../../src/tools/aws';
 
 describe('AwsInitializerPrompt', () => {
 
-    const provArgs: AwsProvisionArgs = {
+    const provArgs: AwsProvisionArgsV0 = {
         create: {
             instanceType: "g5.2xlarge",
             diskSize: 200,

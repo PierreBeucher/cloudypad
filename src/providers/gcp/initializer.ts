@@ -1,5 +1,5 @@
 import { input, select } from '@inquirer/prompts'
-import { InstanceInitializer, GenericInitializationArgs, StaticInitializerPrompts } from '../../core/initializer'
+import { InstanceInitializer, CommonInitConfig, StaticInitializerPrompts } from '../../core/initializer'
 import { StateManager } from '../../core/state'
 import { GcpProvisioner } from './provisioner'
 import { GcpInstanceRunner } from './runner'
@@ -8,7 +8,7 @@ import { InstanceProvisionOptions } from '../../core/provisioner'
 import { PartialDeep } from 'type-fest'
 import { GcpClient } from '../../tools/gcp'
 
-export interface GcpProvisionArgs {
+export interface GcpProvisionArgsV0 {
     create: {
         projectId: string
         machineType: string
@@ -21,11 +21,22 @@ export interface GcpProvisionArgs {
     }
 }
 
+export interface GcpProvisionArgsV1 {
+    projectId: string
+    machineType: string
+    acceleratorType: string
+    diskSize: number
+    publicIpType: string
+    region: string
+    zone: string
+    useSpot: boolean
+}
+
 export class GcpInstanceInitializer extends InstanceInitializer {
 
-    private readonly defaultGcpArgs: PartialDeep<GcpProvisionArgs>
+    private readonly defaultGcpArgs: PartialDeep<GcpProvisionArgsV0>
 
-    constructor(genericArgs?: PartialDeep<Omit<GenericInitializationArgs, "provider">>, defaultGcpArgs?: PartialDeep<GcpProvisionArgs>){
+    constructor(genericArgs?: PartialDeep<Omit<CommonInitConfig, "provider">>, defaultGcpArgs?: PartialDeep<GcpProvisionArgsV0>){
         super(genericArgs)
         this.defaultGcpArgs = defaultGcpArgs ?? {}
     }
@@ -55,7 +66,7 @@ export class GcpInitializerPrompt {
 
     private logger = getLogger(GcpInitializerPrompt.name)
 
-    async prompt(args?: PartialDeep<GcpProvisionArgs>): Promise<GcpProvisionArgs> {
+    async prompt(args?: PartialDeep<GcpProvisionArgsV0>): Promise<GcpProvisionArgsV0> {
 
         this.logger.debug(`Starting Google Cloud prompt with default opts: ${JSON.stringify(args)}`)
 

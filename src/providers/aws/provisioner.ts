@@ -15,27 +15,16 @@ export class AwsProvisioner extends BaseInstanceProvisioner implements InstanceP
 
         this.logger.info(`Provisioning AWS instance ${this.sm.name()}`)
 
+        // TODO should take as args the final arguments expected instead of relying on IF
         const state = this.sm.get()
-        if(!state.provider?.aws) {
+        if(!state.provision.aws) {
             throw new Error(`Missing AWS provider in state ${JSON.stringify(state)}`)
         }
 
-        if(!state.provider?.aws?.provisionArgs) {
-            throw new Error(`Missing AWS provision args in state ${JSON.stringify(state)}`)
-        }
-
-        const args = state.provider.aws.provisionArgs
-
-        if (!state.ssh?.privateKeyPath) {
-            throw new Error(`Provisioning AWS instance requires a private SSH key. Got state: ${JSON.stringify(state)}`)
-        }
-
-        if(!args.create){
-            throw new Error(`Missing AWS provisioning parameter. Got state: ${JSON.stringify(state)}`)
-        }
+        const args = state.provision.aws.config
 
         if(!opts?.skipAuthCheck){
-            await this.checkAwsAuth(args.create.region)
+            await this.checkAwsAuth(args.region)
         }
 
         this.logger.debug(`Provisioning AWS instance with ${JSON.stringify(state)}`)
@@ -48,12 +37,12 @@ export class AwsProvisioner extends BaseInstanceProvisioner implements InstanceP
                 message: `
 You are about to provision AWS machine with the following details:
     Instance name: ${state.name}
-    Spot instance: ${args.create.useSpot}
-    SSH key: ${state.ssh.privateKeyPath}
-    AWS Region: ${args.create.region}
-    Instance Type: ${args.create.instanceType}
-    Public IP Type: ${args.create.publicIpType}
-    Disk size: ${args.create.diskSize}
+    Spot instance: ${args.useSpot}
+    SSH key: ${state.provision.common.config.ssh.privateKeyPath}
+    AWS Region: ${args.region}
+    Instance Type: ${args.instanceType}
+    Public IP Type: ${args.publicIpType}
+    Disk size: ${args.diskSize}
     
 Do you want to proceed?`,
                 default: true,
@@ -64,45 +53,28 @@ Do you want to proceed?`,
             throw new Error('AWS provision aborted.');
         }
 
-        await this.sm.update({
-            status: {
-                initalized: true
-            },
-            provider: {
-                aws: {}
-            }
-        })
-
         const pulumiClient = new AwsPulumiClient(state.name)
         const pulumiConfig: PulumiStackConfigAws = {
-            instanceType: args.create.instanceType,
-            publicIpType: args.create.publicIpType,
-            region: args.create.region,
-            rootVolumeSizeGB: args.create.diskSize,
-            publicSshKeyContent: await parseSshPrivateKeyFileToPublic(state.ssh.privateKeyPath),
-            useSpot: args.create.useSpot,
+            instanceType: args.instanceType,
+            publicIpType: args.publicIpType,
+            region: args.region,
+            rootVolumeSizeGB: args.diskSize,
+            publicSshKeyContent: await parseSshPrivateKeyFileToPublic(state.provision.common.config.ssh.privateKeyPath),
+            useSpot: args.useSpot,
         }
 
         await pulumiClient.setConfig(pulumiConfig)
         const pulumiOutputs = await pulumiClient.up()
 
-        await this.sm.update({
-            host: pulumiOutputs.publicIp,
-            provider: {
-                aws: {
-                    instanceId: pulumiOutputs.instanceId
-                }
-            }
-        })
+        state.provision.aws.state = {
+            instanceId: pulumiOutputs.instanceId
+        }
 
-        await this.sm.update({
-            status: {
-                provision: {
-                    provisioned: true,
-                    lastUpdate: Date.now()
-                }
-            }
-        })
+        state.provision.common.state = {
+            host: pulumiOutputs.publicIp
+        }
+
+        this.sm.update(state)
     }
 
     async destroy(){
@@ -122,18 +94,12 @@ Do you want to proceed?`,
         const pulumiClient = new AwsPulumiClient(state.name)
         await pulumiClient.destroy()
 
-        this.sm.update({
-            status: {
-                configuration: {
-                    configured: false,
-                    lastUpdate: Date.now()
-                },
-                provision: {
-                    provisioned: false,
-                    lastUpdate: Date.now()
-                }
-            }
-        })
+        if(state.provision.aws) {
+            state.provision.aws.state = undefined
+        }
+        state.provision.common.state = undefined
+        
+        this.sm.update(state)
 
     }
 
