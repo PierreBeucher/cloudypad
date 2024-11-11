@@ -1,12 +1,12 @@
 import { AbstractInstanceRunner } from '../../core/runner'
-import { StateManager } from '../../core/state'
+import { StateManagerV0 } from '../../core/state'
 import { AzureClient } from '../../tools/azure'
 
 export class AzureInstanceRunner extends AbstractInstanceRunner {
 
     private client: AzureClient
 
-    constructor(sm: StateManager) {
+    constructor(sm: StateManagerV0) {
         super(sm)
 
         const state = sm.get()

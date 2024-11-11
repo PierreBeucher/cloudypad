@@ -1,13 +1,13 @@
 import { parseSshPrivateKeyFileToPublic } from '../../tools/ssh';
 import { confirm } from '@inquirer/prompts';
 import { BaseInstanceProvisioner, InstanceProvisioner, InstanceProvisionOptions } from '../../core/provisioner';
-import { StateManager } from '../../core/state';
+import { StateManagerV0 } from '../../core/state';
 import { GcpPulumiClient, PulumiStackConfigGcp } from '../../tools/pulumi/gcp';
 import { GcpClient } from '../../tools/gcp';
 
 export class GcpProvisioner extends BaseInstanceProvisioner implements InstanceProvisioner {
 
-    constructor(sm: StateManager){
+    constructor(sm: StateManagerV0){
         super(sm)
     }
 

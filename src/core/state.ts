@@ -1,13 +1,12 @@
 import * as fs from 'fs'
 import * as yaml from 'js-yaml'
 import * as path from 'path';
-import lodash from 'lodash';
-import { PaperspaceProviderStateV0, PaperspaceProviderStateV1 } from '../providers/paperspace/state';
-import { AwsProviderStateV0, AwsProviderV1 } from '../providers/aws/state';
-import { getLogger, Logger } from '../log/utils';
+import { PaperspaceProvisionConfigV1, PaperspaceProviderStateV0, PaperspaceProvisionStateV1 } from '../providers/paperspace/state';
+import { AwsProvisionConfigV1, AwsProviderStateV0, AwsProvisionOutputV1, AwsProvisionStateV1 } from '../providers/aws/state';
+import { getLogger } from '../log/utils';
 import { CLOUDYPAD_INSTANCES_DIR, CLOUDYPAD_PROVIDER, CLOUDYPAD_PROVIDER_AWS, CLOUDYPAD_PROVIDER_AZURE, CLOUDYPAD_PROVIDER_GCP, CLOUDYPAD_PROVIDER_PAPERSPACE } from './const';
-import { AzureProviderStateV0, AzureProviderStateV1 } from '../providers/azure/state';
-import { GcpProviderStateV0, GcpProviderStateV1 } from '../providers/gcp/state';
+import { AzureProvisionConfigV1, AzureProviderStateV0, AzureProvisionStateV1 } from '../providers/azure/state';
+import { GcpProviderStateV0, GcpProvisionStateV1, GcpProvisionConfigV1 } from '../providers/gcp/state';
 
 /**
  * State utils functions to manage instance state
@@ -38,12 +37,12 @@ export class StateUtils {
      * @param instanceName 
      * @returns 
      */
-    static async loadInstanceState(instanceName: string): Promise<StateManager>{
+    static async loadInstanceState(instanceName: string): Promise<InstanceStateV1>{
 
         StateUtils.logger.debug(`Loading instance state ${instanceName}`)
 
         if(!await StateUtils.instanceExists(instanceName)){
-            throw new Error("Instance does not exist.")
+            throw new Error(`Instance named '${instanceName}' does not exist.`)
         }
 
         const configPath = this.getInstanceConfigPath(instanceName)
@@ -53,8 +52,7 @@ export class StateUtils {
         const rawState = yaml.load(fs.readFileSync(configPath, 'utf8'))
 
         const stateV1 = await ensureStateV1(rawState)
-    
-        return new StateManager(stateV1)
+        return stateV1
     }
 }
 
@@ -83,11 +81,23 @@ async function ensureStateV1(rawState: any): Promise<InstanceStateV1>{
 
         // Transform provider
         const providerV0 = stateV0.provider
-        const providerV1: {
-            aws?: AwsProviderV1
-            paperspace?: PaperspaceProviderStateV1
-            azure?: AzureProviderStateV1
-            gcp?: GcpProviderStateV1
+        const provisionV1: {
+            aws?: {
+                state?: AwsProvisionOutputV1,
+                config: AwsProvisionConfigV1
+            },
+            paperspace?: {
+                state?: PaperspaceProvisionStateV1,
+                config: PaperspaceProvisionConfigV1
+            },
+            azure?: {
+                state?: AzureProvisionStateV1,
+                config: AzureProvisionConfigV1
+            }
+            gcp?: {
+                state?: GcpProvisionStateV1,
+                config: GcpProvisionConfigV1
+            }
         } = {}
 
         let providerName: CLOUDYPAD_PROVIDER
@@ -102,7 +112,7 @@ async function ensureStateV1(rawState: any): Promise<InstanceStateV1>{
                 throw new Error("Missing AWS instance ID in state. Was instance fully provisioned ?")
             }
 
-            providerV1.aws = {
+            provisionV1.aws = {
                 state: {
                     instanceId: providerV0.aws.instanceId,
                 },
@@ -125,10 +135,12 @@ async function ensureStateV1(rawState: any): Promise<InstanceStateV1>{
                 throw new Error("Missing Azure Resource Group in state. Was instance fully provisioned ?")
             }
 
-            providerV1.azure = {
-                resourceGroupName: providerV0.azure.resourceGroupName,
-                vmName: providerV0.azure.vmName,
-                provisionArgs: providerV0.azure.provisionArgs.create
+            provisionV1.azure = {
+                state: {
+                    resourceGroupName: providerV0.azure.resourceGroupName,
+                    vmName: providerV0.azure.vmName,
+                },
+                config: providerV0.azure.provisionArgs.create
             }
 
         } else if (providerV0?.gcp) {
@@ -143,9 +155,12 @@ async function ensureStateV1(rawState: any): Promise<InstanceStateV1>{
                 throw new Error("Missing Google instance name in state. Was instance fully provisioned ?")
             }
 
-            providerV1.gcp = {
-                instanceName: providerV0.gcp.instanceName,
-                provisionArgs: providerV0.gcp.provisionArgs.create
+            provisionV1.gcp = {
+                state: {
+                    instanceName: providerV0.gcp.instanceName,
+
+                },
+                config: providerV0.gcp.provisionArgs.create
             }
 
         } else if (providerV0?.paperspace) {
@@ -164,10 +179,14 @@ async function ensureStateV1(rawState: any): Promise<InstanceStateV1>{
                 throw new Error("Missing Paperspace api key in state. Was instance fully provisioned ?")
             }
 
-            providerV1.paperspace = {
-                apiKey: providerV0.paperspace.apiKey ?? providerV0.paperspace.provisionArgs.apiKey,
-                machineId: providerV0.paperspace.machineId,
-                provisionArgs: providerV0.paperspace.provisionArgs.create
+            provisionV1.paperspace = {
+                state: {
+                    machineId: providerV0.paperspace.machineId
+                },
+                config: {
+                    ...providerV0.paperspace.provisionArgs.create,
+                    apiKey: providerV0.paperspace.apiKey ?? providerV0.paperspace.provisionArgs.apiKey,
+                }
             }
 
         } else {
@@ -186,6 +205,8 @@ async function ensureStateV1(rawState: any): Promise<InstanceStateV1>{
             name: name,
             version: "1",
             provision: {
+                ...provisionV1,
+                provider: providerName,
                 common: {
                     config: {
                         ssh: {
@@ -193,15 +214,10 @@ async function ensureStateV1(rawState: any): Promise<InstanceStateV1>{
                             privateKeyPath: stateV0.ssh.privateKeyPath
                         },
                     },
-                    state: {
+                    output: {
                         host: stateV0.host,
                     }
                 },
-                provider: providerName,
-                aws: providerV1.aws,
-                azure: providerV1.azure,
-                gcp: providerV1.gcp,
-                paperspace: providerV1.paperspace,
             }
         }
 
@@ -234,15 +250,26 @@ export interface InstanceStateV1 {
      */
     provision: {
         provider: CLOUDYPAD_PROVIDER,
-        common: { 
-            config: CommonProvisionConfigV1, 
-            state?: CommonProvisionStateV1 
+        common: CommonProvisionStateV1,
+        aws?: AwsProvisionStateV1,
+        paperspace?: {
+            state?: PaperspaceProvisionStateV1,
+            config: PaperspaceProvisionConfigV1
         },
-        aws?: AwsProviderV1
-        paperspace?: PaperspaceProviderStateV1
-        azure?: AzureProviderStateV1
-        gcp?: GcpProviderStateV1
+        azure?: {
+            state?: AzureProvisionStateV1,
+            config: AzureProvisionConfigV1
+        }
+        gcp?: {
+            state?: GcpProvisionStateV1,
+            config: GcpProvisionConfigV1
+        }
     },
+}
+
+export interface CommonProvisionStateV1 { 
+    config: CommonProvisionConfigV1, 
+    output?: CommonProvisionOutputV1 
 }
 
 export interface CommonProvisionConfigV1 {
@@ -258,7 +285,7 @@ export interface CommonProvisionConfigV1 {
 /**
  * Generic provision information.
  */
-export interface CommonProvisionStateV1 {
+export interface CommonProvisionOutputV1 {
 
     /**
      * Known hostname for instance
@@ -350,46 +377,46 @@ export interface InstanceStateV0 {
 /**
  * Manage an instance State and its disk persistence
  */
-export class StateManager {
+// export class StateManagerV0 {
     
-    private state: InstanceStateV1
-    protected readonly logger: Logger
+//     private state: InstanceStateV1
+//     protected readonly logger: Logger
     
-    constructor(state: InstanceStateV1){
-        this.state = state
-        this.logger = getLogger(state.name)
-    }
+//     constructor(state: InstanceStateV1){
+//         this.state = state
+//         this.logger = getLogger(state.name)
+//     }
 
-    get(){
-        return this.state
-    }
+//     get(){
+//         return this.state
+//     }
 
-    /**
-     * Shortcut for get().name
-     * @returns name of instance in state
-     */
-    name(){
-        return this.state.name
-    }
+//     /**
+//      * Shortcut for get().name
+//      * @returns name of instance in state
+//      */
+//     name(){
+//         return this.state.name
+//     }
 
-    async update(data: InstanceStateV1){
-        this.logger.debug(`Updating state for ${this.state.name}`)
-        this.logger.trace(`Updating state for ${this.state.name} with ${JSON.stringify(data)}`)
+//     async update(data: InstanceStateV1){
+//         this.logger.debug(`Updating state for ${this.state.name}`)
+//         this.logger.trace(`Updating state for ${this.state.name} with ${JSON.stringify(data)}`)
 
-        lodash.merge(this.state, data)
-        await this.persist()
-    }
+//         lodash.merge(this.state, data)
+//         await this.persist()
+//     }
 
-    /**
-     * Write state to disk. 
-     * TODO use a lock mechanism to avoid concurrent writes 
-     */
-    async persist(){
+//     /**
+//      * Write state to disk. 
+//      * TODO use a lock mechanism to avoid concurrent writes 
+//      */
+//     async persist(){
         
-        const confPath = StateUtils.getInstanceConfigPath(this.state.name)
+//         const confPath = StateUtils.getInstanceConfigPath(this.state.name)
 
-        this.logger.debug(`Persisting state for ${this.state.name} at ${confPath}`)
+//         this.logger.debug(`Persisting state for ${this.state.name} at ${confPath}`)
 
-        fs.writeFileSync(confPath, yaml.dump(this.state), 'utf-8')
-    }
-}
+//         fs.writeFileSync(confPath, yaml.dump(this.state), 'utf-8')
+//     }
+// }

@@ -1,65 +1,39 @@
 import { select, input, password } from '@inquirer/prompts';
 import { PartialDeep } from 'type-fest';
-import { fetchApiKeyFromEnvironment, PaperspaceClient } from './client/client';
+import { fetchApiKeyFromEnvironment } from './client/client';
 import { getLogger } from '../../log/utils';
 import { InstanceInitializer, CommonInitConfig } from '../../core/initializer';
-import { StateManager } from '../../core/state';
-import { PaperspaceProvisioner } from './provisioner';
-import { PaperspaceInstanceRunner } from './runner';
-import { InstanceProvisionOptions } from '../../core/provisioner';
-
-export interface PaperspaceProvisionArgsV0 {
-    useExisting?: {
-        machineId: string
-        publicIp: string
-    }
-    apiKey?: string
-    create?: {
-        machineType: string
-        diskSize: number
-        publicIpType: 'static' | 'dynamic'
-        region: string
-    }
-}
-
-export interface PaperspaceProvisionArgsV1 {
-    machineType: string
-    diskSize: number
-    publicIpType: 'static' | 'dynamic'
-    region: string
-}
+import { InstanceStateV1 } from '../../core/state';
+import { PaperspaceProvisionConfigV1 } from './state';
+import { CLOUDYPAD_PROVIDER_PAPERSPACE } from '../../core/const';
 
 export class PaperspaceInstanceInitializer extends InstanceInitializer {
 
-    private readonly defaultPaperspaceArgs: PartialDeep<PaperspaceProvisionArgsV0>
+    private readonly defaultPaperspaceConfig: PartialDeep<PaperspaceProvisionConfigV1>
 
-    constructor(genericArgs?: PartialDeep<Omit<CommonInitConfig, "provider">>, defaultAwsArgs?: PartialDeep<PaperspaceProvisionArgsV0>){
-        super(genericArgs)
-        this.defaultPaperspaceArgs = defaultAwsArgs ?? {}
+    constructor(defaultCommonConfig?: PartialDeep<CommonInitConfig>, defaultPaperspaceConfig?: PartialDeep<PaperspaceProvisionConfigV1>){
+        super(defaultCommonConfig)
+        this.defaultPaperspaceConfig = defaultPaperspaceConfig ?? {}
     }
 
-    protected async runProvisioning(sm: StateManager, opts: InstanceProvisionOptions) {
-        const promptResult = await new PaperspaceInitializerPrompt().prompt(this.defaultPaperspaceArgs)
+    protected async promptProviderConfig(commonConfig: CommonInitConfig): Promise<InstanceStateV1> {
+        const pspaceConfig = await new PaperspaceInitializerPrompt().prompt(this.defaultPaperspaceConfig)
 
-        this.logger.debug(`Paperspace prompt result: ${JSON.stringify(promptResult)}`)
-
-        sm.update({ 
-            ssh: {
-                user: "paperspace"
-            },
-            provider: { 
-                paperspace: { 
-                    apiKey: promptResult.apiKey,
-                    provisionArgs: promptResult
+        return {
+            name: commonConfig.instanceName,
+            version: "1",
+            provision: {
+                provider: CLOUDYPAD_PROVIDER_PAPERSPACE,
+                common: {
+                    config: {
+                        ssh: commonConfig.provisionConfig.ssh,
+                    }
+                },
+                paperspace: {
+                    config: pspaceConfig
                 }
             }
-        })
-
-        await new PaperspaceProvisioner(sm).provision(opts)
-    }
-
-    protected async runPairing(sm: StateManager) {
-        await new PaperspaceInstanceRunner(sm).pair()
+        }
     }
     
 }
@@ -68,89 +42,22 @@ export class PaperspaceInitializerPrompt {
     
     protected readonly logger = getLogger(PaperspaceInitializerPrompt.name)
 
-    async prompt(opts?: PartialDeep<PaperspaceProvisionArgsV0>) : Promise<PaperspaceProvisionArgsV0> {
+    async prompt(opts?: PartialDeep<PaperspaceProvisionConfigV1>) : Promise<PaperspaceProvisionConfigV1> {
         
         const apiKey = await this.apiKey(opts?.apiKey)
-
-        const client = new PaperspaceClient({ name: PaperspaceInitializerPrompt.name, apiKey: apiKey, });
-
-        // If create is not empty (eg. a create parameter is passed)
-        let useExisting: boolean
-        if (opts?.create && opts?.useExisting) {
-            throw new Error("Only one of create or useExisting can be passed during Paperspace initialization")
-        } else if (opts?.create) {
-            useExisting = false
-        } else if (opts?.useExisting) {
-            useExisting = true
-        } else {
-            useExisting = await select({
-                message: 'Do you want to use an existing machine or create a new one?',
-                choices: [{
-                    name: "Create a new machine",
-                    value: false
-                }, {
-                    name: "Use an existing machine",
-                    value: true
-                }]
-            });
+        const machineType = await this.machineType(opts?.machineType);
+        const diskSize = await this.diskSize(opts?.diskSize);
+        const publicIpType = await this.publicIpType(opts?.publicIpType);
+        const region = await this.region(opts?.region);
+        
+        return {
+            apiKey: apiKey,
+            diskSize: diskSize,
+            machineType: machineType,
+            publicIpType: publicIpType,
+            region: region
         }
 
-        if (useExisting) {
-            const [machineId, publicIp] = await this.existingMachineId(client, opts?.useExisting?.machineId);
-            
-            return {
-                useExisting: {
-                    machineId: machineId,
-                    publicIp: publicIp
-                }
-            }
-            
-        } else {
-            const machineType = await this.machineType(opts?.create?.machineType);
-            const diskSize = await this.diskSize(opts?.create?.diskSize);
-            const publicIpType = await this.publicIpType(opts?.create?.publicIpType);
-            const region = await this.region(opts?.create?.region);
-            
-            return {
-                apiKey: apiKey,
-                create: {
-                    diskSize: diskSize,
-                    machineType: machineType,
-                    publicIpType: publicIpType,
-                    region: region
-                }
-            }
-        }
-
-    }
-
-    private async existingMachineId(client: PaperspaceClient, existingMachineId?: string) {
-        if (existingMachineId) {
-            return existingMachineId;
-        }
-
-        const existingMachines = await client.listMachines();
-        const machineChoices = existingMachines.map(machine => ({
-            name: `${machine.id} (${machine.name})`,
-            value: machine.id,
-        }));
-
-        const selectedMachineId = await select({
-            message: 'Select an existing Paperspace machine:',
-            choices: machineChoices,
-        });
-
-        const selectedMachine = existingMachines.find(machine => machine.id === selectedMachineId);
-
-        if (!selectedMachine) {
-            throw new Error('Selected machine not found.');
-        }
-
-        if (!selectedMachine.publicIp) {
-            throw new Error('Selected machine does not have a public IP address.');
-        }
-
-        return [ selectedMachineId, selectedMachine.publicIp ]
     }
 
     protected async machineType(machineType?: string): Promise<string> {

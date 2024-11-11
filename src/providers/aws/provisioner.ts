@@ -2,32 +2,36 @@ import { parseSshPrivateKeyFileToPublic } from '../../tools/ssh';
 import { confirm } from '@inquirer/prompts';
 import { AwsPulumiClient, PulumiStackConfigAws } from '../../tools/pulumi/aws';
 import { BaseInstanceProvisioner, InstanceProvisioner, InstanceProvisionOptions } from '../../core/provisioner';
-import { StateManager } from '../../core/state';
 import { AwsClient } from '../../tools/aws';
+import { AwsProvisionStateV1 } from './state';
+import { CommonProvisionStateV1 } from '../../core/state';
+
+export interface AwsProvisionerArgs {
+    instanceName: string
+    common: CommonProvisionStateV1
+    aws: AwsProvisionStateV1
+}
 
 export class AwsProvisioner extends BaseInstanceProvisioner implements InstanceProvisioner {
 
-    constructor(sm: StateManager){
-        super(sm)
+    private readonly args: AwsProvisionerArgs
+
+    constructor(args: AwsProvisionerArgs){
+        super({ instanceName: args.instanceName})
+        this.args = args
     }
 
     async provision(opts?: InstanceProvisionOptions) {
 
-        this.logger.info(`Provisioning AWS instance ${this.sm.name()}`)
+        this.logger.info(`Provisioning AWS instance ${this.args.instanceName}`)
 
-        // TODO should take as args the final arguments expected instead of relying on IF
-        const state = this.sm.get()
-        if(!state.provision.aws) {
-            throw new Error(`Missing AWS provider in state ${JSON.stringify(state)}`)
-        }
-
-        const args = state.provision.aws.config
+        const awsConfig = this.args.aws.config
 
         if(!opts?.skipAuthCheck){
-            await this.checkAwsAuth(args.region)
+            await this.checkAwsAuth(awsConfig.region)
         }
 
-        this.logger.debug(`Provisioning AWS instance with ${JSON.stringify(state)}`)
+        this.logger.debug(`Provisioning AWS instance with ${JSON.stringify(this.args)}`)
 
         let confirmCreation: boolean
         if(opts?.autoApprove){
@@ -36,13 +40,13 @@ export class AwsProvisioner extends BaseInstanceProvisioner implements InstanceP
             confirmCreation = await confirm({
                 message: `
 You are about to provision AWS machine with the following details:
-    Instance name: ${state.name}
-    Spot instance: ${args.useSpot}
-    SSH key: ${state.provision.common.config.ssh.privateKeyPath}
-    AWS Region: ${args.region}
-    Instance Type: ${args.instanceType}
-    Public IP Type: ${args.publicIpType}
-    Disk size: ${args.diskSize}
+    Instance name: ${this.args.instanceName}
+    Spot instance: ${awsConfig.useSpot}
+    SSH key: ${this.args.common.config.ssh.privateKeyPath}
+    AWS Region: ${awsConfig.region}
+    Instance Type: ${awsConfig.instanceType}
+    Public IP Type: ${awsConfig.publicIpType}
+    Disk size: ${awsConfig.diskSize}
     
 Do you want to proceed?`,
                 default: true,
@@ -53,37 +57,34 @@ Do you want to proceed?`,
             throw new Error('AWS provision aborted.');
         }
 
-        const pulumiClient = new AwsPulumiClient(state.name)
+        const pulumiClient = new AwsPulumiClient(this.args.instanceName)
         const pulumiConfig: PulumiStackConfigAws = {
-            instanceType: args.instanceType,
-            publicIpType: args.publicIpType,
-            region: args.region,
-            rootVolumeSizeGB: args.diskSize,
-            publicSshKeyContent: await parseSshPrivateKeyFileToPublic(state.provision.common.config.ssh.privateKeyPath),
-            useSpot: args.useSpot,
+            instanceType: awsConfig.instanceType,
+            publicIpType: awsConfig.publicIpType,
+            region: awsConfig.region,
+            rootVolumeSizeGB: awsConfig.diskSize,
+            publicSshKeyContent: await parseSshPrivateKeyFileToPublic(this.args.common.config.ssh.privateKeyPath),
+            useSpot: awsConfig.useSpot,
         }
 
         await pulumiClient.setConfig(pulumiConfig)
         const pulumiOutputs = await pulumiClient.up()
 
-        state.provision.aws.state = {
+        this.args.aws.output = {
             instanceId: pulumiOutputs.instanceId
         }
 
-        state.provision.common.state = {
+        this.args.common.output = {
             host: pulumiOutputs.publicIp
         }
-
-        this.sm.update(state)
     }
 
     async destroy(){
-        const state = this.sm.get()
 
-        this.logger.info(`Destroying instance: ${this.sm.name()}`)
+        this.logger.info(`Destroying instance: ${this.args.instanceName}`)
 
         const confirmCreation = await confirm({
-            message: `You are about to destroy AWS instance '${state.name}'. Please confirm:`,
+            message: `You are about to destroy AWS instance '${this.args.instanceName}'. Please confirm:`,
             default: false,
         });
 
@@ -91,20 +92,15 @@ Do you want to proceed?`,
             throw new Error('Destroy aborted.');
         }
 
-        const pulumiClient = new AwsPulumiClient(state.name)
+        const pulumiClient = new AwsPulumiClient(this.args.instanceName)
         await pulumiClient.destroy()
 
-        if(state.provision.aws) {
-            state.provision.aws.state = undefined
-        }
-        state.provision.common.state = undefined
-        
-        this.sm.update(state)
-
+        this.args.aws.output = undefined
+        this.args.common.output = undefined
     }
 
     async checkAwsAuth(region: string) {
-        const client = new AwsClient(this.sm.name(), region)
+        const client = new AwsClient(this.args.instanceName, region)
         await client.checkAuth()
     }
 }

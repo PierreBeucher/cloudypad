@@ -1,11 +1,32 @@
-import { GcpProvisionArgsV0, GcpProvisionArgsV1 } from "./initializer";
-
 export interface GcpProviderStateV0 {
     instanceName?: string,
     provisionArgs?: GcpProvisionArgsV0
 }
 
-export interface GcpProviderStateV1 {
+export interface GcpProvisionArgsV0 {
+    create: {
+        projectId: string
+        machineType: string
+        acceleratorType: string
+        diskSize: number
+        publicIpType: string
+        region: string
+        zone: string
+        useSpot: boolean
+    }
+}
+
+export interface GcpProvisionStateV1 {
     instanceName: string,
-    provisionArgs: GcpProvisionArgsV1
+}
+
+export interface GcpProvisionConfigV1 {
+    projectId: string
+    machineType: string
+    acceleratorType: string
+    diskSize: number
+    publicIpType: string
+    region: string
+    zone: string
+    useSpot: boolean
 }

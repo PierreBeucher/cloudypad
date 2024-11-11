@@ -2,16 +2,19 @@
 
 import { version } from '../package.json';
 import { Command } from 'commander';
-import { GlobalInstanceManager } from './core/manager';
+import { GlobalInstanceManager, InstanceManager } from './core/manager';
 import { setLogVerbosity } from './log/utils';
 import { AwsInstanceInitializer } from './providers/aws/initializer';
 import { PartialDeep } from 'type-fest';
-import { PaperspaceInstanceInitializer, PaperspaceProvisionArgsV0 } from './providers/paperspace/initializer';
+import { PaperspaceInstanceInitializer } from './providers/paperspace/initializer';
 import * as fs from 'fs'
 import { InstanceInitializationOptions } from './core/initializer';
-import { AzureInstanceInitializer, AzureProvisionArgsV0 } from './providers/azure/initializer';
-import { GcpInstanceInitializer, GcpProvisionArgsV0 } from './providers/gcp/initializer';
-import { AwsProviderConfigV1 } from './providers/aws/state';
+import { AzureInstanceInitializer } from './providers/azure/initializer';
+import { GcpInstanceInitializer } from './providers/gcp/initializer';
+import { AwsProvisionConfigV1 } from './providers/aws/state';
+import { PaperspaceProvisionConfigV1 } from './providers/paperspace/state';
+import { GcpProvisionConfigV1 } from './providers/gcp/state';
+import { AzureProvisionConfigV1 } from './providers/azure/state';
 
 const program = new Command();
 
@@ -59,7 +62,7 @@ createCmd
                 sshKey: options.privateSshKey,
             }
 
-            const awsArgs: PartialDeep<AwsProviderConfigV1> = {
+            const awsArgs: PartialDeep<AwsProvisionConfigV1> = {
                 instanceType: options.instanceType,
                 diskSize: options.diskSize,
                 publicIpType: options.publicIpType,
@@ -100,14 +103,12 @@ createCmd
             }
 
             const apiKey = options.apiKeyFile ? fs.readFileSync(options.apiKeyFile, 'utf-8') : undefined
-            const pspaceArgs: PartialDeep<PaperspaceProvisionArgsV0> = {
+            const pspaceConfig: PartialDeep<PaperspaceProvisionConfigV1> = {
                 apiKey: apiKey,
-                create: {
-                    machineType: options.machineType,
-                    diskSize: options.diskSize,
-                    publicIpType: options.publicIpType,
-                    region: options.region,
-                }
+                machineType: options.machineType,
+                diskSize: options.diskSize,
+                publicIpType: options.publicIpType,
+                region: options.region,
             }
 
             const opts: InstanceInitializationOptions = {
@@ -115,7 +116,7 @@ createCmd
                 overwriteExisting: options.overwriteExisting
             }
  
-            await new PaperspaceInstanceInitializer(genericArgs, pspaceArgs).initializeInstance(opts)
+            await new PaperspaceInstanceInitializer(genericArgs, pspaceConfig).initializeInstance(opts)
             
         } catch (error) {
             console.error('Error creating Paperspace instance:', error)
@@ -145,17 +146,15 @@ createCmd
                 sshKey: options.privateSshKey,
             }
 
-            const gcpArgs: PartialDeep<GcpProvisionArgsV0> = {
-                create: {
-                    machineType: options.machineType,
-                    diskSize: options.diskSize,
-                    publicIpType: options.publicIpType,
-                    region: options.region,
-                    zone: options.zone,
-                    acceleratorType: options.gpuType,
-                    projectId: options.projectId,
-                    useSpot: options.spot,
-                }
+            const gcpArgs: PartialDeep<GcpProvisionConfigV1> = {
+                machineType: options.machineType,
+                diskSize: options.diskSize,
+                publicIpType: options.publicIpType,
+                region: options.region,
+                zone: options.zone,
+                acceleratorType: options.gpuType,
+                projectId: options.projectId,
+                useSpot: options.spot,
             }
 
             const opts: InstanceInitializationOptions = {
@@ -192,15 +191,13 @@ createCmd
                 sshKey: options.privateSshKey,
             }
 
-            const azArgs: PartialDeep<AzureProvisionArgsV0> = {
-                create: {
-                    vmSize: options.vmSize,
-                    diskSize: options.diskSize,
-                    publicIpType: options.publicIpType,
-                    location: options.location,
-                    subscriptionId: options.subscriptionId,
-                    useSpot: options.spot,
-                }
+            const azArgs: PartialDeep<AzureProvisionConfigV1> = {
+                vmSize: options.vmSize,
+                diskSize: options.diskSize,
+                publicIpType: options.publicIpType,
+                location: options.location,
+                subscriptionId: options.subscriptionId,
+                useSpot: options.spot,
             }
 
             const opts: InstanceInitializationOptions = {
@@ -246,9 +243,8 @@ program
     .description('Start an instance')
     .action(async (name) => {
         try {
-            const m = await GlobalInstanceManager.getInstanceManager(name)
-            const r = await m.getInstanceRunner()
-            await r.start()
+            const m = await InstanceManager.get(name)
+            await m.start()
             console.info(`Started instance ${name}`)
         } catch (error) {
             console.error(`Error starting instance ${name}:`, error)
@@ -261,9 +257,8 @@ program
     .description('Stop an instance')
     .action(async (name) => {
         try {
-            const m = await GlobalInstanceManager.getInstanceManager(name)
-            const r = await m.getInstanceRunner()
-            await r.stop()
+            const m = await InstanceManager.get(name)
+            await m.stop()
             console.info(`Stopped instance ${name}`)
         } catch (error) {
             console.error(`Error stopping instance ${name}:`, error)
@@ -276,9 +271,8 @@ program
     .description('Restart an instance')
     .action(async (name) => {
         try {
-            const m = await GlobalInstanceManager.getInstanceManager(name)
-            const r = await m.getInstanceRunner()
-            await r.restart()
+            const m = await InstanceManager.get(name)
+            await m.restart()
             console.info(`Restarted instance ${name}`)
         } catch (error) {
             console.error(`Error restarting instance ${name}:`, error)
@@ -291,8 +285,9 @@ program
     .description('Get details of an instance')
     .action(async (name) => {
         try {
-            const m = await GlobalInstanceManager.getInstanceManager(name)
-            const details = await m.getState()
+            const m = await InstanceManager.get(name)
+            const details = m.getState()
+
             console.info(JSON.stringify(details, null, 2))
         } catch (error) {
             console.error(`Error getting details of instance ${name}:`, error)
@@ -306,9 +301,9 @@ program
     .option('--yes', 'Do not prompt for approval, automatically approve and continue')
     .action(async (name) => {
         try {
-            const m = await GlobalInstanceManager.getInstanceManager(name)
-            const p = await m.getInstanceProvisioner()
-            await p.provision()
+            const m = await InstanceManager.get(name)
+            await m.provision()
+
             console.info(`Provisioned instance ${name}`)
         } catch (error) {
             console.error(`Error provisioning instance ${name}:`, error)
@@ -321,9 +316,9 @@ program
     .description('Configure an instance (connect to instance and install drivers, packages, etc.)')
     .action(async (name) => {
         try {
-            const m = await GlobalInstanceManager.getInstanceManager(name)
-            const p = await m.getInstanceConfigurator()
-            await p.configure()
+            const m = await InstanceManager.get(name)
+            await m.configure()
+
             console.info("")
             console.info(`Configured instance ${name}`)
         } catch (error) {
@@ -337,12 +332,8 @@ program
     .description('Destroy an instance')
     .action(async (name) => {
         try {
-            const m = await GlobalInstanceManager.getInstanceManager(name)
-
-            const p = await m.getInstanceProvisioner()
-            await p.destroy()
-
-            await m.destroyInstance()
+            const m = await InstanceManager.get(name)
+            await m.destroy()
 
             console.info("")
             console.info(`Destroyed instance ${name}`)
@@ -357,9 +348,8 @@ program.command('pair <name>')
     .description('Pair an instance with Moonlight')
     .action(async (name: string) => {
         try {
-            const m = await GlobalInstanceManager.getInstanceManager(name)
-            const r = await m.getInstanceRunner()
-            await r.pair()
+            const m = await InstanceManager.get(name)
+            await m.pair()
         } catch (error) {
             console.error('Error creating new instance:', error)
             process.exit(1)

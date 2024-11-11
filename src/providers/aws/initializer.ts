@@ -4,14 +4,14 @@ import { AwsClient } from '../../tools/aws';
 import { InstanceInitializer, CommonInitConfig, StaticInitializerPrompts } from '../../core/initializer';
 import { InstanceStateV1 } from '../../core/state';
 import { getLogger } from '../../log/utils';
-import { AwsProviderConfigV1 } from './state';
+import { AwsProvisionConfigV1 } from './state';
 import { CLOUDYPAD_PROVIDER_AWS } from '../../core/const';
 
 export class AwsInstanceInitializer extends InstanceInitializer {
 
-    private readonly defaultAwsConfig: PartialDeep<AwsProviderConfigV1>
+    private readonly defaultAwsConfig: PartialDeep<AwsProvisionConfigV1>
 
-    constructor(genericArgs?: PartialDeep<Omit<CommonInitConfig, "provider">>, defaultAwsConfig?: PartialDeep<AwsProviderConfigV1>){
+    constructor(genericArgs?: PartialDeep<Omit<CommonInitConfig, "provider">>, defaultAwsConfig?: PartialDeep<AwsProvisionConfigV1>){
         super(genericArgs)
         this.defaultAwsConfig = defaultAwsConfig ?? {}
     }
@@ -46,7 +46,7 @@ export class AwsInitializerPrompt {
         
     }
 
-    async prompt(args?: PartialDeep<AwsProviderConfigV1>): Promise<AwsProviderConfigV1> {
+    async prompt(args?: PartialDeep<AwsProvisionConfigV1>): Promise<AwsProvisionConfigV1> {
 
         this.logger.debug(`Starting AWS prompt with default opts: ${JSON.stringify(args)}`)
 

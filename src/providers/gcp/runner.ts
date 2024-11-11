@@ -1,12 +1,12 @@
 import { AbstractInstanceRunner } from '../../core/runner';
-import { StateManager } from '../../core/state';
+import { StateManagerV0 } from '../../core/state';
 import { GcpClient } from '../../tools/gcp';
 
 export class GcpInstanceRunner extends AbstractInstanceRunner {
 
     private gcpClient: GcpClient
 
-    constructor(sm: StateManager) {
+    constructor(sm: StateManagerV0) {
         super(sm)
 
         const state = sm.get()

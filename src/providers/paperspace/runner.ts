@@ -1,5 +1,5 @@
 import { AbstractInstanceRunner } from "../../core/runner"
-import { StateManager } from "../../core/state"
+import { StateManagerV0 } from "../../core/state"
 import { PaperspaceClient } from "./client/client"
 
 export class PaperspaceInstanceRunner extends AbstractInstanceRunner {
@@ -8,7 +8,7 @@ export class PaperspaceInstanceRunner extends AbstractInstanceRunner {
 
     private machineId: string
 
-    constructor(stateManager: StateManager) {
+    constructor(stateManager: StateManagerV0) {
         super(stateManager)
 
         const state = stateManager.get()

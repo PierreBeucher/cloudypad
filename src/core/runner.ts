@@ -1,6 +1,6 @@
 import * as fs from 'fs'
 import { input, select } from '@inquirer/prompts';
-import { CommonProvisionConfigV1, CommonProvisionStateV1 } from './state';
+import { CommonProvisionConfigV1, CommonProvisionOutputV1 } from './state';
 import Docker from 'dockerode';
 import axios from 'axios';
 import { URL } from 'url'
@@ -29,21 +29,21 @@ export interface InstanceRunner {
 
 export interface AbstractInstanceRunnerArgs {
     instanceName: string, 
-    commonArgs: CommonProvisionConfigV1, 
-    commonState: CommonProvisionStateV1
+    commonConfig: CommonProvisionConfigV1, 
+    commonOutput: CommonProvisionOutputV1
 }
 
 export abstract class AbstractInstanceRunner implements InstanceRunner {
     
     readonly commonArgs: CommonProvisionConfigV1
-    readonly state: CommonProvisionStateV1
+    readonly state: CommonProvisionOutputV1
     protected readonly logger: Logger
     readonly instanceName: string
 
     constructor(args: AbstractInstanceRunnerArgs) {
         this.instanceName = args.instanceName
-        this.commonArgs = args.commonArgs
-        this.state = args.commonState
+        this.commonArgs = args.commonConfig
+        this.state = args.commonOutput
         this.logger = getLogger(args.instanceName) 
     }
  

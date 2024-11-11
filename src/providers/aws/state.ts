@@ -13,16 +13,16 @@ export interface AwsProviderStateV0 {
     provisionArgs?: AwsProvisionArgsV0
 }
 
-export interface AwsProviderV1 {
-    state?: AwsProviderStateV1
-    config: AwsProviderConfigV1
+export interface AwsProvisionStateV1 {
+    output?: AwsProvisionOutputV1,
+    config: AwsProvisionConfigV1
 }
 
-export interface AwsProviderStateV1 {
+export interface AwsProvisionOutputV1 {
     instanceId: string
 }
 
-export interface AwsProviderConfigV1 {
+export interface AwsProvisionConfigV1 {
     instanceType: string
     diskSize: number
     publicIpType: string
