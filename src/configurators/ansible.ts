@@ -3,36 +3,33 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';
 import * as yaml from 'js-yaml';
-import { StateManager } from '../core/state';
+import { CommonProvisionConfigV1, CommonProvisionOutputV1 } from '../core/state';
 import { InstanceConfigurator } from '../core/configurator';
 import { getLogger, Logger } from '../log/utils';
 import { AnsibleClient } from '../tools/ansible';
 
+export interface AnsibleConfiguratorArgs {
+    instanceName: string
+    commonConfig: CommonProvisionConfigV1
+    commonOutput: CommonProvisionOutputV1
+    additionalAnsibleArgs?: string[]
+}
+
 export class AnsibleConfigurator implements InstanceConfigurator {
 
-    private readonly sm: StateManager
     protected readonly logger: Logger
-    private readonly additionalAnsibleArgs: string[]
+    private readonly args: AnsibleConfiguratorArgs
 
-    constructor(sm: StateManager, additionalAnsibleArgs?: string[]){
-        this.sm = sm
-        this.logger = getLogger(sm.name())
-        this.additionalAnsibleArgs = additionalAnsibleArgs ?? []
+    constructor(args: AnsibleConfiguratorArgs){
+        this.args = args
+        this.logger = getLogger(args.instanceName)
     }
 
     async configure() {
 
-        const state = this.sm.get()
+        const ssh = this.args.commonConfig.ssh
 
         this.logger.debug(`Running Ansible configuration`)
-
-        if(!state.ssh?.user || !state.ssh?.privateKeyPath) {
-            throw new Error(`Can't configure instance: SSH user or private key unknwon in state: ${JSON.stringify(state)}`)
-        }
-
-        if(!state.host) {
-            throw new Error(`Can't configure instance: hostname or public IP unknwon in state: ${JSON.stringify(state)}`)
-        }
 
         const playbookPath = path.resolve(__dirname, "..", "..", "ansible", "playbook.yml"); // TODO more specific
 
@@ -41,10 +38,10 @@ export class AnsibleConfigurator implements InstanceConfigurator {
         const inventoryContent = {
             all: {
                 hosts: {
-                    [state.name]: {
-                        ansible_host: state.host,
-                        ansible_user: state.ssh.user,
-                        ansible_ssh_private_key_file: state.ssh.privateKeyPath
+                    [this.args.instanceName]: {
+                        ansible_host: this.args.commonOutput.host,
+                        ansible_user: ssh.user,
+                        ansible_ssh_private_key_file: ssh.privateKeyPath
                     },
                 },
             },
@@ -59,16 +56,7 @@ export class AnsibleConfigurator implements InstanceConfigurator {
 
         fs.writeFileSync(inventoryPath, yaml.dump(inventoryContent), 'utf8');
 
-        this.sm.update({
-            status: {
-                configuration: {
-                    configured: true,
-                    lastUpdate: Date.now()
-                }
-            }
-        })
-
         const ansible = new AnsibleClient()
-        await ansible.runAnsible(inventoryPath, playbookPath, this.additionalAnsibleArgs)
+        await ansible.runAnsible(inventoryPath, playbookPath, this.args.additionalAnsibleArgs ?? [])
     }
 }

@@ -1,123 +1,84 @@
 import { parseSshPrivateKeyFileToPublic } from '../../tools/ssh';
 import { confirm } from '@inquirer/prompts';
-import { BaseInstanceProvisioner, InstanceProvisioner, InstanceProvisionOptions } from '../../core/provisioner';
-import { StateManager } from '../../core/state';
+import { BaseInstanceProvisioner, InstanceProvisionerArgs, InstanceProvisionOptions } from '../../core/provisioner';
 import { GcpPulumiClient, PulumiStackConfigGcp } from '../../tools/pulumi/gcp';
 import { GcpClient } from '../../tools/gcp';
+import { GcpProvisionConfigV1, GcpProvisionOutputV1} from './state';
 
-export class GcpProvisioner extends BaseInstanceProvisioner implements InstanceProvisioner {
+export type GcpProvisionerArgs = InstanceProvisionerArgs<GcpProvisionConfigV1, GcpProvisionOutputV1>
 
-    constructor(sm: StateManager){
-        super(sm)
+export class GcpProvisioner extends BaseInstanceProvisioner<GcpProvisionConfigV1, GcpProvisionOutputV1> {
+
+    constructor(args: GcpProvisionerArgs) {
+        super(args)
     }
 
     async provision(opts?: InstanceProvisionOptions) {
 
-        this.logger.info(`Provisioning Google Cloud instance ${this.sm.name()}`)
-
-        const state = this.sm.get()
-        if(!state.provider?.gcp) {
-            throw new Error(`Missing Google Cloud provider in state ${JSON.stringify(state)}`)
-        }
-
-        if(!state.provider?.gcp?.provisionArgs) {
-            throw new Error(`Missing Google Cloud provision args in state ${JSON.stringify(state)}`)
-        }
-
-        const args = state.provider.gcp.provisionArgs
-
-        if (!state.ssh?.privateKeyPath) {
-            throw new Error(`Provisioning Google Cloud instance requires a private SSH key. Got state: ${JSON.stringify(state)}`)
-        }
+        this.logger.info(`Provisioning Google Cloud instance ${this.args.instanceName}`)
 
         if(!opts?.skipAuthCheck){
-            await this.checkGcpAuth(state.provider.gcp.provisionArgs.create.projectId)
+            await this.checkGcpAuth(this.args.config.projectId)
         }
 
-        this.logger.debug(`Provisioning Google Cloud instance with ${JSON.stringify(state)}`)
+        this.logger.debug(`Provisioning Google Cloud instance with ${JSON.stringify(this.args.config)}`)
 
-        if (args.create){
-            
-            let confirmCreation: boolean
-            if(opts?.autoApprove){
-                confirmCreation = opts.autoApprove
-            } else {
-                confirmCreation = await confirm({
-                    message: `
-    You are about to provision Google Cloud machine with the following details:
-        Instance name: ${state.name}
-        SSH key: ${state.ssh.privateKeyPath}
-        Region: ${args.create.region}
-        Project ID: ${args.create.projectId}
-        Machine Type: ${args.create.machineType}
-        Use Spot: ${args.create.useSpot}
-        GPU Type: ${args.create.acceleratorType}
-        Public IP Type: ${args.create.publicIpType}
-        Disk size: ${args.create.diskSize}
         
-    Do you want to proceed?`,
-                    default: true,
-                })
-            }
-
-            if (!confirmCreation) {
-                throw new Error('Google Cloud provision aborted.');
-            }
-
-            await this.sm.update({
-                status: {
-                    initalized: true
-                },
-                provider: {
-                    gcp: {}
-                }
-            })
-
-            const pulumiClient = new GcpPulumiClient(state.name)
-            const pulumiConfig: PulumiStackConfigGcp = {
-                machineType: args.create.machineType,
-                acceleratorType: args.create.acceleratorType,
-                projectId: args.create.projectId,
-                publicIpType: args.create.publicIpType,
-                region: args.create.region,
-                zone: args.create.zone,
-                rootDiskSize: args.create.diskSize,
-                publicSshKeyContent: await parseSshPrivateKeyFileToPublic(state.ssh.privateKeyPath),
-                useSpot: args.create.useSpot,
-            }
-
-            await pulumiClient.setConfig(pulumiConfig)
-            const pulumiOutputs = await pulumiClient.up()
-
-            await this.sm.update({
-                host: pulumiOutputs.publicIp,
-                provider: {
-                    gcp: {
-                        instanceName: pulumiOutputs.instanceName
-                    }
-                }
-            })
+        let confirmCreation: boolean
+        if(opts?.autoApprove){
+            confirmCreation = opts.autoApprove
         } else {
-            throw new Error(`Provisioning Google Cloud requires creation of new instance, got ${JSON.stringify(args)}`)
+            confirmCreation = await confirm({
+                message: `
+You are about to provision Google Cloud machine with the following details:
+    Instance name: ${this.args.instanceName}
+    SSH key: ${this.args.config.ssh.privateKeyPath}
+    Region: ${this.args.config.region}
+    Project ID: ${this.args.config.projectId}
+    Machine Type: ${this.args.config.machineType}
+    Use Spot: ${this.args.config.useSpot}
+    GPU Type: ${this.args.config.acceleratorType}
+    Public IP Type: ${this.args.config.publicIpType}
+    Disk size: ${this.args.config.diskSize}
+    
+Do you want to proceed?`,
+                default: true,
+            })
         }
 
-        await this.sm.update({
-            status: {
-                provision: {
-                    provisioned: true,
-                    lastUpdate: Date.now()
-                }
-            }
-        })
+        if (!confirmCreation) {
+            throw new Error('Google Cloud provision aborted.');
+        }
+
+        const pulumiClient = new GcpPulumiClient(this.args.instanceName)
+        const pulumiConfig: PulumiStackConfigGcp = {
+            machineType: this.args.config.machineType,
+            acceleratorType: this.args.config.acceleratorType,
+            projectId: this.args.config.projectId,
+            publicIpType: this.args.config.publicIpType,
+            region: this.args.config.region,
+            zone: this.args.config.zone,
+            rootDiskSize: this.args.config.diskSize,
+            publicSshKeyContent: await parseSshPrivateKeyFileToPublic(this.args.config.ssh.privateKeyPath),
+            useSpot: this.args.config.useSpot,
+        }
+
+        await pulumiClient.setConfig(pulumiConfig)
+        const pulumiOutputs = await pulumiClient.up()
+
+        return {
+            instanceName: pulumiOutputs.instanceName,
+            host: pulumiOutputs.publicIp
+        }
+
     }
 
     async destroy(){
-        const state = this.sm.get()
 
-        this.logger.info(`Destroying instance: ${this.sm.name()}`)
+        this.logger.info(`Destroying instance: ${this.args.instanceName}`)
 
         const confirmCreation = await confirm({
-            message: `You are about to destroy GCP instance '${state.name}'. Please confirm:`,
+            message: `You are about to destroy GCP instance '${this.args.instanceName}'. Please confirm:`,
             default: false,
         });
 
@@ -125,26 +86,14 @@ export class GcpProvisioner extends BaseInstanceProvisioner implements InstanceP
             throw new Error('Destroy aborted.');
         }
 
-        const pulumiClient = new GcpPulumiClient(state.name)
+        const pulumiClient = new GcpPulumiClient(this.args.instanceName)
         await pulumiClient.destroy()
 
-        this.sm.update({
-            status: {
-                configuration: {
-                    configured: false,
-                    lastUpdate: Date.now()
-                },
-                provision: {
-                    provisioned: false,
-                    lastUpdate: Date.now()
-                }
-            }
-        })
-
+        this.args.output = undefined
     }
 
     private async checkGcpAuth(projectId: string) {
-        const client = new GcpClient(this.sm.name(), projectId)
+        const client = new GcpClient(this.args.instanceName, projectId)
         await client.checkAuth()
     }
 }

@@ -1,33 +1,21 @@
-import { AbstractInstanceRunner } from '../../core/runner';
-import { StateManager } from '../../core/state';
+import { AbstractInstanceRunner, InstanceRunnerArgs } from '../../core/runner';
 import { AwsClient } from '../../tools/aws';
+import { AwsProvisionConfigV1, AwsProvisionOutputV1 } from './state';
 
-export class AwsInstanceRunner extends AbstractInstanceRunner {
+export type AwsInstanceRunnerArgs = InstanceRunnerArgs<AwsProvisionConfigV1, AwsProvisionOutputV1>
+
+export class AwsInstanceRunner extends AbstractInstanceRunner<AwsProvisionConfigV1, AwsProvisionOutputV1>  {
 
     private awsClient: AwsClient
 
-    constructor(sm: StateManager) {
-        super(sm)
+    constructor(args: AwsInstanceRunnerArgs) {
+        super(args)
 
-        const state = sm.get()
-        if(!state.provider?.aws) {
-            throw new Error(`Invalidate state: provider must be AWS, got state ${sm.get()}`)
-        }
-
-        if(!state.provider?.aws?.provisionArgs || !sm.get().provider?.aws?.provisionArgs?.create) {
-            throw new Error(`Invalidate state: missing AWS provison args, got state ${sm.get()}`)
-        }
-
-        this.awsClient = new AwsClient(sm.name(), state.provider.aws?.provisionArgs?.create.region)
+        this.awsClient = new AwsClient(args.instanceName, args.config.region)
     }
 
     private getInstanceId(){
-        const state = this.stateManager.get()
-        if(!state.provider?.aws?.instanceId){
-            throw new Error("Couldn't perform operation: unknown instance ID.")
-        }
-
-        return state.provider?.aws?.instanceId
+        return this.args.output.instanceId
     }
 
     async start() {

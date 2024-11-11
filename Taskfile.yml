@@ -18,7 +18,7 @@ tasks:
   #
 
   test-unit:
-    cmd: npx mocha ./test/unit/**/*.spec.ts
+    cmd: npx mocha --transpile-only ./test/unit/**/*.spec.ts
 
   build-local:
     cmd: docker build -t crafteo/cloudypad:local .
@@ -33,6 +33,10 @@ tasks:
 
   test-create-and-destroy:
     cmd: test/integ/create-and-destroy.sh
+
+  # Detect potential circular deps with Madge
+  test-circular-deps:
+    cmd: npx -y madge --ts-config ./tsconfig.json -c .
     
   #
   # Utils

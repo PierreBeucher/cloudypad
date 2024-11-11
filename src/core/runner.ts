@@ -1,6 +1,6 @@
 import * as fs from 'fs'
 import { input, select } from '@inquirer/prompts';
-import { InstanceState, StateManager } from './state';
+import { CommonProvisionConfigV1, CommonProvisionOutputV1 } from './state';
 import Docker from 'dockerode';
 import axios from 'axios';
 import { URL } from 'url'
@@ -23,41 +23,37 @@ export interface InstanceRunner {
     start(): Promise<void>
     stop(): Promise<void>
     restart(): Promise<void>
-    get(): Promise<InstanceState>
     
     pair(): Promise<void>
 }
 
-export abstract class AbstractInstanceRunner implements InstanceRunner {
-    
-    readonly stateManager: StateManager
-    protected readonly logger: Logger
+export interface InstanceRunnerArgs<C extends CommonProvisionConfigV1, O extends CommonProvisionOutputV1>  {
+    instanceName: string, 
+    config: C
+    output: O
+}
 
-    constructor(sm: StateManager) {
-        this.stateManager = sm
-        this.logger = getLogger(sm.name()) 
+export abstract class AbstractInstanceRunner<C extends CommonProvisionConfigV1, O extends CommonProvisionOutputV1>  implements InstanceRunner {
+    
+    protected readonly logger: Logger
+    protected readonly args: InstanceRunnerArgs<C, O>
+
+
+    constructor(args: InstanceRunnerArgs<C, O>) {
+        this.args = args
+        this.logger = getLogger(args.instanceName) 
     }
  
-    getStateManager(){
-        return this.stateManager
-    }
-
     async start(): Promise<void> {
-        this.logger.info(`Starting instance ${this.getStateManager().name()}`)
+        this.logger.info(`Starting instance ${this.args.instanceName}`)
     }
 
     async stop(): Promise<void> {
-        this.logger.info(`Stopping instance ${this.getStateManager().name()}`)
+        this.logger.info(`Stopping instance ${this.args.instanceName}`)
     }
 
     async restart(): Promise<void> {
-        this.logger.info(`Restarting instance ${this.getStateManager().name()}`)
-    }
-
-    async get(): Promise<InstanceState> {
-        
-        this.logger.debug(`Getting instance ${this.stateManager.get().name}`)
-        return this.stateManager.get()
+        this.logger.info(`Restarting instance ${this.args.instanceName}`)
     }
 
     private async waitForPinURL(docker: Docker, host: string) {
@@ -142,27 +138,14 @@ export abstract class AbstractInstanceRunner implements InstanceRunner {
     }
     
     async pair(){
-        const state = this.stateManager.get()
         
-        if(!state.host) {
-            throw new Error("Can't pair instance: unknown host.")
-        }
-
-        if (!state.ssh?.user || !state.ssh?.privateKeyPath) {
-            throw new Error("Can't configure instance via SSH: user or private key unknown. Check instance state.")
-        }
-
-        if (!state.host) {
-            throw new Error("Can't configure instance: unknown public hostname or IP address.")
-        }
-
-        const privateKey = fs.readFileSync(state.ssh.privateKeyPath, 'utf-8')
+        const privateKey = fs.readFileSync(this.args.config.ssh.privateKeyPath, 'utf-8')
 
         const docker = new Docker({
-            host: state.host,
+            host: this.args.output.host,
             protocol: 'ssh',
             port: 22,
-            username: state.ssh.user,
+            username: this.args.config.ssh.user,
             sshOptions: {
                 privateKey: privateKey
             }
@@ -184,14 +167,14 @@ export abstract class AbstractInstanceRunner implements InstanceRunner {
         })
 
         if(pairMethod === pairManual) {
-            await this.pairManual(docker, state.host)
+            await this.pairManual(docker, this.args.output.host)
         } else if (pairMethod === pairAuto){
-            await this.pairAuto(docker, state.host)
+            await this.pairAuto(docker, this.args.output.host)
         } else {
             throw new Error(`Unrecognized pair method '${pairMethod}'. This is probably an internal bug.`)
         }
 
-        console.info(`Instance ${state.name} paired successfully 🤝 👍`)
+        console.info(`Instance ${this.args.instanceName} paired successfully 🤝 👍`)
         console.info(`You can now run Moonlight to connect and play with your instance 🎮`)
         console.info("")
         console.info("Enjoy Cloudy Pad ? Please give a star on GitHub ⭐ https://github.com/PierreBeucher/cloudypad")

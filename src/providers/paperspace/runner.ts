@@ -1,43 +1,32 @@
-import { AbstractInstanceRunner } from "../../core/runner"
-import { StateManager } from "../../core/state"
+import { AbstractInstanceRunner, InstanceRunnerArgs } from "../../core/runner"
 import { PaperspaceClient } from "./client/client"
+import { PaperspaceProvisionConfigV1, PaperspaceProvisionOutputV1 } from "./state"
 
-export class PaperspaceInstanceRunner extends AbstractInstanceRunner {
-    
+export type PaperspaceInstanceRunnerArgs = InstanceRunnerArgs<PaperspaceProvisionConfigV1, PaperspaceProvisionOutputV1>
+
+export class PaperspaceInstanceRunner extends AbstractInstanceRunner<PaperspaceProvisionConfigV1, PaperspaceProvisionOutputV1>  {
+
     private client: PaperspaceClient
 
-    private machineId: string
+    constructor(args: PaperspaceInstanceRunnerArgs) {
+        super(args)
 
-    constructor(stateManager: StateManager) {
-        super(stateManager)
-
-        const state = stateManager.get()
-
-        if (!state.provider?.paperspace) {
-            throw new Error(`Invalidate state: provider must be Paperspace, got state: ${JSON.stringify(state)}`)
-        }
-
-        if(!state.provider.paperspace.machineId){
-            throw new Error(`CloudyPadInstancePaperspace requires Paperspace instance ID. Got: ${JSON.stringify(state)}`)
-        }
-
-        this.machineId = state.provider.paperspace.machineId
-        this.client = new PaperspaceClient({ name: state.name, apiKey: state.provider.paperspace.apiKey})
+        this.client = new PaperspaceClient({ name: this.args.instanceName, apiKey: this.args.config.apiKey})
     }
-    
+
     async start() {
         await super.start()
-        await this.client.startMachine(this.machineId)
+        await this.client.startMachine(this.args.output.machineId)
     }
 
     async stop() {
         await super.stop()
-        await this.client.stopMachine(this.machineId)
+        await this.client.stopMachine(this.args.output.machineId)
     }
 
     async restart() {
         await super.restart()
-        await this.client.restartMachine(this.machineId)
+        await this.client.restartMachine(this.args.output.machineId)
     }
 
 }
