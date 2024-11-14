@@ -11,7 +11,7 @@ export class AwsInstanceInitializer extends InstanceInitializer {
 
     private readonly defaultAwsConfig: PartialDeep<AwsProvisionConfigV1>
 
-    constructor(genericArgs?: PartialDeep<Omit<CommonInitConfig, "provider">>, defaultAwsConfig?: PartialDeep<AwsProvisionConfigV1>){
+    constructor(genericArgs?: PartialDeep<CommonInitConfig>, defaultAwsConfig?: PartialDeep<AwsProvisionConfigV1>){
         super(genericArgs)
         this.defaultAwsConfig = defaultAwsConfig ?? {}
     }

@@ -2,7 +2,7 @@
 
 import { version } from '../package.json';
 import { Command } from 'commander';
-import { GlobalInstanceManager, InstanceManager } from './core/manager';
+import { InstanceManager } from './core/manager';
 import { setLogVerbosity } from './log/utils';
 import { AwsInstanceInitializer } from './providers/aws/initializer';
 import { PartialDeep } from 'type-fest';
@@ -15,6 +15,7 @@ import { AwsProvisionConfigV1 } from './providers/aws/state';
 import { PaperspaceProvisionConfigV1 } from './providers/paperspace/state';
 import { GcpProvisionConfigV1 } from './providers/gcp/state';
 import { AzureProvisionConfigV1 } from './providers/azure/state';
+import { InstanceManagerBuilder } from './core/manager-builder';
 
 const program = new Command();
 
@@ -32,7 +33,7 @@ const createCmd = program
     .description('Create a new instance, prompting for details. Use `create <provider> for provider-specific creation commands.`')
     .action(async () => {
         try {
-            const instanceInitializer = await GlobalInstanceManager.promptInstanceInitializer()
+            const instanceInitializer = await InstanceManagerBuilder.promptInstanceInitializer()
 
             // No default option for generic initializer
             instanceInitializer.initializeInstance({})
@@ -218,7 +219,7 @@ program
     .option('--format <format>', 'Output format, one of [plain|json] ', 'plain')
     .action(async (options) => {
         try {
-            const instanceNames = GlobalInstanceManager.getAllInstances();
+            const instanceNames = InstanceManagerBuilder.getAllInstances();
             if (instanceNames.length === 0) {
                 console.info('No instances found.');
                 return;

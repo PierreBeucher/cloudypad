@@ -1,39 +1,44 @@
 import * as assert from 'assert';
-import { AwsInitializerPrompt, AwsInstanceInitializer, AwsProvisionArgsV0 } from "../../../src/providers/aws/initializer"
-import { InstanceInitializationOptions } from '../../../src/core/initializer';
+import { AwsInitializerPrompt, AwsInstanceInitializer } from "../../../src/providers/aws/initializer"
+import { CommonInitConfig, InstanceInitializationOptions } from '../../../src/core/initializer';
 import sinon from 'sinon';
 import { AwsInstanceRunner } from '../../../src/providers/aws/runner';
 import { AwsPulumiClient, AwsPulumiOutput } from '../../../src/tools/pulumi/aws';
-import { StateUtils } from '../../../src/core/state';
+import { InstanceStateV1, StateUtils } from '../../../src/core/state';
 import { AnsibleClient } from '../../../src/tools/ansible';
 import { AwsClient } from '../../../src/tools/aws';
+import { AwsProvisionConfigV1 } from '../../../src/providers/aws/state';
+import { CLOUDYPAD_PROVIDER_AWS } from '../../../src/core/const';
 
 describe('AwsInitializerPrompt', () => {
 
-    const provArgs: AwsProvisionArgsV0 = {
-        create: {
-            instanceType: "g5.2xlarge",
-            diskSize: 200,
-            publicIpType: "static",
-            region: "us-west-2",
-            useSpot: true,
-        },
+    const provConfig: AwsProvisionConfigV1 = {
+        instanceType: "g5.2xlarge",
+        diskSize: 200,
+        publicIpType: "static",
+        region: "us-west-2",
+        useSpot: true,
     }
 
     it('should return provided options without prompting for user input', async () => {
 
         const awsInitializerPrompt = new AwsInitializerPrompt()
 
-        const result = await awsInitializerPrompt.prompt(provArgs)
-        assert.deepEqual(result, provArgs)
+        const result = await awsInitializerPrompt.prompt(provConfig)
+        assert.deepEqual(result, provConfig)
     })
 
 
     it('should initialize instance state with provided arguments', async () => {
 
-        const genericArgs = {
+        const genericArgs: CommonInitConfig = {
             instanceName: "aws-dummy",
-            sshKey: "test/resources/ssh-key",
+            provisionConfig: {
+                ssh: {
+                    privateKeyPath: "./test/resources/ssh-key",
+                    user: "ubuntu"
+                }
+            }
         }
 
         const opts: InstanceInitializationOptions = {
@@ -50,22 +55,32 @@ describe('AwsInitializerPrompt', () => {
         const ansibleStub = sinon.stub(AnsibleClient.prototype, 'runAnsible').resolves()
         const pairStub = sinon.stub(AwsInstanceRunner.prototype, 'pair').resolves()
 
-        await new AwsInstanceInitializer(genericArgs, provArgs).initializeInstance(opts)
+        await new AwsInstanceInitializer(genericArgs, provConfig).initializeInstance(opts)
 
         // Check state has been written
-        const sm = await StateUtils.loadInstanceState(genericArgs.instanceName)
-        const state = sm.get()
+        const state = await StateUtils.loadInstanceState(genericArgs.instanceName)
 
-        assert.equal(state.host, dummyPulumiOutput.publicIp)
-        assert.equal(state.name, genericArgs.instanceName)
-        assert.deepEqual(state.provider?.aws, {
-            instanceId: dummyPulumiOutput.instanceId,
-            provisionArgs: provArgs
-        })
-        assert.deepEqual(state.ssh, { user: "ubuntu", privateKeyPath: genericArgs.sshKey})
-        assert.equal(state.status.configuration.configured, true)
-        assert.equal(state.status.provision.provisioned, true)
-        assert.equal(state.status.initalized, true)
+        const expectState: InstanceStateV1 = {
+            name: genericArgs.instanceName,
+            provision: {
+                common: {
+                    config: genericArgs.provisionConfig,
+                    output: {
+                        host: "127.0.0.1"
+                    }
+                },
+                provider: CLOUDYPAD_PROVIDER_AWS,
+                aws: {
+                    config: provConfig,
+                    output: {
+                        instanceId: "i-0123456789"
+                    }
+                }
+            },
+            version: "1"
+        }
+
+        assert.deepEqual(state, expectState)
         
         awsClientStub.restore()
         pairStub.restore()

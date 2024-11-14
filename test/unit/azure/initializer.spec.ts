@@ -1,29 +1,34 @@
 import * as assert from 'assert';
-import { InstanceInitializationOptions } from '../../../src/core/initializer';
+import { CommonInitConfig, InstanceInitializationOptions } from '../../../src/core/initializer';
 import sinon from 'sinon';
-import { StateUtils } from '../../../src/core/state';
+import { InstanceStateV1, StateUtils } from '../../../src/core/state';
 import { AnsibleClient } from '../../../src/tools/ansible';
-import { AzureInitializerPrompt, AzureInstanceInitializer, AzureProvisionArgsV0 } from '../../../src/providers/azure/initializer';
+import { AzureInitializerPrompt, AzureInstanceInitializer } from '../../../src/providers/azure/initializer';
 import { AzureClient } from '../../../src/tools/azure';
 import { AzurePulumiClient, AzurePulumiOutput } from '../../../src/tools/pulumi/azure';
 import { AzureInstanceRunner } from '../../../src/providers/azure/runner';
+import { AzureProvisionConfigV1 } from '../../../src/providers/azure/state';
+import { CLOUDYPAD_PROVIDER_AZURE } from '../../../src/core/const';
 
 describe('Azure initializer', () => {
 
-    const provArgs: AzureProvisionArgsV0 = {
-        create: {
-            subscriptionId: "1234-5689-0000",
-            vmSize: "Standard_NC8as_T4_v3",
-            diskSize: 200,
-            publicIpType: "static",
-            location: "francecentral",
-            useSpot: true,
-        },
+    const provConfig: AzureProvisionConfigV1 = {
+        subscriptionId: "1234-5689-0000",
+        vmSize: "Standard_NC8as_T4_v3",
+        diskSize: 200,
+        publicIpType: "static",
+        location: "francecentral",
+        useSpot: true,
     }
     
-    const genericArgs = {
+    const genericArgs: CommonInitConfig = {
         instanceName: "azure-dummy",
-        sshKey: "test/resources/ssh-key",
+        provisionConfig: {
+            ssh: {
+                privateKeyPath: "./test/resources/ssh-key",
+                user: "ubuntu"
+            }
+        }
     }
 
     const opts: InstanceInitializationOptions = {
@@ -33,8 +38,8 @@ describe('Azure initializer', () => {
 
     it('should return provided options without prompting for user input', async () => {
         const promt = new AzureInitializerPrompt()
-        const result = await promt.prompt(provArgs)
-        assert.deepEqual(result, provArgs)
+        const result = await promt.prompt(provConfig)
+        assert.deepEqual(result, provConfig)
     })
 
 
@@ -49,23 +54,33 @@ describe('Azure initializer', () => {
         const pairStub = sinon.stub(AzureInstanceRunner.prototype, 'pair').resolves()
         const ansibleStub = sinon.stub(AnsibleClient.prototype, 'runAnsible').resolves()
 
-        await new AzureInstanceInitializer(genericArgs, provArgs).initializeInstance(opts)
+        await new AzureInstanceInitializer(genericArgs, provConfig).initializeInstance(opts)
 
         // Check state has been written
-        const sm = await StateUtils.loadInstanceState(genericArgs.instanceName)
-        const state = sm.get()
+        const state = await StateUtils.loadInstanceState(genericArgs.instanceName)
 
-        assert.equal(state.host, dummyPulumiOutput.publicIp)
-        assert.equal(state.name, genericArgs.instanceName)
-        assert.deepEqual(state.provider?.azure, {
-            vmName: dummyPulumiOutput.vmName,
-            resourceGroupName: dummyPulumiOutput.resourceGroupName,
-            provisionArgs: provArgs
-        })
-        assert.deepEqual(state.ssh, { user: "ubuntu", privateKeyPath: genericArgs.sshKey})
-        assert.equal(state.status.configuration.configured, true)
-        assert.equal(state.status.provision.provisioned, true)
-        assert.equal(state.status.initalized, true)
+        const expectState: InstanceStateV1 = {
+            name: genericArgs.instanceName,
+            provision: {
+                common: {
+                    config: genericArgs.provisionConfig,
+                    output: {
+                        host: "127.0.0.1"
+                    }
+                },
+                provider: CLOUDYPAD_PROVIDER_AZURE,
+                azure: {
+                    config: provConfig,
+                    output: {
+                        resourceGroupName: "dummy-rg",
+                        vmName: "dummy-az"
+                    }
+                }
+            },
+            version: "1"
+        }
+
+        assert.deepEqual(state, expectState)
         
         azureClientStub.restore()
         pairStub.restore()
