@@ -8,7 +8,13 @@ import { AwsProvisioner } from '../providers/aws/provisioner';
 import { AnsibleConfigurator } from '../configurators/ansible';
 import { InstanceConfigurator } from './configurator';
 import { getLogger } from '../log/utils';
-import { CLOUDYPAD_PROVIDER_AWS } from './const';
+import { CLOUDYPAD_PROVIDER_AWS, CLOUDYPAD_PROVIDER_AZURE, CLOUDYPAD_PROVIDER_GCP, CLOUDYPAD_PROVIDER_PAPERSPACE } from './const';
+import { PaperspaceProvisioner } from '../providers/paperspace/provisioner';
+import { AzureProvisioner } from '../providers/azure/provisioner';
+import { GcpProvisioner } from '../providers/gcp/provisioner';
+import { PaperspaceInstanceRunner } from '../providers/paperspace/runner';
+import { AzureInstanceRunner } from '../providers/azure/runner';
+import { GcpInstanceRunner } from '../providers/gcp/runner';
 
 /**
  * Manage an instance. Delegate specifities to sub-manager:
@@ -106,12 +112,38 @@ export class InstanceManager implements InstanceRunner, InstanceProvisioner, Ins
                 awsOutput: this.state.provision.aws.output,
             })
 
-        // } else if (provider === CLOUDYPAD_PROVIDER_PAPERSPACE){
-        //     return new PaperspaceInstanceRunner(this.sm)
-        // } else if (provider === CLOUDYPAD_PROVIDER_AZURE){
-        //     return new AzureInstanceRunner(this.sm)
-        // } else if (provider === CLOUDYPAD_PROVIDER_GCP){
-        //     return new GcpInstanceRunner(this.sm)
+        } else if (provider === CLOUDYPAD_PROVIDER_PAPERSPACE){
+            if(!this.state.provision.paperspace || !this.state.provision.paperspace.output) {
+                throw new Error("Missing Paperspace provision state or output. Was instance fully provisioned ?")
+            }
+            
+            return new PaperspaceInstanceRunner({
+                ...commonRunnerArgs, 
+                pspaceConfig: this.state.provision.paperspace.config,
+                pspaceOutput: this.state.provision.paperspace.output,
+            })
+        } else if (provider === CLOUDYPAD_PROVIDER_AZURE){
+            if(!this.state.provision.azure || !this.state.provision.azure.output) {
+                throw new Error("Missing Azure provision state or output. Was instance fully provisioned ?")
+            }
+            
+            return new AzureInstanceRunner({
+                ...commonRunnerArgs, 
+                azConfig: this.state.provision.azure.config,
+                azOutput: this.state.provision.azure.output,
+            })
+
+        } else if (provider === CLOUDYPAD_PROVIDER_GCP){
+            if(!this.state.provision.gcp || !this.state.provision.gcp.output) {
+                throw new Error("Missing GCP provision state or output. Was instance fully provisioned ?")
+            }
+            
+            return new GcpInstanceRunner({
+                ...commonRunnerArgs, 
+                gcpConfig: this.state.provision.gcp.config,
+                gcpOutput: this.state.provision.gcp.output,
+            })
+
         } else {
             throw new Error(`Unknown provider: ${provider}`)
         }
@@ -136,12 +168,34 @@ export class InstanceManager implements InstanceRunner, InstanceProvisioner, Ins
                 aws: this.state.provision.aws,
             })
 
-        // } else if (provider === CLOUDYPAD_PROVIDER_PAPERSPACE){
-        //     return new PaperspaceProvisioner(this.sm)
-        // } else if (provider === CLOUDYPAD_PROVIDER_AZURE){
-        //     return new AzureProvisioner(this.sm)
-        // } else if (provider === CLOUDYPAD_PROVIDER_GCP){
-        //     return new GcpProvisioner(this.sm)
+        } else if (provider === CLOUDYPAD_PROVIDER_PAPERSPACE){
+            if(!this.state.provision.paperspace) {
+                throw new Error("Missing Paperspace provision state. Was instance fully initialized ?")
+            }
+
+            return new PaperspaceProvisioner({
+                ...commonProvisionerArgs, 
+                pspace: this.state.provision.paperspace,
+            })
+        } else if (provider === CLOUDYPAD_PROVIDER_AZURE){
+            if(!this.state.provision.azure) {
+                throw new Error("Missing Azure provision state. Was instance fully initialized ?")
+            }
+
+            return new AzureProvisioner({
+                ...commonProvisionerArgs, 
+                az: this.state.provision.azure,
+            })
+        } else if (provider === CLOUDYPAD_PROVIDER_GCP){
+            if(!this.state.provision.gcp) {
+                throw new Error("Missing GCP provision state. Was instance fully initialized ?")
+            }
+
+            return new GcpProvisioner({
+                ...commonProvisionerArgs, 
+                gcp: this.state.provision.gcp,
+            })
+
         } else {
             throw new Error(`Unknown provider: ${provider}`)
         }

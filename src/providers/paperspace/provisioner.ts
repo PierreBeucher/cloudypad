@@ -81,6 +81,14 @@ Do you want to proceed?`,
             throw new Error(`Created machine does not have a public IP address. Got: ${JSON.stringify(createdMachine)}`)
         }
 
+        this.pspaceArgs.common.output = {
+            host: createdMachine.publicIp
+        }
+
+        this.pspaceArgs.pspace.output = {
+            machineId: createdMachine.id
+        }
+
     }
 
     async destroy(){

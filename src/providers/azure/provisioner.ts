@@ -8,8 +8,8 @@ import { CommonProvisionStateV1 } from '../../core/state'
 
 export interface AzureProvisionerArgs {
     instanceName: string
-    azState: AzureProvisionStateV1
-    commonState: CommonProvisionStateV1
+    az: AzureProvisionStateV1
+    common: CommonProvisionStateV1
 }
 
 export class AzureProvisioner extends BaseInstanceProvisioner implements InstanceProvisioner {
@@ -38,14 +38,14 @@ export class AzureProvisioner extends BaseInstanceProvisioner implements Instanc
             confirmCreation = await confirm({
                 message: `
 You are about to provision Azure machine with the following details:
-    Azure subscription: ${this.args.azState.config.subscriptionId}
-    Azure location: ${this.args.azState.config.location}
+    Azure subscription: ${this.args.az.config.subscriptionId}
+    Azure location: ${this.args.az.config.location}
     Instance name: ${this.args.instanceName}
-    SSH key: ${this.args.commonState.config.ssh.privateKeyPath}
-    VM Size: ${this.args.azState.config.vmSize}
-    Spot instance: ${this.args.azState.config.useSpot}
-    Public IP Type: ${this.args.azState.config.publicIpType}
-    Disk size: ${this.args.azState.config.diskSize}
+    SSH key: ${this.args.common.config.ssh.privateKeyPath}
+    VM Size: ${this.args.az.config.vmSize}
+    Spot instance: ${this.args.az.config.useSpot}
+    Public IP Type: ${this.args.az.config.publicIpType}
+    Disk size: ${this.args.az.config.diskSize}
     
 Do you want to proceed?`,
                 default: true,
@@ -58,23 +58,23 @@ Do you want to proceed?`,
 
         const pulumiClient = new AzurePulumiClient(this.args.instanceName)
         const pulumiConfig: PulumiStackConfigAzure = {
-            subscriptionId: this.args.azState.config.subscriptionId,
-            location: this.args.azState.config.location,
-            vmSize: this.args.azState.config.vmSize,
-            publicIpType: this.args.azState.config.publicIpType,
-            rootDiskSizeGB: this.args.azState.config.diskSize,
-            publicSshKeyContent: await parseSshPrivateKeyFileToPublic(this.args.commonState.config.ssh.privateKeyPath),
-            useSpot: this.args.azState.config.useSpot,
+            subscriptionId: this.args.az.config.subscriptionId,
+            location: this.args.az.config.location,
+            vmSize: this.args.az.config.vmSize,
+            publicIpType: this.args.az.config.publicIpType,
+            rootDiskSizeGB: this.args.az.config.diskSize,
+            publicSshKeyContent: await parseSshPrivateKeyFileToPublic(this.args.common.config.ssh.privateKeyPath),
+            useSpot: this.args.az.config.useSpot,
         }
 
         await pulumiClient.setConfig(pulumiConfig)
         const pulumiOutputs = await pulumiClient.up()
 
-        this.args.commonState.output = {
+        this.args.common.output = {
             host: pulumiOutputs.publicIp
         }
 
-        this.args.azState.output = {
+        this.args.az.output = {
             resourceGroupName: pulumiOutputs.resourceGroupName,
             vmName: pulumiOutputs.vmName,
         }
@@ -96,7 +96,7 @@ Do you want to proceed?`,
         const pulumiClient = new AzurePulumiClient(this.args.instanceName)
         await pulumiClient.destroy()
 
-        this.args.commonState.output = undefined
-        this.args.azState.output = undefined
+        this.args.common.output = undefined
+        this.args.az.output = undefined
     }
 }
