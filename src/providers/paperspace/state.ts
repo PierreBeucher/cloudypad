@@ -19,6 +19,11 @@ export interface PaperspaceProvisionArgsV0 {
 }
 
 export interface PaperspaceProvisionStateV1 {
+    config: PaperspaceProvisionConfigV1
+    output?: PaperspaceProvisionOutputV1
+}
+
+export interface PaperspaceProvisionOutputV1 {
     machineId: string,
 }
 

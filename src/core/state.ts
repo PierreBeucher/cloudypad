@@ -1,12 +1,12 @@
 import * as fs from 'fs'
 import * as yaml from 'js-yaml'
 import * as path from 'path';
-import { PaperspaceProvisionConfigV1, PaperspaceProviderStateV0, PaperspaceProvisionStateV1 } from '../providers/paperspace/state';
+import { PaperspaceProvisionConfigV1, PaperspaceProviderStateV0, PaperspaceProvisionOutputV1 } from '../providers/paperspace/state';
 import { AwsProvisionConfigV1, AwsProviderStateV0, AwsProvisionOutputV1, AwsProvisionStateV1 } from '../providers/aws/state';
 import { getLogger } from '../log/utils';
 import { CLOUDYPAD_INSTANCES_DIR, CLOUDYPAD_PROVIDER, CLOUDYPAD_PROVIDER_AWS, CLOUDYPAD_PROVIDER_AZURE, CLOUDYPAD_PROVIDER_GCP, CLOUDYPAD_PROVIDER_PAPERSPACE } from './const';
-import { AzureProvisionConfigV1, AzureProviderStateV0, AzureProvisionStateV1 } from '../providers/azure/state';
-import { GcpProviderStateV0, GcpProvisionStateV1, GcpProvisionConfigV1 } from '../providers/gcp/state';
+import { AzureProvisionConfigV1, AzureProviderStateV0, AzureProvisionOutputV1 } from '../providers/azure/state';
+import { GcpProviderStateV0, GcpProvisionOutputV1, GcpProvisionConfigV1 } from '../providers/gcp/state';
 
 /**
  * State utils functions to manage instance state
@@ -87,15 +87,15 @@ async function ensureStateV1(rawState: any): Promise<InstanceStateV1>{
                 config: AwsProvisionConfigV1
             },
             paperspace?: {
-                state?: PaperspaceProvisionStateV1,
+                state?: PaperspaceProvisionOutputV1,
                 config: PaperspaceProvisionConfigV1
             },
             azure?: {
-                state?: AzureProvisionStateV1,
+                state?: AzureProvisionOutputV1,
                 config: AzureProvisionConfigV1
             }
             gcp?: {
-                state?: GcpProvisionStateV1,
+                state?: GcpProvisionOutputV1,
                 config: GcpProvisionConfigV1
             }
         } = {}
@@ -253,15 +253,15 @@ export interface InstanceStateV1 {
         common: CommonProvisionStateV1,
         aws?: AwsProvisionStateV1,
         paperspace?: {
-            state?: PaperspaceProvisionStateV1,
+            state?: PaperspaceProvisionOutputV1,
             config: PaperspaceProvisionConfigV1
         },
         azure?: {
-            state?: AzureProvisionStateV1,
+            state?: AzureProvisionOutputV1,
             config: AzureProvisionConfigV1
         }
         gcp?: {
-            state?: GcpProvisionStateV1,
+            state?: GcpProvisionOutputV1,
             config: GcpProvisionConfigV1
         }
     },

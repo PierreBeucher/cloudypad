@@ -98,7 +98,6 @@ export class InstanceManager implements InstanceRunner, InstanceProvisioner, Ins
     }
 
     async destroy(opts?: InstanceProvisionOptions): Promise<void> {
-        // Remove infrastructure with provisioner
         const provisioner = await this.buildInstanceProvisioner()
         await provisioner.destroy(opts)
         await this.persistState()

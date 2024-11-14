@@ -1,40 +1,31 @@
-import { AbstractInstanceRunner } from '../../core/runner'
-import { StateManagerV0 } from '../../core/state'
+import { AbstractInstanceRunner, AbstractInstanceRunnerArgs } from '../../core/runner'
 import { AzureClient } from '../../tools/azure'
+import { AzureProvisionConfigV1, AzureProvisionOutputV1 } from './state'
+
+export interface AzureInstanceRunnerArgs extends AbstractInstanceRunnerArgs{
+    azConfig: AzureProvisionConfigV1,
+    azOutput: AzureProvisionOutputV1,
+}
 
 export class AzureInstanceRunner extends AbstractInstanceRunner {
 
     private client: AzureClient
 
-    constructor(sm: StateManagerV0) {
-        super(sm)
+    private readonly azArgs: AzureInstanceRunnerArgs
 
-        const state = sm.get()
-        if (!state.provider?.azure?.provisionArgs) {
-            throw new Error(`Invalid state: provider must be Azure, got state ${sm.get()}`)
-        }
+    constructor(args: AzureInstanceRunnerArgs) {
+        super(args)
 
-        this.client = new AzureClient(sm.name(), state.provider.azure.provisionArgs.create.subscriptionId)
-
-
+        this.azArgs = args
+        this.client = new AzureClient(args.instanceName, args.azConfig.subscriptionId)
     }
 
     private getVmName() {
-        const state = this.stateManager.get()
-        if (!state.provider?.azure?.vmName) {
-            throw new Error("Couldn't perform operation: unknown instance ID.")
-        }
-
-        return state.provider.azure.vmName
+        return this.azArgs.azOutput.vmName
     }
 
     private getResourceGroupName(){
-        const state = this.stateManager.get()
-        if (!state.provider?.azure?.resourceGroupName) {
-            throw new Error("Couldn't perform operation: unknown resource group name.")
-        }
-        return state.provider?.azure?.resourceGroupName
-
+        return this.azArgs.azOutput.resourceGroupName
     }
 
     async start() {

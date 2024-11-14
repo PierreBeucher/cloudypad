@@ -17,6 +17,11 @@ export interface GcpProvisionArgsV0 {
 }
 
 export interface GcpProvisionStateV1 {
+    output?: GcpProvisionOutputV1,
+    config: GcpProvisionConfigV1
+}
+
+export interface GcpProvisionOutputV1 {
     instanceName: string,
 }
 

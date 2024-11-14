@@ -95,7 +95,7 @@ export abstract class InstanceInitializer {
         
         console.info(`Initializing instance ${commonConfig.instanceName}`)
 
-        // Create instance directory and ersist state
+        // Create instance directory and persist state
         const instanceDir = StateUtils.getInstanceDir(commonConfig.instanceName)
 
         this.logger.debug(`Initializing ${commonConfig.instanceName}: creating instance dir at ${instanceDir}`)

@@ -16,6 +16,11 @@ export interface AzureProvisionArgsV0 {
 }
 
 export interface AzureProvisionStateV1 {
+    config: AzureProvisionConfigV1
+    output?: AzureProvisionOutputV1
+}
+
+export interface AzureProvisionOutputV1 {
     vmName: string
     resourceGroupName: string
 }

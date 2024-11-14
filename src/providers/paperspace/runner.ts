@@ -1,43 +1,38 @@
-import { AbstractInstanceRunner } from "../../core/runner"
-import { StateManagerV0 } from "../../core/state"
+import { AbstractInstanceRunner, AbstractInstanceRunnerArgs } from "../../core/runner"
 import { PaperspaceClient } from "./client/client"
+import { PaperspaceProvisionConfigV1, PaperspaceProvisionOutputV1 } from "./state"
+
+export interface PaperspaceInstanceRunnerArgs extends AbstractInstanceRunnerArgs {
+    pspaceConfig: PaperspaceProvisionConfigV1,
+    pspaceOutput: PaperspaceProvisionOutputV1,
+}
 
 export class PaperspaceInstanceRunner extends AbstractInstanceRunner {
     
     private client: PaperspaceClient
 
-    private machineId: string
+    private readonly pspaceArgs: PaperspaceInstanceRunnerArgs
+    
+    constructor(pspaceArgs: PaperspaceInstanceRunnerArgs) {
+        super(pspaceArgs)
 
-    constructor(stateManager: StateManagerV0) {
-        super(stateManager)
-
-        const state = stateManager.get()
-
-        if (!state.provider?.paperspace) {
-            throw new Error(`Invalidate state: provider must be Paperspace, got state: ${JSON.stringify(state)}`)
-        }
-
-        if(!state.provider.paperspace.machineId){
-            throw new Error(`CloudyPadInstancePaperspace requires Paperspace instance ID. Got: ${JSON.stringify(state)}`)
-        }
-
-        this.machineId = state.provider.paperspace.machineId
-        this.client = new PaperspaceClient({ name: state.name, apiKey: state.provider.paperspace.apiKey})
+        this.pspaceArgs = pspaceArgs
+        this.client = new PaperspaceClient({ name: this.pspaceArgs.instanceName, apiKey: this.pspaceArgs.pspaceConfig.apiKey})
     }
     
     async start() {
         await super.start()
-        await this.client.startMachine(this.machineId)
+        await this.client.startMachine(this.pspaceArgs.pspaceOutput.machineId)
     }
 
     async stop() {
         await super.stop()
-        await this.client.stopMachine(this.machineId)
+        await this.client.stopMachine(this.pspaceArgs.pspaceOutput.machineId)
     }
 
     async restart() {
         await super.restart()
-        await this.client.restartMachine(this.machineId)
+        await this.client.restartMachine(this.pspaceArgs.pspaceOutput.machineId)
     }
 
 }
