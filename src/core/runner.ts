@@ -46,15 +46,22 @@ export abstract class AbstractInstanceRunner<C extends CommonProvisionConfigV1, 
  
     async start(): Promise<void> {
         this.logger.info(`Starting instance ${this.args.instanceName}`)
+        await this.doStart()
     }
 
     async stop(): Promise<void> {
         this.logger.info(`Stopping instance ${this.args.instanceName}`)
+        await this.doStop()
     }
 
     async restart(): Promise<void> {
         this.logger.info(`Restarting instance ${this.args.instanceName}`)
+        await this.doRestart()
     }
+
+    protected abstract doStart(): Promise<void>;
+    protected abstract doStop(): Promise<void>;
+    protected abstract doRestart(): Promise<void>;
 
     private async waitForPinURL(docker: Docker, host: string) {
         const containerName = 'wolf';

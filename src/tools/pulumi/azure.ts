@@ -232,7 +232,7 @@ export class AzurePulumiClient extends InstancePulumiClient<PulumiStackConfigAzu
         super({ program: azurePulumiProgram, projectName: "CloudyPad-Azure", stackName: stackName})
     }
 
-    async setConfig(config: PulumiStackConfigAzure){
+    async doSetConfig(config: PulumiStackConfigAzure){
         this.logger.debug(`Setting stack ${this.stackName} config: ${JSON.stringify(config)}`)
 
         const stack = await this.getStack()

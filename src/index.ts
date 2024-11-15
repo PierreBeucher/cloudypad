@@ -59,6 +59,8 @@ createCmd
             }
 
             await new AwsInstanceInitializer(args).initializeInstance(opts)
+
+            afterInitInfo()
             
         } catch (error) {
             console.error('Error creating AWS instance:', error)
@@ -100,6 +102,8 @@ createCmd
             }
  
             await new PaperspaceInstanceInitializer(args).initializeInstance(opts)
+
+            afterInitInfo()
             
         } catch (error) {
             console.error('Error creating Paperspace instance:', error)
@@ -148,6 +152,8 @@ createCmd
             }
  
             await new GcpInstanceInitializer(args).initializeInstance(opts)
+
+            afterInitInfo()
             
         } catch (error) {
             console.error('Error creating Google Cloud instance:', error)
@@ -193,6 +199,8 @@ createCmd
             }
  
             await new AzureInstanceInitializer(args).initializeInstance(opts)
+
+            afterInitInfo()
             
         } catch (error) {
             console.error('Error creating Azure instance:', error)
@@ -345,3 +353,12 @@ program.command('pair <name>')
 
 
 program.parse(process.argv);
+
+function afterInitInfo(){
+    console.info("")
+    console.info("Instance has been initialized successfully 🥳")
+    console.info("")
+    console.info("If you like Cloudy Pad please leave us a star ⭐ https://github.com/PierreBeucher/cloudypad")
+    console.info("")
+    console.info("🐛 A bug ? Some feedback ? Do not hesitate to file an issue: https://github.com/PierreBeucher/cloudypad/issues")    
+}

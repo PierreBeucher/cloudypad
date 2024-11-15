@@ -22,7 +22,7 @@ export class AzureInstanceRunner extends AbstractInstanceRunner<AzureProvisionCo
         return this.args.output.resourceGroupName
     }
 
-    async start() {
+    async doStart() {
         await super.start()
         const vmName = this.getVmName()
         const resourceGroupName = this.getResourceGroupName()
@@ -30,7 +30,7 @@ export class AzureInstanceRunner extends AbstractInstanceRunner<AzureProvisionCo
         await this.client.startInstance(resourceGroupName, vmName)
     }
 
-    async stop() {
+    async doStop() {
         await super.stop()
         const vmName = this.getVmName()
         const resourceGroupName = this.getResourceGroupName()
@@ -38,7 +38,7 @@ export class AzureInstanceRunner extends AbstractInstanceRunner<AzureProvisionCo
         await this.client.stopInstance(resourceGroupName, vmName)
     }
 
-    async restart() {
+    async doRestart() {
         await super.restart()
         const vmName = this.getVmName()
         const resourceGroupName = this.getResourceGroupName()

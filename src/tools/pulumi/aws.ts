@@ -296,7 +296,7 @@ export class AwsPulumiClient extends InstancePulumiClient<PulumiStackConfigAws, 
         super({ program: awsPulumiProgram, projectName: "CloudyPad-AWS", stackName: stackName})
     }
 
-    async setConfig(config: PulumiStackConfigAws){
+    async doSetConfig(config: PulumiStackConfigAws){
         this.logger.debug(`Setting stack ${this.stackName} config: ${JSON.stringify(config)}`)
 
         const stack = await this.getStack()

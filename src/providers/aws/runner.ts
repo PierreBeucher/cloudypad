@@ -18,20 +18,17 @@ export class AwsInstanceRunner extends AbstractInstanceRunner<AwsProvisionConfig
         return this.args.output.instanceId
     }
 
-    async start() {
-        await super.start()
+    async doStart() {
         const instanceId = this.getInstanceId()
         await this.awsClient.startInstance(instanceId)
     }
 
-    async stop() {
-        await super.stop()
+    async doStop() {
         const instanceId = this.getInstanceId()
         await this.awsClient.stopInstance(instanceId)
     }
 
-    async restart() {
-        await super.restart()
+    async doRestart() {
         const instanceId = this.getInstanceId()
         await this.awsClient.restartInstance(instanceId)
     }
