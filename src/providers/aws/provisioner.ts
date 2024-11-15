@@ -1,25 +1,21 @@
 import { parseSshPrivateKeyFileToPublic } from '../../tools/ssh';
 import { confirm } from '@inquirer/prompts';
 import { AwsPulumiClient, PulumiStackConfigAws } from '../../tools/pulumi/aws';
-import { BaseInstanceProvisioner, InstanceProvisionerArgs, InstanceProvisionOptions } from '../../core/provisioner';
+import { AbstractInstanceProvisioner, InstanceProvisionerArgs, InstanceProvisionOptions } from '../../core/provisioner';
 import { AwsClient } from '../../tools/aws';
 import { AwsProvisionConfigV1, AwsProvisionOutputV1 } from './state';
 
 export type AwsProvisionerArgs = InstanceProvisionerArgs<AwsProvisionConfigV1, AwsProvisionOutputV1>
 
-export class AwsProvisioner extends BaseInstanceProvisioner<AwsProvisionConfigV1, AwsProvisionOutputV1> {
+export class AwsProvisioner extends AbstractInstanceProvisioner<AwsProvisionConfigV1, AwsProvisionOutputV1> {
 
     constructor(args: AwsProvisionerArgs){
         super(args)
     }
 
-    async provision(opts?: InstanceProvisionOptions): Promise<AwsProvisionOutputV1> {
+    async doProvision(opts?: InstanceProvisionOptions): Promise<AwsProvisionOutputV1> {
 
         this.logger.info(`Provisioning AWS instance ${this.args.instanceName}`)
-
-        if(!opts?.skipAuthCheck){
-            await this.checkAwsAuth(this.args.config.region)
-        }
 
         this.logger.debug(`Provisioning AWS instance with ${JSON.stringify(this.args)}`)
 
@@ -67,7 +63,7 @@ Do you want to proceed?`,
 
     }
 
-    async destroy(){
+    async doDestroy(){
 
         this.logger.info(`Destroying instance: ${this.args.instanceName}`)
 
@@ -87,8 +83,8 @@ Do you want to proceed?`,
         this.args.output = undefined
     }
 
-    async checkAwsAuth(region: string) {
-        const client = new AwsClient(this.args.instanceName, region)
+    async doVerifyConfig() {
+        const client = new AwsClient(this.args.instanceName, this.args.config.region)
         await client.checkAuth()
     }
 }

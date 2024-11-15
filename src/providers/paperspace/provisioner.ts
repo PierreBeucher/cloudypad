@@ -1,29 +1,22 @@
 import { confirm } from '@inquirer/prompts';
-import { BaseInstanceProvisioner, InstanceProvisionerArgs, InstanceProvisionOptions } from '../../core/provisioner';
+import { AbstractInstanceProvisioner, InstanceProvisionerArgs, InstanceProvisionOptions } from '../../core/provisioner';
 import { PaperspaceClient } from './client/client';
 import { MachinesCreateRequest } from './client/generated-api';
 import { PaperspaceProvisionConfigV1, PaperspaceProvisionOutputV1 } from './state';
 
 export type PaperspaceProvisionerArgs = InstanceProvisionerArgs<PaperspaceProvisionConfigV1, PaperspaceProvisionOutputV1>
 
-export class PaperspaceProvisioner extends BaseInstanceProvisioner<PaperspaceProvisionConfigV1, PaperspaceProvisionOutputV1> {
+export class PaperspaceProvisioner extends AbstractInstanceProvisioner<PaperspaceProvisionConfigV1, PaperspaceProvisionOutputV1> {
+
+    readonly client: PaperspaceClient
 
     constructor(args: PaperspaceProvisionerArgs) {
         super(args)
-    }
-    private async buildPaperspaceClient(){
-        return new PaperspaceClient({ name: this.args.instanceName, apiKey: this.args.config.apiKey });
+        this.client = new PaperspaceClient({ name: this.args.instanceName, apiKey: this.args.config.apiKey })
     }
 
-    async provision(opts?: InstanceProvisionOptions) {
+    async doProvision(opts?: InstanceProvisionOptions) {
 
-        const client = await this.buildPaperspaceClient()
-
-        if(!opts?.skipAuthCheck){
-            const authResult = await client.checkAuth()
-            this.logger.info(`Paperspace authenticated as ${authResult.user.email} (team: ${authResult.team.id})`)
-        }
-        
         let confirmCreation: boolean
         if(opts?.autoApprove !== undefined){
             confirmCreation = opts.autoApprove
@@ -62,7 +55,7 @@ Do you want to proceed?`,
 
         this.logger.debug(`Creating Paperspace machine: ${JSON.stringify(createArgs)}`)
 
-        const createdMachine = await client.createMachine(createArgs);
+        const createdMachine = await this.client.createMachine(createArgs);
 
         console.info(`Creating Paperspace machine ${createdMachine.id} named ${createdMachine.name}`)
 
@@ -79,11 +72,9 @@ Do you want to proceed?`,
 
     }
 
-    async destroy(){
+    async doDestroy(){
 
         this.logger.info(`Destroying Paperspace instance ${this.args.instanceName}`)
-
-        const client = await this.buildPaperspaceClient()
 
         const confirmDeletion = await confirm({
             message: `You are about to destroy Paperspace instance ${this.args.instanceName} and any associated public IP (machine ID '${this.args.output?.machineId}'). Please confirm:`,
@@ -95,17 +86,22 @@ Do you want to proceed?`,
         }
 
         if(this.args.output){
-            const machineExists = await client.machineExists(this.args.output?.machineId)
+            const machineExists = await this.client.machineExists(this.args.output?.machineId)
 
             if(!machineExists){
                 this.logger.warn(`Nothing to delete: machine ${this.args.output.machineId} not found. Was it already deleted ?`)
             } else {
-                await client.deleteMachine(this.args.output.machineId, true)
+                await this.client.deleteMachine(this.args.output.machineId, true)
             }
         } else {
             this.logger.warn(`Nothing to delete: no output for instance ${this.args.instanceName}. Was instance fully provisioned ?`)
         }
 
+    }
+
+    protected async doVerifyConfig(): Promise<void> {        
+        const authResult = await this.client.checkAuth()
+        this.logger.info(`Paperspace authenticated as ${authResult.user.email} (team: ${authResult.team.id})`)
     }
 
 

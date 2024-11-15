@@ -1,12 +1,7 @@
 import * as assert from 'assert';
 import { InstanceInitializationOptions } from '../../../src/core/initializer';
-import sinon from 'sinon';
 import { StateUtils } from '../../../src/core/state';
-import { AnsibleClient } from '../../../src/tools/ansible';
 import { GcpInstanceInitializer } from '../../../src/providers/gcp/initializer';
-import { GcpClient } from '../../../src/tools/gcp';
-import { GcpPulumiClient, GcpPulumiOutput } from '../../../src/tools/pulumi/gcp';
-import { GcpInstanceRunner } from '../../../src/providers/gcp/runner';
 import { GcpInstanceStateV1, GcpProvisionConfigV1 } from '../../../src/providers/gcp/state';
 import { CLOUDYPAD_PROVIDER_GCP } from '../../../src/core/const';
 import { DEFAULT_COMMON_CONFIG } from '../common/utils';
@@ -42,15 +37,6 @@ describe('GCP initializer', () => {
 
     it('should initialize instance state with provided arguments', async () => {
 
-        // Stub everything interacting with GCP and VM
-        // We just need to check state written on disk and overall process works
-        const gcpClientStub = sinon.stub(GcpClient.prototype, 'checkAuth').resolves()
-        const dummyPulumiOutput: GcpPulumiOutput = { instanceName: "dummy-gcp", publicIp: "127.0.0.1"}
-        const pulumiClientConfigStub = sinon.stub(GcpPulumiClient.prototype, 'setConfig').resolves()
-        const pulumiClientUpStub = sinon.stub(GcpPulumiClient.prototype, 'up').resolves(dummyPulumiOutput)
-        const pairStub = sinon.stub(GcpInstanceRunner.prototype, 'pair').resolves()
-        const ansibleStub = sinon.stub(AnsibleClient.prototype, 'runAnsible').resolves()
-
         await new GcpInstanceInitializer({ instanceName: instanceName, config: conf}).initializeInstance(opts)
 
         // Check state has been written
@@ -70,13 +56,6 @@ describe('GCP initializer', () => {
         }
         
         assert.deepEqual(state, expectState)
-
-        gcpClientStub.restore()
-        pairStub.restore()
-        pulumiClientConfigStub.restore()
-        pulumiClientUpStub.restore()
-        ansibleStub.restore()
-        
     })
 })
     

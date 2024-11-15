@@ -18,7 +18,7 @@ tasks:
   #
 
   test-unit:
-    cmd: npx mocha --transpile-only ./test/unit/**/*.spec.ts
+    cmd: npx mocha --config test/unit/.mocharc.json ./test/unit/**/*.spec.ts
 
   build-local:
     cmd: docker build -t crafteo/cloudypad:local .

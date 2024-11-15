@@ -1,0 +1,7 @@
+{
+  "extension": ["ts"],
+  "require": [
+    "ts-node/register",
+    "test/unit/hooks.ts"
+  ]
+}

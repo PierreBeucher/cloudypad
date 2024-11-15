@@ -45,9 +45,9 @@ export abstract class InstanceInitializer<C extends CommonProvisionConfigV1, O e
 
         this.logger.debug(`Initializing instance with default config ${JSON.stringify(this.args)}`)
         
-        const genericPromt = new GenericInitializerPrompt()
-        const instanceName = await genericPromt.instanceName(this.args?.instanceName)
-        const sshKey = await genericPromt.privateSshKey(this.args?.config?.ssh?.privateKeyPath)
+        const commonConfPrompt = new CommonConfigPrompt()
+        const instanceName = await commonConfPrompt.instanceName(this.args?.instanceName)
+        const sshKey = await commonConfPrompt.privateSshKey(this.args?.config?.ssh?.privateKeyPath)
         const sshUser = "ubuntu" // Harcoded for now since we only support Ubuntu
 
         return {
@@ -108,15 +108,6 @@ export abstract class InstanceInitializer<C extends CommonProvisionConfigV1, O e
                 output: undefined
             },   
         }
-        
-        console.info(`Initializing instance ${instanceName}`)
-
-        // Create instance directory and persist state
-        const instanceDir = StateUtils.getInstanceDir(instanceName)
-
-        this.logger.debug(`Initializing ${instanceName}: creating instance dir at ${instanceDir}`)
-
-        fs.mkdirSync(instanceDir, { recursive: true })
                 
         const instanceManager = await this.buildInstanceManager(initialState)
 
@@ -146,20 +137,12 @@ export abstract class InstanceInitializer<C extends CommonProvisionConfigV1, O e
         } else {
             this.logger.info(`Initializing ${instanceName}: pairing skipped.}`)
         }
-
-        console.info("")
-        console.info("Instance has been initialized successfully 🥳")
-        console.info("")
-        console.info("If you like Cloudy Pad please leave us a star ⭐ https://github.com/PierreBeucher/cloudypad")
-        console.info("")
-        console.info("🐛 A bug ? Some feedback ? Do not hesitate to file an issue: https://github.com/PierreBeucher/cloudypad/issues")
-        
     }
 }
 
-export class GenericInitializerPrompt {
+export class CommonConfigPrompt {
 
-    private readonly logger = getLogger(GenericInitializerPrompt.name)
+    private readonly logger = getLogger(CommonConfigPrompt.name)
 
     async instanceName(_instanceName?: string): Promise<string> {
         let instanceName: string

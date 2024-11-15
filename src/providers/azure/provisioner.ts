@@ -1,25 +1,21 @@
 import { parseSshPrivateKeyFileToPublic } from '../../tools/ssh'
 import { confirm } from '@inquirer/prompts'
 import { AzurePulumiClient, PulumiStackConfigAzure } from '../../tools/pulumi/azure'
-import { BaseInstanceProvisioner, InstanceProvisionerArgs, InstanceProvisionOptions } from '../../core/provisioner'
+import { AbstractInstanceProvisioner, InstanceProvisionerArgs, InstanceProvisionOptions } from '../../core/provisioner'
 import { AzureClient } from '../../tools/azure'
 import { AzureProvisionConfigV1, AzureProvisionOutputV1 } from './state'
 
 export type AzureProvisionerArgs = InstanceProvisionerArgs<AzureProvisionConfigV1, AzureProvisionOutputV1>
 
-export class AzureProvisioner extends BaseInstanceProvisioner<AzureProvisionConfigV1, AzureProvisionOutputV1> {
+export class AzureProvisioner extends AbstractInstanceProvisioner<AzureProvisionConfigV1, AzureProvisionOutputV1> {
 
     constructor(args: AzureProvisionerArgs) {
         super(args)
     }
 
-    async provision(opts?: InstanceProvisionOptions) {
+    async doProvision(opts?: InstanceProvisionOptions) {
 
         this.logger.info(`Provisioning Azure instance ${this.args.instanceName}`)
-
-        if (!opts?.skipAuthCheck) {
-            await AzureClient.checkAuth()
-        }
 
         this.logger.debug(`Provisioning Azure instance ${JSON.stringify(this.args)}`)
 
@@ -70,7 +66,7 @@ Do you want to proceed?`,
 
     }
 
-    async destroy() {
+    async doDestroy() {
 
         this.logger.info(`Destroying instance: ${this.args.instanceName}`)
 
@@ -88,5 +84,9 @@ Do you want to proceed?`,
 
         this.args.output = undefined
         this.args.output = undefined
+    }
+
+    protected async doVerifyConfig(): Promise<void> {
+        await AzureClient.checkAuth()
     }
 }

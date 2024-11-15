@@ -1,6 +1,4 @@
-import * as fs from 'fs';
-import * as path from 'path';
-import { CLOUDYPAD_INSTANCES_DIR, CLOUDYPAD_PROVIDER_AWS, CLOUDYPAD_PROVIDER_AZURE, CLOUDYPAD_PROVIDER_GCP, CLOUDYPAD_PROVIDER_PAPERSPACE } from './const';
+import { CLOUDYPAD_PROVIDER_AWS, CLOUDYPAD_PROVIDER_AZURE, CLOUDYPAD_PROVIDER_GCP, CLOUDYPAD_PROVIDER_PAPERSPACE } from './const';
 import { getLogger } from '../log/utils';
 import { StateUtils } from './state';
 import { AwsInstanceStateV1 } from '../providers/aws/state';
@@ -25,17 +23,7 @@ export class InstanceManagerBuilder {
     private constructor() {}
 
     static getAllInstances(): string[] {
-        
-        try {
-            this.logger.debug(`Listing all instances from ${CLOUDYPAD_INSTANCES_DIR}`)
-
-            const instanceDir = fs.readdirSync(CLOUDYPAD_INSTANCES_DIR);
-
-            return instanceDir.filter(dir => fs.existsSync(path.join(CLOUDYPAD_INSTANCES_DIR, dir, 'config.yml')));
-        } catch (error) {
-            this.logger.error('Failed to read instances directory:', error);
-            return [];
-        }
+        return StateUtils.listInstances()
     }
 
     /**

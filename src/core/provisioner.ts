@@ -10,6 +10,13 @@ export interface InstanceProvisionOptions  {
  * Provision instances: manage Cloud resources and infrastructure
  */
 export interface InstanceProvisioner<O extends CommonProvisionOutputV1>  {
+
+    /**
+     * Verify local provider config is valid to run other operations.
+     * Throw an exception if config is invalid. 
+     */
+    verifyConfig(): Promise<void>
+
     /**
      * Provision the instance: create and update infrastructure and Cloud resources. 
      * @param opts 
@@ -30,7 +37,7 @@ export interface InstanceProvisionerArgs<C extends CommonProvisionConfigV1, O ex
     output?: O
 }
 
-export abstract class BaseInstanceProvisioner<C extends CommonProvisionConfigV1, O extends CommonProvisionOutputV1> implements InstanceProvisioner<O> {
+export abstract class AbstractInstanceProvisioner<C extends CommonProvisionConfigV1, O extends CommonProvisionOutputV1> implements InstanceProvisioner<O> {
     
     protected logger: Logger
     protected args: InstanceProvisionerArgs<C, O>
@@ -39,8 +46,29 @@ export abstract class BaseInstanceProvisioner<C extends CommonProvisionConfigV1,
         this.logger = getLogger(args.instanceName)
         this.args = args
     }
-    
-    abstract provision(opts?: InstanceProvisionOptions): Promise<O>
 
-    abstract destroy(opts?: InstanceProvisionOptions): Promise<void> 
+    async verifyConfig(): Promise<void> {
+        this.logger.info(`Verifying configuration for instance ${this.args.instanceName}`);
+        await this.doVerifyConfig();
+    }
+
+    async provision(opts?: InstanceProvisionOptions): Promise<O> {
+        this.logger.info(`Provisioning instance ${this.args.instanceName}`);
+
+        if(!opts?.skipAuthCheck){
+            await this.verifyConfig()
+        }
+
+        return await this.doProvision(opts);
+    }
+
+    async destroy(opts?: InstanceProvisionOptions): Promise<void> {
+        this.logger.info(`Destroying instance ${this.args.instanceName}`);
+        await this.doDestroy(opts);
+    }
+
+    protected abstract doVerifyConfig(): Promise<void>;
+    protected abstract doProvision(opts?: InstanceProvisionOptions): Promise<O>;
+    protected abstract doDestroy(opts?: InstanceProvisionOptions): Promise<void>;
+
 }

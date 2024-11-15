@@ -1,5 +1,3 @@
-import * as fs from 'fs';
-import * as yaml from 'js-yaml'
 import { CommonProvisionConfigV1, CommonProvisionOutputV1, InstanceStateV1, StateUtils } from './state';
 import { InstanceProvisioner, InstanceProvisionOptions } from './provisioner';
 import { AnsibleConfigurator } from '../configurators/ansible';
@@ -72,13 +70,7 @@ export abstract class AbstractInstanceManager<C extends CommonProvisionConfigV1,
         const provisioner = await this.buildInstanceProvisioner()
         await provisioner.destroy(opts)
         await this.persistState()
-
-        // Remove state on disk
-        const confDir = StateUtils.getInstanceDir(this.state.name)
-
-        this.logger.debug(`Removing instance config directory ${this.state.name}: '${confDir}'`)
-
-        fs.rmSync(confDir, { recursive: true })
+        await StateUtils.removeInstanceDir(this.state.name)
     }
 
     async start(): Promise<void> {
@@ -136,12 +128,7 @@ export abstract class AbstractInstanceManager<C extends CommonProvisionConfigV1,
      * This function is called after every action where eventual state update occured. 
      */
     async persistState(){
-    
-        const confPath = StateUtils.getInstanceConfigPath(this.state.name)
-
-        this.logger.debug(`Persisting state for ${this.state.name} at ${confPath}`)
-
-        fs.writeFileSync(confPath, yaml.dump(this.state), 'utf-8')
+        StateUtils.persistState(this.state)
     }
 
     public getStateJSON(){

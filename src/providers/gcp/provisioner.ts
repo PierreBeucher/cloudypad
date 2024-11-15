@@ -1,24 +1,24 @@
 import { parseSshPrivateKeyFileToPublic } from '../../tools/ssh';
 import { confirm } from '@inquirer/prompts';
-import { BaseInstanceProvisioner, InstanceProvisionerArgs, InstanceProvisionOptions } from '../../core/provisioner';
+import { AbstractInstanceProvisioner, InstanceProvisionerArgs, InstanceProvisionOptions } from '../../core/provisioner';
 import { GcpPulumiClient, PulumiStackConfigGcp } from '../../tools/pulumi/gcp';
 import { GcpClient } from '../../tools/gcp';
 import { GcpProvisionConfigV1, GcpProvisionOutputV1} from './state';
 
 export type GcpProvisionerArgs = InstanceProvisionerArgs<GcpProvisionConfigV1, GcpProvisionOutputV1>
 
-export class GcpProvisioner extends BaseInstanceProvisioner<GcpProvisionConfigV1, GcpProvisionOutputV1> {
+export class GcpProvisioner extends AbstractInstanceProvisioner<GcpProvisionConfigV1, GcpProvisionOutputV1> {
 
     constructor(args: GcpProvisionerArgs) {
         super(args)
     }
 
-    async provision(opts?: InstanceProvisionOptions) {
+    async doProvision(opts?: InstanceProvisionOptions) {
 
         this.logger.info(`Provisioning Google Cloud instance ${this.args.instanceName}`)
 
         if(!opts?.skipAuthCheck){
-            await this.checkGcpAuth(this.args.config.projectId)
+            await this.verifyConfig()
         }
 
         this.logger.debug(`Provisioning Google Cloud instance with ${JSON.stringify(this.args.config)}`)
@@ -73,7 +73,7 @@ Do you want to proceed?`,
 
     }
 
-    async destroy(){
+    async doDestroy(){
 
         this.logger.info(`Destroying instance: ${this.args.instanceName}`)
 
@@ -92,8 +92,8 @@ Do you want to proceed?`,
         this.args.output = undefined
     }
 
-    private async checkGcpAuth(projectId: string) {
-        const client = new GcpClient(this.args.instanceName, projectId)
+    async doVerifyConfig() {
+        const client = new GcpClient(this.args.instanceName, this.args.config.projectId)
         await client.checkAuth()
     }
 }

@@ -1,9 +1,5 @@
 import * as assert from 'assert';
 import { PaperspaceInstanceInitializer } from "../../../src/providers/paperspace/initializer"
-import sinon from 'sinon';
-import { PaperspaceAuthResponse, PaperspaceClient, PaperspaceMachine } from '../../../src/providers/paperspace/client/client';
-import { PaperspaceInstanceRunner } from '../../../src/providers/paperspace/runner';
-import { AnsibleClient } from '../../../src/tools/ansible';
 import { StateUtils } from '../../../src/core/state';
 import { InstanceInitializationOptions } from '../../../src/core/initializer';
 import { PaperspaceInstanceStateV1, PaperspaceProvisionConfigV1 } from '../../../src/providers/paperspace/state';
@@ -38,32 +34,6 @@ describe('PaperspaceInitializerPrompt', () => {
 
     it('should initialize instance state with provided arguments', async () => {
 
-        // Stub everything interacting with GCP and VM
-        // We just need to check state written on disk and overall process works
-        const dummyMachine: PaperspaceMachine = {
-            id: "machine-123456788",
-            name: "test-machine",
-            state: "running",
-            machineType: "RTX4000",
-            privateIp: "192.168.0.10",
-            publicIp: "127.0.0.1",
-            publicIpType: "static"
-        }
-        const dummyAuthResp: PaperspaceAuthResponse = {
-            user: {
-                email: "dummypspace@foo.bar",
-                id: "userxxxx"
-            },
-            team: {
-                namespace: "ns",
-                id: "teamzzzz"
-            }
-        }
-        const pspaceClientCheckAuthStub = sinon.stub(PaperspaceClient.prototype, 'checkAuth').resolves(dummyAuthResp)
-        const pspaceClientCreateMachineStub = sinon.stub(PaperspaceClient.prototype, 'createMachine').resolves(dummyMachine)
-        const pairStub = sinon.stub(PaperspaceInstanceRunner.prototype, 'pair').resolves()
-        const ansibleStub = sinon.stub(AnsibleClient.prototype, 'runAnsible').resolves()
-
         await new PaperspaceInstanceInitializer({ instanceName: instanceName, config: conf}).initializeInstance(opts)
 
         // Check state has been written
@@ -83,11 +53,6 @@ describe('PaperspaceInitializerPrompt', () => {
         }
 
         assert.deepEqual(state, expectState)
-
-        pspaceClientCheckAuthStub.restore()
-        pspaceClientCreateMachineStub.restore()
-        pairStub.restore()
-        ansibleStub.restore()
         
     })
 })
