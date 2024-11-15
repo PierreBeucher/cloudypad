@@ -1,20 +1,37 @@
 import * as fs from 'fs';
 import * as yaml from 'js-yaml'
-import { InstanceStateV1, StateUtils } from './state';
-import { AbstractInstanceRunnerArgs, InstanceRunner } from './runner';
-import { AwsInstanceRunner } from '../providers/aws/runner';
+import { CommonProvisionConfigV1, CommonProvisionOutputV1, InstanceStateV1, StateUtils } from './state';
 import { InstanceProvisioner, InstanceProvisionOptions } from './provisioner';
-import { AwsProvisioner } from '../providers/aws/provisioner';
 import { AnsibleConfigurator } from '../configurators/ansible';
 import { InstanceConfigurator } from './configurator';
 import { getLogger } from '../log/utils';
-import { CLOUDYPAD_PROVIDER_AWS, CLOUDYPAD_PROVIDER_AZURE, CLOUDYPAD_PROVIDER_GCP, CLOUDYPAD_PROVIDER_PAPERSPACE } from './const';
-import { PaperspaceProvisioner } from '../providers/paperspace/provisioner';
-import { AzureProvisioner } from '../providers/azure/provisioner';
-import { GcpProvisioner } from '../providers/gcp/provisioner';
-import { PaperspaceInstanceRunner } from '../providers/paperspace/runner';
-import { AzureInstanceRunner } from '../providers/azure/runner';
-import { GcpInstanceRunner } from '../providers/gcp/runner';
+import { InstanceRunner } from './runner';
+
+/**
+ * Expose main functions to manage an instance lifecycle: init/provision/configure/destroy and start/stop/restart
+ * 
+ * Ressemble underlying Instance Runner, Provisioner and Configurator except it hides Config and Output type complexity.
+ */
+export interface InstanceManager { 
+
+    provision(opts?: InstanceProvisionOptions): Promise<void>
+    destroy(opts?: InstanceProvisionOptions): Promise<void>
+
+    configure(): Promise<void>
+
+    start(): Promise<void>
+    stop(): Promise<void>
+    restart(): Promise<void>
+    
+    pair(): Promise<void>
+
+    persistState(): Promise<void>
+
+    /**
+     * Get a raw JSON representation of instance state
+     */
+    getStateJSON(): string
+}
 
 /**
  * Manage an instance. Delegate specifities to sub-manager:
@@ -22,19 +39,15 @@ import { GcpInstanceRunner } from '../providers/gcp/runner';
  * - InstanceProvisioner to manage Cloud resources
  * - InstanceConfigurator to manage instance OS and system packages
  * 
- * Also manages state update and persistence on disk. 
+ * Also manages instance state update and persistence on disk. After each operation where instance state
+ * potentially change, it is persisted on disk. 
  */
-export class InstanceManager implements InstanceRunner, InstanceProvisioner, InstanceConfigurator {
-
-    static async get(instanceName: string){
-        const state = await StateUtils.loadInstanceState(instanceName)
-        return new InstanceManager(state)
-    }
+export abstract class AbstractInstanceManager<C extends CommonProvisionConfigV1, O extends CommonProvisionOutputV1> implements InstanceManager {
 
     protected readonly logger
-    private readonly state: InstanceStateV1
+    protected readonly state: InstanceStateV1<C, O>
 
-    constructor(state: InstanceStateV1){
+    constructor(state: InstanceStateV1<C, O>){
         this.state = state
         this.logger = getLogger(state.name)
     }
@@ -45,13 +58,17 @@ export class InstanceManager implements InstanceRunner, InstanceProvisioner, Ins
         await this.persistState()
     }
 
-    async provision(opts?: InstanceProvisionOptions): Promise<void> {
+    async provision(opts?: InstanceProvisionOptions) {
         const provisioner = await this.buildInstanceProvisioner()
-        await provisioner.provision(opts)
+
+        // Provision and update output
+        const output = await provisioner.provision(opts)
+        this.state.provision.output = output
+        
         await this.persistState()
     }
 
-    async destroy(opts?: InstanceProvisionOptions): Promise<void> {
+    async destroy(opts?: InstanceProvisionOptions) {
         const provisioner = await this.buildInstanceProvisioner()
         await provisioner.destroy(opts)
         await this.persistState()
@@ -88,135 +105,30 @@ export class InstanceManager implements InstanceRunner, InstanceProvisioner, Ins
         await this.persistState()
     }
     
-    private async buildInstanceRunner(): Promise<InstanceRunner>{
-        const provider = this.getCurrentProviderName()
-
-        if(!this.state.provision.common.output) {
-            throw new Error("Missing common state. Was instance fully initialized ?")
+    protected buildInstanceRunner(): Promise<InstanceRunner> {
+        if(!this.state.provision.output){
+            throw new Error(`Can't build Instance Runner for ${this.state.name}: no provision output in state. Was instance fully provisioned ?`)
         }
 
-        const commonRunnerArgs: AbstractInstanceRunnerArgs = {
-            instanceName: this.state.name,
-            commonConfig: this.state.provision.common.config,
-            commonOutput: this.state.provision.common.output,
-        }
-
-        if(provider === CLOUDYPAD_PROVIDER_AWS){
-            if(!this.state.provision.aws || !this.state.provision.aws.output) {
-                throw new Error("Missing AWS provision state or output. Was instance fully provisioned ?")
-            }
-
-            return new AwsInstanceRunner({
-                ...commonRunnerArgs,
-                awsConfig: this.state.provision.aws.config,
-                awsOutput: this.state.provision.aws.output,
-            })
-
-        } else if (provider === CLOUDYPAD_PROVIDER_PAPERSPACE){
-            if(!this.state.provision.paperspace || !this.state.provision.paperspace.output) {
-                throw new Error("Missing Paperspace provision state or output. Was instance fully provisioned ?")
-            }
-            
-            return new PaperspaceInstanceRunner({
-                ...commonRunnerArgs, 
-                pspaceConfig: this.state.provision.paperspace.config,
-                pspaceOutput: this.state.provision.paperspace.output,
-            })
-        } else if (provider === CLOUDYPAD_PROVIDER_AZURE){
-            if(!this.state.provision.azure || !this.state.provision.azure.output) {
-                throw new Error("Missing Azure provision state or output. Was instance fully provisioned ?")
-            }
-            
-            return new AzureInstanceRunner({
-                ...commonRunnerArgs, 
-                azConfig: this.state.provision.azure.config,
-                azOutput: this.state.provision.azure.output,
-            })
-
-        } else if (provider === CLOUDYPAD_PROVIDER_GCP){
-            if(!this.state.provision.gcp || !this.state.provision.gcp.output) {
-                throw new Error("Missing GCP provision state or output. Was instance fully provisioned ?")
-            }
-            
-            return new GcpInstanceRunner({
-                ...commonRunnerArgs, 
-                gcpConfig: this.state.provision.gcp.config,
-                gcpOutput: this.state.provision.gcp.output,
-            })
-
-        } else {
-            throw new Error(`Unknown provider: ${provider}`)
-        }
+        return this.doBuildInstanceRunnerWith(this.state.provision.output)
     }
     
-    private async buildInstanceProvisioner(): Promise<InstanceProvisioner> {
-        const provider = this.getCurrentProviderName()
+    protected abstract doBuildInstanceRunnerWith(output: O): Promise<InstanceRunner>
 
-        const commonProvisionerArgs = {
-            instanceName: this.state.name,
-            common: this.state.provision.common,
-        }
+    protected abstract buildInstanceProvisioner(): Promise<InstanceProvisioner<O>>
 
-        if(provider === CLOUDYPAD_PROVIDER_AWS){
-
-            if(!this.state.provision.aws) {
-                throw new Error("Missing AWS provision state. Was instance fully initialized ?")
-            }
-
-            return new AwsProvisioner({
-                ...commonProvisionerArgs, 
-                aws: this.state.provision.aws,
-            })
-
-        } else if (provider === CLOUDYPAD_PROVIDER_PAPERSPACE){
-            if(!this.state.provision.paperspace) {
-                throw new Error("Missing Paperspace provision state. Was instance fully initialized ?")
-            }
-
-            return new PaperspaceProvisioner({
-                ...commonProvisionerArgs, 
-                pspace: this.state.provision.paperspace,
-            })
-        } else if (provider === CLOUDYPAD_PROVIDER_AZURE){
-            if(!this.state.provision.azure) {
-                throw new Error("Missing Azure provision state. Was instance fully initialized ?")
-            }
-
-            return new AzureProvisioner({
-                ...commonProvisionerArgs, 
-                az: this.state.provision.azure,
-            })
-        } else if (provider === CLOUDYPAD_PROVIDER_GCP){
-            if(!this.state.provision.gcp) {
-                throw new Error("Missing GCP provision state. Was instance fully initialized ?")
-            }
-
-            return new GcpProvisioner({
-                ...commonProvisionerArgs, 
-                gcp: this.state.provision.gcp,
-            })
-
-        } else {
-            throw new Error(`Unknown provider: ${provider}`)
-        }
-    }
-    
     private async buildInstanceConfigurator(): Promise<InstanceConfigurator> {
 
-        if(!this.state.provision.common.output) {
+        if(!this.state.provision.output) {
             throw new Error("Missing common provision output. Was instance fully initialized ?")
         }
 
         return new AnsibleConfigurator({
             instanceName: this.state.name,
-            commonConfig: this.state.provision.common.config,
-            commonOutput: this.state.provision.common.output,
+            commonConfig: this.state.provision.config,
+            commonOutput: this.state.provision.output,
             additionalAnsibleArgs: ['-e', '\'ansible_ssh_common_args="-o StrictHostKeyChecking=no"\''] //TODO only on first run
         })
-    }
-
-    private getCurrentProviderName(): string {
-        return this.state.provision.provider
     }
 
     /**
@@ -232,7 +144,7 @@ export class InstanceManager implements InstanceRunner, InstanceProvisioner, Ins
         fs.writeFileSync(confPath, yaml.dump(this.state), 'utf-8')
     }
 
-    public getState(){
-        return this.state
+    public getStateJSON(){
+        return JSON.stringify(this.state, null, 2)
     }
 }

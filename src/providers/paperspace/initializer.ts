@@ -1,56 +1,34 @@
 import { select, input, password } from '@inquirer/prompts';
-import { PartialDeep } from 'type-fest';
 import { fetchApiKeyFromEnvironment } from './client/client';
-import { getLogger } from '../../log/utils';
-import { InstanceInitializer, CommonInitConfig } from '../../core/initializer';
-import { InstanceStateV1 } from '../../core/state';
-import { PaperspaceProvisionConfigV1 } from './state';
+import { InstanceInitializer, InstanceInitArgs } from '../../core/initializer';
+import { CommonProvisionConfigV1 } from '../../core/state';
+import { PaperspaceInstanceStateV1, PaperspaceProvisionConfigV1, PaperspaceProvisionOutputV1 } from './state';
+import { InstanceManager } from '../../core/manager';
+import { PaperspaceInstanceManager } from './manager';
 import { CLOUDYPAD_PROVIDER_PAPERSPACE } from '../../core/const';
 
-export class PaperspaceInstanceInitializer extends InstanceInitializer {
+export type PaperspaceInstanceInitArgs = InstanceInitArgs<PaperspaceProvisionConfigV1>
 
-    private readonly defaultPaperspaceConfig: PartialDeep<PaperspaceProvisionConfigV1>
+export class PaperspaceInstanceInitializer extends InstanceInitializer<PaperspaceProvisionConfigV1, PaperspaceProvisionOutputV1> {
 
-    constructor(defaultCommonConfig?: PartialDeep<CommonInitConfig>, defaultPaperspaceConfig?: PartialDeep<PaperspaceProvisionConfigV1>){
-        super(defaultCommonConfig)
-        this.defaultPaperspaceConfig = defaultPaperspaceConfig ?? {}
+    constructor(args: PaperspaceInstanceInitArgs){
+        super(CLOUDYPAD_PROVIDER_PAPERSPACE, args)
     }
 
-    protected async promptProviderConfig(commonConfig: CommonInitConfig): Promise<InstanceStateV1> {
-        const pspaceConfig = await new PaperspaceInitializerPrompt().prompt(this.defaultPaperspaceConfig)
-
-        return {
-            name: commonConfig.instanceName,
-            version: "1",
-            provision: {
-                provider: CLOUDYPAD_PROVIDER_PAPERSPACE,
-                common: {
-                    config: {
-                        ssh: commonConfig.provisionConfig.ssh,
-                    }
-                },
-                paperspace: {
-                    config: pspaceConfig
-                }
-            }
-        }
+    protected async buildInstanceManager(state: PaperspaceInstanceStateV1): Promise<InstanceManager> {
+        return new PaperspaceInstanceManager(state)
     }
-    
-}
 
-export class PaperspaceInitializerPrompt {
-    
-    protected readonly logger = getLogger(PaperspaceInitializerPrompt.name)
-
-    async prompt(opts?: PartialDeep<PaperspaceProvisionConfigV1>) : Promise<PaperspaceProvisionConfigV1> {
+    async promptProviderConfig(commonConfig: CommonProvisionConfigV1): Promise<PaperspaceProvisionConfigV1> {
         
-        const apiKey = await this.apiKey(opts?.apiKey)
-        const machineType = await this.machineType(opts?.machineType);
-        const diskSize = await this.diskSize(opts?.diskSize);
-        const publicIpType = await this.publicIpType(opts?.publicIpType);
-        const region = await this.region(opts?.region);
+        const apiKey = await this.apiKey(this.args.config.apiKey)
+        const machineType = await this.machineType(this.args.config.machineType);
+        const diskSize = await this.diskSize(this.args.config.diskSize);
+        const publicIpType = await this.publicIpType(this.args.config.publicIpType);
+        const region = await this.region(this.args.config.region);
         
-        return {
+        const pspaceConf: PaperspaceProvisionConfigV1 = {
+            ...commonConfig,
             apiKey: apiKey,
             diskSize: diskSize,
             machineType: machineType,
@@ -58,6 +36,7 @@ export class PaperspaceInitializerPrompt {
             region: region
         }
 
+        return pspaceConf
     }
 
     protected async machineType(machineType?: string): Promise<string> {

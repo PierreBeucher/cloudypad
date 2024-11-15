@@ -1,34 +1,24 @@
 import { parseSshPrivateKeyFileToPublic } from '../../tools/ssh';
 import { confirm } from '@inquirer/prompts';
 import { AwsPulumiClient, PulumiStackConfigAws } from '../../tools/pulumi/aws';
-import { BaseInstanceProvisioner, InstanceProvisioner, InstanceProvisionOptions } from '../../core/provisioner';
+import { BaseInstanceProvisioner, InstanceProvisionerArgs, InstanceProvisionOptions } from '../../core/provisioner';
 import { AwsClient } from '../../tools/aws';
-import { AwsProvisionStateV1 } from './state';
-import { CommonProvisionStateV1 } from '../../core/state';
+import { AwsProvisionConfigV1, AwsProvisionOutputV1 } from './state';
 
-export interface AwsProvisionerArgs {
-    instanceName: string
-    common: CommonProvisionStateV1
-    aws: AwsProvisionStateV1
-}
+export type AwsProvisionerArgs = InstanceProvisionerArgs<AwsProvisionConfigV1, AwsProvisionOutputV1>
 
-export class AwsProvisioner extends BaseInstanceProvisioner implements InstanceProvisioner {
-
-    private readonly args: AwsProvisionerArgs
+export class AwsProvisioner extends BaseInstanceProvisioner<AwsProvisionConfigV1, AwsProvisionOutputV1> {
 
     constructor(args: AwsProvisionerArgs){
-        super({ instanceName: args.instanceName})
-        this.args = args
+        super(args)
     }
 
-    async provision(opts?: InstanceProvisionOptions) {
+    async provision(opts?: InstanceProvisionOptions): Promise<AwsProvisionOutputV1> {
 
         this.logger.info(`Provisioning AWS instance ${this.args.instanceName}`)
 
-        const awsConfig = this.args.aws.config
-
         if(!opts?.skipAuthCheck){
-            await this.checkAwsAuth(awsConfig.region)
+            await this.checkAwsAuth(this.args.config.region)
         }
 
         this.logger.debug(`Provisioning AWS instance with ${JSON.stringify(this.args)}`)
@@ -41,12 +31,12 @@ export class AwsProvisioner extends BaseInstanceProvisioner implements InstanceP
                 message: `
 You are about to provision AWS machine with the following details:
     Instance name: ${this.args.instanceName}
-    Spot instance: ${awsConfig.useSpot}
-    SSH key: ${this.args.common.config.ssh.privateKeyPath}
-    AWS Region: ${awsConfig.region}
-    Instance Type: ${awsConfig.instanceType}
-    Public IP Type: ${awsConfig.publicIpType}
-    Disk size: ${awsConfig.diskSize}
+    Spot instance: ${this.args.config.useSpot}
+    SSH key: ${this.args.config.ssh.privateKeyPath}
+    AWS Region: ${this.args.config.region}
+    Instance Type: ${this.args.config.instanceType}
+    Public IP Type: ${this.args.config.publicIpType}
+    Disk size: ${this.args.config.diskSize}
     
 Do you want to proceed?`,
                 default: true,
@@ -59,24 +49,22 @@ Do you want to proceed?`,
 
         const pulumiClient = new AwsPulumiClient(this.args.instanceName)
         const pulumiConfig: PulumiStackConfigAws = {
-            instanceType: awsConfig.instanceType,
-            publicIpType: awsConfig.publicIpType,
-            region: awsConfig.region,
-            rootVolumeSizeGB: awsConfig.diskSize,
-            publicSshKeyContent: await parseSshPrivateKeyFileToPublic(this.args.common.config.ssh.privateKeyPath),
-            useSpot: awsConfig.useSpot,
+            instanceType: this.args.config.instanceType,
+            publicIpType: this.args.config.publicIpType,
+            region: this.args.config.region,
+            rootVolumeSizeGB: this.args.config.diskSize,
+            publicSshKeyContent: await parseSshPrivateKeyFileToPublic(this.args.config.ssh.privateKeyPath),
+            useSpot: this.args.config.useSpot,
         }
 
         await pulumiClient.setConfig(pulumiConfig)
         const pulumiOutputs = await pulumiClient.up()
 
-        this.args.aws.output = {
+        return {
+            host: pulumiOutputs.publicIp,
             instanceId: pulumiOutputs.instanceId
         }
 
-        this.args.common.output = {
-            host: pulumiOutputs.publicIp
-        }
     }
 
     async destroy(){
@@ -95,8 +83,8 @@ Do you want to proceed?`,
         const pulumiClient = new AwsPulumiClient(this.args.instanceName)
         await pulumiClient.destroy()
 
-        this.args.aws.output = undefined
-        this.args.common.output = undefined
+        this.args.output = undefined
+        this.args.output = undefined
     }
 
     async checkAwsAuth(region: string) {

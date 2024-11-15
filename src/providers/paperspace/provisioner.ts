@@ -1,27 +1,18 @@
 import { confirm } from '@inquirer/prompts';
-import { BaseInstanceProvisioner, InstanceProvisioner, InstanceProvisionOptions } from '../../core/provisioner';
+import { BaseInstanceProvisioner, InstanceProvisionerArgs, InstanceProvisionOptions } from '../../core/provisioner';
 import { PaperspaceClient } from './client/client';
 import { MachinesCreateRequest } from './client/generated-api';
-import { PaperspaceProvisionStateV1 } from './state';
-import { CommonProvisionStateV1 } from '../../core/state';
+import { PaperspaceProvisionConfigV1, PaperspaceProvisionOutputV1 } from './state';
 
-export interface PaperspaceProvisionerArgs {
-    instanceName: string
-    common: CommonProvisionStateV1
-    pspace: PaperspaceProvisionStateV1
-}
+export type PaperspaceProvisionerArgs = InstanceProvisionerArgs<PaperspaceProvisionConfigV1, PaperspaceProvisionOutputV1>
 
-export class PaperspaceProvisioner extends BaseInstanceProvisioner implements InstanceProvisioner {
-    
-    private readonly pspaceArgs: PaperspaceProvisionerArgs
+export class PaperspaceProvisioner extends BaseInstanceProvisioner<PaperspaceProvisionConfigV1, PaperspaceProvisionOutputV1> {
 
-    constructor(pspaceArgs: PaperspaceProvisionerArgs){
-        super(pspaceArgs)
-        this.pspaceArgs = pspaceArgs
+    constructor(args: PaperspaceProvisionerArgs) {
+        super(args)
     }
-
     private async buildPaperspaceClient(){
-        return new PaperspaceClient({ name: this.pspaceArgs.instanceName, apiKey: this.pspaceArgs.pspace.config.apiKey });
+        return new PaperspaceClient({ name: this.args.instanceName, apiKey: this.args.config.apiKey });
     }
 
     async provision(opts?: InstanceProvisionOptions) {
@@ -40,12 +31,12 @@ export class PaperspaceProvisioner extends BaseInstanceProvisioner implements In
             confirmCreation = await confirm({
                 message: `
 You are about to provision Paperspace instance with the following details:
-    Instance name: ${this.pspaceArgs.instanceName}
-    SSH key: ${this.pspaceArgs.common.config.ssh.privateKeyPath}
-    Region: ${this.pspaceArgs.pspace.config.region}
-    Machine Type: ${this.pspaceArgs.pspace.config.machineType}
-    Disk Size: ${this.pspaceArgs.pspace.config.diskSize} GB
-    Public IP Type: ${this.pspaceArgs.pspace.config.publicIpType}
+    Instance name: ${this.args.instanceName}
+    SSH key: ${this.args.config.ssh.privateKeyPath}
+    Region: ${this.args.config.region}
+    Machine Type: ${this.args.config.machineType}
+    Disk Size: ${this.args.config.diskSize} GB
+    Public IP Type: ${this.args.config.publicIpType}
 Do you want to proceed?`,
                 default: true,
             })
@@ -56,11 +47,11 @@ Do you want to proceed?`,
         }
 
         const createArgs: MachinesCreateRequest = {
-            name: this.pspaceArgs.instanceName,
-            region: this.pspaceArgs.pspace.config.region,
-            machineType: this.pspaceArgs.pspace.config.machineType,
-            diskSize: this.pspaceArgs.pspace.config.diskSize,
-            publicIpType: this.pspaceArgs.pspace.config.publicIpType,
+            name: this.args.instanceName,
+            region: this.args.config.region,
+            machineType: this.args.config.machineType,
+            diskSize: this.args.config.diskSize,
+            publicIpType: this.args.config.publicIpType,
             startOnCreate: true,
 
             // TODO Always create an Ubuntu 22.04 based on public template "t0nspur5"
@@ -81,11 +72,8 @@ Do you want to proceed?`,
             throw new Error(`Created machine does not have a public IP address. Got: ${JSON.stringify(createdMachine)}`)
         }
 
-        this.pspaceArgs.common.output = {
-            host: createdMachine.publicIp
-        }
-
-        this.pspaceArgs.pspace.output = {
+        return {
+            host: createdMachine.publicIp,
             machineId: createdMachine.id
         }
 
@@ -93,12 +81,12 @@ Do you want to proceed?`,
 
     async destroy(){
 
-        this.logger.info(`Destroying Paperspace instance ${this.pspaceArgs.instanceName}`)
+        this.logger.info(`Destroying Paperspace instance ${this.args.instanceName}`)
 
         const client = await this.buildPaperspaceClient()
 
         const confirmDeletion = await confirm({
-            message: `You are about to destroy Paperspace instance ${this.pspaceArgs.instanceName} and any associated public IP (machine ID '${this.pspaceArgs.pspace.output?.machineId}'). Please confirm:`,
+            message: `You are about to destroy Paperspace instance ${this.args.instanceName} and any associated public IP (machine ID '${this.args.output?.machineId}'). Please confirm:`,
             default: false,
         })
 
@@ -106,16 +94,16 @@ Do you want to proceed?`,
             throw new Error('Destroy aborted.');
         }
 
-        if(this.pspaceArgs.pspace.output){
-            const machineExists = await client.machineExists(this.pspaceArgs.pspace.output?.machineId)
+        if(this.args.output){
+            const machineExists = await client.machineExists(this.args.output?.machineId)
 
             if(!machineExists){
-                this.logger.warn(`Nothing to delete: machine ${this.pspaceArgs.pspace.output.machineId} not found. Was it already deleted ?`)
+                this.logger.warn(`Nothing to delete: machine ${this.args.output.machineId} not found. Was it already deleted ?`)
             } else {
-                await client.deleteMachine(this.pspaceArgs.pspace.output.machineId, true)
+                await client.deleteMachine(this.args.output.machineId, true)
             }
         } else {
-            this.logger.warn(`Nothing to delete: no output for instance ${this.pspaceArgs.instanceName}. Was instance fully provisioned ?`)
+            this.logger.warn(`Nothing to delete: no output for instance ${this.args.instanceName}. Was instance fully provisioned ?`)
         }
 
     }

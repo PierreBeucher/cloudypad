@@ -1,18 +1,22 @@
 import * as assert from 'assert';
-import { AwsInitializerPrompt, AwsInstanceInitializer } from "../../../src/providers/aws/initializer"
-import { CommonInitConfig, InstanceInitializationOptions } from '../../../src/core/initializer';
+import {  AwsInstanceInitializer } from "../../../src/providers/aws/initializer"
+import { InstanceInitializationOptions } from '../../../src/core/initializer';
 import sinon from 'sinon';
 import { AwsInstanceRunner } from '../../../src/providers/aws/runner';
 import { AwsPulumiClient, AwsPulumiOutput } from '../../../src/tools/pulumi/aws';
-import { InstanceStateV1, StateUtils } from '../../../src/core/state';
+import { StateUtils } from '../../../src/core/state';
 import { AnsibleClient } from '../../../src/tools/ansible';
 import { AwsClient } from '../../../src/tools/aws';
-import { AwsProvisionConfigV1 } from '../../../src/providers/aws/state';
+import { AwsInstanceStateV1, AwsProvisionConfigV1 } from '../../../src/providers/aws/state';
 import { CLOUDYPAD_PROVIDER_AWS } from '../../../src/core/const';
+import { DEFAULT_COMMON_CONFIG } from "../common/utils";
 
-describe('AwsInitializerPrompt', () => {
+describe('AwsInstanceInitializer', () => {
 
-    const provConfig: AwsProvisionConfigV1 = {
+    const instanceName = "aws-dummy"
+
+    const config: AwsProvisionConfigV1 = {
+        ...DEFAULT_COMMON_CONFIG,
         instanceType: "g5.2xlarge",
         diskSize: 200,
         publicIpType: "static",
@@ -22,24 +26,14 @@ describe('AwsInitializerPrompt', () => {
 
     it('should return provided options without prompting for user input', async () => {
 
-        const awsInitializerPrompt = new AwsInitializerPrompt()
+        const awsInitializerPrompt = new AwsInstanceInitializer({instanceName: instanceName, config: config})
 
-        const result = await awsInitializerPrompt.prompt(provConfig)
-        assert.deepEqual(result, provConfig)
+        const result = await awsInitializerPrompt.promptProviderConfig(DEFAULT_COMMON_CONFIG)
+        assert.deepEqual(result, config)
     })
 
 
     it('should initialize instance state with provided arguments', async () => {
-
-        const genericArgs: CommonInitConfig = {
-            instanceName: "aws-dummy",
-            provisionConfig: {
-                ssh: {
-                    privateKeyPath: "./test/resources/ssh-key",
-                    user: "ubuntu"
-                }
-            }
-        }
 
         const opts: InstanceInitializationOptions = {
             autoApprove: true,
@@ -55,26 +49,19 @@ describe('AwsInitializerPrompt', () => {
         const ansibleStub = sinon.stub(AnsibleClient.prototype, 'runAnsible').resolves()
         const pairStub = sinon.stub(AwsInstanceRunner.prototype, 'pair').resolves()
 
-        await new AwsInstanceInitializer(genericArgs, provConfig).initializeInstance(opts)
+        await new AwsInstanceInitializer({ instanceName: instanceName, config: config}).initializeInstance(opts)
 
         // Check state has been written
-        const state = await StateUtils.loadInstanceState(genericArgs.instanceName)
+        const state = await StateUtils.loadInstanceState(instanceName)
 
-        const expectState: InstanceStateV1 = {
-            name: genericArgs.instanceName,
+        const expectState: AwsInstanceStateV1 = {
+            name: instanceName,
             provision: {
-                common: {
-                    config: genericArgs.provisionConfig,
-                    output: {
-                        host: "127.0.0.1"
-                    }
-                },
                 provider: CLOUDYPAD_PROVIDER_AWS,
-                aws: {
-                    config: provConfig,
-                    output: {
-                        instanceId: "i-0123456789"
-                    }
+                config: config,
+                output: {
+                    host: "127.0.0.1",
+                    instanceId: "i-0123456789"
                 }
             },
             version: "1"

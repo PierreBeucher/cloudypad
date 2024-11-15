@@ -2,19 +2,20 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';
 import { input, select, confirm } from '@inquirer/prompts';
-import { CommonProvisionConfigV1, InstanceStateV1, StateUtils } from './state';
+import { CommonProvisionConfigV1, CommonProvisionOutputV1, InstanceStateV1, StateUtils } from './state';
 import { getLogger } from '../log/utils';
 import { PartialDeep } from 'type-fest';
 import { InstanceManager } from './manager';
+import { CLOUDYPAD_PROVIDER } from './const';
 
 export interface InstanceInitializationOptions {
     autoApprove?: boolean
     overwriteExisting?: boolean
 }
 
-export interface CommonInitConfig {
-    instanceName: string,
-    provisionConfig: CommonProvisionConfigV1
+export interface InstanceInitArgs<C> {
+    instanceName?: string,
+    config: PartialDeep<C>
 }
 
 /**
@@ -28,28 +29,30 @@ export interface CommonInitConfig {
  * Helper prompts by provider are used to gather user inputs, either
  * from CLI flags or by letting user choose interactively. 
  */
-export abstract class InstanceInitializer {
+export abstract class InstanceInitializer<C extends CommonProvisionConfigV1, O extends CommonProvisionOutputV1> {
 
     protected readonly logger = getLogger(InstanceInitializer.name)
 
-    private readonly initConfig?: PartialDeep<CommonInitConfig>
+    protected readonly provider: CLOUDYPAD_PROVIDER
+    protected readonly args: InstanceInitArgs<C>
 
-    constructor(initConfig?: PartialDeep<CommonInitConfig>){
-        this.initConfig = initConfig
+    constructor(provider: CLOUDYPAD_PROVIDER, args: InstanceInitArgs<C>){
+        this.provider = provider
+        this.args = args
     }
 
-    private async promptCommonConfig(): Promise<CommonInitConfig> {
+    private async promptCommonConfig(): Promise<{ name: string, config: CommonProvisionConfigV1 }> {
 
-        this.logger.debug(`Initializing instance with default config ${JSON.stringify(this.initConfig)}`)
+        this.logger.debug(`Initializing instance with default config ${JSON.stringify(this.args)}`)
         
         const genericPromt = new GenericInitializerPrompt()
-        const name = await genericPromt.instanceName(this.initConfig?.instanceName)
-        const sshKey = await genericPromt.privateSshKey(this.initConfig?.provisionConfig?.ssh?.privateKeyPath)
-        const sshUser = "ubuntu"
+        const instanceName = await genericPromt.instanceName(this.args?.instanceName)
+        const sshKey = await genericPromt.privateSshKey(this.args?.config?.ssh?.privateKeyPath)
+        const sshUser = "ubuntu" // Harcoded for now since we only support Ubuntu
 
         return {
-            instanceName: name,
-            provisionConfig: {
+            name: instanceName,
+            config: {
                 ssh: {
                     privateKeyPath: sshKey,
                     user: sshUser
@@ -62,7 +65,9 @@ export abstract class InstanceInitializer {
      * Prompt user for additional provider-specific configurations.
      * Returns a fully valid state for instance initialization. 
      */
-    protected abstract promptProviderConfig(commonConfig: CommonInitConfig): Promise<InstanceStateV1>
+    protected abstract promptProviderConfig(commonConfig: CommonProvisionConfigV1): Promise<C>
+
+    protected abstract buildInstanceManager(state: InstanceStateV1<C, O>): Promise<InstanceManager>
 
     /**
      * Initialize instance:
@@ -75,11 +80,11 @@ export abstract class InstanceInitializer {
      */
     public async initializeInstance(opts: InstanceInitializationOptions){
 
-        const commonConfig = await this.promptCommonConfig()
+        const { name: instanceName, config: commonConfig } = await this.promptCommonConfig();
 
-        if(await StateUtils.instanceExists(commonConfig.instanceName) && !opts.overwriteExisting){
+        if(await StateUtils.instanceExists(instanceName) && !opts.overwriteExisting){
             const confirmAlreadyExists = await confirm({
-                message: `Instance ${commonConfig.instanceName} already exists. Do you want to overwrite existing instance config?`,
+                message: `Instance ${instanceName} already exists. Do you want to overwrite existing instance config?`,
                 default: false,
             })
             
@@ -89,36 +94,43 @@ export abstract class InstanceInitializer {
         }
 
 
-        const initialState = await this.promptProviderConfig(commonConfig)
+        const finalConfig = await this.promptProviderConfig(commonConfig)
 
-        this.logger.debug(`Initializing a new instance with state ${JSON.stringify(initialState)}`)
+        this.logger.debug(`Initializing a new instance with config ${JSON.stringify(finalConfig)}`)
+
+        // Create the initial state
+        const initialState: InstanceStateV1<C, O> = {
+            version: "1",
+            name: instanceName,
+            provision: {
+                provider: this.provider,
+                config: finalConfig,
+                output: undefined
+            },   
+        }
         
-        console.info(`Initializing instance ${commonConfig.instanceName}`)
+        console.info(`Initializing instance ${instanceName}`)
 
         // Create instance directory and persist state
-        const instanceDir = StateUtils.getInstanceDir(commonConfig.instanceName)
+        const instanceDir = StateUtils.getInstanceDir(instanceName)
 
-        this.logger.debug(`Initializing ${commonConfig.instanceName}: creating instance dir at ${instanceDir}`)
+        this.logger.debug(`Initializing ${instanceName}: creating instance dir at ${instanceDir}`)
 
         fs.mkdirSync(instanceDir, { recursive: true })
                 
-        const instanceManager = new InstanceManager(initialState)
+        const instanceManager = await this.buildInstanceManager(initialState)
 
-        this.logger.info(`Initializing ${commonConfig.instanceName}: persisting initial state before provisioning...`)
-
-        await instanceManager.persistState()
-
-        this.logger.info(`Initializing ${commonConfig.instanceName}: provisioning...`)
+        this.logger.info(`Initializing ${instanceName}: provisioning...`)
 
         await instanceManager.provision(opts)
 
-        this.logger.info(`Initializing ${commonConfig.instanceName}: provision done.}`)
+        this.logger.info(`Initializing ${instanceName}: provision done.}`)
 
-        this.logger.info(`Initializing ${commonConfig.instanceName}: configuring...}`)
+        this.logger.info(`Initializing ${instanceName}: configuring...}`)
         
         await instanceManager.configure()
 
-        this.logger.info(`Initializing ${commonConfig.instanceName}: configuration done.}`)
+        this.logger.info(`Initializing ${instanceName}: configuration done.}`)
 
         const doPair = opts.autoApprove ? true : await confirm({
             message: `Your instance is almost ready ! Do you want to pair Moonlight now?`,
@@ -126,13 +138,13 @@ export abstract class InstanceInitializer {
         })
 
         if (doPair) {
-            this.logger.info(`Initializing ${commonConfig.instanceName}: pairing...}`)
+            this.logger.info(`Initializing ${instanceName}: pairing...}`)
 
             await instanceManager.pair()
     
-            this.logger.info(`Initializing ${commonConfig.instanceName}: pairing done.}`)
+            this.logger.info(`Initializing ${instanceName}: pairing done.}`)
         } else {
-            this.logger.info(`Initializing ${commonConfig.instanceName}: pairing skipped.}`)
+            this.logger.info(`Initializing ${instanceName}: pairing skipped.}`)
         }
 
         console.info("")
@@ -158,7 +170,7 @@ export class GenericInitializerPrompt {
             const userInfo = os.userInfo()
             const defaultInstanceName = `${userInfo.username}`;
             instanceName = await input({
-                message: 'Enter instance name:',
+                message: 'Enter instance instanceName:',
                 default: defaultInstanceName,
             })
         }
@@ -195,7 +207,7 @@ export class GenericInitializerPrompt {
             })
         } else {
         const sshKeyChoices = privateKeys.map(k => ({
-            name: k,
+            instanceName: k,
             value: k
         }))
     

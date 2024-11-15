@@ -1,64 +1,40 @@
 import { input, select } from '@inquirer/prompts'
-import { InstanceInitializer, CommonInitConfig, StaticInitializerPrompts } from '../../core/initializer'
-import { InstanceStateV1 } from '../../core/state'
-import { getLogger } from '../../log/utils'
-import { PartialDeep } from 'type-fest'
+import { InstanceInitializer, StaticInitializerPrompts, InstanceInitArgs } from '../../core/initializer'
+import { CommonProvisionConfigV1 } from '../../core/state'
 import { GcpClient } from '../../tools/gcp'
-import { GcpProvisionConfigV1 } from './state'
+import { GcpInstanceStateV1, GcpProvisionConfigV1, GcpProvisionOutputV1 } from './state'
+import { InstanceManager } from '../../core/manager'
+import { GcpInstanceManager } from './manager'
 import { CLOUDYPAD_PROVIDER_GCP } from '../../core/const'
 
-export class GcpInstanceInitializer extends InstanceInitializer {
+export type GcpInstanceInitArgs = InstanceInitArgs<GcpProvisionConfigV1>
 
-    private readonly defaultGcpConfig: PartialDeep<GcpProvisionConfigV1>
+export class GcpInstanceInitializer extends InstanceInitializer<GcpProvisionConfigV1, GcpProvisionOutputV1> {
 
-    constructor(defaultCommonConfig?: PartialDeep<CommonInitConfig>, defaultGcpConfig?: PartialDeep<GcpProvisionConfigV1>){
-        super(defaultCommonConfig)
-        this.defaultGcpConfig = defaultGcpConfig ?? {}
+    constructor(args: GcpInstanceInitArgs){
+        super(CLOUDYPAD_PROVIDER_GCP, args)
     }
 
-    protected async promptProviderConfig(commonConfig: CommonInitConfig): Promise<InstanceStateV1> {
-        const gcpConfig = await new GcpInitializerPrompt().prompt(this.defaultGcpConfig)
-
-        return {
-            name: commonConfig.instanceName,
-            version: "1",
-            provision: {
-                provider: CLOUDYPAD_PROVIDER_GCP,
-                common: {
-                    config: {
-                        ssh: commonConfig.provisionConfig.ssh,
-                    }
-                },
-                gcp: {
-                    config: gcpConfig
-                }
-            }
-        }
+    protected async buildInstanceManager(state: GcpInstanceStateV1): Promise<InstanceManager> {
+        return new GcpInstanceManager(state)
     }
-}
 
-export class GcpInitializerPrompt {
+    async promptProviderConfig(commonConfig: CommonProvisionConfigV1): Promise<GcpProvisionConfigV1> {
 
-    private logger = getLogger(GcpInitializerPrompt.name)
-
-    async prompt(args?: PartialDeep<GcpProvisionConfigV1>): Promise<GcpProvisionConfigV1> {
-
-        this.logger.debug(`Starting Google Cloud prompt with default opts: ${JSON.stringify(args)}`)
-
-        const projectId = await this.project(args?.projectId)
+        const projectId = await this.project(this.args.config.projectId)
         
-        const client = new GcpClient(GcpInitializerPrompt.name, projectId)
+        const client = new GcpClient(GcpInstanceInitializer.name, projectId)
 
-        const region = await this.region(client, args?.region)
-        const zone = await this.zone(client, region, args?.zone)
-        const machineType = await this.machineType(client, zone, args?.machineType)
-        const useSpot = await StaticInitializerPrompts.useSpotInstance(args?.useSpot)
-        const diskSize = await this.diskSize(args?.diskSize)
-        const publicIpType = await this.publicIpType(args?.publicIpType)
-        const acceleratorType = await this.acceleratorType(client, zone, args?.acceleratorType)
+        const region = await this.region(client, this.args.config.region)
+        const zone = await this.zone(client, region, this.args.config.zone)
+        const machineType = await this.machineType(client, zone, this.args.config.machineType)
+        const useSpot = await StaticInitializerPrompts.useSpotInstance(this.args.config.useSpot)
+        const diskSize = await this.diskSize(this.args.config.diskSize)
+        const publicIpType = await this.publicIpType(this.args.config.publicIpType)
+        const acceleratorType = await this.acceleratorType(client, zone, this.args.config.acceleratorType)
         
-
-        return {
+        const gcpConf: GcpProvisionConfigV1 = {
+            ...commonConfig,
             projectId: projectId,
             diskSize: diskSize,
             machineType: machineType,
@@ -68,6 +44,8 @@ export class GcpInitializerPrompt {
             acceleratorType: acceleratorType,
             useSpot: useSpot,
         }
+
+        return gcpConf
     }
 
     private async machineType(client: GcpClient, zone: string, machineType?: string): Promise<string> {

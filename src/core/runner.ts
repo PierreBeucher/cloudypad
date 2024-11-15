@@ -27,36 +27,33 @@ export interface InstanceRunner {
     pair(): Promise<void>
 }
 
-export interface AbstractInstanceRunnerArgs {
+export interface InstanceRunnerArgs<C extends CommonProvisionConfigV1, O extends CommonProvisionOutputV1>  {
     instanceName: string, 
-    commonConfig: CommonProvisionConfigV1, 
-    commonOutput: CommonProvisionOutputV1
+    config: C
+    output: O
 }
 
-export abstract class AbstractInstanceRunner implements InstanceRunner {
+export abstract class AbstractInstanceRunner<C extends CommonProvisionConfigV1, O extends CommonProvisionOutputV1>  implements InstanceRunner {
     
-    readonly commonArgs: CommonProvisionConfigV1
-    readonly state: CommonProvisionOutputV1
     protected readonly logger: Logger
-    readonly instanceName: string
+    protected readonly args: InstanceRunnerArgs<C, O>
 
-    constructor(args: AbstractInstanceRunnerArgs) {
-        this.instanceName = args.instanceName
-        this.commonArgs = args.commonConfig
-        this.state = args.commonOutput
+
+    constructor(args: InstanceRunnerArgs<C, O>) {
+        this.args = args
         this.logger = getLogger(args.instanceName) 
     }
  
     async start(): Promise<void> {
-        this.logger.info(`Starting instance ${this.instanceName}`)
+        this.logger.info(`Starting instance ${this.args.instanceName}`)
     }
 
     async stop(): Promise<void> {
-        this.logger.info(`Stopping instance ${this.instanceName}`)
+        this.logger.info(`Stopping instance ${this.args.instanceName}`)
     }
 
     async restart(): Promise<void> {
-        this.logger.info(`Restarting instance ${this.instanceName}`)
+        this.logger.info(`Restarting instance ${this.args.instanceName}`)
     }
 
     private async waitForPinURL(docker: Docker, host: string) {
@@ -142,13 +139,13 @@ export abstract class AbstractInstanceRunner implements InstanceRunner {
     
     async pair(){
         
-        const privateKey = fs.readFileSync(this.commonArgs.ssh.privateKeyPath, 'utf-8')
+        const privateKey = fs.readFileSync(this.args.config.ssh.privateKeyPath, 'utf-8')
 
         const docker = new Docker({
-            host: this.state.host,
+            host: this.args.output.host,
             protocol: 'ssh',
             port: 22,
-            username: this.commonArgs.ssh.user,
+            username: this.args.config.ssh.user,
             sshOptions: {
                 privateKey: privateKey
             }
@@ -170,14 +167,14 @@ export abstract class AbstractInstanceRunner implements InstanceRunner {
         })
 
         if(pairMethod === pairManual) {
-            await this.pairManual(docker, this.state.host)
+            await this.pairManual(docker, this.args.output.host)
         } else if (pairMethod === pairAuto){
-            await this.pairAuto(docker, this.state.host)
+            await this.pairAuto(docker, this.args.output.host)
         } else {
             throw new Error(`Unrecognized pair method '${pairMethod}'. This is probably an internal bug.`)
         }
 
-        console.info(`Instance ${this.instanceName} paired successfully 🤝 👍`)
+        console.info(`Instance ${this.args.instanceName} paired successfully 🤝 👍`)
         console.info(`You can now run Moonlight to connect and play with your instance 🎮`)
         console.info("")
         console.info("Enjoy Cloudy Pad ? Please give a star on GitHub ⭐ https://github.com/PierreBeucher/cloudypad")

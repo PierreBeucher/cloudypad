@@ -1,45 +1,39 @@
-import { AbstractInstanceRunner, AbstractInstanceRunnerArgs } from '../../core/runner';
+import { AbstractInstanceRunner, InstanceRunnerArgs } from '../../core/runner';
 import { GcpClient } from '../../tools/gcp';
 import { GcpProvisionConfigV1, GcpProvisionOutputV1 } from './state';
 
-export interface GcpInstanceRunnerArgs extends AbstractInstanceRunnerArgs {
-    gcpConfig: GcpProvisionConfigV1,
-    gcpOutput: GcpProvisionOutputV1,
-}
+export type GcpInstanceRunnerArgs = InstanceRunnerArgs<GcpProvisionConfigV1, GcpProvisionOutputV1>
 
-export class GcpInstanceRunner extends AbstractInstanceRunner {
+export class GcpInstanceRunner extends AbstractInstanceRunner<GcpProvisionConfigV1, GcpProvisionOutputV1>  {
 
-    private gcpClient: GcpClient
-    private readonly gcpArgs: GcpInstanceRunnerArgs
+    private client: GcpClient
 
-    constructor(gcpArgs: GcpInstanceRunnerArgs) {
-        super(gcpArgs)
+    constructor(args: GcpInstanceRunnerArgs) {
+        super(args)
 
-        this.gcpArgs = gcpArgs
-
-        this.gcpClient = new GcpClient(this.gcpArgs.instanceName, this.gcpArgs.gcpConfig.projectId)
+        this.client = new GcpClient(args.instanceName, args.config.projectId)
     }
 
     private getinstanceName(): string{
-        return this.gcpArgs.instanceName, this.gcpArgs.gcpOutput.instanceName
+        return this.args.instanceName, this.args.output.instanceName
     }
 
     private getZone(): string{
-        return this.gcpArgs.instanceName, this.gcpArgs.gcpConfig.zone
+        return this.args.instanceName, this.args.config.zone
     }
 
     async start() {
         await super.start()
-        this.gcpClient.startInstance(this.getZone(), this.getinstanceName())
+        this.client.startInstance(this.getZone(), this.getinstanceName())
     }
 
     async stop() {
         await super.stop()
-        this.gcpClient.stopInstance(this.getZone(), this.getinstanceName())
+        this.client.stopInstance(this.getZone(), this.getinstanceName())
     }
 
     async restart() {
         await super.restart()
-        this.gcpClient.restartInstance(this.getZone(), this.getinstanceName())
+        this.client.restartInstance(this.getZone(), this.getinstanceName())
     }
 }

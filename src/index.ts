@@ -2,19 +2,12 @@
 
 import { version } from '../package.json';
 import { Command } from 'commander';
-import { InstanceManager } from './core/manager';
 import { setLogVerbosity } from './log/utils';
-import { AwsInstanceInitializer } from './providers/aws/initializer';
-import { PartialDeep } from 'type-fest';
-import { PaperspaceInstanceInitializer } from './providers/paperspace/initializer';
-import * as fs from 'fs'
+import { AwsInstanceInitArgs, AwsInstanceInitializer } from './providers/aws/initializer';
+import { PaperspaceInstanceInitArgs, PaperspaceInstanceInitializer } from './providers/paperspace/initializer';
 import { InstanceInitializationOptions } from './core/initializer';
-import { AzureInstanceInitializer } from './providers/azure/initializer';
-import { GcpInstanceInitializer } from './providers/gcp/initializer';
-import { AwsProvisionConfigV1 } from './providers/aws/state';
-import { PaperspaceProvisionConfigV1 } from './providers/paperspace/state';
-import { GcpProvisionConfigV1 } from './providers/gcp/state';
-import { AzureProvisionConfigV1 } from './providers/azure/state';
+import { AzureInstanceInitArgs, AzureInstanceInitializer } from './providers/azure/initializer';
+import { GcpInstanceInitArgs, GcpInstanceInitializer } from './providers/gcp/initializer';
 import { InstanceManagerBuilder } from './core/manager-builder';
 
 const program = new Command();
@@ -30,19 +23,7 @@ program
 
 const createCmd = program
     .command('create')
-    .description('Create a new instance, prompting for details. Use `create <provider> for provider-specific creation commands.`')
-    .action(async () => {
-        try {
-            const instanceInitializer = await InstanceManagerBuilder.promptInstanceInitializer()
-
-            // No default option for generic initializer
-            instanceInitializer.initializeInstance({})
-
-        } catch (error) {
-            console.error('Error creating new instance:', error)
-            process.exit(1)
-        }
-    })
+    .description('Create a new instance. See subcommands for each provider options.`')
 
 createCmd
     .command('aws')
@@ -58,17 +39,18 @@ createCmd
     .option('--overwrite-existing', 'If an instance with the same name already exists, override without warning prompt')
     .action(async (options) => {
         try {
-            const genericArgs = {
+            const args: AwsInstanceInitArgs = {
                 instanceName: options.name,
-                sshKey: options.privateSshKey,
-            }
-
-            const awsArgs: PartialDeep<AwsProvisionConfigV1> = {
-                instanceType: options.instanceType,
-                diskSize: options.diskSize,
-                publicIpType: options.publicIpType,
-                region: options.region,
-                useSpot: options.spot,
+                config: {
+                    ssh: {
+                        privateKeyPath: options.privateSshKey,
+                    },
+                    instanceType: options.instanceType,
+                    diskSize: options.diskSize,
+                    publicIpType: options.publicIpType,
+                    region: options.region,
+                    useSpot: options.spot,
+                }                
             }
 
             const opts: InstanceInitializationOptions = {
@@ -76,7 +58,7 @@ createCmd
                 overwriteExisting: options.overwriteExisting
             }
 
-            await new AwsInstanceInitializer(genericArgs, awsArgs).initializeInstance(opts)
+            await new AwsInstanceInitializer(args).initializeInstance(opts)
             
         } catch (error) {
             console.error('Error creating AWS instance:', error)
@@ -98,18 +80,18 @@ createCmd
     .option('--overwrite-existing', 'If an instance with the same name already exists, override without warning prompt')
     .action(async (options) => {
         try {
-            const genericArgs = {
+            const args: PaperspaceInstanceInitArgs = {
                 instanceName: options.name,
-                sshKey: options.privateSshKey,
-            }
-
-            const apiKey = options.apiKeyFile ? fs.readFileSync(options.apiKeyFile, 'utf-8') : undefined
-            const pspaceConfig: PartialDeep<PaperspaceProvisionConfigV1> = {
-                apiKey: apiKey,
-                machineType: options.machineType,
-                diskSize: options.diskSize,
-                publicIpType: options.publicIpType,
-                region: options.region,
+                config: {
+                    ssh: {
+                        privateKeyPath: options.privateSshKey
+                    },
+                    apiKey: options.apiKeyFile,
+                    machineType: options.machineType,
+                    diskSize: options.diskSize,
+                    publicIpType: options.publicIpType,
+                    region: options.region,
+                }
             }
 
             const opts: InstanceInitializationOptions = {
@@ -117,7 +99,7 @@ createCmd
                 overwriteExisting: options.overwriteExisting
             }
  
-            await new PaperspaceInstanceInitializer(genericArgs, pspaceConfig).initializeInstance(opts)
+            await new PaperspaceInstanceInitializer(args).initializeInstance(opts)
             
         } catch (error) {
             console.error('Error creating Paperspace instance:', error)
@@ -142,20 +124,22 @@ createCmd
     .option('--overwrite-existing', 'If an instance with the same name already exists, override without warning prompt')
     .action(async (options) => {
         try {
-            const genericArgs = {
-                instanceName: options.name,
-                sshKey: options.privateSshKey,
-            }
 
-            const gcpArgs: PartialDeep<GcpProvisionConfigV1> = {
-                machineType: options.machineType,
-                diskSize: options.diskSize,
-                publicIpType: options.publicIpType,
-                region: options.region,
-                zone: options.zone,
-                acceleratorType: options.gpuType,
-                projectId: options.projectId,
-                useSpot: options.spot,
+            const args: GcpInstanceInitArgs = {
+                instanceName: options.name,
+                config: {
+                    ssh: {
+                        privateKeyPath: options.privateSshKey
+                    },
+                    machineType: options.machineType,
+                    diskSize: options.diskSize,
+                    publicIpType: options.publicIpType,
+                    region: options.region,
+                    zone: options.zone,
+                    acceleratorType: options.gpuType,
+                    projectId: options.projectId,
+                    useSpot: options.spot,
+                }
             }
 
             const opts: InstanceInitializationOptions = {
@@ -163,7 +147,7 @@ createCmd
                 overwriteExisting: options.overwriteExisting
             }
  
-            await new GcpInstanceInitializer(genericArgs, gcpArgs).initializeInstance(opts)
+            await new GcpInstanceInitializer(args).initializeInstance(opts)
             
         } catch (error) {
             console.error('Error creating Google Cloud instance:', error)
@@ -187,18 +171,20 @@ createCmd
     .option('--overwrite-existing', 'If an instance with the same name already exists, override without warning prompt')
     .action(async (options) => {
         try {
-            const genericArgs = {
-                instanceName: options.name,
-                sshKey: options.privateSshKey,
-            }
 
-            const azArgs: PartialDeep<AzureProvisionConfigV1> = {
-                vmSize: options.vmSize,
-                diskSize: options.diskSize,
-                publicIpType: options.publicIpType,
-                location: options.location,
-                subscriptionId: options.subscriptionId,
-                useSpot: options.spot,
+            const args: AzureInstanceInitArgs = {
+                instanceName: options.name,
+                config: {
+                    ssh: {
+                        privateKeyPath: options.privateSshKey
+                    },
+                    vmSize: options.vmSize,
+                    diskSize: options.diskSize,
+                    publicIpType: options.publicIpType,
+                    location: options.location,
+                    subscriptionId: options.subscriptionId,
+                    useSpot: options.spot,
+                }
             }
 
             const opts: InstanceInitializationOptions = {
@@ -206,7 +192,7 @@ createCmd
                 overwriteExisting: options.overwriteExisting
             }
  
-            await new AzureInstanceInitializer(genericArgs, azArgs).initializeInstance(opts)
+            await new AzureInstanceInitializer(args).initializeInstance(opts)
             
         } catch (error) {
             console.error('Error creating Azure instance:', error)
@@ -244,7 +230,7 @@ program
     .description('Start an instance')
     .action(async (name) => {
         try {
-            const m = await InstanceManager.get(name)
+            const m = await InstanceManagerBuilder.buildManagerForInstance(name)
             await m.start()
             console.info(`Started instance ${name}`)
         } catch (error) {
@@ -258,7 +244,7 @@ program
     .description('Stop an instance')
     .action(async (name) => {
         try {
-            const m = await InstanceManager.get(name)
+            const m = await InstanceManagerBuilder.buildManagerForInstance(name)
             await m.stop()
             console.info(`Stopped instance ${name}`)
         } catch (error) {
@@ -272,7 +258,7 @@ program
     .description('Restart an instance')
     .action(async (name) => {
         try {
-            const m = await InstanceManager.get(name)
+            const m = await InstanceManagerBuilder.buildManagerForInstance(name)
             await m.restart()
             console.info(`Restarted instance ${name}`)
         } catch (error) {
@@ -286,8 +272,8 @@ program
     .description('Get details of an instance')
     .action(async (name) => {
         try {
-            const m = await InstanceManager.get(name)
-            const details = m.getState()
+            const m = await InstanceManagerBuilder.buildManagerForInstance(name)
+            const details = m.getStateJSON()
 
             console.info(JSON.stringify(details, null, 2))
         } catch (error) {
@@ -302,7 +288,7 @@ program
     .option('--yes', 'Do not prompt for approval, automatically approve and continue')
     .action(async (name) => {
         try {
-            const m = await InstanceManager.get(name)
+            const m = await InstanceManagerBuilder.buildManagerForInstance(name)
             await m.provision()
 
             console.info(`Provisioned instance ${name}`)
@@ -317,7 +303,7 @@ program
     .description('Configure an instance (connect to instance and install drivers, packages, etc.)')
     .action(async (name) => {
         try {
-            const m = await InstanceManager.get(name)
+            const m = await InstanceManagerBuilder.buildManagerForInstance(name)
             await m.configure()
 
             console.info("")
@@ -333,7 +319,7 @@ program
     .description('Destroy an instance')
     .action(async (name) => {
         try {
-            const m = await InstanceManager.get(name)
+            const m = await InstanceManagerBuilder.buildManagerForInstance(name)
             await m.destroy()
 
             console.info("")
@@ -349,7 +335,7 @@ program.command('pair <name>')
     .description('Pair an instance with Moonlight')
     .action(async (name: string) => {
         try {
-            const m = await InstanceManager.get(name)
+            const m = await InstanceManagerBuilder.buildManagerForInstance(name)
             await m.pair()
         } catch (error) {
             console.error('Error creating new instance:', error)

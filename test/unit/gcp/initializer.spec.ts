@@ -1,18 +1,20 @@
 import * as assert from 'assert';
-import { CommonInitConfig, InstanceInitializationOptions } from '../../../src/core/initializer';
+import { InstanceInitializationOptions } from '../../../src/core/initializer';
 import sinon from 'sinon';
-import { InstanceStateV1, StateUtils } from '../../../src/core/state';
+import { StateUtils } from '../../../src/core/state';
 import { AnsibleClient } from '../../../src/tools/ansible';
-import { GcpInitializerPrompt, GcpInstanceInitializer } from '../../../src/providers/gcp/initializer';
+import { GcpInstanceInitializer } from '../../../src/providers/gcp/initializer';
 import { GcpClient } from '../../../src/tools/gcp';
 import { GcpPulumiClient, GcpPulumiOutput } from '../../../src/tools/pulumi/gcp';
 import { GcpInstanceRunner } from '../../../src/providers/gcp/runner';
-import { GcpProvisionConfigV1 } from '../../../src/providers/gcp/state';
+import { GcpInstanceStateV1, GcpProvisionConfigV1 } from '../../../src/providers/gcp/state';
 import { CLOUDYPAD_PROVIDER_GCP } from '../../../src/core/const';
+import { DEFAULT_COMMON_CONFIG } from '../common/utils';
 
 describe('GCP initializer', () => {
 
-    const provConf: GcpProvisionConfigV1 = {
+    const conf: GcpProvisionConfigV1 = {
+        ...DEFAULT_COMMON_CONFIG,
         machineType: "n1-standard-8",
         diskSize: 200,
         publicIpType: "static",
@@ -23,16 +25,8 @@ describe('GCP initializer', () => {
         useSpot: true,
     }
     
-    const genericArgs: CommonInitConfig = {
-        instanceName: "gcp-dummy",
-        provisionConfig: {
-            ssh: {
-                privateKeyPath: "./test/resources/ssh-key",
-                user: "ubuntu"
-            }
-        }
-    }
-
+    const instanceName = "gcp-dummy"
+    
     const opts: InstanceInitializationOptions = {
         autoApprove: true,
         overwriteExisting: true
@@ -40,9 +34,9 @@ describe('GCP initializer', () => {
 
     it('should return provided options without prompting for user input', async () => {
 
-        const promt = new GcpInitializerPrompt();
-        const result = await promt.prompt(provConf);
-        assert.deepEqual(result, provConf)
+        const promt = new GcpInstanceInitializer({ instanceName: instanceName, config: conf})
+        const result = await promt.promptProviderConfig(DEFAULT_COMMON_CONFIG)
+        assert.deepEqual(result, conf)
     })
 
 
@@ -57,29 +51,22 @@ describe('GCP initializer', () => {
         const pairStub = sinon.stub(GcpInstanceRunner.prototype, 'pair').resolves()
         const ansibleStub = sinon.stub(AnsibleClient.prototype, 'runAnsible').resolves()
 
-        await new GcpInstanceInitializer(genericArgs, provConf).initializeInstance(opts)
+        await new GcpInstanceInitializer({ instanceName: instanceName, config: conf}).initializeInstance(opts)
 
         // Check state has been written
-        const state = await StateUtils.loadInstanceState(genericArgs.instanceName)
+        const state = await StateUtils.loadInstanceState(instanceName)
 
-        const expectState: InstanceStateV1 = {
-            name: genericArgs.instanceName,
+        const expectState: GcpInstanceStateV1 = {
+            version: "1",
+            name: instanceName,
             provision: {
-                common: {
-                    config: genericArgs.provisionConfig,
-                    output: {
-                        host: "127.0.0.1"
-                    }
-                },
                 provider: CLOUDYPAD_PROVIDER_GCP,
-                gcp: {
-                    config: provConf,
-                    output: {
-                        instanceName: "dummy-gcp"
-                    }
+                config: conf,
+                output: {
+                    host: "127.0.0.1",
+                    instanceName: "dummy-gcp"
                 }
             },
-            version: "1"
         }
         
         assert.deepEqual(state, expectState)

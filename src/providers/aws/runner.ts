@@ -1,26 +1,21 @@
-import { AbstractInstanceRunner, AbstractInstanceRunnerArgs } from '../../core/runner';
+import { AbstractInstanceRunner, InstanceRunnerArgs } from '../../core/runner';
 import { AwsClient } from '../../tools/aws';
 import { AwsProvisionConfigV1, AwsProvisionOutputV1 } from './state';
 
-export interface AwsInstanceRunnerArgs extends AbstractInstanceRunnerArgs {
-    awsConfig: AwsProvisionConfigV1,
-    awsOutput: AwsProvisionOutputV1,
-}
+export type AwsInstanceRunnerArgs = InstanceRunnerArgs<AwsProvisionConfigV1, AwsProvisionOutputV1>
 
-export class AwsInstanceRunner extends AbstractInstanceRunner {
+export class AwsInstanceRunner extends AbstractInstanceRunner<AwsProvisionConfigV1, AwsProvisionOutputV1>  {
 
     private awsClient: AwsClient
-    private readonly awsArgs: AwsInstanceRunnerArgs
 
     constructor(args: AwsInstanceRunnerArgs) {
         super(args)
-        this.awsArgs = args
 
-        this.awsClient = new AwsClient(args.instanceName, args.awsConfig.region)
+        this.awsClient = new AwsClient(args.instanceName, args.config.region)
     }
 
     private getInstanceId(){
-        return this.awsArgs.awsOutput.instanceId
+        return this.args.output.instanceId
     }
 
     async start() {

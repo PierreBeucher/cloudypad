@@ -1,31 +1,25 @@
-import { AbstractInstanceRunner, AbstractInstanceRunnerArgs } from '../../core/runner'
+import { AbstractInstanceRunner, InstanceRunnerArgs } from '../../core/runner'
 import { AzureClient } from '../../tools/azure'
 import { AzureProvisionConfigV1, AzureProvisionOutputV1 } from './state'
 
-export interface AzureInstanceRunnerArgs extends AbstractInstanceRunnerArgs{
-    azConfig: AzureProvisionConfigV1,
-    azOutput: AzureProvisionOutputV1,
-}
+export type AzureInstanceRunnerArgs = InstanceRunnerArgs<AzureProvisionConfigV1, AzureProvisionOutputV1>
 
-export class AzureInstanceRunner extends AbstractInstanceRunner {
+export class AzureInstanceRunner extends AbstractInstanceRunner<AzureProvisionConfigV1, AzureProvisionOutputV1>  {
 
     private client: AzureClient
-
-    private readonly azArgs: AzureInstanceRunnerArgs
 
     constructor(args: AzureInstanceRunnerArgs) {
         super(args)
 
-        this.azArgs = args
-        this.client = new AzureClient(args.instanceName, args.azConfig.subscriptionId)
+        this.client = new AzureClient(args.instanceName, args.config.subscriptionId)
     }
 
     private getVmName() {
-        return this.azArgs.azOutput.vmName
+        return this.args.output.vmName
     }
 
     private getResourceGroupName(){
-        return this.azArgs.azOutput.resourceGroupName
+        return this.args.output.resourceGroupName
     }
 
     async start() {

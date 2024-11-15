@@ -1,68 +1,44 @@
 import { input, select } from '@inquirer/prompts';
-import { PartialDeep } from 'type-fest';
 import { AwsClient } from '../../tools/aws';
-import { InstanceInitializer, CommonInitConfig, StaticInitializerPrompts } from '../../core/initializer';
-import { InstanceStateV1 } from '../../core/state';
-import { getLogger } from '../../log/utils';
-import { AwsProvisionConfigV1 } from './state';
+import { InstanceInitArgs, InstanceInitializer, StaticInitializerPrompts } from '../../core/initializer';
+import { CommonProvisionConfigV1 } from '../../core/state';
+import { AwsInstanceStateV1, AwsProvisionConfigV1, AwsProvisionOutputV1 } from './state';
+import { InstanceManager } from '../../core/manager';
+import { AwsInstanceManager } from './manager';
 import { CLOUDYPAD_PROVIDER_AWS } from '../../core/const';
 
-export class AwsInstanceInitializer extends InstanceInitializer {
+export type AwsInstanceInitArgs = InstanceInitArgs<AwsProvisionConfigV1>
 
-    private readonly defaultAwsConfig: PartialDeep<AwsProvisionConfigV1>
+export class AwsInstanceInitializer extends InstanceInitializer<AwsProvisionConfigV1, AwsProvisionOutputV1> {
 
-    constructor(genericArgs?: PartialDeep<CommonInitConfig>, defaultAwsConfig?: PartialDeep<AwsProvisionConfigV1>){
-        super(genericArgs)
-        this.defaultAwsConfig = defaultAwsConfig ?? {}
+    constructor(args: AwsInstanceInitArgs){
+        super(CLOUDYPAD_PROVIDER_AWS, args)
     }
 
-    protected async promptProviderConfig(commonConfig: CommonInitConfig): Promise<InstanceStateV1> {
-        const awsConfig = await new AwsInitializerPrompt().prompt(this.defaultAwsConfig)
-
-        return {
-            name: commonConfig.instanceName,
-            version: "1",
-            provision: {
-                provider: CLOUDYPAD_PROVIDER_AWS,
-                common: {
-                    config: {
-                        ssh: commonConfig.provisionConfig.ssh,
-                    }
-                },
-                aws: {
-                    config: awsConfig
-                }
-            }
-        }
-
-    }
-}
-
-export class AwsInitializerPrompt {
-
-    private logger = getLogger(AwsInitializerPrompt.name)
-
-    constructor(){
-        
+    protected async buildInstanceManager(state: AwsInstanceStateV1): Promise<InstanceManager> {
+        return new AwsInstanceManager(state)
     }
 
-    async prompt(args?: PartialDeep<AwsProvisionConfigV1>): Promise<AwsProvisionConfigV1> {
+    async promptProviderConfig(commonConfig: CommonProvisionConfigV1): Promise<AwsProvisionConfigV1> {
+        this.logger.debug(`Starting AWS prompt with default opts: ${JSON.stringify(commonConfig)}`)
 
-        this.logger.debug(`Starting AWS prompt with default opts: ${JSON.stringify(args)}`)
+        const instanceType = await this.instanceType(this.args.config.instanceType)
+        const useSpot = await StaticInitializerPrompts.useSpotInstance(this.args.config.useSpot)
+        const diskSize = await this.diskSize(this.args.config.diskSize)
+        const publicIpType = await this.publicIpType(this.args.config.publicIpType)
+        const region = await this.region(this.args.config.region)
 
-        const instanceType = await this.instanceType(args?.instanceType)
-        const useSpot = await StaticInitializerPrompts.useSpotInstance(args?.useSpot)
-        const diskSize = await this.diskSize(args?.diskSize)
-        const publicIpType = await this.publicIpType(args?.publicIpType)
-        const region = await this.region(args?.region)
-
-        return {
+        const awsConfig: AwsProvisionConfigV1 = {
+            ...commonConfig,
             diskSize: diskSize,
             instanceType: instanceType,
             publicIpType: publicIpType,
             region: region,
             useSpot: useSpot,
         }
+
+        return awsConfig
+        
     }
 
     private async instanceType(instanceType?: string): Promise<string> {
@@ -144,5 +120,4 @@ export class AwsInitializerPrompt {
             default: currentAwsRegion,
         })
     }
-
 }

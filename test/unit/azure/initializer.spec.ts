@@ -1,18 +1,20 @@
 import * as assert from 'assert';
-import { CommonInitConfig, InstanceInitializationOptions } from '../../../src/core/initializer';
+import { InstanceInitializationOptions } from '../../../src/core/initializer';
 import sinon from 'sinon';
-import { InstanceStateV1, StateUtils } from '../../../src/core/state';
+import { StateUtils } from '../../../src/core/state';
 import { AnsibleClient } from '../../../src/tools/ansible';
-import { AzureInitializerPrompt, AzureInstanceInitializer } from '../../../src/providers/azure/initializer';
+import { AzureInstanceInitializer } from '../../../src/providers/azure/initializer';
 import { AzureClient } from '../../../src/tools/azure';
 import { AzurePulumiClient, AzurePulumiOutput } from '../../../src/tools/pulumi/azure';
 import { AzureInstanceRunner } from '../../../src/providers/azure/runner';
-import { AzureProvisionConfigV1 } from '../../../src/providers/azure/state';
+import { AzureInstanceStateV1, AzureProvisionConfigV1 } from '../../../src/providers/azure/state';
 import { CLOUDYPAD_PROVIDER_AZURE } from '../../../src/core/const';
+import { DEFAULT_COMMON_CONFIG } from '../common/utils';
 
 describe('Azure initializer', () => {
 
-    const provConfig: AzureProvisionConfigV1 = {
+    const config: AzureProvisionConfigV1 = {
+        ...DEFAULT_COMMON_CONFIG,
         subscriptionId: "1234-5689-0000",
         vmSize: "Standard_NC8as_T4_v3",
         diskSize: 200,
@@ -20,16 +22,8 @@ describe('Azure initializer', () => {
         location: "francecentral",
         useSpot: true,
     }
-    
-    const genericArgs: CommonInitConfig = {
-        instanceName: "azure-dummy",
-        provisionConfig: {
-            ssh: {
-                privateKeyPath: "./test/resources/ssh-key",
-                user: "ubuntu"
-            }
-        }
-    }
+
+    const instanceName = "azure-dummy"
 
     const opts: InstanceInitializationOptions = {
         autoApprove: true,
@@ -37,9 +31,9 @@ describe('Azure initializer', () => {
     }
 
     it('should return provided options without prompting for user input', async () => {
-        const promt = new AzureInitializerPrompt()
-        const result = await promt.prompt(provConfig)
-        assert.deepEqual(result, provConfig)
+        const promt = new AzureInstanceInitializer({ instanceName: instanceName, config: config })
+        const result = await promt.promptProviderConfig(DEFAULT_COMMON_CONFIG)
+        assert.deepEqual(result, config)
     })
 
 
@@ -54,30 +48,23 @@ describe('Azure initializer', () => {
         const pairStub = sinon.stub(AzureInstanceRunner.prototype, 'pair').resolves()
         const ansibleStub = sinon.stub(AnsibleClient.prototype, 'runAnsible').resolves()
 
-        await new AzureInstanceInitializer(genericArgs, provConfig).initializeInstance(opts)
+        await new AzureInstanceInitializer({ instanceName: instanceName, config: config }).initializeInstance(opts)
 
         // Check state has been written
-        const state = await StateUtils.loadInstanceState(genericArgs.instanceName)
+        const state = await StateUtils.loadInstanceState(instanceName)
 
-        const expectState: InstanceStateV1 = {
-            name: genericArgs.instanceName,
+        const expectState: AzureInstanceStateV1 = {
+            version: "1",
+            name: instanceName,
             provision: {
-                common: {
-                    config: genericArgs.provisionConfig,
-                    output: {
-                        host: "127.0.0.1"
-                    }
-                },
                 provider: CLOUDYPAD_PROVIDER_AZURE,
-                azure: {
-                    config: provConfig,
-                    output: {
-                        resourceGroupName: "dummy-rg",
-                        vmName: "dummy-az"
-                    }
+                config: config,
+                output: {
+                    host: "127.0.0.1",
+                    resourceGroupName: "dummy-rg",
+                    vmName: "dummy-az"
                 }
             },
-            version: "1"
         }
 
         assert.deepEqual(state, expectState)

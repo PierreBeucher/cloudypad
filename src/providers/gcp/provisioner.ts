@@ -1,35 +1,27 @@
 import { parseSshPrivateKeyFileToPublic } from '../../tools/ssh';
 import { confirm } from '@inquirer/prompts';
-import { BaseInstanceProvisioner, InstanceProvisioner, InstanceProvisionOptions } from '../../core/provisioner';
+import { BaseInstanceProvisioner, InstanceProvisionerArgs, InstanceProvisionOptions } from '../../core/provisioner';
 import { GcpPulumiClient, PulumiStackConfigGcp } from '../../tools/pulumi/gcp';
 import { GcpClient } from '../../tools/gcp';
-import { CommonProvisionStateV1 } from '../../core/state';
-import { GcpProvisionStateV1 } from './state';
+import { GcpProvisionConfigV1, GcpProvisionOutputV1} from './state';
 
-export interface GcpProvisionerArgs {
-    instanceName: string
-    common: CommonProvisionStateV1
-    gcp: GcpProvisionStateV1
-}
+export type GcpProvisionerArgs = InstanceProvisionerArgs<GcpProvisionConfigV1, GcpProvisionOutputV1>
 
-export class GcpProvisioner extends BaseInstanceProvisioner implements InstanceProvisioner {
+export class GcpProvisioner extends BaseInstanceProvisioner<GcpProvisionConfigV1, GcpProvisionOutputV1> {
 
-    private readonly gcpArgs: GcpProvisionerArgs
-
-    constructor(gcpArgs: GcpProvisionerArgs){
-        super(gcpArgs)
-        this.gcpArgs = gcpArgs
+    constructor(args: GcpProvisionerArgs) {
+        super(args)
     }
 
     async provision(opts?: InstanceProvisionOptions) {
 
-        this.logger.info(`Provisioning Google Cloud instance ${this.gcpArgs.instanceName}`)
+        this.logger.info(`Provisioning Google Cloud instance ${this.args.instanceName}`)
 
         if(!opts?.skipAuthCheck){
-            await this.checkGcpAuth(this.gcpArgs.gcp.config.projectId)
+            await this.checkGcpAuth(this.args.config.projectId)
         }
 
-        this.logger.debug(`Provisioning Google Cloud instance with ${JSON.stringify(this.gcpArgs.gcp.config)}`)
+        this.logger.debug(`Provisioning Google Cloud instance with ${JSON.stringify(this.args.config)}`)
 
         
         let confirmCreation: boolean
@@ -39,15 +31,15 @@ export class GcpProvisioner extends BaseInstanceProvisioner implements InstanceP
             confirmCreation = await confirm({
                 message: `
 You are about to provision Google Cloud machine with the following details:
-    Instance name: ${this.gcpArgs.instanceName}
-    SSH key: ${this.gcpArgs.common.config.ssh.privateKeyPath}
-    Region: ${this.gcpArgs.gcp.config.region}
-    Project ID: ${this.gcpArgs.gcp.config.projectId}
-    Machine Type: ${this.gcpArgs.gcp.config.machineType}
-    Use Spot: ${this.gcpArgs.gcp.config.useSpot}
-    GPU Type: ${this.gcpArgs.gcp.config.acceleratorType}
-    Public IP Type: ${this.gcpArgs.gcp.config.publicIpType}
-    Disk size: ${this.gcpArgs.gcp.config.diskSize}
+    Instance name: ${this.args.instanceName}
+    SSH key: ${this.args.config.ssh.privateKeyPath}
+    Region: ${this.args.config.region}
+    Project ID: ${this.args.config.projectId}
+    Machine Type: ${this.args.config.machineType}
+    Use Spot: ${this.args.config.useSpot}
+    GPU Type: ${this.args.config.acceleratorType}
+    Public IP Type: ${this.args.config.publicIpType}
+    Disk size: ${this.args.config.diskSize}
     
 Do you want to proceed?`,
                 default: true,
@@ -58,37 +50,35 @@ Do you want to proceed?`,
             throw new Error('Google Cloud provision aborted.');
         }
 
-        const pulumiClient = new GcpPulumiClient(this.gcpArgs.instanceName)
+        const pulumiClient = new GcpPulumiClient(this.args.instanceName)
         const pulumiConfig: PulumiStackConfigGcp = {
-            machineType: this.gcpArgs.gcp.config.machineType,
-            acceleratorType: this.gcpArgs.gcp.config.acceleratorType,
-            projectId: this.gcpArgs.gcp.config.projectId,
-            publicIpType: this.gcpArgs.gcp.config.publicIpType,
-            region: this.gcpArgs.gcp.config.region,
-            zone: this.gcpArgs.gcp.config.zone,
-            rootDiskSize: this.gcpArgs.gcp.config.diskSize,
-            publicSshKeyContent: await parseSshPrivateKeyFileToPublic(this.gcpArgs.common.config.ssh.privateKeyPath),
-            useSpot: this.gcpArgs.gcp.config.useSpot,
+            machineType: this.args.config.machineType,
+            acceleratorType: this.args.config.acceleratorType,
+            projectId: this.args.config.projectId,
+            publicIpType: this.args.config.publicIpType,
+            region: this.args.config.region,
+            zone: this.args.config.zone,
+            rootDiskSize: this.args.config.diskSize,
+            publicSshKeyContent: await parseSshPrivateKeyFileToPublic(this.args.config.ssh.privateKeyPath),
+            useSpot: this.args.config.useSpot,
         }
 
         await pulumiClient.setConfig(pulumiConfig)
         const pulumiOutputs = await pulumiClient.up()
 
-        this.gcpArgs.gcp.output = {
-            instanceName: pulumiOutputs.instanceName
-        }
-
-        this.gcpArgs.common.output = {
+        return {
+            instanceName: pulumiOutputs.instanceName,
             host: pulumiOutputs.publicIp
         }
+
     }
 
     async destroy(){
 
-        this.logger.info(`Destroying instance: ${this.gcpArgs.instanceName}`)
+        this.logger.info(`Destroying instance: ${this.args.instanceName}`)
 
         const confirmCreation = await confirm({
-            message: `You are about to destroy GCP instance '${this.gcpArgs.instanceName}'. Please confirm:`,
+            message: `You are about to destroy GCP instance '${this.args.instanceName}'. Please confirm:`,
             default: false,
         });
 
@@ -96,15 +86,14 @@ Do you want to proceed?`,
             throw new Error('Destroy aborted.');
         }
 
-        const pulumiClient = new GcpPulumiClient(this.gcpArgs.instanceName)
+        const pulumiClient = new GcpPulumiClient(this.args.instanceName)
         await pulumiClient.destroy()
 
-        this.gcpArgs.gcp.output = undefined
-        this.gcpArgs.common.output = undefined
+        this.args.output = undefined
     }
 
     private async checkGcpAuth(projectId: string) {
-        const client = new GcpClient(this.gcpArgs.instanceName, projectId)
+        const client = new GcpClient(this.args.instanceName, projectId)
         await client.checkAuth()
     }
 }
