@@ -11,7 +11,7 @@ if [ -n "$CLOUDYPAD_CLI_LAUNCHER_DEBUG" ]; then
   set -x
 fi
 
-CLOUDYPAD_VERSION=0.7.0
+CLOUDYPAD_VERSION=0.8.0
 CLOUDYPAD_IMAGE="${CLOUDYPAD_IMAGE:-"crafteo/cloudypad:$CLOUDYPAD_VERSION"}"
 CLOUDYPAD_TARGET_IMAGE="crafteo/cloudypad-local-runner:local"
 
@@ -133,6 +133,9 @@ run_cloudypad_docker() {
         "GOOGLE_REGION" "GCLOUD_REGION" "CLOUDSDK_COMPUTE_REGION"
         "GOOGLE_ZONE" "GCLOUD_ZONE" "CLOUDSDK_COMPUTE_ZONE"
         "GOOGLE_IMPERSONATE_SERVICE_ACCOUNT"
+
+        # Ansible
+        "ANSIBLE_DEBUG" "ANSIBLE_LOG_VERBOSITY"
     )
 
     for env_var in "${env_vars[@]}"; do
