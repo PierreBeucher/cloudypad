@@ -229,7 +229,7 @@ export class StaticInitializerPrompts {
 
         const useSpotChoice = await confirm({
             message: `Do you want to use spot instances ? Spot instances are cheaper (usually 20% to 70% off) but may be restarted any time.`,
-            default: false,
+            default: true,
         })
     
         return useSpotChoice;
