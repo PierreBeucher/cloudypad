@@ -125,11 +125,12 @@ class CloudyPadAzureInstance extends pulumi.ComponentResource {
                 },
             },
             storageProfile: {
+                // Specify most precise version for better reproducibility
                 imageReference: {
                     publisher: "Canonical",
                     offer: "0001-com-ubuntu-server-jammy",
                     sku: "22_04-lts-gen2",
-                    version: "latest",
+                    version: "22.04.202410020",
                 },
                 osDisk: {
                     createOption: "FromImage",
@@ -143,7 +144,12 @@ class CloudyPadAzureInstance extends pulumi.ComponentResource {
             priority: args.priority,
             evictionPolicy: args.evictionPolicy,
             tags: globalTags
-        }, commonPulumiOpts)
+        }, {
+            ...commonPulumiOpts,
+            // ignore imageReference change to avoid destroying instance on update
+            // TODO support such change while keeping user's data
+            ignoreChanges: [ "storageProfile.imageReference" ]
+        })
 
         this.resourceGroupName = resourceGroup.name
         this.vmName = vm.name

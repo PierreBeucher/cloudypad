@@ -74,7 +74,7 @@ class CloudyPadGCEInstance extends pulumi.ComponentResource {
             machineType: args.machineType,
             bootDisk: {
                 initializeParams: {
-                    image: "ubuntu-2204-lts",
+                    image: "ubuntu-2204-jammy-v20241119",
                     size: args.bootDisk?.sizeGb || 50,
                     type: "pd-balanced"
                 }
@@ -99,7 +99,12 @@ class CloudyPadGCEInstance extends pulumi.ComponentResource {
                 instanceTerminationAction: "STOP",
                 preemptible: args.useSpot ?? false
             },
-        }, commonPulumiOpts)
+        }, {
+            ...commonPulumiOpts,
+            // Ignore bootDisk changes to avoid machine replacement on change (user's data loss)
+            // TODO support such change while keeping user's data
+            ignoreChanges: [ "bootDisk.initializeParams" ]
+        })
 
         this.instanceName = gceInstance.name
 
