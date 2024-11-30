@@ -1,4 +1,6 @@
-# Paperspace monthly cost estimations
+# Paperspace costs
+
+## Monthly cost estimations
 
 Cloudy-Pad is free and open-source; however, charges may apply when using a Cloud provider. Typically billed resources:
 - Machine usage (GPU, CPU, RAM)
@@ -14,4 +16,8 @@ Example: Using a P4000 with 30 GB RAM, 8 CPU and 100 GB disk for 10 h / month wi
 |     P5000     |    30    |   8  |       250      |     $0.780     |     30    |     $10.00     |      $33.40     |
 |    RTX5000    |    30    |   8  |       250      |     $0.820     |     30    |     $10.00     |      $34.60     |
 
-_*Estimations based on Paperspace pricing as of September 2024. Exact prices may vary over time and by region._
+_*Estimations based on [Paperspace pricing as of September 2024](https://www.paperspace.com/pricing). Exact prices may vary over time and by region._
+
+## Egress costs - Data transfer out from Paperspace to Internet
+
+Paperspace does not charge for data transfer. (or it's not documented on their [pricing page](https://www.paperspace.com/pricing))

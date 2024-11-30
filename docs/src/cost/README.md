@@ -1,11 +1,19 @@
 # How much will I pay ? 🫰
 
+- [Cost estimations](#cost-estimations)
+- [Cost optimizations](#cost-optimizations)
+  - [Spot instances](#spot-instances)
+  - [Egress (sending data out to Internet from Cloud provider network)](#egress-sending-data-out-to-internet-from-cloud-provider-network)
+  - [Instance setup and specs recommandations](#instance-setup-and-specs-recommandations)
+- [Turn off your instance while not in use](#turn-off-your-instance-while-not-in-use)
+
 Cloudy-Pad is free and open-source; however, charges may apply when using a Cloud provider. Typically billed resources:
 - Machine usage (GPU, CPU, RAM)
 - Disk storage
 - IP address reservation
+- Past a certain time played per month, data transfer charges may apply (typically if you play 50h+ per months)
 
-## Cost estimation
+## Cost estimations
 
 Estimations for a setup with **8 CPUs, ~30GB RAM, 100GB Disk for 30 hours / month**:
 
@@ -21,11 +29,11 @@ See per cloud providers estimations:
 - [Google Cloud](gcp.md)
 - [Paperspace](paperspace.md)
 
-## Cost optimization
+## Cost optimizations
 
 Some general recommandations to avoid unnecessary costs
 
-## Spot instances
+### Spot instances
 
 **💸 It's recommenced to use Spot instances as they are 30% to 90% cheaper !** As Spot instances interrupton is generally low, you probably won't get interruped during your session. However, make sure to save often nonetheless 😉
 
@@ -40,7 +48,13 @@ Spot instance usage is specified during instance creation with `cloudypad create
 
 To have a better understand about spot instances, [see this article](https://www.cloudzero.com/blog/on-demand-vs-spot-instances/).
 
-## Instance setup and specs recommandations 
+### Egress (sending data out to Internet from Cloud provider network)
+
+Most clouders (including AWS, Azure and GCP) will bill Egress traffic (outgoing traffic from their network to the internet) past a certain threshold. Cloudy Pad incurs egress traffic as video stream will be sent from Clouder network to internet on your machine.
+
+**Egress charges may apply typically after 50 hours / month with a 1080p 60FPS streaming setup** - time varies depending on your setup and Cloud provider used.  See Clouder cost recommandations for details. 
+
+### Instance setup and specs recommandations 
 
 - Choose a location or region as close as possible to you to avoid too much latency (eg. if you live in the US don't create your instance in Europe)
 - Just provision what you need for: don't create a 500 GB disk if you intend to play a game that will only use 100 GB. 
