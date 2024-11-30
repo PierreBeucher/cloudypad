@@ -89,6 +89,8 @@ function create_destroy_azure() {
 
     $cloudypad_cmd stop $instance_name
 
+    $cloudypad_cmd start $instance_name
+
     $cloudypad_cmd destroy $instance_name
 }
 
