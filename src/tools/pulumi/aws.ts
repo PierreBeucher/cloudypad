@@ -163,7 +163,10 @@ class CloudyPadEC2Instance extends pulumi.ComponentResource {
         }, {
             ...commonPulumiOpts,
             ignoreChanges: [
-                "associatePublicIpAddress" 
+                "associatePublicIpAddress",
+                // Don't update AMI as it will replace instance, destroying disk and user's data
+                // TODO support such change while keeping user's data
+                "ami" 
             ]
         })
 
@@ -221,13 +224,15 @@ async function awsPulumiProgram(): Promise<Record<string, any> | void> {
 
     const instanceName = pulumi.getStack()
 
-    // TODO fixed version
     const ubuntuAmi = aws.ec2.getAmiOutput({
         mostRecent: true,
         filters: [
             {
                 name: "name",
-                values: ["ubuntu/images/hvm-ssd/ubuntu-jammy-22.04-amd64-server-*"],
+                // Use a specific version as much as possible to avoid reproducibility issues
+                // Can't use AMI ID as it's region dependent 
+                // and specifying AMI for all regions may not yield expected results and would be hard to maintain
+                values: ["ubuntu/images/hvm-ssd/ubuntu-jammy-22.04-amd64-server-20241120"],
             },
             {
                 name: "virtualization-type",

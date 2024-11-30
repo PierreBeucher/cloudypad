@@ -10,6 +10,7 @@
 - name: Reboot after nouveau driver blacklist update
   when: nvidia_nouveau_driver_blacklist.changed
   reboot:
+    post_reboot_delay: 10
 
 # NVIDIA driver install require gcc and make
 # and that gcc version matches the one used to compile kernel
@@ -28,6 +29,7 @@
 - name: Reboot after previous install method package removal
   when: previous_install_method_package_remove.changed
   reboot:
+    post_reboot_delay: 10  
 
 - name: install driver required packages
   apt:
@@ -114,3 +116,4 @@
 - name: Reboot after dotrun driver install
   when: nvidia_driver_version != nvidia_driver_dotrun_install_version
   reboot:
+    post_reboot_delay: 10
