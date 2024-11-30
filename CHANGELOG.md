@@ -6,19 +6,15 @@
 ### Features
 
 * bump driver version and more flexible install method ([ea8a1bf](https://github.com/PierreBeucher/cloudypad/commit/ea8a1bf899005d09419a99769f4d66e4c69affc1))
-* **doc:** rewrote doc as mdbook ([0eb3df6](https://github.com/PierreBeucher/cloudypad/commit/0eb3df65251e6aa34fded8fc21db39d20a892014))
 * **doc:** rewrote doc as mdbook ([c97de91](https://github.com/PierreBeucher/cloudypad/commit/c97de911db95437f1af168dc556a78ea46abdcc3))
-* more automated Moonlight pairing ([9f0f97e](https://github.com/PierreBeucher/cloudypad/commit/9f0f97e9627923a5416e862e32aec9ec89cba44b))
 * more automated Moonlight pairing ([6f8029e](https://github.com/PierreBeucher/cloudypad/commit/6f8029ea48a1c056f6781754a33cf0144b37b97b))
 
 
 ### Bug Fixes
 
-* Azure start should use start() and not restart() function ([02074d2](https://github.com/PierreBeucher/cloudypad/commit/02074d201b0a2c578e47320310271dab06f3b09d))
 * Azure start should use start() and not restart() function ([7fc38aa](https://github.com/PierreBeucher/cloudypad/commit/7fc38aacc27b263c62b3af52ee4e740d3b7ac2e5))
 * fixed Cloud image to avoid reproducibility issues ([0cca532](https://github.com/PierreBeucher/cloudypad/commit/0cca53243e462c5e4c1d41a8e513d1973421eec3))
 * post reboot delay to avoid too-early continue ([a257d28](https://github.com/PierreBeucher/cloudypad/commit/a257d28410145c4b8b2512b0b91f473e0817a853))
-* prompt error on missing AWS region in user's config ([2881b38](https://github.com/PierreBeucher/cloudypad/commit/2881b38f7009d513fcc28335738496da138beaab))
 * prompt error on missing AWS region in user's config ([4e1eaab](https://github.com/PierreBeucher/cloudypad/commit/4e1eaab413e4625a1698783a543ed79399ef7206))
 
 ## [0.7.0](https://github.com/PierreBeucher/cloudypad/compare/v0.6.0...v0.7.0) (2024-09-15)
