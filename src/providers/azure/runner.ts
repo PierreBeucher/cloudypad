@@ -42,7 +42,7 @@ export class AzureInstanceRunner extends AbstractInstanceRunner {
         const vmName = this.getVmName()
         const resourceGroupName = this.getResourceGroupName()
 
-        await this.client.restartInstance(resourceGroupName, vmName)
+        await this.client.startInstance(resourceGroupName, vmName)
     }
 
     async stop() {
