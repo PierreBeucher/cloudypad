@@ -68,19 +68,18 @@ jobs:
         - ubuntu-22.04
         - ubuntu-20.04
         # - macos-14 # Docker install suported yet
-        - macos-13
-        - macos-12
+        # - macos-13
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
       
-      - name: (MacOS) Setup Docker
-        if: startsWith(matrix.os, 'macos')
-        # uses: docker-practice/actions-setup-docker@master
-        # timeout-minutes: 12
-        # uses: douglascamata/setup-docker-macos-action@main
-        uses: crazy-max/ghaction-setup-docker@v3
+      # - name: (MacOS) Setup Docker
+      #   if: startsWith(matrix.os, 'macos')
+      #   # uses: docker-practice/actions-setup-docker@master
+      #   # timeout-minutes: 12
+      #   # uses: douglascamata/setup-docker-macos-action@main
+      #   uses: crazy-max/ghaction-setup-docker@v3
         
       # Test the install script and cloudypad.sh for current commit
       - name: Run install script
