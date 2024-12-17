@@ -1,6 +1,6 @@
 import { CLOUDYPAD_PROVIDER_AWS, CLOUDYPAD_PROVIDER_AZURE, CLOUDYPAD_PROVIDER_GCP, CLOUDYPAD_PROVIDER_PAPERSPACE } from './const';
 import { getLogger } from '../log/utils';
-import { StateUtils } from './state';
+import { StateManager } from './state';
 import { AwsInstanceStateV1 } from '../providers/aws/state';
 import { AwsInstanceManager } from '../providers/aws/manager';
 import { InstanceManager } from './manager';
@@ -19,11 +19,15 @@ import { PaperspaceInstanceStateV1 } from '../providers/paperspace/state';
 export class InstanceManagerBuilder {
 
     private static readonly logger = getLogger(InstanceManagerBuilder.name)
+    
+    private readonly stateManager: StateManager
 
-    private constructor() {}
+    private constructor() {
+        this.stateManager = StateManager.default()
+    }
 
     static getAllInstances(): string[] {
-        return StateUtils.listInstances()
+        return StateManager.default().listInstances()
     }
 
     /**
@@ -33,7 +37,7 @@ export class InstanceManagerBuilder {
      * @param name 
      */
     static async buildManagerForInstance(name: string): Promise<InstanceManager>{
-        const stateRaw = await StateUtils.loadInstanceState(name)
+        const stateRaw = await StateManager.default().loadInstanceState(name)
 
         if (stateRaw.provision.provider === CLOUDYPAD_PROVIDER_AWS) {
             const awsState = stateRaw as AwsInstanceStateV1;

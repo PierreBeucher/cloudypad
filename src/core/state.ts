@@ -1,65 +1,104 @@
 import * as fs from 'fs'
 import * as yaml from 'js-yaml'
-import * as path from 'path';
-import { PaperspaceInstanceStateV1, PaperspaceProviderStateV0 } from '../providers/paperspace/state';
-import { AwsInstanceStateV1, AwsProviderStateV0 } from '../providers/aws/state';
-import { getLogger } from '../log/utils';
-import { CLOUDYPAD_PROVIDER, CLOUDYPAD_PROVIDER_AWS, CLOUDYPAD_PROVIDER_AZURE, CLOUDYPAD_PROVIDER_GCP, CLOUDYPAD_PROVIDER_PAPERSPACE } from './const';
-import { AzureInstanceStateV1, AzureProviderStateV0 } from '../providers/azure/state';
-import { GcpInstanceStateV1, GcpProviderStateV0 } from '../providers/gcp/state';
-import { DataHomeUtils } from './data';
+import * as path from 'path'
+import { PaperspaceInstanceStateV1, PaperspaceProviderStateV0 } from '../providers/paperspace/state'
+import { AwsInstanceStateV1, AwsProviderStateV0 } from '../providers/aws/state'
+import { getLogger } from '../log/utils'
+import { CLOUDYPAD_PROVIDER, CLOUDYPAD_PROVIDER_AWS, CLOUDYPAD_PROVIDER_AZURE, CLOUDYPAD_PROVIDER_GCP, CLOUDYPAD_PROVIDER_PAPERSPACE } from './const'
+import { AzureInstanceStateV1, AzureProviderStateV0 } from '../providers/azure/state'
+import { GcpInstanceStateV1, GcpProviderStateV0 } from '../providers/gcp/state'
 
 export type AnyInstanceStateV1 = AwsInstanceStateV1 | AzureInstanceStateV1 | GcpInstanceStateV1 | PaperspaceInstanceStateV1
 
 /**
- * State utils functions to manage instance state
- * including reading and writing State to disk
+ * Return current environments Cloudy Pad data root dir, by order of priority:
+ * - $CLOUDYPAD_HOME environment variable
+ * - $HOME/.cloudypad
+ * - Fails is neither CLOUDYPAD_HOME nor HOME is set
+ * 
+ * This function is used by all components with side effects in Cloudy Pad data root dir (aka Cloudy Pad Home)
+ * and can be mocked during tests to control side effect
  */
-export class StateUtils {
+export function getEnvironmentDataRootDir(): string {
+    if (process.env.CLOUDYPAD_HOME) {
+        return process.env.CLOUDYPAD_HOME
+    } else {
+        if (!process.env.HOME){
+            throw new Error("Neither CLOUDYPAD_HOME nor HOME environment variable is set. Could not define Cloudy Pad data root directory.")
+        }
 
-    private static readonly logger = getLogger(StateUtils.name)
+        return path.resolve(`${ process.env.HOME}/.cloudypad`)
+    }
+}
 
-    static getInstanceDir(instanceName: string){
-        return path.join(DataHomeUtils.getInstanceDirPath(), instanceName);
+export interface StateManagerArgs {
+
+    /**
+     * Data root directory where Cloudy Pad state are saved.
+     * Default to value returned by getEnvironmentDataRootDir()
+     */
+    dataRootDir?: string
+}
+
+/**
+ * Manages instance states on disk
+ * including reading and writing State to disk
+ * and transforming older state version to new state version
+ */
+export class StateManager {
+
+    static default(): StateManager{
+        return new StateManager()
+    }
+
+    private logger = getLogger(StateManager.name)
+
+    private dataRootDir: string 
+
+    constructor(args?: StateManagerArgs) {
+        this.dataRootDir = args?.dataRootDir ?? getEnvironmentDataRootDir()
     }
     
-    static getInstanceConfigPath(instanceName: string){
-        return path.join(this.getInstanceDir(instanceName), "config.yml");
+    getDataRootDir(){
+        return this.dataRootDir
     }
 
-    static listInstances(){
+    getInstanceDir(instanceName: string): string {
+        return path.join(this.dataRootDir, 'instances', instanceName)
+    }
+
+    getInstanceConfigPath(instanceName: string): string {
+        return path.join(this.getInstanceDir(instanceName), "config.yml")
+    }
+
+    listInstances(): string[] {
         try {
-            const instancesDirPath = DataHomeUtils.getInstanceDirPath()
+            const instancesDirPath = path.join(this.dataRootDir, 'instances')
             this.logger.debug(`Listing all instances from ${instancesDirPath}`)
 
-            const instanceDirs = fs.readdirSync(instancesDirPath);
+            const instanceDirs = fs.readdirSync(instancesDirPath)
 
-            return instanceDirs.filter(dir => fs.existsSync(path.join(instancesDirPath, dir, 'config.yml')));
+            return instanceDirs.filter(dir =>
+                fs.existsSync(path.join(instancesDirPath, dir, 'config.yml'))
+            )
         } catch (error) {
-            this.logger.error('Failed to read instances directory:', error);
-            return [];
+            this.logger.error('Failed to read instances directory:', error)
+            return []
         }
     }
 
-    static async instanceExists(instanceName: string): Promise<boolean>{
-        const instanceDir = StateUtils.getInstanceDir(instanceName)
-        
-        StateUtils.logger.debug(`Checking instance ${instanceName} exists at ${instanceDir}`)
-        
+    async instanceExists(instanceName: string): Promise<boolean> {
+        const instanceDir = this.getInstanceDir(instanceName)
+
+        this.logger.debug(`Checking instance ${instanceName} exists at ${instanceDir}`)
+
         return fs.existsSync(instanceDir)
     }
 
-    /**
-     * Load an instance state from disk into a known, stable object in memory wrapped around a State Manager.
-     * Also migrate if needed to expecteed state version. 
-     * @param instanceName 
-     * @returns 
-     */
-    static async loadInstanceState(instanceName: string): Promise<AnyInstanceStateV1>{
+    async loadInstanceState(instanceName: string): Promise<AnyInstanceStateV1> {
+        this.logger.debug(`Loading instance state ${instanceName}`)
 
-        StateUtils.logger.debug(`Loading instance state ${instanceName}`)
-
-        if(!await StateUtils.instanceExists(instanceName)){
+        if (!(await this.instanceExists(instanceName))) {
             throw new Error(`Instance named '${instanceName}' does not exist.`)
         }
 
@@ -68,49 +107,40 @@ export class StateUtils {
         this.logger.debug(`Loading instance state ${instanceName} from ${configPath}`)
 
         const rawState = yaml.load(fs.readFileSync(configPath, 'utf8'))
-
         const stateV1 = await ensureStateV1(rawState)
         return stateV1
     }
 
-    /**
-     * Persist state on disk. 
-     */
-    static async persistState<C extends CommonProvisionConfigV1, O extends CommonProvisionOutputV1>(state: InstanceStateV1<C, O>){
-        
+    async persistState<C extends CommonProvisionConfigV1, O extends CommonProvisionOutputV1>(state: InstanceStateV1<C, O>): Promise<void> {
         await this.ensureInstanceDirExists(state.name)
 
-        const confPath = StateUtils.getInstanceConfigPath(state.name)
+        const confPath = this.getInstanceConfigPath(state.name)
 
         this.logger.debug(`Persisting state for ${state.name} at ${confPath}`)
 
         fs.writeFileSync(confPath, yaml.dump(state), 'utf-8')
     }
 
-    private static async ensureInstanceDirExists(instanceName: string){
-        const instanceDir = StateUtils.getInstanceDir(instanceName)
+    private async ensureInstanceDirExists(instanceName: string): Promise<void> {
+        const instanceDir = this.getInstanceDir(instanceName)
 
         if (!fs.existsSync(instanceDir)) {
             this.logger.debug(`Creating instance ${instanceName} directory at ${instanceDir}`)
-            
-            fs.mkdirSync(instanceDir, { recursive: true });
 
-            this.logger.debug(`Instance ${instanceName} directory created at ${instanceDir}`);
+            fs.mkdirSync(instanceDir, { recursive: true })
+
+            this.logger.debug(`Instance ${instanceName} directory created at ${instanceDir}`)
         } else {
-            this.logger.trace(`Instance directory already exists at ${instanceDir}`);
+            this.logger.trace(`Instance directory already exists at ${instanceDir}`)
         }
     }
 
-    /**
-     * Remove an instance directory, effectively deleting everything about this instance.
-     */
-    static async removeInstanceDir(instanceName: string){
-        // Remove state on disk
-        const confDir = StateUtils.getInstanceDir(instanceName)
+    async removeInstanceDir(instanceName: string): Promise<void> {
+        const confDir = this.getInstanceDir(instanceName)
 
         this.logger.debug(`Removing instance config directory ${instanceName}: '${confDir}'`)
 
-        fs.rmSync(confDir, { recursive: true })
+        fs.rmSync(confDir, { recursive: true, force: true })
     }
 }
 
@@ -358,7 +388,7 @@ export interface CommonProvisionOutputV1 {
 }
 
 /**
- * Current state of a Cloudy Pad instance. It contains every data
+ * Legacy state of a Cloudy Pad instance. It contains every data
  * about an instance: Cloud provider used, how to access, etc.
  * 
  * These data are persisted on disk and loaded in memory. This class

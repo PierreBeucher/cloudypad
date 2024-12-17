@@ -2,11 +2,12 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';
 import { input, select, confirm } from '@inquirer/prompts';
-import { CommonProvisionConfigV1, CommonProvisionOutputV1, InstanceStateV1, StateUtils } from './state';
+import { CommonProvisionConfigV1, CommonProvisionOutputV1, InstanceStateV1 } from './state';
 import { getLogger } from '../log/utils';
 import { PartialDeep } from 'type-fest';
 import { InstanceManager } from './manager';
 import { CLOUDYPAD_PROVIDER } from './const';
+import { StateManager } from './state';
 
 export interface InstanceInitializationOptions {
     autoApprove?: boolean
@@ -35,10 +36,12 @@ export abstract class InstanceInitializer<C extends CommonProvisionConfigV1, O e
 
     protected readonly provider: CLOUDYPAD_PROVIDER
     protected readonly args: InstanceInitArgs<C>
+    protected stateManager: StateManager
 
     constructor(provider: CLOUDYPAD_PROVIDER, args: InstanceInitArgs<C>){
         this.provider = provider
         this.args = args
+        this.stateManager = StateManager.default()
     }
 
     private async promptCommonConfig(): Promise<{ name: string, config: CommonProvisionConfigV1 }> {
@@ -82,7 +85,7 @@ export abstract class InstanceInitializer<C extends CommonProvisionConfigV1, O e
 
         const { name: instanceName, config: commonConfig } = await this.promptCommonConfig();
 
-        if(await StateUtils.instanceExists(instanceName) && !opts.overwriteExisting){
+        if(await this.stateManager.instanceExists(instanceName) && !opts.overwriteExisting){
             const confirmAlreadyExists = await confirm({
                 message: `Instance ${instanceName} already exists. Do you want to overwrite existing instance config?`,
                 default: false,

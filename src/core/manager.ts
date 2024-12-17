@@ -1,4 +1,4 @@
-import { CommonProvisionConfigV1, CommonProvisionOutputV1, InstanceStateV1, StateUtils } from './state';
+import { CommonProvisionConfigV1, CommonProvisionOutputV1, InstanceStateV1, StateManager } from './state';
 import { InstanceProvisioner, InstanceProvisionOptions } from './provisioner';
 import { AnsibleConfigurator } from '../configurators/ansible';
 import { InstanceConfigurator } from './configurator';
@@ -70,7 +70,7 @@ export abstract class AbstractInstanceManager<C extends CommonProvisionConfigV1,
         const provisioner = await this.buildInstanceProvisioner()
         await provisioner.destroy(opts)
         await this.persistState()
-        await StateUtils.removeInstanceDir(this.state.name)
+        await StateManager.default().removeInstanceDir(this.state.name)
     }
 
     async start(): Promise<void> {
@@ -128,7 +128,7 @@ export abstract class AbstractInstanceManager<C extends CommonProvisionConfigV1,
      * This function is called after every action where eventual state update occured. 
      */
     async persistState(){
-        StateUtils.persistState(this.state)
+        StateManager.default().persistState(this.state)
     }
 
     public getStateJSON(){

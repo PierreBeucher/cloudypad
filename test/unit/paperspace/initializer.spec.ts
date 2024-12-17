@@ -1,6 +1,6 @@
 import * as assert from 'assert';
 import { PaperspaceInstanceInitializer } from "../../../src/providers/paperspace/initializer"
-import { StateUtils } from '../../../src/core/state';
+import { StateManager } from '../../../src/core/state';
 import { InstanceInitializationOptions } from '../../../src/core/initializer';
 import { PaperspaceInstanceStateV1, PaperspaceProvisionConfigV1 } from '../../../src/providers/paperspace/state';
 import { CLOUDYPAD_PROVIDER_PAPERSPACE } from '../../../src/core/const';
@@ -37,7 +37,7 @@ describe('PaperspaceInitializerPrompt', () => {
         await new PaperspaceInstanceInitializer({ instanceName: instanceName, config: conf}).initializeInstance(opts)
 
         // Check state has been written
-        const state = await StateUtils.loadInstanceState(instanceName)
+        const state = await StateManager.default().loadInstanceState(instanceName)
 
         const expectState: PaperspaceInstanceStateV1 = {
             version: "1",

@@ -1,6 +1,6 @@
 import * as assert from 'assert';
 import { InstanceInitializationOptions } from '../../../src/core/initializer';
-import { StateUtils } from '../../../src/core/state';
+import { StateManager } from '../../../src/core/state';
 import { AzureInstanceInitializer } from '../../../src/providers/azure/initializer';
 import { AzureInstanceStateV1, AzureProvisionConfigV1 } from '../../../src/providers/azure/state';
 import { CLOUDYPAD_PROVIDER_AZURE } from '../../../src/core/const';
@@ -37,7 +37,7 @@ describe('Azure initializer', () => {
         await new AzureInstanceInitializer({ instanceName: instanceName, config: config }).initializeInstance(opts)
 
         // Check state has been written
-        const state = await StateUtils.loadInstanceState(instanceName)
+        const state = await StateManager.default().loadInstanceState(instanceName)
 
         const expectState: AzureInstanceStateV1 = {
             version: "1",

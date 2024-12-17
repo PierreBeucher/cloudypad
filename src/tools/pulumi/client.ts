@@ -1,7 +1,7 @@
 import * as fs from 'fs'
 import { InlineProgramArgs, LocalWorkspace, LocalWorkspaceOptions, OutputMap, PulumiFn, Stack } from "@pulumi/pulumi/automation";
 import { getLogger, Logger } from '../../log/utils';
-import { DataHomeUtils } from '../../core/data';
+import { StateManager } from '../../core/state';
 
 export interface InstancePulumiClientArgs {
     program: PulumiFn
@@ -19,12 +19,14 @@ export abstract class InstancePulumiClient<ConfigType, OutputType> {
     readonly stackName: string
     protected readonly logger: Logger
     private stack: Stack | undefined
+    private stateManager: StateManager
 
     constructor(args: InstancePulumiClientArgs){
         this.program = args.program
         this.projectName = args.projectName
         this.stackName = args.stackName
         this.logger = getLogger(`${args.projectName}-${args.stackName}`)
+        this.stateManager = StateManager.default()
     }
 
     protected async getStack(): Promise<Stack>{
@@ -47,7 +49,8 @@ export abstract class InstancePulumiClient<ConfigType, OutputType> {
         this.logger.debug(`Initializing stack and config`)
 
         // Force use of local backend unless environment configured otherwise
-        const backendUrl = process.env.PULUMI_BACKEND_URL ?? `file://${DataHomeUtils.getDataDirPath()}/pulumi-backend`
+        // Pulumi state is a state so Pulumi state path depends on StateManager path
+        const backendUrl = process.env.PULUMI_BACKEND_URL ?? `file://${this.stateManager.getDataRootDir()}/pulumi-backend`
         const configPassphrase=`${process.env.PULUMI_CONFIG_PASSPHRASE ?? ""}`
         
         if(this.stack !== undefined) {

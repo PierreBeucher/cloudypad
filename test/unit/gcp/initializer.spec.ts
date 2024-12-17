@@ -1,6 +1,6 @@
 import * as assert from 'assert';
 import { InstanceInitializationOptions } from '../../../src/core/initializer';
-import { StateUtils } from '../../../src/core/state';
+import { StateManager } from '../../../src/core/state';
 import { GcpInstanceInitializer } from '../../../src/providers/gcp/initializer';
 import { GcpInstanceStateV1, GcpProvisionConfigV1 } from '../../../src/providers/gcp/state';
 import { CLOUDYPAD_PROVIDER_GCP } from '../../../src/core/const';
@@ -40,7 +40,7 @@ describe('GCP initializer', () => {
         await new GcpInstanceInitializer({ instanceName: instanceName, config: conf}).initializeInstance(opts)
 
         // Check state has been written
-        const state = await StateUtils.loadInstanceState(instanceName)
+        const state = await StateManager.default().loadInstanceState(instanceName)
 
         const expectState: GcpInstanceStateV1 = {
             version: "1",
