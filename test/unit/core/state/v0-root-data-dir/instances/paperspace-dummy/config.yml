@@ -1,0 +1,23 @@
+name: pspace-test
+ssh:
+  privateKeyPath: /home/pbeucher/.ssh/id_ed25519
+  user: paperspace
+status:
+  initalized: true
+  configuration:
+    configured: true
+    lastUpdate: 1721765744811
+  provision:
+    provisioned: true
+    lastUpdate: 1721765744811
+provider:
+  paperspace:
+    apiKey: xyz
+    provisionArgs:
+      create:
+        machineType: P4000
+        diskSize: 100
+        publicIpType: 'static'
+        region: "Europe (AMS1)"
+    machineId: pspspspspsps
+host: 184.105.189.240

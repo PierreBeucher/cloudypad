@@ -1,0 +1,25 @@
+name: test-create-destroy-azure
+ssh:
+  privateKeyPath: /home/pbeucher/.ssh/id_ed25519
+  user: ubuntu
+status:
+  initalized: true
+  configuration:
+    configured: true
+    lastUpdate: 1734442914293
+  provision:
+    provisioned: true
+    lastUpdate: 1734442914292
+provider:
+  azure:
+    provisionArgs:
+      create:
+        diskSize: 100
+        vmSize: Standard_NC8as_T4_v3
+        publicIpType: static
+        location: francecentral
+        subscriptionId: 12345678-9099-1111-1111-123456789abc
+        useSpot: true
+    vmName: test-create-destroy-azure-vmfoo
+    resourceGroupName: CloudyPad-test-create-destroy-azure
+host: 4.211.183.133

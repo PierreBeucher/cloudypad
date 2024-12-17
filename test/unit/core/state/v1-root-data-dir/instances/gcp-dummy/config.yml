@@ -1,0 +1,19 @@
+name: test-state-gcp
+version: '1'
+provision:
+  provider: gcp
+  output:
+    host: 34.13.187.25
+    instanceName: cloudypad-test-state-gcp
+  config:
+    projectId: crafteo-sandbox
+    diskSize: 100
+    machineType: n1-standard-2
+    publicIpType: static
+    region: europe-west4
+    zone: europe-west4-b
+    acceleratorType: nvidia-tesla-t4
+    useSpot: true
+    ssh:
+      user: ubuntu
+      privateKeyPath: /home/pbeucher/.ssh/id_ed25519

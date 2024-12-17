@@ -1,0 +1,26 @@
+name: test-state-gcp
+ssh:
+  privateKeyPath: /home/pbeucher/.ssh/id_ed25519
+  user: ubuntu
+status:
+  initalized: true
+  configuration:
+    configured: true
+    lastUpdate: 1734450334718
+  provision:
+    provisioned: true
+    lastUpdate: 1734450334715
+provider:
+  gcp:
+    provisionArgs:
+      create:
+        projectId: crafteo-sandbox
+        diskSize: 100
+        machineType: n1-standard-2
+        publicIpType: static
+        region: europe-west4
+        zone: europe-west4-b
+        acceleratorType: nvidia-tesla-t4
+        useSpot: true
+    instanceName: cloudypad-test-state-gcp
+host: 34.13.187.25
