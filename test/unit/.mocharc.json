@@ -1,7 +1,7 @@
 {
   "extension": ["ts"],
   "require": [
-    "ts-node/register",
+    "ts-node/register/transpile-only",
     "test/unit/hooks.ts"
   ]
 }

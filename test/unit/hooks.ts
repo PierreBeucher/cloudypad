@@ -13,7 +13,7 @@ import { PaperspaceClient, PaperspaceMachine } from '../../src/providers/papersp
 
 export const mochaHooks = {
     async beforeAll() {
-        console.info("Calling before hook")
+        console.info("Before hook: stub all side effects for unit tests")
 
         //
         // Stub side effects
