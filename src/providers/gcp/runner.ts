@@ -23,17 +23,14 @@ export class GcpInstanceRunner extends AbstractInstanceRunner<GcpProvisionConfig
     }
 
     async doStart() {
-        await super.start()
         this.client.startInstance(this.getZone(), this.getinstanceName())
     }
 
     async doStop() {
-        await super.stop()
         this.client.stopInstance(this.getZone(), this.getinstanceName())
     }
 
     async doRestart() {
-        await super.restart()
         this.client.restartInstance(this.getZone(), this.getinstanceName())
     }
 }

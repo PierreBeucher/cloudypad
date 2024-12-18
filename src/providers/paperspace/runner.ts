@@ -15,17 +15,14 @@ export class PaperspaceInstanceRunner extends AbstractInstanceRunner<PaperspaceP
     }
 
     async doStart() {
-        await super.start()
         await this.client.startMachine(this.args.output.machineId)
     }
 
     async doStop() {
-        await super.stop()
         await this.client.stopMachine(this.args.output.machineId)
     }
 
     async doRestart() {
-        await super.restart()
         await this.client.restartMachine(this.args.output.machineId)
     }
 
