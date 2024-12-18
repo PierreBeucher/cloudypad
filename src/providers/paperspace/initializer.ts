@@ -1,22 +1,16 @@
 import { select, input, password } from '@inquirer/prompts';
 import { fetchApiKeyFromEnvironment } from './client/client';
-import { InstanceInitializer, InstanceInitArgs } from '../../core/initializer';
+import { AbstractInstanceInitializer, InstanceInitArgs } from '../../core/initializer';
 import { CommonProvisionConfigV1 } from '../../core/state/state';
-import { PaperspaceInstanceStateV1, PaperspaceProvisionConfigV1, PaperspaceProvisionOutputV1 } from './state';
-import { InstanceManager } from '../../core/manager';
-import { PaperspaceInstanceManager } from './manager';
+import { PaperspaceProvisionConfigV1 } from './state';
 import { CLOUDYPAD_PROVIDER_PAPERSPACE } from '../../core/const';
 
 export type PaperspaceInstanceInitArgs = InstanceInitArgs<PaperspaceProvisionConfigV1>
 
-export class PaperspaceInstanceInitializer extends InstanceInitializer<PaperspaceProvisionConfigV1, PaperspaceProvisionOutputV1> {
+export class PaperspaceInstanceInitializer extends AbstractInstanceInitializer<PaperspaceProvisionConfigV1> {
 
     constructor(args: PaperspaceInstanceInitArgs){
         super(CLOUDYPAD_PROVIDER_PAPERSPACE, args)
-    }
-
-    protected async buildInstanceManager(state: PaperspaceInstanceStateV1): Promise<InstanceManager> {
-        return new PaperspaceInstanceManager(state)
     }
 
     async promptProviderConfig(commonConfig: CommonProvisionConfigV1): Promise<PaperspaceProvisionConfigV1> {

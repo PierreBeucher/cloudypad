@@ -2,7 +2,7 @@ import * as fs from 'fs'
 import * as yaml from 'js-yaml'
 import * as path from 'path'
 import { getLogger } from '../../log/utils'
-import { AnyInstanceStateV1, CommonProvisionConfigV1, CommonProvisionOutputV1, InstanceStateV1 } from './state'
+import { AnyInstanceStateV1, InstanceStateV1 } from './state'
 import { StateMigrator } from './migrator'
 
 /**
@@ -109,7 +109,7 @@ export class StateManager {
         return stateV1
     }
 
-    async persistState<C extends CommonProvisionConfigV1, O extends CommonProvisionOutputV1>(state: InstanceStateV1<C, O>): Promise<void> {
+    async persistState(state: InstanceStateV1): Promise<void> {
         await this.ensureInstanceDirExists(state.name)
 
         const confPath = this.getInstanceConfigPath(state.name)

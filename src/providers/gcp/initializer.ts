@@ -1,22 +1,16 @@
 import { input, select } from '@inquirer/prompts'
-import { InstanceInitializer, StaticInitializerPrompts, InstanceInitArgs } from '../../core/initializer'
+import {  StaticInitializerPrompts, InstanceInitArgs, AbstractInstanceInitializer } from '../../core/initializer'
 import { CommonProvisionConfigV1 } from '../../core/state/state'
 import { GcpClient } from '../../tools/gcp'
-import { GcpInstanceStateV1, GcpProvisionConfigV1, GcpProvisionOutputV1 } from './state'
-import { InstanceManager } from '../../core/manager'
-import { GcpInstanceManager } from './manager'
+import { GcpProvisionConfigV1 } from './state'
 import { CLOUDYPAD_PROVIDER_GCP } from '../../core/const'
 
 export type GcpInstanceInitArgs = InstanceInitArgs<GcpProvisionConfigV1>
 
-export class GcpInstanceInitializer extends InstanceInitializer<GcpProvisionConfigV1, GcpProvisionOutputV1> {
+export class GcpInstanceInitializer extends AbstractInstanceInitializer<GcpProvisionConfigV1> {
 
     constructor(args: GcpInstanceInitArgs){
         super(CLOUDYPAD_PROVIDER_GCP, args)
-    }
-
-    protected async buildInstanceManager(state: GcpInstanceStateV1): Promise<InstanceManager> {
-        return new GcpInstanceManager(state)
     }
 
     async promptProviderConfig(commonConfig: CommonProvisionConfigV1): Promise<GcpProvisionConfigV1> {

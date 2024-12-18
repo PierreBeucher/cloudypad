@@ -213,7 +213,7 @@ program
     .option('--format <format>', 'Output format, one of [plain|json] ', 'plain')
     .action(async (options) => {
         try {
-            const instanceNames = InstanceManagerBuilder.getAllInstances();
+            const instanceNames = new InstanceManagerBuilder().getAllInstances();
             if (instanceNames.length === 0) {
                 console.info('No instances found.');
                 return;
@@ -238,7 +238,7 @@ program
     .description('Start an instance')
     .action(async (name) => {
         try {
-            const m = await InstanceManagerBuilder.buildManagerForInstance(name)
+            const m = await new InstanceManagerBuilder().buildManagerForInstance(name)
             await m.start()
             console.info(`Started instance ${name}`)
         } catch (error) {
@@ -252,7 +252,7 @@ program
     .description('Stop an instance')
     .action(async (name) => {
         try {
-            const m = await InstanceManagerBuilder.buildManagerForInstance(name)
+            const m = await new InstanceManagerBuilder().buildManagerForInstance(name)
             await m.stop()
             console.info(`Stopped instance ${name}`)
         } catch (error) {
@@ -266,7 +266,7 @@ program
     .description('Restart an instance')
     .action(async (name) => {
         try {
-            const m = await InstanceManagerBuilder.buildManagerForInstance(name)
+            const m = await new InstanceManagerBuilder().buildManagerForInstance(name)
             await m.restart()
             console.info(`Restarted instance ${name}`)
         } catch (error) {
@@ -280,7 +280,7 @@ program
     .description('Get details of an instance')
     .action(async (name) => {
         try {
-            const m = await InstanceManagerBuilder.buildManagerForInstance(name)
+            const m = await new InstanceManagerBuilder().buildManagerForInstance(name)
             const details = m.getStateJSON()
 
             console.info(JSON.stringify(details, null, 2))
@@ -296,7 +296,7 @@ program
     .option('--yes', 'Do not prompt for approval, automatically approve and continue')
     .action(async (name) => {
         try {
-            const m = await InstanceManagerBuilder.buildManagerForInstance(name)
+            const m = await new InstanceManagerBuilder().buildManagerForInstance(name)
             await m.provision()
 
             console.info(`Provisioned instance ${name}`)
@@ -311,7 +311,7 @@ program
     .description('Configure an instance (connect to instance and install drivers, packages, etc.)')
     .action(async (name) => {
         try {
-            const m = await InstanceManagerBuilder.buildManagerForInstance(name)
+            const m = await new InstanceManagerBuilder().buildManagerForInstance(name)
             await m.configure()
 
             console.info("")
@@ -327,7 +327,7 @@ program
     .description('Destroy an instance')
     .action(async (name) => {
         try {
-            const m = await InstanceManagerBuilder.buildManagerForInstance(name)
+            const m = await new InstanceManagerBuilder().buildManagerForInstance(name)
             await m.destroy()
 
             console.info("")
@@ -343,7 +343,7 @@ program.command('pair <name>')
     .description('Pair an instance with Moonlight')
     .action(async (name: string) => {
         try {
-            const m = await InstanceManagerBuilder.buildManagerForInstance(name)
+            const m = await new InstanceManagerBuilder().buildManagerForInstance(name)
             await m.pair()
         } catch (error) {
             console.error('Error creating new instance:', error)

@@ -1,22 +1,16 @@
 import { input, select } from '@inquirer/prompts';
 import { AwsClient } from '../../tools/aws';
-import { InstanceInitArgs, InstanceInitializer, StaticInitializerPrompts } from '../../core/initializer';
+import { AbstractInstanceInitializer, InstanceInitArgs, StaticInitializerPrompts } from '../../core/initializer';
 import { CommonProvisionConfigV1 } from '../../core/state/state';
-import { AwsInstanceStateV1, AwsProvisionConfigV1, AwsProvisionOutputV1 } from './state';
-import { InstanceManager } from '../../core/manager';
-import { AwsInstanceManager } from './manager';
+import { AwsProvisionConfigV1 } from './state';
 import { CLOUDYPAD_PROVIDER_AWS } from '../../core/const';
 
 export type AwsInstanceInitArgs = InstanceInitArgs<AwsProvisionConfigV1>
 
-export class AwsInstanceInitializer extends InstanceInitializer<AwsProvisionConfigV1, AwsProvisionOutputV1> {
+export class AwsInstanceInitializer extends AbstractInstanceInitializer<AwsProvisionConfigV1> {
 
     constructor(args: AwsInstanceInitArgs){
         super(CLOUDYPAD_PROVIDER_AWS, args)
-    }
-
-    protected async buildInstanceManager(state: AwsInstanceStateV1): Promise<InstanceManager> {
-        return new AwsInstanceManager(state)
     }
 
     async promptProviderConfig(commonConfig: CommonProvisionConfigV1): Promise<AwsProvisionConfigV1> {

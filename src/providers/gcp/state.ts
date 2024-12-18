@@ -1,6 +1,11 @@
 import { CommonProvisionConfigV1, CommonProvisionOutputV1, InstanceStateV1 } from "../../core/state/state"
 
-export type GcpInstanceStateV1 = InstanceStateV1<GcpProvisionConfigV1, GcpProvisionOutputV1>
+export type GcpInstanceStateV1 = InstanceStateV1 & {
+    provision: {
+        output?: GcpProvisionOutputV1,
+        config: GcpProvisionConfigV1,
+    }
+}
 
 export interface GcpProvisionOutputV1 extends CommonProvisionOutputV1 {
     instanceName: string,

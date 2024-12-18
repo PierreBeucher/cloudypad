@@ -2,12 +2,13 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';
 import { input, select, confirm } from '@inquirer/prompts';
-import { CommonProvisionConfigV1, CommonProvisionOutputV1, InstanceStateV1 } from './state/state';
+import { CommonProvisionConfigV1, InstanceStateV1 } from './state/state';
 import { getLogger } from '../log/utils';
 import { PartialDeep } from 'type-fest';
 import { InstanceManager } from './manager';
 import { CLOUDYPAD_PROVIDER } from './const';
 import { StateManager } from './state/manager';
+import { InstanceManagerBuilder } from './manager-builder';
 
 export interface InstanceInitializationOptions {
     autoApprove?: boolean
@@ -30,9 +31,24 @@ export interface InstanceInitArgs<C> {
  * Helper prompts by provider are used to gather user inputs, either
  * from CLI flags or by letting user choose interactively. 
  */
-export abstract class InstanceInitializer<C extends CommonProvisionConfigV1, O extends CommonProvisionOutputV1> {
+export interface InstanceInitializer {
 
-    protected readonly logger = getLogger(InstanceInitializer.name)
+    /**
+     * Initialize instance:
+     * - Prompt for common and provisioner-specific configs
+     * - Initialize state
+     * - Run provision
+     * - Run configuration
+     * - Optionally pair instance
+     * @param opts 
+     */
+    initializeInstance(config: CommonProvisionConfigV1, opts: InstanceInitializationOptions): Promise<void>
+
+}
+
+export abstract class AbstractInstanceInitializer<C extends CommonProvisionConfigV1> {
+
+    protected readonly logger = getLogger(AbstractInstanceInitializer.name)
 
     protected readonly provider: CLOUDYPAD_PROVIDER
     protected readonly args: InstanceInitArgs<C>
@@ -70,17 +86,10 @@ export abstract class InstanceInitializer<C extends CommonProvisionConfigV1, O e
      */
     protected abstract promptProviderConfig(commonConfig: CommonProvisionConfigV1): Promise<C>
 
-    protected abstract buildInstanceManager(state: InstanceStateV1<C, O>): Promise<InstanceManager>
+    protected buildInstanceManager(state: InstanceStateV1): InstanceManager {
+        return new InstanceManagerBuilder().buildManagerForState(state)
+    }
 
-    /**
-     * Initialize instance:
-     * - Prompt for common and provisioner-specific configs
-     * - Initialize state
-     * - Run provision
-     * - Run configuration
-     * - Optionally pair instance
-     * @param opts 
-     */
     public async initializeInstance(opts: InstanceInitializationOptions){
 
         const { name: instanceName, config: commonConfig } = await this.promptCommonConfig();
@@ -102,7 +111,7 @@ export abstract class InstanceInitializer<C extends CommonProvisionConfigV1, O e
         this.logger.debug(`Initializing a new instance with config ${JSON.stringify(finalConfig)}`)
 
         // Create the initial state
-        const initialState: InstanceStateV1<C, O> = {
+        const initialState: InstanceStateV1 = {
             version: "1",
             name: instanceName,
             provision: {

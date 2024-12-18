@@ -1,23 +1,17 @@
 import { input, select } from '@inquirer/prompts'
-import { InstanceInitializer, StaticInitializerPrompts, InstanceInitArgs } from '../../core/initializer'
+import { StaticInitializerPrompts, InstanceInitArgs, AbstractInstanceInitializer } from '../../core/initializer'
 import { AzureClient } from '../../tools/azure'
-import { AzureInstanceStateV1, AzureProvisionConfigV1, AzureProvisionOutputV1 } from './state'
-import { InstanceManager } from '../../core/manager'
-import { AzureInstanceManager } from './manager'
+import { AzureProvisionConfigV1 } from './state'
 import { CommonProvisionConfigV1 } from '../../core/state/state'
 import { CLOUDYPAD_PROVIDER_AZURE } from '../../core/const'
 
 
 export type AzureInstanceInitArgs = InstanceInitArgs<AzureProvisionConfigV1>
 
-export class AzureInstanceInitializer extends InstanceInitializer<AzureProvisionConfigV1, AzureProvisionOutputV1> {
+export class AzureInstanceInitializer extends AbstractInstanceInitializer<AzureProvisionConfigV1> {
 
     constructor(args: AzureInstanceInitArgs){
         super(CLOUDYPAD_PROVIDER_AZURE, args)
-    }
-
-    protected async buildInstanceManager(state: AzureInstanceStateV1): Promise<InstanceManager> {
-        return new AzureInstanceManager(state)
     }
 
     async promptProviderConfig(commonConfig: CommonProvisionConfigV1): Promise<AzureProvisionConfigV1> {

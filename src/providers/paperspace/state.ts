@@ -1,6 +1,11 @@
 import { CommonProvisionConfigV1, CommonProvisionOutputV1, InstanceStateV1 } from "../../core/state/state"
 
-export type PaperspaceInstanceStateV1 = InstanceStateV1<PaperspaceProvisionConfigV1, PaperspaceProvisionOutputV1>
+export type PaperspaceInstanceStateV1 = InstanceStateV1 & {
+    provision: {
+        output?: PaperspaceProvisionOutputV1,
+        config: PaperspaceProvisionConfigV1,
+    }
+}
 
 export interface PaperspaceProvisionOutputV1 extends CommonProvisionOutputV1 {
     machineId: string,

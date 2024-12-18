@@ -1,17 +1,38 @@
-import { CommonProvisionConfigV1, CommonProvisionOutputV1, InstanceStateV1 } from "../../core/state/state"
+import { z } from "zod"
+import { BaseProvisionOutputV1Schema, BaseProvisionConfigV1Schema, InstanceStateV1Schema } from "../../core/state/state"
+import { CLOUDYPAD_PROVIDER_AWS } from "../../core/const"
 
-export type AwsInstanceStateV1 = InstanceStateV1<AwsProvisionConfigV1, AwsProvisionOutputV1>
+const AwsProvisionOutputV1Schema = BaseProvisionOutputV1Schema.extend({
+    instanceId: z.string().describe("AWS instance ID"),
+})
 
-export interface AwsProvisionOutputV1 extends CommonProvisionOutputV1 {
-    instanceId: string
-}
+const AwsProvisionConfigV1Schema = BaseProvisionConfigV1Schema.extend({
+    instanceType: z.string().describe("Type of AWS instance"),
+    diskSize: z.number().describe("Disk size in GB"),
+    publicIpType: z.string().describe("Type of public IP address (static or dynamic"),
+    region: z.string().describe("AWS region"),
+    useSpot: z.boolean().describe("Whether to use spot instances"),
+})
 
-export interface AwsProvisionConfigV1 extends CommonProvisionConfigV1 {
-    instanceType: string
-    diskSize: number
-    publicIpType: string
-    region: string
-    useSpot: boolean
+const AwsInstanceStateV1Schema = InstanceStateV1Schema.extend({
+    provision: z.object({
+        provider: z.literal(CLOUDYPAD_PROVIDER_AWS),
+        output: AwsProvisionOutputV1Schema.optional(),
+        config: AwsProvisionConfigV1Schema,
+    })
+})
+
+type AwsInstanceStateV1 = z.infer<typeof AwsInstanceStateV1Schema>
+type AwsProvisionOutputV1 = z.infer<typeof AwsProvisionOutputV1Schema>
+type AwsProvisionConfigV1 = z.infer<typeof AwsProvisionConfigV1Schema>
+
+export {
+    AwsProvisionOutputV1Schema,
+    AwsProvisionConfigV1Schema,
+    AwsInstanceStateV1Schema,
+    AwsInstanceStateV1,
+    AwsProvisionOutputV1,
+    AwsProvisionConfigV1
 }
 
 // V0

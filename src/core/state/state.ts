@@ -1,66 +1,44 @@
 import { PaperspaceInstanceStateV1, PaperspaceProviderStateV0 } from '../../providers/paperspace/state'
 import { AwsInstanceStateV1, AwsProviderStateV0 } from '../../providers/aws/state'
-import { CLOUDYPAD_PROVIDER } from '../const'
 import { AzureInstanceStateV1, AzureProviderStateV0 } from '../../providers/azure/state'
 import { GcpInstanceStateV1, GcpProviderStateV0 } from '../../providers/gcp/state'
+import { z } from "zod"
+import { CLOUDYPAD_PROVIDER_LIST } from "../const"
 
 export type AnyInstanceStateV1 = AwsInstanceStateV1 | AzureInstanceStateV1 | GcpInstanceStateV1 | PaperspaceInstanceStateV1
+
+const CommonProvisionOutputV1Schema = z.object({
+    host: z.string().describe("Instance hostname or IP address"),
+})
+
+const CommonProvisionConfigV1Schema = z.object({
+    ssh: z.object({
+        user: z.string().describe("SSH user"),
+        privateKeyPath: z.string().describe("Local path to private key"),
+    }).describe("SSH access configuration"),
+})
+
+const InstanceStateV1Schema = z.object({
+    version: z.literal("1").describe("State schema version, always 1"),
+    name: z.string().describe("Unique instance name"),
+    provision: z.object({
+        provider: z.enum(CLOUDYPAD_PROVIDER_LIST).describe("Supported providers"),
+        output: CommonProvisionOutputV1Schema.optional(),
+        config: CommonProvisionConfigV1Schema,
+    })
+})
+
+export { InstanceStateV1Schema, CommonProvisionOutputV1Schema as BaseProvisionOutputV1Schema, CommonProvisionConfigV1Schema as BaseProvisionConfigV1Schema }
 
 /**
  * State representation of Cloudy Pad instance.
  * These data are persisted on disk and loaded in memory,
  * used to manipulate instance for any action.
  */
-export interface InstanceStateV1<C extends CommonProvisionConfigV1, O extends CommonProvisionOutputV1> {
+export type InstanceStateV1 = z.infer<typeof InstanceStateV1Schema>
 
-    /**
-     * This state schema version. Always "1". 
-     */
-    version: "1",
-
-    /**
-     * Unique instance name
-     */
-    name: string,
-
-    /**
-     * Provider used by instance. Exactly one must be set.
-     */
-    provision: {
-        provider: CLOUDYPAD_PROVIDER,
-        // Generic types, may be more complex
-        output?: O,
-        config: C,
-    },
-}
-
-// export interface CommonProvisionStateV1 { 
-//     config: CommonProvisionConfigV1, 
-//     output?: CommonProvisionOutputV1 
-// }
-
-export interface CommonProvisionConfigV1 {
-    /**
-     * SSH access configuration
-     */
-    ssh: {
-        user: string,
-        privateKeyPath: string,
-    }
-}
-
-/**
- * Provision outputs are data representing Cloud resources and infrastructure after provision
- * such as hostname/IP and relevent provider-specific resources (eg. Cloud virtual machine ID)
- */
-export interface CommonProvisionOutputV1 {
-
-    /**
-     * Known hostname for instance
-     */
-    host: string,
-
-}
+export type CommonProvisionConfigV1 = z.infer<typeof CommonProvisionConfigV1Schema>
+export type CommonProvisionOutputV1 = z.infer<typeof CommonProvisionOutputV1Schema>
 
 /**
  * Legacy state of a Cloudy Pad instance. It contains every data

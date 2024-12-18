@@ -1,6 +1,11 @@
 import { CommonProvisionConfigV1, CommonProvisionOutputV1, InstanceStateV1 } from "../../core/state/state"
 
-export type AzureInstanceStateV1 = InstanceStateV1<AzureProvisionConfigV1, AzureProvisionOutputV1>
+export type AzureInstanceStateV1 = InstanceStateV1 & {
+    provision: {
+        output?: AzureProvisionOutputV1,
+        config: AzureProvisionConfigV1,
+    }
+}
 
 export interface AzureProvisionOutputV1 extends CommonProvisionOutputV1 {
     vmName: string

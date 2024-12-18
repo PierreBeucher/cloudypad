@@ -9,7 +9,7 @@ export interface InstanceProvisionOptions  {
 /**
  * Provision instances: manage Cloud resources and infrastructure
  */
-export interface InstanceProvisioner<O extends CommonProvisionOutputV1>  {
+export interface InstanceProvisioner  {
 
     /**
      * Verify local provider config is valid to run other operations.
@@ -22,7 +22,7 @@ export interface InstanceProvisioner<O extends CommonProvisionOutputV1>  {
      * @param opts 
      * @returns Outputs after provision
      */
-    provision(opts?: InstanceProvisionOptions): Promise<O>
+    provision(opts?: InstanceProvisionOptions): Promise<CommonProvisionOutputV1>
 
     /**
      * Destroy the instance. Every infrastructure and Cloud resources managed for this instance are destroyed. 
@@ -37,7 +37,7 @@ export interface InstanceProvisionerArgs<C extends CommonProvisionConfigV1, O ex
     output?: O
 }
 
-export abstract class AbstractInstanceProvisioner<C extends CommonProvisionConfigV1, O extends CommonProvisionOutputV1> implements InstanceProvisioner<O> {
+export abstract class AbstractInstanceProvisioner<C extends CommonProvisionConfigV1, O extends CommonProvisionOutputV1> implements InstanceProvisioner {
     
     protected logger: Logger
     protected args: InstanceProvisionerArgs<C, O>
