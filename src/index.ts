@@ -283,7 +283,7 @@ program
             const m = await new InstanceManagerBuilder().buildManagerForInstance(name)
             const details = m.getStateJSON()
 
-            console.info(JSON.stringify(details, null, 2))
+            console.info(details)
         } catch (error) {
             console.error(`Error getting details of instance ${name}:`, error)
             process.exit(1)
