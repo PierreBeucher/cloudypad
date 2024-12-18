@@ -1,4 +1,4 @@
-name: test-create-destroy-azure
+name: azure-dummy
 version: '1'
 provision:
   provider: azure

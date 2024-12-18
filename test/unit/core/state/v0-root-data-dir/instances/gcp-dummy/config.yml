@@ -1,4 +1,4 @@
-name: test-state-gcp
+name: gcp-dummy
 ssh:
   privateKeyPath: /home/pbeucher/.ssh/id_ed25519
   user: ubuntu

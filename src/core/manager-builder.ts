@@ -29,17 +29,15 @@ export class InstanceManagerBuilder {
     /**
      * Build an InstanceManager for a instance. Load instance state from disk 
      * and create a related InstanceManager.
-     * TODO Zod here
-     * @param name 
      */
     async buildManagerForInstance(name: string): Promise<InstanceManager>{
-        const state = await StateManager.default().loadInstanceState(name)
+        const state = await StateManager.default().loadInstanceStateSafe(name)
         return this.buildManagerForState(state)
     }
 
-    // TODO ZOD here
     buildManagerForState(state: InstanceStateV1) {
         if (state.provision.provider === CLOUDYPAD_PROVIDER_AWS) {
+            
             return this.buildAwsInstanceManager(state as AwsInstanceStateV1)
         } else if (state.provision.provider === CLOUDYPAD_PROVIDER_GCP) {
             return this.buildGcpInstanceManager(state as GcpInstanceStateV1)

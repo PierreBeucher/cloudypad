@@ -1,4 +1,4 @@
-name: aws-spot
+name: aws-dummy
 version: '1'
 provision:
   provider: aws

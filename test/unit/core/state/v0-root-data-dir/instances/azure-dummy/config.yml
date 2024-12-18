@@ -1,4 +1,4 @@
-name: test-create-destroy-azure
+name: azure-dummy
 ssh:
   privateKeyPath: /home/pbeucher/.ssh/id_ed25519
   user: ubuntu

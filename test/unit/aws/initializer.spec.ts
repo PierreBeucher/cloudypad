@@ -38,7 +38,7 @@ describe('AwsInstanceInitializer', () => {
         await new AwsInstanceInitializer({ instanceName: instanceName, config: config}).initializeInstance(opts)
 
         // Check state has been written
-        const state = await StateManager.default().loadInstanceState(instanceName)
+        const state = await StateManager.default().loadInstanceStateSafe(instanceName)
 
         const expectState: AwsInstanceStateV1 = {
             name: instanceName,

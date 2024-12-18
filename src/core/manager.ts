@@ -155,7 +155,7 @@ export class InstanceManager {
      * This function is called after every action where eventual state update occured. 
      */
     async persistState(){
-        StateManager.default().persistState(this.state)
+        await StateManager.default().persistState(this.state)
     }
 
     public getStateJSON(){

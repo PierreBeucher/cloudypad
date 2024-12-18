@@ -40,7 +40,7 @@ describe('GCP initializer', () => {
         await new GcpInstanceInitializer({ instanceName: instanceName, config: conf}).initializeInstance(opts)
 
         // Check state has been written
-        const state = await StateManager.default().loadInstanceState(instanceName)
+        const state = await StateManager.default().loadInstanceStateSafe(instanceName)
 
         const expectState: GcpInstanceStateV1 = {
             version: "1",

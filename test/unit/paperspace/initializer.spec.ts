@@ -37,7 +37,7 @@ describe('PaperspaceInitializerPrompt', () => {
         await new PaperspaceInstanceInitializer({ instanceName: instanceName, config: conf}).initializeInstance(opts)
 
         // Check state has been written
-        const state = await StateManager.default().loadInstanceState(instanceName)
+        const state = await StateManager.default().loadInstanceStateSafe(instanceName)
 
         const expectState: PaperspaceInstanceStateV1 = {
             version: "1",

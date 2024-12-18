@@ -1,4 +1,4 @@
-name: pspace-test
+name: paperspace-dummy
 ssh:
   privateKeyPath: /home/pbeucher/.ssh/id_ed25519
   user: paperspace

@@ -1,4 +1,4 @@
-name: pspace-test
+name: paperspace-dummy
 version: '1'
 provision:
   provider: paperspace

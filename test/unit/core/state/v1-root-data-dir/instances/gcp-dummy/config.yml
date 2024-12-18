@@ -1,4 +1,4 @@
-name: test-state-gcp
+name: gcp-dummy
 version: '1'
 provision:
   provider: gcp

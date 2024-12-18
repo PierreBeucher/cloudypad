@@ -37,7 +37,7 @@ describe('Azure initializer', () => {
         await new AzureInstanceInitializer({ instanceName: instanceName, config: config }).initializeInstance(opts)
 
         // Check state has been written
-        const state = await StateManager.default().loadInstanceState(instanceName)
+        const state = await StateManager.default().loadInstanceStateSafe(instanceName)
 
         const expectState: AzureInstanceStateV1 = {
             version: "1",

@@ -6,206 +6,189 @@ import { AzureInstanceStateV1 } from '../../providers/azure/state'
 import { GcpInstanceStateV1 } from '../../providers/gcp/state'
 import { AnyInstanceStateV1, InstanceStateV0 } from './state'
 
-/**
- * Migrate persisted states between versions
- */
 export class StateMigrator {
 
     private logger = getLogger(StateMigrator.name)
 
     /**
      * Ensure a raw state loaded from disk matches the current V1 State interface
-     * @param rawState 
      */
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    async ensureStateV1(rawState: any): Promise<AnyInstanceStateV1>{
+    async migrateStateV0toV1(rawState: any): Promise<AnyInstanceStateV1>{
 
-        if(rawState.version){
-            if(rawState.version != "1") {
-                throw new Error("Unknown state version '1'")
+        const stateV0 = rawState as InstanceStateV0
+
+        const name = stateV0.name
+
+        // Transform provider
+        const providerV0 = stateV0.provider
+        let stateV1: AnyInstanceStateV1
+
+        let providerName: CLOUDYPAD_PROVIDER
+
+        try {
+            if(!stateV0.ssh || !stateV0.ssh.user || !stateV0.ssh.privateKeyPath) {
+                throw new Error("Missing SSH config in state. Was instance fully configured ?")
             }
 
-            // Nothing do to, state in V1
-            // TODO ZOD
-            return rawState as AnyInstanceStateV1
-        } else {
-            // no state version, state is in V0
-            // Transform into V1
-
-            const stateV0 = rawState as InstanceStateV0
-
-            const name = stateV0.name
-
-            // Transform provider
-            const providerV0 = stateV0.provider
-            let stateV1: AnyInstanceStateV1
-
-            let providerName: CLOUDYPAD_PROVIDER
-
-            try {
-                if(!stateV0.ssh || !stateV0.ssh.user || !stateV0.ssh.privateKeyPath) {
-                    throw new Error("Missing SSH config in state. Was instance fully configured ?")
+            if(providerV0?.aws) {
+                providerName = CLOUDYPAD_PROVIDER_AWS
+                if(!providerV0.aws.provisionArgs || !providerV0.aws.provisionArgs.create){
+                    throw new Error("Missing AWS provision args in state. Was instance fully configured ?")
                 }
 
-                if(providerV0?.aws) {
-                    providerName = CLOUDYPAD_PROVIDER_AWS
-                    if(!providerV0.aws.provisionArgs || !providerV0.aws.provisionArgs.create){
-                        throw new Error("Missing AWS provision args in state. Was instance fully configured ?")
-                    }
-
-                    const awsState: AwsInstanceStateV1 = {
-                        name: name,
-                        version: "1",
-                        provision: {
-                            provider: providerName,
-                            config: {
-                                ...providerV0.aws.provisionArgs.create,
-                                ssh: {
-                                    user: stateV0.ssh.user,
-                                    privateKeyPath: stateV0.ssh.privateKeyPath
-                                },
-                            }
-                        },
-
-                    }
-
-                    if(stateV0.host){
-                        if(!providerV0.aws.instanceId){
-                            throw new Error(`Invalid state: host is defined but not AWS instance ID.`)
+                const awsState: AwsInstanceStateV1 = {
+                    name: name,
+                    version: "1",
+                    provision: {
+                        provider: providerName,
+                        config: {
+                            ...providerV0.aws.provisionArgs.create,
+                            ssh: {
+                                user: stateV0.ssh.user,
+                                privateKeyPath: stateV0.ssh.privateKeyPath
+                            },
                         }
+                    },
 
-                        awsState.provision.output = {
-                            host: stateV0.host,
-                            instanceId: providerV0.aws.instanceId,
-                        }
-                    }
-
-                    stateV1 = awsState
-
-                } else if (providerV0?.azure) {
-
-                    providerName = CLOUDYPAD_PROVIDER_AZURE
-
-                    if(!providerV0.azure.provisionArgs || !providerV0.azure.provisionArgs.create){
-                        throw new Error("Missing Azure provision args in state. Was instance fully configured ?")
-                    }
-
-                    const azureState: AzureInstanceStateV1 = {
-                        name: name,
-                        version: "1",
-                        provision: {
-                            provider: providerName,
-                            config: {
-                                ...providerV0.azure.provisionArgs.create,
-                                ssh: {
-                                    user: stateV0.ssh.user,
-                                    privateKeyPath: stateV0.ssh.privateKeyPath
-                                },
-                            }
-                        },
-
-                    }
-
-                    if(stateV0.host){
-                        if(!providerV0.azure.vmName || !providerV0.azure.resourceGroupName){
-                            throw new Error(`Invalid state: host is defined but Azure VM name and/or Resource Group is missing.`)
-                        }
-                        
-                        azureState.provision.output = {
-                            host: stateV0.host,
-                            resourceGroupName: providerV0.azure.resourceGroupName,
-                            vmName: providerV0.azure.vmName
-                        }
-                    }
-
-                    stateV1 = azureState
-
-                } else if (providerV0?.gcp) {
-
-                    providerName = CLOUDYPAD_PROVIDER_GCP
-
-                    if(!providerV0.gcp.provisionArgs || !providerV0.gcp.provisionArgs.create){
-                        throw new Error("Missing Google provision args in state. Was instance fully provisioned ?")
-                    }
-
-                    const gcpState: GcpInstanceStateV1 = {
-                        name: name,
-                        version: "1",
-                        provision: {
-                            provider: providerName,
-                            config: {
-                                ...providerV0.gcp.provisionArgs.create,
-                                ssh: {
-                                    user: stateV0.ssh.user,
-                                    privateKeyPath: stateV0.ssh.privateKeyPath
-                                },
-                            }
-                        },
-                    }
-
-                    if(stateV0.host){
-                        if(!providerV0.gcp.instanceName){
-                            throw new Error(`Invalid state: host is defined but GCP instance name is missing.`)
-                        }
-                        
-                        gcpState.provision.output = {
-                            host: stateV0.host,
-                            instanceName: providerV0.gcp.instanceName
-                        }
-                    }
-
-                    stateV1 = gcpState
-
-                } else if (providerV0?.paperspace) {
-
-                    providerName = CLOUDYPAD_PROVIDER_PAPERSPACE
-
-                    if(!providerV0.paperspace.provisionArgs || !providerV0.paperspace.provisionArgs.create){
-                        throw new Error("Missing Paperspace provision args in state. Was instance fully configured ?")
-                    }
-
-                    if(!providerV0.paperspace.apiKey && !providerV0.paperspace.provisionArgs.apiKey){
-                        throw new Error("Missing Paperspace API Key. Was instance fully configured ?")
-                    }
-
-                    const pspaceState: PaperspaceInstanceStateV1 = {
-                        name: name,
-                        version: "1",
-                        provision: {
-                            provider: providerName,
-                            config: {
-                                ...providerV0.paperspace.provisionArgs.create,
-                                apiKey: providerV0.paperspace.apiKey ?? providerV0.paperspace.provisionArgs.apiKey,
-                                ssh: {
-                                    user: stateV0.ssh.user,
-                                    privateKeyPath: stateV0.ssh.privateKeyPath
-                                },
-                            }
-                        },
-                    }
-
-                    if(stateV0.host){
-                        if(!providerV0.paperspace.machineId){
-                            throw new Error(`Invalid state: host is defined but Paperspace machine ID and/or API Key is missing.`)
-                        }
-                        
-                        pspaceState.provision.output = {
-                            host: stateV0.host,
-                            machineId: providerV0.paperspace.machineId
-                        }
-                    }
-
-                    stateV1 = pspaceState
-
-                } else {
-                    throw new Error(`Unknwon provider in state ${JSON.stringify(providerV0)}`)
                 }
-            } catch (e) {
-                this.logger.error(e)
-                throw new Error(`Unable to migrate State from V0 to V1. Please create an issue with full error log and state: ${JSON.stringify(rawState)}`)
+
+                if(stateV0.host){
+                    if(!providerV0.aws.instanceId){
+                        throw new Error(`Invalid state: host is defined but not AWS instance ID.`)
+                    }
+
+                    awsState.provision.output = {
+                        host: stateV0.host,
+                        instanceId: providerV0.aws.instanceId,
+                    }
+                }
+
+                stateV1 = awsState
+
+            } else if (providerV0?.azure) {
+
+                providerName = CLOUDYPAD_PROVIDER_AZURE
+
+                if(!providerV0.azure.provisionArgs || !providerV0.azure.provisionArgs.create){
+                    throw new Error("Missing Azure provision args in state. Was instance fully configured ?")
+                }
+
+                const azureState: AzureInstanceStateV1 = {
+                    name: name,
+                    version: "1",
+                    provision: {
+                        provider: providerName,
+                        config: {
+                            ...providerV0.azure.provisionArgs.create,
+                            ssh: {
+                                user: stateV0.ssh.user,
+                                privateKeyPath: stateV0.ssh.privateKeyPath
+                            },
+                        }
+                    },
+
+                }
+
+                if(stateV0.host){
+                    if(!providerV0.azure.vmName || !providerV0.azure.resourceGroupName){
+                        throw new Error(`Invalid state: host is defined but Azure VM name and/or Resource Group is missing.`)
+                    }
+                    
+                    azureState.provision.output = {
+                        host: stateV0.host,
+                        resourceGroupName: providerV0.azure.resourceGroupName,
+                        vmName: providerV0.azure.vmName
+                    }
+                }
+
+                stateV1 = azureState
+
+            } else if (providerV0?.gcp) {
+
+                providerName = CLOUDYPAD_PROVIDER_GCP
+
+                if(!providerV0.gcp.provisionArgs || !providerV0.gcp.provisionArgs.create){
+                    throw new Error("Missing Google provision args in state. Was instance fully provisioned ?")
+                }
+
+                const gcpState: GcpInstanceStateV1 = {
+                    name: name,
+                    version: "1",
+                    provision: {
+                        provider: providerName,
+                        config: {
+                            ...providerV0.gcp.provisionArgs.create,
+                            ssh: {
+                                user: stateV0.ssh.user,
+                                privateKeyPath: stateV0.ssh.privateKeyPath
+                            },
+                        }
+                    },
+                }
+
+                if(stateV0.host){
+                    if(!providerV0.gcp.instanceName){
+                        throw new Error(`Invalid state: host is defined but GCP instance name is missing.`)
+                    }
+                    
+                    gcpState.provision.output = {
+                        host: stateV0.host,
+                        instanceName: providerV0.gcp.instanceName
+                    }
+                }
+
+                stateV1 = gcpState
+
+            } else if (providerV0?.paperspace) {
+
+                providerName = CLOUDYPAD_PROVIDER_PAPERSPACE
+
+                if(!providerV0.paperspace.provisionArgs || !providerV0.paperspace.provisionArgs.create){
+                    throw new Error("Missing Paperspace provision args in state. Was instance fully configured ?")
+                }
+
+                if(!providerV0.paperspace.apiKey && !providerV0.paperspace.provisionArgs.apiKey){
+                    throw new Error("Missing Paperspace API Key. Was instance fully configured ?")
+                }
+
+                const pspaceState: PaperspaceInstanceStateV1 = {
+                    name: name,
+                    version: "1",
+                    provision: {
+                        provider: providerName,
+                        config: {
+                            ...providerV0.paperspace.provisionArgs.create,
+                            apiKey: providerV0.paperspace.apiKey ?? providerV0.paperspace.provisionArgs.apiKey,
+                            ssh: {
+                                user: stateV0.ssh.user,
+                                privateKeyPath: stateV0.ssh.privateKeyPath
+                            },
+                        }
+                    },
+                }
+
+                if(stateV0.host){
+                    if(!providerV0.paperspace.machineId){
+                        throw new Error(`Invalid state: host is defined but Paperspace machine ID and/or API Key is missing.`)
+                    }
+                    
+                    pspaceState.provision.output = {
+                        host: stateV0.host,
+                        machineId: providerV0.paperspace.machineId
+                    }
+                }
+
+                stateV1 = pspaceState
+
+            } else {
+                throw new Error(`Unknwon provider in state ${JSON.stringify(providerV0)}`)
             }
-            return stateV1
-
+        } catch (e) {
+            this.logger.error(e)
+            throw new Error(`Unable to migrate State from V0 to V1. Please create an issue with full error log and state: ${JSON.stringify(rawState)}`)
         }
+        return stateV1
+
     }
 }
