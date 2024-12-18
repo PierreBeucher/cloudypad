@@ -1,9 +1,10 @@
-import { CommonProvisionConfigV1, CommonProvisionOutputV1, InstanceStateV1, StateManager } from './state';
+import { CommonProvisionConfigV1, CommonProvisionOutputV1, InstanceStateV1 } from './state/state';
 import { InstanceProvisioner, InstanceProvisionOptions } from './provisioner';
 import { AnsibleConfigurator } from '../configurators/ansible';
 import { InstanceConfigurator } from './configurator';
 import { getLogger } from '../log/utils';
 import { InstanceRunner } from './runner';
+import { StateManager } from './state/manager';
 
 /**
  * Expose main functions to manage an instance lifecycle: init/provision/configure/destroy and start/stop/restart

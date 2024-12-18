@@ -1,5 +1,5 @@
 import { getLogger, Logger } from "../log/utils"
-import { CommonProvisionConfigV1, CommonProvisionOutputV1 } from "./state"
+import { CommonProvisionConfigV1, CommonProvisionOutputV1 } from "./state/state"
 
 export interface InstanceProvisionOptions  {
     autoApprove?: boolean

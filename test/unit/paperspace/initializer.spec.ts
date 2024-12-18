@@ -1,6 +1,6 @@
 import * as assert from 'assert';
 import { PaperspaceInstanceInitializer } from "../../../src/providers/paperspace/initializer"
-import { StateManager } from '../../../src/core/state';
+import { StateManager } from '../../../src/core/state/manager';
 import { InstanceInitializationOptions } from '../../../src/core/initializer';
 import { PaperspaceInstanceStateV1, PaperspaceProvisionConfigV1 } from '../../../src/providers/paperspace/state';
 import { CLOUDYPAD_PROVIDER_PAPERSPACE } from '../../../src/core/const';

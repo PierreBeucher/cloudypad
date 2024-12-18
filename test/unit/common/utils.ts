@@ -1,4 +1,4 @@
-import { CommonProvisionConfigV1 } from "../../../src/core/state";
+import { CommonProvisionConfigV1 } from "../../../src/core/state/state";
 
 export const DEFAULT_COMMON_CONFIG: CommonProvisionConfigV1 = {
     ssh: {

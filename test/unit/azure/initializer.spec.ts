@@ -1,6 +1,6 @@
 import * as assert from 'assert';
 import { InstanceInitializationOptions } from '../../../src/core/initializer';
-import { StateManager } from '../../../src/core/state';
+import { StateManager } from '../../../src/core/state/manager';
 import { AzureInstanceInitializer } from '../../../src/providers/azure/initializer';
 import { AzureInstanceStateV1, AzureProvisionConfigV1 } from '../../../src/providers/azure/state';
 import { CLOUDYPAD_PROVIDER_AZURE } from '../../../src/core/const';

@@ -2,12 +2,12 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';
 import { input, select, confirm } from '@inquirer/prompts';
-import { CommonProvisionConfigV1, CommonProvisionOutputV1, InstanceStateV1 } from './state';
+import { CommonProvisionConfigV1, CommonProvisionOutputV1, InstanceStateV1 } from './state/state';
 import { getLogger } from '../log/utils';
 import { PartialDeep } from 'type-fest';
 import { InstanceManager } from './manager';
 import { CLOUDYPAD_PROVIDER } from './const';
-import { StateManager } from './state';
+import { StateManager } from './state/manager';
 
 export interface InstanceInitializationOptions {
     autoApprove?: boolean

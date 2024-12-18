@@ -1,6 +1,6 @@
 import * as path from 'path'
 import * as assert from 'assert';
-import { StateManager } from "../../../../src/core/state";
+import { StateManager } from "../../../../src/core/state/manager";
 
 // Test loading a V0 State result in a proper transition to V1 state
 describe('State Manager version migration', () => {

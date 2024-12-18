@@ -1,7 +1,7 @@
 import * as assert from 'assert';
 import {  AwsInstanceInitializer } from "../../../src/providers/aws/initializer"
 import { InstanceInitializationOptions } from '../../../src/core/initializer';
-import { StateManager } from '../../../src/core/state';
+import { StateManager } from '../../../src/core/state/manager';
 import { AwsInstanceStateV1, AwsProvisionConfigV1 } from '../../../src/providers/aws/state';
 import { CLOUDYPAD_PROVIDER_AWS } from '../../../src/core/const';
 import { DEFAULT_COMMON_CONFIG } from "../common/utils";

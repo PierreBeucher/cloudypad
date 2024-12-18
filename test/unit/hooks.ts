@@ -9,7 +9,7 @@ import { AbstractInstanceProvisioner } from '../../src/core/provisioner';
 import { AzurePulumiClient, AzurePulumiOutput } from '../../src/tools/pulumi/azure';
 import { GcpPulumiClient, GcpPulumiOutput } from '../../src/tools/pulumi/gcp';
 import { PaperspaceClient, PaperspaceMachine } from '../../src/providers/paperspace/client/client';
-import { StateManager } from '../../src/core/state';
+import { StateManager } from '../../src/core/state/manager';
 
 /**
  * Creates a StateManager using a temporary file as data root dir

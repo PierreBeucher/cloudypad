@@ -3,7 +3,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';
 import * as yaml from 'js-yaml';
-import { CommonProvisionConfigV1, CommonProvisionOutputV1 } from '../core/state';
+import { CommonProvisionConfigV1, CommonProvisionOutputV1 } from '../core/state/state';
 import { InstanceConfigurator } from '../core/configurator';
 import { getLogger, Logger } from '../log/utils';
 import { AnsibleClient } from '../tools/ansible';

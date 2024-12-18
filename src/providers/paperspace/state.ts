@@ -1,4 +1,4 @@
-import { CommonProvisionConfigV1, CommonProvisionOutputV1, InstanceStateV1 } from "../../core/state"
+import { CommonProvisionConfigV1, CommonProvisionOutputV1, InstanceStateV1 } from "../../core/state/state"
 
 export type PaperspaceInstanceStateV1 = InstanceStateV1<PaperspaceProvisionConfigV1, PaperspaceProvisionOutputV1>
 

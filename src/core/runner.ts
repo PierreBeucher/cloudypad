@@ -1,6 +1,6 @@
 import * as fs from 'fs'
 import { input, select } from '@inquirer/prompts';
-import { CommonProvisionConfigV1, CommonProvisionOutputV1 } from './state';
+import { CommonProvisionConfigV1, CommonProvisionOutputV1 } from './state/state';
 import Docker from 'dockerode';
 import axios from 'axios';
 import { URL } from 'url'

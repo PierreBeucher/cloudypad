@@ -1,6 +1,6 @@
 import { input, select } from '@inquirer/prompts'
 import { InstanceInitializer, StaticInitializerPrompts, InstanceInitArgs } from '../../core/initializer'
-import { CommonProvisionConfigV1 } from '../../core/state'
+import { CommonProvisionConfigV1 } from '../../core/state/state'
 import { GcpClient } from '../../tools/gcp'
 import { GcpInstanceStateV1, GcpProvisionConfigV1, GcpProvisionOutputV1 } from './state'
 import { InstanceManager } from '../../core/manager'

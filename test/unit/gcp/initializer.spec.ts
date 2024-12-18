@@ -1,6 +1,6 @@
 import * as assert from 'assert';
 import { InstanceInitializationOptions } from '../../../src/core/initializer';
-import { StateManager } from '../../../src/core/state';
+import { StateManager } from '../../../src/core/state/manager';
 import { GcpInstanceInitializer } from '../../../src/providers/gcp/initializer';
 import { GcpInstanceStateV1, GcpProvisionConfigV1 } from '../../../src/providers/gcp/state';
 import { CLOUDYPAD_PROVIDER_GCP } from '../../../src/core/const';

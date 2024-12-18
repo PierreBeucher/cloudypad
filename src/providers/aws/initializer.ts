@@ -1,7 +1,7 @@
 import { input, select } from '@inquirer/prompts';
 import { AwsClient } from '../../tools/aws';
 import { InstanceInitArgs, InstanceInitializer, StaticInitializerPrompts } from '../../core/initializer';
-import { CommonProvisionConfigV1 } from '../../core/state';
+import { CommonProvisionConfigV1 } from '../../core/state/state';
 import { AwsInstanceStateV1, AwsProvisionConfigV1, AwsProvisionOutputV1 } from './state';
 import { InstanceManager } from '../../core/manager';
 import { AwsInstanceManager } from './manager';

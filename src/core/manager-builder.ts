@@ -1,6 +1,6 @@
 import { CLOUDYPAD_PROVIDER_AWS, CLOUDYPAD_PROVIDER_AZURE, CLOUDYPAD_PROVIDER_GCP, CLOUDYPAD_PROVIDER_PAPERSPACE } from './const';
 import { getLogger } from '../log/utils';
-import { StateManager } from './state';
+import { StateManager } from './state/manager';
 import { AwsInstanceStateV1 } from '../providers/aws/state';
 import { AwsInstanceManager } from '../providers/aws/manager';
 import { InstanceManager } from './manager';

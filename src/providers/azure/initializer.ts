@@ -4,7 +4,7 @@ import { AzureClient } from '../../tools/azure'
 import { AzureInstanceStateV1, AzureProvisionConfigV1, AzureProvisionOutputV1 } from './state'
 import { InstanceManager } from '../../core/manager'
 import { AzureInstanceManager } from './manager'
-import { CommonProvisionConfigV1 } from '../../core/state'
+import { CommonProvisionConfigV1 } from '../../core/state/state'
 import { CLOUDYPAD_PROVIDER_AZURE } from '../../core/const'
 
 

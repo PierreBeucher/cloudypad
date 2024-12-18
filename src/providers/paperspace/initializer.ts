@@ -1,7 +1,7 @@
 import { select, input, password } from '@inquirer/prompts';
 import { fetchApiKeyFromEnvironment } from './client/client';
 import { InstanceInitializer, InstanceInitArgs } from '../../core/initializer';
-import { CommonProvisionConfigV1 } from '../../core/state';
+import { CommonProvisionConfigV1 } from '../../core/state/state';
 import { PaperspaceInstanceStateV1, PaperspaceProvisionConfigV1, PaperspaceProvisionOutputV1 } from './state';
 import { InstanceManager } from '../../core/manager';
 import { PaperspaceInstanceManager } from './manager';
