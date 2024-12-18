@@ -1,5 +1,4 @@
 import * as path from 'path'
-import * as yaml from 'js-yaml'
 import * as assert from 'assert';
 import { StateManager } from "../../../../src/core/state";
 
@@ -17,13 +16,11 @@ describe('State Manager version migration', () => {
 
         // Should load aws v0 state into a v1 state
         const result = await smV0.loadInstanceState(name)
-        const resultYaml = yaml.dump(result)
 
         // Load the expected v1 state and compare
         const expected = await smV1.loadInstanceState(name)
-        const expectYaml = yaml.dump(expected)
 
-        assert.equal(resultYaml, expectYaml)
+        assert.deepEqual(result, expected)
     }
     
     it('should convert AWS V0 state to V1', async () => {
