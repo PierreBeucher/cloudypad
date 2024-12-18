@@ -1,11 +1,9 @@
-import { PaperspaceInstanceStateV1, PaperspaceProviderStateV0 } from '../../providers/paperspace/state'
-import { AwsInstanceStateV1, AwsProviderStateV0 } from '../../providers/aws/state'
-import { AzureInstanceStateV1, AzureProviderStateV0 } from '../../providers/azure/state'
-import { GcpInstanceStateV1, GcpProviderStateV0 } from '../../providers/gcp/state'
+import { PaperspaceProviderStateV0 } from '../../providers/paperspace/state'
+import { AwsProviderStateV0 } from '../../providers/aws/state'
+import { AzureProviderStateV0 } from '../../providers/azure/state'
+import { GcpProviderStateV0 } from '../../providers/gcp/state'
 import { z } from "zod"
 import { CLOUDYPAD_PROVIDER_LIST } from "../const"
-
-export type AnyInstanceStateV1 = AwsInstanceStateV1 | AzureInstanceStateV1 | GcpInstanceStateV1 | PaperspaceInstanceStateV1
 
 const CommonProvisionOutputV1Schema = z.object({
     host: z.string().describe("Instance hostname or IP address"),
@@ -28,7 +26,7 @@ const InstanceStateV1Schema = z.object({
     })
 })
 
-export { InstanceStateV1Schema, CommonProvisionOutputV1Schema as BaseProvisionOutputV1Schema, CommonProvisionConfigV1Schema as BaseProvisionConfigV1Schema }
+export { InstanceStateV1Schema, CommonProvisionOutputV1Schema, CommonProvisionConfigV1Schema }
 
 /**
  * State representation of Cloudy Pad instance.

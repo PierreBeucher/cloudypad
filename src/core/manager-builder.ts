@@ -11,12 +11,15 @@ import { GcpSubManagerFactory } from '../providers/gcp/factory';
 import { AzureSubManagerFactory } from '../providers/azure/factory';
 import { PaperspaceSubManagerFactory } from '../providers/paperspace/factory';
 import { InstanceManager } from './manager';
+import { StateParser } from './state/parser';
 
 export class InstanceManagerBuilder {
 
     private static readonly logger = getLogger(InstanceManagerBuilder.name)
     
     private readonly stateManager: StateManager
+
+    private readonly stateParser = new StateParser()
 
     constructor() {
         this.stateManager = StateManager.default()
@@ -37,17 +40,20 @@ export class InstanceManagerBuilder {
 
     buildManagerForState(state: InstanceStateV1) {
         if (state.provision.provider === CLOUDYPAD_PROVIDER_AWS) {
-            
-            return this.buildAwsInstanceManager(state as AwsInstanceStateV1)
+            const awsState: AwsInstanceStateV1 = this.stateParser.parseAwsStateV1(state)
+            return this.buildAwsInstanceManager(awsState)
         } else if (state.provision.provider === CLOUDYPAD_PROVIDER_GCP) {
-            return this.buildGcpInstanceManager(state as GcpInstanceStateV1)
+            const gcpState: GcpInstanceStateV1 = this.stateParser.parseGcpStateV1(state)
+            return this.buildGcpInstanceManager(gcpState)
         } else if (state.provision.provider === CLOUDYPAD_PROVIDER_AZURE) {
-            return this.buildAzureInstanceManager(state as AzureInstanceStateV1)
+            const azureState: AzureInstanceStateV1 = this.stateParser.parseAzureStateV1(state)
+            return this.buildAzureInstanceManager(azureState)
         } else if (state.provision.provider === CLOUDYPAD_PROVIDER_PAPERSPACE) {
-            return this.buildPaperspaceInstanceManager(state as PaperspaceInstanceStateV1)
+            const paperspaceState: PaperspaceInstanceStateV1 = this.stateParser.parsePaperspaceStateV1(state)
+            return this.buildPaperspaceInstanceManager(paperspaceState)
         } else {
-            throw new Error(`Unknown provider in state: '${state.provision.provider}'`);
-        }
+            throw new Error(`Unknown provider '${state.provision.provider}' in state: ${JSON.stringify(state)}`)
+        }        
     }
 
     buildAwsInstanceManager(state: AwsInstanceStateV1){

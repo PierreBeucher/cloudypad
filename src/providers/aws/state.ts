@@ -1,12 +1,12 @@
 import { z } from "zod"
-import { BaseProvisionOutputV1Schema, BaseProvisionConfigV1Schema, InstanceStateV1Schema } from "../../core/state/state"
+import { CommonProvisionOutputV1Schema, CommonProvisionConfigV1Schema, InstanceStateV1Schema } from "../../core/state/state"
 import { CLOUDYPAD_PROVIDER_AWS } from "../../core/const"
 
-const AwsProvisionOutputV1Schema = BaseProvisionOutputV1Schema.extend({
+const AwsProvisionOutputV1Schema = CommonProvisionOutputV1Schema.extend({
     instanceId: z.string().describe("AWS instance ID"),
 })
 
-const AwsProvisionConfigV1Schema = BaseProvisionConfigV1Schema.extend({
+const AwsProvisionConfigV1Schema = CommonProvisionConfigV1Schema.extend({
     instanceType: z.string().describe("Type of AWS instance"),
     diskSize: z.number().describe("Disk size in GB"),
     publicIpType: z.string().describe("Type of public IP address (static or dynamic"),

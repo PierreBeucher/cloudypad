@@ -2,9 +2,9 @@ import * as fs from 'fs'
 import * as yaml from 'js-yaml'
 import * as path from 'path'
 import { getLogger } from '../../log/utils'
-import { AnyInstanceStateV1, InstanceStateV1 } from './state'
+import { InstanceStateV1 } from './state'
 import { StateMigrator } from './migrator'
-import { AwsInstanceStateV1Schema } from '../../providers/aws/state'
+import { AnyInstanceStateV1, StateParser } from './parser'
 
 /**
  * Return current environments Cloudy Pad data root dir, by order of priority:
@@ -59,6 +59,8 @@ export class StateManager {
     private logger = getLogger(StateManager.name)
 
     private dataRootDir: string 
+
+    private parser = new StateParser()
 
     constructor(args?: StateManagerArgs) {
         this.dataRootDir = args?.dataRootDir ?? getEnvironmentDataRootDir()
@@ -173,7 +175,6 @@ export class StateManager {
             // Remove legacy state file and persist new one
 
             this.logger.debug(`V0 to V1 migration: Persisting new state file for ${instanceName}...`)
-            // TODO zod
             await this.persistState(rawStateV1) 
 
             this.logger.debug(`V0 to V1 migration: Deleting old V0 state file for ${instanceName}...`)
@@ -186,35 +187,25 @@ export class StateManager {
         if(rawStateV1.version != "1") {
             throw new Error(`Unknown state version '${rawStateV1.version}'`)
         }
-        
-        return rawStateV1
-        // return this.checkInstanceStateTypeZod(rawStateV1)
+
+        return this.parser.parseAnyStateV1(rawStateV1)
     }
 
-    // /**
-    //  * Check instance state using Zod to ensure a properly formatted object is loaded
-    //  */
-    // private checkInstanceStateTypeZod(rawState: unknown): AnyInstanceStateV1 {
-    //     const result = AwsInstanceStateV1Schema.safeParse(rawState)
-    //     if(result.success){
-    //         return result.data
-    //     } else {
-    //         this.logger.error(result.error.format())
-    //         throw new Error("Coulnd't parse state with Zod. State is either corrupted and not compatible with this Cloudy Pad version.")
-    //     }
-    // }
-
     /**
-     * Persist state on disk. 
+     * Persist state on disk. Verify the persisted state matches expeced structure for safety
+     * to avoid writing something we won't be able to load. 
      */
     async persistState(state: InstanceStateV1): Promise<void> {
-        await this.ensureInstanceDirExists(state.name)
 
-        const statePath = this.getInstanceStateV1Path(state.name)
+        const safeState = this.parser.parseAnyStateV1(state)
 
-        this.logger.debug(`Persisting state for ${state.name} at ${statePath}`)
+        await this.ensureInstanceDirExists(safeState.name)
 
-        fs.writeFileSync(statePath, yaml.dump(state), 'utf-8')
+        const statePath = this.getInstanceStateV1Path(safeState.name)
+
+        this.logger.debug(`Persisting state for ${safeState.name} at ${statePath}`)
+
+        fs.writeFileSync(statePath, yaml.dump(safeState), 'utf-8')
     }
 
     private async ensureInstanceDirExists(instanceName: string): Promise<void> {

@@ -4,7 +4,8 @@ import { getLogger } from '../../log/utils'
 import { CLOUDYPAD_PROVIDER, CLOUDYPAD_PROVIDER_AWS, CLOUDYPAD_PROVIDER_AZURE, CLOUDYPAD_PROVIDER_GCP, CLOUDYPAD_PROVIDER_PAPERSPACE } from '../const'
 import { AzureInstanceStateV1 } from '../../providers/azure/state'
 import { GcpInstanceStateV1 } from '../../providers/gcp/state'
-import { AnyInstanceStateV1, InstanceStateV0 } from './state'
+import { InstanceStateV0 } from './state'
+import { AnyInstanceStateV1 } from './parser'
 
 export class StateMigrator {
 

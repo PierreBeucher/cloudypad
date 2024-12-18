@@ -1,22 +1,38 @@
-import { CommonProvisionConfigV1, CommonProvisionOutputV1, InstanceStateV1 } from "../../core/state/state"
+import { z } from "zod"
+import { CommonProvisionOutputV1Schema, CommonProvisionConfigV1Schema, InstanceStateV1Schema } from "../../core/state/state"
+import { CLOUDYPAD_PROVIDER_PAPERSPACE } from "../../core/const"
 
-export type PaperspaceInstanceStateV1 = InstanceStateV1 & {
-    provision: {
-        output?: PaperspaceProvisionOutputV1,
-        config: PaperspaceProvisionConfigV1,
-    }
-}
+const PaperspaceProvisionOutputV1Schema = CommonProvisionOutputV1Schema.extend({
+    machineId: z.string().describe("Paperspace machine ID"),
+})
 
-export interface PaperspaceProvisionOutputV1 extends CommonProvisionOutputV1 {
-    machineId: string,
-}
+const PaperspaceProvisionConfigV1Schema = CommonProvisionConfigV1Schema.extend({
+    apiKey: z.string().describe("Paperspace API key"),
+    machineType: z.string().describe("Type of Paperspace machine"),
+    diskSize: z.number().describe("Disk size in GB"),
+    publicIpType: z.enum(['static', 'dynamic']).describe("Type of public IP address"),
+    region: z.string().describe("Paperspace region"),
+})
 
-export interface PaperspaceProvisionConfigV1 extends CommonProvisionConfigV1 {
-    apiKey: string
-    machineType: string
-    diskSize: number
-    publicIpType: 'static' | 'dynamic'
-    region: string
+const PaperspaceInstanceStateV1Schema = InstanceStateV1Schema.extend({
+    provision: z.object({
+        provider: z.literal(CLOUDYPAD_PROVIDER_PAPERSPACE),
+        output: PaperspaceProvisionOutputV1Schema.optional(),
+        config: PaperspaceProvisionConfigV1Schema,
+    })
+})
+
+type PaperspaceInstanceStateV1 = z.infer<typeof PaperspaceInstanceStateV1Schema>
+type PaperspaceProvisionOutputV1 = z.infer<typeof PaperspaceProvisionOutputV1Schema>
+type PaperspaceProvisionConfigV1 = z.infer<typeof PaperspaceProvisionConfigV1Schema>
+
+export {
+    PaperspaceProvisionOutputV1Schema,
+    PaperspaceProvisionConfigV1Schema,
+    PaperspaceInstanceStateV1Schema,
+    PaperspaceInstanceStateV1,
+    PaperspaceProvisionOutputV1,
+    PaperspaceProvisionConfigV1
 }
 
 // V0
