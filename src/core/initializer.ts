@@ -2,20 +2,22 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';
 import { input, select, confirm } from '@inquirer/prompts';
-import { AnsibleConfigurator } from '../configurators/ansible';
-import { InstanceState, StateManager, StateUtils } from './state';
+import { CommonProvisionConfigV1, InstanceStateV1 } from './state/state';
 import { getLogger } from '../log/utils';
 import { PartialDeep } from 'type-fest';
-import { InstanceProvisionOptions } from './provisioner';
-
-export interface GenericInitializationArgs {
-    instanceName: string,
-    sshKey: string
-}
+import { InstanceManager } from './manager';
+import { CLOUDYPAD_PROVIDER } from './const';
+import { StateManager } from './state/manager';
+import { InstanceManagerBuilder } from './manager-builder';
 
 export interface InstanceInitializationOptions {
     autoApprove?: boolean
     overwriteExisting?: boolean
+}
+
+export interface InstanceInitArgs<C> {
+    instanceName?: string,
+    config: PartialDeep<C>
 }
 
 /**
@@ -29,50 +31,72 @@ export interface InstanceInitializationOptions {
  * Helper prompts by provider are used to gather user inputs, either
  * from CLI flags or by letting user choose interactively. 
  */
-export abstract class InstanceInitializer {
+export interface InstanceInitializer {
 
-    protected readonly logger = getLogger(InstanceInitializer.name)
+    /**
+     * Initialize instance:
+     * - Prompt for common and provisioner-specific configs
+     * - Initialize state
+     * - Run provision
+     * - Run configuration
+     * - Optionally pair instance
+     * @param opts 
+     */
+    initializeInstance(config: CommonProvisionConfigV1, opts: InstanceInitializationOptions): Promise<void>
 
-    private readonly defaultArgs: PartialDeep<GenericInitializationArgs>
+}
 
-    constructor(defaultGenericArgs?: PartialDeep<GenericInitializationArgs>){
-        this.defaultArgs = defaultGenericArgs ?? {}
+export abstract class AbstractInstanceInitializer<C extends CommonProvisionConfigV1> {
+
+    protected readonly logger = getLogger(AbstractInstanceInitializer.name)
+
+    protected readonly provider: CLOUDYPAD_PROVIDER
+    protected readonly args: InstanceInitArgs<C>
+    protected stateManager: StateManager
+
+    constructor(provider: CLOUDYPAD_PROVIDER, args: InstanceInitArgs<C>){
+        this.provider = provider
+        this.args = args
+        this.stateManager = StateManager.default()
     }
 
-    protected async getGenericInitArgs(): Promise<GenericInitializationArgs> {
+    private async promptCommonConfig(): Promise<{ name: string, config: CommonProvisionConfigV1 }> {
 
-        this.logger.debug(`Creating instance: default generic arguments ${JSON.stringify(this.defaultArgs)}`)
+        this.logger.debug(`Initializing instance with default config ${JSON.stringify(this.args)}`)
         
-        const genericPromt = new GenericInitializerPrompt()
-        const name = await genericPromt.instanceName(this.defaultArgs?.instanceName)
-        const sshKey = await genericPromt.privateSshKey(this.defaultArgs?.sshKey)
+        const commonConfPrompt = new CommonConfigPrompt()
+        const instanceName = await commonConfPrompt.instanceName(this.args?.instanceName)
+        const sshKey = await commonConfPrompt.privateSshKey(this.args?.config?.ssh?.privateKeyPath)
+        const sshUser = "ubuntu" // Harcoded for now since we only support Ubuntu
 
         return {
-            instanceName: name,
-            sshKey: sshKey
+            name: instanceName,
+            config: {
+                ssh: {
+                    privateKeyPath: sshKey,
+                    user: sshUser
+                }
+            }
         }
     }
 
-    protected abstract runProvisioning(sm: StateManager, opts: InstanceProvisionOptions): Promise<void>
+    /**
+     * Prompt user for additional provider-specific configurations.
+     * Returns a fully valid state for instance initialization. 
+     */
+    protected abstract promptProviderConfig(commonConfig: CommonProvisionConfigV1): Promise<C>
 
-    protected abstract runPairing(sm: StateManager): Promise<void>
-    
-    protected async runConfiguration(sm: StateManager){
-        // Ignore host key checking only during initialization to bypass host key checking
-        // which will be unkwown anyway as it's a new cloud machine
-        // This will persist host key in known_hosts for subsequent runs
-        const additionalAnsibleArgs = ['-e', '\'ansible_ssh_common_args="-o StrictHostKeyChecking=no"\'']
-        const configurator = new AnsibleConfigurator(sm, additionalAnsibleArgs)
-        await configurator.configure()
+    protected buildInstanceManager(state: InstanceStateV1): InstanceManager {
+        return new InstanceManagerBuilder().buildManagerForState(state)
     }
 
     public async initializeInstance(opts: InstanceInitializationOptions){
 
-        const genericArgs = await this.getGenericInitArgs()
+        const { name: instanceName, config: commonConfig } = await this.promptCommonConfig();
 
-        if(await StateUtils.instanceExists(genericArgs.instanceName) && !opts.overwriteExisting){
+        if(await this.stateManager.instanceExists(instanceName) && !opts.overwriteExisting){
             const confirmAlreadyExists = await confirm({
-                message: `Instance ${genericArgs.instanceName} already exists. Do you want to overwrite existing instance config?`,
+                message: `Instance ${instanceName} already exists. Do you want to overwrite existing instance config?`,
                 default: false,
             })
             
@@ -81,50 +105,35 @@ export abstract class InstanceInitializer {
             }
         }
 
-        this.logger.debug(`Initializing a new instance with args ${JSON.stringify(genericArgs)}`)
-        
-        console.info(`Creating instance ${genericArgs.instanceName}`)
-        this.logger.info(`Creating instance ${genericArgs.instanceName}²`)
-        
-        const initialState: InstanceState = {
-            name: genericArgs.instanceName,
-            ssh: {
-                privateKeyPath: genericArgs.sshKey,
-            },
-            status: {
-                initalized: false,
-                configuration: {
-                    configured: false
-                },
-                provision: {
-                    provisioned: false
-                }
-            }
+
+        const finalConfig = await this.promptProviderConfig(commonConfig)
+
+        this.logger.debug(`Initializing a new instance with config ${JSON.stringify(finalConfig)}`)
+
+        // Create the initial state
+        const initialState: InstanceStateV1 = {
+            version: "1",
+            name: instanceName,
+            provision: {
+                provider: this.provider,
+                config: finalConfig,
+                output: undefined
+            },   
         }
+                
+        const instanceManager = await this.buildInstanceManager(initialState)
 
-        this.logger.debug(`Creating ${genericArgs.instanceName}: initial state is ${JSON.stringify(initialState)}`)
+        this.logger.info(`Initializing ${instanceName}: provisioning...`)
 
-        const sm = new StateManager(initialState)
+        await instanceManager.provision(opts)
 
-        // Create instance directory in which to persist state
-        const instanceDir = StateUtils.getInstanceDir(genericArgs.instanceName)
+        this.logger.info(`Initializing ${instanceName}: provision done.}`)
 
-        this.logger.debug(`Creating ${genericArgs.instanceName}: creating instance dir at ${instanceDir}`)
-
-        fs.mkdirSync(instanceDir, { recursive: true })
+        this.logger.info(`Initializing ${instanceName}: configuring...}`)
         
-        this.logger.info(`Creating ${genericArgs.instanceName}: provisionning...`)
-        this.logger.debug(`Creating ${genericArgs.instanceName}: starting provision with state ${JSON.stringify(sm.get())}`)
-        
-        await this.runProvisioning(sm, opts)
-        
-        this.logger.info(`Creating ${genericArgs.instanceName}: provision done.}`)
+        await instanceManager.configure()
 
-        this.logger.info(`Creating ${genericArgs.instanceName}: configuring...}`)
-        
-        await this.runConfiguration(sm)
-        
-        this.logger.info(`Creating ${genericArgs.instanceName}: configuration done.}`)
+        this.logger.info(`Initializing ${instanceName}: configuration done.}`)
 
         const doPair = opts.autoApprove ? true : await confirm({
             message: `Your instance is almost ready ! Do you want to pair Moonlight now?`,
@@ -132,28 +141,20 @@ export abstract class InstanceInitializer {
         })
 
         if (doPair) {
-            this.logger.info(`Creating ${genericArgs.instanceName}: pairing...}`)
+            this.logger.info(`Initializing ${instanceName}: pairing...}`)
 
-            await this.runPairing(sm)
-
-            this.logger.info(`Creating ${genericArgs.instanceName}: pairing done.}`)
+            await instanceManager.pair()
+    
+            this.logger.info(`Initializing ${instanceName}: pairing done.}`)
         } else {
-            this.logger.info(`Creating ${genericArgs.instanceName}: pairing skipped.}`)
+            this.logger.info(`Initializing ${instanceName}: pairing skipped.}`)
         }
-
-        console.info("")
-        console.info("Instance has been initialized successfully 🥳")
-        console.info("")
-        console.info("If you like Cloudy Pad please leave us a star ⭐ https://github.com/PierreBeucher/cloudypad")
-        console.info("")
-        console.info("🐛 A bug ? Some feedback ? Do not hesitate to file an issue: https://github.com/PierreBeucher/cloudypad/issues")
-        
     }
 }
 
-export class GenericInitializerPrompt {
+export class CommonConfigPrompt {
 
-    private readonly logger = getLogger(GenericInitializerPrompt.name)
+    private readonly logger = getLogger(CommonConfigPrompt.name)
 
     async instanceName(_instanceName?: string): Promise<string> {
         let instanceName: string
@@ -164,7 +165,7 @@ export class GenericInitializerPrompt {
             const userInfo = os.userInfo()
             const defaultInstanceName = `${userInfo.username}`;
             instanceName = await input({
-                message: 'Enter instance name:',
+                message: 'Enter instance instanceName:',
                 default: defaultInstanceName,
             })
         }
@@ -201,7 +202,7 @@ export class GenericInitializerPrompt {
             })
         } else {
         const sshKeyChoices = privateKeys.map(k => ({
-            name: k,
+            instanceName: k,
             value: k
         }))
     

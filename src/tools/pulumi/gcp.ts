@@ -185,7 +185,7 @@ export class GcpPulumiClient extends InstancePulumiClient<PulumiStackConfigGcp, 
         super({ program: gcpPulumiProgram, projectName: "CloudyPad-GCP", stackName: stackName})
     }
 
-    async setConfig(config: PulumiStackConfigGcp){
+    async doSetConfig(config: PulumiStackConfigGcp){
         this.logger.debug(`Setting stack ${this.stackName} config: ${JSON.stringify(config)}`)
 
         const stack = await this.getStack()

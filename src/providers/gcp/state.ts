@@ -1,6 +1,59 @@
-import { GcpProvisionArgs } from "./initializer";
+import { z } from "zod"
+import { CommonProvisionOutputV1Schema, CommonProvisionConfigV1Schema, InstanceStateV1Schema } from "../../core/state/state"
+import { CLOUDYPAD_PROVIDER_GCP } from "../../core/const"
 
-export interface GcpProviderState {
+const GcpProvisionOutputV1Schema = CommonProvisionOutputV1Schema.extend({
+    instanceName: z.string().describe("GCP instance name"),
+})
+
+const GcpProvisionConfigV1Schema = CommonProvisionConfigV1Schema.extend({
+    projectId: z.string().describe("GCP Project ID"),
+    machineType: z.string().describe("GCP Machine Type"),
+    acceleratorType: z.string().describe("GCP Accelerator Type"),
+    diskSize: z.number().describe("Disk size in GB"),
+    publicIpType: z.string().describe("Type of public IP address (static or dynamic)"),
+    region: z.string().describe("GCP region"),
+    zone: z.string().describe("GCP zone"),
+    useSpot: z.boolean().describe("Whether to use spot instances"),
+})
+
+const GcpInstanceStateV1Schema = InstanceStateV1Schema.extend({
+    provision: z.object({
+        provider: z.literal(CLOUDYPAD_PROVIDER_GCP),
+        output: GcpProvisionOutputV1Schema.optional(),
+        config: GcpProvisionConfigV1Schema,
+    }),
+})
+
+type GcpInstanceStateV1 = z.infer<typeof GcpInstanceStateV1Schema>
+type GcpProvisionOutputV1 = z.infer<typeof GcpProvisionOutputV1Schema>
+type GcpProvisionConfigV1 = z.infer<typeof GcpProvisionConfigV1Schema>
+
+export {
+    GcpProvisionOutputV1Schema,
+    GcpProvisionConfigV1Schema,
+    GcpInstanceStateV1Schema,
+    GcpInstanceStateV1,
+    GcpProvisionOutputV1,
+    GcpProvisionConfigV1,
+}
+
+// V0
+
+export interface GcpProviderStateV0 {
     instanceName?: string,
-    provisionArgs?: GcpProvisionArgs
+    provisionArgs?: GcpProvisionArgsV0
+}
+
+export interface GcpProvisionArgsV0 {
+    create: {
+        projectId: string
+        machineType: string
+        acceleratorType: string
+        diskSize: number
+        publicIpType: string
+        region: string
+        zone: string
+        useSpot: boolean
+    }
 }

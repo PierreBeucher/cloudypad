@@ -1,12 +1,7 @@
 import * as fs from 'fs'
 import { InlineProgramArgs, LocalWorkspace, LocalWorkspaceOptions, OutputMap, PulumiFn, Stack } from "@pulumi/pulumi/automation";
-import { CLOUDYPAD_HOME } from "../../core/const"
 import { getLogger, Logger } from '../../log/utils';
-
-// Force use of local backend unless environment configured otherwise
-export const CLOUDYPAD_LOCAL_PULUMI_BACKEND_DIR = `${CLOUDYPAD_HOME}/pulumi-backend` // Not a Pulumi built-in en var
-export const PULUMI_BACKEND_URL=process.env.PULUMI_BACKEND_URL ?? `file://${CLOUDYPAD_HOME}/pulumi-backend`
-export const PULUMI_CONFIG_PASSPHRASE=`${process.env.PULUMI_CONFIG_PASSPHRASE ?? ""}`
+import { StateManager } from '../../core/state/manager';
 
 export interface InstancePulumiClientArgs {
     program: PulumiFn
@@ -24,12 +19,14 @@ export abstract class InstancePulumiClient<ConfigType, OutputType> {
     readonly stackName: string
     protected readonly logger: Logger
     private stack: Stack | undefined
+    private stateManager: StateManager
 
     constructor(args: InstancePulumiClientArgs){
         this.program = args.program
         this.projectName = args.projectName
         this.stackName = args.stackName
         this.logger = getLogger(`${args.projectName}-${args.stackName}`)
+        this.stateManager = StateManager.default()
     }
 
     protected async getStack(): Promise<Stack>{
@@ -39,12 +36,22 @@ export abstract class InstancePulumiClient<ConfigType, OutputType> {
         return this.stack
     }
 
-    public abstract setConfig(config: ConfigType): Promise<void>
+    public async setConfig(config: ConfigType): Promise<void> {
+        // wrap call around this side-effect call to easily stub during test
+        await this.doSetConfig(config)
+    }
+
+    protected abstract doSetConfig(config: ConfigType): Promise<void>
 
     protected abstract buildTypedOutput(outputs: OutputMap): Promise<OutputType>
 
     private async initStack(){
         this.logger.debug(`Initializing stack and config`)
+
+        // Force use of local backend unless environment configured otherwise
+        // Pulumi state is a state so Pulumi state path depends on StateManager path
+        const backendUrl = process.env.PULUMI_BACKEND_URL ?? `file://${this.stateManager.getDataRootDir()}/pulumi-backend`
+        const configPassphrase=`${process.env.PULUMI_CONFIG_PASSPHRASE ?? ""}`
         
         if(this.stack !== undefined) {
             throw new Error(`Stack ${this.stackName} for project ${this.projectName} has already been initialized. This is probably an internal bug.`)
@@ -52,15 +59,15 @@ export abstract class InstancePulumiClient<ConfigType, OutputType> {
 
         const opts: LocalWorkspaceOptions = {
             envVars: {
-                PULUMI_BACKEND_URL: PULUMI_BACKEND_URL,
-                PULUMI_CONFIG_PASSPHRASE: PULUMI_CONFIG_PASSPHRASE
+                PULUMI_BACKEND_URL: backendUrl,
+                PULUMI_CONFIG_PASSPHRASE: configPassphrase
             }
         }
 
         // Ensure Pulumi directories exists
         // TODO unit test 
-        if(PULUMI_BACKEND_URL.startsWith("file://")){
-            const pulumiBackendDir = PULUMI_BACKEND_URL.slice("file://".length)
+        if(backendUrl.startsWith("file://")){
+            const pulumiBackendDir = backendUrl.slice("file://".length)
             if (!fs.existsSync(pulumiBackendDir)){
                 
                 this.logger.debug(`Creating File PULUMI_BACKEND_URL ${pulumiBackendDir}`)

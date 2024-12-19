@@ -1,0 +1,16 @@
+name: paperspace-dummy
+version: '1'
+provision:
+  provider: paperspace
+  output:
+    host: 184.105.189.240
+    machineId: pspspspspsps
+  config:
+    machineType: P4000
+    diskSize: 100
+    publicIpType: static
+    region: Europe (AMS1)
+    apiKey: xyz
+    ssh:
+      user: paperspace
+      privateKeyPath: /home/pbeucher/.ssh/id_ed25519

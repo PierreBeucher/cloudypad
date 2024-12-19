@@ -40,6 +40,8 @@ function create_destroy_aws() {
     $cloudypad_cmd stop $instance_name
 
     $cloudypad_cmd start $instance_name
+    
+    $cloudypad_cmd restart $instance_name
 
     $cloudypad_cmd destroy $instance_name
 }
@@ -90,6 +92,8 @@ function create_destroy_azure() {
     $cloudypad_cmd stop $instance_name
 
     $cloudypad_cmd start $instance_name
+
+    $cloudypad_cmd restart $instance_name
 
     $cloudypad_cmd destroy $instance_name
 }

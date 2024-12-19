@@ -1,80 +1,40 @@
 import { input, select } from '@inquirer/prompts'
-import { PartialDeep } from 'type-fest'
-import { InstanceInitializer, GenericInitializationArgs, StaticInitializerPrompts } from '../../core/initializer'
-import { StateManager } from '../../core/state'
-import { getLogger } from '../../log/utils'
-import { InstanceProvisionOptions } from '../../core/provisioner'
-import { AzureProvisioner } from './provisioner'
-import { AzureInstanceRunner } from './runner'
+import { StaticInitializerPrompts, InstanceInitArgs, AbstractInstanceInitializer } from '../../core/initializer'
 import { AzureClient } from '../../tools/azure'
+import { AzureProvisionConfigV1 } from './state'
+import { CommonProvisionConfigV1 } from '../../core/state/state'
+import { CLOUDYPAD_PROVIDER_AZURE } from '../../core/const'
 
-export interface AzureProvisionArgs {
-    create: {
-        vmSize: string
-        diskSize: number
-        publicIpType: string
-        subscriptionId: string
-        location: string
-        useSpot: boolean
-    }
-}
 
-export class AzureInstanceInitializer extends InstanceInitializer {
+export type AzureInstanceInitArgs = InstanceInitArgs<AzureProvisionConfigV1>
 
-    private readonly defaultAzureArgs: PartialDeep<AzureProvisionArgs>
+export class AzureInstanceInitializer extends AbstractInstanceInitializer<AzureProvisionConfigV1> {
 
-    constructor(genericArgs?: PartialDeep<Omit<GenericInitializationArgs, "provider">>, defaultAzureArgs?: PartialDeep<AzureProvisionArgs>){
-        super(genericArgs)
-        this.defaultAzureArgs = defaultAzureArgs ?? {}
+    constructor(args: AzureInstanceInitArgs){
+        super(CLOUDYPAD_PROVIDER_AZURE, args)
     }
 
-    protected async runProvisioning(sm: StateManager, opts: InstanceProvisionOptions) {
-        const args = await new AzureInitializerPrompt().prompt(this.defaultAzureArgs)
+    async promptProviderConfig(commonConfig: CommonProvisionConfigV1): Promise<AzureProvisionConfigV1> {
+        this.logger.debug(`Starting Azure prompt with default opts: ${JSON.stringify(commonConfig)}`)
 
-        this.logger.debug(`Running Azure provision with args: ${JSON.stringify(args)}`)
-        
-        sm.update({ 
-            ssh: {
-                user: "ubuntu"
-            },
-            provider: { azure: { provisionArgs: args }}
-        })
+        const subscriptionId = await this.subscriptionId(this.args.config.subscriptionId)
+        const useSpot = await StaticInitializerPrompts.useSpotInstance(this.args.config.useSpot)
+        const location = await this.location(subscriptionId, this.args.config.location)
+        const vmSize = await this.instanceType(subscriptionId, location, this.args.config.vmSize)
+        const diskSize = await this.diskSize(this.args.config.diskSize)
+        const publicIpType = await this.publicIpType(this.args.config.publicIpType)
 
-        await new AzureProvisioner(sm).provision(opts)
-    }
-
-    protected async runPairing(sm: StateManager) {
-        await new AzureInstanceRunner(sm).pair()
-    }
-    
-}
-
-export class AzureInitializerPrompt {
-
-    private logger = getLogger(AzureInitializerPrompt.name)
-
-
-    async prompt(args?: PartialDeep<AzureProvisionArgs>): Promise<AzureProvisionArgs> {
-
-        this.logger.debug(`Starting Azure prompt with default opts: ${JSON.stringify(args)}`)
-
-        const subscriptionId = await this.subscriptionId(args?.create?.subscriptionId)
-        const useSpot = await StaticInitializerPrompts.useSpotInstance(args?.create?.useSpot)
-        const location = await this.location(subscriptionId, args?.create?.location)
-        const vmSize = await this.instanceType(subscriptionId, location, args?.create?.vmSize)
-        const diskSize = await this.diskSize(args?.create?.diskSize)
-        const publicIpType = await this.publicIpType(args?.create?.publicIpType)
-
-        return {
-            create: {
-                diskSize: diskSize,
-                vmSize: vmSize,
-                publicIpType: publicIpType,
-                location: location,
-                subscriptionId: subscriptionId,
-                useSpot: useSpot,
-            }
+        const azConf: AzureProvisionConfigV1 = {
+            ...commonConfig,
+            diskSize: diskSize,
+            vmSize: vmSize,
+            publicIpType: publicIpType,
+            location: location,
+            subscriptionId: subscriptionId,
+            useSpot: useSpot,
         }
+
+        return azConf
     }
 
     private async instanceType(subscriptionId: string, location: string, instanceType?: string): Promise<string> {
@@ -221,5 +181,4 @@ export class AzureInitializerPrompt {
             })
         }
     }
-
 }

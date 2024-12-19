@@ -1,0 +1,16 @@
+name: aws-dummy
+version: '1'
+provision:
+  provider: aws
+  output:
+    host: 18.199.182.227
+    instanceId: i-0ae901f1799b17fdf
+  config:
+    diskSize: 200
+    instanceType: g4dn.2xlarge
+    publicIpType: static
+    region: eu-central-1
+    useSpot: true
+    ssh:
+      user: ubuntu
+      privateKeyPath: /home/pbeucher/.ssh/id_ed25519
