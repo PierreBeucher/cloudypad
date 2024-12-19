@@ -23,7 +23,7 @@ program
 
 const createCmd = program
     .command('create')
-    .description('Create a new instance. See subcommands for each provider options.`')
+    .description('Create a new instance. See subcommands for each provider options.')
 
 createCmd
     .command('aws')
