@@ -183,9 +183,6 @@ export abstract class AbstractInstanceRunner<C extends CommonProvisionConfigV1, 
 
         console.info(`Instance ${this.args.instanceName} paired successfully 🤝 👍`)
         console.info(`You can now run Moonlight to connect and play with your instance 🎮`)
-        console.info("")
-        console.info("Enjoy Cloudy Pad ? Please give a star on GitHub ⭐ https://github.com/PierreBeucher/cloudypad")
-        
     }
 
     private async pairManual(docker: Docker, host: string) {
