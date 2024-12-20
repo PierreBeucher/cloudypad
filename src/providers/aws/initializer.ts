@@ -19,7 +19,7 @@ export class AwsInstanceInitializer extends AbstractInstanceInitializer<AwsProvi
         const instanceType = await this.instanceType(this.args.config.instanceType)
         const useSpot = await StaticInitializerPrompts.useSpotInstance(this.args.config.useSpot)
         const diskSize = await this.diskSize(this.args.config.diskSize)
-        const publicIpType = await this.publicIpType(this.args.config.publicIpType)
+        const publicIpType = await StaticInitializerPrompts.publicIpType(this.args.config.publicIpType)
         const region = await this.region(this.args.config.region)
 
         const awsConfig: AwsProvisionConfigV1 = {
@@ -77,23 +77,6 @@ export class AwsInstanceInitializer extends AbstractInstanceInitializer<AwsProvi
 
         return Number.parseInt(selectedDiskSize)
 
-    }
-
-    private async publicIpType(publicIpType?: string): Promise<string> {
-        if (publicIpType) {
-            return publicIpType;
-        }
-
-        const publicIpTypeChoices = ['static', 'dynamic'].map(type => ({
-            name: type,
-            value: type,
-        }));
-
-        return await select({
-            message: 'Use static Elastic IP or dynamic IP? :',
-            choices: publicIpTypeChoices,
-            default: 'static',
-        });
     }
 
     private async region(region?: string): Promise<string> {

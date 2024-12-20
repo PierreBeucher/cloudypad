@@ -1,3 +1,4 @@
+import { PUBLIC_IP_TYPE_STATIC } from "../../../src/core/const";
 import { PulumiStackConfigAws } from "../../../src/tools/pulumi/aws"
 import { PulumiStackConfigAzure } from "../../../src/tools/pulumi/azure";
 import { PulumiStackConfigGcp } from "../../../src/tools/pulumi/gcp";
@@ -10,7 +11,7 @@ export const awsConfig: PulumiStackConfigAws = {
     instanceType: "g4dn.xlarge",
     rootVolumeSizeGB: 100,
     publicSshKeyContent: pubKey,
-    publicIpType: "static",
+    publicIpType: PUBLIC_IP_TYPE_STATIC,
     useSpot: false
 }
 
@@ -20,7 +21,7 @@ export const azureConfig: PulumiStackConfigAzure = {
     vmSize: "Standard_NC8as_T4_v3",
     rootDiskSizeGB: 100,
     publicSshKeyContent: pubKey,
-    publicIpType: "static",
+    publicIpType: PUBLIC_IP_TYPE_STATIC,
     useSpot: false
 }
 
@@ -32,6 +33,6 @@ export const gcpConfig: PulumiStackConfigGcp = {
     acceleratorType: "nvidia-tesla-p4",
     rootDiskSize: 100,
     publicSshKeyContent: pubKey,
-    publicIpType: "static",
+    publicIpType: PUBLIC_IP_TYPE_STATIC,
     useSpot: false        
 }

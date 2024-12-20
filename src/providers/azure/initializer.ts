@@ -22,7 +22,7 @@ export class AzureInstanceInitializer extends AbstractInstanceInitializer<AzureP
         const location = await this.location(subscriptionId, this.args.config.location)
         const vmSize = await this.instanceType(subscriptionId, location, this.args.config.vmSize)
         const diskSize = await this.diskSize(this.args.config.diskSize)
-        const publicIpType = await this.publicIpType(this.args.config.publicIpType)
+        const publicIpType = await StaticInitializerPrompts.publicIpType(this.args.config.publicIpType)
 
         const azConf: AzureProvisionConfigV1 = {
             ...commonConfig,
@@ -114,23 +114,6 @@ export class AzureInstanceInitializer extends AbstractInstanceInitializer<AzureP
 
         return Number.parseInt(selectedDiskSize)
 
-    }
-
-    private async publicIpType(publicIpType?: string): Promise<string> {
-        if (publicIpType) {
-            return publicIpType
-        }
-
-        const publicIpTypeChoices = ['static', 'dynamic'].map(type => ({
-            name: type,
-            value: type,
-        }))
-
-        return await select({
-            message: 'Use static Elastic IP or dynamic IP? :',
-            choices: publicIpTypeChoices,
-            default: 'static',
-        })
     }
 
     private async location(subscriptionId: string, location?: string): Promise<string> {

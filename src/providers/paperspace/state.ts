@@ -1,6 +1,6 @@
 import { z } from "zod"
 import { CommonProvisionOutputV1Schema, CommonProvisionConfigV1Schema, InstanceStateV1Schema } from "../../core/state/state"
-import { CLOUDYPAD_PROVIDER_PAPERSPACE } from "../../core/const"
+import { CLOUDYPAD_PROVIDER_PAPERSPACE, PUBLIC_IP_TYPE, PUBLIC_IP_TYPE_DYNAMIC, PUBLIC_IP_TYPE_STATIC } from "../../core/const"
 
 const PaperspaceProvisionOutputV1Schema = CommonProvisionOutputV1Schema.extend({
     machineId: z.string().describe("Paperspace machine ID"),
@@ -10,7 +10,7 @@ const PaperspaceProvisionConfigV1Schema = CommonProvisionConfigV1Schema.extend({
     apiKey: z.string().describe("Paperspace API key"),
     machineType: z.string().describe("Type of Paperspace machine"),
     diskSize: z.number().describe("Disk size in GB"),
-    publicIpType: z.enum(['static', 'dynamic']).describe("Type of public IP address"),
+    publicIpType: z.enum([PUBLIC_IP_TYPE_STATIC, PUBLIC_IP_TYPE_DYNAMIC]).describe("Type of public IP address"),
     region: z.string().describe("Paperspace region"),
 })
 
@@ -52,7 +52,7 @@ export interface PaperspaceProvisionArgsV0 {
     create?: {
         machineType: string
         diskSize: number
-        publicIpType: 'static' | 'dynamic'
+        publicIpType: PUBLIC_IP_TYPE
         region: string
     }
 }

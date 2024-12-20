@@ -2,6 +2,7 @@ import * as az from "@pulumi/azure-native"
 import * as pulumi from "@pulumi/pulumi"
 import { InstancePulumiClient } from "./client"
 import { OutputMap } from "@pulumi/pulumi/automation"
+import { PUBLIC_IP_TYPE, PUBLIC_IP_TYPE_STATIC } from "../../core/const"
 
 interface PortDefinition {
     from: pulumi.Input<number>,
@@ -80,7 +81,7 @@ class CloudyPadAzureInstance extends pulumi.ComponentResource {
             tags: globalTags
         }, commonPulumiOpts)
 
-        const publicIp = args.publicIpType === "static" ? 
+        const publicIp = args.publicIpType === PUBLIC_IP_TYPE_STATIC ? 
             new az.network.PublicIPAddress(`${name}-public-ip`, {
                 resourceGroupName: resourceGroup.name,
                 publicIPAllocationMethod: "Static",
@@ -215,7 +216,7 @@ export interface PulumiStackConfigAzure {
     vmSize: string
     rootDiskSizeGB: number
     publicSshKeyContent: string
-    publicIpType: string
+    publicIpType: PUBLIC_IP_TYPE
     useSpot: boolean
 }
 

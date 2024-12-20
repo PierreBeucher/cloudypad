@@ -3,7 +3,7 @@ import { InstanceInitializationOptions } from '../../../src/core/initializer';
 import { StateManager } from '../../../src/core/state/manager';
 import { AzureInstanceInitializer } from '../../../src/providers/azure/initializer';
 import { AzureInstanceStateV1, AzureProvisionConfigV1 } from '../../../src/providers/azure/state';
-import { CLOUDYPAD_PROVIDER_AZURE } from '../../../src/core/const';
+import { CLOUDYPAD_PROVIDER_AZURE, PUBLIC_IP_TYPE_STATIC } from '../../../src/core/const';
 import { DEFAULT_COMMON_CONFIG } from '../common/utils';
 
 describe('Azure initializer', () => {
@@ -13,7 +13,7 @@ describe('Azure initializer', () => {
         subscriptionId: "1234-5689-0000",
         vmSize: "Standard_NC8as_T4_v3",
         diskSize: 200,
-        publicIpType: "static",
+        publicIpType: PUBLIC_IP_TYPE_STATIC,
         location: "francecentral",
         useSpot: true,
     }

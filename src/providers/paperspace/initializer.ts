@@ -3,7 +3,7 @@ import { fetchApiKeyFromEnvironment } from './client/client';
 import { AbstractInstanceInitializer, InstanceInitArgs } from '../../core/initializer';
 import { CommonProvisionConfigV1 } from '../../core/state/state';
 import { PaperspaceProvisionConfigV1 } from './state';
-import { CLOUDYPAD_PROVIDER_PAPERSPACE } from '../../core/const';
+import { CLOUDYPAD_PROVIDER_PAPERSPACE, PUBLIC_IP_TYPE, PUBLIC_IP_TYPE_DYNAMIC, PUBLIC_IP_TYPE_STATIC } from '../../core/const';
 
 export type PaperspaceInstanceInitArgs = InstanceInitArgs<PaperspaceProvisionConfigV1>
 
@@ -70,15 +70,15 @@ export class PaperspaceInstanceInitializer extends AbstractInstanceInitializer<P
         return Number.parseInt(selectedDiskSize);
     }
 
-    protected async publicIpType(publicIpType?: string): Promise<'static' | 'dynamic'> {
+    protected async publicIpType(publicIpType?: string): Promise<PUBLIC_IP_TYPE> {
         if (publicIpType) {
-            if (publicIpType !== 'static' && publicIpType !== 'dynamic') {
-                throw new Error(`Unknown IP type ${publicIpType}, must be 'static' or 'dynamic'`)
+            if (publicIpType !== PUBLIC_IP_TYPE_STATIC && publicIpType !== PUBLIC_IP_TYPE_DYNAMIC) {
+                throw new Error(`Unknown IP type ${publicIpType}, must be '${PUBLIC_IP_TYPE_STATIC}' or '${PUBLIC_IP_TYPE_DYNAMIC}'`)
             }
             return publicIpType;
         }
         
-        return 'static';
+        return PUBLIC_IP_TYPE_STATIC;
     }
 
     protected async region(region?: string): Promise<string> {

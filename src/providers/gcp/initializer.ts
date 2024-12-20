@@ -24,7 +24,7 @@ export class GcpInstanceInitializer extends AbstractInstanceInitializer<GcpProvi
         const machineType = await this.machineType(client, zone, this.args.config.machineType)
         const useSpot = await StaticInitializerPrompts.useSpotInstance(this.args.config.useSpot)
         const diskSize = await this.diskSize(this.args.config.diskSize)
-        const publicIpType = await this.publicIpType(this.args.config.publicIpType)
+        const publicIpType = await StaticInitializerPrompts.publicIpType(this.args.config.publicIpType)
         const acceleratorType = await this.acceleratorType(client, zone, this.args.config.acceleratorType)
         
         const gcpConf: GcpProvisionConfigV1 = {
@@ -99,23 +99,6 @@ export class GcpInstanceInitializer extends AbstractInstanceInitializer<GcpProvi
 
         return Number.parseInt(selectedDiskSize)
 
-    }
-
-    private async publicIpType(publicIpType?: string): Promise<string> {
-        if (publicIpType) {
-            return publicIpType
-        }
-
-        const publicIpTypeChoices = ['static', 'dynamic'].map(type => ({
-            name: type,
-            value: type,
-        }))
-
-        return await select({
-            message: 'Use static IP or dynamic IP? :',
-            choices: publicIpTypeChoices,
-            default: 'static',
-        })
     }
 
     private async region(client: GcpClient, region?: string): Promise<string> {

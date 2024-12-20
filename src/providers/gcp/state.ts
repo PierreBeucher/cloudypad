@@ -1,6 +1,6 @@
 import { z } from "zod"
 import { CommonProvisionOutputV1Schema, CommonProvisionConfigV1Schema, InstanceStateV1Schema } from "../../core/state/state"
-import { CLOUDYPAD_PROVIDER_GCP } from "../../core/const"
+import { CLOUDYPAD_PROVIDER_GCP, PUBLIC_IP_TYPE_DYNAMIC, PUBLIC_IP_TYPE_STATIC } from "../../core/const"
 
 const GcpProvisionOutputV1Schema = CommonProvisionOutputV1Schema.extend({
     instanceName: z.string().describe("GCP instance name"),
@@ -11,7 +11,7 @@ const GcpProvisionConfigV1Schema = CommonProvisionConfigV1Schema.extend({
     machineType: z.string().describe("GCP Machine Type"),
     acceleratorType: z.string().describe("GCP Accelerator Type"),
     diskSize: z.number().describe("Disk size in GB"),
-    publicIpType: z.string().describe("Type of public IP address (static or dynamic)"),
+    publicIpType: z.enum([PUBLIC_IP_TYPE_STATIC, PUBLIC_IP_TYPE_DYNAMIC]).describe("Type of public IP address"),
     region: z.string().describe("GCP region"),
     zone: z.string().describe("GCP zone"),
     useSpot: z.boolean().describe("Whether to use spot instances"),

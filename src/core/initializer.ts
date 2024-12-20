@@ -6,7 +6,7 @@ import { CommonProvisionConfigV1, InstanceStateV1 } from './state/state';
 import { getLogger } from '../log/utils';
 import { PartialDeep } from 'type-fest';
 import { InstanceManager } from './manager';
-import { CLOUDYPAD_PROVIDER } from './const';
+import { CLOUDYPAD_PROVIDER, PUBLIC_IP_TYPE, PUBLIC_IP_TYPE_DYNAMIC, PUBLIC_IP_TYPE_STATIC } from './const';
 import { StateManager } from './state/manager';
 import { InstanceManagerBuilder } from './manager-builder';
 import lodash from 'lodash'
@@ -252,5 +252,25 @@ export class StaticInitializerPrompts {
         })
     
         return useSpotChoice;
+    }
+
+    static async publicIpType(publicIpType?: PUBLIC_IP_TYPE): Promise<PUBLIC_IP_TYPE> {
+        if (publicIpType) {
+            return publicIpType
+        }
+
+        const publicIpTypeChoices: {name: PUBLIC_IP_TYPE, value: PUBLIC_IP_TYPE }[] = [{
+            name: PUBLIC_IP_TYPE_STATIC,
+            value: PUBLIC_IP_TYPE_STATIC
+        },{
+            name: PUBLIC_IP_TYPE_DYNAMIC,
+            value: PUBLIC_IP_TYPE_DYNAMIC
+        }]
+
+        return await select({
+            message: 'Use static Elastic IP or dynamic IP? :',
+            choices: publicIpTypeChoices,
+            default: PUBLIC_IP_TYPE_STATIC,
+        })
     }
 }

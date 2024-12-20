@@ -1,6 +1,6 @@
 import { z } from "zod"
 import { CommonProvisionOutputV1Schema, CommonProvisionConfigV1Schema, InstanceStateV1Schema } from "../../core/state/state"
-import { CLOUDYPAD_PROVIDER_AWS } from "../../core/const"
+import { CLOUDYPAD_PROVIDER_AWS, PUBLIC_IP_TYPE_DYNAMIC, PUBLIC_IP_TYPE_STATIC } from "../../core/const"
 
 const AwsProvisionOutputV1Schema = CommonProvisionOutputV1Schema.extend({
     instanceId: z.string().describe("AWS instance ID"),
@@ -9,7 +9,7 @@ const AwsProvisionOutputV1Schema = CommonProvisionOutputV1Schema.extend({
 const AwsProvisionConfigV1Schema = CommonProvisionConfigV1Schema.extend({
     instanceType: z.string().describe("Type of AWS instance"),
     diskSize: z.number().describe("Disk size in GB"),
-    publicIpType: z.string().describe("Type of public IP address (static or dynamic"),
+    publicIpType: z.enum([PUBLIC_IP_TYPE_STATIC, PUBLIC_IP_TYPE_DYNAMIC]).describe("Type of public IP address"),
     region: z.string().describe("AWS region"),
     useSpot: z.boolean().describe("Whether to use spot instances"),
 })

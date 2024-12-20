@@ -3,7 +3,7 @@ import {  AwsInstanceInitializer } from "../../../src/providers/aws/initializer"
 import { InstanceInitializationOptions } from '../../../src/core/initializer';
 import { StateManager } from '../../../src/core/state/manager';
 import { AwsInstanceStateV1, AwsProvisionConfigV1 } from '../../../src/providers/aws/state';
-import { CLOUDYPAD_PROVIDER_AWS } from '../../../src/core/const';
+import { CLOUDYPAD_PROVIDER_AWS, PUBLIC_IP_TYPE_STATIC } from '../../../src/core/const';
 import { DEFAULT_COMMON_CONFIG } from "../common/utils";
 
 describe('AwsInstanceInitializer', () => {
@@ -14,7 +14,7 @@ describe('AwsInstanceInitializer', () => {
         ...DEFAULT_COMMON_CONFIG,
         instanceType: "g5.2xlarge",
         diskSize: 200,
-        publicIpType: "static",
+        publicIpType: PUBLIC_IP_TYPE_STATIC,
         region: "us-west-2",
         useSpot: true,
     }

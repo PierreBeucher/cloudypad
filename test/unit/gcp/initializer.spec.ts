@@ -3,7 +3,7 @@ import { InstanceInitializationOptions } from '../../../src/core/initializer';
 import { StateManager } from '../../../src/core/state/manager';
 import { GcpInstanceInitializer } from '../../../src/providers/gcp/initializer';
 import { GcpInstanceStateV1, GcpProvisionConfigV1 } from '../../../src/providers/gcp/state';
-import { CLOUDYPAD_PROVIDER_GCP } from '../../../src/core/const';
+import { CLOUDYPAD_PROVIDER_GCP, PUBLIC_IP_TYPE_STATIC } from '../../../src/core/const';
 import { DEFAULT_COMMON_CONFIG } from '../common/utils';
 
 describe('GCP initializer', () => {
@@ -12,7 +12,7 @@ describe('GCP initializer', () => {
         ...DEFAULT_COMMON_CONFIG,
         machineType: "n1-standard-8",
         diskSize: 200,
-        publicIpType: "static",
+        publicIpType: PUBLIC_IP_TYPE_STATIC,
         region: "europe-west4",
         zone: "europe-west4-b",
         acceleratorType: "nvidia-tesla-p4",

@@ -1,6 +1,6 @@
 import { z } from "zod"
 import { CommonProvisionOutputV1Schema, CommonProvisionConfigV1Schema, InstanceStateV1Schema } from "../../core/state/state"
-import { CLOUDYPAD_PROVIDER_AZURE } from "../../core/const"
+import { CLOUDYPAD_PROVIDER_AZURE, PUBLIC_IP_TYPE_DYNAMIC, PUBLIC_IP_TYPE_STATIC } from "../../core/const"
 
 const AzureProvisionOutputV1Schema = CommonProvisionOutputV1Schema.extend({
     vmName: z.string().describe("Azure VM name"),
@@ -10,7 +10,7 @@ const AzureProvisionOutputV1Schema = CommonProvisionOutputV1Schema.extend({
 const AzureProvisionConfigV1Schema = CommonProvisionConfigV1Schema.extend({
     vmSize: z.string().describe("Azure VM size"),
     diskSize: z.number().describe("Disk size in GB"),
-    publicIpType: z.string().describe("Type of public IP address (static or dynamic)"),
+    publicIpType: z.enum([PUBLIC_IP_TYPE_STATIC, PUBLIC_IP_TYPE_DYNAMIC]).describe("Type of public IP address"),
     subscriptionId: z.string().describe("Azure Subscription ID"),
     location: z.string().describe("Azure location/region"),
     useSpot: z.boolean().describe("Whether to use spot instances"),

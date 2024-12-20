@@ -3,7 +3,7 @@ import { PaperspaceInstanceInitializer } from "../../../src/providers/paperspace
 import { StateManager } from '../../../src/core/state/manager';
 import { InstanceInitializationOptions } from '../../../src/core/initializer';
 import { PaperspaceInstanceStateV1, PaperspaceProvisionConfigV1 } from '../../../src/providers/paperspace/state';
-import { CLOUDYPAD_PROVIDER_PAPERSPACE } from '../../../src/core/const';
+import { CLOUDYPAD_PROVIDER_PAPERSPACE, PUBLIC_IP_TYPE_STATIC } from '../../../src/core/const';
 import { DEFAULT_COMMON_CONFIG } from '../common/utils';
 
 describe('PaperspaceInitializerPrompt', () => {
@@ -13,7 +13,7 @@ describe('PaperspaceInitializerPrompt', () => {
         apiKey: "xxxSecret",
         machineType: "P5000",
         diskSize: 100,
-        publicIpType: "static",
+        publicIpType: PUBLIC_IP_TYPE_STATIC,
         region: "East Coast (NY2)",
     }
 
