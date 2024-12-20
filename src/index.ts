@@ -1,7 +1,7 @@
 #! /usr/bin/env node
 
 import { version } from '../package.json';
-import { Command } from 'commander';
+import { Command } from '@commander-js/extra-typings';
 import { setLogVerbosity } from './log/utils';
 import { AwsInstanceInitArgs, AwsInstanceInitializer } from './providers/aws/initializer';
 import { PaperspaceInstanceInitArgs, PaperspaceInstanceInitializer } from './providers/paperspace/initializer';
@@ -9,6 +9,7 @@ import { InstanceInitializationOptions } from './core/initializer';
 import { AzureInstanceInitArgs, AzureInstanceInitializer } from './providers/azure/initializer';
 import { GcpInstanceInitArgs, GcpInstanceInitializer } from './providers/gcp/initializer';
 import { InstanceManagerBuilder } from './core/manager-builder';
+import { PUBLIC_IP_TYPE, PUBLIC_IP_TYPE_DYNAMIC, PUBLIC_IP_TYPE_STATIC } from './core/const';
 
 const program = new Command();
 
@@ -33,7 +34,7 @@ createCmd
     .option('--instance-type <type>', 'EC2 instance type')
     .option('--spot', 'Enable Spot instance. Spot instances are cheaper (usually 20% to 70% off) but may be restarted any time.')
     .option('--disk-size <size>', 'Disk size in GB', parseInt)
-    .option('--public-ip-type <type>', 'Public IP type. Either "static" or "dynamic"')
+    .option('--public-ip-type <type>', `Public IP type. Either ${PUBLIC_IP_TYPE_STATIC} or ${PUBLIC_IP_TYPE_DYNAMIC}`, parsePublicIpType)
     .option('--region <region>', 'Region in which to deploy instance')
     .option('--yes', 'Do not prompt for approval, automatically approve and continue')
     .option('--overwrite-existing', 'If an instance with the same name already exists, override without warning prompt')
@@ -76,7 +77,7 @@ createCmd
     .option('--api-key-file <apikeyfile>', 'Path to Paperspace API key file')
     .option('--machine-type <type>', 'Machine type')
     .option('--disk-size <size>', 'Disk size in GB', parseInt)
-    .option('--public-ip-type <type>', 'Public IP type. Either "static" or "dynamic"')
+    .option('--public-ip-type <type>', `Public IP type. Either ${PUBLIC_IP_TYPE_STATIC} or ${PUBLIC_IP_TYPE_DYNAMIC}`, parsePublicIpType)
     .option('--region <region>', 'Region in which to deploy instance')
     .option('--yes', 'Do not prompt for approval, automatically approve and continue')
     .option('--overwrite-existing', 'If an instance with the same name already exists, override without warning prompt')
@@ -121,7 +122,7 @@ createCmd
     .option('--project-id <project>', 'Project ID to use.')
     .option('--spot', 'Enable Spot instance. Spot instances are cheaper (usually 60% to 90% off) but may be restarted any time.')
     .option('--disk-size <size>', 'Disk size in GB', parseInt)
-    .option('--public-ip-type <type>', 'Public IP type. Either "static" or "dynamic"')
+    .option('--public-ip-type <type>', `Public IP type. Either ${PUBLIC_IP_TYPE_STATIC} or ${PUBLIC_IP_TYPE_DYNAMIC}`, parsePublicIpType)
     .option('--region <region>', 'Region in which to deploy instance')
     .option('--zone <zone>', 'Zone in which to deploy instance')
     .option('--yes', 'Do not prompt for approval, automatically approve and continue')
@@ -169,7 +170,7 @@ createCmd
     .option('--api-key-file <apikeyfile>', 'Path to Paperspace API key file')
     .option('--vm-size <vmsize>', 'Virtual machine size')
     .option('--disk-size <size>', 'Disk size in GB', parseInt)
-    .option('--public-ip-type <type>', 'Public IP type. Either "static" or "dynamic"')
+    .option('--public-ip-type <type>', `Public IP type. Either ${PUBLIC_IP_TYPE_STATIC} or ${PUBLIC_IP_TYPE_DYNAMIC}`, parsePublicIpType)
     .option('--location <location>', 'Location in which to deploy instance')
     .option('--subscription-id <subscriptionid>', 'Subscription ID in which to deploy resources')
     .option('--spot', 'Enable Spot instance. Spot instances are cheaper (usually 20% to 70% off) but may be restarted any time.')
@@ -361,4 +362,11 @@ function afterInitInfo(){
     console.info("If you like Cloudy Pad please leave us a star ⭐ https://github.com/PierreBeucher/cloudypad")
     console.info("")
     console.info("🐛 A bug ? Some feedback ? Do not hesitate to file an issue: https://github.com/PierreBeucher/cloudypad/issues")    
+}
+
+function parsePublicIpType(value: string): PUBLIC_IP_TYPE {
+    if (value !== PUBLIC_IP_TYPE_STATIC && value !== PUBLIC_IP_TYPE_DYNAMIC) {
+        throw new Error(`Invalid value for --public-ip-type. Either "${PUBLIC_IP_TYPE_STATIC}" or "${PUBLIC_IP_TYPE_DYNAMIC}"`)
+    }
+    return value
 }
