@@ -41,7 +41,8 @@ export class AnsibleConfigurator implements InstanceConfigurator {
                     [this.args.instanceName]: {
                         ansible_host: this.args.commonOutput.host,
                         ansible_user: ssh.user,
-                        ansible_ssh_private_key_file: ssh.privateKeyPath
+                        ansible_ssh_private_key_file: ssh.privateKeyPath,
+                        wolf_instance_name: this.args.instanceName
                     },
                 },
             },

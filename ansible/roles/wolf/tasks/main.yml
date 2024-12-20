@@ -104,6 +104,11 @@
   command: 
     cmd: "{{ ansible_user_dir }}/wolf/docker-nvidia-volume.sh"
 
+- name: Copy Wolf config.toml
+  template:
+    src: wolf-config.toml
+    dest: "{{ ansible_user_dir }}/wolf/config.toml"
+
 - name: Copy docker-compose file
   template:
     src: docker-compose.nvidia.yml
