@@ -1,17 +1,17 @@
 import { AbstractInstanceRunner, InstanceRunnerArgs } from '../../core/runner'
 import { AzureClient } from '../../tools/azure'
-import { AzureProvisionConfigV1, AzureProvisionOutputV1 } from './state'
+import { AzureProvisionInputV1, AzureProvisionOutputV1 } from './state'
 
-export type AzureInstanceRunnerArgs = InstanceRunnerArgs<AzureProvisionConfigV1, AzureProvisionOutputV1>
+export type AzureInstanceRunnerArgs = InstanceRunnerArgs<AzureProvisionInputV1, AzureProvisionOutputV1>
 
-export class AzureInstanceRunner extends AbstractInstanceRunner<AzureProvisionConfigV1, AzureProvisionOutputV1>  {
+export class AzureInstanceRunner extends AbstractInstanceRunner<AzureProvisionInputV1, AzureProvisionOutputV1>  {
 
     private client: AzureClient
 
     constructor(args: AzureInstanceRunnerArgs) {
         super(args)
 
-        this.client = new AzureClient(args.instanceName, args.config.subscriptionId)
+        this.client = new AzureClient(args.instanceName, args.input.subscriptionId)
     }
 
     private getVmName() {

@@ -1,12 +1,12 @@
 import { z } from "zod"
-import { CommonProvisionOutputV1Schema, CommonProvisionConfigV1Schema, InstanceStateV1Schema } from "../../core/state/state"
+import { CommonProvisionOutputV1Schema, CommonProvisionInputV1Schema, InstanceStateV1Schema } from "../../core/state/state"
 import { CLOUDYPAD_PROVIDER_GCP, PUBLIC_IP_TYPE_DYNAMIC, PUBLIC_IP_TYPE_STATIC } from "../../core/const"
 
 const GcpProvisionOutputV1Schema = CommonProvisionOutputV1Schema.extend({
     instanceName: z.string().describe("GCP instance name"),
 })
 
-const GcpProvisionConfigV1Schema = CommonProvisionConfigV1Schema.extend({
+const GcpProvisionInputV1Schema = CommonProvisionInputV1Schema.extend({
     projectId: z.string().describe("GCP Project ID"),
     machineType: z.string().describe("GCP Machine Type"),
     acceleratorType: z.string().describe("GCP Accelerator Type"),
@@ -21,21 +21,21 @@ const GcpInstanceStateV1Schema = InstanceStateV1Schema.extend({
     provision: z.object({
         provider: z.literal(CLOUDYPAD_PROVIDER_GCP),
         output: GcpProvisionOutputV1Schema.optional(),
-        config: GcpProvisionConfigV1Schema,
+        input: GcpProvisionInputV1Schema,
     }),
 })
 
 type GcpInstanceStateV1 = z.infer<typeof GcpInstanceStateV1Schema>
 type GcpProvisionOutputV1 = z.infer<typeof GcpProvisionOutputV1Schema>
-type GcpProvisionConfigV1 = z.infer<typeof GcpProvisionConfigV1Schema>
+type GcpProvisionInputV1 = z.infer<typeof GcpProvisionInputV1Schema>
 
 export {
     GcpProvisionOutputV1Schema,
-    GcpProvisionConfigV1Schema,
+    GcpProvisionInputV1Schema as GcpProvisionInputV1Schema,
     GcpInstanceStateV1Schema,
     GcpInstanceStateV1,
     GcpProvisionOutputV1,
-    GcpProvisionConfigV1,
+    GcpProvisionInputV1,
 }
 
 // V0

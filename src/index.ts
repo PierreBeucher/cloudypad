@@ -42,7 +42,7 @@ createCmd
         try {
             const args: AwsInstanceInitArgs = {
                 instanceName: options.name,
-                config: {
+                input: {
                     ssh: {
                         privateKeyPath: options.privateSshKey,
                     },
@@ -85,7 +85,7 @@ createCmd
         try {
             const args: PaperspaceInstanceInitArgs = {
                 instanceName: options.name,
-                config: {
+                input: {
                     ssh: {
                         privateKeyPath: options.privateSshKey
                     },
@@ -132,7 +132,7 @@ createCmd
 
             const args: GcpInstanceInitArgs = {
                 instanceName: options.name,
-                config: {
+                input: {
                     ssh: {
                         privateKeyPath: options.privateSshKey
                     },
@@ -181,7 +181,7 @@ createCmd
 
             const args: AzureInstanceInitArgs = {
                 instanceName: options.name,
-                config: {
+                input: {
                     ssh: {
                         privateKeyPath: options.privateSshKey
                     },

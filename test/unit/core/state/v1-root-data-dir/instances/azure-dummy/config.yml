@@ -6,7 +6,7 @@ provision:
     host: 4.211.183.133
     resourceGroupName: CloudyPad-test-create-destroy-azure
     vmName: test-create-destroy-azure-vmfoo
-  config:
+  input:
     diskSize: 100
     vmSize: Standard_NC8as_T4_v3
     publicIpType: static

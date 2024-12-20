@@ -1,5 +1,5 @@
 import { getLogger, Logger } from "../log/utils"
-import { CommonProvisionConfigV1, CommonProvisionOutputV1 } from "./state/state"
+import { CommonProvisionInputV1, CommonProvisionOutputV1 } from "./state/state"
 
 export interface InstanceProvisionOptions  {
     autoApprove?: boolean
@@ -31,13 +31,13 @@ export interface InstanceProvisioner  {
     destroy(opts?: InstanceProvisionOptions): Promise<void>
 }
 
-export interface InstanceProvisionerArgs<C extends CommonProvisionConfigV1, O extends CommonProvisionOutputV1> {
+export interface InstanceProvisionerArgs<C extends CommonProvisionInputV1, O extends CommonProvisionOutputV1> {
     instanceName: string
-    config: C
+    input: C
     output?: O
 }
 
-export abstract class AbstractInstanceProvisioner<C extends CommonProvisionConfigV1, O extends CommonProvisionOutputV1> implements InstanceProvisioner {
+export abstract class AbstractInstanceProvisioner<C extends CommonProvisionInputV1, O extends CommonProvisionOutputV1> implements InstanceProvisioner {
     
     protected logger: Logger
     protected args: InstanceProvisionerArgs<C, O>

@@ -18,12 +18,12 @@ export interface SubManagerFactory {
 export abstract class AbstractSubManagerFactory<StateType extends InstanceStateV1> {
 
     async buildProvisioner(state: StateType): Promise<InstanceProvisioner> {
-        return this.doBuildProvisioner(state.name, state.provision.config, state.provision.output)
+        return this.doBuildProvisioner(state.name, state.provision.input, state.provision.output)
     }
 
     protected abstract doBuildProvisioner(
         name: string, 
-        config: StateType["provision"]["config"], 
+        input: StateType["provision"]["input"], 
         output: StateType["provision"]["output"]
     ): Promise<InstanceProvisioner>
     
@@ -32,12 +32,12 @@ export abstract class AbstractSubManagerFactory<StateType extends InstanceStateV
             throw new Error(`Can't build Instance Runner for ${state.name}: no provision output in state. Was instance fully provisioned ?`)
         }
 
-        return this.doBuildRunner(state.name, state.provision.config, state.provision.output)
+        return this.doBuildRunner(state.name, state.provision.input, state.provision.output)
     }
 
     protected abstract doBuildRunner(
         name: string, 
-        config: StateType["provision"]["config"], 
+        input: StateType["provision"]["input"], 
         output: NonNullable<StateType["provision"]["output"]>
     ): Promise<InstanceRunner>
     
@@ -47,18 +47,18 @@ export abstract class AbstractSubManagerFactory<StateType extends InstanceStateV
             throw new Error("Missing common provision output. Was instance fully initialized ?")
         }
 
-        return this.doBuildConfigurator(state.name, state.provision.config, state.provision.output)
+        return this.doBuildConfigurator(state.name, state.provision.input, state.provision.output)
     }
 
     protected async doBuildConfigurator(
         name: string,
-        config: StateType["provision"]["config"],
+        input: StateType["provision"]["input"],
         output: NonNullable<StateType["provision"]["output"]>
     ): Promise<InstanceConfigurator> {
 
         return new AnsibleConfigurator({
             instanceName: name,
-            commonConfig: config,
+            commonInput: input,
             commonOutput: output,
             additionalAnsibleArgs: ['-e', '\'ansible_ssh_common_args="-o StrictHostKeyChecking=no"\''] //TODO only on first run
         })

@@ -1,6 +1,6 @@
 import * as fs from 'fs'
 import { input, select } from '@inquirer/prompts';
-import { CommonProvisionConfigV1, CommonProvisionOutputV1 } from './state/state';
+import { CommonProvisionInputV1, CommonProvisionOutputV1 } from './state/state';
 import Docker from 'dockerode';
 import axios from 'axios';
 import { URL } from 'url'
@@ -27,13 +27,13 @@ export interface InstanceRunner {
     pair(): Promise<void>
 }
 
-export interface InstanceRunnerArgs<C extends CommonProvisionConfigV1, O extends CommonProvisionOutputV1>  {
+export interface InstanceRunnerArgs<C extends CommonProvisionInputV1, O extends CommonProvisionOutputV1>  {
     instanceName: string, 
-    config: C
+    input: C
     output: O
 }
 
-export abstract class AbstractInstanceRunner<C extends CommonProvisionConfigV1, O extends CommonProvisionOutputV1>  implements InstanceRunner {
+export abstract class AbstractInstanceRunner<C extends CommonProvisionInputV1, O extends CommonProvisionOutputV1>  implements InstanceRunner {
     
     protected readonly logger: Logger
     protected readonly args: InstanceRunnerArgs<C, O>
@@ -146,13 +146,13 @@ export abstract class AbstractInstanceRunner<C extends CommonProvisionConfigV1, 
     
     async pair(){
         
-        const privateKey = fs.readFileSync(this.args.config.ssh.privateKeyPath, 'utf-8')
+        const privateKey = fs.readFileSync(this.args.input.ssh.privateKeyPath, 'utf-8')
 
         const docker = new Docker({
             host: this.args.output.host,
             protocol: 'ssh',
             port: 22,
-            username: this.args.config.ssh.user,
+            username: this.args.input.ssh.user,
             sshOptions: {
                 privateKey: privateKey
             }

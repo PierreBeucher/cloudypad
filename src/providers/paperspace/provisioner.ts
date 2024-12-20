@@ -2,17 +2,17 @@ import { confirm } from '@inquirer/prompts';
 import { AbstractInstanceProvisioner, InstanceProvisionerArgs, InstanceProvisionOptions } from '../../core/provisioner';
 import { PaperspaceClient } from './client/client';
 import { MachinesCreateRequest } from './client/generated-api';
-import { PaperspaceProvisionConfigV1, PaperspaceProvisionOutputV1 } from './state';
+import { PaperspaceProvisionInputV1, PaperspaceProvisionOutputV1 } from './state';
 
-export type PaperspaceProvisionerArgs = InstanceProvisionerArgs<PaperspaceProvisionConfigV1, PaperspaceProvisionOutputV1>
+export type PaperspaceProvisionerArgs = InstanceProvisionerArgs<PaperspaceProvisionInputV1, PaperspaceProvisionOutputV1>
 
-export class PaperspaceProvisioner extends AbstractInstanceProvisioner<PaperspaceProvisionConfigV1, PaperspaceProvisionOutputV1> {
+export class PaperspaceProvisioner extends AbstractInstanceProvisioner<PaperspaceProvisionInputV1, PaperspaceProvisionOutputV1> {
 
     readonly client: PaperspaceClient
 
     constructor(args: PaperspaceProvisionerArgs) {
         super(args)
-        this.client = new PaperspaceClient({ name: this.args.instanceName, apiKey: this.args.config.apiKey })
+        this.client = new PaperspaceClient({ name: this.args.instanceName, apiKey: this.args.input.apiKey })
     }
 
     async doProvision(opts?: InstanceProvisionOptions) {
@@ -25,11 +25,11 @@ export class PaperspaceProvisioner extends AbstractInstanceProvisioner<Paperspac
                 message: `
 You are about to provision Paperspace instance with the following details:
     Instance name: ${this.args.instanceName}
-    SSH key: ${this.args.config.ssh.privateKeyPath}
-    Region: ${this.args.config.region}
-    Machine Type: ${this.args.config.machineType}
-    Disk Size: ${this.args.config.diskSize} GB
-    Public IP Type: ${this.args.config.publicIpType}
+    SSH key: ${this.args.input.ssh.privateKeyPath}
+    Region: ${this.args.input.region}
+    Machine Type: ${this.args.input.machineType}
+    Disk Size: ${this.args.input.diskSize} GB
+    Public IP Type: ${this.args.input.publicIpType}
 Do you want to proceed?`,
                 default: true,
             })
@@ -41,10 +41,10 @@ Do you want to proceed?`,
 
         const createArgs: MachinesCreateRequest = {
             name: this.args.instanceName,
-            region: this.args.config.region,
-            machineType: this.args.config.machineType,
-            diskSize: this.args.config.diskSize,
-            publicIpType: this.args.config.publicIpType,
+            region: this.args.input.region,
+            machineType: this.args.input.machineType,
+            diskSize: this.args.input.diskSize,
+            publicIpType: this.args.input.publicIpType,
             startOnCreate: true,
 
             // TODO Always create an Ubuntu 22.04 based on public template "t0nspur5"

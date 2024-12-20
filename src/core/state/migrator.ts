@@ -48,7 +48,7 @@ export class StateMigrator {
                     version: "1",
                     provision: {
                         provider: providerName,
-                        config: {
+                        input: {
                             ...providerV0.aws.provisionArgs.create,
                             publicIpType: providerV0.aws.provisionArgs.create.publicIpType,
                             ssh: {
@@ -91,7 +91,7 @@ export class StateMigrator {
                     version: "1",
                     provision: {
                         provider: providerName,
-                        config: {
+                        input: {
                             ...providerV0.azure.provisionArgs.create,
                             publicIpType: providerV0.azure.provisionArgs.create.publicIpType,
                             ssh: {
@@ -135,7 +135,7 @@ export class StateMigrator {
                     version: "1",
                     provision: {
                         provider: providerName,
-                        config: {
+                        input: {
                             ...providerV0.gcp.provisionArgs.create,
                             publicIpType: providerV0.gcp.provisionArgs.create.publicIpType,
                             ssh: {
@@ -176,7 +176,7 @@ export class StateMigrator {
                     version: "1",
                     provision: {
                         provider: providerName,
-                        config: {
+                        input: {
                             ...providerV0.paperspace.provisionArgs.create,
                             apiKey: providerV0.paperspace.apiKey ?? providerV0.paperspace.provisionArgs.apiKey,
                             ssh: {

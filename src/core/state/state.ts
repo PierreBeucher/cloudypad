@@ -9,7 +9,7 @@ const CommonProvisionOutputV1Schema = z.object({
     host: z.string().describe("Instance hostname or IP address"),
 })
 
-const CommonProvisionConfigV1Schema = z.object({
+const CommonProvisionInputV1Schema = z.object({
     ssh: z.object({
         user: z.string().describe("SSH user"),
         privateKeyPath: z.string().describe("Local path to private key"),
@@ -22,11 +22,11 @@ const InstanceStateV1Schema = z.object({
     provision: z.object({
         provider: z.enum(CLOUDYPAD_PROVIDER_LIST).describe("Supported providers"),
         output: CommonProvisionOutputV1Schema.optional(),
-        config: CommonProvisionConfigV1Schema,
+        input: CommonProvisionInputV1Schema,
     })
 })
 
-export { InstanceStateV1Schema, CommonProvisionOutputV1Schema, CommonProvisionConfigV1Schema }
+export { InstanceStateV1Schema, CommonProvisionOutputV1Schema, CommonProvisionInputV1Schema }
 
 /**
  * State representation of Cloudy Pad instance.
@@ -35,7 +35,7 @@ export { InstanceStateV1Schema, CommonProvisionOutputV1Schema, CommonProvisionCo
  */
 export type InstanceStateV1 = z.infer<typeof InstanceStateV1Schema>
 
-export type CommonProvisionConfigV1 = z.infer<typeof CommonProvisionConfigV1Schema>
+export type CommonProvisionInputV1 = z.infer<typeof CommonProvisionInputV1Schema>
 export type CommonProvisionOutputV1 = z.infer<typeof CommonProvisionOutputV1Schema>
 
 /**

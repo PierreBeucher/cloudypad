@@ -1,31 +1,31 @@
 import { input, select } from '@inquirer/prompts'
 import { StaticInitializerPrompts, InstanceInitArgs, AbstractInstanceInitializer } from '../../core/initializer'
 import { AzureClient } from '../../tools/azure'
-import { AzureProvisionConfigV1 } from './state'
-import { CommonProvisionConfigV1 } from '../../core/state/state'
+import { AzureProvisionInputV1 } from './state'
+import { CommonProvisionInputV1 } from '../../core/state/state'
 import { CLOUDYPAD_PROVIDER_AZURE } from '../../core/const'
 
 
-export type AzureInstanceInitArgs = InstanceInitArgs<AzureProvisionConfigV1>
+export type AzureInstanceInitArgs = InstanceInitArgs<AzureProvisionInputV1>
 
-export class AzureInstanceInitializer extends AbstractInstanceInitializer<AzureProvisionConfigV1> {
+export class AzureInstanceInitializer extends AbstractInstanceInitializer<AzureProvisionInputV1> {
 
     constructor(args: AzureInstanceInitArgs){
         super(CLOUDYPAD_PROVIDER_AZURE, args)
     }
 
-    async promptProviderConfig(commonConfig: CommonProvisionConfigV1): Promise<AzureProvisionConfigV1> {
-        this.logger.debug(`Starting Azure prompt with default opts: ${JSON.stringify(commonConfig)}`)
+    async promptProviderConfig(commonInput: CommonProvisionInputV1): Promise<AzureProvisionInputV1> {
+        this.logger.debug(`Starting Azure prompt with default opts: ${JSON.stringify(commonInput)}`)
 
-        const subscriptionId = await this.subscriptionId(this.args.config.subscriptionId)
-        const useSpot = await StaticInitializerPrompts.useSpotInstance(this.args.config.useSpot)
-        const location = await this.location(subscriptionId, this.args.config.location)
-        const vmSize = await this.instanceType(subscriptionId, location, this.args.config.vmSize)
-        const diskSize = await this.diskSize(this.args.config.diskSize)
-        const publicIpType = await StaticInitializerPrompts.publicIpType(this.args.config.publicIpType)
+        const subscriptionId = await this.subscriptionId(this.args.input.subscriptionId)
+        const useSpot = await StaticInitializerPrompts.useSpotInstance(this.args.input.useSpot)
+        const location = await this.location(subscriptionId, this.args.input.location)
+        const vmSize = await this.instanceType(subscriptionId, location, this.args.input.vmSize)
+        const diskSize = await this.diskSize(this.args.input.diskSize)
+        const publicIpType = await StaticInitializerPrompts.publicIpType(this.args.input.publicIpType)
 
-        const azConf: AzureProvisionConfigV1 = {
-            ...commonConfig,
+        const azConf: AzureProvisionInputV1 = {
+            ...commonInput,
             diskSize: diskSize,
             vmSize: vmSize,
             publicIpType: publicIpType,

@@ -3,11 +3,11 @@ import { confirm } from '@inquirer/prompts'
 import { AzurePulumiClient, PulumiStackConfigAzure } from '../../tools/pulumi/azure'
 import { AbstractInstanceProvisioner, InstanceProvisionerArgs, InstanceProvisionOptions } from '../../core/provisioner'
 import { AzureClient } from '../../tools/azure'
-import { AzureProvisionConfigV1, AzureProvisionOutputV1 } from './state'
+import { AzureProvisionInputV1, AzureProvisionOutputV1 } from './state'
 
-export type AzureProvisionerArgs = InstanceProvisionerArgs<AzureProvisionConfigV1, AzureProvisionOutputV1>
+export type AzureProvisionerArgs = InstanceProvisionerArgs<AzureProvisionInputV1, AzureProvisionOutputV1>
 
-export class AzureProvisioner extends AbstractInstanceProvisioner<AzureProvisionConfigV1, AzureProvisionOutputV1> {
+export class AzureProvisioner extends AbstractInstanceProvisioner<AzureProvisionInputV1, AzureProvisionOutputV1> {
 
     constructor(args: AzureProvisionerArgs) {
         super(args)
@@ -26,14 +26,14 @@ export class AzureProvisioner extends AbstractInstanceProvisioner<AzureProvision
             confirmCreation = await confirm({
                 message: `
 You are about to provision Azure machine with the following details:
-    Azure subscription: ${this.args.config.subscriptionId}
-    Azure location: ${this.args.config.location}
+    Azure subscription: ${this.args.input.subscriptionId}
+    Azure location: ${this.args.input.location}
     Instance name: ${this.args.instanceName}
-    SSH key: ${this.args.config.ssh.privateKeyPath}
-    VM Size: ${this.args.config.vmSize}
-    Spot instance: ${this.args.config.useSpot}
-    Public IP Type: ${this.args.config.publicIpType}
-    Disk size: ${this.args.config.diskSize}
+    SSH key: ${this.args.input.ssh.privateKeyPath}
+    VM Size: ${this.args.input.vmSize}
+    Spot instance: ${this.args.input.useSpot}
+    Public IP Type: ${this.args.input.publicIpType}
+    Disk size: ${this.args.input.diskSize}
     
 Do you want to proceed?`,
                 default: true,
@@ -46,13 +46,13 @@ Do you want to proceed?`,
 
         const pulumiClient = new AzurePulumiClient(this.args.instanceName)
         const pulumiConfig: PulumiStackConfigAzure = {
-            subscriptionId: this.args.config.subscriptionId,
-            location: this.args.config.location,
-            vmSize: this.args.config.vmSize,
-            publicIpType: this.args.config.publicIpType,
-            rootDiskSizeGB: this.args.config.diskSize,
-            publicSshKeyContent: await parseSshPrivateKeyFileToPublic(this.args.config.ssh.privateKeyPath),
-            useSpot: this.args.config.useSpot,
+            subscriptionId: this.args.input.subscriptionId,
+            location: this.args.input.location,
+            vmSize: this.args.input.vmSize,
+            publicIpType: this.args.input.publicIpType,
+            rootDiskSizeGB: this.args.input.diskSize,
+            publicSshKeyContent: await parseSshPrivateKeyFileToPublic(this.args.input.ssh.privateKeyPath),
+            useSpot: this.args.input.useSpot,
         }
 
         await pulumiClient.setConfig(pulumiConfig)

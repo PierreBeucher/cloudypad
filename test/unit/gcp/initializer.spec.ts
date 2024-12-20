@@ -2,14 +2,14 @@ import * as assert from 'assert';
 import { InstanceInitializationOptions } from '../../../src/core/initializer';
 import { StateManager } from '../../../src/core/state/manager';
 import { GcpInstanceInitializer } from '../../../src/providers/gcp/initializer';
-import { GcpInstanceStateV1, GcpProvisionConfigV1 } from '../../../src/providers/gcp/state';
+import { GcpInstanceStateV1, GcpProvisionInputV1 } from '../../../src/providers/gcp/state';
 import { CLOUDYPAD_PROVIDER_GCP, PUBLIC_IP_TYPE_STATIC } from '../../../src/core/const';
-import { DEFAULT_COMMON_CONFIG } from '../common/utils';
+import { DEFAULT_COMMON_INPUT } from '../common/utils';
 
 describe('GCP initializer', () => {
 
-    const conf: GcpProvisionConfigV1 = {
-        ...DEFAULT_COMMON_CONFIG,
+    const conf: GcpProvisionInputV1 = {
+        ...DEFAULT_COMMON_INPUT,
         machineType: "n1-standard-8",
         diskSize: 200,
         publicIpType: PUBLIC_IP_TYPE_STATIC,
@@ -29,15 +29,15 @@ describe('GCP initializer', () => {
 
     it('should return provided options without prompting for user input', async () => {
 
-        const promt = new GcpInstanceInitializer({ instanceName: instanceName, config: conf})
-        const result = await promt.promptProviderConfig(DEFAULT_COMMON_CONFIG)
+        const promt = new GcpInstanceInitializer({ instanceName: instanceName, input: conf})
+        const result = await promt.promptProviderConfig(DEFAULT_COMMON_INPUT)
         assert.deepEqual(result, conf)
     })
 
 
     it('should initialize instance state with provided arguments', async () => {
 
-        await new GcpInstanceInitializer({ instanceName: instanceName, config: conf}).initializeInstance(opts)
+        await new GcpInstanceInitializer({ instanceName: instanceName, input: conf}).initializeInstance(opts)
 
         // Check state has been written
         const state = await StateManager.default().loadInstanceStateSafe(instanceName)
@@ -47,7 +47,7 @@ describe('GCP initializer', () => {
             name: instanceName,
             provision: {
                 provider: CLOUDYPAD_PROVIDER_GCP,
-                config: conf,
+                input: conf,
                 output: {
                     host: "127.0.0.1",
                     instanceName: "dummy-gcp"

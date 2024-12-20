@@ -5,7 +5,7 @@ provision:
   output:
     host: 18.199.182.227
     instanceId: i-0ae901f1799b17fdf
-  config:
+  input:
     diskSize: 200
     instanceType: g4dn.2xlarge
     publicIpType: static

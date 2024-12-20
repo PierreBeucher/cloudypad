@@ -3,11 +3,11 @@ import { confirm } from '@inquirer/prompts';
 import { AbstractInstanceProvisioner, InstanceProvisionerArgs, InstanceProvisionOptions } from '../../core/provisioner';
 import { GcpPulumiClient, PulumiStackConfigGcp } from '../../tools/pulumi/gcp';
 import { GcpClient } from '../../tools/gcp';
-import { GcpProvisionConfigV1, GcpProvisionOutputV1} from './state';
+import { GcpProvisionInputV1, GcpProvisionOutputV1} from './state';
 
-export type GcpProvisionerArgs = InstanceProvisionerArgs<GcpProvisionConfigV1, GcpProvisionOutputV1>
+export type GcpProvisionerArgs = InstanceProvisionerArgs<GcpProvisionInputV1, GcpProvisionOutputV1>
 
-export class GcpProvisioner extends AbstractInstanceProvisioner<GcpProvisionConfigV1, GcpProvisionOutputV1> {
+export class GcpProvisioner extends AbstractInstanceProvisioner<GcpProvisionInputV1, GcpProvisionOutputV1> {
 
     constructor(args: GcpProvisionerArgs) {
         super(args)
@@ -21,7 +21,7 @@ export class GcpProvisioner extends AbstractInstanceProvisioner<GcpProvisionConf
             await this.verifyConfig()
         }
 
-        this.logger.debug(`Provisioning Google Cloud instance with ${JSON.stringify(this.args.config)}`)
+        this.logger.debug(`Provisioning Google Cloud instance with ${JSON.stringify(this.args.input)}`)
 
         
         let confirmCreation: boolean
@@ -32,14 +32,14 @@ export class GcpProvisioner extends AbstractInstanceProvisioner<GcpProvisionConf
                 message: `
 You are about to provision Google Cloud machine with the following details:
     Instance name: ${this.args.instanceName}
-    SSH key: ${this.args.config.ssh.privateKeyPath}
-    Region: ${this.args.config.region}
-    Project ID: ${this.args.config.projectId}
-    Machine Type: ${this.args.config.machineType}
-    Use Spot: ${this.args.config.useSpot}
-    GPU Type: ${this.args.config.acceleratorType}
-    Public IP Type: ${this.args.config.publicIpType}
-    Disk size: ${this.args.config.diskSize}
+    SSH key: ${this.args.input.ssh.privateKeyPath}
+    Region: ${this.args.input.region}
+    Project ID: ${this.args.input.projectId}
+    Machine Type: ${this.args.input.machineType}
+    Use Spot: ${this.args.input.useSpot}
+    GPU Type: ${this.args.input.acceleratorType}
+    Public IP Type: ${this.args.input.publicIpType}
+    Disk size: ${this.args.input.diskSize}
     
 Do you want to proceed?`,
                 default: true,
@@ -52,15 +52,15 @@ Do you want to proceed?`,
 
         const pulumiClient = new GcpPulumiClient(this.args.instanceName)
         const pulumiConfig: PulumiStackConfigGcp = {
-            machineType: this.args.config.machineType,
-            acceleratorType: this.args.config.acceleratorType,
-            projectId: this.args.config.projectId,
-            publicIpType: this.args.config.publicIpType,
-            region: this.args.config.region,
-            zone: this.args.config.zone,
-            rootDiskSize: this.args.config.diskSize,
-            publicSshKeyContent: await parseSshPrivateKeyFileToPublic(this.args.config.ssh.privateKeyPath),
-            useSpot: this.args.config.useSpot,
+            machineType: this.args.input.machineType,
+            acceleratorType: this.args.input.acceleratorType,
+            projectId: this.args.input.projectId,
+            publicIpType: this.args.input.publicIpType,
+            region: this.args.input.region,
+            zone: this.args.input.zone,
+            rootDiskSize: this.args.input.diskSize,
+            publicSshKeyContent: await parseSshPrivateKeyFileToPublic(this.args.input.ssh.privateKeyPath),
+            useSpot: this.args.input.useSpot,
         }
 
         await pulumiClient.setConfig(pulumiConfig)
@@ -93,7 +93,7 @@ Do you want to proceed?`,
     }
 
     async doVerifyConfig() {
-        const client = new GcpClient(this.args.instanceName, this.args.config.projectId)
+        const client = new GcpClient(this.args.instanceName, this.args.input.projectId)
         await client.checkAuth()
     }
 }
