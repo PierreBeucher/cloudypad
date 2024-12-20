@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "test": "mocha",
-    "build": "tsc && npm run copy-ansible",
+    "build": "rm -r dist/ && tsc && npm run copy-ansible",
     "copy-ansible": "cp -r ansible dist/ansible"
   },
   "bin": {
