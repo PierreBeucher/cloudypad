@@ -1,0 +1,11 @@
+# Only references images used by Wolf
+# This Compose is used to pull all images in parallel for faster subequent startup when using Wolf
+services:
+  wolf_app_steam:
+    image: {{ wolf_app_steam_image }}
+  wolf_app_lutris:
+    image: {{ wolf_app_lutris_image }}
+  wolf_app_pegasus:
+    image: {{ wolf_app_pegasus_image }}
+  wolf_app_retroarch:
+    image: {{ wolf_app_retroarch_image }}

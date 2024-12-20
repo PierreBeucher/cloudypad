@@ -118,3 +118,13 @@
   community.docker.docker_compose_v2:
     project_src: "{{ ansible_user_dir }}/wolf"
     files: docker-compose.nvidia.yml
+
+- name: Copy Docker Compose preheat pull file
+  ansible.builtin.template:
+    src: docker-compose.app-preheat.yml
+    dest: "{{ ansible_user_dir }}/wolf/docker-compose.app-preheat.yml"
+
+- name: Pull images using preheat Compose file
+  community.docker.docker_compose_v2_pull:
+    project_src: /tmp
+    files: "{{ ansible_user_dir }}/wolf/docker-compose.app-preheat.yml"
