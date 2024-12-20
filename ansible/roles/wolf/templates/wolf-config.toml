@@ -37,7 +37,7 @@ env = [
   "GOW_REQUIRED_DEVICES=/dev/input/* /dev/dri/* /dev/nvidia*",
 ]
 mounts = []
-image = "ghcr.io/games-on-whales/steam:edge"
+image = "{{ wolf_app_steam_image }}"
 name = "WolfSteam"
 type = "docker"
 
@@ -63,7 +63,7 @@ env = [
   "GOW_REQUIRED_DEVICES=/dev/input/event* /dev/dri/* /dev/nvidia*",
 ]
 mounts = []
-image = "ghcr.io/games-on-whales/pegasus:edge"
+image = "{{ wolf_app_pegasus_image }}"
 name = "WolfPegasus"
 type = "docker"
 
@@ -89,7 +89,7 @@ env = [
   "GOW_REQUIRED_DEVICES=/dev/input/event* /dev/dri/* /dev/nvidia* /var/lutris/",
 ]
 mounts = ["lutris:/var/lutris/:rw"]
-image = "ghcr.io/games-on-whales/lutris:edge"
+image = "{{ wolf_app_lutris_image }}"
 name = "WolfLutris"
 type = "docker"
 
@@ -115,7 +115,7 @@ env = [
   "GOW_REQUIRED_DEVICES=/dev/input/* /dev/dri/* /dev/nvidia*",
 ]
 mounts = []
-image = "ghcr.io/games-on-whales/retroarch:edge"
+image = "{{ wolf_app_retroarch_image }}"
 name = "WolfRetroarch"
 type = "docker"
 
