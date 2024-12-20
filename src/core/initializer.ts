@@ -9,6 +9,8 @@ import { InstanceManager } from './manager';
 import { CLOUDYPAD_PROVIDER } from './const';
 import { StateManager } from './state/manager';
 import { InstanceManagerBuilder } from './manager-builder';
+import lodash from 'lodash'
+const { kebabCase } = lodash
 
 export interface InstanceInitializationOptions {
     autoApprove?: boolean
@@ -170,7 +172,23 @@ export class CommonConfigPrompt {
             })
         }
 
-        return instanceName
+        // Ensure instance name is kebab case
+        const kebabCaseInstanceName = kebabCase(instanceName)
+
+        if(kebabCaseInstanceName !== instanceName) {
+            const confirmKebabCase = await confirm({
+                message: `Instance name must be kebab case. Use ${kebabCaseInstanceName} instead?`,
+                default: true,
+            })
+
+            if(!confirmKebabCase){
+                // let's ask again, without provided default
+                return this.instanceName()
+            }
+        }
+
+        
+        return kebabCaseInstanceName 
     }
 
     async privateSshKey(privateSshKey?: string): Promise<string> {
