@@ -1,6 +1,6 @@
 {
   inputs = {
-    nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
+    nixpkgs.url = "github:nixos/nixpkgs/nixos-24.11";
     flake-utils.url = "github:numtide/flake-utils";
   };
 
@@ -30,7 +30,7 @@
             meta = with pkgs.lib; {
               description = "Cloudypad script";
               homepage = "https://github.com/PierreBeucher/cloudypad";
-              license = licenses.gpl3;
+              license = licenses.agpl3Plus;
             };
           };
           
@@ -39,7 +39,7 @@
           default = pkgs.mkShell {
             packages = with pkgs; [
               gnumake
-              pulumi
+              pulumi-bin
               pulumiPackages.pulumi-language-nodejs
               nodejs
               nodePackages.pnpm
@@ -53,6 +53,10 @@
               jq
               gh
               mdbook
+              pv # for demo-magic
+              asciinema
+              imagemagick_light
+              ffmpeg
 
               google-cloud-sdk
             ];
