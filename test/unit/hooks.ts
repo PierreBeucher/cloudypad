@@ -10,6 +10,7 @@ import { AzurePulumiClient, AzurePulumiOutput } from '../../src/tools/pulumi/azu
 import { GcpPulumiClient, GcpPulumiOutput } from '../../src/tools/pulumi/gcp';
 import { PaperspaceClient, PaperspaceMachine } from '../../src/providers/paperspace/client/client';
 import { StateManager } from '../../src/core/state/manager';
+import { PUBLIC_IP_TYPE_STATIC } from '../../src/core/const';
 
 /**
  * Creates a StateManager using a temporary file as data root dir
@@ -70,7 +71,7 @@ export const mochaHooks = {
             machineType: "RTX4000",
             privateIp: "192.168.0.10",
             publicIp: "127.0.0.1",
-            publicIpType: "static"
+            publicIpType: PUBLIC_IP_TYPE_STATIC
         }
         sinon.stub(PaperspaceClient.prototype, 'createMachine').resolves(dummyMachine)
     }

@@ -1,7 +1,7 @@
 import { PaperspaceInstanceStateV1 } from '../../providers/paperspace/state'
 import { AwsInstanceStateV1 } from '../../providers/aws/state'
 import { getLogger } from '../../log/utils'
-import { CLOUDYPAD_PROVIDER, CLOUDYPAD_PROVIDER_AWS, CLOUDYPAD_PROVIDER_AZURE, CLOUDYPAD_PROVIDER_GCP, CLOUDYPAD_PROVIDER_PAPERSPACE } from '../const'
+import { CLOUDYPAD_PROVIDER, CLOUDYPAD_PROVIDER_AWS, CLOUDYPAD_PROVIDER_AZURE, CLOUDYPAD_PROVIDER_GCP, CLOUDYPAD_PROVIDER_PAPERSPACE, PUBLIC_IP_TYPE_DYNAMIC, PUBLIC_IP_TYPE_STATIC } from '../const'
 import { AzureInstanceStateV1 } from '../../providers/azure/state'
 import { GcpInstanceStateV1 } from '../../providers/gcp/state'
 import { InstanceStateV0 } from './state'
@@ -38,13 +38,19 @@ export class StateMigrator {
                     throw new Error("Missing AWS provision args in state. Was instance fully configured ?")
                 }
 
+                if(providerV0.aws.provisionArgs.create.publicIpType !== PUBLIC_IP_TYPE_STATIC &&
+                    providerV0.aws.provisionArgs.create.publicIpType !== PUBLIC_IP_TYPE_DYNAMIC) {
+                    throw new Error(`Public IP type is neither ${PUBLIC_IP_TYPE_STATIC} nor ${PUBLIC_IP_TYPE_DYNAMIC}`)
+                }
+
                 const awsState: AwsInstanceStateV1 = {
                     name: name,
                     version: "1",
                     provision: {
                         provider: providerName,
-                        config: {
+                        input: {
                             ...providerV0.aws.provisionArgs.create,
+                            publicIpType: providerV0.aws.provisionArgs.create.publicIpType,
                             ssh: {
                                 user: stateV0.ssh.user,
                                 privateKeyPath: stateV0.ssh.privateKeyPath
@@ -75,13 +81,19 @@ export class StateMigrator {
                     throw new Error("Missing Azure provision args in state. Was instance fully configured ?")
                 }
 
+                if(providerV0.azure.provisionArgs.create.publicIpType !== PUBLIC_IP_TYPE_STATIC &&
+                    providerV0.azure.provisionArgs.create.publicIpType !== PUBLIC_IP_TYPE_DYNAMIC) {
+                    throw new Error(`Public IP type is neither ${PUBLIC_IP_TYPE_STATIC} nor ${PUBLIC_IP_TYPE_DYNAMIC}`)
+                }
+
                 const azureState: AzureInstanceStateV1 = {
                     name: name,
                     version: "1",
                     provision: {
                         provider: providerName,
-                        config: {
+                        input: {
                             ...providerV0.azure.provisionArgs.create,
+                            publicIpType: providerV0.azure.provisionArgs.create.publicIpType,
                             ssh: {
                                 user: stateV0.ssh.user,
                                 privateKeyPath: stateV0.ssh.privateKeyPath
@@ -113,13 +125,19 @@ export class StateMigrator {
                     throw new Error("Missing Google provision args in state. Was instance fully provisioned ?")
                 }
 
+                if(providerV0.gcp.provisionArgs.create.publicIpType !== PUBLIC_IP_TYPE_STATIC &&
+                    providerV0.gcp.provisionArgs.create.publicIpType !== PUBLIC_IP_TYPE_DYNAMIC) {
+                    throw new Error(`Public IP type is neither ${PUBLIC_IP_TYPE_STATIC} nor ${PUBLIC_IP_TYPE_DYNAMIC}`)
+                }
+
                 const gcpState: GcpInstanceStateV1 = {
                     name: name,
                     version: "1",
                     provision: {
                         provider: providerName,
-                        config: {
+                        input: {
                             ...providerV0.gcp.provisionArgs.create,
+                            publicIpType: providerV0.gcp.provisionArgs.create.publicIpType,
                             ssh: {
                                 user: stateV0.ssh.user,
                                 privateKeyPath: stateV0.ssh.privateKeyPath
@@ -158,7 +176,7 @@ export class StateMigrator {
                     version: "1",
                     provision: {
                         provider: providerName,
-                        config: {
+                        input: {
                             ...providerV0.paperspace.provisionArgs.create,
                             apiKey: providerV0.paperspace.apiKey ?? providerV0.paperspace.provisionArgs.apiKey,
                             ssh: {

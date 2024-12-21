@@ -2,13 +2,15 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';
 import { input, select, confirm } from '@inquirer/prompts';
-import { CommonProvisionConfigV1, InstanceStateV1 } from './state/state';
+import { CommonProvisionInputV1, InstanceStateV1 } from './state/state';
 import { getLogger } from '../log/utils';
 import { PartialDeep } from 'type-fest';
 import { InstanceManager } from './manager';
-import { CLOUDYPAD_PROVIDER } from './const';
+import { CLOUDYPAD_PROVIDER, PUBLIC_IP_TYPE, PUBLIC_IP_TYPE_DYNAMIC, PUBLIC_IP_TYPE_STATIC } from './const';
 import { StateManager } from './state/manager';
 import { InstanceManagerBuilder } from './manager-builder';
+import lodash from 'lodash'
+const { kebabCase } = lodash
 
 export interface InstanceInitializationOptions {
     autoApprove?: boolean
@@ -17,7 +19,7 @@ export interface InstanceInitializationOptions {
 
 export interface InstanceInitArgs<C> {
     instanceName?: string,
-    config: PartialDeep<C>
+    input: PartialDeep<C>
 }
 
 /**
@@ -42,11 +44,11 @@ export interface InstanceInitializer {
      * - Optionally pair instance
      * @param opts 
      */
-    initializeInstance(config: CommonProvisionConfigV1, opts: InstanceInitializationOptions): Promise<void>
+    initializeInstance(input: CommonProvisionInputV1, opts: InstanceInitializationOptions): Promise<void>
 
 }
 
-export abstract class AbstractInstanceInitializer<C extends CommonProvisionConfigV1> {
+export abstract class AbstractInstanceInitializer<C extends CommonProvisionInputV1> {
 
     protected readonly logger = getLogger(AbstractInstanceInitializer.name)
 
@@ -60,18 +62,18 @@ export abstract class AbstractInstanceInitializer<C extends CommonProvisionConfi
         this.stateManager = StateManager.default()
     }
 
-    private async promptCommonConfig(): Promise<{ name: string, config: CommonProvisionConfigV1 }> {
+    private async promptCommonConfig(): Promise<{ name: string, input: CommonProvisionInputV1 }> {
 
         this.logger.debug(`Initializing instance with default config ${JSON.stringify(this.args)}`)
         
         const commonConfPrompt = new CommonConfigPrompt()
         const instanceName = await commonConfPrompt.instanceName(this.args?.instanceName)
-        const sshKey = await commonConfPrompt.privateSshKey(this.args?.config?.ssh?.privateKeyPath)
+        const sshKey = await commonConfPrompt.privateSshKey(this.args?.input?.ssh?.privateKeyPath)
         const sshUser = "ubuntu" // Harcoded for now since we only support Ubuntu
 
         return {
             name: instanceName,
-            config: {
+            input: {
                 ssh: {
                     privateKeyPath: sshKey,
                     user: sshUser
@@ -84,7 +86,7 @@ export abstract class AbstractInstanceInitializer<C extends CommonProvisionConfi
      * Prompt user for additional provider-specific configurations.
      * Returns a fully valid state for instance initialization. 
      */
-    protected abstract promptProviderConfig(commonConfig: CommonProvisionConfigV1): Promise<C>
+    protected abstract promptProviderConfig(commonInput: CommonProvisionInputV1): Promise<C>
 
     protected buildInstanceManager(state: InstanceStateV1): InstanceManager {
         return new InstanceManagerBuilder().buildManagerForState(state)
@@ -92,7 +94,7 @@ export abstract class AbstractInstanceInitializer<C extends CommonProvisionConfi
 
     public async initializeInstance(opts: InstanceInitializationOptions){
 
-        const { name: instanceName, config: commonConfig } = await this.promptCommonConfig();
+        const { name: instanceName, input: commonConfig } = await this.promptCommonConfig();
 
         if(await this.stateManager.instanceExists(instanceName) && !opts.overwriteExisting){
             const confirmAlreadyExists = await confirm({
@@ -116,7 +118,7 @@ export abstract class AbstractInstanceInitializer<C extends CommonProvisionConfi
             name: instanceName,
             provision: {
                 provider: this.provider,
-                config: finalConfig,
+                input: finalConfig,
                 output: undefined
             },   
         }
@@ -170,7 +172,23 @@ export class CommonConfigPrompt {
             })
         }
 
-        return instanceName
+        // Ensure instance name is kebab case
+        const kebabCaseInstanceName = kebabCase(instanceName)
+
+        if(kebabCaseInstanceName !== instanceName) {
+            const confirmKebabCase = await confirm({
+                message: `Instance name must be kebab case. Use ${kebabCaseInstanceName} instead?`,
+                default: true,
+            })
+
+            if(!confirmKebabCase){
+                // let's ask again, without provided default
+                return this.instanceName()
+            }
+        }
+
+        
+        return kebabCaseInstanceName 
     }
 
     async privateSshKey(privateSshKey?: string): Promise<string> {
@@ -234,5 +252,25 @@ export class StaticInitializerPrompts {
         })
     
         return useSpotChoice;
+    }
+
+    static async publicIpType(publicIpType?: PUBLIC_IP_TYPE): Promise<PUBLIC_IP_TYPE> {
+        if (publicIpType) {
+            return publicIpType
+        }
+
+        const publicIpTypeChoices: {name: PUBLIC_IP_TYPE, value: PUBLIC_IP_TYPE }[] = [{
+            name: PUBLIC_IP_TYPE_STATIC,
+            value: PUBLIC_IP_TYPE_STATIC
+        },{
+            name: PUBLIC_IP_TYPE_DYNAMIC,
+            value: PUBLIC_IP_TYPE_DYNAMIC
+        }]
+
+        return await select({
+            message: 'Use static Elastic IP or dynamic IP? :',
+            choices: publicIpTypeChoices,
+            default: PUBLIC_IP_TYPE_STATIC,
+        })
     }
 }

@@ -5,7 +5,7 @@ provision:
   output:
     host: 184.105.189.240
     machineId: pspspspspsps
-  config:
+  input:
     machineType: P4000
     diskSize: 100
     publicIpType: static

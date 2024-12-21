@@ -3,14 +3,14 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';
 import * as yaml from 'js-yaml';
-import { CommonProvisionConfigV1, CommonProvisionOutputV1 } from '../core/state/state';
+import { CommonProvisionInputV1, CommonProvisionOutputV1 } from '../core/state/state';
 import { InstanceConfigurator } from '../core/configurator';
 import { getLogger, Logger } from '../log/utils';
 import { AnsibleClient } from '../tools/ansible';
 
 export interface AnsibleConfiguratorArgs {
     instanceName: string
-    commonConfig: CommonProvisionConfigV1
+    commonInput: CommonProvisionInputV1
     commonOutput: CommonProvisionOutputV1
     additionalAnsibleArgs?: string[]
 }
@@ -27,7 +27,7 @@ export class AnsibleConfigurator implements InstanceConfigurator {
 
     async configure() {
 
-        const ssh = this.args.commonConfig.ssh
+        const ssh = this.args.commonInput.ssh
 
         this.logger.debug(`Running Ansible configuration`)
 
@@ -41,7 +41,8 @@ export class AnsibleConfigurator implements InstanceConfigurator {
                     [this.args.instanceName]: {
                         ansible_host: this.args.commonOutput.host,
                         ansible_user: ssh.user,
-                        ansible_ssh_private_key_file: ssh.privateKeyPath
+                        ansible_ssh_private_key_file: ssh.privateKeyPath,
+                        wolf_instance_name: this.args.instanceName
                     },
                 },
             },

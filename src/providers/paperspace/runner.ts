@@ -1,17 +1,17 @@
 import { AbstractInstanceRunner, InstanceRunnerArgs } from "../../core/runner"
 import { PaperspaceClient } from "./client/client"
-import { PaperspaceProvisionConfigV1, PaperspaceProvisionOutputV1 } from "./state"
+import { PaperspaceProvisionInputV1, PaperspaceProvisionOutputV1 } from "./state"
 
-export type PaperspaceInstanceRunnerArgs = InstanceRunnerArgs<PaperspaceProvisionConfigV1, PaperspaceProvisionOutputV1>
+export type PaperspaceInstanceRunnerArgs = InstanceRunnerArgs<PaperspaceProvisionInputV1, PaperspaceProvisionOutputV1>
 
-export class PaperspaceInstanceRunner extends AbstractInstanceRunner<PaperspaceProvisionConfigV1, PaperspaceProvisionOutputV1>  {
+export class PaperspaceInstanceRunner extends AbstractInstanceRunner<PaperspaceProvisionInputV1, PaperspaceProvisionOutputV1>  {
 
     private client: PaperspaceClient
 
     constructor(args: PaperspaceInstanceRunnerArgs) {
         super(args)
 
-        this.client = new PaperspaceClient({ name: this.args.instanceName, apiKey: this.args.config.apiKey})
+        this.client = new PaperspaceClient({ name: this.args.instanceName, apiKey: this.args.input.apiKey})
     }
 
     async doStart() {

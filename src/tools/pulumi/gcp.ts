@@ -2,6 +2,7 @@ import * as gcp from "@pulumi/gcp"
 import * as pulumi from "@pulumi/pulumi"
 import { OutputMap } from "@pulumi/pulumi/automation"
 import { InstancePulumiClient } from "./client"
+import { PUBLIC_IP_TYPE, PUBLIC_IP_TYPE_DYNAMIC, PUBLIC_IP_TYPE_STATIC } from "../../core/const"
 
 interface PortDefinition {
     from: pulumi.Input<number>,
@@ -13,7 +14,7 @@ interface CloudyPadGCEInstanceArgs {
     ingressPorts: PortDefinition[]
     publicKeyContent: pulumi.Input<string>
     machineType: pulumi.Input<string>
-    publicIpType: pulumi.Input<string>
+    publicIpType: pulumi.Input<PUBLIC_IP_TYPE>
     acceleratorType: pulumi.Input<string>
     bootDisk?: {
         sizeGb?: pulumi.Input<number>
@@ -61,12 +62,12 @@ class CloudyPadGCEInstance extends pulumi.ComponentResource {
         }, commonPulumiOpts)
 
         let publicIp: gcp.compute.Address | undefined = undefined
-        if (args.publicIpType === "static") {
+        if (args.publicIpType === PUBLIC_IP_TYPE_STATIC) {
             publicIp = new gcp.compute.Address(`${name}-eip`, {
                 name: gcpResourceNamePrefix,
             }, commonPulumiOpts)
-        } else if (args.publicIpType !== "dynamic") {
-            throw "publicIpType must be either 'static' or 'dynamic'"
+        } else if (args.publicIpType !== PUBLIC_IP_TYPE_DYNAMIC) {
+            throw `publicIpType must be either '${PUBLIC_IP_TYPE_STATIC}' or '${PUBLIC_IP_TYPE_DYNAMIC}'`
         }
 
         const gceInstance = new gcp.compute.Instance(`${name}-gce-instance`, {
@@ -129,7 +130,7 @@ async function gcpPulumiProgram(): Promise<Record<string, any> | void> {
     const machineType = config.require("machineType")
     const acceleratorType = config.require("acceleratorType")
     const bootDiskSizeGB = config.requireNumber("bootDiskSizeGB")
-    const publicIpType = config.require("publicIpType")
+    const publicIpType = config.requireObject<PUBLIC_IP_TYPE>("publicIpType")
     const publicKeyContent = config.require("publicSshKeyContent")
     const useSpot = config.requireBoolean("useSpot")
 

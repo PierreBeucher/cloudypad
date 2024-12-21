@@ -1,29 +1,29 @@
 import { input, select } from '@inquirer/prompts';
 import { AwsClient } from '../../tools/aws';
 import { AbstractInstanceInitializer, InstanceInitArgs, StaticInitializerPrompts } from '../../core/initializer';
-import { CommonProvisionConfigV1 } from '../../core/state/state';
-import { AwsProvisionConfigV1 } from './state';
+import { CommonProvisionInputV1 } from '../../core/state/state';
+import { AwsProvisionInputV1 } from './state';
 import { CLOUDYPAD_PROVIDER_AWS } from '../../core/const';
 
-export type AwsInstanceInitArgs = InstanceInitArgs<AwsProvisionConfigV1>
+export type AwsInstanceInitArgs = InstanceInitArgs<AwsProvisionInputV1>
 
-export class AwsInstanceInitializer extends AbstractInstanceInitializer<AwsProvisionConfigV1> {
+export class AwsInstanceInitializer extends AbstractInstanceInitializer<AwsProvisionInputV1> {
 
     constructor(args: AwsInstanceInitArgs){
         super(CLOUDYPAD_PROVIDER_AWS, args)
     }
 
-    async promptProviderConfig(commonConfig: CommonProvisionConfigV1): Promise<AwsProvisionConfigV1> {
-        this.logger.debug(`Starting AWS prompt with default opts: ${JSON.stringify(commonConfig)}`)
+    async promptProviderConfig(commonInput: CommonProvisionInputV1): Promise<AwsProvisionInputV1> {
+        this.logger.debug(`Starting AWS prompt with default opts: ${JSON.stringify(commonInput)}`)
 
-        const instanceType = await this.instanceType(this.args.config.instanceType)
-        const useSpot = await StaticInitializerPrompts.useSpotInstance(this.args.config.useSpot)
-        const diskSize = await this.diskSize(this.args.config.diskSize)
-        const publicIpType = await this.publicIpType(this.args.config.publicIpType)
-        const region = await this.region(this.args.config.region)
+        const instanceType = await this.instanceType(this.args.input.instanceType)
+        const useSpot = await StaticInitializerPrompts.useSpotInstance(this.args.input.useSpot)
+        const diskSize = await this.diskSize(this.args.input.diskSize)
+        const publicIpType = await StaticInitializerPrompts.publicIpType(this.args.input.publicIpType)
+        const region = await this.region(this.args.input.region)
 
-        const awsConfig: AwsProvisionConfigV1 = {
-            ...commonConfig,
+        const awsInput: AwsProvisionInputV1 = {
+            ...commonInput,
             diskSize: diskSize,
             instanceType: instanceType,
             publicIpType: publicIpType,
@@ -31,7 +31,7 @@ export class AwsInstanceInitializer extends AbstractInstanceInitializer<AwsProvi
             useSpot: useSpot,
         }
 
-        return awsConfig
+        return awsInput
         
     }
 
@@ -77,23 +77,6 @@ export class AwsInstanceInitializer extends AbstractInstanceInitializer<AwsProvi
 
         return Number.parseInt(selectedDiskSize)
 
-    }
-
-    private async publicIpType(publicIpType?: string): Promise<string> {
-        if (publicIpType) {
-            return publicIpType;
-        }
-
-        const publicIpTypeChoices = ['static', 'dynamic'].map(type => ({
-            name: type,
-            value: type,
-        }));
-
-        return await select({
-            message: 'Use static Elastic IP or dynamic IP? :',
-            choices: publicIpTypeChoices,
-            default: 'static',
-        });
     }
 
     private async region(region?: string): Promise<string> {

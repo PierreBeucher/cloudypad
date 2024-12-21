@@ -1,0 +1,9 @@
+# Instance name set on Wolf and shown by Moonlight client
+wolf_instance_name: wolf
+
+# Image versions to use for each apps
+# Lock version with hash for better reproducibility
+wolf_app_steam_image: ghcr.io/games-on-whales/steam:edge@sha256:9130e7b4cfe1e82979148e7ff89ef95886d5f7a2bf60a7ba4d0cdbf720347bf0
+wolf_app_lutris_image: ghcr.io/games-on-whales/lutris:edge@sha256:47efba06507c3d8b02e324ce3582ac355abb5a12985c30eec5f93828fa628b05
+wolf_app_pegasus_image: ghcr.io/games-on-whales/pegasus:edge@sha256:f8ab22c55bc2234475662766f53d75074b9b4e31abeb7840a21c847e6ec77559
+wolf_app_retroarch_image: ghcr.io/games-on-whales/retroarch:edge@sha256:c45d4473da0fd2294be61b8fc3bb30f5f713ef97a0aa41d0a6e7f0a94ed51330

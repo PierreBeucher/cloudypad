@@ -3,11 +3,11 @@ import { confirm } from '@inquirer/prompts';
 import { AwsPulumiClient, PulumiStackConfigAws } from '../../tools/pulumi/aws';
 import { AbstractInstanceProvisioner, InstanceProvisionerArgs, InstanceProvisionOptions } from '../../core/provisioner';
 import { AwsClient } from '../../tools/aws';
-import { AwsProvisionConfigV1, AwsProvisionOutputV1 } from './state';
+import { AwsProvisionInputV1, AwsProvisionOutputV1 } from './state';
 
-export type AwsProvisionerArgs = InstanceProvisionerArgs<AwsProvisionConfigV1, AwsProvisionOutputV1>
+export type AwsProvisionerArgs = InstanceProvisionerArgs<AwsProvisionInputV1, AwsProvisionOutputV1>
 
-export class AwsProvisioner extends AbstractInstanceProvisioner<AwsProvisionConfigV1, AwsProvisionOutputV1> {
+export class AwsProvisioner extends AbstractInstanceProvisioner<AwsProvisionInputV1, AwsProvisionOutputV1> {
 
     constructor(args: AwsProvisionerArgs){
         super(args)
@@ -27,12 +27,12 @@ export class AwsProvisioner extends AbstractInstanceProvisioner<AwsProvisionConf
                 message: `
 You are about to provision AWS machine with the following details:
     Instance name: ${this.args.instanceName}
-    Spot instance: ${this.args.config.useSpot}
-    SSH key: ${this.args.config.ssh.privateKeyPath}
-    AWS Region: ${this.args.config.region}
-    Instance Type: ${this.args.config.instanceType}
-    Public IP Type: ${this.args.config.publicIpType}
-    Disk size: ${this.args.config.diskSize}
+    Spot instance: ${this.args.input.useSpot}
+    SSH key: ${this.args.input.ssh.privateKeyPath}
+    AWS Region: ${this.args.input.region}
+    Instance Type: ${this.args.input.instanceType}
+    Public IP Type: ${this.args.input.publicIpType}
+    Disk size: ${this.args.input.diskSize}
     
 Do you want to proceed?`,
                 default: true,
@@ -45,12 +45,12 @@ Do you want to proceed?`,
 
         const pulumiClient = new AwsPulumiClient(this.args.instanceName)
         const pulumiConfig: PulumiStackConfigAws = {
-            instanceType: this.args.config.instanceType,
-            publicIpType: this.args.config.publicIpType,
-            region: this.args.config.region,
-            rootVolumeSizeGB: this.args.config.diskSize,
-            publicSshKeyContent: await parseSshPrivateKeyFileToPublic(this.args.config.ssh.privateKeyPath),
-            useSpot: this.args.config.useSpot,
+            instanceType: this.args.input.instanceType,
+            publicIpType: this.args.input.publicIpType,
+            region: this.args.input.region,
+            rootVolumeSizeGB: this.args.input.diskSize,
+            publicSshKeyContent: await parseSshPrivateKeyFileToPublic(this.args.input.ssh.privateKeyPath),
+            useSpot: this.args.input.useSpot,
         }
 
         await pulumiClient.setConfig(pulumiConfig)
@@ -84,7 +84,7 @@ Do you want to proceed?`,
     }
 
     async doVerifyConfig() {
-        const client = new AwsClient(this.args.instanceName, this.args.config.region)
+        const client = new AwsClient(this.args.instanceName, this.args.input.region)
         await client.checkAuth()
     }
 }

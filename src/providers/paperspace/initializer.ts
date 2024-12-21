@@ -1,28 +1,28 @@
 import { select, input, password } from '@inquirer/prompts';
 import { fetchApiKeyFromEnvironment } from './client/client';
 import { AbstractInstanceInitializer, InstanceInitArgs } from '../../core/initializer';
-import { CommonProvisionConfigV1 } from '../../core/state/state';
-import { PaperspaceProvisionConfigV1 } from './state';
-import { CLOUDYPAD_PROVIDER_PAPERSPACE } from '../../core/const';
+import { CommonProvisionInputV1 } from '../../core/state/state';
+import { PaperspaceProvisionInputV1 } from './state';
+import { CLOUDYPAD_PROVIDER_PAPERSPACE, PUBLIC_IP_TYPE, PUBLIC_IP_TYPE_DYNAMIC, PUBLIC_IP_TYPE_STATIC } from '../../core/const';
 
-export type PaperspaceInstanceInitArgs = InstanceInitArgs<PaperspaceProvisionConfigV1>
+export type PaperspaceInstanceInitArgs = InstanceInitArgs<PaperspaceProvisionInputV1>
 
-export class PaperspaceInstanceInitializer extends AbstractInstanceInitializer<PaperspaceProvisionConfigV1> {
+export class PaperspaceInstanceInitializer extends AbstractInstanceInitializer<PaperspaceProvisionInputV1> {
 
     constructor(args: PaperspaceInstanceInitArgs){
         super(CLOUDYPAD_PROVIDER_PAPERSPACE, args)
     }
 
-    async promptProviderConfig(commonConfig: CommonProvisionConfigV1): Promise<PaperspaceProvisionConfigV1> {
+    async promptProviderConfig(commonInput: CommonProvisionInputV1): Promise<PaperspaceProvisionInputV1> {
         
-        const apiKey = await this.apiKey(this.args.config.apiKey)
-        const machineType = await this.machineType(this.args.config.machineType);
-        const diskSize = await this.diskSize(this.args.config.diskSize);
-        const publicIpType = await this.publicIpType(this.args.config.publicIpType);
-        const region = await this.region(this.args.config.region);
+        const apiKey = await this.apiKey(this.args.input.apiKey)
+        const machineType = await this.machineType(this.args.input.machineType);
+        const diskSize = await this.diskSize(this.args.input.diskSize);
+        const publicIpType = await this.publicIpType(this.args.input.publicIpType);
+        const region = await this.region(this.args.input.region);
         
-        const pspaceConf: PaperspaceProvisionConfigV1 = {
-            ...commonConfig,
+        const pspaceConf: PaperspaceProvisionInputV1 = {
+            ...commonInput,
             apiKey: apiKey,
             diskSize: diskSize,
             machineType: machineType,
@@ -70,15 +70,15 @@ export class PaperspaceInstanceInitializer extends AbstractInstanceInitializer<P
         return Number.parseInt(selectedDiskSize);
     }
 
-    protected async publicIpType(publicIpType?: string): Promise<'static' | 'dynamic'> {
+    protected async publicIpType(publicIpType?: string): Promise<PUBLIC_IP_TYPE> {
         if (publicIpType) {
-            if (publicIpType !== 'static' && publicIpType !== 'dynamic') {
-                throw new Error(`Unknown IP type ${publicIpType}, must be 'static' or 'dynamic'`)
+            if (publicIpType !== PUBLIC_IP_TYPE_STATIC && publicIpType !== PUBLIC_IP_TYPE_DYNAMIC) {
+                throw new Error(`Unknown IP type ${publicIpType}, must be '${PUBLIC_IP_TYPE_STATIC}' or '${PUBLIC_IP_TYPE_DYNAMIC}'`)
             }
             return publicIpType;
         }
         
-        return 'static';
+        return PUBLIC_IP_TYPE_STATIC;
     }
 
     protected async region(region?: string): Promise<string> {

@@ -11,6 +11,7 @@ services:
       # Used by other containers created by wolf. Do not change
       - /etc/wolf/:/etc/wolf:rw
       - /etc/wolf/cfg:/etc/wolf/cfg:rw
+      - "{{ ansible_user_dir }}/wolf/config.toml:/etc/wolf/cfg/config.toml"
       - /tmp/sockets:/tmp/sockets:rw
       - /var/run/docker.sock:/var/run/docker.sock:rw
       - /dev/:/dev/:rw

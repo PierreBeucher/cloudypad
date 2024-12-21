@@ -2,21 +2,24 @@
 [![Discord](https://img.shields.io/discord/856434175455133727?style=for-the-badge&logo=discord&logoColor=ffffff&label=Chat%20with%20us&labelColor=6A7EC2&color=7389D8)](https://discord.gg/dCxDVfVnSD)
 [![GitHub License](https://img.shields.io/github/license/PierreBeucher/cloudypad?style=for-the-badge&color=00d4c4)](./LICENSE.txt)
 
-
 Cloudy Pad lets you deploy a Cloud gaming server anywhere in the world and play your own games - without requiring a powerful gaming machine or a costly subscription:
 
-- Run any application (**Steam**, Pegasus, Firefox...) thanks to [Wolf streaming server](https://games-on-whales.github.io/wolf/stable/)
+- Stream with **[Moonlight](https://moonlight-stream.org/)** client
+- Run your games through **[Steam](https://store.steampowered.com/)**, **[Pegasus](https://pegasus-frontend.org/)** or **[Lutris](https://lutris.net/)**
 - Deploy on **AWS**, **Google Cloud**, **Azure** or **Paperspace**
-- Use **Spot instances** for up to **90% cheaper** instances with some Clouders
+- Use **Spot instances** for up to **90% cheaper** instances
 - Play **30 hours per month** for **~15$ / month or less**
 - **Pay by the hour, no subscription** required
-- Compatible with **[Moonlight](https://moonlight-stream.org/)** streaming client
-
-![](docs/src/assets/cloudypad-overview.png)
-
-**[📜 See full documentation](https://cloudypad.gg)**
 
 **Not familiar with Cloud Gaming ?** See [What's Cloud Gaming and how is Cloudy Pad useful ?](./docs/src/what-is-cloud-gaming.md)
+
+[![](./docs/src/assets/demo.gif)](https://cloudypad.gg)
+
+**[📜 Full documentation](https://cloudypad.gg)**
+
+[**🫰 Cost estimation per Cloud provider**](https://cloudypad.gg/cost/index.html)
+
+[![Discord](https://img.shields.io/discord/856434175455133727?style=for-the-badge&logo=discord&logoColor=ffffff&label=Chat%20with%20us&labelColor=6A7EC2&color=7389D8)](https://discord.gg/dCxDVfVnSD)
 
 ---
 

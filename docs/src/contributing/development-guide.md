@@ -7,6 +7,8 @@
   - [Development](#development)
   - [Scripts](#scripts)
 - [Adding a new provider](#adding-a-new-provider)
+  - [Provider components](#provider-components)
+  - [Integrate provider in Core](#integrate-provider-in-core)
 
 ## Release
 
@@ -87,24 +89,31 @@ Will eventually add an easier way to pass custom Ansible options such as `--ansi
 
 This section outlines how to add a new provider. It's still scarce but provides a basic entrypoint to help implemented a new provider. 
 
-Implement all provider objects:
+Implementing a new provider requires to:
 
-- [ ] Initializer
-- [ ] Provisioner
-- [ ] Runner
-- [ ] State
+- Implement various components to manage instance lifecycle (Runner, Provisioner, Initializer...)
+- Integrating these components into main code
 
-Along with clients and others as required.
+### Provider components
 
-Add new provider to Manager:
+Each component must implement a stricly defined interface, allowing seamless integration in Cloudy Pad core:
 
-- [ ] `CLOUDYPAD_PROVIDER_XXX` in `src/core/const.ts`
-- [ ] `promptInstanceInitializer` prompt
-- [ ] `getCurrentProviderName`
-- [ ] `getInstanceRunner`
-- [ ] `getInstanceProvisioner`
+- [ ] Initializer - Prompt users for required options during creation. 
+- [ ] Provisioner - Use Pulumi to deploy the instance.
+  - Will require a Pulumi stack definition under `src/tools/pulumi`
+- [ ] Runner - Start/stop/restart instance. 
+- [ ] State - Describe configuration and current state (outputs) for the instance.
+- [ ] Factory - Create Provisioner and Runner instances for global Instance Manager 
 
-Finalize:
-- [ ] Add `create PROVIDER` command in `src/index.ts`
-- [ ] Add proper bind mounts and environment variables in `cloudypad.sh`
-- [ ] Add test case in `test/integ/created-and-destroy.sh`
+Along with clients, Pulumi stack, etc. as required.
+
+See existing providers for example in `src/providers`.
+
+### Integrate provider in Core
+
+Integrate Provider in core, should be relatively straightforward:
+
+- Add provider state parser function in `src/core/state/parser.ts`
+- Add provider name and classes in `src/core/const.ts`
+- Add provider Instance Manager builder function in `src/core/manager-builder.ts`
+- Add a `create` sub-command for provider in `src/index.ts` with options matching provider state interface. 

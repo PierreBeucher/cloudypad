@@ -1,34 +1,34 @@
 import { input, select } from '@inquirer/prompts'
 import {  StaticInitializerPrompts, InstanceInitArgs, AbstractInstanceInitializer } from '../../core/initializer'
-import { CommonProvisionConfigV1 } from '../../core/state/state'
+import { CommonProvisionInputV1 } from '../../core/state/state'
 import { GcpClient } from '../../tools/gcp'
-import { GcpProvisionConfigV1 } from './state'
+import { GcpProvisionInputV1 } from './state'
 import { CLOUDYPAD_PROVIDER_GCP } from '../../core/const'
 
-export type GcpInstanceInitArgs = InstanceInitArgs<GcpProvisionConfigV1>
+export type GcpInstanceInitArgs = InstanceInitArgs<GcpProvisionInputV1>
 
-export class GcpInstanceInitializer extends AbstractInstanceInitializer<GcpProvisionConfigV1> {
+export class GcpInstanceInitializer extends AbstractInstanceInitializer<GcpProvisionInputV1> {
 
     constructor(args: GcpInstanceInitArgs){
         super(CLOUDYPAD_PROVIDER_GCP, args)
     }
 
-    async promptProviderConfig(commonConfig: CommonProvisionConfigV1): Promise<GcpProvisionConfigV1> {
+    async promptProviderConfig(commonInput: CommonProvisionInputV1): Promise<GcpProvisionInputV1> {
 
-        const projectId = await this.project(this.args.config.projectId)
+        const projectId = await this.project(this.args.input.projectId)
         
         const client = new GcpClient(GcpInstanceInitializer.name, projectId)
 
-        const region = await this.region(client, this.args.config.region)
-        const zone = await this.zone(client, region, this.args.config.zone)
-        const machineType = await this.machineType(client, zone, this.args.config.machineType)
-        const useSpot = await StaticInitializerPrompts.useSpotInstance(this.args.config.useSpot)
-        const diskSize = await this.diskSize(this.args.config.diskSize)
-        const publicIpType = await this.publicIpType(this.args.config.publicIpType)
-        const acceleratorType = await this.acceleratorType(client, zone, this.args.config.acceleratorType)
+        const region = await this.region(client, this.args.input.region)
+        const zone = await this.zone(client, region, this.args.input.zone)
+        const machineType = await this.machineType(client, zone, this.args.input.machineType)
+        const useSpot = await StaticInitializerPrompts.useSpotInstance(this.args.input.useSpot)
+        const diskSize = await this.diskSize(this.args.input.diskSize)
+        const publicIpType = await StaticInitializerPrompts.publicIpType(this.args.input.publicIpType)
+        const acceleratorType = await this.acceleratorType(client, zone, this.args.input.acceleratorType)
         
-        const gcpConf: GcpProvisionConfigV1 = {
-            ...commonConfig,
+        const gcpConf: GcpProvisionInputV1 = {
+            ...commonInput,
             projectId: projectId,
             diskSize: diskSize,
             machineType: machineType,
@@ -99,23 +99,6 @@ export class GcpInstanceInitializer extends AbstractInstanceInitializer<GcpProvi
 
         return Number.parseInt(selectedDiskSize)
 
-    }
-
-    private async publicIpType(publicIpType?: string): Promise<string> {
-        if (publicIpType) {
-            return publicIpType
-        }
-
-        const publicIpTypeChoices = ['static', 'dynamic'].map(type => ({
-            name: type,
-            value: type,
-        }))
-
-        return await select({
-            message: 'Use static IP or dynamic IP? :',
-            choices: publicIpTypeChoices,
-            default: 'static',
-        })
     }
 
     private async region(client: GcpClient, region?: string): Promise<string> {

@@ -2,6 +2,7 @@ import * as aws from "@pulumi/aws";
 import * as pulumi from "@pulumi/pulumi";
 import { OutputMap } from "@pulumi/pulumi/automation";
 import { InstancePulumiClient } from "./client";
+import { PUBLIC_IP_TYPE, PUBLIC_IP_TYPE_DYNAMIC, PUBLIC_IP_TYPE_STATIC } from "../../core/const";
 
 interface PortDefinition {
     from: pulumi.Input<number>,
@@ -192,7 +193,7 @@ class CloudyPadEC2Instance extends pulumi.ComponentResource {
         })
         
 
-        if (args.publicIpType === "static") {
+        if (args.publicIpType === PUBLIC_IP_TYPE_STATIC) {
             this.eip = new aws.ec2.Eip(`${name}-eip`, {
                 tags: globalTags
             }, commonPulumiOpts);
@@ -201,8 +202,8 @@ class CloudyPadEC2Instance extends pulumi.ComponentResource {
                 instanceId: this.ec2Instance.id,
                 allocationId: this.eip.id,
             }, commonPulumiOpts);
-        } else if (args.publicIpType !== "dynamic") {
-            throw "publicIpType must be either 'static' or 'dynamic'"
+        } else if (args.publicIpType !== PUBLIC_IP_TYPE_DYNAMIC) {
+            throw `publicIpType must be either '${PUBLIC_IP_TYPE_STATIC}' or '${PUBLIC_IP_TYPE_DYNAMIC}'`
         }
 
         // set client-facing values
@@ -281,7 +282,7 @@ export interface PulumiStackConfigAws {
     instanceType: string
     rootVolumeSizeGB: number
     publicSshKeyContent: string
-    publicIpType: string
+    publicIpType: PUBLIC_IP_TYPE
     useSpot: boolean
 }
 

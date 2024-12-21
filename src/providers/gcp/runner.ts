@@ -1,17 +1,17 @@
 import { AbstractInstanceRunner, InstanceRunnerArgs } from '../../core/runner';
 import { GcpClient } from '../../tools/gcp';
-import { GcpProvisionConfigV1, GcpProvisionOutputV1 } from './state';
+import { GcpProvisionInputV1, GcpProvisionOutputV1 } from './state';
 
-export type GcpInstanceRunnerArgs = InstanceRunnerArgs<GcpProvisionConfigV1, GcpProvisionOutputV1>
+export type GcpInstanceRunnerArgs = InstanceRunnerArgs<GcpProvisionInputV1, GcpProvisionOutputV1>
 
-export class GcpInstanceRunner extends AbstractInstanceRunner<GcpProvisionConfigV1, GcpProvisionOutputV1>  {
+export class GcpInstanceRunner extends AbstractInstanceRunner<GcpProvisionInputV1, GcpProvisionOutputV1>  {
 
     private client: GcpClient
 
     constructor(args: GcpInstanceRunnerArgs) {
         super(args)
 
-        this.client = new GcpClient(args.instanceName, args.config.projectId)
+        this.client = new GcpClient(args.instanceName, args.input.projectId)
     }
 
     private getinstanceName(): string{
@@ -19,7 +19,7 @@ export class GcpInstanceRunner extends AbstractInstanceRunner<GcpProvisionConfig
     }
 
     private getZone(): string{
-        return this.args.instanceName, this.args.config.zone
+        return this.args.instanceName, this.args.input.zone
     }
 
     async doStart() {
