@@ -5,22 +5,30 @@ Cloudy Pad lets you deploy a Cloud gaming server anywhere in the world and play 
 
 ## Features ✨
 
-- Run any application (**Steam**, Pegasus, Firefox...) thanks to [Wolf streaming server](https://games-on-whales.github.io/wolf/stable/)
+- Stream with **[Moonlight](https://moonlight-stream.org/)** client
+- Run your games through **[Steam](https://store.steampowered.com/)**, **[Pegasus](https://pegasus-frontend.org/)** or **[Lutris](https://lutris.net/)**
 - Deploy on **AWS**, **Google Cloud**, **Azure** or **Paperspace**
-- Use **Spot instances** for up to **90% cheaper** instances with some Clouders
+- Use **Spot instances** for up to **90% cheaper** instances
 - Play **30 hours per month** for **~15$ / month or less**
 - **Pay by the hour, no subscription** required
-- Compatible with **[Moonlight](https://moonlight-stream.org/)** streaming client
-
-![](assets/cloudypad-overview.png)
 
 **Not familiar with Cloud Gaming ?** See [What's Cloud Gaming and how is Cloudy Pad useful ?](./docs/what-is-cloudy-pad.md)
+
+<video controls>
+  <source src="assets/demo.webm" type="video/mp4">
+</video>
 
 ## Getting started
 
 🚀 [Follow Getting started guide](./getting-started.md) to deploy your Cloudy Pad instance
 
 💰 [Understand Cloud provider costs](./cost) - Cloudy Pad itself is free, but Cloud provider usage is not. Make sure you understand Cloud costs before deploying your instance 😉
+
+Need help ? A question ?
+
+[![Discord](https://img.shields.io/discord/856434175455133727?style=for-the-badge&logo=discord&logoColor=ffffff&label=Chat%20with%20us&labelColor=6A7EC2&color=7389D8)](https://discord.gg/dCxDVfVnSD)
+
+[🐛 File an issue on GitHub](https://github.com/PierreBeucher/cloudypad)
 
 ## Development status 🧪
 
@@ -39,3 +47,9 @@ Potential future Cloud providers - upvote them on their GitHub issues!
 - [Oblivus](https://oblivus.com/pricing/) - [👍 on GitHub issue](https://github.com/PierreBeucher/cloudypad/issues/4) if you want it implemented
 - [TensorDock](https://www.tensordock.com/) - [👍 on GitHub issue](https://github.com/PierreBeucher/cloudypad/issues/5) if you want it implemented
 - [Vulture](https://www.vultr.com/pricing/#cloud-gpu) - [👍 on GitHub issue](https://github.com/PierreBeucher/cloudypad/issues/3) if you want it implemented
+
+## How does it work?
+
+![](assets/cloudypad-overview.png)
+
+See [What's Cloud Gaming and how is Cloudy Pad useful ?](./what-is-cloud-gaming.md)
