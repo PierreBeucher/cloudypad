@@ -13,13 +13,11 @@ Cloudy Pad lets you deploy a Cloud gaming server anywhere in the world and play 
 
 **Not familiar with Cloud Gaming ?** See [What's Cloud Gaming and how is Cloudy Pad useful ?](./docs/src/what-is-cloud-gaming.md)
 
-<video controls>
-  <source src="assets/demo.webm" type="video/mp4">
-</video>
+[![](./docs/src/assets/demo.gif)](https://cloudypad.gg)
 
 **[📜 Full documentation](https://cloudypad.gg)**
 
-[**🫰 Cost estimation per Clouder provider**](https://cloudypad.gg/cost/index.html)
+[**🫰 Cost estimation per Cloud provider**](https://cloudypad.gg/cost/index.html)
 
 [![Discord](https://img.shields.io/discord/856434175455133727?style=for-the-badge&logo=discord&logoColor=ffffff&label=Chat%20with%20us&labelColor=6A7EC2&color=7389D8)](https://discord.gg/dCxDVfVnSD)
 
