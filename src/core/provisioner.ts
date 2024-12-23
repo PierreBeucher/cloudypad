@@ -3,7 +3,6 @@ import { CommonProvisionInputV1, CommonProvisionOutputV1 } from "./state/state"
 
 export interface InstanceProvisionOptions  {
     autoApprove?: boolean
-    skipAuthCheck?: boolean
 }
 
 /**
@@ -54,10 +53,6 @@ export abstract class AbstractInstanceProvisioner<C extends CommonProvisionInput
 
     async provision(opts?: InstanceProvisionOptions): Promise<O> {
         this.logger.info(`Provisioning instance ${this.args.instanceName}`);
-
-        if(!opts?.skipAuthCheck){
-            await this.verifyConfig()
-        }
 
         return await this.doProvision(opts);
     }

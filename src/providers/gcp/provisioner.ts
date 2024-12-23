@@ -17,9 +17,7 @@ export class GcpProvisioner extends AbstractInstanceProvisioner<GcpProvisionInpu
 
         this.logger.info(`Provisioning Google Cloud instance ${this.args.instanceName}`)
 
-        if(!opts?.skipAuthCheck){
-            await this.verifyConfig()
-        }
+        await this.verifyConfig()
 
         this.logger.debug(`Provisioning Google Cloud instance with ${JSON.stringify(this.args.input)}`)
 

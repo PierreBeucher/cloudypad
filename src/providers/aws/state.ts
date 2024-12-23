@@ -1,5 +1,5 @@
 import { z } from "zod"
-import { CommonProvisionOutputV1Schema, CommonProvisionInputV1Schema, InstanceStateV1Schema } from "../../core/state/state"
+import { CommonProvisionOutputV1Schema, CommonProvisionInputV1Schema, InstanceStateV1Schema, AbstractInstanceInputs } from "../../core/state/state"
 import { CLOUDYPAD_PROVIDER_AWS, PUBLIC_IP_TYPE_DYNAMIC, PUBLIC_IP_TYPE_STATIC } from "../../core/const"
 
 const AwsProvisionOutputV1Schema = CommonProvisionOutputV1Schema.extend({
@@ -26,6 +26,8 @@ type AwsInstanceStateV1 = z.infer<typeof AwsInstanceStateV1Schema>
 type AwsProvisionOutputV1 = z.infer<typeof AwsProvisionOutputV1Schema>
 type AwsProvisionInputV1 = z.infer<typeof AwsProvisionInputV1Schema>
 
+type AwsInstanceInput = AbstractInstanceInputs<AwsProvisionInputV1>
+
 export {
     AwsProvisionOutputV1Schema,
     AwsProvisionInputV1Schema,
@@ -33,6 +35,7 @@ export {
     AwsInstanceStateV1,
     AwsProvisionOutputV1,
     AwsProvisionInputV1,
+    AwsInstanceInput,
 }
 
 // V0
