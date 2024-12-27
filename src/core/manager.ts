@@ -5,6 +5,7 @@ import { getLogger } from '../log/utils';
 import { InstanceRunner } from './runner';
 import { StateManager } from './state/manager';
 import { AnsibleConfigurator } from '../configurators/ansible';
+import { confirm } from '@inquirer/prompts';
 
 /**
  * Used by InstanceManager to build sub-managers
@@ -91,6 +92,44 @@ export class InstanceManager {
         this.state = args.state
         this.factory = args.factory
         this.logger = getLogger(args.state.name)
+    }
+
+    /**
+     * Pass through various initialization phases, updating instance state as it goes:
+     * - Initial state creation
+     * - Provisioning
+     * - Configuration
+     * - Pairing (optional with prompt)
+     */
+    async initialize(opts?: InstanceProvisionOptions): Promise<void> {
+        const instanceName = this.state.name
+        
+        this.logger.info(`Initializing ${instanceName}: provisioning...`)
+
+        await this.provision(opts)
+
+        this.logger.info(`Initializing ${instanceName}: provision done.}`)
+
+        this.logger.info(`Initializing ${instanceName}: configuring...}`)
+        
+        await this.configure()
+
+        this.logger.info(`Initializing ${instanceName}: configuration done.}`)
+
+        const doPair = opts?.autoApprove ? true : await confirm({
+            message: `Your instance is almost ready ! Do you want to pair Moonlight now?`,
+            default: true,
+        })
+
+        if (doPair) {
+            this.logger.info(`Initializing ${instanceName}: pairing...}`)
+
+            await this.pair()
+    
+            this.logger.info(`Initializing ${instanceName}: pairing done.}`)
+        } else {
+            this.logger.info(`Initializing ${instanceName}: pairing skipped.}`)
+        }
     }
 
     async configure(): Promise<void> {

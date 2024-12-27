@@ -16,3 +16,6 @@ provision:
     ssh:
       user: ubuntu
       privateKeyPath: /home/pbeucher/.ssh/id_ed25519
+configuration:
+  configurator: ansible
+  input: {}

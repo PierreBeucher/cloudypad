@@ -1,7 +1,7 @@
 import { PaperspaceInstanceStateV1 } from '../../providers/paperspace/state'
 import { AwsInstanceStateV1 } from '../../providers/aws/state'
 import { getLogger } from '../../log/utils'
-import { CLOUDYPAD_PROVIDER, CLOUDYPAD_PROVIDER_AWS, CLOUDYPAD_PROVIDER_AZURE, CLOUDYPAD_PROVIDER_GCP, CLOUDYPAD_PROVIDER_PAPERSPACE, PUBLIC_IP_TYPE_DYNAMIC, PUBLIC_IP_TYPE_STATIC } from '../const'
+import { CLOUDYPAD_CONFIGURATOR_ANSIBLE, CLOUDYPAD_PROVIDER, CLOUDYPAD_PROVIDER_AWS, CLOUDYPAD_PROVIDER_AZURE, CLOUDYPAD_PROVIDER_GCP, CLOUDYPAD_PROVIDER_PAPERSPACE, PUBLIC_IP_TYPE_DYNAMIC, PUBLIC_IP_TYPE_STATIC } from '../const'
 import { AzureInstanceStateV1 } from '../../providers/azure/state'
 import { GcpInstanceStateV1 } from '../../providers/gcp/state'
 import { InstanceStateV0 } from './state'
@@ -57,7 +57,10 @@ export class StateMigrator {
                             },
                         }
                     },
-
+                    configuration: {
+                        configurator: CLOUDYPAD_CONFIGURATOR_ANSIBLE,
+                        input: {}
+                    }
                 }
 
                 if(stateV0.host){
@@ -98,7 +101,11 @@ export class StateMigrator {
                                 user: stateV0.ssh.user,
                                 privateKeyPath: stateV0.ssh.privateKeyPath
                             },
-                        }
+                        },
+                    },
+                    configuration: {
+                        configurator: CLOUDYPAD_CONFIGURATOR_ANSIBLE,
+                        input: {}
                     },
 
                 }
@@ -142,7 +149,11 @@ export class StateMigrator {
                                 user: stateV0.ssh.user,
                                 privateKeyPath: stateV0.ssh.privateKeyPath
                             },
-                        }
+                        },
+                    },
+                    configuration: {
+                        configurator: CLOUDYPAD_CONFIGURATOR_ANSIBLE,
+                        input: {}
                     },
                 }
 
@@ -183,8 +194,12 @@ export class StateMigrator {
                                 user: stateV0.ssh.user,
                                 privateKeyPath: stateV0.ssh.privateKeyPath
                             },
-                        }
+                        },
                     },
+                    configuration: {
+                        configurator: CLOUDYPAD_CONFIGURATOR_ANSIBLE,
+                        input: {}
+                    }
                 }
 
                 if(stateV0.host){

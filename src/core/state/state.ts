@@ -3,7 +3,7 @@ import { AwsProviderStateV0 } from '../../providers/aws/state'
 import { AzureProviderStateV0 } from '../../providers/azure/state'
 import { GcpProviderStateV0 } from '../../providers/gcp/state'
 import { z } from "zod"
-import { CLOUDYPAD_PROVIDER_LIST } from "../const"
+import { CLOUDYPAD_CONFIGURATOR_LIST, CLOUDYPAD_PROVIDER_LIST } from "../const"
 
 const CommonProvisionOutputV1Schema = z.object({
     host: z.string().describe("Instance hostname or IP address"),
@@ -16,6 +16,10 @@ const CommonProvisionInputV1Schema = z.object({
     }).describe("SSH access configuration"),
 })
 
+const CommonConfigurationOutputV1Schema = z.object({})
+
+const CommonConfigurationInputV1Schema = z.object({})
+
 const InstanceStateV1Schema = z.object({
     version: z.literal("1").describe("State schema version, always 1"),
     name: z.string().describe("Unique instance name"),
@@ -23,6 +27,11 @@ const InstanceStateV1Schema = z.object({
         provider: z.enum(CLOUDYPAD_PROVIDER_LIST).describe("Supported providers"),
         output: CommonProvisionOutputV1Schema.optional(),
         input: CommonProvisionInputV1Schema,
+    }),
+    configuration: z.object({
+        configurator: z.enum(CLOUDYPAD_CONFIGURATOR_LIST).describe("Supported configurators"),
+        output: CommonConfigurationOutputV1Schema.optional(),
+        input: CommonConfigurationInputV1Schema,
     })
 })
 
@@ -37,6 +46,27 @@ export type InstanceStateV1 = z.infer<typeof InstanceStateV1Schema>
 
 export type CommonProvisionInputV1 = z.infer<typeof CommonProvisionInputV1Schema>
 export type CommonProvisionOutputV1 = z.infer<typeof CommonProvisionOutputV1Schema>
+
+export type CommonConfigurationInputV1 = z.infer<typeof CommonConfigurationInputV1Schema>
+export type CommonConfigurationOutputV1 = z.infer<typeof CommonConfigurationOutputV1Schema>
+
+/**
+ * Wrapper around all possible Inputs for an instance
+ */
+export interface CommonInstanceInput {
+    instanceName: string,
+    provision: CommonProvisionInputV1,
+    configuration: CommonConfigurationInputV1
+}
+
+export interface AbstractInstanceInputs<
+    P extends CommonProvisionInputV1, 
+    C extends CommonConfigurationInputV1 = CommonConfigurationInputV1
+> extends CommonInstanceInput {
+    instanceName: string,
+    provision: P,
+    configuration: C
+}
 
 /**
  * Legacy state of a Cloudy Pad instance. It contains every data

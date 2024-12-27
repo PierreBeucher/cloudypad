@@ -1,40 +1,71 @@
-import { input, select } from '@inquirer/prompts'
-import { StaticInitializerPrompts, InstanceInitArgs, AbstractInstanceInitializer } from '../../core/initializer'
-import { AzureClient } from '../../tools/azure'
-import { AzureProvisionInputV1 } from './state'
-import { CommonProvisionInputV1 } from '../../core/state/state'
-import { CLOUDYPAD_PROVIDER_AZURE } from '../../core/const'
+import { AzureInstanceInput } from "./state"
+import { CommonInstanceInput } from "../../core/state/state"
+import { input, select } from '@inquirer/prompts';
+import { AbstractInputPrompter, CreateCliArgs } from "../../core/input/prompter";
+import { AzureClient } from "../../tools/azure";
+import lodash from 'lodash'
+import { CLOUDYPAD_PROVIDER_AZURE, PUBLIC_IP_TYPE } from "../../core/const";
+import { PartialDeep } from "type-fest";
+import { CLI_OPTION_DISK_SIZE, CLI_OPTION_PUBLIC_IP_TYPE, CLI_OPTION_SPOT, CliCommandGenerator } from "../../core/input/cli";
+import { InteractiveInstanceInitializer } from "../../core/initializer";
 
+export interface AzureCreateCliArgs extends CreateCliArgs {
+    subscriptionId?: string
+    resourceGroupName?: string
+    location?: string
+    vmSize?: string
+    diskSize?: number
+    publicIpType?: PUBLIC_IP_TYPE
+    spot?: boolean
+}
 
-export type AzureInstanceInitArgs = InstanceInitArgs<AzureProvisionInputV1>
-
-export class AzureInstanceInitializer extends AbstractInstanceInitializer<AzureProvisionInputV1> {
-
-    constructor(args: AzureInstanceInitArgs){
-        super(CLOUDYPAD_PROVIDER_AZURE, args)
+export class AzureInputPrompter extends AbstractInputPrompter<AzureCreateCliArgs, AzureInstanceInput> {
+    
+    cliArgsIntoInput(cliArgs: AzureCreateCliArgs): PartialDeep<AzureInstanceInput> {
+        return {
+            instanceName: cliArgs.name,
+            provision: {
+                ssh: {
+                    privateKeyPath: cliArgs.privateSshKey
+                },
+                vmSize: cliArgs.vmSize,
+                diskSize: cliArgs.diskSize,
+                publicIpType: cliArgs.publicIpType,
+                location: cliArgs.location,
+                subscriptionId: cliArgs.subscriptionId,
+                useSpot: cliArgs.spot,
+            },
+            configuration: {}
+        }
     }
 
-    async promptProviderConfig(commonInput: CommonProvisionInputV1): Promise<AzureProvisionInputV1> {
-        this.logger.debug(`Starting Azure prompt with default opts: ${JSON.stringify(commonInput)}`)
+    protected async promptSpecificInput(defaultInput: CommonInstanceInput & PartialDeep<AzureInstanceInput>): Promise<AzureInstanceInput> {
 
-        const subscriptionId = await this.subscriptionId(this.args.input.subscriptionId)
-        const useSpot = await StaticInitializerPrompts.useSpotInstance(this.args.input.useSpot)
-        const location = await this.location(subscriptionId, this.args.input.location)
-        const vmSize = await this.instanceType(subscriptionId, location, this.args.input.vmSize)
-        const diskSize = await this.diskSize(this.args.input.diskSize)
-        const publicIpType = await StaticInitializerPrompts.publicIpType(this.args.input.publicIpType)
+        this.logger.debug(`Starting Azure prompt with default opts: ${JSON.stringify(defaultInput)}`)
+        
+        const subscriptionId = await this.subscriptionId(defaultInput.provision?.subscriptionId)
+        const useSpot = await this.useSpotInstance(defaultInput.provision?.useSpot)
+        const location = await this.location(subscriptionId, defaultInput.provision?.location)
+        const vmSize = await this.instanceType(subscriptionId, location, defaultInput.provision?.vmSize)
+        const diskSize = await this.diskSize(defaultInput.provision?.diskSize)
+        const publicIpType = await this.publicIpType(defaultInput.provision?.publicIpType)
 
-        const azConf: AzureProvisionInputV1 = {
-            ...commonInput,
-            diskSize: diskSize,
-            vmSize: vmSize,
-            publicIpType: publicIpType,
-            location: location,
-            subscriptionId: subscriptionId,
-            useSpot: useSpot,
-        }
-
-        return azConf
+        const azInput: AzureInstanceInput = lodash.merge(
+            {},
+            defaultInput,
+            {
+                provision: {
+                    diskSize: diskSize,
+                    vmSize: vmSize,
+                    publicIpType: publicIpType,
+                    location: location,
+                    subscriptionId: subscriptionId,
+                    useSpot: useSpot,
+                },
+            })
+        
+        return azInput
+        
     }
 
     private async instanceType(subscriptionId: string, location: string, instanceType?: string): Promise<string> {
@@ -42,7 +73,7 @@ export class AzureInstanceInitializer extends AbstractInstanceInitializer<AzureP
             return instanceType
         }
 
-        const client = new AzureClient(AzureInstanceInitializer.name, subscriptionId)
+        const client = new AzureClient(AzureInputPrompter.name, subscriptionId)
         const allMachineSize = await client.listMachineSizes(location)
 
         // Only include NVIDIA GPU suitable for gaming
@@ -121,7 +152,7 @@ export class AzureInstanceInitializer extends AbstractInstanceInitializer<AzureP
             return location
         }
 
-        const client = new AzureClient(AzureInstanceInitializer.name, subscriptionId)
+        const client = new AzureClient(AzureInputPrompter.name, subscriptionId)
         const locs = await client.listLocations()
 
         const choices = locs.filter(l => l.name && l.displayName)
@@ -163,5 +194,30 @@ export class AzureInstanceInitializer extends AbstractInstanceInitializer<AzureP
                 choices: choices
             })
         }
+    }
+}
+
+export class AzureCliCommandGenerator extends CliCommandGenerator {
+    
+    buildCreateCommand() {
+        return this.getBaseCreateCommand(CLOUDYPAD_PROVIDER_AZURE)
+            .addOption(CLI_OPTION_SPOT)
+            .addOption(CLI_OPTION_DISK_SIZE)
+            .addOption(CLI_OPTION_PUBLIC_IP_TYPE)
+            .option('--vm-size <vmsize>', 'Virtual machine size')
+            .option('--location <location>', 'Location in which to deploy instance')
+            .option('--subscription-id <subscriptionid>', 'Subscription ID in which to deploy resources')
+            .action(async (cliArgs) => {
+                try {
+                    await new InteractiveInstanceInitializer({ 
+                        inputPrompter: new AzureInputPrompter(),
+                        provider: CLOUDYPAD_PROVIDER_AZURE,
+                    }).initializeInstance(cliArgs)
+                    
+                } catch (error) {
+                    console.error('Error creating Azure instance:', error)
+                    process.exit(1)
+                }
+            })
     }
 }

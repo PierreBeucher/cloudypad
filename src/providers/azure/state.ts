@@ -1,5 +1,5 @@
 import { z } from "zod"
-import { CommonProvisionOutputV1Schema, CommonProvisionInputV1Schema, InstanceStateV1Schema } from "../../core/state/state"
+import { CommonProvisionOutputV1Schema, CommonProvisionInputV1Schema, InstanceStateV1Schema, AbstractInstanceInputs } from "../../core/state/state"
 import { CLOUDYPAD_PROVIDER_AZURE, PUBLIC_IP_TYPE_DYNAMIC, PUBLIC_IP_TYPE_STATIC } from "../../core/const"
 
 const AzureProvisionOutputV1Schema = CommonProvisionOutputV1Schema.extend({
@@ -28,6 +28,8 @@ type AzureInstanceStateV1 = z.infer<typeof AzureInstanceStateV1Schema>
 type AzureProvisionOutputV1 = z.infer<typeof AzureProvisionOutputV1Schema>
 type AzureProvisionInputV1 = z.infer<typeof AzureProvisionInputV1Schema>
 
+type AzureInstanceInput = AbstractInstanceInputs<AzureProvisionInputV1>
+
 export {
     AzureProvisionOutputV1Schema,
     AzureProvisionInputV1Schema,
@@ -35,6 +37,7 @@ export {
     AzureInstanceStateV1,
     AzureProvisionOutputV1,
     AzureProvisionInputV1,
+    AzureInstanceInput,
 }
 
 // V0

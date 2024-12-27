@@ -1,8 +1,12 @@
-import { CommonProvisionInputV1 } from "../../../src/core/state/state";
+import { CommonInstanceInput } from "../../../src/core/state/state";
 
-export const DEFAULT_COMMON_INPUT: CommonProvisionInputV1 = {
-    ssh: {
-        privateKeyPath: "./test/resources/ssh-key",
-        user: "ubuntu"
-    }
+export const DEFAULT_COMMON_INPUT: CommonInstanceInput = {
+    instanceName: "dummy-instance",
+    provision: {
+        ssh: {
+            privateKeyPath: "./test/resources/ssh-key",
+            user: "ubuntu"
+        }
+    },
+    configuration: {}
 }
