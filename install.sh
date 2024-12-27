@@ -1,4 +1,4 @@
-#/usr/env/bin sh
+#/usr/env/bin bash
 
 set -e
 
@@ -20,13 +20,29 @@ SCRIPT_PATH="$INSTALL_DIR/cloudypad"
 
 # Check if cloudypad is already in PATH
 if [ -n "$(which cloudypad)" ]; then
-  CURRENT_PATH=$(which cloudypad)
+  CURRENT_CLOUDYPAD_PATH=$(which cloudypad)
 
   # Read from /dev/tty to ensure read will work even if script is piped to shell such as install.sh | sh
-  read -p "cloudypad is already installed at ${CURRENT_CLOUDYPAD}. Do you want to overwrite it? (y/N): " CONFIRM < /dev/tty
+  read -p "cloudypad is already installed at ${CURRENT_CLOUDYPAD_PATH}. Do you want to overwrite it? (y/N): " CONFIRM < /dev/tty
 
   if [[ "$CONFIRM" != "y" ]]; then
     echo "Installation aborted."
+    exit 1
+  fi
+fi
+
+if [ "$CLOUDYPAD_INSTALL_SKIP_DOCKER_CHECK" != "true" ]; then
+
+  # Check if Docker is installed and usable
+  if ! docker --version > /dev/null; then
+    echo "Docker is not installed or running 'docker --version' failed. Please make sure you have a working Docker installation. See https://docs.docker.com/engine/install/"
+    exit 1
+  fi
+
+  # Check if Docker daemon is accessible
+  if ! docker info > /dev/null; then
+    echo "Docker is installed but not usable. Have you added yourself to docker group? See https://docs.docker.com/engine/install/linux-postinstall/"
+    echo "You might need to run 'sudo usermod -aG docker \$USER' and restart your logout / log back before being able to use Docker"
     exit 1
   fi
 fi
