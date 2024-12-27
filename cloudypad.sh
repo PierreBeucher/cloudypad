@@ -11,7 +11,7 @@ if [ -n "$CLOUDYPAD_CLI_LAUNCHER_DEBUG" ]; then
   set -x
 fi
 
-CLOUDYPAD_VERSION=0.8.0
+CLOUDYPAD_VERSION=0.9.0
 CLOUDYPAD_IMAGE="${CLOUDYPAD_IMAGE:-"crafteo/cloudypad:$CLOUDYPAD_VERSION"}"
 CLOUDYPAD_TARGET_IMAGE="crafteo/cloudypad-local-runner:local"
 
