@@ -40,7 +40,7 @@ export abstract class AbstractInputPrompter<A extends CreateCliArgs, I extends C
         
         const instanceName = await this.instanceName(partialInput.instanceName)
         const sshKey = await this.privateSshKey(partialInput.provision?.ssh?.privateKeyPath)
-        const sshUser = "ubuntu" // Harcoded for now since we only support Ubuntu
+        const sshUser = "ubuntu" // Harcoded default for now since we only support Ubuntu
 
         return {
             instanceName: instanceName,

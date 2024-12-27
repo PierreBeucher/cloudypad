@@ -19,6 +19,10 @@ describe('Paperspace input prompter', () => {
             diskSize: 100,
             publicIpType: PUBLIC_IP_TYPE_STATIC,
             region: "East Coast (NY2)",
+            ssh: {
+                ...DEFAULT_COMMON_INPUT.provision.ssh,
+                user: "paperspace"
+            }
         },
         configuration: {
             ...DEFAULT_COMMON_INPUT.configuration
