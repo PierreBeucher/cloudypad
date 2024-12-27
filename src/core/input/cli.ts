@@ -5,6 +5,13 @@ import { PUBLIC_IP_TYPE, PUBLIC_IP_TYPE_DYNAMIC, PUBLIC_IP_TYPE_STATIC } from ".
 // Common CLI Option each providers can re-use
 ///
 
+export interface CreateCliArgs {
+    name?: string
+    privateSshKey?: string
+    yes?: boolean // auto approve
+    overwriteExisting?: boolean
+}
+
 export const CLI_OPTION_INSTANCE_NAME = new Option('--name <name>', 'Instance name')
 export const CLI_OPTION_PRIVATE_SSH_KEY = new Option('--private-ssh-key <path>', 'Path to private SSH key to use to connect to instance')
 export const CLI_OPTION_AUTO_APPROVE = new Option('--yes', 'Do not prompt for approval, automatically approve and continue')

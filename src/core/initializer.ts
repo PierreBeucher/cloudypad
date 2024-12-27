@@ -1,5 +1,7 @@
+import { getLogger } from "../log/utils"
 import { CLOUDYPAD_PROVIDER } from "./const"
-import { CreateCliArgs, InputPrompter } from "./input/prompter"
+import { CreateCliArgs } from "./input/cli"
+import { InputPrompter } from "./input/prompter"
 import { InstanceManagerBuilder } from "./manager-builder"
 import { StateInitializer } from "./state/initializer"
 
@@ -23,6 +25,7 @@ export class InteractiveInstanceInitializer {
 
     private readonly provider: CLOUDYPAD_PROVIDER
     private readonly inputPrompter: InputPrompter
+    private readonly logger = getLogger(InteractiveInstanceInitializer.name)
 
     constructor(args: InstancerInitializerArgs){
         this.provider = args.provider
@@ -36,6 +39,8 @@ export class InteractiveInstanceInitializer {
      * - Run instance initialization
      */
     async initializeInstance(cliArgs: CreateCliArgs, options?: InstancerInitializationOptions): Promise<void> {
+
+        this.logger.debug(`Initializing instance from CLI args ${JSON.stringify(cliArgs)} and options ${JSON.stringify(options)}`)
         
         const input = await this.inputPrompter.completeCliInput(cliArgs)
 
@@ -47,7 +52,7 @@ export class InteractiveInstanceInitializer {
     
         const manager = new InstanceManagerBuilder().buildManagerForState(state)
         await manager.initialize({ 
-            autoApprove: cliArgs.autoApprove
+            autoApprove: cliArgs.yes
         })
     
         if(!options?.skipPostInitInfo){

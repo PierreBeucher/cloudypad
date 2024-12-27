@@ -1,12 +1,12 @@
 import { AzureInstanceInput } from "./state"
 import { CommonInstanceInput } from "../../core/state/state"
 import { input, select } from '@inquirer/prompts';
-import { AbstractInputPrompter, CreateCliArgs } from "../../core/input/prompter";
+import { AbstractInputPrompter } from "../../core/input/prompter";
 import { AzureClient } from "../../tools/azure";
 import lodash from 'lodash'
 import { CLOUDYPAD_PROVIDER_AZURE, PUBLIC_IP_TYPE } from "../../core/const";
 import { PartialDeep } from "type-fest";
-import { CLI_OPTION_DISK_SIZE, CLI_OPTION_PUBLIC_IP_TYPE, CLI_OPTION_SPOT, CliCommandGenerator } from "../../core/input/cli";
+import { CLI_OPTION_DISK_SIZE, CLI_OPTION_PUBLIC_IP_TYPE, CLI_OPTION_SPOT, CliCommandGenerator, CreateCliArgs } from "../../core/input/cli";
 import { InteractiveInstanceInitializer } from "../../core/initializer";
 
 export interface AzureCreateCliArgs extends CreateCliArgs {

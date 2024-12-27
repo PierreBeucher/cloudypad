@@ -33,7 +33,7 @@ describe('Instance initializer', () => {
      */
     const TEST_CLI_ARGS: GcpCreateCliArgs = {
         name: TEST_INPUT.instanceName,
-        autoApprove: true,
+        yes: true,
         overwriteExisting: false,
         privateSshKey: TEST_INPUT.provision.ssh.privateKeyPath,
         projectId: TEST_INPUT.provision.projectId,

@@ -17,7 +17,7 @@ export class AwsProvisioner extends AbstractInstanceProvisioner<AwsProvisionInpu
 
         this.logger.info(`Provisioning AWS instance ${this.args.instanceName}`)
 
-        this.logger.debug(`Provisioning AWS instance with ${JSON.stringify(this.args)}`)
+        this.logger.debug(`Provisioning AWS instance with args ${JSON.stringify(this.args)} and options ${JSON.stringify(opts)}`)
 
         let confirmCreation: boolean
         if(opts?.autoApprove){

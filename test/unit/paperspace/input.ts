@@ -27,7 +27,7 @@ describe('Paperspace input prompter', () => {
 
     const TEST_CLI_ARGS: PaperspaceCreateCliArgs = {
         name: TEST_INPUT.instanceName,
-        autoApprove: true,
+        yes: true,
         overwriteExisting: false,
         privateSshKey: TEST_INPUT.provision.ssh.privateKeyPath,
         region: TEST_INPUT.provision.region,
