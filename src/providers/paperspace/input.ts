@@ -45,19 +45,25 @@ export class PaperspaceInputPrompter extends AbstractInputPrompter<PaperspaceCre
         const diskSize = await this.diskSize(defaultInput.provision?.diskSize)
         const publicIpType = await this.publicIpType(defaultInput.provision?.publicIpType)
         const region = await this.region(defaultInput.provision?.region)
+        const sshUser = "paperspace" // Paperspace uses 'paperspace' SSH user, enforce it
 
+        const specificInput = {
+            provision: {
+                apiKey: apiKey,
+                machineType: machineType,
+                diskSize: diskSize,
+                publicIpType: publicIpType,
+                region: region,
+                ssh: {
+                    user: sshUser,
+                }
+            },
+        }
+        
         const psInput: PaperspaceInstanceInput = lodash.merge(
             {},
             defaultInput,
-            {
-                provision: {
-                    apiKey: apiKey,
-                    machineType: machineType,
-                    diskSize: diskSize,
-                    publicIpType: publicIpType,
-                    region: region,
-                },
-            }
+            specificInput
         )
 
         return psInput
