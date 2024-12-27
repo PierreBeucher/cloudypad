@@ -1,5 +1,27 @@
 # Changelog
 
+## [0.9.0](https://github.com/PierreBeucher/cloudypad/compare/v0.8.0...v0.9.0) (2024-12-27)
+
+
+### Features
+
+* change interface and underlying state format ([c4688d8](https://github.com/PierreBeucher/cloudypad/commit/c4688d85ef787ee520688b02c5cf1077c8694e74))
+* ensure instance name is kebab case on creation ([f9ad37c](https://github.com/PierreBeucher/cloudypad/commit/f9ad37c0331ff692f692fb09b452981ff59603db))
+* faster initial startup by pulling known container images on configuration ([98428e2](https://github.com/PierreBeucher/cloudypad/commit/98428e22d48f2e96aae65504e7c2d0f8d6e9224f))
+* **license:** switch from GPL to AGPL ([82cef52](https://github.com/PierreBeucher/cloudypad/commit/82cef52a110943f8df3659076a4a3e8b6d4722b0))
+* more reproduciblity and stability by locking Wolf apps container images ([070a24e](https://github.com/PierreBeucher/cloudypad/commit/070a24ec56bf3eb7a782ed16e0182732a862b188))
+* template Wolf config with known apps and instance name ([ec48e72](https://github.com/PierreBeucher/cloudypad/commit/ec48e72a297c5eaf38078cdbb489de9bc195d76f))
+* use Spot instance by default ([a87c98d](https://github.com/PierreBeucher/cloudypad/commit/a87c98dddd3eb55e47e082b3d8968d00e3db3a86))
+* use Spot instance by default ([307fd73](https://github.com/PierreBeucher/cloudypad/commit/307fd73684cb6998926da9b1441b42d7fd94222d))
+* Zod schema validation for persisted state ([61c01fd](https://github.com/PierreBeucher/cloudypad/commit/61c01fd57e2a98c53010ddd91842e79dd7e619fb))
+
+
+### Bug Fixes
+
+* install Pulumi ARM64 instead of X64 variant for ARM64 container … ([ca8e753](https://github.com/PierreBeucher/cloudypad/commit/ca8e753a81a50d208860b21cdfea8bbc93a22d30))
+* install Pulumi ARM64 instead of X64 variant for ARM64 container image ([e0f25af](https://github.com/PierreBeucher/cloudypad/commit/e0f25af8aebaf40dd94d1dbe7061cbf30b9f0823))
+* **install:** use bash, fix missing existing install variable and check Docker installation ([4c74516](https://github.com/PierreBeucher/cloudypad/commit/4c7451642f349deb9b241b2ad52f596e92458ef6))
+
 ## [0.8.0](https://github.com/PierreBeucher/cloudypad/compare/v0.7.0...v0.8.0) (2024-11-30)
 
 
