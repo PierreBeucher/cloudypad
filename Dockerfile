@@ -11,7 +11,15 @@ RUN apt update && apt install -y \
 FROM build AS pulumi
 
 ARG PULUMI_VERSION="v3.124.0"
-RUN curl "https://get.pulumi.com/releases/sdk/pulumi-${PULUMI_VERSION}-linux-x64.tar.gz" -o pulumi.tar.gz \
+ARG TARGETPLATFORM
+RUN case "$TARGETPLATFORM" in \
+      "linux/amd64") \
+        curl "https://get.pulumi.com/releases/sdk/pulumi-${PULUMI_VERSION}-linux-x64.tar.gz" -o pulumi.tar.gz ;; \
+      "linux/arm64") \
+        curl "https://get.pulumi.com/releases/sdk/pulumi-${PULUMI_VERSION}-linux-arm64.tar.gz" -o pulumi.tar.gz ;; \
+      *) \
+        echo "Unsupported platform: $TARGETPLATFORM" && exit 1 ;; \
+    esac \
     && tar -xzf pulumi.tar.gz -C /usr/local/bin \
     && rm pulumi.tar.gz
 
