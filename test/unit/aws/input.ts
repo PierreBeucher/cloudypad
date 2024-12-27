@@ -27,7 +27,7 @@ describe('AWS input prompter', () => {
 
     const TEST_CLI_ARGS: AwsCreateCliArgs = {
         name: TEST_INPUT.instanceName,
-        autoApprove: true,
+        yes: true,
         overwriteExisting: false,
         privateSshKey: TEST_INPUT.provision.ssh.privateKeyPath,
         diskSize: TEST_INPUT.provision.diskSize,

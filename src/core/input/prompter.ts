@@ -7,14 +7,8 @@ import lodash from 'lodash'
 import { CommonInstanceInput } from "../state/state";
 import { getLogger } from "../../log/utils";
 import { PUBLIC_IP_TYPE, PUBLIC_IP_TYPE_DYNAMIC, PUBLIC_IP_TYPE_STATIC } from '../const';
+import { CreateCliArgs } from './cli';
 const { kebabCase } = lodash
-
-export interface CreateCliArgs {
-    name?: string
-    privateSshKey?: string
-    autoApprove?: boolean
-    overwriteExisting?: boolean
-}
 
 export interface InputPrompter {
 
@@ -68,7 +62,7 @@ export abstract class AbstractInputPrompter<A extends CreateCliArgs, I extends C
     /**
      * Transform CLI arguments into known Input interface
      */
-    abstract cliArgsIntoInput(clIArgs: A): PartialDeep<I>
+    abstract cliArgsIntoInput(cliArgs: A): PartialDeep<I>
 
     async completeCliInput(cliArgs: A): Promise<I> {
         const partialInput = this.cliArgsIntoInput(cliArgs)
