@@ -4,6 +4,7 @@ import { CreateCliArgs } from "./input/cli"
 import { InputPrompter } from "./input/prompter"
 import { InstanceManagerBuilder } from "./manager-builder"
 import { StateInitializer } from "./state/initializer"
+import { confirm } from '@inquirer/prompts';
 
 export interface InstancerInitializerArgs {
     provider: CLOUDYPAD_PROVIDER
@@ -51,9 +52,35 @@ export class InteractiveInstanceInitializer {
         }).initializeState()
     
         const manager = new InstanceManagerBuilder().buildManagerForState(state)
-        await manager.initialize({ 
-            autoApprove: cliArgs.yes
+        const instanceName = state.name
+        const autoApprove =  cliArgs.yes
+
+        this.logger.info(`Initializing ${instanceName}: provisioning...`)
+
+        await manager.provision({ autoApprove: autoApprove})
+
+        this.logger.info(`Initializing ${instanceName}: provision done.}`)
+
+        this.logger.info(`Initializing ${instanceName}: configuring...}`)
+        
+        await manager.configure()
+
+        this.logger.info(`Initializing ${instanceName}: configuration done.}`)
+
+        const doPair = autoApprove ? true : await confirm({
+            message: `Your instance is almost ready ! Do you want to pair Moonlight now?`,
+            default: true,
         })
+
+        if (doPair) {
+            this.logger.info(`Initializing ${instanceName}: pairing...}`)
+
+            await manager.pair()
+    
+            this.logger.info(`Initializing ${instanceName}: pairing done.}`)
+        } else {
+            this.logger.info(`Initializing ${instanceName}: pairing skipped.}`)
+        }
     
         if(!options?.skipPostInitInfo){
             console.info("")
