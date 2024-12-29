@@ -17,7 +17,7 @@ export type AnyInstanceStateV1 = AwsInstanceStateV1 |
     PaperspaceInstanceStateV1
 
 /**
- * State Parser to safely load and veriyf states using Zod
+ * State Parser to safely load and verify states using Zod
  */
 export class StateParser {
 
@@ -53,8 +53,7 @@ export class StateParser {
         if(result.success){
             return result.data as z.infer<T>
         } else {
-            this.logger.error(result.error.format())
-            throw new Error(`Coulnd't parse provided State with Zod. State is either corrupted and not compatible with this Cloudy Pad version. If you think this is a bug, please create an issue. Error state: ${JSON.stringify(data)}`)
+            throw new Error(`Coulnd't parse provided State with Zod. State is either corrupted and not compatible with this Cloudy Pad version. If you think this is a bug, please create an issue. Error state: ${JSON.stringify(data)}; Zod error: ${JSON.stringify(result.error.format())}`)
         }
     }
 

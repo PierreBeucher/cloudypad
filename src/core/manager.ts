@@ -3,31 +3,31 @@ import { InstanceProvisioner, InstanceProvisionOptions } from './provisioner';
 import { InstanceConfigurator } from './configurator';
 import { getLogger } from '../log/utils';
 import { InstanceRunner } from './runner';
-import { StateManager } from './state/manager';
+import { StateWriter } from './state/writer';
 import { AnsibleConfigurator } from '../configurators/ansible';
 
 /**
  * Used by InstanceManager to build sub-managers
  */
-export interface SubManagerFactory {
-    buildProvisioner(state: InstanceStateV1): Promise<InstanceProvisioner>
-    buildRunner(state: InstanceStateV1): Promise<InstanceRunner>
-    buildConfigurator(state: InstanceStateV1): Promise<InstanceConfigurator>
+export interface SubManagerFactory<ST extends InstanceStateV1> {
+    buildProvisioner(state: ST): Promise<InstanceProvisioner>
+    buildRunner(state: ST): Promise<InstanceRunner>
+    buildConfigurator(state: ST): Promise<InstanceConfigurator>
 }
 
-export abstract class AbstractSubManagerFactory<StateType extends InstanceStateV1> {
+export abstract class AbstractSubManagerFactory<ST extends InstanceStateV1> {
 
-    async buildProvisioner(state: StateType): Promise<InstanceProvisioner> {
+    async buildProvisioner(state: ST): Promise<InstanceProvisioner> {
         return this.doBuildProvisioner(state.name, state.provision.input, state.provision.output)
     }
 
     protected abstract doBuildProvisioner(
         name: string, 
-        input: StateType["provision"]["input"], 
-        output: StateType["provision"]["output"]
+        input: ST["provision"]["input"], 
+        output: ST["provision"]["output"]
     ): Promise<InstanceProvisioner>
     
-    async buildRunner(state: StateType): Promise<InstanceRunner> {
+    async buildRunner(state: ST): Promise<InstanceRunner> {
         if(!state.provision.output){
             throw new Error(`Can't build Instance Runner for ${state.name}: no provision output in state. Was instance fully provisioned ?`)
         }
@@ -37,38 +37,59 @@ export abstract class AbstractSubManagerFactory<StateType extends InstanceStateV
 
     protected abstract doBuildRunner(
         name: string, 
-        input: StateType["provision"]["input"], 
-        output: NonNullable<StateType["provision"]["output"]>
+        input: ST["provision"]["input"], 
+        output: NonNullable<ST["provision"]["output"]>
     ): Promise<InstanceRunner>
     
-    async buildConfigurator(state: StateType): Promise<InstanceConfigurator> {
+    async buildConfigurator(state: ST): Promise<InstanceConfigurator> {
 
         if(!state.provision.output) {
             throw new Error("Missing common provision output. Was instance fully initialized ?")
         }
 
-        return this.doBuildConfigurator(state.name, state.provision.input, state.provision.output)
+        return this.doBuildConfigurator(
+            state.name, 
+            state.provision.input, 
+            state.provision.output,
+            state.configuration.input
+        )
     }
 
     protected async doBuildConfigurator(
         name: string,
-        input: StateType["provision"]["input"],
-        output: NonNullable<StateType["provision"]["output"]>
+        provisionInput: ST["provision"]["input"],
+        provisionOutput: NonNullable<ST["provision"]["output"]>,
+        configurationInput: ST["configuration"]["input"]
     ): Promise<InstanceConfigurator> {
 
-        return new AnsibleConfigurator({
+        const configurator = new AnsibleConfigurator<ST>({
             instanceName: name,
-            commonInput: input,
-            commonOutput: output,
+            provisionInput: provisionInput,
+            provisionOutput: provisionOutput,
+            configurationInput: configurationInput,
             additionalAnsibleArgs: ['-e', '\'ansible_ssh_common_args="-o StrictHostKeyChecking=no"\''] //TODO only on first run
         })
+
+        return configurator
     }
 }
 
-export interface InstanceManagerArgs {
-    state: InstanceStateV1
-    factory: SubManagerFactory
+export interface InstanceManager {
+    configure(): Promise<void>
+    provision(opts?: InstanceProvisionOptions): Promise<void>
+    destroy(opts?: InstanceProvisionOptions): Promise<void>
+    start(): Promise<void>
+    stop(): Promise<void>
+    restart(): Promise<void>
+    pair(): Promise<void>
+    getStateJSON(): string
 }
+
+export interface InstanceManagerArgs<ST extends InstanceStateV1> {
+    stateWriter: StateWriter<ST>
+    factory: SubManagerFactory<ST>
+}
+
 /**
  * Manage an instance. Delegate specifities to sub-manager:
  * - InstanceRunner for managing instance running status (stopping, starting, etc)
@@ -81,84 +102,70 @@ export interface InstanceManagerArgs {
  * The concrete instance type is not known by this class: a per-provider factory is used 
  * to build each sub-managers.
  */
-export class InstanceManager {
+export class GenericInstanceManager<ST extends InstanceStateV1> {
 
     protected readonly logger
-    protected readonly state: InstanceStateV1
-    protected readonly factory: SubManagerFactory
+    protected readonly stateWriter: StateWriter<ST>
+    protected readonly factory: SubManagerFactory<ST>
 
-    constructor(args: InstanceManagerArgs){
-        this.state = args.state
+    constructor(args: InstanceManagerArgs<ST>){
+        this.stateWriter = args.stateWriter
         this.factory = args.factory
-        this.logger = getLogger(args.state.name)
+        this.logger = getLogger(args.stateWriter.instanceName())
     }
 
     async configure(): Promise<void> {
         const configurator = await this.buildConfigurator()
-        await configurator.configure()
-        await this.persistState()
+        const output = await configurator.configure()
+        this.stateWriter.setConfigurationOutput(output)
     }
 
     async provision(opts?: InstanceProvisionOptions) {
         const provisioner = await this.buildProvisioner()
         const output = await provisioner.provision(opts)
-        this.state.provision.output = output
-        await this.persistState()
+        this.stateWriter.setProvisionOutput(output)
     }
 
     async destroy(opts?: InstanceProvisionOptions) {
         const provisioner = await this.buildProvisioner()
         await provisioner.destroy(opts)
-        this.state.provision.output = undefined
-        await this.persistState()
-        await StateManager.default().removeInstanceDir(this.state.name)
+        this.stateWriter.setProvisionOutput(undefined)
+        this.stateWriter.destroyInstanceStateDirectory()
     }
 
     async start(): Promise<void> {
         const runner = await this.buildRunner()
         await runner.start()
-        await this.persistState()
     }
 
     async stop(): Promise<void> {
         const runner = await this.buildRunner()
         await runner.stop()
-        await this.persistState()
     }
 
     async restart(): Promise<void> {
         const runner = await this.buildRunner()
         await runner.restart()
-        await this.persistState()
     }
 
     async pair(): Promise<void> {
         const runner = await this.buildRunner()
         await runner.pair()
-        await this.persistState()
     }
     
     private async buildRunner(){
-        return this.factory.buildRunner(this.state)
+        return this.factory.buildRunner(this.stateWriter.cloneState())
     }
     
     private async buildConfigurator(){
-        return this.factory.buildConfigurator(this.state)
+        return this.factory.buildConfigurator(this.stateWriter.cloneState())
     }
     
     private async buildProvisioner(){
-        return this.factory.buildProvisioner(this.state)
-    }
-
-    /**
-     * Persist current state on disk.
-     * This function is called after every action where eventual state update occured. 
-     */
-    async persistState(){
-        await StateManager.default().persistState(this.state)
+        return this.factory.buildProvisioner(this.stateWriter.cloneState())
     }
 
     public getStateJSON(){
-        return JSON.stringify(this.state, null, 2)
+        return JSON.stringify(this.stateWriter.cloneState(), null, 2)
     }
 }

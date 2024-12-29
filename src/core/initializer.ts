@@ -5,6 +5,7 @@ import { InputPrompter } from "./input/prompter"
 import { InstanceManagerBuilder } from "./manager-builder"
 import { StateInitializer } from "./state/initializer"
 import { confirm } from '@inquirer/prompts';
+import { StateLoader } from "./state/loader"
 
 export interface InstancerInitializerArgs {
     provider: CLOUDYPAD_PROVIDER
@@ -45,10 +46,21 @@ export class InteractiveInstanceInitializer {
         
         const input = await this.inputPrompter.completeCliInput(cliArgs)
 
-        const state = await new StateInitializer({
+        const loader = new StateLoader()
+        if(await loader.instanceExists(input.instanceName) && !cliArgs.overwriteExisting){
+            const confirmAlreadyExists = await confirm({
+                message: `Instance ${input.instanceName} already exists. Do you want to overwrite existing instance config?`,
+                default: false,
+            })
+            
+            if (!confirmAlreadyExists) {
+                throw new Error("Won't overwrite existing instance. Initialization aborted.")
+            }
+        }
+
+        const state = new StateInitializer({
             input: input,
             provider: this.provider,
-            overwriteExisting: cliArgs.overwriteExisting
         }).initializeState()
     
         const manager = new InstanceManagerBuilder().buildManagerForState(state)
