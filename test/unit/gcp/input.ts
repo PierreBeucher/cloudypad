@@ -1,7 +1,7 @@
 import * as assert from 'assert';
 import { GcpInstanceInput } from '../../../src/providers/gcp/state';
 import { PUBLIC_IP_TYPE_STATIC } from '../../../src/core/const';
-import { DEFAULT_COMMON_INPUT } from '../common/utils';
+import { DEFAULT_COMMON_INPUT } from '../utils';
 import { GcpCreateCliArgs, GcpInputPrompter } from '../../../src/providers/gcp/input';
 import lodash from 'lodash'
 import { PartialDeep } from 'type-fest';

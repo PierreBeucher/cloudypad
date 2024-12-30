@@ -16,7 +16,7 @@ export CLOUDYPAD_CLI_LAUNCHER_DEBUG=true
 # Use container image or local script directly
 # Faster with local script but may miss container image issue
 
-task build-local && cloudypad_cmd="./cloudypad.sh"
+task build-local > /dev/null && cloudypad_cmd="./cloudypad.sh"
 # cloudypad_cmd="npx ts-node src/index.ts"
 
 function create_destroy_aws() {
@@ -32,6 +32,11 @@ function create_destroy_aws() {
         --region eu-central-1 \
         --spot \
         --yes --overwrite-existing
+
+    $cloudypad_cmd update aws \
+        --name $instance_name \
+        --disk-size 101 \
+        --yes
 
     $cloudypad_cmd get $instance_name
 
@@ -85,6 +90,12 @@ function create_destroy_azure() {
         --subscription-id 0dceb5ed-9096-4db7-b430-2609e7cc6a15 \
         --yes --overwrite-existing
 
+    $cloudypad_cmd update azure \
+        --name $instance_name \
+        --vm-size Standard_NC4as_T4_v3 \
+        --disk-size 100 \
+        --yes
+
     $cloudypad_cmd get $instance_name
 
     $cloudypad_cmd list | grep $instance_name
@@ -98,7 +109,7 @@ function create_destroy_azure() {
     $cloudypad_cmd destroy $instance_name
 }
 
-function create_destroy_google() {
+function create_destroy_gcp() {
     
     instance_name="test-create-destroy-gcp"
 
@@ -114,6 +125,11 @@ function create_destroy_google() {
         --project-id crafteo-sandbox \
         --spot \
         --yes --overwrite-existing
+
+    $cloudypad_cmd update gcp \
+        --name $instance_name \
+        --machine-type n1-standard-4 \
+        --yes
 
     $cloudypad_cmd get $instance_name
 
@@ -136,11 +152,11 @@ case "$1" in
     azure)
         create_destroy_azure
         ;;
-    google)
-        create_destroy_google
+    gcp)
+        create_destroy_gcp
         ;;
     *)
-        echo "Usage: $0 {aws|paperspace|azure|google}"
+        echo "Usage: $0 {aws|paperspace|azure|gcp}"
         ;;
 esac
 

@@ -1,7 +1,7 @@
 import * as assert from 'assert';
 import { AzureInstanceInput } from '../../../src/providers/azure/state';
 import { PUBLIC_IP_TYPE_STATIC } from '../../../src/core/const';
-import { DEFAULT_COMMON_INPUT } from '../common/utils';
+import { DEFAULT_COMMON_INPUT } from '../utils';
 import { AzureCreateCliArgs, AzureInputPrompter } from '../../../src/providers/azure/input';
 import { PartialDeep } from 'type-fest';
 import lodash from 'lodash'

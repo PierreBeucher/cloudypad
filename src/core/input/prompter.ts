@@ -62,7 +62,20 @@ export abstract class AbstractInputPrompter<A extends CreateCliArgs, I extends C
     /**
      * Transform CLI arguments into known Input interface
      */
-    abstract cliArgsIntoInput(cliArgs: A): PartialDeep<I>
+    cliArgsIntoInput(cliArgs: A): PartialDeep<I> {
+        this.logger.debug(`Parsing CLI args ${JSON.stringify(cliArgs)} into Input interface...`)
+
+        const result = this.doTransformCliArgsIntoInput(cliArgs)
+        
+        this.logger.debug(`Parsed CLI args ${JSON.stringify(cliArgs)} into ${JSON.stringify(input)}`)
+
+        return result
+    }
+
+    /**
+     * Transform CLI arguments into known Input interface
+     */
+    protected abstract doTransformCliArgsIntoInput(cliArgs: A): PartialDeep<I>
 
     async completeCliInput(cliArgs: A): Promise<I> {
         const partialInput = this.cliArgsIntoInput(cliArgs)

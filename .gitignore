@@ -4,3 +4,6 @@ pulumi/aws/Pulumi.*.yaml
 **/node_modules
 **/dist
 result 
+
+# Unit test tmp dir
+test/unit/core/state/TMP-v0-root-data-dir

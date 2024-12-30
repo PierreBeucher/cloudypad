@@ -1,3 +1,6 @@
+import * as path from 'path'
+import * as fs from 'fs'
+import * as yaml from 'js-yaml'
 import { PaperspaceInstanceStateV1 } from '../../providers/paperspace/state'
 import { AwsInstanceStateV1 } from '../../providers/aws/state'
 import { getLogger } from '../../log/utils'
@@ -6,16 +9,65 @@ import { AzureInstanceStateV1 } from '../../providers/azure/state'
 import { GcpInstanceStateV1 } from '../../providers/gcp/state'
 import { InstanceStateV0 } from './state'
 import { AnyInstanceStateV1 } from './parser'
+import { BaseStateManager } from './base-manager'
+import { StateWriter } from './writer'
 
-export class StateMigrator {
+export class StateMigrator extends BaseStateManager {
 
     private logger = getLogger(StateMigrator.name)
+
+    /**
+     * 
+     * @param instanceName 
+     */
+    async needMigration(instanceName: string): Promise<boolean>{
+
+        const v0InstancePath = this.getInstanceStateV0Path(instanceName)
+
+        this.logger.debug(`Checking if instance ${instanceName} needs migration using ${v0InstancePath}`)
+
+        if(fs.existsSync(this.getInstanceDir(instanceName)) && fs.existsSync(v0InstancePath)) {
+            return true
+        }
+
+        return false
+    }
+
+    async ensureInstanceStateV1(instanceName: string){
+        const needsMigration = await this.needMigration(instanceName)
+        if(!needsMigration){
+            return
+        }
+
+        const v0StatePath = this.getInstanceStateV0Path(instanceName)
+        this.logger.debug(`Migrating instance ${instanceName} state V0 to V1 state using V0 state ${v0StatePath}`)
+        
+        this.logger.debug(`Loading instance V0 state for ${instanceName} at ${v0StatePath}`)
+
+        const rawState = yaml.load(fs.readFileSync(v0StatePath, 'utf8'))
+
+        this.logger.debug(`Loaded state of ${instanceName} for migration: ${v0StatePath}`)
+
+        // Migrate state and persist
+        this.logger.debug(`Migrating instance V0 state to V1 for ${instanceName} at ${v0StatePath}`)
+        const result = await this.doMigrateStateV0toV1(rawState)
+        const writer = new StateWriter({ state: result, dataRootDir: this.dataRootDir })
+        await writer.persistStateNow()
+
+        // Delete old state file
+        this.logger.debug(`Deleting old V0 state for ${instanceName} at ${v0StatePath}`)
+        fs.rmSync(v0StatePath)
+    }
+
+    private getInstanceStateV0Path(instanceName: string): string {
+        return path.join(this.getInstanceDir(instanceName), "config.yml")
+    }
 
     /**
      * Ensure a raw state loaded from disk matches the current V1 State interface
      */
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    async migrateStateV0toV1(rawState: any): Promise<AnyInstanceStateV1>{
+    private async doMigrateStateV0toV1(rawState: any): Promise<AnyInstanceStateV1>{
 
         const stateV0 = rawState as InstanceStateV0
 

@@ -1,13 +1,11 @@
 import { CommonInstanceInput, InstanceStateV1 } from './state';
 import { getLogger } from '../../log/utils';
 import { CLOUDYPAD_CONFIGURATOR_ANSIBLE, CLOUDYPAD_PROVIDER } from '../const';
-import { StateManager } from './manager';
-import { confirm } from '@inquirer/prompts';
+import { StateWriter } from './writer';
 
 export interface StateInitializerArgs {
     provider: CLOUDYPAD_PROVIDER,
     input: CommonInstanceInput,
-    overwriteExisting?: boolean
 }
 
 export class StateInitializer {
@@ -15,11 +13,9 @@ export class StateInitializer {
     protected readonly logger = getLogger(StateInitializer.name)
 
     protected readonly args: StateInitializerArgs
-    protected stateManager: StateManager
-
+    
     constructor(args: StateInitializerArgs){
         this.args = args
-        this.stateManager = StateManager.default()
     }
 
     /**
@@ -31,21 +27,10 @@ export class StateInitializer {
      * - Optionally pair instance
      * @param opts 
      */
-    public async initializeState(): Promise<InstanceStateV1>{
+    public async initializeState(): Promise<InstanceStateV1> {
 
         const instanceName = this.args.input.instanceName
         const input = this.args.input
-
-        if(await this.stateManager.instanceExists(instanceName) && !this.args.overwriteExisting){
-            const confirmAlreadyExists = await confirm({
-                message: `Instance ${instanceName} already exists. Do you want to overwrite existing instance config?`,
-                default: false,
-            })
-            
-            if (!confirmAlreadyExists) {
-                throw new Error("Won't overwrite existing instance. Initialization aborted.")
-            }
-        }
 
         this.logger.debug(`Initializing a new instance with config ${JSON.stringify(input)}`)
 
@@ -64,6 +49,11 @@ export class StateInitializer {
                 output: undefined,
             }
         }
+
+        const writer = new StateWriter({
+            state: initialState,
+        })
+        await writer.persistStateNow()
 
         return initialState
     }

@@ -8,6 +8,7 @@ import { CLOUDYPAD_PROVIDER_AZURE, PUBLIC_IP_TYPE } from "../../core/const";
 import { PartialDeep } from "type-fest";
 import { CLI_OPTION_DISK_SIZE, CLI_OPTION_PUBLIC_IP_TYPE, CLI_OPTION_SPOT, CliCommandGenerator, CreateCliArgs } from "../../core/input/cli";
 import { InteractiveInstanceInitializer } from "../../core/initializer";
+import { InstanceManagerBuilder } from "../../core/manager-builder";
 
 export interface AzureCreateCliArgs extends CreateCliArgs {
     subscriptionId?: string
@@ -21,7 +22,7 @@ export interface AzureCreateCliArgs extends CreateCliArgs {
 
 export class AzureInputPrompter extends AbstractInputPrompter<AzureCreateCliArgs, AzureInstanceInput> {
     
-    cliArgsIntoInput(cliArgs: AzureCreateCliArgs): PartialDeep<AzureInstanceInput> {
+    protected doTransformCliArgsIntoInput(cliArgs: AzureCreateCliArgs): PartialDeep<AzureInstanceInput> {
         return {
             instanceName: cliArgs.name,
             provision: {
@@ -216,6 +217,30 @@ export class AzureCliCommandGenerator extends CliCommandGenerator {
                     
                 } catch (error) {
                     console.error('Error creating Azure instance:', error)
+                    process.exit(1)
+                }
+            })
+    }
+
+    buildUpdateCommand() {
+        return this.getBaseUpdateCommand(CLOUDYPAD_PROVIDER_AZURE)
+            .addOption(CLI_OPTION_DISK_SIZE)
+            .addOption(CLI_OPTION_PUBLIC_IP_TYPE)
+            .option('--vm-size <vmsize>', 'Virtual machine size')
+            .action(async (cliArgs) => {
+                try {
+                    const input = new AzureInputPrompter().cliArgsIntoInput(cliArgs)
+                    const updater = await new InstanceManagerBuilder().buildAzureInstanceUpdater(cliArgs.name)
+                    await updater.update({
+                        provisionInput: input.provision,
+                        configurationInput: input.configuration,
+                    }, { 
+                        autoApprove: cliArgs.yes
+                    })
+                    console.info(`Updated instance ${cliArgs.name}`)
+                    
+                } catch (error) {
+                    console.error('Error updating Azure instance:', error)
                     process.exit(1)
                 }
             })

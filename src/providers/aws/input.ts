@@ -4,10 +4,11 @@ import { input, select } from '@inquirer/prompts';
 import { AwsClient } from "../../tools/aws";
 import { AbstractInputPrompter } from "../../core/input/prompter";
 import lodash from 'lodash'
-import { CLI_OPTION_DISK_SIZE, CLI_OPTION_PUBLIC_IP_TYPE, CLI_OPTION_SPOT, CliCommandGenerator, CreateCliArgs } from "../../core/input/cli";
+import { CLI_OPTION_DISK_SIZE, CLI_OPTION_PUBLIC_IP_TYPE, CLI_OPTION_SPOT, CliCommandGenerator, CreateCliArgs, UpdateCliArgs } from "../../core/input/cli";
 import { CLOUDYPAD_PROVIDER_AWS, PUBLIC_IP_TYPE } from "../../core/const";
 import { InteractiveInstanceInitializer } from "../../core/initializer";
 import { PartialDeep } from "type-fest";
+import { InstanceManagerBuilder } from "../../core/manager-builder";
 
 export interface AwsCreateCliArgs extends CreateCliArgs {
     spot?: boolean
@@ -17,9 +18,14 @@ export interface AwsCreateCliArgs extends CreateCliArgs {
     region?: string
 }
 
+/**
+ * Possible update arguments for AWS update. Region and spot cannot be updated as it would destroy existing machine and/or disk. 
+ */
+export type AwsUpdateCliArgs = UpdateCliArgs & Omit<AwsCreateCliArgs, "region" | "spot">
+
 export class AwsInputPrompter extends AbstractInputPrompter<AwsCreateCliArgs, AwsInstanceInput> {
     
-    cliArgsIntoInput(cliArgs: AwsCreateCliArgs): PartialDeep<AwsInstanceInput> {
+    doTransformCliArgsIntoInput(cliArgs: AwsCreateCliArgs): PartialDeep<AwsInstanceInput> {
         return {
             instanceName: cliArgs.name,
             provision: {
@@ -145,6 +151,30 @@ export class AwsCliCommandGenerator extends CliCommandGenerator {
                     
                 } catch (error) {
                     console.error('Error creating AWS instance:', error)
+                    process.exit(1)
+                }
+            })
+    }
+
+    buildUpdateCommand() {
+        return this.getBaseUpdateCommand(CLOUDYPAD_PROVIDER_AWS)
+            .addOption(CLI_OPTION_DISK_SIZE)
+            .addOption(CLI_OPTION_PUBLIC_IP_TYPE)
+            .option('--instance-type <type>', 'EC2 instance type')
+            .action(async (cliArgs) => {
+                try {
+                    const input = new AwsInputPrompter().cliArgsIntoInput(cliArgs)
+                    const updater = await new InstanceManagerBuilder().buildAwsInstanceUpdater(cliArgs.name)
+                    await updater.update({
+                        provisionInput: input.provision,
+                        configurationInput: input.configuration,
+                    }, { 
+                        autoApprove: cliArgs.yes
+                    })
+                    console.info(`Updated instance ${cliArgs.name}`)
+                    
+                } catch (error) {
+                    console.error('Error updating AWS instance:', error)
                     process.exit(1)
                 }
             })

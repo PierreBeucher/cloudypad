@@ -29,6 +29,15 @@ createCmd.addCommand(new AzureCliCommandGenerator().buildCreateCommand())
 createCmd.addCommand(new GcpCliCommandGenerator().buildCreateCommand())
 createCmd.addCommand(new PaperspaceCliCommandGenerator().buildCreateCommand())
 
+const updateCmd = program
+    .command('update')
+    .description('Update an existing instance. See subcommands for each provider options.')
+
+updateCmd.addCommand(new AwsCliCommandGenerator().buildUpdateCommand())
+updateCmd.addCommand(new AzureCliCommandGenerator().buildUpdateCommand())
+updateCmd.addCommand(new GcpCliCommandGenerator().buildUpdateCommand())
+updateCmd.addCommand(new PaperspaceCliCommandGenerator().buildUpdateCommand())
+
 program
     .command('list')
     .description('List all instances')
@@ -60,7 +69,7 @@ program
     .description('Start an instance')
     .action(async (name) => {
         try {
-            const m = await new InstanceManagerBuilder().buildManagerForInstance(name)
+            const m = await new InstanceManagerBuilder().buildInstanceManager(name)
             await m.start()
             console.info(`Started instance ${name}`)
         } catch (error) {
@@ -74,7 +83,7 @@ program
     .description('Stop an instance')
     .action(async (name) => {
         try {
-            const m = await new InstanceManagerBuilder().buildManagerForInstance(name)
+            const m = await new InstanceManagerBuilder().buildInstanceManager(name)
             await m.stop()
             console.info(`Stopped instance ${name}`)
         } catch (error) {
@@ -88,7 +97,7 @@ program
     .description('Restart an instance')
     .action(async (name) => {
         try {
-            const m = await new InstanceManagerBuilder().buildManagerForInstance(name)
+            const m = await new InstanceManagerBuilder().buildInstanceManager(name)
             await m.restart()
             console.info(`Restarted instance ${name}`)
         } catch (error) {
@@ -102,7 +111,7 @@ program
     .description('Get details of an instance')
     .action(async (name) => {
         try {
-            const m = await new InstanceManagerBuilder().buildManagerForInstance(name)
+            const m = await new InstanceManagerBuilder().buildInstanceManager(name)
             const details = m.getStateJSON()
 
             console.info(details)
@@ -118,7 +127,7 @@ program
     .option('--yes', 'Do not prompt for approval, automatically approve and continue')
     .action(async (name) => {
         try {
-            const m = await new InstanceManagerBuilder().buildManagerForInstance(name)
+            const m = await new InstanceManagerBuilder().buildInstanceManager(name)
             await m.provision()
 
             console.info(`Provisioned instance ${name}`)
@@ -133,7 +142,7 @@ program
     .description('Configure an instance (connect to instance and install drivers, packages, etc.)')
     .action(async (name) => {
         try {
-            const m = await new InstanceManagerBuilder().buildManagerForInstance(name)
+            const m = await new InstanceManagerBuilder().buildInstanceManager(name)
             await m.configure()
 
             console.info("")
@@ -149,7 +158,7 @@ program
     .description('Destroy an instance')
     .action(async (name) => {
         try {
-            const m = await new InstanceManagerBuilder().buildManagerForInstance(name)
+            const m = await new InstanceManagerBuilder().buildInstanceManager(name)
             await m.destroy()
 
             console.info("")
@@ -165,7 +174,7 @@ program.command('pair <name>')
     .description('Pair an instance with Moonlight')
     .action(async (name: string) => {
         try {
-            const m = await new InstanceManagerBuilder().buildManagerForInstance(name)
+            const m = await new InstanceManagerBuilder().buildInstanceManager(name)
             await m.pair()
         } catch (error) {
             console.error('Error creating new instance:', error)

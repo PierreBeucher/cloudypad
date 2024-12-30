@@ -3,31 +3,33 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';
 import * as yaml from 'js-yaml';
-import { CommonProvisionInputV1, CommonProvisionOutputV1 } from '../core/state/state';
-import { InstanceConfigurator } from '../core/configurator';
+import { CommonConfigurationInputV1, CommonProvisionInputV1, CommonProvisionOutputV1, InstanceStateV1 } from '../core/state/state';
+import { AbstractInstanceConfigurator } from '../core/configurator';
 import { getLogger, Logger } from '../log/utils';
 import { AnsibleClient } from '../tools/ansible';
 
 export interface AnsibleConfiguratorArgs {
     instanceName: string
-    commonInput: CommonProvisionInputV1
-    commonOutput: CommonProvisionOutputV1
+    provisionInput: CommonProvisionInputV1
+    provisionOutput: CommonProvisionOutputV1
+    configurationInput: CommonConfigurationInputV1
     additionalAnsibleArgs?: string[]
 }
 
-export class AnsibleConfigurator implements InstanceConfigurator {
+export class AnsibleConfigurator<ST extends InstanceStateV1> extends AbstractInstanceConfigurator<ST> {
 
     protected readonly logger: Logger
     private readonly args: AnsibleConfiguratorArgs
 
     constructor(args: AnsibleConfiguratorArgs){
+        super()
         this.args = args
         this.logger = getLogger(args.instanceName)
     }
 
-    async configure() {
+    async doConfigure() {
 
-        const ssh = this.args.commonInput.ssh
+        const ssh = this.args.provisionInput.ssh
 
         this.logger.debug(`Running Ansible configuration`)
 
@@ -39,7 +41,7 @@ export class AnsibleConfigurator implements InstanceConfigurator {
             all: {
                 hosts: {
                     [this.args.instanceName]: {
-                        ansible_host: this.args.commonOutput.host,
+                        ansible_host: this.args.provisionOutput.host,
                         ansible_user: ssh.user,
                         ansible_ssh_private_key_file: ssh.privateKeyPath,
                         wolf_instance_name: this.args.instanceName
@@ -59,5 +61,7 @@ export class AnsibleConfigurator implements InstanceConfigurator {
 
         const ansible = new AnsibleClient()
         await ansible.runAnsible(inventoryPath, playbookPath, this.args.additionalAnsibleArgs ?? [])
+
+        return {}
     }
 }

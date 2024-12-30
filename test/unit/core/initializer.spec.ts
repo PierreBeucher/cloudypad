@@ -1,10 +1,10 @@
 import * as assert from 'assert';
 import { GcpInstanceInput, GcpInstanceStateV1 } from '../../../src/providers/gcp/state';
 import { CLOUDYPAD_CONFIGURATOR_ANSIBLE, CLOUDYPAD_PROVIDER_GCP, PUBLIC_IP_TYPE_STATIC } from '../../../src/core/const';
-import { DEFAULT_COMMON_INPUT } from '../common/utils';
+import { DEFAULT_COMMON_INPUT } from '../utils';
 import { InteractiveInstanceInitializer } from '../../../src/core/initializer';
-import { StateManager } from '../../../src/core/state/manager';
 import { GcpCreateCliArgs, GcpInputPrompter } from '../../../src/providers/gcp/input';
+import { StateLoader } from '../../../src/core/state/loader';
 
 describe('Instance initializer', () => {
 
@@ -34,7 +34,7 @@ describe('Instance initializer', () => {
     const TEST_CLI_ARGS: GcpCreateCliArgs = {
         name: TEST_INPUT.instanceName,
         yes: true,
-        overwriteExisting: false,
+        overwriteExisting: true,
         privateSshKey: TEST_INPUT.provision.ssh.privateKeyPath,
         projectId: TEST_INPUT.provision.projectId,
         region: TEST_INPUT.provision.region,
@@ -56,7 +56,7 @@ describe('Instance initializer', () => {
         }).initializeInstance(TEST_CLI_ARGS, { skipPostInitInfo: true })
 
         // Check state has been written
-        const state = await StateManager.default().loadInstanceStateSafe(instanceName)
+        const state = await new StateLoader().loadInstanceStateSafe(instanceName)
 
         const expectState: GcpInstanceStateV1 = {
             version: "1",
@@ -71,7 +71,8 @@ describe('Instance initializer', () => {
             },
             configuration: {
                 configurator: CLOUDYPAD_CONFIGURATOR_ANSIBLE,
-                input: {}
+                input: {},
+                output: {}
             }
         }
         

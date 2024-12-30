@@ -53,7 +53,6 @@ export abstract class AbstractInstanceProvisioner<C extends CommonProvisionInput
 
     async provision(opts?: InstanceProvisionOptions): Promise<O> {
         this.logger.info(`Provisioning instance ${this.args.instanceName}`);
-
         return await this.doProvision(opts);
     }
 
