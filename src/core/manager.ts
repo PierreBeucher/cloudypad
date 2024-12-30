@@ -117,20 +117,20 @@ export class GenericInstanceManager<ST extends InstanceStateV1> implements Insta
     async configure(): Promise<void> {
         const configurator = await this.buildConfigurator()
         const output = await configurator.configure()
-        this.stateWriter.setConfigurationOutput(output)
+        await this.stateWriter.setConfigurationOutput(output)
     }
 
     async provision(opts?: InstanceProvisionOptions) {
         const provisioner = await this.buildProvisioner()
         const output = await provisioner.provision(opts)
-        this.stateWriter.setProvisionOutput(output)
+        await this.stateWriter.setProvisionOutput(output)
     }
 
     async destroy(opts?: InstanceProvisionOptions) {
         const provisioner = await this.buildProvisioner()
         await provisioner.destroy(opts)
-        this.stateWriter.setProvisionOutput(undefined)
-        this.stateWriter.destroyInstanceStateDirectory()
+        await this.stateWriter.setProvisionOutput(undefined)
+        await this.stateWriter.destroyInstanceStateDirectory()
     }
 
     async start(): Promise<void> {
