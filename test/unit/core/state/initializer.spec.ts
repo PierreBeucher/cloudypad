@@ -44,7 +44,7 @@ describe('StateInitializer', function () {
             input: TEST_INPUT,
             provider: CLOUDYPAD_PROVIDER_GCP,
         })
-        const result = initializer.initializeState()
+        const result = await initializer.initializeState()
 
         assert.deepEqual(result, EXPECT_STATE)
     })

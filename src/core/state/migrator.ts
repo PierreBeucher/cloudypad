@@ -24,6 +24,8 @@ export class StateMigrator extends BaseStateManager {
 
         const v0InstancePath = this.getInstanceStateV0Path(instanceName)
 
+        this.logger.debug(`Checking if instance ${instanceName} needs migration using ${v0InstancePath}`)
+
         if(fs.existsSync(this.getInstanceDir(instanceName)) && fs.existsSync(v0InstancePath)) {
             return true
         }
@@ -32,7 +34,8 @@ export class StateMigrator extends BaseStateManager {
     }
 
     async ensureInstanceStateV1(instanceName: string){
-        if(!this.needMigration(instanceName)){
+        const needsMigration = await this.needMigration(instanceName)
+        if(!needsMigration){
             return
         }
 
@@ -40,7 +43,10 @@ export class StateMigrator extends BaseStateManager {
         this.logger.debug(`Migrating instance ${instanceName} state V0 to V1 state using V0 state ${v0StatePath}`)
         
         this.logger.debug(`Loading instance V0 state for ${instanceName} at ${v0StatePath}`)
+
         const rawState = yaml.load(fs.readFileSync(v0StatePath, 'utf8'))
+
+        this.logger.debug(`Loaded state of ${instanceName} for migration: ${v0StatePath}`)
 
         // Migrate state and persist
         this.logger.debug(`Migrating instance V0 state to V1 for ${instanceName} at ${v0StatePath}`)

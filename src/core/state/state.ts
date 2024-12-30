@@ -7,18 +7,18 @@ import { CLOUDYPAD_CONFIGURATOR_LIST, CLOUDYPAD_PROVIDER_LIST } from "../const"
 
 const CommonProvisionOutputV1Schema = z.object({
     host: z.string().describe("Instance hostname or IP address"),
-})
+}).passthrough()
 
 const CommonProvisionInputV1Schema = z.object({
     ssh: z.object({
         user: z.string().describe("SSH user"),
         privateKeyPath: z.string().describe("Local path to private key"),
     }).describe("SSH access configuration"),
-})
+}).passthrough()
 
-const CommonConfigurationOutputV1Schema = z.object({})
+const CommonConfigurationOutputV1Schema = z.object({}).passthrough()
 
-const CommonConfigurationInputV1Schema = z.object({})
+const CommonConfigurationInputV1Schema = z.object({}).passthrough()
 
 const InstanceStateV1Schema = z.object({
     version: z.literal("1").describe("State schema version, always 1"),

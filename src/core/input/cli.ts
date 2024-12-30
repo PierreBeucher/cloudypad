@@ -3,14 +3,23 @@ import { PUBLIC_IP_TYPE, PUBLIC_IP_TYPE_DYNAMIC, PUBLIC_IP_TYPE_STATIC } from ".
 
 //
 // Common CLI Option each providers can re-use
-///
+//
 
+/**
+ * Arguments any Provider can take as parameter for create command
+ */
 export interface CreateCliArgs {
     name?: string
     privateSshKey?: string
     yes?: boolean // auto approve
     overwriteExisting?: boolean
 }
+
+/**
+ * Arguments any Provider can take as parameter for update command
+ */
+export type UpdateCliArgs = Omit<CreateCliArgs, "name" | "privateSshKey">
+
 
 export const CLI_OPTION_INSTANCE_NAME = new Option('--name <name>', 'Instance name')
 export const CLI_OPTION_PRIVATE_SSH_KEY = new Option('--private-ssh-key <path>', 'Path to private SSH key to use to connect to instance')
@@ -40,9 +49,24 @@ export abstract class CliCommandGenerator {
     }
 
     /**
+     * Create a base 'update' command for a given provider name with possibilities to chain with additional options.
+     */
+    protected getBaseUpdateCommand(provider: string){
+        return new Command(provider)
+            .description(`Update an existing Cloudy Pad instance using ${provider} provider.`)
+            .requiredOption('--name <name>', 'Instance name')
+            .addOption(CLI_OPTION_AUTO_APPROVE)
+    }
+
+    /**
      * Build a 'create' Command for Commander CLI using provided Command
      */
     abstract buildCreateCommand(): Command<[]>
+
+    /**
+     * Build an 'update' Command for Commander CLI using provided Command
+     */
+    abstract buildUpdateCommand(): Command<[]>
 
 }
 

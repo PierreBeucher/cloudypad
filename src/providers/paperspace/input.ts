@@ -8,6 +8,7 @@ import { PartialDeep } from "type-fest";
 import { CLOUDYPAD_PROVIDER_PAPERSPACE, PUBLIC_IP_TYPE } from "../../core/const";
 import { CLI_OPTION_DISK_SIZE, CLI_OPTION_PUBLIC_IP_TYPE, CLI_OPTION_SPOT, CliCommandGenerator, CreateCliArgs } from "../../core/input/cli";
 import { InteractiveInstanceInitializer } from "../../core/initializer";
+import { InstanceManagerBuilder } from "../../core/manager-builder";
 
 export interface PaperspaceCreateCliArgs extends CreateCliArgs {
     apiKeyFile?: string
@@ -19,7 +20,7 @@ export interface PaperspaceCreateCliArgs extends CreateCliArgs {
 
 export class PaperspaceInputPrompter extends AbstractInputPrompter<PaperspaceCreateCliArgs, PaperspaceInstanceInput> {
     
-    cliArgsIntoInput(cliArgs: PaperspaceCreateCliArgs): PartialDeep<PaperspaceInstanceInput> {
+    doTransformCliArgsIntoInput(cliArgs: PaperspaceCreateCliArgs): PartialDeep<PaperspaceInstanceInput> {
         return {
             instanceName: cliArgs.name,
             provision: {
@@ -154,6 +155,31 @@ export class PaperspaceCliCommandGenerator extends CliCommandGenerator {
                     
                 } catch (error) {
                     console.error('Error creating Paperspace instance:', error)
+                    process.exit(1)
+                }
+            })
+    }
+
+    buildUpdateCommand() {
+        return this.getBaseUpdateCommand(CLOUDYPAD_PROVIDER_PAPERSPACE)
+            .addOption(CLI_OPTION_DISK_SIZE)
+            .addOption(CLI_OPTION_PUBLIC_IP_TYPE)
+            .option('--api-key-file <apikeyfile>', 'Path to Paperspace API key file')
+            .option('--machine-type <type>', 'Machine type')
+            .action(async (cliArgs) => {
+                try {
+                    const input = new PaperspaceInputPrompter().cliArgsIntoInput(cliArgs)
+                    const updater = await new InstanceManagerBuilder().buildPaperspaceInstanceUpdater(cliArgs.name)
+                    await updater.update({
+                        provisionInput: input.provision,
+                        configurationInput: input.configuration,
+                    }, { 
+                        autoApprove: cliArgs.yes
+                    })
+                    console.info(`Updated instance ${cliArgs.name}`)
+                    
+                } catch (error) {
+                    console.error('Error updating Paperspace instance:', error)
                     process.exit(1)
                 }
             })

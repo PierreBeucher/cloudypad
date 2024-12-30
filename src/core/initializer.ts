@@ -58,12 +58,12 @@ export class InteractiveInstanceInitializer {
             }
         }
 
-        const state = new StateInitializer({
+        const state = await new StateInitializer({
             input: input,
             provider: this.provider,
         }).initializeState()
     
-        const manager = new InstanceManagerBuilder().buildManagerForState(state)
+        const manager = await new InstanceManagerBuilder().buildInstanceManager(state.name)
         const instanceName = state.name
         const autoApprove =  cliArgs.yes
 

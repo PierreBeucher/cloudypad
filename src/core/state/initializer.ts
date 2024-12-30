@@ -1,6 +1,7 @@
 import { CommonInstanceInput, InstanceStateV1 } from './state';
 import { getLogger } from '../../log/utils';
 import { CLOUDYPAD_CONFIGURATOR_ANSIBLE, CLOUDYPAD_PROVIDER } from '../const';
+import { StateWriter } from './writer';
 
 export interface StateInitializerArgs {
     provider: CLOUDYPAD_PROVIDER,
@@ -26,7 +27,7 @@ export class StateInitializer {
      * - Optionally pair instance
      * @param opts 
      */
-    public initializeState(): InstanceStateV1{
+    public async initializeState(): Promise<InstanceStateV1> {
 
         const instanceName = this.args.input.instanceName
         const input = this.args.input
@@ -48,6 +49,11 @@ export class StateInitializer {
                 output: undefined,
             }
         }
+
+        const writer = new StateWriter({
+            state: initialState,
+        })
+        await writer.persistStateNow()
 
         return initialState
     }

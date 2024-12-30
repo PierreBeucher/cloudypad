@@ -47,7 +47,7 @@ export class StateWriter<ST extends InstanceStateV1> extends BaseStateManager {
         // Parse to make sure a buggy state isn't persisted to disk
         // Throws error if marlformed state
         const parser = new StateParser()
-        parser.parseAnyStateV1(unsafeState)
+        parser.parseBaseStateV1(unsafeState)
         const safeState = unsafeState
 
         this.state = safeState

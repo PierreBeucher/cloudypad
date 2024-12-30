@@ -1,6 +1,7 @@
 import { mkdtempSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import sinon from 'sinon';
+import path from 'path';
 import { AwsPulumiClient, AwsPulumiOutput } from '../../src/tools/pulumi/aws';
 import { AnsibleClient } from '../../src/tools/ansible';
 import { InstancePulumiClient } from '../../src/tools/pulumi/client';
@@ -9,8 +10,8 @@ import { AbstractInstanceProvisioner } from '../../src/core/provisioner';
 import { AzurePulumiClient, AzurePulumiOutput } from '../../src/tools/pulumi/azure';
 import { GcpPulumiClient, GcpPulumiOutput } from '../../src/tools/pulumi/gcp';
 import { PaperspaceClient, PaperspaceMachine } from '../../src/providers/paperspace/client/client';
-import { StateWriter } from '../../src/core/state/writer';
 import { PUBLIC_IP_TYPE_STATIC } from '../../src/core/const';
+import { BaseStateManager } from '../../src/core/state/base-manager';
 
 
 export const mochaHooks = {
@@ -34,10 +35,10 @@ export const mochaHooks = {
         // don't sub provision() and destroy() as they have logic we want to test
 
         // Force environment data root dir to a temp directory for unit tests
-        sinon.stub(StateWriter, 'getEnvironmentDataRootDir').callsFake(() => {
-            return mkdtempSync(tmpdir())
+        const dummyCloudyPadHome = mkdtempSync(path.join(tmpdir(), ".cloudypad-unit-tests"))
+        sinon.stub(BaseStateManager, 'getEnvironmentDataRootDir').callsFake(() => {
+            return dummyCloudyPadHome
         })
-        
 
         sinon.stub(AnsibleClient.prototype, 'runAnsible').resolves()
 

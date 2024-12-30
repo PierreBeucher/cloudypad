@@ -13,36 +13,36 @@ describe('StateParser', function () {
         return yaml.load(fs.readFileSync(filePath, 'utf-8'))
     }
 
-    describe('parseAnyStateV1()', function () {
+    describe('parseBaseStateV1()', function () {
         
         it('should parse a valid AWS state', function () {
             const rawState = loadRawState('aws-dummy')
-            const parsedState = parser.parseAnyStateV1(rawState)
+            const parsedState = parser.parseBaseStateV1(rawState)
             assert.deepEqual(parsedState, rawState)
         })
 
         it('should parse a valid Azure state', function () {
             const rawState = loadRawState('azure-dummy')
-            const parsedState = parser.parseAnyStateV1(rawState)
+            const parsedState = parser.parseBaseStateV1(rawState)
             assert.deepEqual(parsedState, rawState)
         })
 
         it('should parse a valid GCP state', function () {
             const rawState = loadRawState('gcp-dummy')
-            const parsedState = parser.parseAnyStateV1(rawState)
+            const parsedState = parser.parseBaseStateV1(rawState)
             assert.deepEqual(parsedState, rawState)
         })
 
         it('should parse a valid Paperspace state', function () {
             const rawState = loadRawState('paperspace-dummy')
-            const parsedState = parser.parseAnyStateV1(rawState)
+            const parsedState = parser.parseBaseStateV1(rawState)
             assert.deepEqual(parsedState, rawState)
         })
 
         it('should throw an error for an invalid state', function () {
             const rawState = loadRawState('wrong-state-version')
             assert.throws(() => {
-                parser.parseAnyStateV1(rawState)
+                parser.parseBaseStateV1(rawState)
             }, /Coulnd't parse provided State with Zod/)
         })
     })

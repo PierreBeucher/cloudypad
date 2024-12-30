@@ -8,6 +8,7 @@ import { CLOUDYPAD_PROVIDER_GCP, PUBLIC_IP_TYPE } from "../../core/const";
 import { PartialDeep } from "type-fest";
 import { InteractiveInstanceInitializer } from "../../core/initializer";
 import { CLI_OPTION_DISK_SIZE, CLI_OPTION_PUBLIC_IP_TYPE, CLI_OPTION_SPOT, CliCommandGenerator, CreateCliArgs } from "../../core/input/cli";
+import { InstanceManagerBuilder } from "../../core/manager-builder";
 
 export interface GcpCreateCliArgs extends CreateCliArgs {
     projectId?: string
@@ -22,7 +23,7 @@ export interface GcpCreateCliArgs extends CreateCliArgs {
 
 export class GcpInputPrompter extends AbstractInputPrompter<GcpCreateCliArgs, GcpInstanceInput> {
     
-    cliArgsIntoInput(cliArgs: GcpCreateCliArgs): PartialDeep<GcpInstanceInput> {
+    protected doTransformCliArgsIntoInput(cliArgs: GcpCreateCliArgs): PartialDeep<GcpInstanceInput> {
         return {
             instanceName: cliArgs.name,
             provision:{ 
@@ -228,6 +229,31 @@ export class GcpCliCommandGenerator extends CliCommandGenerator {
                     
                 } catch (error) {
                     console.error('Error creating GCP instance:', error)
+                    process.exit(1)
+                }
+            })
+    }
+
+    buildUpdateCommand() {
+        return this.getBaseUpdateCommand(CLOUDYPAD_PROVIDER_GCP)
+            .addOption(CLI_OPTION_DISK_SIZE)
+            .addOption(CLI_OPTION_PUBLIC_IP_TYPE)
+            .option('--machine-type <machinetype>', 'Machine type to use for the instance')
+            .option('--gpu-type <gputype>', 'Type of accelerator (e.g., GPU) to attach to the instance')
+            .action(async (cliArgs) => {
+                try {
+                    const input = new GcpInputPrompter().cliArgsIntoInput(cliArgs)
+                    const updater = await new InstanceManagerBuilder().buildGcpInstanceUpdater(cliArgs.name)
+                    await updater.update({
+                        provisionInput: input.provision,
+                        configurationInput: input.configuration,
+                    }, { 
+                        autoApprove: cliArgs.yes
+                    })
+                    console.info(`Updated instance ${cliArgs.name}`)
+                    
+                } catch (error) {
+                    console.error('Error updating GCP instance:', error)
                     process.exit(1)
                 }
             })

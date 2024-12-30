@@ -102,7 +102,7 @@ export interface InstanceManagerArgs<ST extends InstanceStateV1> {
  * The concrete instance type is not known by this class: a per-provider factory is used 
  * to build each sub-managers.
  */
-export class GenericInstanceManager<ST extends InstanceStateV1> {
+export class GenericInstanceManager<ST extends InstanceStateV1> implements InstanceManager {
 
     protected readonly logger
     protected readonly stateWriter: StateWriter<ST>

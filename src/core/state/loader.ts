@@ -2,8 +2,9 @@ import * as fs from 'fs'
 import * as yaml from 'js-yaml'
 import * as path from 'path'
 import { getLogger } from '../../log/utils'
-import { AnyInstanceStateV1, StateParser } from './parser'
+import { StateParser } from './parser'
 import { BaseStateManager } from './base-manager'
+import { InstanceStateV1 } from './state'
 
 export interface StateLoaderArgs {
 
@@ -74,7 +75,7 @@ export class StateLoader extends BaseStateManager {
         }
     }
 
-    async loadInstanceStateSafe(instanceName: string): Promise<AnyInstanceStateV1> {
+    async loadInstanceStateSafe(instanceName: string): Promise<InstanceStateV1> {
         // state is unchecked, any is acceptable at this point
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const rawState = await this.loadRawInstanceState(instanceName) as any
@@ -84,6 +85,6 @@ export class StateLoader extends BaseStateManager {
         }
 
         const parser = new StateParser()
-        return parser.parseAnyStateV1(rawState)
+        return parser.parseBaseStateV1(rawState)
     }
 }
