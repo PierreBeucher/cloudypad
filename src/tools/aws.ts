@@ -1,4 +1,4 @@
-import { EC2Client, DescribeInstancesCommand, Instance, StartInstancesCommand, StopInstancesCommand, RebootInstancesCommand } from '@aws-sdk/client-ec2';
+import { EC2Client, DescribeInstancesCommand, Instance, StartInstancesCommand, StopInstancesCommand, RebootInstancesCommand, waitUntilInstanceRunning, waitUntilInstanceStopped } from '@aws-sdk/client-ec2';
 import { STSClient, GetCallerIdentityCommand } from '@aws-sdk/client-sts';
 import { getLogger, Logger } from '../log/utils';
 import { loadConfig } from "@smithy/node-config-provider";
@@ -9,6 +9,16 @@ import { AccountClient, ListRegionsCommand } from "@aws-sdk/client-account";
  * Region to use when no client region is configured
  */
 export const DEFAULT_REGION = "us-east-1"
+
+export interface StartStopOptions {
+    wait?: boolean
+    waitTimeoutSeconds?: number
+}
+
+const DEFAULT_START_STOP_OPTION_WAIT=false
+
+// Generous default timeout as G instances are sometime long to stop
+const DEFAULT_START_STOP_OPTION_WAIT_TIMEOUT=60*8
 
 export class AwsClient {
 
@@ -93,54 +103,87 @@ export class AwsClient {
         return instances
     }
 
-    async startInstance(instanceId: string){
+    async startInstance(instanceId: string, opts?: StartStopOptions) {
+        const wait = opts?.wait ?? DEFAULT_START_STOP_OPTION_WAIT
+        const waitTimeout = opts?.waitTimeoutSeconds || DEFAULT_START_STOP_OPTION_WAIT_TIMEOUT
+
         try {
             const command = new StartInstancesCommand({
                 InstanceIds: [instanceId],
             })
-
+    
             this.logger.debug(`Starting AWS instance: ${JSON.stringify(command)}`)
-
+    
             const result = await this.ec2Client.send(command)
             
             this.logger.trace(`Starting EC2 instance response ${JSON.stringify(result)}`)
-            
+    
+            if (wait) {
+                this.logger.debug(`Waiting for instance ${instanceId} to reach 'running' state`)
+                await waitUntilInstanceRunning(
+                    { client: this.ec2Client, maxWaitTime: waitTimeout  },
+                    { InstanceIds: [instanceId] }
+                )
+                this.logger.trace(`Instance ${instanceId} is now running`)
+            }
         } catch (error) {
             this.logger.error(`Failed to start EC2 instance ${instanceId}:`, error)
             throw error
         }
     }
 
-    async stopInstance(instanceId: string) {
+    async stopInstance(instanceId: string, opts?: StartStopOptions) {
+        const wait = opts?.wait ?? DEFAULT_START_STOP_OPTION_WAIT
+        const waitTimeout = opts?.waitTimeoutSeconds || DEFAULT_START_STOP_OPTION_WAIT_TIMEOUT
+
         try {
             const command = new StopInstancesCommand({
                 InstanceIds: [instanceId],
             });
-
+    
             this.logger.debug(`Stopping instance: ${JSON.stringify(command)}`)
-
+    
             const result = await this.ec2Client.send(command);
-
+    
             this.logger.trace(`Stopping EC2 instance response ${JSON.stringify(result)}`)
-
+    
+            if (wait) {
+                this.logger.debug(`Waiting for instance ${instanceId} to reach 'stopped' state`)
+                await waitUntilInstanceStopped(
+                    { client: this.ec2Client, maxWaitTime: waitTimeout },
+                    { InstanceIds: [instanceId] }
+                )
+                this.logger.trace(`Instance ${instanceId} is now stopped`)
+            }
         } catch (error) {
             this.logger.error(`Failed to stop EC2 instance ${instanceId}:`, error)
             throw error
         }
     }
     
-    async restartInstance(instanceId: string) {
+    async restartInstance(instanceId: string, opts?: StartStopOptions) {
+        const wait = opts?.wait ?? DEFAULT_START_STOP_OPTION_WAIT
+        const waitTimeout = opts?.waitTimeoutSeconds || DEFAULT_START_STOP_OPTION_WAIT_TIMEOUT
+
         try {
             const rebootCommand = new RebootInstancesCommand({
                 InstanceIds: [instanceId],
             });
-
+    
             this.logger.debug(`Restarting instance: ${JSON.stringify(rebootCommand)}`)
-
+    
             const result = await this.ec2Client.send(rebootCommand);
             
             this.logger.trace(`Restarting EC2 instance response ${JSON.stringify(result)}`)
-
+    
+            if (wait) {
+                this.logger.debug(`Waiting for instance ${instanceId} to reach 'running' state after reboot`)
+                await waitUntilInstanceRunning(
+                    { client: this.ec2Client, maxWaitTime: waitTimeout },
+                    { InstanceIds: [instanceId] }
+                )
+                this.logger.trace(`Instance ${instanceId} is now fully restarted and running`)
+            }
         } catch (error) {
             this.logger.error(`Failed to restart EC2 instance ${instanceId}:`, error)
             throw error

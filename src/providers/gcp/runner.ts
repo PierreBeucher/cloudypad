@@ -1,4 +1,4 @@
-import { AbstractInstanceRunner, InstanceRunnerArgs } from '../../core/runner';
+import { AbstractInstanceRunner, InstanceRunnerArgs, StartStopOptions } from '../../core/runner';
 import { GcpClient } from '../../tools/gcp';
 import { GcpProvisionInputV1, GcpProvisionOutputV1 } from './state';
 
@@ -22,15 +22,15 @@ export class GcpInstanceRunner extends AbstractInstanceRunner<GcpProvisionInputV
         return this.args.instanceName, this.args.input.zone
     }
 
-    async doStart() {
-        this.client.startInstance(this.getZone(), this.getinstanceName())
+    async doStart(opts?: StartStopOptions) {
+        await this.client.startInstance(this.getZone(), this.getinstanceName(), opts)
     }
 
-    async doStop() {
-        this.client.stopInstance(this.getZone(), this.getinstanceName())
+    async doStop(opts?: StartStopOptions) {
+        await this.client.stopInstance(this.getZone(), this.getinstanceName(), opts)
     }
 
-    async doRestart() {
-        this.client.restartInstance(this.getZone(), this.getinstanceName())
+    async doRestart(opts?: StartStopOptions) {
+        await this.client.restartInstance(this.getZone(), this.getinstanceName(), opts)
     }
 }

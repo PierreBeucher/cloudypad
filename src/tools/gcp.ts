@@ -1,7 +1,17 @@
-import { InstancesClient, protos, RegionsClient, MachineTypesClient, AcceleratorTypesClient } from '@google-cloud/compute'
+import { InstancesClient, protos, RegionsClient, MachineTypesClient, AcceleratorTypesClient, ZoneOperationsClient } from '@google-cloud/compute'
 import { GoogleAuth } from 'google-auth-library'
 import { getLogger, Logger } from '../log/utils'
 import { ProjectsClient, protos as rmprotos  } from '@google-cloud/resource-manager'
+
+interface StartStopActionOpts {
+    wait?: boolean
+    waitTimeoutSeconds?: number
+}
+
+const DEFAULT_START_STOP_OPTION_WAIT=false
+
+// Generous default timeout as G instances are sometime long to stop
+const DEFAULT_START_STOP_OPTION_WAIT_TIMEOUT=60
 
 export class GcpClient {
 
@@ -63,38 +73,61 @@ export class GcpClient {
         }
     }
 
-    async startInstance(zone: string, instanceName: string){
+    async startInstance(zone: string, instanceName: string, opts?: StartStopActionOpts){
+        const wait = opts?.wait ?? DEFAULT_START_STOP_OPTION_WAIT
+        const waitTimeout = opts?.waitTimeoutSeconds || DEFAULT_START_STOP_OPTION_WAIT_TIMEOUT
+
         try {
             this.logger.debug(`Starting Google Cloud instance ${instanceName}`)
-            const [result] = await this.instances.start({
+            const [response] = await this.instances.start({
                 instance: instanceName,
                 project: this.projectId,
                 zone: zone
             })
-            this.logger.debug(`Started Google Cloud instance ${instanceName}, response: ${JSON.stringify(result)}`)
+            
+            if(wait){
+                await this.waitOperation(response.latestResponse.name, zone, waitTimeout)
+            }
+
+            this.logger.debug(`Started Google Cloud instance ${instanceName}, response: ${JSON.stringify(response)}`)
         } catch (error) {
             this.logger.error(`Failed to start GCP instance ${instanceName}:`, error)
             throw error
         }
     }
 
-    async stopInstance(zone: string, instanceName: string) {
+    async stopInstance(zone: string, instanceName: string, opts?: StartStopActionOpts) {
+        const wait = opts?.wait ?? DEFAULT_START_STOP_OPTION_WAIT
+        const waitTimeout = opts?.waitTimeoutSeconds || DEFAULT_START_STOP_OPTION_WAIT_TIMEOUT
+
         try {
             this.logger.debug(`Stopping Google Cloud instance ${instanceName}`)
-            const [result] = await this.instances.stop({
+            const [response] = await this.instances.stop({
                 instance: instanceName,
                 project: this.projectId,
                 zone: zone
             })
-            this.logger.debug(`Stopped Google Cloud instance ${instanceName}, response: ${JSON.stringify(result)}`)
+
+            if(wait){
+                await this.waitOperation(response.latestResponse.name, zone, waitTimeout)
+            }
+            
+            this.logger.debug(`Stopped Google Cloud instance ${instanceName}, response: ${JSON.stringify(response)}`)
         } catch (error) {
             this.logger.error(`Failed to stop Google Cloud instance ${instanceName}:`, error)
             throw error
         }
     }
-    
-    async restartInstance(zone: string, instanceName: string) {
-        throw new Error("Not implemented yet. " + instanceName)
+   
+    async restartInstance(zone: string, instanceName: string, opts?: StartStopActionOpts) {
+        // As google-cloud SDK doesn't have a "restart" operation we need to stop, wait for full stop, and then start
+        // In this context, without --wait, operation would be ambiguous as we can't run start until instance is stopped
+        // We'd need to wait start operation which would make the wait flag ambiguous as without it we would still wait partially
+        if(!opts?.wait) {
+            throw new Error(`--wait is required to restart GCP instance.`)
+        }
+        await this.stopInstance(zone, instanceName, opts)
+        await this.stopInstance(zone, instanceName, opts)
     }
 
     async listRegions(): Promise<protos.google.cloud.compute.v1.IRegion[]> {
@@ -151,5 +184,45 @@ export class GcpClient {
             throw error
         }
     }
+
+    private async waitOperation(operationName: string, zone: string, waitTimeoutSeconds?: number): Promise<void> {
+        const operationsClient = new ZoneOperationsClient()
+        const startTime = Date.now()
+        const timeout = (waitTimeoutSeconds ?? 300) * 1000 // Default timeout 300 seconds if not specified
+
+        this.logger.debug(`Waiting for operation ${operationName} in zone ${zone} to complete`)
+
+        let [operation] = await operationsClient.get({
+            operation: operationName,
+            project: this.projectId,
+            zone: zone
+        })
+
+        while (operation.status !== "DONE") {
+
+            [operation] = await operationsClient.get({
+                operation: operationName,
+                project: this.projectId,
+                zone: zone
+            })
+
+            this.logger.debug(`Checking operation ${operationName} status in ${zone}`)
+
+            if (Date.now() - startTime > timeout) {
+                throw new Error(`Operation ${operationName} timed out after ${waitTimeoutSeconds} seconds`)
+            }
+
+            await new Promise(resolve => setTimeout(resolve, 2000)) // Wait 2 second before checking again
+        }
+
+        if (operation.status === 'DONE') {
+            if (operation.error) {
+                throw new Error(`Operation ${operationName} failed with errors: ${JSON.stringify(operation.error)}`)
+            }
+            this.logger.debug(`Operation ${operationName} completed successfully`)
+        }
+
+    }
+
 
 }

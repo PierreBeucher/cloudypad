@@ -92,6 +92,12 @@ cloudypad stop mypad
 cloudypad restart mypad
 ```
 
+By default instance stop/start/restart triggers the action without waiting. Wait for action to finish with `--wait` (and optionally `timeout <seconds>`)
+
+```sh
+cloudypad [start|top|restart] mypad --wait --timeout 180
+```
+
 Destroy instance:
 
 ```sh
