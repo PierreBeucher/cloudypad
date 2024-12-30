@@ -1,7 +1,7 @@
 import * as assert from 'assert';
 import { PaperspaceInstanceInput } from '../../../src/providers/paperspace/state';
 import { PUBLIC_IP_TYPE_STATIC } from '../../../src/core/const';
-import { DEFAULT_COMMON_INPUT } from '../common/utils';
+import { DEFAULT_COMMON_INPUT } from '../utils';
 import { PaperspaceCreateCliArgs, PaperspaceInputPrompter } from '../../../src/providers/paperspace/input';
 import { PartialDeep } from 'type-fest';
 import lodash from 'lodash'

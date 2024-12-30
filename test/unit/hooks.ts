@@ -2,16 +2,16 @@ import { mkdtempSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import sinon from 'sinon';
 import path from 'path';
-import { AwsPulumiClient, AwsPulumiOutput } from '../../src/tools/pulumi/aws';
+import { AwsPulumiClient } from '../../src/tools/pulumi/aws';
 import { AnsibleClient } from '../../src/tools/ansible';
 import { InstancePulumiClient } from '../../src/tools/pulumi/client';
 import { AbstractInstanceRunner } from '../../src/core/runner';
 import { AbstractInstanceProvisioner } from '../../src/core/provisioner';
-import { AzurePulumiClient, AzurePulumiOutput } from '../../src/tools/pulumi/azure';
-import { GcpPulumiClient, GcpPulumiOutput } from '../../src/tools/pulumi/gcp';
+import { AzurePulumiClient } from '../../src/tools/pulumi/azure';
+import { GcpPulumiClient } from '../../src/tools/pulumi/gcp';
 import { PaperspaceClient, PaperspaceMachine } from '../../src/providers/paperspace/client/client';
-import { PUBLIC_IP_TYPE_STATIC } from '../../src/core/const';
 import { BaseStateManager } from '../../src/core/state/base-manager';
+import { DUMMY_AWS_PULUMI_OUTPUT, DUMMY_AZURE_PULUMI_OUTPUT, DUMMY_GCP_PULUMI_OUTPUT, DUMMY_PAPERSPACE_MACHINE } from './utils';
 
 
 export const mochaHooks = {
@@ -43,27 +43,17 @@ export const mochaHooks = {
         sinon.stub(AnsibleClient.prototype, 'runAnsible').resolves()
 
         // AWS
-        const dummyAwsPulumiOutput: AwsPulumiOutput = { instanceId: "i-0123456789", publicIp: "127.0.0.1" }
-        sinon.stub(AwsPulumiClient.prototype, 'up').resolves(dummyAwsPulumiOutput)
+        sinon.stub(AwsPulumiClient.prototype, 'up').resolves(DUMMY_AWS_PULUMI_OUTPUT)
 
         // Azure
-        const dummyAzurePulumiOutput: AzurePulumiOutput = { vmName: "dummy-az", publicIp: "127.0.0.1", resourceGroupName: "dummy-rg"}
-        sinon.stub(AzurePulumiClient.prototype, 'up').resolves(dummyAzurePulumiOutput)
+        sinon.stub(AzurePulumiClient.prototype, 'up').resolves(DUMMY_AZURE_PULUMI_OUTPUT)
 
         // GCP
-        const dummyGcpPulumiOutput: GcpPulumiOutput = { instanceName: "dummy-gcp", publicIp: "127.0.0.1"}
-        sinon.stub(GcpPulumiClient.prototype, 'up').resolves(dummyGcpPulumiOutput)
+        sinon.stub(GcpPulumiClient.prototype, 'up').resolves(DUMMY_GCP_PULUMI_OUTPUT)
 
         // Paperspace
-        const dummyMachine: PaperspaceMachine = {
-            id: "machine-123456788",
-            name: "test-machine",
-            state: "running",
-            machineType: "RTX4000",
-            privateIp: "192.168.0.10",
-            publicIp: "127.0.0.1",
-            publicIpType: PUBLIC_IP_TYPE_STATIC
-        }
+        const dummyMachine: PaperspaceMachine = DUMMY_PAPERSPACE_MACHINE
+
         sinon.stub(PaperspaceClient.prototype, 'createMachine').resolves(dummyMachine)
     }
 }

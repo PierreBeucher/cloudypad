@@ -1,7 +1,7 @@
 import * as assert from 'assert';
 import { GcpInstanceInput, GcpInstanceStateV1 } from '../../../src/providers/gcp/state';
 import { CLOUDYPAD_CONFIGURATOR_ANSIBLE, CLOUDYPAD_PROVIDER_GCP, PUBLIC_IP_TYPE_STATIC } from '../../../src/core/const';
-import { DEFAULT_COMMON_INPUT } from '../common/utils';
+import { DEFAULT_COMMON_INPUT } from '../utils';
 import { InteractiveInstanceInitializer } from '../../../src/core/initializer';
 import { GcpCreateCliArgs, GcpInputPrompter } from '../../../src/providers/gcp/input';
 import { StateLoader } from '../../../src/core/state/loader';

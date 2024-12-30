@@ -1,17 +1,12 @@
 import * as assert from 'assert'
 import { StateParser } from '../../../../src/core/state/parser'
-import yaml from 'js-yaml'
-import * as fs from 'fs'
-import * as path from 'path'
+import { loadRawState } from '../../utils'
 
 describe('StateParser', function () {
 
     const parser = new StateParser()
 
-    function loadRawState(fileName: string): unknown {
-        const filePath = path.resolve(__dirname, 'v1-root-data-dir/instances', fileName, 'state.yml')
-        return yaml.load(fs.readFileSync(filePath, 'utf-8'))
-    }
+
 
     describe('parseBaseStateV1()', function () {
         

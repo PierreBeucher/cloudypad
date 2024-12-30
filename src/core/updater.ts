@@ -24,7 +24,7 @@ export class InstanceUpdater<ST extends InstanceStateV1> {
         this.logger = getLogger(args.stateWriter.instanceName())
     }
 
-    async update(updates: InstanceUpdateArgs<ST>, opts: InstanceProvisionOptions): Promise<void> {
+    async update(updates: InstanceUpdateArgs<ST>, opts?: InstanceProvisionOptions): Promise<void> {
 
         const intanceName = this.stateWriter.instanceName()
         this.logger.debug(`Updating instance ${intanceName} with ${JSON.stringify(updates)} and options ${JSON.stringify(opts)}`)
