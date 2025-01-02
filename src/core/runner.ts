@@ -20,9 +20,9 @@ export interface InstanceRunnerOptions  {
  */
 export interface InstanceRunner {
 
-    start(): Promise<void>
-    stop(): Promise<void>
-    restart(): Promise<void>
+    start(opts?: StartStopOptions): Promise<void>
+    stop(opts?: StartStopOptions): Promise<void>
+    restart(opts?: StartStopOptions): Promise<void>
     
     pair(): Promise<void>
 }
@@ -31,6 +31,11 @@ export interface InstanceRunnerArgs<C extends CommonProvisionInputV1, O extends 
     instanceName: string, 
     input: C
     output: O
+}
+
+export interface StartStopOptions {
+    wait?: boolean
+    waitTimeoutSeconds?: number
 }
 
 export abstract class AbstractInstanceRunner<C extends CommonProvisionInputV1, O extends CommonProvisionOutputV1>  implements InstanceRunner {
@@ -44,24 +49,24 @@ export abstract class AbstractInstanceRunner<C extends CommonProvisionInputV1, O
         this.logger = getLogger(args.instanceName) 
     }
  
-    async start(): Promise<void> {
+    async start(opts?: StartStopOptions): Promise<void> {
         this.logger.info(`Starting instance ${this.args.instanceName}`)
-        await this.doStart()
+        await this.doStart(opts)
     }
 
-    async stop(): Promise<void> {
+    async stop(opts?: StartStopOptions): Promise<void> {
         this.logger.info(`Stopping instance ${this.args.instanceName}`)
-        await this.doStop()
+        await this.doStop(opts)
     }
 
-    async restart(): Promise<void> {
+    async restart(opts?: StartStopOptions): Promise<void> {
         this.logger.info(`Restarting instance ${this.args.instanceName}`)
-        await this.doRestart()
+        await this.doRestart(opts)
     }
 
-    protected abstract doStart(): Promise<void>;
-    protected abstract doStop(): Promise<void>;
-    protected abstract doRestart(): Promise<void>;
+    protected abstract doStart(opts?: StartStopOptions): Promise<void>
+    protected abstract doStop(opts?: StartStopOptions): Promise<void>
+    protected abstract doRestart(opts?: StartStopOptions): Promise<void>
 
     private async waitForPinURL(docker: Docker, host: string) {
         const containerName = 'wolf';

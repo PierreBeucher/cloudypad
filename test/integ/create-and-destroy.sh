@@ -42,11 +42,11 @@ function create_destroy_aws() {
 
     $cloudypad_cmd list | grep $instance_name
 
-    $cloudypad_cmd stop $instance_name
+    $cloudypad_cmd stop $instance_name --wait
 
-    $cloudypad_cmd start $instance_name
+    $cloudypad_cmd start $instance_name --wait
     
-    $cloudypad_cmd restart $instance_name
+    $cloudypad_cmd restart $instance_name --wait
 
     $cloudypad_cmd destroy $instance_name
 }
@@ -68,9 +68,9 @@ function create_destroy_paperspace() {
 
     $cloudypad_cmd list | grep $instance_name
 
-    $cloudypad_cmd stop $instance_name
+    $cloudypad_cmd stop $instance_name --wait
 
-    $cloudypad_cmd start $instance_name
+    $cloudypad_cmd start $instance_name --wait
 
     $cloudypad_cmd destroy $instance_name
 }
@@ -100,11 +100,11 @@ function create_destroy_azure() {
 
     $cloudypad_cmd list | grep $instance_name
 
-    $cloudypad_cmd stop $instance_name
+    $cloudypad_cmd stop $instance_name --wait
 
-    $cloudypad_cmd start $instance_name
+    $cloudypad_cmd start $instance_name --wait
 
-    $cloudypad_cmd restart $instance_name
+    $cloudypad_cmd restart $instance_name --wait
 
     $cloudypad_cmd destroy $instance_name
 }
@@ -113,7 +113,7 @@ function create_destroy_gcp() {
     
     instance_name="test-create-destroy-gcp"
 
-    $cloudypad_cmd create gcp \
+    npx tsx src/index.ts create gcp \
         --name $instance_name \
         --private-ssh-key ~/.ssh/id_ed25519 \
         --machine-type n1-standard-8 \
@@ -135,9 +135,11 @@ function create_destroy_gcp() {
 
     $cloudypad_cmd list | grep $instance_name
 
-    $cloudypad_cmd stop $instance_name
+    $cloudypad_cmd stop $instance_name --wait
 
-    $cloudypad_cmd start $instance_name
+    $cloudypad_cmd start $instance_name --wait
+
+    $cloudypad_cmd restart $instance_name --wait
 
     $cloudypad_cmd destroy $instance_name
 }

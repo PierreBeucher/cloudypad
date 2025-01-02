@@ -2,7 +2,7 @@ import { InstanceStateV1 } from './state/state';
 import { InstanceProvisioner, InstanceProvisionOptions } from './provisioner';
 import { InstanceConfigurator } from './configurator';
 import { getLogger } from '../log/utils';
-import { InstanceRunner } from './runner';
+import { InstanceRunner, StartStopOptions } from './runner';
 import { StateWriter } from './state/writer';
 import { AnsibleConfigurator } from '../configurators/ansible';
 
@@ -78,9 +78,9 @@ export interface InstanceManager {
     configure(): Promise<void>
     provision(opts?: InstanceProvisionOptions): Promise<void>
     destroy(opts?: InstanceProvisionOptions): Promise<void>
-    start(): Promise<void>
-    stop(): Promise<void>
-    restart(): Promise<void>
+    start(opts?: StartStopOptions): Promise<void>
+    stop(opts?: StartStopOptions): Promise<void>
+    restart(opts?: StartStopOptions): Promise<void>
     pair(): Promise<void>
     getStateJSON(): string
 }
@@ -133,19 +133,19 @@ export class GenericInstanceManager<ST extends InstanceStateV1> implements Insta
         await this.stateWriter.destroyInstanceStateDirectory()
     }
 
-    async start(): Promise<void> {
+    async start(opts?: StartStopOptions): Promise<void> {
         const runner = await this.buildRunner()
-        await runner.start()
+        await runner.start(opts)
     }
 
-    async stop(): Promise<void> {
+    async stop(opts?: StartStopOptions): Promise<void> {
         const runner = await this.buildRunner()
-        await runner.stop()
+        await runner.stop(opts)
     }
 
-    async restart(): Promise<void> {
+    async restart(opts?: StartStopOptions): Promise<void> {
         const runner = await this.buildRunner()
-        await runner.restart()
+        await runner.restart(opts)
     }
 
     async pair(): Promise<void> {

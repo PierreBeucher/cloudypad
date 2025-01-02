@@ -1,4 +1,4 @@
-import { AbstractInstanceRunner, InstanceRunnerArgs } from '../../core/runner';
+import { AbstractInstanceRunner, InstanceRunnerArgs, StartStopOptions } from '../../core/runner';
 import { AwsClient } from '../../tools/aws';
 import { AwsProvisionInputV1, AwsProvisionOutputV1 } from './state';
 
@@ -18,18 +18,18 @@ export class AwsInstanceRunner extends AbstractInstanceRunner<AwsProvisionInputV
         return this.args.output.instanceId
     }
 
-    async doStart() {
+    async doStart(opts?: StartStopOptions) {
         const instanceId = this.getInstanceId()
-        await this.awsClient.startInstance(instanceId)
+        await this.awsClient.startInstance(instanceId, opts)
     }
 
-    async doStop() {
+    async doStop(opts?: StartStopOptions) {
         const instanceId = this.getInstanceId()
-        await this.awsClient.stopInstance(instanceId)
+        await this.awsClient.stopInstance(instanceId, opts)
     }
 
-    async doRestart() {
+    async doRestart(opts?: StartStopOptions) {
         const instanceId = this.getInstanceId()
-        await this.awsClient.restartInstance(instanceId)
+        await this.awsClient.restartInstance(instanceId, opts)
     }
 }

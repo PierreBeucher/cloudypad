@@ -67,11 +67,20 @@ program
 program
     .command('start <name>')
     .description('Start an instance')
-    .action(async (name) => {
+    .option('--wait', 'Wait for instance to be fully started.')
+    .option('--timeout <seconds>', 'Timeout when waiting for instance to be fully started. Ignored if --wait not set.', parseInt)
+    .action(async (name, opts) => {
         try {
+            console.info(`Starting instance ${name}...`)
             const m = await new InstanceManagerBuilder().buildInstanceManager(name)
-            await m.start()
-            console.info(`Started instance ${name}`)
+            await m.start({ wait: opts.wait, waitTimeoutSeconds: opts.timeout})
+
+            if(opts.wait){
+                console.info(`Started instance ${name}`)
+            } else {
+                console.info(`Instance ${name} start triggered. Use --wait flag to wait for completion.`)
+            }
+
         } catch (error) {
             console.error(`Error starting instance ${name}:`, error)
             process.exit(1)
@@ -81,11 +90,20 @@ program
 program
     .command('stop <name>')
     .description('Stop an instance')
-    .action(async (name) => {
+    .option('--wait', 'Wait for instance to be fully stopped.')
+    .option('--timeout <seconds>', 'Timeout when waiting for instance to be fully stopped. Ignored if --wait not set.', parseInt)
+    .action(async (name, opts) => {
         try {
+            console.info(`Stopping instance ${name}...`)
             const m = await new InstanceManagerBuilder().buildInstanceManager(name)
-            await m.stop()
-            console.info(`Stopped instance ${name}`)
+            await m.stop({ wait: opts.wait, waitTimeoutSeconds: opts.timeout})
+            
+            if(opts.wait){
+                console.info(`Stopped instance ${name}`)
+            } else {
+                console.info(`Instance ${name} stop triggered. Use --wait flag to wait for completion.`)
+            }
+
         } catch (error) {
             console.error(`Error stopping instance ${name}:`, error)
             process.exit(1)
@@ -94,12 +112,15 @@ program
 
 program
     .command('restart <name>')
-    .description('Restart an instance')
-    .action(async (name) => {
+    .description('Restart an instance. Depending on provider this operation may be synchronous.')
+    .option('--wait', 'Wait for instance to be fully restarted.')
+    .option('--timeout <seconds>', 'Timeout when waiting for instance to be fully restarted. Ignored if --wait not set.', parseInt)
+    .action(async (name, opts) => {
         try {
+            console.info(`Restarting instance ${name}...`)
             const m = await new InstanceManagerBuilder().buildInstanceManager(name)
-            await m.restart()
-            console.info(`Restarted instance ${name}`)
+            await m.restart({ wait: opts.wait, waitTimeoutSeconds: opts.timeout})
+            
         } catch (error) {
             console.error(`Error restarting instance ${name}:`, error)
             process.exit(1)

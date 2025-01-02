@@ -1,4 +1,4 @@
-import { AbstractInstanceRunner, InstanceRunnerArgs } from '../../core/runner'
+import { AbstractInstanceRunner, InstanceRunnerArgs, StartStopOptions } from '../../core/runner'
 import { AzureClient } from '../../tools/azure'
 import { AzureProvisionInputV1, AzureProvisionOutputV1 } from './state'
 
@@ -22,24 +22,26 @@ export class AzureInstanceRunner extends AbstractInstanceRunner<AzureProvisionIn
         return this.args.output.resourceGroupName
     }
 
-    async doStart() {
+    async doStart(opts?: StartStopOptions) {
         const vmName = this.getVmName()
         const resourceGroupName = this.getResourceGroupName()
 
-        await this.client.startInstance(resourceGroupName, vmName)
+        await this.client.startInstance(resourceGroupName, vmName, {
+            wait: opts?.wait,
+        })
     }
 
-    async doStop() {
+    async doStop(opts?: StartStopOptions) {
         const vmName = this.getVmName()
         const resourceGroupName = this.getResourceGroupName()
 
-        await this.client.stopInstance(resourceGroupName, vmName)
+        await this.client.stopInstance(resourceGroupName, vmName, opts)
     }
 
-    async doRestart() {
+    async doRestart(opts?: StartStopOptions) {
         const vmName = this.getVmName()
         const resourceGroupName = this.getResourceGroupName()
 
-        await this.client.restartInstance(resourceGroupName, vmName)
+        await this.client.restartInstance(resourceGroupName, vmName, opts)
     }
 }
