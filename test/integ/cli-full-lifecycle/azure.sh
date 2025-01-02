@@ -2,16 +2,16 @@ function create_destroy_azure() {
     
     instance_name="test-create-destroy-azure"
 
-    # $cloudypad_cmd create azure \
-    #     --name $instance_name \
-    #     --private-ssh-key ~/.ssh/id_ed25519 \
-    #     --vm-size Standard_NC8as_T4_v3 \
-    #     --disk-size 100 \
-    #     --public-ip-type static \
-    #     --location "francecentral" \
-    #     --spot \
-    #     --subscription-id 0dceb5ed-9096-4db7-b430-2609e7cc6a15 \
-    #     --yes --overwrite-existing
+    $cloudypad_cmd create azure \
+        --name $instance_name \
+        --private-ssh-key ~/.ssh/id_ed25519 \
+        --vm-size Standard_NC8as_T4_v3 \
+        --disk-size 100 \
+        --public-ip-type static \
+        --location "francecentral" \
+        --spot \
+        --subscription-id 0dceb5ed-9096-4db7-b430-2609e7cc6a15 \
+        --yes --overwrite-existing
 
     $cloudypad_cmd update azure \
         --name $instance_name \

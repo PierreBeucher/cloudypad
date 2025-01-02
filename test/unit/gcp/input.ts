@@ -34,7 +34,7 @@ describe('GCP input prompter', () => {
     const TEST_CLI_ARGS: GcpCreateCliArgs = {
         name: TEST_INPUT.instanceName,
         yes: true,
-        overwriteExisting: false,
+        overwriteExisting: true,
         privateSshKey: TEST_INPUT.provision.ssh.privateKeyPath,
         projectId: TEST_INPUT.provision.projectId,
         region: TEST_INPUT.provision.region,
@@ -45,6 +45,28 @@ describe('GCP input prompter', () => {
         gpuType: TEST_INPUT.provision.acceleratorType,
         spot: TEST_INPUT.provision.useSpot,
     }
+
+    it('should convert CLI args into partial input', () => {
+        
+        const prompter = new GcpInputPrompter()
+        const result = prompter.cliArgsIntoInput(TEST_CLI_ARGS)
+
+        const expected: PartialDeep<GcpInstanceInput> = {
+            ...TEST_INPUT,
+            provision: {
+                ...TEST_INPUT.provision,
+                ssh: lodash.omit(TEST_INPUT.provision.ssh, "user")
+            }
+        }
+        
+        assert.deepEqual(result, expected)
+    })
+
+    it('should return provided inputs without prompting when full input provider', async () => {
+
+        const result = await new GcpInputPrompter().promptInput(TEST_INPUT, { overwriteExisting: true})
+        assert.deepEqual(result, TEST_INPUT)
+    })
 
     it('should convert CLI args into partial input', () => {
         
