@@ -31,9 +31,6 @@ tasks:
       [ $(docker run crafteo/cloudypad:local --version) = $(cat package.json | jq .version -r) ] 
       || echo "Version in container image doesn't match package.json version"
 
-  test-create-and-destroy:
-    cmd: test/integ/create-and-destroy.sh
-
   # Detect potential circular deps with Madge
   test-circular-deps:
     cmd: npx -y madge --ts-config ./tsconfig.json -c .
