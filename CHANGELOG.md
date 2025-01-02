@@ -1,5 +1,20 @@
 # Changelog
 
+## [0.10.0](https://github.com/PierreBeucher/cloudypad/compare/v0.9.0...v0.10.0) (2025-01-02)
+
+
+### Features
+
+* add 'cloudypad update' command to update some instance configurations (eg. disk size or instance type) ([cbd2f4e](https://github.com/PierreBeucher/cloudypad/commit/cbd2f4e8cd5980df30963ccaef91ecae66627d16))
+* cloudypad start/stop/restart --wait and --timeout flags ([17d93a6](https://github.com/PierreBeucher/cloudypad/commit/17d93a6debf95334432b67dffece5885e6a00dde))
+* destroy command --yes flag for auto approval ([c202e67](https://github.com/PierreBeucher/cloudypad/commit/c202e67d3646f326df823e6d92d847c2d648ecea))
+
+
+### Bug Fixes
+
+* Azure instance with dynamic IP creation failure ([6e6cc2f](https://github.com/PierreBeucher/cloudypad/commit/6e6cc2ffc64cd2bd77c85ba7e8d92362fa82e679))
+* prompt for existing instance as soon as instance name is known ([81137aa](https://github.com/PierreBeucher/cloudypad/commit/81137aaf269a155a0f00b539b5e59cf54cf7a649))
+
 ## [0.9.0](https://github.com/PierreBeucher/cloudypad/compare/v0.8.0...v0.9.0) (2024-12-27)
 
 
