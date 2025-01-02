@@ -1,7 +1,12 @@
 import { getLogger, Logger } from "../log/utils"
 import { CommonProvisionInputV1, CommonProvisionOutputV1 } from "./state/state"
+import { confirm } from '@inquirer/prompts'
 
 export interface InstanceProvisionOptions  {
+    autoApprove?: boolean
+}
+
+export interface DestroyOptions {
     autoApprove?: boolean
 }
 
@@ -27,7 +32,7 @@ export interface InstanceProvisioner  {
      * Destroy the instance. Every infrastructure and Cloud resources managed for this instance are destroyed. 
      * @param opts 
      */
-    destroy(opts?: InstanceProvisionOptions): Promise<void>
+    destroy(opts?: DestroyOptions): Promise<void>
 }
 
 export interface InstanceProvisionerArgs<C extends CommonProvisionInputV1, O extends CommonProvisionOutputV1> {
@@ -56,13 +61,30 @@ export abstract class AbstractInstanceProvisioner<C extends CommonProvisionInput
         return await this.doProvision(opts);
     }
 
-    async destroy(opts?: InstanceProvisionOptions): Promise<void> {
-        this.logger.info(`Destroying instance ${this.args.instanceName}`);
-        await this.doDestroy(opts);
+    async destroy(opts?: DestroyOptions): Promise<void> {
+        this.logger.info(`Destroying instance: ${this.args.instanceName}`)
+
+        let autoApprove = opts?.autoApprove
+        if(opts?.autoApprove === undefined){
+            autoApprove = await confirm({
+                message: `You are about to destroy instance '${this.args.instanceName}'. Please confirm:`,
+                default: false,
+            })
+        }
+
+        if (!autoApprove) {
+            throw new Error('Destroy aborted.')
+        }
+
+        this.logger.info(`Destroying instance ${this.args.instanceName}...`)
+        
+        await this.doDestroy()
+
+        this.logger.info(`Destroyed instance ${this.args.instanceName}`)
     }
 
     protected abstract doVerifyConfig(): Promise<void>;
     protected abstract doProvision(opts?: InstanceProvisionOptions): Promise<O>;
-    protected abstract doDestroy(opts?: InstanceProvisionOptions): Promise<void>;
+    protected abstract doDestroy(): Promise<void>;
 
 }

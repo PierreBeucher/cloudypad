@@ -8,6 +8,7 @@ import { CommonInstanceInput } from "../state/state";
 import { getLogger } from "../../log/utils";
 import { PUBLIC_IP_TYPE, PUBLIC_IP_TYPE_DYNAMIC, PUBLIC_IP_TYPE_STATIC } from '../const';
 import { CreateCliArgs } from './cli';
+import { StateLoader } from '../state/loader';
 const { kebabCase } = lodash
 
 export interface InputPrompter {
@@ -19,6 +20,10 @@ export interface InputPrompter {
     completeCliInput(cliArgs: CreateCliArgs): Promise<CommonInstanceInput>
 }
 
+export interface InstanceCreateOptions {
+    overwriteExisting?: boolean
+}
+
 export abstract class AbstractInputPrompter<A extends CreateCliArgs, I extends CommonInstanceInput> implements InputPrompter {
 
     protected readonly logger = getLogger(AbstractInputPrompter.name)
@@ -27,18 +32,27 @@ export abstract class AbstractInputPrompter<A extends CreateCliArgs, I extends C
      * Prompt user for additional provider-specific inputs based on common provider inputs.
      * Returns a fully valid state for instance initialization. 
      */
-    async promptInput(partialInput: PartialDeep<I>): Promise<I> {
-        const commonInput = await this.promptCommonInput(partialInput)
+    async promptInput(partialInput: PartialDeep<I>, createOptions: InstanceCreateOptions): Promise<I> {
+        const commonInput = await this.promptCommonInput(partialInput, createOptions)
         const commonInputWithPartial = lodash.merge({}, commonInput, partialInput)
         const finalInput = await this.promptSpecificInput(commonInputWithPartial)
         return finalInput
     }
     
-    private async promptCommonInput(partialInput: PartialDeep<CommonInstanceInput>): Promise<CommonInstanceInput> {
+    private async promptCommonInput(partialInput: PartialDeep<CommonInstanceInput>, createOptions: InstanceCreateOptions): Promise<CommonInstanceInput> {
 
         this.logger.debug(`Initializing instance with default config ${JSON.stringify(partialInput)}`)
         
         const instanceName = await this.instanceName(partialInput.instanceName)
+        
+        const alreadyExists = await new StateLoader().instanceExists(instanceName)
+        if(alreadyExists){
+            const overwriteExisting = await this.promptOverwriteExisting(instanceName, createOptions?.overwriteExisting ?? false)
+            if(!overwriteExisting) {
+                throw new Error(`Won't overwrite existing instance ${instanceName}. Initialization aborted.`)
+            }
+        }
+
         const sshKey = await this.privateSshKey(partialInput.provision?.ssh?.privateKeyPath)
         const sshUser = "ubuntu" // Harcoded default for now since we only support Ubuntu
 
@@ -67,7 +81,7 @@ export abstract class AbstractInputPrompter<A extends CreateCliArgs, I extends C
 
         const result = this.doTransformCliArgsIntoInput(cliArgs)
         
-        this.logger.debug(`Parsed CLI args ${JSON.stringify(cliArgs)} into ${JSON.stringify(input)}`)
+        this.logger.debug(`Parsed CLI args ${JSON.stringify(cliArgs)} into ${JSON.stringify(result)}`)
 
         return result
     }
@@ -79,7 +93,7 @@ export abstract class AbstractInputPrompter<A extends CreateCliArgs, I extends C
 
     async completeCliInput(cliArgs: A): Promise<I> {
         const partialInput = this.cliArgsIntoInput(cliArgs)
-        const input = await this.promptInput(partialInput)
+        const input = await this.promptInput(partialInput, { overwriteExisting: cliArgs.overwriteExisting })
         return input
     }
 
@@ -111,9 +125,19 @@ export abstract class AbstractInputPrompter<A extends CreateCliArgs, I extends C
                 return this.instanceName()
             }
         }
-
         
         return kebabCaseInstanceName 
+    }
+
+    protected async promptOverwriteExisting(instanceName: string, overwriteExisting?: boolean): Promise<boolean> {
+        if (overwriteExisting !== undefined) {
+            return overwriteExisting
+        }
+
+        return await confirm({
+            message: `Instance ${instanceName} already exists. Do you want to overwrite existing instance config?`,
+            default: false,
+        })
     }
 
     protected async privateSshKey(privateSshKey?: string): Promise<string> {

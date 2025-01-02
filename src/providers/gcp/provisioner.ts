@@ -72,18 +72,6 @@ Do you want to proceed?`,
     }
 
     async doDestroy(){
-
-        this.logger.info(`Destroying instance: ${this.args.instanceName}`)
-
-        const confirmCreation = await confirm({
-            message: `You are about to destroy GCP instance '${this.args.instanceName}'. Please confirm:`,
-            default: false,
-        });
-
-        if (!confirmCreation) {
-            throw new Error('Destroy aborted.');
-        }
-
         const pulumiClient = new GcpPulumiClient(this.args.instanceName)
         await pulumiClient.destroy()
 

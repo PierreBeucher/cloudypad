@@ -1,5 +1,5 @@
 import { InstanceStateV1 } from './state/state';
-import { InstanceProvisioner, InstanceProvisionOptions } from './provisioner';
+import { DestroyOptions, InstanceProvisioner, InstanceProvisionOptions } from './provisioner';
 import { InstanceConfigurator } from './configurator';
 import { getLogger } from '../log/utils';
 import { InstanceRunner, StartStopOptions } from './runner';
@@ -77,7 +77,7 @@ export abstract class AbstractSubManagerFactory<ST extends InstanceStateV1> {
 export interface InstanceManager {
     configure(): Promise<void>
     provision(opts?: InstanceProvisionOptions): Promise<void>
-    destroy(opts?: InstanceProvisionOptions): Promise<void>
+    destroy(opts?: DestroyOptions): Promise<void>
     start(opts?: StartStopOptions): Promise<void>
     stop(opts?: StartStopOptions): Promise<void>
     restart(opts?: StartStopOptions): Promise<void>
