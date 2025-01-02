@@ -40,7 +40,7 @@ Integration tests are manual for now:
 Integration tests using CLI
 
 ```
-test/integ/create-and-destroy.sh
+test/integ/cli-full-lifecycle/run.sh [aws|gcp|azure|paperspace]
 ```
 
 Using Mocha

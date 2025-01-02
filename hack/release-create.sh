@@ -65,7 +65,7 @@ git pull
 
 echo "Building release... (may take some time)"
 
-docker_repo="crafteo/cloudypad"
+docker_repo="ghcr.io/pierrebeucher/cloudypad"
 
 docker buildx build \
   -t $docker_repo:$new_version -t $docker_repo:latest \
