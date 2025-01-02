@@ -81,13 +81,20 @@ class CloudyPadAzureInstance extends pulumi.ComponentResource {
             tags: globalTags
         }, commonPulumiOpts)
 
-        const publicIp = args.publicIpType === PUBLIC_IP_TYPE_STATIC ? 
+        const publicIp = args.publicIpType === PUBLIC_IP_TYPE_STATIC ?
             new az.network.PublicIPAddress(`${name}-public-ip`, {
                 resourceGroupName: resourceGroup.name,
                 publicIPAllocationMethod: "Static",
                 sku: { name: "Standard" },
                 tags: globalTags
-            }, commonPulumiOpts) : undefined
+            }, commonPulumiOpts)
+        : // args.publicIpType === PUBLIC_IP_TYPE_DYNAMIC
+            new az.network.PublicIPAddress(`${name}-public-ip`, {
+                resourceGroupName: resourceGroup.name,
+                publicIPAllocationMethod: "Dynamic",
+                sku: { name: "Basic" },
+                tags: globalTags
+            }, commonPulumiOpts)
 
         const networkInterface = new az.network.NetworkInterface(`${name}-network-interface`, {
             resourceGroupName: resourceGroup.name,
@@ -97,7 +104,7 @@ class CloudyPadAzureInstance extends pulumi.ComponentResource {
             ipConfigurations: [{
                 name: `${name}-ipcfg`,
                 privateIPAllocationMethod: "Dynamic",
-                publicIPAddress: publicIp ? { id: publicIp.id } : undefined,
+                publicIPAddress: { id: publicIp.id },
                 subnet: {
                     id: subnet.id,
                 },
@@ -154,12 +161,12 @@ class CloudyPadAzureInstance extends pulumi.ComponentResource {
 
         this.resourceGroupName = resourceGroup.name
         this.vmName = vm.name
-        this.publicIp = publicIp ? publicIp.ipAddress : networkInterface.ipConfigurations.apply(ips => {
+        this.publicIp = publicIp.ipAddress ? publicIp.ipAddress : networkInterface.ipConfigurations.apply(ips => {
             if(ips && ips.length == 1 && ips[0].publicIPAddress?.ipAddress) {
                 return ips[0].publicIPAddress.ipAddress
             }
 
-            throw new Error(`Expected a single IP, got: ${JSON.stringify(ips)}`)  
+            throw new Error(`Expected a single Public IP, got: ${JSON.stringify(ips)}`)  
         })
 
         
