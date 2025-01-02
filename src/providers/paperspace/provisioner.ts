@@ -73,18 +73,6 @@ Do you want to proceed?`,
     }
 
     async doDestroy(){
-
-        this.logger.info(`Destroying Paperspace instance ${this.args.instanceName}`)
-
-        const confirmDeletion = await confirm({
-            message: `You are about to destroy Paperspace instance ${this.args.instanceName} and any associated public IP (machine ID '${this.args.output?.machineId}'). Please confirm:`,
-            default: false,
-        })
-
-        if (!confirmDeletion) {
-            throw new Error('Destroy aborted.');
-        }
-
         if(this.args.output){
             const machineExists = await this.client.machineExists(this.args.output?.machineId)
 

@@ -177,10 +177,11 @@ program
 program
     .command('destroy <name>')
     .description('Destroy an instance')
-    .action(async (name) => {
+    .option('--yes', 'Do not prompt for approval, automatically approve and continue')
+    .action(async (name, opts) => {
         try {
             const m = await new InstanceManagerBuilder().buildInstanceManager(name)
-            await m.destroy()
+            await m.destroy({ autoApprove: opts.yes})
 
             console.info("")
             console.info(`Destroyed instance ${name}`)
