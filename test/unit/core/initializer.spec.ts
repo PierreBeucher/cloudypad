@@ -46,6 +46,12 @@ describe('Instance initializer', () => {
         spot: TEST_INPUT.provision.useSpot,
     }
 
+    const TEST_CLI_ARGS_ALREADY_EXISTING: GcpCreateCliArgs = {
+        ...TEST_CLI_ARGS,
+        name: "gcp-dummy-already-exists-test",
+        overwriteExisting: false,
+    }
+
     // Check instanceInitializer creates instance state as expected
     // Testing here using GCP state, but Initializer is generic and should work with any statet
     it('should initialize instance state with provided arguments', async () => {
@@ -77,6 +83,24 @@ describe('Instance initializer', () => {
         }
         
         assert.deepEqual(state, expectState)
+    })
+
+    it('should failed to initialize for existing instance with no overwrite', async () => {
+
+        // Initialize dummy instance 
+        await new InteractiveInstanceInitializer({ 
+            provider: CLOUDYPAD_PROVIDER_GCP,
+            inputPrompter: new GcpInputPrompter()
+        }).initializeInstance(TEST_CLI_ARGS_ALREADY_EXISTING, { skipPostInitInfo: true })
+
+        await assert.rejects(
+            // Initialize again, should throw exception as overwriteExisting is false
+            new InteractiveInstanceInitializer({ 
+                provider: CLOUDYPAD_PROVIDER_GCP,
+                inputPrompter: new GcpInputPrompter()
+            }).initializeInstance(TEST_CLI_ARGS_ALREADY_EXISTING, { skipPostInitInfo: true }),
+            /Won't overwrite existing instance/
+        )
     })
 })
     
