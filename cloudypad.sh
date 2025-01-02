@@ -12,8 +12,8 @@ if [ -n "$CLOUDYPAD_CLI_LAUNCHER_DEBUG" ]; then
 fi
 
 CLOUDYPAD_VERSION=0.9.0
-CLOUDYPAD_IMAGE="${CLOUDYPAD_IMAGE:-"crafteo/cloudypad:$CLOUDYPAD_VERSION"}"
-CLOUDYPAD_TARGET_IMAGE="crafteo/cloudypad-local-runner:local"
+CLOUDYPAD_IMAGE="${CLOUDYPAD_IMAGE:-"ghcr.io/pierrebeucher/cloudypad:$CLOUDYPAD_VERSION"}"
+CLOUDYPAD_TARGET_IMAGE="cloudypad/local-runner:local"
 
 # Hidden command used during installation to setup Docker image locally
 if [ "$1" == "download-container-images" ]; then
