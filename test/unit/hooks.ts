@@ -10,8 +10,10 @@ import { AbstractInstanceProvisioner } from '../../src/core/provisioner';
 import { AzurePulumiClient } from '../../src/tools/pulumi/azure';
 import { GcpPulumiClient } from '../../src/tools/pulumi/gcp';
 import { PaperspaceClient, PaperspaceMachine } from '../../src/providers/paperspace/client/client';
-import { BaseStateManager } from '../../src/core/state/base-manager';
 import { DUMMY_AWS_PULUMI_OUTPUT, DUMMY_AZURE_PULUMI_OUTPUT, DUMMY_GCP_PULUMI_OUTPUT, DUMMY_PAPERSPACE_MACHINE } from './utils';
+import { DataRootDirManager } from '../../src/core/data-dir';
+import { AnalyticsManager } from '../../src/tools/analytics/manager';
+import { NoOpAnalyticsClient } from '../../src/tools/analytics/client';
 
 
 export const mochaHooks = {
@@ -39,6 +41,13 @@ export const mochaHooks = {
         sinon.stub(DataRootDirManager, 'getEnvironmentDataRootDir').callsFake(() => {
             return dummyCloudyPadHome
         })
+
+        // Force dummy analytics client
+        // We don't want tests to send dummy data
+        sinon.stub(AnalyticsManager, 'get').callsFake(() => {
+            return new NoOpAnalyticsClient()
+        })
+        
 
         sinon.stub(AnsibleClient.prototype, 'runAnsible').resolves()
 

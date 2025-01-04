@@ -5,10 +5,14 @@ import { GcpCliCommandGenerator } from './providers/gcp/input';
 import { AzureCliCommandGenerator } from './providers/azure/input';
 import { AwsCliCommandGenerator } from './providers/aws/input';
 import { PaperspaceCliCommandGenerator } from './providers/paperspace/input';
+import { AnalyticsManager } from './tools/analytics/manager';
+import { RUN_COMMAND_CONFIGURE, RUN_COMMAND_DESTROY, RUN_COMMAND_GET, RUN_COMMAND_LIST, RUN_COMMAND_PAIR, RUN_COMMAND_PROVISION, RUN_COMMAND_RESTART, RUN_COMMAND_START, RUN_COMMAND_STOP } from './tools/analytics/events';
 import { CLOUDYPAD_VERSION } from './core/const';
 
 export function buildProgram(){
 
+    const analyticsClient = AnalyticsManager.get()
+    
     const program = new Command()
 
     program
@@ -44,6 +48,8 @@ export function buildProgram(){
         .option('--format <format>', 'Output format, one of [plain|json] ', 'plain')
         .action(async (options) => {
             try {
+                analyticsClient.sendEvent(RUN_COMMAND_LIST)
+
                 const instanceNames = new InstanceManagerBuilder().getAllInstances();
                 if (instanceNames.length === 0) {
                     console.info('No instances found.');
@@ -70,6 +76,8 @@ export function buildProgram(){
         .option('--timeout <seconds>', 'Timeout when waiting for instance to be fully started. Ignored if --wait not set.', parseInt)
         .action(async (name, opts) => {
             try {
+                analyticsClient.sendEvent(RUN_COMMAND_START)
+
                 console.info(`Starting instance ${name}...`)
                 const m = await new InstanceManagerBuilder().buildInstanceManager(name)
                 await m.start({ wait: opts.wait, waitTimeoutSeconds: opts.timeout})
@@ -92,6 +100,8 @@ export function buildProgram(){
         .option('--timeout <seconds>', 'Timeout when waiting for instance to be fully stopped. Ignored if --wait not set.', parseInt)
         .action(async (name, opts) => {
             try {
+                analyticsClient.sendEvent(RUN_COMMAND_STOP)
+
                 console.info(`Stopping instance ${name}...`)
                 const m = await new InstanceManagerBuilder().buildInstanceManager(name)
                 await m.stop({ wait: opts.wait, waitTimeoutSeconds: opts.timeout})
@@ -114,6 +124,8 @@ export function buildProgram(){
         .option('--timeout <seconds>', 'Timeout when waiting for instance to be fully restarted. Ignored if --wait not set.', parseInt)
         .action(async (name, opts) => {
             try {
+                analyticsClient.sendEvent(RUN_COMMAND_RESTART)
+
                 console.info(`Restarting instance ${name}...`)
                 const m = await new InstanceManagerBuilder().buildInstanceManager(name)
                 await m.restart({ wait: opts.wait, waitTimeoutSeconds: opts.timeout})
@@ -128,6 +140,8 @@ export function buildProgram(){
         .description('Get details of an instance')
         .action(async (name) => {
             try {
+                analyticsClient.sendEvent(RUN_COMMAND_GET)
+
                 const m = await new InstanceManagerBuilder().buildInstanceManager(name)
                 const details = m.getStateJSON()
     
@@ -143,6 +157,8 @@ export function buildProgram(){
         .option('--yes', 'Do not prompt for approval, automatically approve and continue')
         .action(async (name) => {
             try {
+                analyticsClient.sendEvent(RUN_COMMAND_PROVISION)
+
                 const m = await new InstanceManagerBuilder().buildInstanceManager(name)
                 await m.provision()
     
@@ -157,6 +173,8 @@ export function buildProgram(){
         .description('Configure an instance (connect to instance and install drivers, packages, etc.)')
         .action(async (name) => {
             try {
+                analyticsClient.sendEvent(RUN_COMMAND_CONFIGURE)
+
                 const m = await new InstanceManagerBuilder().buildInstanceManager(name)
                 await m.configure()
     
@@ -173,6 +191,8 @@ export function buildProgram(){
         .option('--yes', 'Do not prompt for approval, automatically approve and continue')
         .action(async (name, opts) => {
             try {
+                analyticsClient.sendEvent(RUN_COMMAND_DESTROY)
+
                 const m = await new InstanceManagerBuilder().buildInstanceManager(name)
                 await m.destroy({ autoApprove: opts.yes})
     
@@ -188,6 +208,8 @@ export function buildProgram(){
         .description('Pair an instance with Moonlight')
         .action(async (name: string) => {
             try {
+                analyticsClient.sendEvent(RUN_COMMAND_PAIR)
+                const m = await new InstanceManagerBuilder().buildInstanceManager(name)
                 await m.pair()
             } catch (error) {
                 console.error('Error creating new instance:', error)
