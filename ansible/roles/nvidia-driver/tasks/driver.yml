@@ -38,27 +38,40 @@
   loop:
     - make
 
-- name: Get GCC version used to compile the kernel
-  command: cat /proc/version
-  register: kernel_version_output
+- name: Fetch kernel configuration file
+  slurp:
+    src: "/boot/config-{{ ansible_kernel }}"
+  register: kernel_config_file
 
-- name: Extract GCC version from kernel version output
+- name: Decode kernel configuration content
   set_fact:
-    gcc_version: "{{ kernel_version_output.stdout | regex_search('gcc-([1-9]+)',  '\\1') | first }}"
+    kernel_config_content: "{{ kernel_config_file.content | b64decode }}"
+
+- name: Extract GCC version from kernel configuration
+  set_fact:
+    gcc_version_raw: "{{ kernel_config_content | regex_search('CONFIG_GCC_VERSION=([0-9]+)', '\\1') | first }}"
 
 - debug:
-    msg: Found kernel compiled with GCC version '{{ gcc_version }}'
+    msg: "Found raw GCC version '{{ gcc_version_raw }}'"
+
+- name: Transform GCC version into x.y.z format
+  set_fact:
+    gcc_major_version: >-
+      {{ gcc_version_raw[:gcc_version_raw | length - 4] | int }}
+
+- debug:
+    msg: "Found GCC version '{{ gcc_major_version }}' from kernel configuration"
 
 - name: Install matching GCC version
   apt:
-    name: "gcc-{{ gcc_version }}"
+    name: "gcc-{{ gcc_major_version }}"
     state: present
 
 - name: Set installed GCC version as default
   alternatives:
     name: gcc
     link: /usr/bin/gcc
-    path: /usr/bin/gcc-{{ gcc_version }}
+    path: /usr/bin/gcc-{{ gcc_major_version }}
 
 - name: Set CC as GCC
   alternatives:
