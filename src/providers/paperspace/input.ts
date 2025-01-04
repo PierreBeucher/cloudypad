@@ -1,12 +1,12 @@
 import { PaperspaceInstanceInput } from "./state"
 import { CommonInstanceInput } from "../../core/state/state"
-import { AbstractInputPrompter } from "../../core/input/prompter";
+import { AbstractInputPrompter } from "../../core/cli/prompter";
 import { select, input, password } from '@inquirer/prompts';
 import { fetchApiKeyFromEnvironment } from './client/client';
 import lodash from 'lodash'
 import { PartialDeep } from "type-fest";
 import { CLOUDYPAD_PROVIDER_PAPERSPACE, PUBLIC_IP_TYPE } from "../../core/const";
-import { CLI_OPTION_DISK_SIZE, CLI_OPTION_PUBLIC_IP_TYPE, CLI_OPTION_SPOT, CliCommandGenerator, CreateCliArgs } from "../../core/input/cli";
+import { CLI_OPTION_DISK_SIZE, CLI_OPTION_PUBLIC_IP_TYPE, CLI_OPTION_SPOT, CliCommandGenerator, CreateCliArgs } from "../../core/cli/command";
 import { InteractiveInstanceInitializer } from "../../core/initializer";
 import { InstanceManagerBuilder } from "../../core/manager-builder";
 
@@ -155,7 +155,6 @@ export class PaperspaceCliCommandGenerator extends CliCommandGenerator {
                     
                 } catch (error) {
                     console.error('Error creating Paperspace instance:', error)
-                    process.exit(1)
                 }
             })
     }
@@ -180,7 +179,6 @@ export class PaperspaceCliCommandGenerator extends CliCommandGenerator {
                     
                 } catch (error) {
                     console.error('Error updating Paperspace instance:', error)
-                    process.exit(1)
                 }
             })
     }

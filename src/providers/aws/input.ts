@@ -2,9 +2,9 @@ import { AwsInstanceInput } from "./state"
 import { CommonInstanceInput } from "../../core/state/state"
 import { input, select } from '@inquirer/prompts';
 import { AwsClient } from "../../tools/aws";
-import { AbstractInputPrompter } from "../../core/input/prompter";
+import { AbstractInputPrompter } from "../../core/cli/prompter";
 import lodash from 'lodash'
-import { CLI_OPTION_DISK_SIZE, CLI_OPTION_PUBLIC_IP_TYPE, CLI_OPTION_SPOT, CliCommandGenerator, CreateCliArgs, UpdateCliArgs } from "../../core/input/cli";
+import { CLI_OPTION_DISK_SIZE, CLI_OPTION_PUBLIC_IP_TYPE, CLI_OPTION_SPOT, CliCommandGenerator, CreateCliArgs, UpdateCliArgs } from "../../core/cli/command";
 import { CLOUDYPAD_PROVIDER_AWS, PUBLIC_IP_TYPE } from "../../core/const";
 import { InteractiveInstanceInitializer } from "../../core/initializer";
 import { PartialDeep } from "type-fest";
@@ -151,7 +151,6 @@ export class AwsCliCommandGenerator extends CliCommandGenerator {
                     
                 } catch (error) {
                     console.error('Error creating AWS instance:', error)
-                    process.exit(1)
                 }
             })
     }
@@ -175,7 +174,6 @@ export class AwsCliCommandGenerator extends CliCommandGenerator {
                     
                 } catch (error) {
                     console.error('Error updating AWS instance:', error)
-                    process.exit(1)
                 }
             })
     }

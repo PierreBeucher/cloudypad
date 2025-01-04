@@ -36,7 +36,7 @@ export const mochaHooks = {
 
         // Force environment data root dir to a temp directory for unit tests
         const dummyCloudyPadHome = mkdtempSync(path.join(tmpdir(), ".cloudypad-unit-tests"))
-        sinon.stub(BaseStateManager, 'getEnvironmentDataRootDir').callsFake(() => {
+        sinon.stub(DataRootDirManager, 'getEnvironmentDataRootDir').callsFake(() => {
             return dummyCloudyPadHome
         })
 

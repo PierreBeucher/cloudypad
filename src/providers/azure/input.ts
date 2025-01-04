@@ -1,12 +1,12 @@
 import { AzureInstanceInput } from "./state"
 import { CommonInstanceInput } from "../../core/state/state"
 import { input, select } from '@inquirer/prompts';
-import { AbstractInputPrompter } from "../../core/input/prompter";
+import { AbstractInputPrompter } from "../../core/cli/prompter";
 import { AzureClient } from "../../tools/azure";
 import lodash from 'lodash'
 import { CLOUDYPAD_PROVIDER_AZURE, PUBLIC_IP_TYPE } from "../../core/const";
 import { PartialDeep } from "type-fest";
-import { CLI_OPTION_DISK_SIZE, CLI_OPTION_PUBLIC_IP_TYPE, CLI_OPTION_SPOT, CliCommandGenerator, CreateCliArgs } from "../../core/input/cli";
+import { CLI_OPTION_DISK_SIZE, CLI_OPTION_PUBLIC_IP_TYPE, CLI_OPTION_SPOT, CliCommandGenerator, CreateCliArgs } from "../../core/cli/command";
 import { InteractiveInstanceInitializer } from "../../core/initializer";
 import { InstanceManagerBuilder } from "../../core/manager-builder";
 
@@ -217,7 +217,6 @@ export class AzureCliCommandGenerator extends CliCommandGenerator {
                     
                 } catch (error) {
                     console.error('Error creating Azure instance:', error)
-                    process.exit(1)
                 }
             })
     }
@@ -241,7 +240,6 @@ export class AzureCliCommandGenerator extends CliCommandGenerator {
                     
                 } catch (error) {
                     console.error('Error updating Azure instance:', error)
-                    process.exit(1)
                 }
             })
     }

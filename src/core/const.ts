@@ -1,3 +1,5 @@
+import { version } from '../../package.json'
+
 export const CLOUDYPAD_PROVIDER_AWS = "aws"
 export const CLOUDYPAD_PROVIDER_PAPERSPACE = "paperspace"
 export const CLOUDYPAD_PROVIDER_AZURE = "azure"
@@ -25,3 +27,8 @@ export const PUBLIC_IP_TYPE_DYNAMIC = "dynamic"
  * Use this string to represent IP type.
  */
 export type PUBLIC_IP_TYPE = typeof PUBLIC_IP_TYPE_DYNAMIC | typeof PUBLIC_IP_TYPE_STATIC
+
+/**
+ * Current Cloudy Pad version
+ */
+export const CLOUDYPAD_VERSION = version

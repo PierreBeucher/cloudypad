@@ -1,13 +1,13 @@
 import { GcpInstanceInput } from "./state"
 import { CommonInstanceInput } from "../../core/state/state"
 import { input, select } from '@inquirer/prompts';
-import { AbstractInputPrompter } from "../../core/input/prompter";
+import { AbstractInputPrompter } from "../../core/cli/prompter";
 import { GcpClient } from "../../tools/gcp";
 import lodash from 'lodash'
 import { CLOUDYPAD_PROVIDER_GCP, PUBLIC_IP_TYPE } from "../../core/const";
 import { PartialDeep } from "type-fest";
 import { InteractiveInstanceInitializer } from "../../core/initializer";
-import { CLI_OPTION_DISK_SIZE, CLI_OPTION_PUBLIC_IP_TYPE, CLI_OPTION_SPOT, CliCommandGenerator, CreateCliArgs } from "../../core/input/cli";
+import { CLI_OPTION_DISK_SIZE, CLI_OPTION_PUBLIC_IP_TYPE, CLI_OPTION_SPOT, CliCommandGenerator, CreateCliArgs } from "../../core/cli/command";
 import { InstanceManagerBuilder } from "../../core/manager-builder";
 
 export interface GcpCreateCliArgs extends CreateCliArgs {
@@ -229,7 +229,6 @@ export class GcpCliCommandGenerator extends CliCommandGenerator {
                     
                 } catch (error) {
                     console.error('Error creating GCP instance:', error)
-                    process.exit(1)
                 }
             })
     }
@@ -254,7 +253,6 @@ export class GcpCliCommandGenerator extends CliCommandGenerator {
                     
                 } catch (error) {
                     console.error('Error updating GCP instance:', error)
-                    process.exit(1)
                 }
             })
     }
