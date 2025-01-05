@@ -66,7 +66,7 @@ export class InteractiveInstanceInitializer {
 
         this.logger.info(`Initializing ${instanceName}: configuration done.}`)
 
-        const doPair = autoApprove ? true : await confirm({
+        const doPair = cliArgs?.skipPairing ? false : autoApprove ? true : await confirm({
             message: `Your instance is almost ready ! Do you want to pair Moonlight now?`,
             default: true,
         })
