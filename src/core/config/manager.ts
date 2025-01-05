@@ -30,11 +30,6 @@ export type PostHogConfig = z.infer<typeof PostHogConfigSchema>
 export type GlobalCliConfigV1 = z.infer<typeof GlobalCliConfigSchemaV1>
 export type AnalyticsConfig = z.infer<typeof AnalyticsConfigSchema>
 
-export function getCliConfigPath(){
-    const dataRoot = DataRootDirManager.getEnvironmentDataRootDir()
-    return path.join(dataRoot, 'config.yml')
-}
-
 export const DEFAULT_CONFIG: GlobalCliConfigV1 = {
     version: "1",
     analytics: {
@@ -50,6 +45,7 @@ export const DEFAULT_CONFIG: GlobalCliConfigV1 = {
 export class ConfigManager {
     private static instance: ConfigManager
     private configPath: string
+    private dataRootDir: string
     private logger = getLogger(ConfigManager.name)
 
     /**
@@ -57,7 +53,8 @@ export class ConfigManager {
      * @param dataRootDir Do not use default dataRootDir. 
      */
     constructor(dataRootDir?: string) {
-        this.configPath = dataRootDir ? path.join(dataRootDir, "config.yml") : getCliConfigPath()
+        this.dataRootDir = dataRootDir ?? DataRootDirManager.getEnvironmentDataRootDir()
+        this.configPath = path.join(this.dataRootDir, 'config.yml')
     }
 
     static getInstance(): ConfigManager {
@@ -135,6 +132,12 @@ export class ConfigManager {
     private writeConfigSafe(unsafeConfig: GlobalCliConfigV1): void {
         try {
             this.logger.debug(`Writing config ${JSON.stringify(unsafeConfig)} at ${this.configPath}...`)
+
+            // Create data root directory if not exists
+            if (!fs.existsSync(this.dataRootDir)) {
+                this.logger.debug(`Creating data root directory '${this.dataRootDir}'`)
+                fs.mkdirSync(this.dataRootDir, { recursive: true })
+            }
 
             const parsedConfig = this.zodParseSafe(unsafeConfig, GlobalCliConfigSchemaV1)
             const yamlContent = yaml.dump(parsedConfig)
