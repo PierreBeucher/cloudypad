@@ -9,7 +9,7 @@ function create_destroy_paperspace() {
         --disk-size 100 \
         --public-ip-type static \
         --region "East Coast (NY2)" \
-        --yes --overwrite-existing
+        --yes --overwrite-existing --skip-pairing
 
     $cloudypad_cmd get $instance_name
 

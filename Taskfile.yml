@@ -34,7 +34,26 @@ tasks:
   # Detect potential circular deps with Madge
   test-circular-deps:
     cmd: npx -y madge --ts-config ./tsconfig.json -c .
-    
+  
+  test-integ-full-lifecycle-all:
+    cmds:
+    - task: test-integ-full-lifecycle-aws
+    - task: test-integ-full-lifecycle-azure
+    - task: test-integ-full-lifecycle-gcp
+    - task: test-integ-full-lifecycle-paperspace
+  
+  test-integ-full-lifecycle-aws:
+    - test/integ/cli-full-lifecycle/run.sh aws
+
+  test-integ-full-lifecycle-azure:
+    - test/integ/cli-full-lifecycle/run.sh azure
+
+  test-integ-full-lifecycle-gcp:
+    - test/integ/cli-full-lifecycle/run.sh gcp
+
+  test-integ-full-lifecycle-paperspace:
+    - test/integ/cli-full-lifecycle/run.sh paperspace
+
   #
   # Utils
   #

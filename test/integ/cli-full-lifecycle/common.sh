@@ -5,7 +5,7 @@ set -e
 
 # Build local image to run tests
 export CLOUDYPAD_IMAGE="crafteo/cloudypad:local"
-export CLOUDYPAD_CLI_LAUNCHER_DEBUG=true
+# export CLOUDYPAD_CLI_LAUNCHER_DEBUG=true
 
 # Use container image or local script directly
 # Faster with local script but may miss container image issue
