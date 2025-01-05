@@ -34,7 +34,7 @@ async function main(){
         
     } catch (e){
         logger.error("Oops, something went wrong 😨", e)
-        logger.error("If you think this is a bug, please file an issue: https://github.com/PierreBeucher/cloudypad/issues")
+        logger.error("If you think this is a bug, please file an issue with error logs: https://github.com/PierreBeucher/cloudypad/issues")
         process.exit(1)
     }
 }
