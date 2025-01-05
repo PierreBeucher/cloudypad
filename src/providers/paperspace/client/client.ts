@@ -166,6 +166,12 @@ export class PaperspaceClient {
 
     async createMachine(params: paperspace.MachinesCreateRequest): Promise<PaperspaceMachine> {
         try {
+            // check machine already exists
+            const alreadyExists = await this.machineWithNameExists(params.name)
+            if(alreadyExists){
+                throw new Error(`Machine ${params.name} already exists.`)
+            }
+
             this.logger.debug(`Creating machine: ${JSON.stringify(params)}`)
 
             const response = await this.machineClient.machinesCreate(params, this.baseOptions)
