@@ -67,12 +67,7 @@ echo "Building release... (may take some time)"
 
 docker_repo="ghcr.io/pierrebeucher/cloudypad"
 
-docker buildx build \
-  -t $docker_repo:$new_version -t $docker_repo:latest \
-  --platform=linux/amd64,linux/arm64 \
-  .
-
-echo "Push images $docker_repo:$new_version and $docker_repo:latest..."
+echo "Building + pushing images $docker_repo:$new_version and $docker_repo:latest..."
 
 docker buildx build \
   -t $docker_repo:$new_version -t $docker_repo:latest \
