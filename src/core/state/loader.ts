@@ -25,6 +25,8 @@ export class StateLoader extends BaseStateManager {
 
     listInstances(): string[] {
         try {
+            this.ensureInstanceParentDirExists()
+
             const allInstancesDirPath = path.join(this.dataRootDir, 'instances')
             this.logger.debug(`Listing all instances from ${allInstancesDirPath}`)
 
@@ -35,8 +37,7 @@ export class StateLoader extends BaseStateManager {
 
             return instanceNames
         } catch (error) {
-            this.logger.error('Failed to read instances directory:', error)
-            return []
+            throw new Error('Failed to read instances parent directory.', { cause: error })
         }
     }
 
@@ -86,5 +87,17 @@ export class StateLoader extends BaseStateManager {
 
         const parser = new StateParser()
         return parser.parseBaseStateV1(rawState)
+    }
+
+    private ensureInstanceParentDirExists() {
+        const instanceParentDir = this.getInstanceParentDir()
+
+        if (!fs.existsSync(instanceParentDir)) {
+            this.logger.debug(`Creating instance parent directory '${instanceParentDir}'`)
+
+            fs.mkdirSync(instanceParentDir, { recursive: true })
+
+            this.logger.debug(`Created instance parent directory '${instanceParentDir}'`)
+        }
     }
 }

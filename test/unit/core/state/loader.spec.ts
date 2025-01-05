@@ -4,12 +4,13 @@ import { StateLoader } from '../../../../src/core/state/loader'
 import * as yaml from 'js-yaml'
 import * as fs from 'fs'
 import { AwsInstanceStateV1 } from '../../../../src/providers/aws/state'
+import { createTempTestDir } from '../../utils'
 
 describe('StateLoader', function () {
 
-    function createLoader() {
+    function createLoader(dataRootDir?: string) {
         return new StateLoader({
-            dataRootDir: path.resolve(__dirname, 'v1-root-data-dir')
+            dataRootDir: path.resolve(__dirname, dataRootDir ?? 'v1-root-data-dir')
         })
     }
 
@@ -28,6 +29,13 @@ describe('StateLoader', function () {
                 'wrong-state-version'
             ]
             assert.deepStrictEqual(instances.sort(), expectedInstances.sort())
+        })
+
+        it('should list no instances without error with empty data root dir', function () {
+            const loader = createLoader(createTempTestDir("state-loader-list-empty"))
+            const emptyInstances = loader.listInstances()
+
+            assert.equal(emptyInstances.length, 0)
         })
     })
 
