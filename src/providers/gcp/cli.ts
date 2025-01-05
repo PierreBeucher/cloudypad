@@ -9,6 +9,7 @@ import { PartialDeep } from "type-fest";
 import { InteractiveInstanceInitializer } from "../../core/initializer";
 import { CLI_OPTION_DISK_SIZE, CLI_OPTION_PUBLIC_IP_TYPE, CLI_OPTION_SPOT, CliCommandGenerator, CreateCliArgs } from "../../core/cli/command";
 import { InstanceManagerBuilder } from "../../core/manager-builder";
+import { RUN_COMMAND_CREATE, RUN_COMMAND_UPDATE } from "../../tools/analytics/events";
 
 export interface GcpCreateCliArgs extends CreateCliArgs {
     projectId?: string
@@ -221,6 +222,7 @@ export class GcpCliCommandGenerator extends CliCommandGenerator {
             .option('--project-id <projectid>', 'GCP Project ID in which to deploy resources')
             .option('--gpu-type <gputype>', 'Type of accelerator (e.g., GPU) to attach to the instance')
             .action(async (cliArgs) => {
+                this.analytics.sendEvent(RUN_COMMAND_CREATE, { provider: CLOUDYPAD_PROVIDER_GCP })
                 try {
                     await new InteractiveInstanceInitializer({ 
                         inputPrompter: new GcpInputPrompter(),
@@ -240,6 +242,7 @@ export class GcpCliCommandGenerator extends CliCommandGenerator {
             .option('--machine-type <machinetype>', 'Machine type to use for the instance')
             .option('--gpu-type <gputype>', 'Type of accelerator (e.g., GPU) to attach to the instance')
             .action(async (cliArgs) => {
+                this.analytics.sendEvent(RUN_COMMAND_UPDATE, { provider: CLOUDYPAD_PROVIDER_GCP })
                 try {
                     const input = new GcpInputPrompter().cliArgsIntoInput(cliArgs)
                     const updater = await new InstanceManagerBuilder().buildGcpInstanceUpdater(cliArgs.name)

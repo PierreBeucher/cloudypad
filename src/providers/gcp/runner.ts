@@ -1,3 +1,4 @@
+import { CLOUDYPAD_PROVIDER_GCP } from '../../core/const';
 import { AbstractInstanceRunner, InstanceRunnerArgs, StartStopOptions } from '../../core/runner';
 import { GcpClient } from '../../tools/gcp';
 import { GcpProvisionInputV1, GcpProvisionOutputV1 } from './state';
@@ -9,7 +10,7 @@ export class GcpInstanceRunner extends AbstractInstanceRunner<GcpProvisionInputV
     private client: GcpClient
 
     constructor(args: GcpInstanceRunnerArgs) {
-        super(args)
+        super(CLOUDYPAD_PROVIDER_GCP, args)
 
         this.client = new GcpClient(args.instanceName, args.input.projectId)
     }

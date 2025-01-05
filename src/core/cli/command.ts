@@ -1,5 +1,6 @@
 import { Command, Option } from "@commander-js/extra-typings";
 import { PUBLIC_IP_TYPE, PUBLIC_IP_TYPE_DYNAMIC, PUBLIC_IP_TYPE_STATIC } from "../const";
+import { AnalyticsManager } from "../../tools/analytics/manager";
 
 //
 // Common CLI Option each providers can re-use
@@ -35,6 +36,8 @@ export const CLI_OPTION_PUBLIC_IP_TYPE = new Option('--public-ip-type <type>', `
  * Helper to create a Commander CLI sub-commands for create and update commands.
  */
 export abstract class CliCommandGenerator {
+
+    protected analytics = AnalyticsManager.get()
 
     /**
      * Create a base 'create' command for a given provider name with possibilities to chain with additional options.

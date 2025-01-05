@@ -3,7 +3,7 @@ import { GcpInstanceInput, GcpInstanceStateV1 } from '../../../src/providers/gcp
 import { CLOUDYPAD_CONFIGURATOR_ANSIBLE, CLOUDYPAD_PROVIDER_GCP, PUBLIC_IP_TYPE_STATIC } from '../../../src/core/const';
 import { DEFAULT_COMMON_INPUT } from '../utils';
 import { InteractiveInstanceInitializer } from '../../../src/core/initializer';
-import { GcpCreateCliArgs, GcpInputPrompter } from '../../../src/providers/gcp/input';
+import { GcpCreateCliArgs, GcpInputPrompter } from '../../../src/providers/gcp/cli';
 import { StateLoader } from '../../../src/core/state/loader';
 
 describe('Instance initializer', () => {

@@ -1,3 +1,4 @@
+import { CLOUDYPAD_PROVIDER_PAPERSPACE } from "../../core/const"
 import { AbstractInstanceRunner, InstanceRunnerArgs, StartStopOptions } from "../../core/runner"
 import { PaperspaceClient } from "./client/client"
 import { PaperspaceProvisionInputV1, PaperspaceProvisionOutputV1 } from "./state"
@@ -9,7 +10,7 @@ export class PaperspaceInstanceRunner extends AbstractInstanceRunner<PaperspaceP
     private client: PaperspaceClient
 
     constructor(args: PaperspaceInstanceRunnerArgs) {
-        super(args)
+        super(CLOUDYPAD_PROVIDER_PAPERSPACE, args)
 
         this.client = new PaperspaceClient({ name: this.args.instanceName, apiKey: this.args.input.apiKey})
     }

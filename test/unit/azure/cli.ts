@@ -1,57 +1,55 @@
 import * as assert from 'assert';
-import { PaperspaceInstanceInput } from '../../../src/providers/paperspace/state';
+import { AzureInstanceInput } from '../../../src/providers/azure/state';
 import { PUBLIC_IP_TYPE_STATIC } from '../../../src/core/const';
 import { DEFAULT_COMMON_INPUT } from '../utils';
-import { PaperspaceCreateCliArgs, PaperspaceInputPrompter } from '../../../src/providers/paperspace/input';
+import { AzureCreateCliArgs, AzureInputPrompter } from '../../../src/providers/azure/cli';
 import { PartialDeep } from 'type-fest';
 import lodash from 'lodash'
 
-describe('Paperspace input prompter', () => {
+describe('Azure input prompter', () => {
 
-    const instanceName = "paperspace-dummy"
+    const instanceName = "azure-dummy"
 
-    const TEST_INPUT: PaperspaceInstanceInput = {
+    const TEST_INPUT: AzureInstanceInput = {
         instanceName: instanceName,
         provision: {
             ...DEFAULT_COMMON_INPUT.provision,
-            apiKey: "xxxSecret",
-            machineType: "P5000",
-            diskSize: 100,
+            subscriptionId: "1234-5689-0000",
+            vmSize: "Standard_NC8as_T4_v3",
+            diskSize: 200,
             publicIpType: PUBLIC_IP_TYPE_STATIC,
-            region: "East Coast (NY2)",
-            ssh: {
-                ...DEFAULT_COMMON_INPUT.provision.ssh,
-                user: "paperspace"
-            }
-        },
+            location: "francecentral",
+            useSpot: true,
+        }, 
         configuration: {
             ...DEFAULT_COMMON_INPUT.configuration
         }
     }
 
-    const TEST_CLI_ARGS: PaperspaceCreateCliArgs = {
+    const TEST_CLI_ARGS: AzureCreateCliArgs = {
         name: TEST_INPUT.instanceName,
         yes: true,
         overwriteExisting: false,
         privateSshKey: TEST_INPUT.provision.ssh.privateKeyPath,
-        region: TEST_INPUT.provision.region,
-        machineType: TEST_INPUT.provision.machineType,
         diskSize: TEST_INPUT.provision.diskSize,
         publicIpType: TEST_INPUT.provision.publicIpType,
-        apiKeyFile: TEST_INPUT.provision.apiKey,
+        spot: TEST_INPUT.provision.useSpot,
+        location: TEST_INPUT.provision.location,
+        subscriptionId: TEST_INPUT.provision.subscriptionId,
+        vmSize: TEST_INPUT.provision.vmSize,
     }
-    
+
     it('should return provided inputs without prompting when full input provider', async () => {
-        const result = await new PaperspaceInputPrompter().promptInput(TEST_INPUT, {})
+        const result = await new AzureInputPrompter().promptInput(TEST_INPUT, {})
         assert.deepEqual(result, TEST_INPUT)
     })
 
     it('should convert CLI args into partial input', () => {
         
-        const prompter = new PaperspaceInputPrompter()
+        const prompter = new AzureInputPrompter()
         const result = prompter.cliArgsIntoInput(TEST_CLI_ARGS)
 
-        const expected: PartialDeep<PaperspaceInstanceInput> = {
+        const expected: PartialDeep<AzureInstanceInput> = {
             ...TEST_INPUT,
             provision: {
                 ...TEST_INPUT.provision,
@@ -62,3 +60,5 @@ describe('Paperspace input prompter', () => {
         assert.deepEqual(result, expected)
     })
 })
+    
+

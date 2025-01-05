@@ -1,10 +1,10 @@
 import { Command } from '@commander-js/extra-typings';
 import { setLogVerbosity } from './log/utils';
 import { InstanceManagerBuilder } from './core/manager-builder';
-import { GcpCliCommandGenerator } from './providers/gcp/input';
-import { AzureCliCommandGenerator } from './providers/azure/input';
-import { AwsCliCommandGenerator } from './providers/aws/input';
-import { PaperspaceCliCommandGenerator } from './providers/paperspace/input';
+import { GcpCliCommandGenerator } from './providers/gcp/cli';
+import { AzureCliCommandGenerator } from './providers/azure/cli';
+import { AwsCliCommandGenerator } from './providers/aws/cli';
+import { PaperspaceCliCommandGenerator } from './providers/paperspace/cli';
 import { AnalyticsManager } from './tools/analytics/manager';
 import { RUN_COMMAND_CONFIGURE, RUN_COMMAND_DESTROY, RUN_COMMAND_GET, RUN_COMMAND_LIST, RUN_COMMAND_PAIR, RUN_COMMAND_PROVISION, RUN_COMMAND_RESTART, RUN_COMMAND_START, RUN_COMMAND_STOP } from './tools/analytics/events';
 import { CLOUDYPAD_VERSION } from './core/const';

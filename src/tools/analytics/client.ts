@@ -5,7 +5,7 @@ import { CLOUDYPAD_VERSION } from '../../core/const'
 export interface AnalyticsClient {
     init(): void
     shutdown(): Promise<void>
-    sendEvent(event: string): void
+    sendEvent(event: string, properties?: Record<string | number, unknown> | undefined): void
 }
 
 const POSTHOG_API_KEY = process.env.CLOUDYPAD_ANALYTICS_POSTHOG_API_KEY ?? 'phc_caJIOD8vW5727svQf90FNgdALIyYYouwEDEVh3BI1IH'
