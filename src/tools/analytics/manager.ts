@@ -10,16 +10,21 @@ export class AnalyticsManager {
 
     /**
      * Build an AnalyticsManager using current global configuration.
-     * Returned instance is a singleton initialized the firs time this function is called.
+     * Returned instance is a singleton initialized the firs time this function is called..
      * 
-     * On first call, global configuration is read and depending on analytics configuration
-     * (enabled or disabled) an AnalyticsClient is created to match config (eg. a no-op client if disabled
-     * or a real client if enabled)
+     * On first call, create an analytics client following:
+     * - If CLOUDYPAD_ANALYTICS_DISABLE is true, a dummy no-op client is created
+     * - If global enables analytics, a client is created accordingly
+     * - Otherwise, a dummy no-op client is created
      */
     static get(): AnalyticsClient {
 
         if(AnalyticsManager.client){
             return AnalyticsManager.client
+        }
+
+        if(process.env.CLOUDYPAD_ANALYTICS_DISABLE === "true" || process.env.CLOUDYPAD_ANALYTICS_DISABLE === "1") {
+            AnalyticsManager.logger.debug(`Initializing NoOp AnalyticsClient as per CLOUDYPAD_ANALYTICS_DISABLE=${process.env.CLOUDYPAD_ANALYTICS_DISABLE}`)
         }
 
         const config = ConfigManager.getInstance().load()
@@ -34,7 +39,7 @@ export class AnalyticsManager {
     
             AnalyticsManager.client = new PostHogAnalyticsClient({ distinctId: config.analytics.posthog.distinctId})
         } else {
-            AnalyticsManager.logger.debug("Initializing NoOp AnalyticsClient")
+            AnalyticsManager.logger.debug("Initializing NoOp AnalyticsClient as no config enables analytics")
 
             AnalyticsManager.client = new NoOpAnalyticsClient()
         }
