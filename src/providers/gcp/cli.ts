@@ -230,7 +230,7 @@ export class GcpCliCommandGenerator extends CliCommandGenerator {
                     }).initializeInstance(cliArgs)
                     
                 } catch (error) {
-                    console.error('Error creating GCP instance:', error)
+                    throw new Error('Error creating GCP instance:', { cause: error })
                 }
             })
     }
@@ -255,7 +255,7 @@ export class GcpCliCommandGenerator extends CliCommandGenerator {
                     console.info(`Updated instance ${cliArgs.name}`)
                     
                 } catch (error) {
-                    console.error('Error updating GCP instance:', error)
+                    throw new Error('Error updating GCP instance:', { cause: error })
                 }
             })
     }

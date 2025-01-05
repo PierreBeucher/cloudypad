@@ -156,7 +156,7 @@ export class PaperspaceCliCommandGenerator extends CliCommandGenerator {
                     }).initializeInstance(cliArgs)
                     
                 } catch (error) {
-                    console.error('Error creating Paperspace instance:', error)
+                    throw new Error('Error creating Paperspace instance:', { cause: error })
                 }
             })
     }
@@ -181,7 +181,7 @@ export class PaperspaceCliCommandGenerator extends CliCommandGenerator {
                     console.info(`Updated instance ${cliArgs.name}`)
                     
                 } catch (error) {
-                    console.error('Error updating Paperspace instance:', error)
+                    throw new Error('Error updating Paperspace instance:', { cause: error })
                 }
             })
     }
