@@ -1,7 +1,7 @@
 import { getLogger } from "../log/utils"
 import { CLOUDYPAD_PROVIDER } from "./const"
-import { CreateCliArgs } from "./input/cli"
-import { InputPrompter } from "./input/prompter"
+import { CreateCliArgs } from "./cli/command"
+import { InputPrompter } from "./cli/prompter"
 import { InstanceManagerBuilder } from "./manager-builder"
 import { StateInitializer } from "./state/initializer"
 import { confirm } from '@inquirer/prompts'

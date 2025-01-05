@@ -7,7 +7,7 @@ import lodash from 'lodash'
 import { CommonInstanceInput } from "../state/state";
 import { getLogger } from "../../log/utils";
 import { PUBLIC_IP_TYPE, PUBLIC_IP_TYPE_DYNAMIC, PUBLIC_IP_TYPE_STATIC } from '../const';
-import { CreateCliArgs } from './cli';
+import { CreateCliArgs } from './command';
 import { StateLoader } from '../state/loader';
 const { kebabCase } = lodash
 
@@ -47,7 +47,7 @@ export abstract class AbstractInputPrompter<A extends CreateCliArgs, I extends C
         
         const alreadyExists = await new StateLoader().instanceExists(instanceName)
         if(alreadyExists){
-            const overwriteExisting = await this.promptOverwriteExisting(instanceName, createOptions?.overwriteExisting ?? false)
+            const overwriteExisting = await this.promptOverwriteExisting(instanceName, createOptions?.overwriteExisting)
             if(!overwriteExisting) {
                 throw new Error(`Won't overwrite existing instance ${instanceName}. Initialization aborted.`)
             }

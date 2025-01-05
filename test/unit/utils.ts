@@ -1,6 +1,6 @@
 import { CommonInstanceInput, InstanceStateV1 } from "../../src/core/state/state";
 import path from "path"
-import fs from "fs"
+import fs, { mkdtempSync } from "fs"
 import yaml from 'js-yaml'
 import { StateParser } from "../../src/core/state/parser";
 import { AwsPulumiOutput } from "../../src/tools/pulumi/aws";
@@ -8,6 +8,7 @@ import { AzurePulumiOutput } from "../../src/tools/pulumi/azure";
 import { GcpPulumiOutput } from "../../src/tools/pulumi/gcp";
 import { PaperspaceMachine } from "../../src/providers/paperspace/client/client";
 import { PUBLIC_IP_TYPE_STATIC } from "../../src/core/const";
+import { tmpdir } from "os";
 
 export const DEFAULT_COMMON_INPUT: CommonInstanceInput = {
     instanceName: "dummy-instance",
@@ -60,3 +61,6 @@ export function loadState(instanceName: string): InstanceStateV1 {
     return new StateParser().parseBaseStateV1(rawState)
 }
 
+export function createTempTestDir(prefix: string){
+    return mkdtempSync(path.join(tmpdir(), `.cloudypad-unit-test-${prefix}`))
+}

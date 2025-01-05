@@ -1,7 +1,7 @@
 import * as fs from 'fs'
 import { InlineProgramArgs, LocalWorkspace, LocalWorkspaceOptions, OutputMap, PulumiFn, Stack } from "@pulumi/pulumi/automation";
 import { getLogger, Logger } from '../../log/utils';
-import { BaseStateManager } from '../../core/state/base-manager';
+import { DataRootDirManager } from '../../core/data-dir';
 
 export interface InstancePulumiClientArgs {
     program: PulumiFn
@@ -48,7 +48,7 @@ export abstract class InstancePulumiClient<ConfigType, OutputType> {
 
         // Force use of local backend unless environment configured otherwise
         // Pulumi state is a state so Pulumi state path depends on StateManager path
-        const backendUrl = process.env.PULUMI_BACKEND_URL ?? `file://${BaseStateManager.getEnvironmentDataRootDir()}/pulumi-backend`
+        const backendUrl = process.env.PULUMI_BACKEND_URL ?? `file://${DataRootDirManager.getEnvironmentDataRootDir()}/pulumi-backend`
         const configPassphrase=`${process.env.PULUMI_CONFIG_PASSPHRASE ?? ""}`
         
         if(this.stack !== undefined) {
