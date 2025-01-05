@@ -8,6 +8,7 @@ _🧪 `cloudypad` CLI interface is still experimental and may change in the futu
 - [Environment variables](#environment-variables)
   - [Cloudy Pad built-in environment variables](#cloudy-pad-built-in-environment-variables)
   - [Other environment variables](#other-environment-variables)
+- [Global configuration](#global-configuration)
 
 Available commands:
 
@@ -163,3 +164,7 @@ CLOUDYPAD_IMAGE="crafteo/cloudypad:$CLOUDYPAD_VERSION"
 Cloudy Pad relies on external tools and libraries like AWS library and Ansible to manage your instances. Some variables can set to alter behavior.
 
 See [`env_vars` variable in launcher script](https://github.com/PierreBeucher/cloudypad/blob/master/cloudypad.sh#L117C11-L117C19) for details. 
+
+## Global configuration
+
+A global configuration is saved under `$HOME/.cloudypad/config.yml`. Later version will add commands to manipulate this configuration.
