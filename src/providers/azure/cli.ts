@@ -9,6 +9,7 @@ import { PartialDeep } from "type-fest";
 import { CLI_OPTION_DISK_SIZE, CLI_OPTION_PUBLIC_IP_TYPE, CLI_OPTION_SPOT, CliCommandGenerator, CreateCliArgs } from "../../core/cli/command";
 import { InteractiveInstanceInitializer } from "../../core/initializer";
 import { InstanceManagerBuilder } from "../../core/manager-builder";
+import { RUN_COMMAND_CREATE, RUN_COMMAND_UPDATE } from "../../tools/analytics/events";
 
 export interface AzureCreateCliArgs extends CreateCliArgs {
     subscriptionId?: string
@@ -209,6 +210,7 @@ export class AzureCliCommandGenerator extends CliCommandGenerator {
             .option('--location <location>', 'Location in which to deploy instance')
             .option('--subscription-id <subscriptionid>', 'Subscription ID in which to deploy resources')
             .action(async (cliArgs) => {
+                this.analytics.sendEvent(RUN_COMMAND_CREATE, { provider: CLOUDYPAD_PROVIDER_AZURE })
                 try {
                     await new InteractiveInstanceInitializer({ 
                         inputPrompter: new AzureInputPrompter(),
@@ -227,6 +229,7 @@ export class AzureCliCommandGenerator extends CliCommandGenerator {
             .addOption(CLI_OPTION_PUBLIC_IP_TYPE)
             .option('--vm-size <vmsize>', 'Virtual machine size')
             .action(async (cliArgs) => {
+                this.analytics.sendEvent(RUN_COMMAND_UPDATE, { provider: CLOUDYPAD_PROVIDER_AZURE })
                 try {
                     const input = new AzureInputPrompter().cliArgsIntoInput(cliArgs)
                     const updater = await new InstanceManagerBuilder().buildAzureInstanceUpdater(cliArgs.name)

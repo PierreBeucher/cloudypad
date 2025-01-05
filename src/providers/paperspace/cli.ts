@@ -9,6 +9,7 @@ import { CLOUDYPAD_PROVIDER_PAPERSPACE, PUBLIC_IP_TYPE } from "../../core/const"
 import { CLI_OPTION_DISK_SIZE, CLI_OPTION_PUBLIC_IP_TYPE, CLI_OPTION_SPOT, CliCommandGenerator, CreateCliArgs } from "../../core/cli/command";
 import { InteractiveInstanceInitializer } from "../../core/initializer";
 import { InstanceManagerBuilder } from "../../core/manager-builder";
+import { RUN_COMMAND_CREATE, RUN_COMMAND_UPDATE } from "../../tools/analytics/events";
 
 export interface PaperspaceCreateCliArgs extends CreateCliArgs {
     apiKeyFile?: string
@@ -147,6 +148,7 @@ export class PaperspaceCliCommandGenerator extends CliCommandGenerator {
             .option('--machine-type <type>', 'Machine type')
             .option('--region <region>', 'Region in which to deploy instance')
             .action(async (cliArgs) => {
+                this.analytics.sendEvent(RUN_COMMAND_CREATE, { provider: CLOUDYPAD_PROVIDER_PAPERSPACE })
                 try {
                     await new InteractiveInstanceInitializer({ 
                         inputPrompter: new PaperspaceInputPrompter(),
@@ -166,6 +168,7 @@ export class PaperspaceCliCommandGenerator extends CliCommandGenerator {
             .option('--api-key-file <apikeyfile>', 'Path to Paperspace API key file')
             .option('--machine-type <type>', 'Machine type')
             .action(async (cliArgs) => {
+                this.analytics.sendEvent(RUN_COMMAND_UPDATE, { provider: CLOUDYPAD_PROVIDER_PAPERSPACE })
                 try {
                     const input = new PaperspaceInputPrompter().cliArgsIntoInput(cliArgs)
                     const updater = await new InstanceManagerBuilder().buildPaperspaceInstanceUpdater(cliArgs.name)

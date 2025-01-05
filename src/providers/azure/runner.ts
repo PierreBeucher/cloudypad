@@ -1,3 +1,4 @@
+import { CLOUDYPAD_PROVIDER_AZURE } from '../../core/const'
 import { AbstractInstanceRunner, InstanceRunnerArgs, StartStopOptions } from '../../core/runner'
 import { AzureClient } from '../../tools/azure'
 import { AzureProvisionInputV1, AzureProvisionOutputV1 } from './state'
@@ -9,7 +10,7 @@ export class AzureInstanceRunner extends AbstractInstanceRunner<AzureProvisionIn
     private client: AzureClient
 
     constructor(args: AzureInstanceRunnerArgs) {
-        super(args)
+        super(CLOUDYPAD_PROVIDER_AZURE, args)
 
         this.client = new AzureClient(args.instanceName, args.input.subscriptionId)
     }

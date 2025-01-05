@@ -2,7 +2,7 @@ import * as assert from 'assert';
 import { AwsInstanceInput } from '../../../src/providers/aws/state';
 import { PUBLIC_IP_TYPE_STATIC } from '../../../src/core/const';
 import { DEFAULT_COMMON_INPUT } from "../utils";
-import { AwsCreateCliArgs, AwsInputPrompter } from '../../../src/providers/aws/input';
+import { AwsCreateCliArgs, AwsInputPrompter } from '../../../src/providers/aws/cli';
 import lodash from 'lodash'
 import { PartialDeep } from 'type-fest';
 

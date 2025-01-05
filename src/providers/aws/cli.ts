@@ -9,6 +9,7 @@ import { CLOUDYPAD_PROVIDER_AWS, PUBLIC_IP_TYPE } from "../../core/const";
 import { InteractiveInstanceInitializer } from "../../core/initializer";
 import { PartialDeep } from "type-fest";
 import { InstanceManagerBuilder } from "../../core/manager-builder";
+import { RUN_COMMAND_CREATE, RUN_COMMAND_UPDATE } from "../../tools/analytics/events";
 
 export interface AwsCreateCliArgs extends CreateCliArgs {
     spot?: boolean
@@ -143,6 +144,8 @@ export class AwsCliCommandGenerator extends CliCommandGenerator {
             .option('--instance-type <type>', 'EC2 instance type')
             .option('--region <region>', 'Region in which to deploy instance')
             .action(async (cliArgs) => {
+                this.analytics.sendEvent(RUN_COMMAND_CREATE, { provider: CLOUDYPAD_PROVIDER_AWS })
+                
                 try {
                     await new InteractiveInstanceInitializer({ 
                         inputPrompter: new AwsInputPrompter(),
@@ -161,6 +164,8 @@ export class AwsCliCommandGenerator extends CliCommandGenerator {
             .addOption(CLI_OPTION_PUBLIC_IP_TYPE)
             .option('--instance-type <type>', 'EC2 instance type')
             .action(async (cliArgs) => {
+                this.analytics.sendEvent(RUN_COMMAND_UPDATE, { provider: CLOUDYPAD_PROVIDER_AWS })
+
                 try {
                     const input = new AwsInputPrompter().cliArgsIntoInput(cliArgs)
                     const updater = await new InstanceManagerBuilder().buildAwsInstanceUpdater(cliArgs.name)

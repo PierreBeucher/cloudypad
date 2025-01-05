@@ -6,6 +6,10 @@ import axios from 'axios';
 import { URL } from 'url'
 import { buildAxiosError } from '../tools/axios';
 import { getLogger, Logger } from '../log/utils';
+import { AnalyticsClient } from '../tools/analytics/client';
+import { AnalyticsManager } from '../tools/analytics/manager';
+import { RUN_COMMAND_START } from '../tools/analytics/events';
+import { CLOUDYPAD_PROVIDER } from './const';
 
 /**
  * Options that may be passed to InstanceRunner functions
@@ -38,19 +42,25 @@ export interface StartStopOptions {
     waitTimeoutSeconds?: number
 }
 
-export abstract class AbstractInstanceRunner<C extends CommonProvisionInputV1, O extends CommonProvisionOutputV1>  implements InstanceRunner {
+export abstract class AbstractInstanceRunner<C extends CommonProvisionInputV1, O extends CommonProvisionOutputV1> implements InstanceRunner {
     
     protected readonly logger: Logger
     protected readonly args: InstanceRunnerArgs<C, O>
+    private analytics: AnalyticsClient
+    private provider: CLOUDYPAD_PROVIDER
 
-
-    constructor(args: InstanceRunnerArgs<C, O>) {
+    constructor(provider: CLOUDYPAD_PROVIDER, args: InstanceRunnerArgs<C, O>) {
         this.args = args
+        this.provider = provider
         this.logger = getLogger(args.instanceName) 
+        this.analytics = AnalyticsManager.get()
     }
  
     async start(opts?: StartStopOptions): Promise<void> {
         this.logger.info(`Starting instance ${this.args.instanceName}`)
+        this.analytics.sendEvent(RUN_COMMAND_START, { 
+            provider: this.provider,
+        })
         await this.doStart(opts)
     }
 

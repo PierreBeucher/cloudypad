@@ -1,3 +1,4 @@
+import { CLOUDYPAD_PROVIDER_AWS } from '../../core/const';
 import { AbstractInstanceRunner, InstanceRunnerArgs, StartStopOptions } from '../../core/runner';
 import { AwsClient } from '../../tools/aws';
 import { AwsProvisionInputV1, AwsProvisionOutputV1 } from './state';
@@ -9,7 +10,7 @@ export class AwsInstanceRunner extends AbstractInstanceRunner<AwsProvisionInputV
     private awsClient: AwsClient
 
     constructor(args: AwsInstanceRunnerArgs) {
-        super(args)
+        super(CLOUDYPAD_PROVIDER_AWS, args)
 
         this.awsClient = new AwsClient(args.instanceName, args.input.region)
     }
