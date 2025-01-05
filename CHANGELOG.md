@@ -1,5 +1,23 @@
 # Changelog
 
+## [0.11.0](https://github.com/PierreBeucher/cloudypad/compare/v0.10.0...v0.11.0) (2025-01-05)
+
+
+### Features
+
+* cloudypad create --skip-pairing option ([139382b](https://github.com/PierreBeucher/cloudypad/commit/139382bd5d66810440a6c934a80eb720bf42f6f9))
+* default to auto-pairing after create ([c394325](https://github.com/PierreBeucher/cloudypad/commit/c39432582bf130ece769605cb18af5f9e7626b1b))
+* global CLI config persisted on disk ([9dbe35b](https://github.com/PierreBeucher/cloudypad/commit/9dbe35b21023bd3e3faaebec4d919627950c1bcd))
+* **paperspace:** implement start/stop/restart --wait flag ([e9667ed](https://github.com/PierreBeucher/cloudypad/commit/e9667ed9635be556dc6dae1ae6be39c1c4b221bf))
+
+
+### Bug Fixes
+
+* listing empty instances directory should not cause error ([90da7be](https://github.com/PierreBeucher/cloudypad/commit/90da7be811369fa15ead4537660300f8406e6fee))
+* more robust logic to identify GCC version used to compile kernel ([7ae9e50](https://github.com/PierreBeucher/cloudypad/commit/7ae9e503492d6056fddd26787e34cbfd3b3dc4f9))
+* **paperspace:** broken Paperspace apt repo GPG key ([dad83cb](https://github.com/PierreBeucher/cloudypad/commit/dad83cb6ffdf54898a1ded52bed89ee93c84b2d3))
+* **paperspace:** do not create another instance on provision if one already exists ([352c643](https://github.com/PierreBeucher/cloudypad/commit/352c6436d1cb340f29ddad32057d8cc698e0bb56))
+
 ## [0.10.0](https://github.com/PierreBeucher/cloudypad/compare/v0.9.0...v0.10.0) (2025-01-02)
 
 
