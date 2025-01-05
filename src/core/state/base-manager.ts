@@ -22,8 +22,12 @@ export class BaseStateManager {
         return this.dataRootDir
     }
 
+    protected getInstanceParentDir(){
+        return path.join(this.dataRootDir, 'instances')
+    }
+
     protected getInstanceDir(instanceName: string): string {
-        return path.join(this.dataRootDir, 'instances', instanceName)
+        return path.join(this.getInstanceParentDir(), instanceName)
     }
 
     protected getInstanceStatePath(instanceName: string): string {
