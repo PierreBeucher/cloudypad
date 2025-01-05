@@ -55,7 +55,6 @@ export class PostHogAnalyticsClient extends AbstractAnalyticsClient {
                 initial_cloudypad_version: CLOUDYPAD_VERSION
             }
         })
-        this.postHog.debug()
         this.args = args
     }
     
