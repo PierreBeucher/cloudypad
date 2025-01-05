@@ -10,7 +10,7 @@ function create_destroy_aws() {
         --public-ip-type static \
         --region eu-central-1 \
         --spot \
-        --yes --overwrite-existing
+        --yes --overwrite-existing --skip-pairing
 
     $cloudypad_cmd update aws \
         --name $instance_name \

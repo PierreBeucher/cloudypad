@@ -14,6 +14,7 @@ export interface CreateCliArgs {
     privateSshKey?: string
     yes?: boolean // auto approve
     overwriteExisting?: boolean
+    skipPairing?: boolean
 }
 
 /**
@@ -31,6 +32,7 @@ export const CLI_OPTION_DISK_SIZE = new Option('--disk-size <size>', 'Disk size 
     .argParser(parseInt)
 export const CLI_OPTION_PUBLIC_IP_TYPE = new Option('--public-ip-type <type>', `Public IP type. Either ${PUBLIC_IP_TYPE_STATIC} or ${PUBLIC_IP_TYPE_DYNAMIC}`)
     .argParser(parsePublicIpType)
+export const CLI_OPTION_SKIP_PAIRING = new Option('--skip-pairing', 'Skip Moonlight pairing after initial provisioning and configuration')
 
 /**
  * Helper to create a Commander CLI sub-commands for create and update commands.
@@ -49,6 +51,7 @@ export abstract class CliCommandGenerator {
             .addOption(CLI_OPTION_PRIVATE_SSH_KEY)
             .addOption(CLI_OPTION_AUTO_APPROVE)
             .addOption(CLI_OPTION_OVERWRITE_EXISTING)
+            .addOption(CLI_OPTION_SKIP_PAIRING)
     }
 
     /**

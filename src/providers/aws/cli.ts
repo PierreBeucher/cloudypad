@@ -153,7 +153,7 @@ export class AwsCliCommandGenerator extends CliCommandGenerator {
                     }).initializeInstance(cliArgs)
                     
                 } catch (error) {
-                    console.error('Error creating AWS instance:', error)
+                    throw new Error('Error creating AWS instance:', { cause: error })
                 }
             })
     }
@@ -178,7 +178,7 @@ export class AwsCliCommandGenerator extends CliCommandGenerator {
                     console.info(`Updated instance ${cliArgs.name}`)
                     
                 } catch (error) {
-                    console.error('Error updating AWS instance:', error)
+                    throw new Error('Error updating AWS instance:', { cause: error })
                 }
             })
     }

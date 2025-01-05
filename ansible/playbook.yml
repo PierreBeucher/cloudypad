@@ -9,6 +9,8 @@
 - name: Install Docker, NVIDIA drivers and Wolf
   hosts: all
   roles:
+    - role: roles/prepare-install
+      tags: [ prepare-install ]
     - role: geerlingguy.docker
       tags: [ docker ]
       docker_users:

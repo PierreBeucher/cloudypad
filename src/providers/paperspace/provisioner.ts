@@ -17,6 +17,25 @@ export class PaperspaceProvisioner extends AbstractInstanceProvisioner<Paperspac
 
     async doProvision(opts?: InstanceProvisionOptions) {
 
+        const pspaceMachineName = this.args.instanceName
+        
+        const alreadyExists = await this.client.machineWithNameExists(pspaceMachineName)
+        if(alreadyExists){
+            this.logger.warn(`Machine ${this.args.instanceName} already provisioned. Paperspace doesn't support updating existing machine provisioning options.` +
+            `You can either create another instance with desired options or update it manually.`)
+
+            const existingMachine = await this.client.getMachineByName(this.args.instanceName)
+
+            if (!existingMachine.publicIp) {
+                throw new Error(`Existing machine does not have a public IP address. Got: ${JSON.stringify(existingMachine)}`)
+            }
+
+            return {
+                host: existingMachine.publicIp,
+                machineId: existingMachine.id
+            }
+        }
+
         let confirmCreation: boolean
         if(opts?.autoApprove !== undefined){
             confirmCreation = opts.autoApprove
@@ -24,7 +43,7 @@ export class PaperspaceProvisioner extends AbstractInstanceProvisioner<Paperspac
             confirmCreation = await confirm({
                 message: `
 You are about to provision Paperspace instance with the following details:
-    Instance name: ${this.args.instanceName}
+    Instance name: ${pspaceMachineName}
     SSH key: ${this.args.input.ssh.privateKeyPath}
     Region: ${this.args.input.region}
     Machine Type: ${this.args.input.machineType}
@@ -40,7 +59,7 @@ Do you want to proceed?`,
         }
 
         const createArgs: MachinesCreateRequest = {
-            name: this.args.instanceName,
+            name: pspaceMachineName,
             region: this.args.input.region,
             machineType: this.args.input.machineType,
             diskSize: this.args.input.diskSize,
