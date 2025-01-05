@@ -168,6 +168,7 @@ export abstract class AbstractInstanceRunner<C extends CommonProvisionInputV1, O
 
         const pairMethod = await select({
             message: 'Pair Moonlight automatically or run Moonlight yourself to pair manually ?',
+            default: pairAuto,
             choices: [{
                 name: "manual: run Moonlight yourself and add your instance.",
                 value: pairManual
