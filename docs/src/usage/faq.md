@@ -13,6 +13,7 @@
   - [I Found an bug or I have a suggestion](#i-found-an-bug-or-i-have-a-suggestion)
   - [How does all of this work?](#how-does-all-of-this-work)
   - [Will Cloudy Pad become a paid product ?](#will-cloudy-pad-become-a-paid-product-)
+  - [How are my data collected? How does analytics works?](#how-are-my-data-collected-how-does-analytics-works)
 - [Known issues](#known-issues)
   - [Docker for MacOS and VirtioFS](#docker-for-macos-and-virtiofs)
 
@@ -93,6 +94,17 @@ If you found a bug or have a suggestion, [please report an issue](https://github
 Probably not in its current form. Considering I'm really _not_ happy about the [enshittification of the internet](https://en.wikipedia.org/wiki/Enshittification), Cloudy Pad will remain FOSS - at least for personal use.
 
 Cloudy Pad may have a Premium or Pro offer in the future, but for a personal simple use it will remain FOSS.
+
+### How are my data collected? How does analytics works?
+
+Cloudy Pad may, upon your initial agreement on install, collect anonymous usage data. This data is only used internally and won't be shared with third party or used for targeted ads. Allowing anonymous data collection helps Cloudy Pad get better !
+
+Cloudy Pad uses [Post Hog](https://posthog.com) and will keep data for 1 or 3 months. 
+
+To opt-out of analytics, either:
+- Refuse analytics on initial installation
+- Export environment variable `CLOUDYPAD_ANALYTICS_DISABLE=true`
+- Edit local configuration at `$HOME/.cloudypad/config.yml` and set `analytics.enabled: false`
 
 ## Known issues
 
