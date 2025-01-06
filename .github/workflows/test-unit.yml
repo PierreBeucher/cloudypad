@@ -50,7 +50,10 @@ jobs:
         with:
           primary-key: nix-${{ runner.os }}-${{ hashFiles('**/*.nix') }}
           restore-prefixes-first-match: nix-${{ runner.os }}-
-  
+
+      - name: test analytics key match
+        run: nix develop -c task test-analytics-key-match
+
       - name: Build container image
         run: nix develop -c task build-local
       

@@ -54,6 +54,9 @@ tasks:
   test-integ-full-lifecycle-paperspace:
     - test/integ/cli-full-lifecycle/run.sh paperspace
 
+  test-analytics-key-match:
+    - cmd: test/shell/test-matching-analytics-key.sh
+
   #
   # Utils
   #
