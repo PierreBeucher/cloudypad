@@ -101,7 +101,7 @@ run_cloudypad_docker() {
     # Set interactive+tty by default
     # no tty if CLOUDYPAD_CONTAINER_NO_TTY is set (for CI)
     if [ -n "$CLOUDYPAD_CONTAINER_NO_TTY" ]; then
-        cmd="$cmd -t"
+        cmd="$cmd"
     else
         cmd="$cmd -it"
     fi
