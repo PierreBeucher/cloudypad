@@ -8,6 +8,28 @@ DEFAULT_CLOUDYPAD_SCRIPT_REF=v0.11.0
 CLOUDYPAD_HOME=${CLOUDYPAD_HOME:-"$HOME/.cloudypad"}
 CLOUDYPAD_SCRIPT_REF=${CLOUDYPAD_SCRIPT_REF:-$DEFAULT_CLOUDYPAD_SCRIPT_REF}
 
+INSTALL_POSTHOG_DISTINCT_ID="cli-install-$(date +%Y-%m-%d-%H-%M-%S)-$RANDOM"
+INSTALL_POSTHOG_API_KEY="phc_caJIOD8vW5727svQf90FNgdALIyYYouwEDEVh3BI1IH"
+
+# Sends anonymous analytics event during installation
+send_analytics_event() {
+  event=$1
+  if [ "$CLOUDYPAD_ANALYTICS_DISABLE" != "true" ]; then
+    curl -s -o /dev/null -L --header "Content-Type: application/json" -d "{
+      \"api_key\": \"$INSTALL_POSTHOG_API_KEY\",
+      \"event\": \"$event\",
+      \"distinct_id\": \"$INSTALL_POSTHOG_DISTINCT_ID\",
+      \"properties\": {
+        \"\$process_person_profile\": false,
+        \"os_name\": \"$(uname -s)\",
+        \"os_arch\": \"$(uname -m)\"
+      }
+    }" https://eu.i.posthog.com/capture/
+  fi
+}
+
+send_analytics_event "cli_install_start"
+
 echo "Installing Cloudy Pad version $CLOUDYPAD_SCRIPT_REF"
 
 CLOUDYPAD_SCRIPT_URL="https://raw.githubusercontent.com/PierreBeucher/cloudypad/$CLOUDYPAD_SCRIPT_REF/cloudypad.sh"
@@ -68,14 +90,7 @@ chmod +x "$SCRIPT_PATH"
 
 echo "Downloading Cloudy Pad container images..."
 
-if [ ! -n "$(which docker)" ]; then
-  echo
-  echo "WARNING: Docker CLI not found. Cloudy Pad will still get installed but you'll need Docker to run it."
-  echo "         See https://docs.docker.com/engine/install/ for Docker installation instructions."
-  echo
-else 
-  $SCRIPT_PATH download-container-images
-fi
+$SCRIPT_PATH download-container-images
 
 # Identify shell to update *.rc file with PATH update
 SHELL_NAME=$(basename "${SHELL}")
@@ -140,3 +155,5 @@ echo
 echo "If you enjoy Cloudy Pad, please star us ⭐ https://github.com/PierreBeucher/cloudypad"
 echo "🐛 Found a bug? Create an issue: https://github.com/PierreBeucher/cloudypad/issues"
 echo
+
+send_analytics_event "cli_install_finish"

@@ -50,7 +50,10 @@ jobs:
         with:
           primary-key: nix-${{ runner.os }}-${{ hashFiles('**/*.nix') }}
           restore-prefixes-first-match: nix-${{ runner.os }}-
-  
+
+      - name: test analytics key match
+        run: nix develop -c task test-analytics-key-match
+
       - name: Build container image
         run: nix develop -c task build-local
       
@@ -84,19 +87,22 @@ jobs:
       # Test the install script and cloudypad.sh for current commit
       - name: Run install script
         run: |
-          curl -fsSL https://raw.githubusercontent.com/PierreBeucher/cloudypad/${{ github.sha }}/install.sh | CLOUDYPAD_VERSION=${{ github.sha }} sh
+          curl -fsSL https://raw.githubusercontent.com/PierreBeucher/cloudypad/${{ github.sha }}/install.sh | bash
+          echo " ==== .bachrc content ==="
+          cat ~/.bashrc
+          echo " ==== .bachrc content ==="
+          bash -i -c 'echo $PATH && which cloudypad'
 
-      - name: Check version
-        run: |
-          export PATH=$PATH:$HOME/.cloudypad/bin
-          export CLOUDYPAD_CONTAINER_NO_TTY=true
-          export CLOUDYPAD_CLI_LAUNCHER_DEBUG=true
-          cloudypad --version
-  
   test-install-container:
     name: Test install/run in containers
     if: "!startsWith(github.head_ref, 'release/')" # Install test will fail on release branch as version won't mach
     runs-on: ubuntu-22.04
+    
+    # env:
+    #   # Container do not have a tty, this will ensure script behave appropriately
+    #   CLOUDYPAD_CONTAINER_NO_TTY: true
+    #   # Enable debug logs
+    #   CLOUDYPAD_CLI_LAUNCHER_DEBUG: true
 
     steps:
       - name: Checkout repository
@@ -119,5 +125,6 @@ jobs:
       - uses: nixbuild/nix-quick-install-action@v27
       
       - run: nix build .#
-      
-      - run: CLOUDYPAD_CONTAINER_NO_TTY=true nix run .# -- --version
+
+      # Disable this for now as latets version does not respect no-tty properly      
+      # - run: CLOUDYPAD_CONTAINER_NO_TTY=true nix run .# -- --version

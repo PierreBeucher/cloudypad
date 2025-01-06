@@ -21,7 +21,7 @@ Cloudy Pad deploys a Cloud gaming gear using a Cloud provider of your choice:
 Install latest version of `cloudypad` CLI:
 
 ```sh
-curl -fsSL https://raw.githubusercontent.com/PierreBeucher/cloudypad/master/install.sh | sh
+curl -fsSL https://raw.githubusercontent.com/PierreBeucher/cloudypad/master/install.sh | bash
 ```
 
 For other installation methods, see [Installation](#installation)

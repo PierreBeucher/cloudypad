@@ -61,7 +61,7 @@ Not familiar with terms like _"Cloud gaming"_, _"Moonlight"_, _"Cloud Provider"_
 Install latest version of `cloudypad` CLI:
 
 ```sh
-curl -fsSL https://raw.githubusercontent.com/PierreBeucher/cloudypad/master/install.sh | sh
+curl -fsSL https://raw.githubusercontent.com/PierreBeucher/cloudypad/master/install.sh | bash
 ```
 
 For other installation methods, see [Installation](https://cloudypad.gg/usage/installation)

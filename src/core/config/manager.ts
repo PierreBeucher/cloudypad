@@ -4,6 +4,8 @@ import yaml from 'js-yaml'
 import { z } from 'zod'
 import { DataRootDirManager } from '../data-dir'
 import { getLogger } from '../../log/utils'
+import { v4 as uuidv4 } from 'uuid'
+import * as lodash from 'lodash'
 
 const PostHogConfigSchema = z.object({
     distinctId: z.string()
@@ -12,7 +14,7 @@ const PostHogConfigSchema = z.object({
 const AnalyticsConfigSchema = z.object({
     enabled: z.boolean().describe("Whether analytics is enabled."),
     promptedApproval: z.boolean().describe("Whether user has been prompted for analytics approval yet."),
-    posthog: PostHogConfigSchema.optional()
+    posthog: PostHogConfigSchema
 }).refine(
     (data) => !data.enabled || (data.enabled && data.posthog !== undefined),
     {
@@ -21,7 +23,7 @@ const AnalyticsConfigSchema = z.object({
     }
 )
 
-const GlobalCliConfigSchemaV1 = z.object({
+export const GlobalCliConfigSchemaV1 = z.object({
     version: z.literal("1"),
     analytics: AnalyticsConfigSchema
 }).describe("PostHog analytics config. https://posthog.com")
@@ -30,11 +32,12 @@ export type PostHogConfig = z.infer<typeof PostHogConfigSchema>
 export type GlobalCliConfigV1 = z.infer<typeof GlobalCliConfigSchemaV1>
 export type AnalyticsConfig = z.infer<typeof AnalyticsConfigSchema>
 
-export const DEFAULT_CONFIG: GlobalCliConfigV1 = {
+export const BASE_DEFAULT_CONFIG: GlobalCliConfigV1 = {
     version: "1",
     analytics: {
-        enabled: false,
-        promptedApproval: false
+        enabled: true,
+        promptedApproval: false,
+        posthog: { distinctId: "dummy" }
     }
 }
 
@@ -72,11 +75,25 @@ export class ConfigManager {
     init(): void {
         if (!fs.existsSync(this.configPath)) {
             this.logger.info(`CLI config not found at ${this.configPath}. Creating default config...`)
-            this.writeConfigSafe(DEFAULT_CONFIG)
+            
+            const initConfig = lodash.merge(
+                {},
+                BASE_DEFAULT_CONFIG, 
+                { 
+                    analytics: { 
+                        posthog: { 
+                            distinctId: uuidv4()
+                        } 
+                    } 
+                }
+            )
+            this.writeConfigSafe(initConfig)
+
+            this.logger.debug(`Generated default config: ${JSON.stringify(initConfig)}`)
             this.logger.info(`Default config created at ${this.configPath}`)
         }
 
-        this.logger.debug(`Found existing config at ${this.configPath}.`)
+        this.logger.debug(`Init: found existing config at ${this.configPath}. Not overwriting it.`)
     }
 
     load(): GlobalCliConfigV1 {
@@ -93,20 +110,19 @@ export class ConfigManager {
         this.writeConfigSafe(updatedConfig)
     }
 
-    enableAnalyticsPosthHog(posthog: PostHogConfig): void {
-        this.logger.debug(`Enabling PostHog analytics: ${posthog}`)
+    setAnalyticsPosthHog(posthog: PostHogConfig): void {
+        this.logger.debug(`Setting PostHog analytics: ${JSON.stringify(posthog)}`)
 
         const updatedConfig = this.load()
-        updatedConfig.analytics.enabled = true
         updatedConfig.analytics.posthog = posthog
         this.writeConfigSafe(updatedConfig)
     }
 
-    disableAnalytics(): void {
-        this.logger.debug(`Disabling analytics`)
+    setAnalyticsEnabled(enable: boolean): void {
+        this.logger.debug(`Setting analytics enabled: ${enable}`)
 
         const updatedConfig = this.load()
-        updatedConfig.analytics.enabled = false
+        updatedConfig.analytics.enabled = enable
         this.writeConfigSafe(updatedConfig)
     }
 
