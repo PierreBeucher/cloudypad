@@ -1,15 +1,16 @@
 
 import { confirm } from '@inquirer/prompts'
-import { v4 as uuidv4 } from 'uuid'
 import { ConfigManager } from '../../core/config/manager'
 
 export class AnalyticsInitializer {
 
-    async promptApproval(): Promise<boolean>{
+    private configManager = ConfigManager.getInstance()
+    
+    private async promptApprovalAndSetAnalytics(): Promise<void>{
 
         // Skip prompt if no TTY to avoid failures
         if(!process.stdin.isTTY) {
-            return true
+            return
         }
         
         const approveAnalytics = await confirm({
@@ -17,28 +18,15 @@ export class AnalyticsInitializer {
             default: true,
         })
 
-        return approveAnalytics
+        this.configManager.setAnalyticsEnabled(approveAnalytics)
     }
 
-    /**
-     * Prepare global configuration to enable PostHog analytics. Prompt user for approval if not already done. 
-     */
-    async prepareAnalyticsConfig() {
-        const configManager = ConfigManager.getInstance()
-        const config = configManager.load()
-    
+    async promptAnalyticsConsentUnlessAlreadyDone() {
+        const config = this.configManager.load()
+
         if(!config.analytics.promptedApproval) {
-            const enableAnalytics = await this.promptApproval()
-    
-            if(enableAnalytics){
-                // Generate unique distinct if not already exists
-                const distinctId = config.analytics.posthog?.distinctId ? config.analytics.posthog?.distinctId : uuidv4() 
-                configManager.enableAnalyticsPosthHog({ distinctId: distinctId })
-            } else {
-                configManager.disableAnalytics()
-            }
-    
-            configManager.updateAnalyticsPromptedApproval(true)
+            await this.promptApprovalAndSetAnalytics()
+            this.configManager.updateAnalyticsPromptedApproval(true)
         }
     }
 }

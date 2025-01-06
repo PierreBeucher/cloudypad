@@ -11,21 +11,16 @@
 import { ConfigManager } from "./core/config/manager"
 import { getLogger } from "./log/utils"
 import { buildProgram } from "./program"
-import { AnalyticsManager } from "./tools/analytics/manager"
 import { AnalyticsInitializer } from "./tools/analytics/initializer"
+import { AnalyticsManager } from "./tools/analytics/manager"
 
 const logger = getLogger("main")
 
 async function main(){
     try {
-
-        // Init config
         ConfigManager.getInstance().init()
-        
-        // Prepare analytics
-        await new AnalyticsInitializer().prepareAnalyticsConfig()
+        await new AnalyticsInitializer().promptAnalyticsConsentUnlessAlreadyDone()
 
-        // Run program
         const program = buildProgram()
         await program.parseAsync(process.argv)
 
