@@ -7,21 +7,22 @@ import { getLogger } from '../../log/utils'
 import { v4 as uuidv4 } from 'uuid'
 import * as lodash from 'lodash'
 
+export enum AnalyticsCollectionMethod {
+    All = "all",
+    Technical = "technical",
+    None = "none"
+}
+
 const PostHogConfigSchema = z.object({
-    distinctId: z.string()
+    distinctId: z.string(),
+    collectionMethod: z.enum([ AnalyticsCollectionMethod.All, AnalyticsCollectionMethod.Technical, AnalyticsCollectionMethod.None ]).optional()
+        .describe("The method used to collect analytics data. All: collect everything, including personal data (require user consent). Technical: only collect technical non-personal data. None: do not collect anything."),
 })
 
 const AnalyticsConfigSchema = z.object({
-    enabled: z.boolean().describe("Whether analytics is enabled."),
-    promptedApproval: z.boolean().describe("Whether user has been prompted for analytics approval yet."),
+    promptedPersonalDataCollectionApproval: z.boolean().default(false).describe("Whether user has been prompted for personal data collection approval yet."),
     posthog: PostHogConfigSchema
-}).refine(
-    (data) => !data.enabled || (data.enabled && data.posthog !== undefined),
-    {
-        message: 'PostHog configuration is required when analytics is enabled',
-        path: ['posthog'] // Optional: Point to the specific field in error
-    }
-)
+})
 
 export const GlobalCliConfigSchemaV1 = z.object({
     version: z.literal("1"),
@@ -35,9 +36,11 @@ export type AnalyticsConfig = z.infer<typeof AnalyticsConfigSchema>
 export const BASE_DEFAULT_CONFIG: GlobalCliConfigV1 = {
     version: "1",
     analytics: {
-        enabled: true,
-        promptedApproval: false,
-        posthog: { distinctId: "dummy" }
+        promptedPersonalDataCollectionApproval: false,
+        posthog: { 
+            distinctId: "dummy",
+            collectionMethod: AnalyticsCollectionMethod.Technical
+        },
     }
 }
 
@@ -82,7 +85,8 @@ export class ConfigManager {
                 { 
                     analytics: { 
                         posthog: { 
-                            distinctId: uuidv4()
+                            distinctId: uuidv4(),
+                            collectionMethod: "technical"
                         } 
                     } 
                 }
@@ -99,14 +103,23 @@ export class ConfigManager {
     load(): GlobalCliConfigV1 {
         const rawConfig = this.readConfigRaw()
         const config = this.zodParseSafe(rawConfig, GlobalCliConfigSchemaV1)
+        this.writeConfigSafe(config) // Rewrite config with correct schema version as current schema may have changed since last load
         return config
     }
 
-    updateAnalyticsPromptedApproval(prompted: boolean): void {
+    setAnalyticsPromptedPersonalDataCollectionApproval(prompted: boolean): void {
         this.logger.debug(`Updating promptedApproval: ${prompted}`)
 
         const updatedConfig = this.load()
-        updatedConfig.analytics.promptedApproval = prompted
+        updatedConfig.analytics.promptedPersonalDataCollectionApproval = prompted
+        this.writeConfigSafe(updatedConfig)
+    }
+
+    setAnalyticsCollectionMethod(collectionMethod: AnalyticsCollectionMethod): void {
+        this.logger.debug(`Setting analytics collection method: ${collectionMethod}`)
+
+        const updatedConfig = this.load()
+        updatedConfig.analytics.posthog.collectionMethod = collectionMethod
         this.writeConfigSafe(updatedConfig)
     }
 
@@ -114,15 +127,7 @@ export class ConfigManager {
         this.logger.debug(`Setting PostHog analytics: ${JSON.stringify(posthog)}`)
 
         const updatedConfig = this.load()
-        updatedConfig.analytics.posthog = posthog
-        this.writeConfigSafe(updatedConfig)
-    }
-
-    setAnalyticsEnabled(enable: boolean): void {
-        this.logger.debug(`Setting analytics enabled: ${enable}`)
-
-        const updatedConfig = this.load()
-        updatedConfig.analytics.enabled = enable
+        updatedConfig.analytics.posthog = lodash.merge({}, updatedConfig.analytics.posthog, posthog)
         this.writeConfigSafe(updatedConfig)
     }
 
