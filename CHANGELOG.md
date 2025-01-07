@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.12.0](https://github.com/PierreBeucher/cloudypad/compare/v0.11.0...v0.12.0) (2025-01-07)
+
+
+### Features
+
+* prettier Pulumi outputs with colors and without unnecessary newlines ([abcf356](https://github.com/PierreBeucher/cloudypad/commit/abcf356325c3bda6406dcd7ff87fc2a20e9b973a))
+
+
+### Bug Fixes
+
+* typo in install script shebang ([85c76c5](https://github.com/PierreBeucher/cloudypad/commit/85c76c5b498a236480292c37e73e74de7b55a159))
+
 ## [0.11.0](https://github.com/PierreBeucher/cloudypad/compare/v0.10.0...v0.11.0) (2025-01-05)
 
 
