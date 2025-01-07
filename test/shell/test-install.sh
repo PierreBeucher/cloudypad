@@ -26,6 +26,18 @@ docker run -i \
     sh -c '/cloudypad/install.sh && PATH=$PATH:/root/.cloudypad/bin && echo $PATH && which cloudypad || (echo "Cloudypad not found on PATH after install" && false)'
 
 echo "===================="
+echo "Testing Ubuntu with zsh"
+
+docker build -f test/shell/Dockerfile.ubuntu -t cloudypad-test-install-ubuntu:local .
+docker run -i \
+    -v $PWD:/cloudypad -w /cloudypad \
+    -v /var/run/docker.sock:/var/run/docker.sock \
+    -e CLOUDYPAD_CONTAINER_NO_TTY="true" \
+    -e CLOUDYPAD_ANALYTICS_DISABLE="true" \
+    cloudypad-test-install-ubuntu:local \
+    zsh -c '/cloudypad/install.sh && PATH=$PATH:/root/.cloudypad/bin && echo $PATH && which cloudypad || (echo "Cloudypad not found on PATH after install" && false)'
+
+echo "===================="
 echo "Testing Debian with bash"
 
 docker build -f test/shell/Dockerfile.debian -t cloudypad-test-install-debian:local .

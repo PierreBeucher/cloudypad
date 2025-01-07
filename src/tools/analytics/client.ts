@@ -36,7 +36,8 @@ export abstract class AbstractAnalyticsClient implements AnalyticsClient {
 }
 
 export interface PostHogAnalyticsManagerArgs {
-    distinctId: string
+    distinctId: string,
+    additionalProperties?: Record<string | number, unknown> | undefined
 }
 
 export class PostHogAnalyticsClient extends AbstractAnalyticsClient {
@@ -52,7 +53,8 @@ export class PostHogAnalyticsClient extends AbstractAnalyticsClient {
             distinctId: args.distinctId,
             properties: {
                 cloudypad_version: CLOUDYPAD_VERSION,
-                initial_cloudypad_version: CLOUDYPAD_VERSION
+                initial_cloudypad_version: CLOUDYPAD_VERSION,
+                ...args.additionalProperties
             }
         })
         this.args = args

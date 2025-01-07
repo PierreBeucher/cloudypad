@@ -97,7 +97,23 @@ Cloudy Pad may have a Premium or Pro offer in the future, but for a personal sim
 
 ### How are my data collected? How does analytics works?
 
-Cloudy Pad may, upon your initial agreement on install, collect anonymous usage data. This data is only used internally and won't be shared with third party or used for targeted ads. Allowing anonymous data collection helps Cloudy Pad get better !
+Cloudy Pad may, with your consent, collect some personal information. Here's the full list of information collected if you consent:
+- OS name and details (distribution and version)
+
+This data is only used internally and won't be shared with third party or used for targeted ads. Your data are only used for analytics purpose to understand usage, track feature usage and help resolve issues.
+
+Cloudy Pad will, by default, collect technical data such as when a command is run or certain technical event occurs, _without collecting any personal information._ Collected data:
+- Cloudy Pad version
+- Techical events (action performed such as instance start/stop without instance details, error without personal info, etc.)
+
+To completely opt out of any data collection (even technical non-personal data) or change data collection method, open `$HOME/.cloudypad/config.yml` and set `analytics.enabled: false`, eg:
+
+```sh
+analytics:
+  posthog:
+    collectionMethod: none # <<===== EDIT HERE, valid value: "none", "technical", "all"
+    distinctId: xxx
+```
 
 Cloudy Pad uses [Post Hog](https://posthog.com) and will keep data for 1 or 3 months. 
 

@@ -93,14 +93,15 @@ describe('Instance initializer', () => {
             inputPrompter: new GcpInputPrompter()
         }).initializeInstance(TEST_CLI_ARGS_ALREADY_EXISTING, { skipPostInitInfo: true })
 
-        await assert.rejects(
+        await assert.rejects(async () => {
             // Initialize again, should throw exception as overwriteExisting is false
-            new InteractiveInstanceInitializer({ 
+            return new InteractiveInstanceInitializer({ 
                 provider: CLOUDYPAD_PROVIDER_GCP,
                 inputPrompter: new GcpInputPrompter()
-            }).initializeInstance(TEST_CLI_ARGS_ALREADY_EXISTING, { skipPostInitInfo: true }),
-            /Won't overwrite existing instance/
-        )
+            }).initializeInstance(TEST_CLI_ARGS_ALREADY_EXISTING, { skipPostInitInfo: true })
+        }, (thrown: unknown) => {
+            return thrown instanceof Error && thrown.cause instanceof Error && thrown.cause.message.includes("Won't overwrite existing instance")
+        })
     })
 })
     

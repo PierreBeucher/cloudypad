@@ -161,44 +161,50 @@ export abstract class AbstractInstanceRunner<C extends CommonProvisionInputV1, O
     
     async pair(){
         
-        const privateKey = fs.readFileSync(this.args.input.ssh.privateKeyPath, 'utf-8')
+        try {
+            const privateKey = fs.readFileSync(this.args.input.ssh.privateKeyPath, 'utf-8')
 
-        const docker = new Docker({
-            host: this.args.output.host,
-            protocol: 'ssh',
-            port: 22,
-            username: this.args.input.ssh.user,
-            sshOptions: {
-                privateKey: privateKey
+            const docker = new Docker({
+                host: this.args.output.host,
+                protocol: 'ssh',
+                port: 22,
+                username: this.args.input.ssh.user,
+                sshOptions: {
+                    privateKey: privateKey
+                }
+            })
+
+            const pairManual = "manual"
+            const pairAuto = "auto"
+
+            const pairMethod = await select({
+                message: 'Pair Moonlight automatically or run Moonlight yourself to pair manually ?',
+                default: pairAuto,
+                choices: [{
+                    name: "manual: run Moonlight yourself and add your instance.",
+                    value: pairManual
+                }, {
+                    name: "automatic: run a single command to pair your instance.",
+                    value: pairAuto
+                }],
+                loop: false,
+            })
+
+            if(pairMethod === pairManual) {
+                await this.pairManual(docker, this.args.output.host)
+            } else if (pairMethod === pairAuto){
+                await this.pairAuto(docker, this.args.output.host)
+            } else {
+                throw new Error(`Unrecognized pair method '${pairMethod}'. This is probably an internal bug.`)
             }
-        })
 
-        const pairManual = "manual"
-        const pairAuto = "auto"
-
-        const pairMethod = await select({
-            message: 'Pair Moonlight automatically or run Moonlight yourself to pair manually ?',
-            default: pairAuto,
-            choices: [{
-                name: "manual: run Moonlight yourself and add your instance.",
-                value: pairManual
-            }, {
-                name: "automatic: run a single command to pair your instance.",
-                value: pairAuto
-            }],
-            loop: false,
-        })
-
-        if(pairMethod === pairManual) {
-            await this.pairManual(docker, this.args.output.host)
-        } else if (pairMethod === pairAuto){
-            await this.pairAuto(docker, this.args.output.host)
-        } else {
-            throw new Error(`Unrecognized pair method '${pairMethod}'. This is probably an internal bug.`)
+            console.info(`Instance ${this.args.instanceName} paired successfully 🤝 👍`)
+            console.info(`You can now run Moonlight to connect and play with your instance 🎮`)
+        } catch (error) {
+            const eventProps = error instanceof Error ? { errorMessage: error.message, stackTrace: error.stack } : { errorMessage: String(error), stackTrace: "unknown" }
+            this.analytics.sendEvent("pairing_error", eventProps)
+            throw new Error(`Error pairing instance`, { cause: error })
         }
-
-        console.info(`Instance ${this.args.instanceName} paired successfully 🤝 👍`)
-        console.info(`You can now run Moonlight to connect and play with your instance 🎮`)
     }
 
     private async pairManual(docker: Docker, host: string) {

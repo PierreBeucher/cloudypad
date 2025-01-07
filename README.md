@@ -2,7 +2,7 @@
 [![Discord](https://img.shields.io/discord/856434175455133727?style=for-the-badge&logo=discord&logoColor=ffffff&label=Chat%20with%20us&labelColor=6A7EC2&color=7389D8)](https://discord.gg/dCxDVfVnSD)
 [![GitHub License](https://img.shields.io/github/license/PierreBeucher/cloudypad?style=for-the-badge&color=00d4c4)](./LICENSE.txt)
 
-Cloudy Pad lets you deploy a Cloud gaming server anywhere in the world and play your own games - without requiring a powerful gaming machine or a costly subscription:
+Cloudy Pad is a Free, Open Source alternative to GeForce Now, Blacknut and similar Cloud Gaming platforms. It lets you deploy a Cloud gaming server anywhere in the world and play your own games - without requiring a powerful gaming machine or a costly subscription:
 
 - Stream with **[Moonlight](https://moonlight-stream.org/)** client
 - Run your games through **[Steam](https://store.steampowered.com/)**, **[Pegasus](https://pegasus-frontend.org/)** or **[Lutris](https://lutris.net/)**

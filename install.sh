@@ -1,4 +1,4 @@
-#/usr/env/bin bash
+#!/usr/bin/env bash
 
 set -e
 
@@ -11,9 +11,12 @@ CLOUDYPAD_SCRIPT_REF=${CLOUDYPAD_SCRIPT_REF:-$DEFAULT_CLOUDYPAD_SCRIPT_REF}
 INSTALL_POSTHOG_DISTINCT_ID="cli-install-$(date +%Y-%m-%d-%H-%M-%S)-$RANDOM"
 INSTALL_POSTHOG_API_KEY="phc_caJIOD8vW5727svQf90FNgdALIyYYouwEDEVh3BI1IH"
 
-# Sends anonymous analytics event during installation
+# Sends anonymous technical analytics event during installation
+# No personal data is sent 
 send_analytics_event() {
   event=$1
+  eventDetails=$2
+  
   if [ "$CLOUDYPAD_ANALYTICS_DISABLE" != "true" ]; then
     curl -s -o /dev/null -L --header "Content-Type: application/json" -d "{
       \"api_key\": \"$INSTALL_POSTHOG_API_KEY\",
@@ -21,12 +24,24 @@ send_analytics_event() {
       \"distinct_id\": \"$INSTALL_POSTHOG_DISTINCT_ID\",
       \"properties\": {
         \"\$process_person_profile\": false,
+        \"event_details\": $eventDetails,
         \"os_name\": \"$(uname -s)\",
         \"os_arch\": \"$(uname -m)\"
       }
     }" https://eu.i.posthog.com/capture/
   fi
 }
+
+# Identify shell to adapt behavior accordingly
+SHELL_NAME=$(basename "${SHELL}")
+
+if [[  $SHELL_NAME == "bash" ]]; then
+  trap 'send_analytics_event "cli_install_error" "LINENO: $LINENO, FUNCNAME: $FUNCNAME, BASH_SOURCE: $BASH_SOURCE, BASH_VERSION: $BASH_VERSION"' ERR
+else
+  echo "WARNING: install script is not running in a bash shell. This may lead to unexpected behavior."
+  echo "         Maybe bash is not available on your system?"
+  echo "         If you think this is a bug, please create an issue: https://github.com/PierreBeucher/cloudypad/issues"
+fi
 
 send_analytics_event "cli_install_start"
 
@@ -92,10 +107,7 @@ echo "Downloading Cloudy Pad container images..."
 
 $SCRIPT_PATH download-container-images
 
-# Identify shell to update *.rc file with PATH update
-SHELL_NAME=$(basename "${SHELL}")
 STARTUP_FILE=""
-
 case "${SHELL_NAME}" in
     "bash")
         # Terminal.app on macOS prefers .bash_profile to .bashrc, so we prefer that

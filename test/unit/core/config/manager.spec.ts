@@ -1,7 +1,7 @@
 import * as fs from 'fs'
 import * as assert from 'assert'
 import * as yaml from 'js-yaml'
-import { ConfigManager, BASE_DEFAULT_CONFIG, GlobalCliConfigV1, GlobalCliConfigSchemaV1 } from '../../../../src/core/config/manager'
+import { ConfigManager, BASE_DEFAULT_CONFIG, GlobalCliConfigV1, GlobalCliConfigSchemaV1, AnalyticsCollectionMethod } from '../../../../src/core/config/manager'
 import { createTempTestDir } from '../../utils'
 import path from 'path'
 import lodash from 'lodash'
@@ -26,8 +26,7 @@ describe('ConfigManager', () => {
             const writtenConfig = writtenConfigParsed.data!
             
             assert.equal(writtenConfig.version, "1")
-            assert.equal(writtenConfig.analytics.enabled, BASE_DEFAULT_CONFIG.analytics.enabled)
-            assert.equal(writtenConfig.analytics.promptedApproval, BASE_DEFAULT_CONFIG.analytics.promptedApproval)
+            assert.equal(writtenConfig.analytics.promptedPersonalDataCollectionApproval, BASE_DEFAULT_CONFIG.analytics.promptedPersonalDataCollectionApproval)
             // assert distinctId looks like a UUID
             assert.match(writtenConfig.analytics.posthog.distinctId, /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/)
 
@@ -38,12 +37,12 @@ describe('ConfigManager', () => {
             // Calling init() again should not overwrite
             // Update config (and check it's been updated)
             // and call init() again to see if existing config is not overwritten
-            configManager.updateAnalyticsPromptedApproval(!loadedConfig.analytics.promptedApproval)
+            configManager.setAnalyticsPromptedPersonalDataCollectionApproval(!loadedConfig.analytics.promptedPersonalDataCollectionApproval)
             const expectUpdatedConfig = lodash.merge({},
                 loadedConfig,
                 {
                     analytics: {
-                        promptedApproval: !loadedConfig.analytics.promptedApproval
+                        promptedPersonalDataCollectionApproval: !loadedConfig.analytics.promptedPersonalDataCollectionApproval
                     }
                 }
             )
@@ -66,11 +65,11 @@ describe('ConfigManager', () => {
         it('should update prompted approval', () => {
 
             const configBeforeUpdate = configUpdateTestManager.load()
-            assert.equal(configBeforeUpdate.analytics.promptedApproval, false)
+            assert.equal(configBeforeUpdate.analytics.promptedPersonalDataCollectionApproval, false)
 
-            configUpdateTestManager.updateAnalyticsPromptedApproval(true)
+            configUpdateTestManager.setAnalyticsPromptedPersonalDataCollectionApproval(true)
             const configAfterUpdate = configUpdateTestManager.load()
-            assert.equal(configAfterUpdate.analytics.promptedApproval, true)
+            assert.equal(configAfterUpdate.analytics.promptedPersonalDataCollectionApproval, true)
         })
 
         it('should update PostHog analytics', () => {
@@ -79,24 +78,72 @@ describe('ConfigManager', () => {
             assert.equal(configAfterUpdate.analytics.posthog?.distinctId, "distinct-id-unit-test")
         })
 
-        it('should update analytics enabled', () => {
+        it("should update analytics collection method", () => {
             const configBeforeUpdate = configUpdateTestManager.load()
-            assert.equal(configBeforeUpdate.analytics.enabled, true)
+            assert.equal(configBeforeUpdate.analytics.posthog?.collectionMethod, AnalyticsCollectionMethod.Technical, "Should start test with technical collection method to avoid false positives")
 
-            configUpdateTestManager.setAnalyticsEnabled(false)
+            configUpdateTestManager.setAnalyticsCollectionMethod(AnalyticsCollectionMethod.All)
             const configAfterUpdate = configUpdateTestManager.load()
-            assert.equal(configAfterUpdate.analytics.enabled, false)
+            assert.equal(configAfterUpdate.analytics.posthog?.collectionMethod, AnalyticsCollectionMethod.All)
         })
 
+    })
+
+    // Some fields have been removed or renamed in schema
+    // Ensure configs loaded with or without old fields are correctly handled
+    describe('Configuration schema change handling', () => {
+        it('should load and update config with old "enabled" field', () => {
+            const tmpDataRootDir = createTempTestDir("config-manager-load-with-old-enabled")
+            const expectConfigPath = path.join(tmpDataRootDir, "config.yml")
+
+            /// Generate dummy config with old "enabled" field
+            fs.writeFileSync(expectConfigPath, yaml.dump(lodash.merge({}, BASE_DEFAULT_CONFIG, {
+                analytics: {
+                    enabled: true,
+                }
+            })), "utf-8")
+
+            const configManager = new ConfigManager(tmpDataRootDir)
+            const loadedConfig = configManager.load() as any
+
+            // Check config now has correct schema
+            // and config file on disk has been rewritten with correct schema
+            assert.equal(loadedConfig.analytics.enabled, undefined)
+
+            const writtenConfig = yaml.load(fs.readFileSync(expectConfigPath, 'utf-8'))
+            assert.deepEqual(writtenConfig, BASE_DEFAULT_CONFIG)
+        })
+
+        // promptedApproval is now promptedPersonalDataCollectionApproval
+        // promptedPersonalDataCollectionApproval is missing from old schema
+        it('should load and update config with old "promptedApproval" field', () => {
+            const tmpDataRootDir = createTempTestDir("config-manager-load-with-old-promptedApproval")
+            const expectConfigPath = path.join(tmpDataRootDir, "config.yml")
+
+            const oldConfig = lodash.cloneDeep(BASE_DEFAULT_CONFIG) as any
+            oldConfig.analytics.promptedPersonalDataCollectionApproval = undefined
+            oldConfig.analytics.promptedApproval = true
+            fs.writeFileSync(expectConfigPath, yaml.dump(oldConfig), "utf-8")
+
+            const configManager = new ConfigManager(tmpDataRootDir)
+            const loadedConfig = configManager.load() as any
+
+            // Check config now has correct schema
+            // and config file on disk has been rewritten with correct schema
+            assert.equal(loadedConfig.analytics.promptedPersonalDataCollectionApproval, BASE_DEFAULT_CONFIG.analytics.promptedPersonalDataCollectionApproval, "promptedPersonalDataCollectionApproval should be BASE_DEFAULT_CONFIG.analytics.promptedPersonalDataCollectionApproval")
+            assert.equal(loadedConfig.analytics.promptedApproval, undefined, "promptedApproval should be undefined")
+
+            const writtenConfig = yaml.load(fs.readFileSync(expectConfigPath, 'utf-8'))
+            assert.deepEqual(writtenConfig, BASE_DEFAULT_CONFIG)
+        })
     })
 
     describe('Configuration Loading', () => {
         it('should load and parse configuration correctly', () => {
             const dummyConfigDiff: PartialDeep<GlobalCliConfigV1> = {
                 analytics: {
-                    enabled: true,
                     posthog: {
-                        distinctId: "foo"
+                        distinctId: "foo",
                     }
                 }
             }
