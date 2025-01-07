@@ -9,6 +9,8 @@ export interface InstancePulumiClientArgs {
     stackName: string
 }
 
+const LOG_ON_OUTPUT_COLOR = "always"
+
 /**
  * An abstract Pulumi client for a Cloudy Pad instance
  */
@@ -97,7 +99,7 @@ export abstract class InstancePulumiClient<ConfigType, OutputType> {
         // Might become a flag later
         await stack.cancel()
 
-        const upRes = await stack.up({ onOutput: (msg) => { console.info(msg.trim()) }, color: "auto", refresh: true })
+        const upRes = await stack.up({ onOutput: this.stackLogOnOutput, color: LOG_ON_OUTPUT_COLOR, refresh: true })
         
         this.logger.trace(`Up result: ${JSON.stringify(upRes)}`)
         
@@ -120,7 +122,7 @@ export abstract class InstancePulumiClient<ConfigType, OutputType> {
         // Might become a flag later
         await stack.cancel()
 
-        const prevRes = await stack.preview({ onOutput: (msg) => { console.info(msg.trim()) }, color: "auto", refresh: true })
+        const prevRes = await stack.preview({ onOutput: this.stackLogOnOutput, color: LOG_ON_OUTPUT_COLOR, refresh: true })
         
         this.logger.trace(`Preview result: ${JSON.stringify(prevRes)}`)
 
@@ -139,10 +141,22 @@ export abstract class InstancePulumiClient<ConfigType, OutputType> {
         
         this.logger.debug(`Refreshing stack ${stack.name} before destroy result`)
 
-        const refreshRes = await stack.refresh({ onOutput: console.info, color: "auto" })
+        const refreshRes = await stack.refresh({ onOutput: this.stackLogOnOutput, color: LOG_ON_OUTPUT_COLOR })
         this.logger.trace(`Refresh result: ${JSON.stringify(refreshRes)}`)
 
-        const destroyRes = await stack.destroy({ onOutput: console.info, color: "auto", remove: true })
+        const destroyRes = await stack.destroy({ onOutput: this.stackLogOnOutput, color: LOG_ON_OUTPUT_COLOR, remove: true })
         this.logger.trace(`Destroy result: ${JSON.stringify(destroyRes)}`)
+   }
+
+   /**
+    * Log Pulumi output to console using stdout directly and tweaking a bit the output for nicer display
+    * @param msg raw pulumi output on stack action
+    */
+   private async stackLogOnOutput(_msg: string){
+
+    let msg = _msg
+    if(msg.trim() === ".") msg = "." // if msg is a dot with newlines or spaces, print it as a dot without newline
+
+    process.stdout.write(msg)
    }
 }
