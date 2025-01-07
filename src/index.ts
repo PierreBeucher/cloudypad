@@ -30,6 +30,9 @@ async function main(){
     } catch (e){
         logger.error("Oops, something went wrong 😨", e)
         logger.error("If you think this is a bug, please file an issue with error logs: https://github.com/PierreBeucher/cloudypad/issues")
+
+        const eventProps = e instanceof Error ? { errorMessage: e.message, stackTrace: e.stack } : { errorMessage: String(e), stackTrace: "unknown" }
+        AnalyticsManager.get().sendEvent("error", eventProps)
         process.exit(1)
     }
 }
