@@ -24,7 +24,7 @@ send_analytics_event() {
       \"distinct_id\": \"$INSTALL_POSTHOG_DISTINCT_ID\",
       \"properties\": {
         \"\$process_person_profile\": false,
-        \"event_details\": $eventDetails,
+        \"event_details\": \"$eventDetails\",
         \"os_name\": \"$(uname -s)\",
         \"os_arch\": \"$(uname -m)\"
       }
