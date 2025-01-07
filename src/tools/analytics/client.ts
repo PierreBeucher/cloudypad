@@ -75,7 +75,7 @@ export class PostHogAnalyticsClient extends AbstractAnalyticsClient {
     protected async doShutdown() {
         this.logger.debug(`Shutting down PostHog analytics client...`)
 
-        await this.postHog.shutdown() // Wait at most 5s before final shutdown
+        await this.postHog.shutdown()
 
         this.logger.debug(`Shut down complete for PostHog analytics client`)
     }

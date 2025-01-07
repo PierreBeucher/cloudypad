@@ -24,7 +24,6 @@ async function main(){
         const program = buildProgram()
         await program.parseAsync(process.argv)
 
-        // Shutdown
         await AnalyticsManager.get().shutdown()
         
     } catch (e){
@@ -32,7 +31,10 @@ async function main(){
         logger.error("If you think this is a bug, please file an issue with error logs: https://github.com/PierreBeucher/cloudypad/issues")
 
         const eventProps = e instanceof Error ? { errorMessage: e.message, stackTrace: e.stack } : { errorMessage: String(e), stackTrace: "unknown" }
-        AnalyticsManager.get().sendEvent("error", eventProps)
+        const analytics = AnalyticsManager.get()
+        analytics.sendEvent("error", eventProps)
+        await analytics.shutdown()
+
         process.exit(1)
     }
 }
