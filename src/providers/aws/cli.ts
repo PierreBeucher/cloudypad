@@ -1,7 +1,7 @@
 import { AwsInstanceInput } from "./state"
 import { CommonInstanceInput } from "../../core/state/state"
-import { input, select } from '@inquirer/prompts';
-import { AwsClient } from "../../tools/aws";
+import { input, select, confirm } from '@inquirer/prompts';
+import { AwsClient, EC2_QUOTA_CODE_ALL_G_AND_VT_SPOT_INSTANCES } from "../../tools/aws";
 import { AbstractInputPrompter } from "../../core/cli/prompter";
 import lodash from 'lodash'
 import { CLI_OPTION_DISK_SIZE, CLI_OPTION_PUBLIC_IP_TYPE, CLI_OPTION_SPOT, CliCommandGenerator, CreateCliArgs, UpdateCliArgs } from "../../core/cli/command";
@@ -23,6 +23,14 @@ export interface AwsCreateCliArgs extends CreateCliArgs {
  * Possible update arguments for AWS update. Region and spot cannot be updated as it would destroy existing machine and/or disk. 
  */
 export type AwsUpdateCliArgs = UpdateCliArgs & Omit<AwsCreateCliArgs, "region" | "spot">
+
+/**
+ * Supported instance types for AWS. Other instance types may work but are not tested.
+ */
+export const SUPPORTED_INSTANCE_TYPES = [
+    "g4dn.xlarge", "g4dn.2xlarge", "g4dn.4xlarge",
+    "g5.xlarge", "g5.2xlarge", "g5.4xlarge", "g5.8xlarge"
+]
 
 export class AwsInputPrompter extends AbstractInputPrompter<AwsCreateCliArgs, AwsInstanceInput> {
     
@@ -47,11 +55,11 @@ export class AwsInputPrompter extends AbstractInputPrompter<AwsCreateCliArgs, Aw
 
         this.logger.debug(`Starting AWS prompt with default opts: ${JSON.stringify(defaultInput)}`)
 
-        const instanceType = await this.instanceType(defaultInput.provision?.instanceType)
+        const region = await this.region(defaultInput.provision?.region)
+        const instanceType = await this.instanceType(region, defaultInput.provision?.instanceType)
         const useSpot = await this.useSpotInstance(defaultInput.provision?.useSpot)
         const diskSize = await this.diskSize(defaultInput.provision?.diskSize)
         const publicIpType = await this.publicIpType(defaultInput.provision?.publicIpType)
-        const region = await this.region(defaultInput.provision?.region)
         
         const awsInput: AwsInstanceInput = lodash.merge(
             {},
@@ -70,18 +78,33 @@ export class AwsInputPrompter extends AbstractInputPrompter<AwsCreateCliArgs, Aw
         
     }
 
-    private async instanceType(instanceType?: string): Promise<string> {
+    private async instanceType(region: string, instanceType?: string): Promise<string> {
+
         if (instanceType) {
             return instanceType;
         }
 
-        const choices = [
-            "g4dn.xlarge", "g4dn.2xlarge", "g4dn.4xlarge",
-            "g5.xlarge", "g5.2xlarge", "g5.4xlarge"
-        ].sort().map(type => ({
-            name: type,
-            value: type,
-        }))
+        // fetch AWS instance type details
+        const awsClient = new AwsClient("instance-type-prompt", region)
+        const availableInstanceTypes = await awsClient.filterAvailableInstanceTypes(SUPPORTED_INSTANCE_TYPES)
+        const instanceTypeDetails = await awsClient.getInstanceTypeDetails(SUPPORTED_INSTANCE_TYPES)
+
+        const choices = instanceTypeDetails
+            .filter(typeInfo => typeInfo.InstanceType)
+            .sort((a, b) => {
+                // Sort by vCPU count
+                const aVCpu = a.VCpuInfo?.DefaultVCpus || 0;
+                const bVCpu = b.VCpuInfo?.DefaultVCpus || 0;
+                return aVCpu - bVCpu;
+            })
+            .map(typeInfo => {
+                const instanceType = typeInfo.InstanceType! // guaranteed to exist with filter
+                const memoryGb = typeInfo.MemoryInfo?.SizeInMiB ? typeInfo.MemoryInfo?.SizeInMiB / 1024 : undefined
+                return {
+                    name: `${instanceType} - ${typeInfo.VCpuInfo?.DefaultVCpus} vCPU - ${memoryGb} GiB Memory`,
+                    value: String(instanceType),
+                }
+            })
 
         choices.push({name: "Let me type an instance type", value: "_"})
 
@@ -95,6 +118,35 @@ export class AwsInputPrompter extends AbstractInputPrompter<AwsCreateCliArgs, Aw
             return await input({
                 message: 'Enter machine type:',
             })
+        }
+
+        // Check quotas for select instance type
+        const quotaCode = EC2_QUOTA_CODE_ALL_G_AND_VT_SPOT_INSTANCES
+        const currentQuota = await awsClient.getQuota(quotaCode)
+        
+        const selectInstanceTypeDetails = instanceTypeDetails.find(typeInfo => typeInfo.InstanceType === selectedInstanceType)
+
+        if(currentQuota === undefined || selectInstanceTypeDetails === undefined || selectInstanceTypeDetails.VCpuInfo?.DefaultVCpus === undefined){
+            this.logger.warn(`No quota found for machine type ${JSON.stringify(selectInstanceTypeDetails)} in region ${region}`)
+            this.logger.warn(`Unable to check for quota before creating instance ${selectedInstanceType} in ${region}. Instance creation may fail.` + 
+                `See https://cloudypad.gg/cloud-provider-setup/aws.html for details about quotas`)
+
+        } else if (currentQuota < selectInstanceTypeDetails.VCpuInfo?.DefaultVCpus) {
+            this.logger.debug(`Quota found for machine type ${JSON.stringify(selectInstanceTypeDetails)} in region ${region}: ${currentQuota}`)
+
+            const confirmQuota = await confirm({
+                message: `Uh oh. It seems quotas for machine type ${selectedInstanceType} in region ${region} are too low. \n\n` +
+                `Current quota: ${currentQuota} vCPUS\n` +
+                `Required quota: ${selectInstanceTypeDetails.VCpuInfo?.DefaultVCpus} vCPUs\n\n` +
+                `Without enough quota, instance provisioning will probably fail. \n` +
+                `Checkout https://cloudypad.gg/cloud-provider-setup/aws.html for details about quotas.\n\n` +
+                `Do you still want to continue?`,
+                default: false,
+            })
+
+            if(!confirmQuota){
+                throw new Error(`Stopped instance creation: detected quota were not high enough for ${selectedInstanceType} in ${region}`)
+            }
         }
 
         return selectedInstanceType        
