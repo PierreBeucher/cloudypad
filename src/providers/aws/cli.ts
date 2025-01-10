@@ -1,7 +1,7 @@
 import { AwsInstanceInput } from "./state"
 import { CommonInstanceInput } from "../../core/state/state"
 import { input, select, confirm } from '@inquirer/prompts';
-import { AwsClient, EC2_QUOTA_CODE_ALL_G_AND_VT_SPOT_INSTANCES } from "../../tools/aws";
+import { AwsClient, EC2_QUOTA_CODE_ALL_G_AND_VT_SPOT_INSTANCES, EC2_QUOTA_CODE_RUNNING_ON_DEMAND_G_AND_VT_INSTANCES } from "../../tools/aws";
 import { AbstractInputPrompter } from "../../core/cli/prompter";
 import lodash from 'lodash'
 import { CLI_OPTION_DISK_SIZE, CLI_OPTION_PUBLIC_IP_TYPE, CLI_OPTION_SPOT, CliCommandGenerator, CreateCliArgs, UpdateCliArgs } from "../../core/cli/command";
@@ -56,8 +56,8 @@ export class AwsInputPrompter extends AbstractInputPrompter<AwsCreateCliArgs, Aw
         this.logger.debug(`Starting AWS prompt with default opts: ${JSON.stringify(defaultInput)}`)
 
         const region = await this.region(defaultInput.provision?.region)
-        const instanceType = await this.instanceType(region, defaultInput.provision?.instanceType)
         const useSpot = await this.useSpotInstance(defaultInput.provision?.useSpot)
+        const instanceType = await this.instanceType(region, useSpot, defaultInput.provision?.instanceType)
         const diskSize = await this.diskSize(defaultInput.provision?.diskSize)
         const publicIpType = await this.publicIpType(defaultInput.provision?.publicIpType)
         
@@ -78,7 +78,7 @@ export class AwsInputPrompter extends AbstractInputPrompter<AwsCreateCliArgs, Aw
         
     }
 
-    private async instanceType(region: string, instanceType?: string): Promise<string> {
+    private async instanceType(region: string, useSpot: boolean, instanceType?: string): Promise<string> {
 
         if (instanceType) {
             return instanceType;
@@ -121,7 +121,8 @@ export class AwsInputPrompter extends AbstractInputPrompter<AwsCreateCliArgs, Aw
         }
 
         // Check quotas for select instance type
-        const quotaCode = EC2_QUOTA_CODE_ALL_G_AND_VT_SPOT_INSTANCES
+        // Depending on spot usage, quota is different
+        const quotaCode = useSpot ? EC2_QUOTA_CODE_ALL_G_AND_VT_SPOT_INSTANCES : EC2_QUOTA_CODE_RUNNING_ON_DEMAND_G_AND_VT_INSTANCES
         const currentQuota = await awsClient.getQuota(quotaCode)
         
         const selectInstanceTypeDetails = instanceTypeDetails.find(typeInfo => typeInfo.InstanceType === selectedInstanceType)

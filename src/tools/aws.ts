@@ -24,6 +24,8 @@ const DEFAULT_START_STOP_OPTION_WAIT_TIMEOUT=60*8
 // Quote code used by AWS API
 // All G and VT Spot Instance Requests
 export const EC2_QUOTA_CODE_ALL_G_AND_VT_SPOT_INSTANCES = "L-3819A6DF"
+// Running On-Demand G and VT instances
+export const EC2_QUOTA_CODE_RUNNING_ON_DEMAND_G_AND_VT_INSTANCES = "L-DB2E81BA"
 
 export class AwsClient {
 
