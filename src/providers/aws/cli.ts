@@ -2,7 +2,7 @@ import { AwsInstanceInput } from "./state"
 import { CommonInstanceInput } from "../../core/state/state"
 import { input, select, confirm } from '@inquirer/prompts';
 import { AwsClient, EC2_QUOTA_CODE_ALL_G_AND_VT_SPOT_INSTANCES, EC2_QUOTA_CODE_RUNNING_ON_DEMAND_G_AND_VT_INSTANCES } from "../../tools/aws";
-import { AbstractInputPrompter } from "../../core/cli/prompter";
+import { AbstractInputPrompter, InstanceCreateOptions } from "../../core/cli/prompter";
 import lodash from 'lodash'
 import { CLI_OPTION_DISK_SIZE, CLI_OPTION_PUBLIC_IP_TYPE, CLI_OPTION_SPOT, CliCommandGenerator, CreateCliArgs, UpdateCliArgs } from "../../core/cli/command";
 import { CLOUDYPAD_PROVIDER_AWS, PUBLIC_IP_TYPE } from "../../core/const";
@@ -51,9 +51,12 @@ export class AwsInputPrompter extends AbstractInputPrompter<AwsCreateCliArgs, Aw
         }
     }
 
-    protected async promptSpecificInput(defaultInput: CommonInstanceInput & PartialDeep<AwsInstanceInput>): Promise<AwsInstanceInput> {
+    protected async promptSpecificInput(defaultInput: CommonInstanceInput & PartialDeep<AwsInstanceInput>, createOptions: InstanceCreateOptions): Promise<AwsInstanceInput> {
 
         this.logger.debug(`Starting AWS prompt with default opts: ${JSON.stringify(defaultInput)}`)
+        if(!createOptions.autoApprove){
+            await this.informCloudProviderQuotaWarning(CLOUDYPAD_PROVIDER_AWS, "https://cloudypad.gg/cloud-provider-setup/aws.html")
+        }
 
         const region = await this.region(defaultInput.provision?.region)
         const useSpot = await this.useSpotInstance(defaultInput.provision?.useSpot)

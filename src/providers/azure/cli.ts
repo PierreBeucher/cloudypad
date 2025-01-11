@@ -1,7 +1,7 @@
 import { AzureInstanceInput } from "./state"
 import { CommonInstanceInput } from "../../core/state/state"
 import { input, select, confirm } from '@inquirer/prompts';
-import { AbstractInputPrompter } from "../../core/cli/prompter";
+import { AbstractInputPrompter, InstanceCreateOptions } from "../../core/cli/prompter";
 import { AzureClient } from "../../tools/azure";
 import lodash from 'lodash'
 import { CLOUDYPAD_PROVIDER_AZURE, PUBLIC_IP_TYPE } from "../../core/const";
@@ -77,10 +77,14 @@ export class AzureInputPrompter extends AbstractInputPrompter<AzureCreateCliArgs
         }
     }
 
-    protected async promptSpecificInput(defaultInput: CommonInstanceInput & PartialDeep<AzureInstanceInput>): Promise<AzureInstanceInput> {
+    protected async promptSpecificInput(defaultInput: CommonInstanceInput & PartialDeep<AzureInstanceInput>, createOptions: InstanceCreateOptions): Promise<AzureInstanceInput> {
 
         this.logger.debug(`Starting Azure prompt with default opts: ${JSON.stringify(defaultInput)}`)
         
+        if(!createOptions.autoApprove){
+            await this.informCloudProviderQuotaWarning(CLOUDYPAD_PROVIDER_AZURE, "https://cloudypad.gg/cloud-provider-setup/azure.html")
+        }
+
         const subscriptionId = await this.subscriptionId(defaultInput.provision?.subscriptionId)
         const useSpot = await this.useSpotInstance(defaultInput.provision?.useSpot)
         const location = await this.location(subscriptionId, defaultInput.provision?.location)
