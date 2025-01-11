@@ -136,10 +136,10 @@ export class AwsInputPrompter extends AbstractInputPrompter<AwsCreateCliArgs, Aw
             this.logger.debug(`Quota found for machine type ${JSON.stringify(selectInstanceTypeDetails)} in region ${region}: ${currentQuota}`)
 
             const confirmQuota = await confirm({
-                message: `Uh oh. It seems quotas for machine type ${selectedInstanceType} in region ${region} are too low. \n\n` +
+                message: `Uh oh. It seems quotas for machine type ${selectedInstanceType} in region ${region} may be too low. \n` +
+                `You can still try to provision the instance, but it may fail.\n\n` +
                 `Current quota: ${currentQuota} vCPUS\n` +
                 `Required quota: ${selectInstanceTypeDetails.VCpuInfo?.DefaultVCpus} vCPUs\n\n` +
-                `Without enough quota, instance provisioning will probably fail. \n` +
                 `Checkout https://cloudypad.gg/cloud-provider-setup/aws.html for details about quotas.\n\n` +
                 `Do you still want to continue?`,
                 default: false,

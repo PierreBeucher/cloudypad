@@ -159,9 +159,9 @@ export class AzureInputPrompter extends AbstractInputPrompter<AzureCreateCliArgs
 
             if(currentQuota !== undefined && currentQuota < selectedInstanceTypeDetails.numberOfCores) {
                 const confirmQuota = await confirm({
-                    message: `Uh oh. It seems quotas for machine type ${selectedInstanceType} in region ${location} are too low. \n\n` +
+                    message: `Uh oh. It seems quotas for machine type ${selectedInstanceType} in region ${location} may be too low. \n`+
+                    `You can still try to provision the instance, but it may fail. \n` +
                     `Current limit: ${currentQuota}\n\n` +
-                    `Without enough quota, instance provisioning will probably fail. \n` +
                     `Checkout https://cloudypad.gg/cloud-provider-setup/azure.html for details about quotas.\n\n` +
                     `Do you still want to continue?`,
                     default: false,
