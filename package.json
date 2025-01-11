@@ -44,6 +44,7 @@
     "@aws-sdk/s3-request-presigner": "^3.614.0",
     "@azure/arm-compute": "^22.0.0",
     "@azure/arm-network": "^33.3.0",
+    "@azure/arm-quota": "^1.0.0",
     "@azure/arm-subscriptions": "^5.1.0",
     "@azure/identity": "^4.4.1",
     "@commander-js/extra-typings": "^12.1.0",
