@@ -39,7 +39,7 @@ describe('AWS input prompter', () => {
 
     it('should return provided inputs without prompting when full input provider', async () => {
 
-        const result = await new AwsInputPrompter().promptInput(TEST_INPUT, {})
+        const result = await new AwsInputPrompter().promptInput(TEST_INPUT, { autoApprove: true })
         assert.deepEqual(result, TEST_INPUT)
     })
 

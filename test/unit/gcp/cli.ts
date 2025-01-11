@@ -64,7 +64,7 @@ describe('GCP input prompter', () => {
 
     it('should return provided inputs without prompting when full input provider', async () => {
 
-        const result = await new GcpInputPrompter().promptInput(TEST_INPUT, { overwriteExisting: true})
+        const result = await new GcpInputPrompter().promptInput(TEST_INPUT, { overwriteExisting: true, autoApprove: true })
         assert.deepEqual(result, TEST_INPUT)
     })
 
