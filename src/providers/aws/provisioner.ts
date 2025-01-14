@@ -33,6 +33,8 @@ You are about to provision AWS machine with the following details:
     Instance Type: ${this.args.input.instanceType}
     Public IP Type: ${this.args.input.publicIpType}
     Disk size: ${this.args.input.diskSize}
+    Cost Alert: ${this.args.input.costAlert?.limit ? `enabled, limit: ${this.args.input.costAlert.limit}$, ` + 
+        `notification email: ${this.args.input.costAlert.notificationEmail}` : 'None.'}
     
 Do you want to proceed?`,
                 default: true,
@@ -51,6 +53,10 @@ Do you want to proceed?`,
             rootVolumeSizeGB: this.args.input.diskSize,
             publicSshKeyContent: await parseSshPrivateKeyFileToPublic(this.args.input.ssh.privateKeyPath),
             useSpot: this.args.input.useSpot,
+            billingAlert: this.args.input.costAlert ? {
+                limit: this.args.input.costAlert.limit.toString(),
+                notificationEmail: this.args.input.costAlert.notificationEmail
+            } : undefined
         }
 
         await pulumiClient.setConfig(pulumiConfig)

@@ -2,9 +2,9 @@ import { AwsInstanceInput } from "./state"
 import { CommonInstanceInput } from "../../core/state/state"
 import { input, select, confirm } from '@inquirer/prompts';
 import { AwsClient, EC2_QUOTA_CODE_ALL_G_AND_VT_SPOT_INSTANCES, EC2_QUOTA_CODE_RUNNING_ON_DEMAND_G_AND_VT_INSTANCES } from "../../tools/aws";
-import { AbstractInputPrompter, InstanceCreateOptions } from "../../core/cli/prompter";
+import { AbstractInputPrompter, costAlertCliArgsIntoConfig, InstanceCreateOptions } from "../../core/cli/prompter";
 import lodash from 'lodash'
-import { CLI_OPTION_DISK_SIZE, CLI_OPTION_PUBLIC_IP_TYPE, CLI_OPTION_SPOT, CliCommandGenerator, CreateCliArgs, UpdateCliArgs } from "../../core/cli/command";
+import { CLI_OPTION_COST_NOTIFICATION_EMAIL, CLI_OPTION_COST_ALERT, CLI_OPTION_COST_LIMIT, CLI_OPTION_DISK_SIZE, CLI_OPTION_PUBLIC_IP_TYPE, CLI_OPTION_SPOT, CliCommandGenerator, CreateCliArgs, UpdateCliArgs } from "../../core/cli/command";
 import { CLOUDYPAD_PROVIDER_AWS, PUBLIC_IP_TYPE } from "../../core/const";
 import { InteractiveInstanceInitializer } from "../../core/initializer";
 import { PartialDeep } from "type-fest";
@@ -17,6 +17,9 @@ export interface AwsCreateCliArgs extends CreateCliArgs {
     publicIpType?: PUBLIC_IP_TYPE
     instanceType?: string
     region?: string
+    costAlert?: boolean
+    costLimit?: number
+    costNotificationEmail?: string
 }
 
 /**
@@ -35,6 +38,7 @@ export const SUPPORTED_INSTANCE_TYPES = [
 export class AwsInputPrompter extends AbstractInputPrompter<AwsCreateCliArgs, AwsInstanceInput> {
     
     doTransformCliArgsIntoInput(cliArgs: AwsCreateCliArgs): PartialDeep<AwsInstanceInput> {
+
         return {
             instanceName: cliArgs.name,
             provision: {
@@ -46,6 +50,7 @@ export class AwsInputPrompter extends AbstractInputPrompter<AwsCreateCliArgs, Aw
                 publicIpType: cliArgs.publicIpType,
                 region: cliArgs.region,
                 useSpot: cliArgs.spot,
+                costAlert: costAlertCliArgsIntoConfig(cliArgs)
             },
             configuration: {}
         }
@@ -63,7 +68,8 @@ export class AwsInputPrompter extends AbstractInputPrompter<AwsCreateCliArgs, Aw
         const instanceType = await this.instanceType(region, useSpot, defaultInput.provision?.instanceType)
         const diskSize = await this.diskSize(defaultInput.provision?.diskSize)
         const publicIpType = await this.publicIpType(defaultInput.provision?.publicIpType)
-        
+        const costAlert = await this.costAlert(defaultInput.provision?.costAlert)
+                
         const awsInput: AwsInstanceInput = lodash.merge(
             {},
             defaultInput, 
@@ -74,6 +80,7 @@ export class AwsInputPrompter extends AbstractInputPrompter<AwsCreateCliArgs, Aw
                     publicIpType: publicIpType,
                     region: region,
                     useSpot: useSpot,
+                    costAlert: costAlert,
                 }
             })
         
@@ -115,6 +122,7 @@ export class AwsInputPrompter extends AbstractInputPrompter<AwsCreateCliArgs, Aw
             message: 'Choose an instance type:',
             default: "g4dn.xlarge",
             choices: choices,
+            loop: false,
         })
 
         if(selectedInstanceType === '_'){
@@ -197,6 +205,9 @@ export class AwsCliCommandGenerator extends CliCommandGenerator {
             .addOption(CLI_OPTION_SPOT)
             .addOption(CLI_OPTION_DISK_SIZE)
             .addOption(CLI_OPTION_PUBLIC_IP_TYPE)
+            .addOption(CLI_OPTION_COST_ALERT)
+            .addOption(CLI_OPTION_COST_LIMIT)
+            .addOption(CLI_OPTION_COST_NOTIFICATION_EMAIL)
             .option('--instance-type <type>', 'EC2 instance type')
             .option('--region <region>', 'Region in which to deploy instance')
             .action(async (cliArgs) => {
@@ -218,6 +229,9 @@ export class AwsCliCommandGenerator extends CliCommandGenerator {
         return this.getBaseUpdateCommand(CLOUDYPAD_PROVIDER_AWS)
             .addOption(CLI_OPTION_DISK_SIZE)
             .addOption(CLI_OPTION_PUBLIC_IP_TYPE)
+            .addOption(CLI_OPTION_COST_ALERT)
+            .addOption(CLI_OPTION_COST_LIMIT)
+            .addOption(CLI_OPTION_COST_NOTIFICATION_EMAIL)
             .option('--instance-type <type>', 'EC2 instance type')
             .action(async (cliArgs) => {
                 this.analytics.sendEvent(RUN_COMMAND_UPDATE, { provider: CLOUDYPAD_PROVIDER_AWS })

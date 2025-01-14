@@ -9,6 +9,7 @@ import { getLogger } from "../../log/utils";
 import { PUBLIC_IP_TYPE, PUBLIC_IP_TYPE_DYNAMIC, PUBLIC_IP_TYPE_STATIC } from '../const';
 import { CreateCliArgs } from './command';
 import { StateLoader } from '../state/loader';
+import { CostAlertOptions } from '../provisioner';
 const { kebabCase } = lodash
 
 export interface InputPrompter {
@@ -42,7 +43,7 @@ export abstract class AbstractInputPrompter<A extends CreateCliArgs, I extends C
     
     private async promptCommonInput(partialInput: PartialDeep<CommonInstanceInput>, createOptions: InstanceCreateOptions): Promise<CommonInstanceInput> {
 
-        this.logger.debug(`Initializing instance with default config ${JSON.stringify(partialInput)}`)
+        this.logger.debug(`Initializing instance with default config ${JSON.stringify(partialInput)} and create options ${JSON.stringify(createOptions)}`)
         
         const instanceName = await this.instanceName(partialInput.instanceName)
         
@@ -225,4 +226,87 @@ export abstract class AbstractInputPrompter<A extends CreateCliArgs, I extends C
         })
     }
 
+    /**
+     * Prompt for cost alert options. See costAlertCliArgsIntoConfig() for more details on costAlert argument handling.
+     * 
+     * @param costAlert - Cost alert options. If undefined, prompt user for cost alert options.
+     * If null, cost alert is explicitely disabled. If set, cost alert is enabled and prompt for missing options.
+     */
+    protected async costAlert(costAlert: Partial<CostAlertOptions> | undefined | null): Promise<CostAlertOptions | undefined> {
+        
+        this.logger.debug(`Prompting for billing alert with costAlert: ${JSON.stringify(costAlert)}`)
+
+        const costAlertEnabled = costAlert === null ? false : costAlert !== undefined ? true : await confirm({
+            message: "Do you want to enable billing alert? You'll receive an email when cost exceeds defined limit.",
+            default: true,
+        })
+
+        // Only prompt for billing alert if enabled
+        if(costAlertEnabled){
+            const costLimit = costAlert?.limit ?? await this.promptBillingAlertLimit()
+            const costNotificationEmail = costAlert?.notificationEmail ?? await this.promptBillingAlertEmail()
+
+            return {
+                limit: costLimit,
+                notificationEmail: costNotificationEmail,
+            }
+        }
+
+        return undefined
+    }
+
+    private async promptBillingAlertEmail(): Promise<string>{ 
+        let costNotificationEmail = await input({
+            message: "Enter billing alert notification email:",
+            required: true,
+        })
+
+        let confirmCostNotificationEmail = await input({
+            message: `Confirm email:`,
+            required: true,
+        })
+
+        if(costNotificationEmail != confirmCostNotificationEmail){
+            console.warn("Emails do not match:")
+            console.warn(`\t${costNotificationEmail}`)
+            console.warn(`\t${confirmCostNotificationEmail}`)
+            return this.promptBillingAlertEmail()
+        }
+
+        return costNotificationEmail
+    }
+
+    private async promptBillingAlertLimit(): Promise<number>{
+        const costLimit = await input({
+            message: "Enter billing alert limit (USD):",
+            default: "100",
+        })
+
+        // check if it's a number
+        if(isNaN(Number.parseInt(costLimit))){
+            console.warn("Please enter a valid number for billing alert limit")
+            return this.promptBillingAlertLimit()
+        }
+
+        return Number.parseInt(costLimit)
+    }
+}
+
+/**
+ * Transform CLI arguments into cost alert options.
+ * If costAlert is false, return null to explicitly disable cost alert.
+ * If costAlert is true, return a (potential empty) object with limit and notificationEmail that prompt will fill.
+ * If costAlert is undefined, return undefined to let the prompt handle it.
+ */
+export function costAlertCliArgsIntoConfig(args: { costAlert?: boolean, costLimit?: number, costNotificationEmail?: string }): PartialDeep<CostAlertOptions> | null |undefined {
+    if(args.costAlert === false){
+        return null
+    } else if (args.costAlert === true) {
+        return {
+            limit: args.costLimit,
+            notificationEmail: args.costNotificationEmail,
+        }
+    } else if (args.costAlert === undefined){
+        return undefined
+    }
 }

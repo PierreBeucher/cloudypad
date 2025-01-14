@@ -34,6 +34,19 @@ export const CLI_OPTION_PUBLIC_IP_TYPE = new Option('--public-ip-type <type>', `
     .argParser(parsePublicIpType)
 export const CLI_OPTION_SKIP_PAIRING = new Option('--skip-pairing', 'Skip Moonlight pairing after initial provisioning and configuration')
 
+export const CLI_OPTION_COST_ALERT = new Option('--cost-alert [disable|no|false|0]', 'Enable or disable cost alert.' + 
+    'Will prompt for cost alert limit and notification email unless --cost-limit and --cost-notification-email are provided. ' +
+    'Passing "disable", "no", "0" or "false" will disable cost alerts.').argParser((value) => {
+        return value === "disable" || value === "no" || value === "false" || value === "0" ? false : true
+    })
+export const CLI_OPTION_COST_LIMIT = new Option('--cost-limit <limit>', 'Cost alert limit (USD). Imply --cost-alert.').argParser((l) => {
+    if(isNaN(parseInt(l))) {
+        throw new Error('Cost alert limit must be a valid number')
+    }
+    return parseInt(l)
+})
+export const CLI_OPTION_COST_NOTIFICATION_EMAIL = new Option('--cost-notification-email <email>', 'Cost alert notification email. Imply --cost-alert.')
+
 /**
  * Helper to create a Commander CLI sub-commands for create and update commands.
  */

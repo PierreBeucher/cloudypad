@@ -12,6 +12,10 @@ const AwsProvisionInputV1Schema = CommonProvisionInputV1Schema.extend({
     publicIpType: z.enum([PUBLIC_IP_TYPE_STATIC, PUBLIC_IP_TYPE_DYNAMIC]).describe("Type of public IP address"),
     region: z.string().describe("AWS region"),
     useSpot: z.boolean().describe("Whether to use spot instances"),
+    costAlert: z.object({
+        limit: z.number().describe("Cost alert limit (USD)"),
+        notificationEmail: z.string().describe("Cost alert notification email"),
+    }).nullish().describe("Cost alert settings. If not provided, cost alert will not be enabled."),
 })
 
 const AwsInstanceStateV1Schema = InstanceStateV1Schema.extend({
