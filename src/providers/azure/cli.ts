@@ -1,12 +1,12 @@
 import { AzureInstanceInput } from "./state"
 import { CommonInstanceInput } from "../../core/state/state"
 import { input, select, confirm } from '@inquirer/prompts';
-import { AbstractInputPrompter, InstanceCreateOptions } from "../../core/cli/prompter";
+import { AbstractInputPrompter, costAlertCliArgsIntoConfig, InstanceCreateOptions } from "../../core/cli/prompter";
 import { AzureClient } from "../../tools/azure";
 import lodash from 'lodash'
 import { CLOUDYPAD_PROVIDER_AZURE, PUBLIC_IP_TYPE } from "../../core/const";
 import { PartialDeep } from "type-fest";
-import { CLI_OPTION_DISK_SIZE, CLI_OPTION_PUBLIC_IP_TYPE, CLI_OPTION_SPOT, CliCommandGenerator, CreateCliArgs } from "../../core/cli/command";
+import { CLI_OPTION_COST_ALERT, CLI_OPTION_COST_LIMIT, CLI_OPTION_COST_NOTIFICATION_EMAIL, CLI_OPTION_DISK_SIZE, CLI_OPTION_PUBLIC_IP_TYPE, CLI_OPTION_SPOT, CliCommandGenerator, CreateCliArgs } from "../../core/cli/command";
 import { InteractiveInstanceInitializer } from "../../core/initializer";
 import { InstanceManagerBuilder } from "../../core/manager-builder";
 import { RUN_COMMAND_CREATE, RUN_COMMAND_UPDATE } from "../../tools/analytics/events";
@@ -18,7 +18,10 @@ export interface AzureCreateCliArgs extends CreateCliArgs {
     vmSize?: string
     diskSize?: number
     publicIpType?: PUBLIC_IP_TYPE
-    spot?: boolean
+    spot?: boolean,
+    costAlert?: boolean,
+    costLimit?: number,
+    costNotificationEmail?: string
 }
 
 export const AZURE_SUPPORTED_GPU = [
@@ -60,6 +63,7 @@ export const AZURE_SUPPORTED_GPU = [
 export class AzureInputPrompter extends AbstractInputPrompter<AzureCreateCliArgs, AzureInstanceInput> {
     
     protected doTransformCliArgsIntoInput(cliArgs: AzureCreateCliArgs): PartialDeep<AzureInstanceInput> {
+
         return {
             instanceName: cliArgs.name,
             provision: {
@@ -72,6 +76,7 @@ export class AzureInputPrompter extends AbstractInputPrompter<AzureCreateCliArgs
                 location: cliArgs.location,
                 subscriptionId: cliArgs.subscriptionId,
                 useSpot: cliArgs.spot,
+                costAlert: costAlertCliArgsIntoConfig(cliArgs)
             },
             configuration: {}
         }
@@ -91,7 +96,8 @@ export class AzureInputPrompter extends AbstractInputPrompter<AzureCreateCliArgs
         const vmSize = await this.instanceType(subscriptionId, location, useSpot,defaultInput.provision?.vmSize)
         const diskSize = await this.diskSize(defaultInput.provision?.diskSize)
         const publicIpType = await this.publicIpType(defaultInput.provision?.publicIpType)
-
+        const costAlert = await this.costAlert(defaultInput.provision?.costAlert)
+        
         const azInput: AzureInstanceInput = lodash.merge(
             {},
             defaultInput,
@@ -103,6 +109,7 @@ export class AzureInputPrompter extends AbstractInputPrompter<AzureCreateCliArgs
                     location: location,
                     subscriptionId: subscriptionId,
                     useSpot: useSpot,
+                    costAlert: costAlert,
                 },
             })
         
@@ -256,13 +263,17 @@ export class AzureCliCommandGenerator extends CliCommandGenerator {
             .addOption(CLI_OPTION_SPOT)
             .addOption(CLI_OPTION_DISK_SIZE)
             .addOption(CLI_OPTION_PUBLIC_IP_TYPE)
+            .addOption(CLI_OPTION_COST_ALERT)
+            .addOption(CLI_OPTION_COST_LIMIT)
+            .addOption(CLI_OPTION_COST_NOTIFICATION_EMAIL)
             .option('--vm-size <vmsize>', 'Virtual machine size')
             .option('--location <location>', 'Location in which to deploy instance')
             .option('--subscription-id <subscriptionid>', 'Subscription ID in which to deploy resources')
             .action(async (cliArgs) => {
                 this.analytics.sendEvent(RUN_COMMAND_CREATE, { provider: CLOUDYPAD_PROVIDER_AZURE })
+
                 try {
-                    await new InteractiveInstanceInitializer({ 
+                    await new InteractiveInstanceInitializer<AzureCreateCliArgs>({ 
                         inputPrompter: new AzureInputPrompter(),
                         provider: CLOUDYPAD_PROVIDER_AZURE,
                     }).initializeInstance(cliArgs)
@@ -277,9 +288,13 @@ export class AzureCliCommandGenerator extends CliCommandGenerator {
         return this.getBaseUpdateCommand(CLOUDYPAD_PROVIDER_AZURE)
             .addOption(CLI_OPTION_DISK_SIZE)
             .addOption(CLI_OPTION_PUBLIC_IP_TYPE)
+            .addOption(CLI_OPTION_COST_ALERT)
+            .addOption(CLI_OPTION_COST_LIMIT)
+            .addOption(CLI_OPTION_COST_NOTIFICATION_EMAIL)
             .option('--vm-size <vmsize>', 'Virtual machine size')
             .action(async (cliArgs) => {
                 this.analytics.sendEvent(RUN_COMMAND_UPDATE, { provider: CLOUDYPAD_PROVIDER_AZURE })
+
                 try {
                     const input = new AzureInputPrompter().cliArgsIntoInput(cliArgs)
                     const updater = await new InstanceManagerBuilder().buildAzureInstanceUpdater(cliArgs.name)

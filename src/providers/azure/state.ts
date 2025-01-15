@@ -14,6 +14,10 @@ const AzureProvisionInputV1Schema = CommonProvisionInputV1Schema.extend({
     subscriptionId: z.string().describe("Azure Subscription ID"),
     location: z.string().describe("Azure location/region"),
     useSpot: z.boolean().describe("Whether to use spot instances"),
+    costAlert: z.object({
+        limit: z.number().describe("Cost alert limit"),
+        notificationEmail: z.string().describe("Cost alert notification email"),
+    }).nullish(),
 })
 
 const AzureInstanceStateV1Schema = InstanceStateV1Schema.extend({
