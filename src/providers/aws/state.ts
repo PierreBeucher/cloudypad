@@ -1,6 +1,7 @@
 import { z } from "zod"
 import { CommonProvisionOutputV1Schema, CommonProvisionInputV1Schema, InstanceStateV1Schema, AbstractInstanceInputs } from "../../core/state/state"
 import { CLOUDYPAD_PROVIDER_AWS, PUBLIC_IP_TYPE_DYNAMIC, PUBLIC_IP_TYPE_STATIC } from "../../core/const"
+import { GenericStateParser } from "../../core/state/parser"
 
 const AwsProvisionOutputV1Schema = CommonProvisionOutputV1Schema.extend({
     instanceId: z.string().describe("AWS instance ID"),
@@ -12,6 +13,10 @@ const AwsProvisionInputV1Schema = CommonProvisionInputV1Schema.extend({
     publicIpType: z.enum([PUBLIC_IP_TYPE_STATIC, PUBLIC_IP_TYPE_DYNAMIC]).describe("Type of public IP address"),
     region: z.string().describe("AWS region"),
     useSpot: z.boolean().describe("Whether to use spot instances"),
+    costAlert: z.object({
+        limit: z.number().describe("Cost alert limit (USD)"),
+        notificationEmail: z.string().describe("Cost alert notification email"),
+    }).nullish().describe("Cost alert settings. If not provided, cost alert will not be enabled."),
 })
 
 const AwsInstanceStateV1Schema = InstanceStateV1Schema.extend({
@@ -36,6 +41,17 @@ export {
     AwsProvisionOutputV1,
     AwsProvisionInputV1,
     AwsInstanceInput,
+}
+
+export class AwsStateParser extends GenericStateParser<AwsInstanceStateV1> {
+
+    constructor() {
+        super({ zodSchema: AwsInstanceStateV1Schema })
+    }
+
+    parse(rawState: unknown): AwsInstanceStateV1 {
+        return this.zodParseSafe(rawState, AwsInstanceStateV1Schema)
+    }
 }
 
 // V0

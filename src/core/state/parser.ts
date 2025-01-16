@@ -17,45 +17,22 @@ export type AnyInstanceStateV1 = AwsInstanceStateV1 |
     GcpInstanceStateV1 | 
     PaperspaceInstanceStateV1
 
-/**
- * State Parser to safely load and verify states using Zod
- */
-export class StateParser {
 
-    private logger = getLogger(StateParser.name)
+export interface GenericStateParserArgs {
+    zodSchema: z.AnyZodObject
+}
 
-    /**
-     * Parse a raw State into known State schema. The State is validated only for base InstanceStateV1Schema
-     * but unknown keys are kept, allowing any provider-specific state to be passed and it will retain all elements
-     * not present on InstanceStateV1Schema. 
-     * Not suitable for use with provider-specific component. A second parsing round is required with parsePROVIDERStateV1 functions.
-     */
-    parseBaseStateV1(rawState: unknown): InstanceStateV1 {
-        const result = this.zodParseSafe(rawState, InstanceStateV1Schema)
-        return result
+export abstract class GenericStateParser<S extends InstanceStateV1> {
+
+    private zodSchema: z.AnyZodObject
+
+    constructor(private args: GenericStateParserArgs) {
+        this.zodSchema = args.zodSchema
     }
+    
+    public abstract parse(rawState: unknown): S
 
-    parseAwsStateV1(rawState: unknown): AwsInstanceStateV1 {
-        const result = this.zodParseSafe(rawState, AwsInstanceStateV1Schema)
-        return result
-    }
-
-    parseAzureStateV1(rawState: unknown): AzureInstanceStateV1 {
-        const result = this.zodParseSafe(rawState, AzureInstanceStateV1Schema)
-        return result
-    }
-
-    parseGcpStateV1(rawState: unknown): GcpInstanceStateV1 {
-        const result = this.zodParseSafe(rawState, GcpInstanceStateV1Schema)
-        return result
-    }
-
-    parsePaperspaceStateV1(rawState: unknown): PaperspaceInstanceStateV1 {
-        const result = this.zodParseSafe(rawState, PaperspaceInstanceStateV1Schema)
-        return result
-    }
-
-    private zodParseSafe<T extends z.AnyZodObject>(data: unknown, schema: T){
+    protected zodParseSafe<T extends z.AnyZodObject>(data: unknown, schema: T): z.infer<T>{
         const result = schema.safeParse(data) 
         if(result.success){
             return result.data as z.infer<T>
@@ -63,5 +40,15 @@ export class StateParser {
             throw new Error(`Coulnd't parse provided State with Zod. State is either corrupted and not compatible with this Cloudy Pad version. If you think this is a bug, please create an issue. Error state: ${JSON.stringify(data)}; Zod error: ${JSON.stringify(result.error.format())}`)
         }
     }
+}
 
+export class AnonymousStateParser extends GenericStateParser<InstanceStateV1> {
+
+    constructor() {
+        super({ zodSchema: InstanceStateV1Schema })
+    }
+
+    parse(rawState: unknown): InstanceStateV1 {
+        return this.zodParseSafe(rawState, InstanceStateV1Schema)
+    }
 }

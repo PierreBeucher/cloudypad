@@ -1,6 +1,7 @@
 import { z } from "zod"
 import { CommonProvisionOutputV1Schema, CommonProvisionInputV1Schema, InstanceStateV1Schema, AbstractInstanceInputs } from "../../core/state/state"
 import { CLOUDYPAD_PROVIDER_PAPERSPACE, PUBLIC_IP_TYPE, PUBLIC_IP_TYPE_DYNAMIC, PUBLIC_IP_TYPE_STATIC } from "../../core/const"
+import { GenericStateParser } from "../../core/state/parser"
 
 const PaperspaceProvisionOutputV1Schema = CommonProvisionOutputV1Schema.extend({
     machineId: z.string().describe("Paperspace machine ID"),
@@ -36,6 +37,17 @@ export {
     PaperspaceProvisionOutputV1,
     PaperspaceProvisionInputV1,
     PaperspaceInstanceInput,
+}
+
+export class PaperspaceStateParser extends GenericStateParser<PaperspaceInstanceStateV1> {
+
+    constructor() {
+        super({ zodSchema: PaperspaceInstanceStateV1Schema })
+    }
+
+    parse(rawState: unknown): PaperspaceInstanceStateV1 {
+        return this.zodParseSafe(rawState, PaperspaceInstanceStateV1Schema)
+    }
 }
 
 // V0

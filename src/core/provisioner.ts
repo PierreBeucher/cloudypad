@@ -88,3 +88,19 @@ export abstract class AbstractInstanceProvisioner<C extends CommonProvisionInput
     protected abstract doDestroy(): Promise<void>;
 
 }
+
+/**
+ * Generic options for cost alert used by providers supporting automated cost alert setup.
+ */
+export interface CostAlertOptions {
+
+    /**
+     * Cost alert limit (USD).
+     */
+    limit: number
+
+    /**
+     * Cost alert notification email.
+     */
+    notificationEmail: string
+}

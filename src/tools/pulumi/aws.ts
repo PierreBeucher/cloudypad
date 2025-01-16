@@ -50,6 +50,11 @@ interface CloudyPadEC2instanceArgs {
         enabled?: pulumi.Input<boolean>
     }
 
+    billingAlert?: {
+        limit: pulumi.Input<string>
+        notificationEmail: pulumi.Input<string>
+    }
+
     /**
      * Ignore changes to public key used to create instance.
      * This allow to pass any value to public key without destroying instance
@@ -89,6 +94,39 @@ class CloudyPadEC2Instance extends pulumi.ComponentResource {
 
         const commonPulumiOpts = {
             parent: this
+        }
+
+        if(args.billingAlert){
+            const ec2 = new aws.budgets.Budget(`${name}-cost-alert`, {
+                name: `${name}-cost-alert`,
+                budgetType: "COST",
+                limitAmount: args.billingAlert.limit,
+                limitUnit: "USD",
+                timeUnit: "MONTHLY",
+                notifications: [
+                    {
+                        comparisonOperator: "GREATER_THAN",
+                        threshold: 50,
+                        thresholdType: "PERCENTAGE",
+                        notificationType: "ACTUAL",
+                        subscriberEmailAddresses: [args.billingAlert.notificationEmail],
+                    },
+                    {
+                        comparisonOperator: "GREATER_THAN",
+                        threshold: 80,
+                        thresholdType: "PERCENTAGE",
+                        notificationType: "ACTUAL",
+                        subscriberEmailAddresses: [args.billingAlert.notificationEmail],
+                    },
+                    {
+                        comparisonOperator: "GREATER_THAN",
+                        threshold: 100,
+                        thresholdType: "PERCENTAGE",
+                        notificationType: "ACTUAL",
+                        subscriberEmailAddresses: [args.billingAlert.notificationEmail],
+                    },
+                ]
+            })
         }
 
         this.securityGroup = new aws.ec2.SecurityGroup(`${name}-sg`, {
@@ -222,6 +260,10 @@ async function awsPulumiProgram(): Promise<Record<string, any> | void> {
     const publicIpType = config.require("publicIpType");
     const publicKeyContent = config.require("publicSshKeyContent");
     const useSpot = config.requireBoolean("useSpot");
+    
+    const billingAlertEnabled = config.requireBoolean("billingAlertEnabled");
+    const billingAlertLimit = config.get("billingAlertLimit");
+    const billingAlertNotificationEmail = config.get("billingAlertNotificationEmail");
 
     const instanceName = pulumi.getStack()
 
@@ -242,6 +284,25 @@ async function awsPulumiProgram(): Promise<Record<string, any> | void> {
         ],
         owners: ["099720109477"],
     })
+    
+    let billingAlert: {
+        limit: pulumi.Input<string>
+        notificationEmail: pulumi.Input<string>
+    } | undefined = undefined
+
+    if(billingAlertEnabled) {
+        if(!billingAlertLimit) {
+            throw new Error("billingAlertLimit is required when billingAlertEnabled is true")
+        }
+        if(!billingAlertNotificationEmail) {
+            throw new Error("billingAlertNotificationEmail is required when billingAlertEnabled is true")
+        }
+
+        billingAlert = {
+            limit: billingAlertLimit,
+            notificationEmail: billingAlertNotificationEmail
+        }
+    }
 
     const instance = new CloudyPadEC2Instance(instanceName, {
         ami: ubuntuAmi.imageId,
@@ -257,6 +318,7 @@ async function awsPulumiProgram(): Promise<Record<string, any> | void> {
         spot: {
             enabled: useSpot
         },
+        billingAlert: billingAlert,
         ingressPorts: [ // SSH + Wolf ports
             { from: 22, protocol: "tcp" }, // HTTP
             { from: 80, protocol: "Tcp" }, // HTTP
@@ -284,6 +346,10 @@ export interface PulumiStackConfigAws {
     publicSshKeyContent: string
     publicIpType: PUBLIC_IP_TYPE
     useSpot: boolean
+    billingAlert?: {
+        limit: number
+        notificationEmail: string
+    }
 }
 
 export interface AwsPulumiOutput {
@@ -307,6 +373,14 @@ export class AwsPulumiClient extends InstancePulumiClient<PulumiStackConfigAws, 
         await stack.setConfig("publicSshKeyContent", { value: config.publicSshKeyContent})
         await stack.setConfig("publicIpType", { value: config.publicIpType})
         await stack.setConfig("useSpot", { value: config.useSpot.toString()})
+        
+        if(config.billingAlert){
+            await stack.setConfig("billingAlertEnabled", { value: "true"})
+            await stack.setConfig("billingAlertLimit", { value: config.billingAlert.limit.toString()})
+            await stack.setConfig("billingAlertNotificationEmail", { value: config.billingAlert.notificationEmail})
+        } else {
+            await stack.setConfig("billingAlertEnabled", { value: "false"})
+        }
 
         const allConfs = await stack.getAllConfig()
         this.logger.debug(`Config after update: ${JSON.stringify(allConfs)}`)

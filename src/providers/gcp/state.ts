@@ -1,6 +1,7 @@
 import { z } from "zod"
-import { CommonProvisionOutputV1Schema, CommonProvisionInputV1Schema, InstanceStateV1Schema, AbstractInstanceInputs } from "../../core/state/state"
+import { CommonProvisionOutputV1Schema, CommonProvisionInputV1Schema, InstanceStateV1Schema, AbstractInstanceInputs, CostAlertSchema } from "../../core/state/state"
 import { CLOUDYPAD_PROVIDER_GCP, PUBLIC_IP_TYPE_DYNAMIC, PUBLIC_IP_TYPE_STATIC } from "../../core/const"
+import { GenericStateParser } from "../../core/state/parser"
 
 const GcpProvisionOutputV1Schema = CommonProvisionOutputV1Schema.extend({
     instanceName: z.string().describe("GCP instance name"),
@@ -15,6 +16,7 @@ const GcpProvisionInputV1Schema = CommonProvisionInputV1Schema.extend({
     region: z.string().describe("GCP region"),
     zone: z.string().describe("GCP zone"),
     useSpot: z.boolean().describe("Whether to use spot instances"),
+    costAlert: CostAlertSchema,
 })
 
 const GcpInstanceStateV1Schema = InstanceStateV1Schema.extend({
@@ -39,6 +41,17 @@ export {
     GcpProvisionOutputV1,
     GcpProvisionInputV1,
     GcpInstanceInput,  
+}
+
+export class GcpStateParser extends GenericStateParser<GcpInstanceStateV1> {
+
+    constructor() {
+        super({ zodSchema: GcpInstanceStateV1Schema })
+    }
+
+    parse(rawState: unknown): GcpInstanceStateV1 {
+        return this.zodParseSafe(rawState, GcpInstanceStateV1Schema)
+    }
 }
 
 // V0

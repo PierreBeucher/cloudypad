@@ -14,6 +14,7 @@ import { DUMMY_AWS_PULUMI_OUTPUT, DUMMY_AZURE_PULUMI_OUTPUT, DUMMY_GCP_PULUMI_OU
 import { DataRootDirManager } from '../../src/core/data-dir';
 import { AnalyticsManager } from '../../src/tools/analytics/manager';
 import { NoOpAnalyticsClient } from '../../src/tools/analytics/client';
+import { SshKeyLoader } from '../../src/tools/ssh';
 
 
 export const mochaHooks = {
@@ -47,7 +48,9 @@ export const mochaHooks = {
         sinon.stub(AnalyticsManager, 'get').callsFake(() => {
             return new NoOpAnalyticsClient()
         })
-        
+
+        // Force dummy ssh key loader
+        sinon.stub(SshKeyLoader.prototype, 'parseSshPrivateKeyFileToPublic').resolves()
 
         sinon.stub(AnsibleClient.prototype, 'runAnsible').resolves()
 

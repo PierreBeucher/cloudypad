@@ -3,6 +3,7 @@ import * as pulumi from "@pulumi/pulumi"
 import { InstancePulumiClient } from "./client"
 import { OutputMap } from "@pulumi/pulumi/automation"
 import { PUBLIC_IP_TYPE, PUBLIC_IP_TYPE_STATIC } from "../../core/const"
+import { CostAlertOptions } from "../../core/provisioner"
 
 interface PortDefinition {
     from: pulumi.Input<number>,
@@ -25,7 +26,11 @@ interface CloudyPadVMArgs {
     osDisk: VolumeArgs
     publicIpType?: pulumi.Input<string>
     priority?: pulumi.Input<string>
-    evictionPolicy?: pulumi.Input<string>
+    evictionPolicy?: pulumi.Input<string>,
+    costAlert?: {
+        limit: pulumi.Input<number>
+        notificationEmail: pulumi.Input<string>
+    }
 }
 
 class CloudyPadAzureInstance extends pulumi.ComponentResource {
@@ -169,7 +174,46 @@ class CloudyPadAzureInstance extends pulumi.ComponentResource {
             throw new Error(`Expected a single Public IP, got: ${JSON.stringify(ips)}`)  
         })
 
-        
+        const startDate = `${new Date().getFullYear()}-${new Date().getMonth()+1}-01`
+
+        console.info(`Start date: ${startDate}`)
+
+        if(args.costAlert) {
+            // Cost alert scoped to instance resource group
+            const costAlert = new az.costmanagement.Budget(`${name}-cost-alert`, {
+                category: "Cost",
+                budgetName: `cloudypad-cost-alert-${name}`,
+                scope: resourceGroup.id,
+                amount: args.costAlert.limit,
+                timeGrain: "Monthly",
+                timePeriod: {
+                    startDate: startDate
+                },
+                notifications: {
+                    "100%": {
+                        enabled: true,
+                        contactEmails: [args.costAlert.notificationEmail],
+                        thresholdType: "Actual",
+                        operator: "GreaterThanOrEqualTo",
+                        threshold: 100,
+                    },
+                    "80%": {
+                        enabled: true,
+                        contactEmails: [args.costAlert.notificationEmail],
+                        thresholdType: "Actual",
+                        operator: "GreaterThanOrEqualTo",
+                        threshold: 80,
+                    },
+                    "50%": {
+                        enabled: true,
+                        contactEmails: [args.costAlert.notificationEmail],
+                        thresholdType: "Actual",
+                        operator: "GreaterThanOrEqualTo",
+                        threshold: 50,
+                    }
+                },
+            }, commonPulumiOpts)
+        }        
     }
 }
 
@@ -181,6 +225,7 @@ async function azurePulumiProgram(): Promise<Record<string, any> | void> {
     const rootDiskSizeGB = config.requireNumber("rootDiskSizeGB")
     const publicIpType = config.require("publicIpType")
     const useSpot = config.requireBoolean("useSpot")
+    const costAlert = config.getObject<CostAlertOptions>("costAlert")
 
     const instanceName = pulumi.getStack()
 
@@ -208,6 +253,7 @@ async function azurePulumiProgram(): Promise<Record<string, any> | void> {
         // Spot config if enabled
         priority: useSpot ? "Spot" : undefined,
         evictionPolicy: useSpot ? "Deallocate" : undefined,
+        costAlert: costAlert
     })
 
     return {
@@ -224,7 +270,8 @@ export interface PulumiStackConfigAzure {
     rootDiskSizeGB: number
     publicSshKeyContent: string
     publicIpType: PUBLIC_IP_TYPE
-    useSpot: boolean
+    useSpot: boolean,
+    costAlert?: CostAlertOptions
 }
 
 export interface AzurePulumiOutput {
@@ -252,6 +299,10 @@ export class AzurePulumiClient extends InstancePulumiClient<PulumiStackConfigAzu
         await stack.setConfig("publicSshKeyContent", { value: config.publicSshKeyContent})
         await stack.setConfig("publicIpType", { value: config.publicIpType})
         await stack.setConfig("useSpot", { value: config.useSpot.toString()})
+
+        if(config.costAlert){
+            await stack.setConfig("costAlert", { value: JSON.stringify(config.costAlert)})
+        }
 
         const allConfs = await stack.getAllConfig()
         this.logger.debug(`Config after update: ${JSON.stringify(allConfs)}`)

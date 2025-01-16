@@ -1,6 +1,7 @@
 import { z } from "zod"
 import { CommonProvisionOutputV1Schema, CommonProvisionInputV1Schema, InstanceStateV1Schema, AbstractInstanceInputs } from "../../core/state/state"
 import { CLOUDYPAD_PROVIDER_AZURE, PUBLIC_IP_TYPE_DYNAMIC, PUBLIC_IP_TYPE_STATIC } from "../../core/const"
+import { GenericStateParser } from "../../core/state/parser"
 
 const AzureProvisionOutputV1Schema = CommonProvisionOutputV1Schema.extend({
     vmName: z.string().describe("Azure VM name"),
@@ -14,6 +15,10 @@ const AzureProvisionInputV1Schema = CommonProvisionInputV1Schema.extend({
     subscriptionId: z.string().describe("Azure Subscription ID"),
     location: z.string().describe("Azure location/region"),
     useSpot: z.boolean().describe("Whether to use spot instances"),
+    costAlert: z.object({
+        limit: z.number().describe("Cost alert limit"),
+        notificationEmail: z.string().describe("Cost alert notification email"),
+    }).nullish(),
 })
 
 const AzureInstanceStateV1Schema = InstanceStateV1Schema.extend({
@@ -40,6 +45,16 @@ export {
     AzureInstanceInput,
 }
 
+export class AzureStateParser extends GenericStateParser<AzureInstanceStateV1> {
+
+    constructor() {
+        super({ zodSchema: AzureInstanceStateV1Schema })
+    }
+
+    parse(rawState: unknown): AzureInstanceStateV1 {
+        return this.zodParseSafe(rawState, AzureInstanceStateV1Schema)
+    }
+}
 // V0
 
 export interface AzureProviderStateV0 {

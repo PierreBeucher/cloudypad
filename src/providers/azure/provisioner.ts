@@ -1,4 +1,4 @@
-import { parseSshPrivateKeyFileToPublic } from '../../tools/ssh'
+import { SshKeyLoader } from '../../tools/ssh'
 import { confirm } from '@inquirer/prompts'
 import { AzurePulumiClient, PulumiStackConfigAzure } from '../../tools/pulumi/azure'
 import { AbstractInstanceProvisioner, InstanceProvisionerArgs, InstanceProvisionOptions } from '../../core/provisioner'
@@ -34,6 +34,8 @@ You are about to provision Azure machine with the following details:
     Spot instance: ${this.args.input.useSpot}
     Public IP Type: ${this.args.input.publicIpType}
     Disk size: ${this.args.input.diskSize}
+    Cost Alert: ${this.args.input.costAlert?.limit ? `enabled, limit: ${this.args.input.costAlert.limit}$, ` + 
+        `notification email: ${this.args.input.costAlert.notificationEmail}` : 'None.'}
     
 Do you want to proceed?`,
                 default: true,
@@ -51,8 +53,9 @@ Do you want to proceed?`,
             vmSize: this.args.input.vmSize,
             publicIpType: this.args.input.publicIpType,
             rootDiskSizeGB: this.args.input.diskSize,
-            publicSshKeyContent: await parseSshPrivateKeyFileToPublic(this.args.input.ssh.privateKeyPath),
+            publicSshKeyContent: new SshKeyLoader().parseSshPrivateKeyFileToPublic(this.args.input.ssh.privateKeyPath),
             useSpot: this.args.input.useSpot,
+            costAlert: this.args.input.costAlert ?? undefined,
         }
 
         await pulumiClient.setConfig(pulumiConfig)

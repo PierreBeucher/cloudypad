@@ -1,10 +1,11 @@
 import * as assert from 'assert';
-import { GcpInstanceInput } from '../../../src/providers/gcp/state';
+import { GcpInstanceInput, GcpInstanceStateV1 } from '../../../src/providers/gcp/state';
 import { PUBLIC_IP_TYPE_STATIC } from '../../../src/core/const';
 import { DEFAULT_COMMON_INPUT } from '../utils';
 import { GcpCreateCliArgs, GcpInputPrompter } from '../../../src/providers/gcp/cli';
 import lodash from 'lodash'
 import { PartialDeep } from 'type-fest';
+import { StateWriter } from '../../../src/core/state/writer';
 
 describe('GCP input prompter', () => {
 
@@ -22,10 +23,14 @@ describe('GCP input prompter', () => {
             acceleratorType: "nvidia-tesla-p4",
             projectId: "crafteo-sandbox",
             useSpot: true,
+            costAlert: {
+                notificationEmail: "test@test.com",
+                limit: 100
+            }
         }, 
         configuration: {
             ...DEFAULT_COMMON_INPUT.configuration
-        }
+        },
     }
 
     /**
@@ -44,6 +49,8 @@ describe('GCP input prompter', () => {
         publicIpType: TEST_INPUT.provision.publicIpType,
         gpuType: TEST_INPUT.provision.acceleratorType,
         spot: TEST_INPUT.provision.useSpot,
+        costNotificationEmail: TEST_INPUT.provision.costAlert?.notificationEmail,
+        costLimit: TEST_INPUT.provision.costAlert?.limit,
     }
 
     it('should convert CLI args into partial input', () => {
@@ -64,7 +71,7 @@ describe('GCP input prompter', () => {
 
     it('should return provided inputs without prompting when full input provider', async () => {
 
-        const result = await new GcpInputPrompter().promptInput(TEST_INPUT, { overwriteExisting: true})
+        const result = await new GcpInputPrompter().promptInput(TEST_INPUT, { overwriteExisting: true, autoApprove: true })
         assert.deepEqual(result, TEST_INPUT)
     })
 

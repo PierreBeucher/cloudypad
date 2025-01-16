@@ -22,6 +22,7 @@ describe('Instance initializer', () => {
             acceleratorType: "nvidia-tesla-p4",
             projectId: "crafteo-sandbox",
             useSpot: true,
+            costAlert: null
         }, 
         configuration: {
             ...DEFAULT_COMMON_INPUT.configuration
@@ -44,6 +45,7 @@ describe('Instance initializer', () => {
         publicIpType: TEST_INPUT.provision.publicIpType,
         gpuType: TEST_INPUT.provision.acceleratorType,
         spot: TEST_INPUT.provision.useSpot,
+        costAlert: false,
     }
 
     const TEST_CLI_ARGS_ALREADY_EXISTING: GcpCreateCliArgs = {
@@ -62,7 +64,7 @@ describe('Instance initializer', () => {
         }).initializeInstance(TEST_CLI_ARGS, { skipPostInitInfo: true })
 
         // Check state has been written
-        const state = await new StateLoader().loadInstanceStateSafe(instanceName)
+        const state = await new StateLoader().loadAndMigrateInstanceState(instanceName)
 
         const expectState: GcpInstanceStateV1 = {
             version: "1",

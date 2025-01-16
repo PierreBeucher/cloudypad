@@ -170,12 +170,15 @@ export class SSHClient {
     
 }
 
-export async function parseSshPrivateKeyFileToPublic(keyPath: string){
-    const kData = fs.readFileSync(keyPath, { encoding: 'utf8' });
-    return parseSshPrivateKeyToPublic(kData)
-}
+export class SshKeyLoader {
 
-export async function parseSshPrivateKeyToPublic(keyData: string){
-    const privKey = parseKey(keyData, "ssh-private")
-    return privKey.toString("ssh")
+    parseSshPrivateKeyFileToPublic(keyPath: string){
+        const kData = fs.readFileSync(keyPath, { encoding: 'utf8' });
+        return this.parseSshPrivateKeyToPublic(kData)
+    }
+    
+    parseSshPrivateKeyToPublic(keyData: string){
+        const privKey = parseKey(keyData, "ssh-private")
+        return privKey.toString("ssh")
+    }
 }

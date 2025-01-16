@@ -2,13 +2,13 @@ import { CommonInstanceInput, InstanceStateV1 } from "../../src/core/state/state
 import path from "path"
 import fs, { mkdtempSync } from "fs"
 import yaml from 'js-yaml'
-import { StateParser } from "../../src/core/state/parser";
 import { AwsPulumiOutput } from "../../src/tools/pulumi/aws";
 import { AzurePulumiOutput } from "../../src/tools/pulumi/azure";
 import { GcpPulumiOutput } from "../../src/tools/pulumi/gcp";
 import { PaperspaceMachine } from "../../src/providers/paperspace/client/client";
 import { PUBLIC_IP_TYPE_STATIC } from "../../src/core/const";
 import { tmpdir } from "os";
+import { AnonymousStateParser } from "../../src/core/state/parser";
 
 export const DEFAULT_COMMON_INPUT: CommonInstanceInput = {
     instanceName: "dummy-instance",
@@ -38,6 +38,9 @@ export const DUMMY_AZURE_PULUMI_OUTPUT: AzurePulumiOutput = { vmName: "dummy-az"
  */
 export const DUMMY_GCP_PULUMI_OUTPUT: GcpPulumiOutput = { instanceName: "dummy-gcp", publicIp: "127.0.0.1"}
 
+export const DUMMY_V1_ROOT_DATA_DIR = path.resolve(__dirname, "core", "state", "v1-root-data-dir")
+export const DUMMY_V0_ROOT_DATA_DIR = path.resolve(__dirname, "core", "state", "v0-root-data-dir")
+
 /**
  * Dummy output returned by Paperspace client during unit test
  */
@@ -51,14 +54,19 @@ export const DUMMY_PAPERSPACE_MACHINE: PaperspaceMachine = {
     publicIpType: PUBLIC_IP_TYPE_STATIC
 }
 
-export function loadRawState(instanceName: string): unknown {
-    const filePath = path.resolve(__dirname, 'core', 'state', 'v1-root-data-dir', 'instances', instanceName, 'state.yml')
+export function loadRawDummyStateV0(instanceName: string): unknown {
+    const filePath = path.resolve(DUMMY_V0_ROOT_DATA_DIR, 'instances', instanceName, 'config.yml')
     return yaml.load(fs.readFileSync(filePath, 'utf-8'))
 }
 
-export function loadState(instanceName: string): InstanceStateV1 {
-    const rawState = loadRawState(instanceName)
-    return new StateParser().parseBaseStateV1(rawState)
+export function loadRawDummyStateV1(instanceName: string): unknown {
+    const filePath = path.resolve(DUMMY_V1_ROOT_DATA_DIR, 'instances', instanceName, 'state.yml')
+    return yaml.load(fs.readFileSync(filePath, 'utf-8'))
+}
+
+export function loadDumyAnonymousStateV1(instanceName: string): InstanceStateV1 {
+    const rawState = loadRawDummyStateV1(instanceName)
+    return new AnonymousStateParser().parse(rawState)
 }
 
 export function createTempTestDir(prefix: string){

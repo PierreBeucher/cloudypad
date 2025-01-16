@@ -37,8 +37,8 @@ describe('State Manager version migration', () => {
             dataRootDir: v1Dir
         })
 
-        const result = await loaderV0.loadInstanceStateSafe(instanceName)
-        const expected = await loaderV1.loadInstanceStateSafe(instanceName)
+        const result = await loaderV0.loadAndMigrateInstanceState(instanceName)
+        const expected = await loaderV1.loadAndMigrateInstanceState(instanceName)
         assert.deepEqual(result, expected)
 
         // Check old state has been deleted

@@ -24,7 +24,7 @@ export interface InstancerInitializationOptions {
 /**
  * Initialize a new instance from CLI args. Create a new State and persist to disk before and build an InstanceManager.
  */
-export class InteractiveInstanceInitializer {
+export class InteractiveInstanceInitializer<A extends CreateCliArgs> {
 
     private readonly provider: CLOUDYPAD_PROVIDER
     private readonly inputPrompter: InputPrompter
@@ -42,7 +42,7 @@ export class InteractiveInstanceInitializer {
      * - Interactively prompt for missing args
      * - Run instance initialization
      */
-    async initializeInstance(cliArgs: CreateCliArgs, options?: InstancerInitializationOptions): Promise<void> {
+    async initializeInstance(cliArgs: A, options?: InstancerInitializationOptions): Promise<void> {
         try {
             this.analyticsEvent("create_instance_start")
 
@@ -62,11 +62,11 @@ export class InteractiveInstanceInitializer {
         } catch (error) {
             const errMsg = error instanceof Error ? error.message : String(error)
             this.analyticsEvent("create_instance_error", { errorMessage: errMsg })
-            throw new Error(`Error initializing instance`, { cause: error })
+            throw new Error(`Error initializing instance: ${errMsg}`, { cause: error})
         }
     }
 
-    private async cliArgsToInput(cliArgs: CreateCliArgs): Promise<CommonInstanceInput> {
+    private async cliArgsToInput(cliArgs: A): Promise<CommonInstanceInput> {
         this.analyticsEvent("create_instance_start_input_prompt")
         const input = await this.inputPrompter.completeCliInput(cliArgs)
         this.analyticsEvent("create_instance_finish_input_prompt")

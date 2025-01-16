@@ -19,6 +19,10 @@ describe('AWS input prompter', () => {
             publicIpType: PUBLIC_IP_TYPE_STATIC,
             region: "us-west-2",
             useSpot: true,
+            costAlert: {
+                limit: 999,
+                notificationEmail: "dummy@crafteo.io",
+            }
         },
         configuration: {
             ...DEFAULT_COMMON_INPUT.configuration
@@ -35,11 +39,13 @@ describe('AWS input prompter', () => {
         instanceType: TEST_INPUT.provision.instanceType,
         region: TEST_INPUT.provision.region,
         spot: TEST_INPUT.provision.useSpot,
+        costLimit: TEST_INPUT.provision.costAlert?.limit,
+        costNotificationEmail: TEST_INPUT.provision.costAlert?.notificationEmail,
     }
 
     it('should return provided inputs without prompting when full input provider', async () => {
 
-        const result = await new AwsInputPrompter().promptInput(TEST_INPUT, {})
+        const result = await new AwsInputPrompter().promptInput(TEST_INPUT, { autoApprove: true })
         assert.deepEqual(result, TEST_INPUT)
     })
 
@@ -52,7 +58,11 @@ describe('AWS input prompter', () => {
             ...TEST_INPUT,
             provision: {
                 ...TEST_INPUT.provision,
-                ssh: lodash.omit(TEST_INPUT.provision.ssh, "user")
+                ssh: lodash.omit(TEST_INPUT.provision.ssh, "user"),
+                costAlert: {
+                    limit: 999,
+                    notificationEmail: "dummy@crafteo.io",
+                }
             }
         }
         

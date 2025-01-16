@@ -13,7 +13,7 @@ provision:
     useSpot: true
     ssh:
       user: ubuntu
-      privateKeyPath: /home/pbeucher/.ssh/id_ed25519
+      privateKeyPath: /dummy/ssh/key/id_rsa
 configuration:
   configurator: ansible
   input: {}

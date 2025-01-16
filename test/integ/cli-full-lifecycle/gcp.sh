@@ -13,6 +13,8 @@ function create_destroy_gcp() {
         --gpu-type "nvidia-tesla-p4" \
         --project-id crafteo-sandbox \
         --spot \
+        --cost-limit 2 \
+        --cost-notification-email "test@test.com" \
         --yes --overwrite-existing --skip-pairing
 
     $cloudypad_cmd update gcp \

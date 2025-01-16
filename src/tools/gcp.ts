@@ -56,8 +56,12 @@ export class GcpClient {
         } catch (e) {
             this.logger.error(`Couldn't check Google Cloud authentication: ${JSON.stringify(e)}`)
             this.logger.error(`Is your local Google Cloud authentication configured ?`)
+            this.logger.error(`Make sure you authenticated with Google Application Default Credentials using gcloud auth application-default login`)
             
-            throw new Error(`Couldn't check Google Cloud authentication: ${JSON.stringify(e)}`)
+            throw new Error(`Couldn't check Google Cloud authentication.` + 
+                `Make sure you authenticated with Google Application Default Credentials using gcloud auth application-default login`,
+                { cause: e }
+            )
         }
     }
 
@@ -165,7 +169,8 @@ export class GcpClient {
         this.logger.debug(`Listing Google Cloud machine types in zone ${zone}`)
         try {
             const [machineTypes] = await this.machines.list({ project: this.projectId, zone: zone })
-            this.logger.debug(`List machine types response: ${JSON.stringify(machineTypes)}`)
+            this.logger.debug(`List machine types response: ${JSON.stringify(machineTypes.lastIndexOf)} elements`)
+            this.logger.trace(`List machine types response: ${JSON.stringify(machineTypes)}`) // very bverbose, use trace
             return machineTypes
         } catch (error) {
             this.logger.error(`Failed to list Google Cloud machine types in zone ${zone}:`, error)

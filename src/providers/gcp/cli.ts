@@ -1,15 +1,15 @@
-import { GcpInstanceInput } from "./state"
+import { GcpInstanceInput, GcpInstanceStateV1, GcpStateParser } from "./state"
 import { CommonInstanceInput } from "../../core/state/state"
 import { input, select } from '@inquirer/prompts';
-import { AbstractInputPrompter } from "../../core/cli/prompter";
+import { AbstractInputPrompter, costAlertCliArgsIntoConfig, PromptOptions } from "../../core/cli/prompter";
 import { GcpClient } from "../../tools/gcp";
 import lodash from 'lodash'
 import { CLOUDYPAD_PROVIDER_GCP, PUBLIC_IP_TYPE } from "../../core/const";
 import { PartialDeep } from "type-fest";
 import { InteractiveInstanceInitializer } from "../../core/initializer";
-import { CLI_OPTION_DISK_SIZE, CLI_OPTION_PUBLIC_IP_TYPE, CLI_OPTION_SPOT, CliCommandGenerator, CreateCliArgs } from "../../core/cli/command";
-import { InstanceManagerBuilder } from "../../core/manager-builder";
+import { CLI_OPTION_COST_ALERT, CLI_OPTION_COST_LIMIT, CLI_OPTION_COST_NOTIFICATION_EMAIL, CLI_OPTION_DISK_SIZE, CLI_OPTION_PUBLIC_IP_TYPE, CLI_OPTION_SPOT, CliCommandGenerator, CreateCliArgs, UpdateCliArgs } from "../../core/cli/command";
 import { RUN_COMMAND_CREATE, RUN_COMMAND_UPDATE } from "../../tools/analytics/events";
+import { InstanceUpdater } from "../../core/updater";
 
 export interface GcpCreateCliArgs extends CreateCliArgs {
     projectId?: string
@@ -19,8 +19,16 @@ export interface GcpCreateCliArgs extends CreateCliArgs {
     diskSize?: number
     publicIpType?: PUBLIC_IP_TYPE
     gpuType?: string
-    spot?: boolean
+    spot?: boolean,
+    costAlert?: boolean
+    costLimit?: number
+    costNotificationEmail?: string
 }
+
+/**
+ * Possible update arguments for GCP update. Use create arguments as reference and remove fields that cannot be updated.
+ */
+export type GcpUpdateCliArgs = UpdateCliArgs & Omit<GcpCreateCliArgs, "projectId" | "region" | "zone">
 
 export class GcpInputPrompter extends AbstractInputPrompter<GcpCreateCliArgs, GcpInstanceInput> {
     
@@ -39,14 +47,19 @@ export class GcpInputPrompter extends AbstractInputPrompter<GcpCreateCliArgs, Gc
                 acceleratorType: cliArgs.gpuType,
                 projectId: cliArgs.projectId,
                 useSpot: cliArgs.spot,
+                costAlert: costAlertCliArgsIntoConfig(cliArgs),
             },
             configuration: {}
         }
     }
 
-    protected async promptSpecificInput(defaultInput: CommonInstanceInput & PartialDeep<GcpInstanceInput>): Promise<GcpInstanceInput> {
+    protected async promptSpecificInput(defaultInput: CommonInstanceInput & PartialDeep<GcpInstanceInput>, createOptions: PromptOptions): Promise<GcpInstanceInput> {
 
-        this.logger.debug(`Starting Gcp prompt with default opts: ${JSON.stringify(defaultInput)}`)
+        this.logger.debug(`Starting Gcp prompt with defaultInput: ${JSON.stringify(defaultInput)} and createOptions: ${JSON.stringify(createOptions)}`)
+
+        if(!createOptions.autoApprove && !createOptions.skipQuotaWarning){
+            await this.informCloudProviderQuotaWarning(CLOUDYPAD_PROVIDER_GCP, "https://cloudypad.gg/cloud-provider-setup/gcp.html")
+        }
         
         const projectId = await this.project(defaultInput.provision?.projectId)
         
@@ -55,10 +68,11 @@ export class GcpInputPrompter extends AbstractInputPrompter<GcpCreateCliArgs, Gc
         const region = await this.region(client, defaultInput.provision?.region)
         const zone = await this.zone(client, region, defaultInput.provision?.zone)
         const machineType = await this.machineType(client, zone, defaultInput.provision?.machineType)
+        const acceleratorType = await this.acceleratorType(client, zone, defaultInput.provision?.acceleratorType)
         const useSpot = await this.useSpotInstance(defaultInput.provision?.useSpot)
         const diskSize = await this.diskSize(defaultInput.provision?.diskSize)
         const publicIpType = await this.publicIpType(defaultInput.provision?.publicIpType)
-        const acceleratorType = await this.acceleratorType(client, zone, defaultInput.provision?.acceleratorType)
+        const costAlert = await this.costAlert(defaultInput.provision?.costAlert)
         
         const gcpInput: GcpInstanceInput = lodash.merge(
             {},
@@ -73,6 +87,7 @@ export class GcpInputPrompter extends AbstractInputPrompter<GcpCreateCliArgs, Gc
                     zone: zone,
                     acceleratorType: acceleratorType,
                     useSpot: useSpot,
+                    costAlert: costAlert,
                 },
             }
         )
@@ -100,7 +115,7 @@ export class GcpInputPrompter extends AbstractInputPrompter<GcpCreateCliArgs, Gc
                 return a.guestCpus! - b.guestCpus!
             }) 
             .map(t => ({
-                name: `${t.name} (RAM: ${Math.round(t.memoryMb! / 100)/10} GB, CPUs: ${t.guestCpus})`,
+                name: `${t.name} (CPUs: ${t.guestCpus}, RAM: ${Math.round(t.memoryMb! / 100)/10} GiB)`,
                 value: t.name!,
             }))
         
@@ -197,7 +212,10 @@ export class GcpInputPrompter extends AbstractInputPrompter<GcpCreateCliArgs, Gc
         const acceleratorTypes = await client.listAcceleratorTypes(zone)
 
         const choices = acceleratorTypes.filter(t => t.name)
-            .filter(t => t.name && t.name.startsWith("nvidia") && !t.name.includes("vws")) // only support NVIDIA for now and remove workstations
+            .filter(t => 
+                t.name && t.name.startsWith("nvidia") && !t.name.includes("vws") && // only support NVIDIA for now and remove workstations
+                t.name != "nvidia-h100-80gb" && t.name != "nvidia-h100-mega-80gb" // not supported yet
+            ) 
             .map(t => ({name: `${t.description} (${t.name})`, value: t.name!}))
             .sort()
 
@@ -216,6 +234,9 @@ export class GcpCliCommandGenerator extends CliCommandGenerator {
             .addOption(CLI_OPTION_SPOT)
             .addOption(CLI_OPTION_DISK_SIZE)
             .addOption(CLI_OPTION_PUBLIC_IP_TYPE)
+            .addOption(CLI_OPTION_COST_ALERT)
+            .addOption(CLI_OPTION_COST_LIMIT)
+            .addOption(CLI_OPTION_COST_NOTIFICATION_EMAIL)
             .option('--machine-type <machinetype>', 'Machine type to use for the instance')
             .option('--region <region>', 'Region in which to deploy instance')
             .option('--zone <zone>', 'Zone within the region to deploy the instance')
@@ -224,7 +245,7 @@ export class GcpCliCommandGenerator extends CliCommandGenerator {
             .action(async (cliArgs) => {
                 this.analytics.sendEvent(RUN_COMMAND_CREATE, { provider: CLOUDYPAD_PROVIDER_GCP })
                 try {
-                    await new InteractiveInstanceInitializer({ 
+                    await new InteractiveInstanceInitializer<GcpCreateCliArgs>({ 
                         inputPrompter: new GcpInputPrompter(),
                         provider: CLOUDYPAD_PROVIDER_GCP,
                     }).initializeInstance(cliArgs)
@@ -239,21 +260,21 @@ export class GcpCliCommandGenerator extends CliCommandGenerator {
         return this.getBaseUpdateCommand(CLOUDYPAD_PROVIDER_GCP)
             .addOption(CLI_OPTION_DISK_SIZE)
             .addOption(CLI_OPTION_PUBLIC_IP_TYPE)
+            .addOption(CLI_OPTION_COST_ALERT)
+            .addOption(CLI_OPTION_COST_LIMIT)
+            .addOption(CLI_OPTION_COST_NOTIFICATION_EMAIL)
             .option('--machine-type <machinetype>', 'Machine type to use for the instance')
             .option('--gpu-type <gputype>', 'Type of accelerator (e.g., GPU) to attach to the instance')
             .action(async (cliArgs) => {
                 this.analytics.sendEvent(RUN_COMMAND_UPDATE, { provider: CLOUDYPAD_PROVIDER_GCP })
                 try {
-                    const input = new GcpInputPrompter().cliArgsIntoInput(cliArgs)
-                    const updater = await new InstanceManagerBuilder().buildGcpInstanceUpdater(cliArgs.name)
-                    await updater.update({
-                        provisionInput: input.provision,
-                        configurationInput: input.configuration,
-                    }, { 
-                        autoApprove: cliArgs.yes
-                    })
+                    await new InstanceUpdater<GcpInstanceStateV1, GcpUpdateCliArgs>({
+                        stateParser: new GcpStateParser(),
+                        inputPrompter: new GcpInputPrompter()
+                    }).update(cliArgs)
+
                     console.info(`Updated instance ${cliArgs.name}`)
-                    
+
                 } catch (error) {
                     throw new Error('Error updating GCP instance:', { cause: error })
                 }
