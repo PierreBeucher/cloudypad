@@ -3,6 +3,12 @@ import { CommonProvisionOutputV1Schema, CommonProvisionInputV1Schema, InstanceSt
 import { CLOUDYPAD_PROVIDER_AZURE, PUBLIC_IP_TYPE_DYNAMIC, PUBLIC_IP_TYPE_STATIC } from "../../core/const"
 import { GenericStateParser } from "../../core/state/parser"
 
+export enum AZURE_SUPPORTED_DISK_TYPES {
+    STANDARD_LRS = "Standard_LRS",
+    STANDARD_SSD_LRS = "StandardSSD_LRS",
+    PREMIUM_LRS = "Premium_LRS",
+}
+
 const AzureProvisionOutputV1Schema = CommonProvisionOutputV1Schema.extend({
     vmName: z.string().describe("Azure VM name"),
     resourceGroupName: z.string().describe("Azure Resource Group name"),
@@ -11,6 +17,7 @@ const AzureProvisionOutputV1Schema = CommonProvisionOutputV1Schema.extend({
 const AzureProvisionInputV1Schema = CommonProvisionInputV1Schema.extend({
     vmSize: z.string().describe("Azure VM size"),
     diskSize: z.number().describe("Disk size in GB"),
+    diskType: z.string().describe("Disk type (HDD, SSD...)").default(AZURE_SUPPORTED_DISK_TYPES.STANDARD_LRS),
     publicIpType: z.enum([PUBLIC_IP_TYPE_STATIC, PUBLIC_IP_TYPE_DYNAMIC]).describe("Type of public IP address"),
     subscriptionId: z.string().describe("Azure Subscription ID"),
     location: z.string().describe("Azure location/region"),

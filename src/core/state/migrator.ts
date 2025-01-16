@@ -5,7 +5,7 @@ import { PaperspaceInstanceStateV1 } from '../../providers/paperspace/state'
 import { AwsInstanceStateV1 } from '../../providers/aws/state'
 import { getLogger } from '../../log/utils'
 import { CLOUDYPAD_CONFIGURATOR_ANSIBLE, CLOUDYPAD_PROVIDER, CLOUDYPAD_PROVIDER_AWS, CLOUDYPAD_PROVIDER_AZURE, CLOUDYPAD_PROVIDER_GCP, CLOUDYPAD_PROVIDER_PAPERSPACE, PUBLIC_IP_TYPE_DYNAMIC, PUBLIC_IP_TYPE_STATIC } from '../const'
-import { AzureInstanceStateV1 } from '../../providers/azure/state'
+import { AZURE_SUPPORTED_DISK_TYPES, AzureInstanceStateV1 } from '../../providers/azure/state'
 import { GcpInstanceStateV1 } from '../../providers/gcp/state'
 import { InstanceStateV0 } from './state'
 import { AnyInstanceStateV1 } from './parser'
@@ -149,6 +149,7 @@ export class StateMigrator extends BaseStateManager {
                         input: {
                             ...providerV0.azure.provisionArgs.create,
                             publicIpType: providerV0.azure.provisionArgs.create.publicIpType,
+                            diskType: AZURE_SUPPORTED_DISK_TYPES.STANDARD_LRS,
                             ssh: {
                                 user: stateV0.ssh.user,
                                 privateKeyPath: stateV0.ssh.privateKeyPath

@@ -8,6 +8,7 @@ provision:
     vmName: test-create-destroy-azure-vmfoo
   input:
     diskSize: 100
+    diskType: Standard_LRS
     vmSize: Standard_NC8as_T4_v3
     publicIpType: static
     location: francecentral
