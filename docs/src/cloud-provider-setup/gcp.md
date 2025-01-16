@@ -4,15 +4,13 @@ If you don't already have a Google Cloud account, [create an account](https://co
 
 Configure your credentials locally ([see official documentation](https://cloud.google.com/sdk/docs/install))
 
-Check your configuration:
+**⚠️ You must authenticate using Application Default Credentials such as:**
 
 ```sh
-$ gcloud auth list
-
-Credentialed Accounts
-ACTIVE  ACCOUNT
-*       your_email@gmail.com
+$ gcloud auth application-default login
 ```
+
+Otherwise Google API won't be able to use "classic" `gcloud auth login` credentials. 
 
 ## Quotas
 
