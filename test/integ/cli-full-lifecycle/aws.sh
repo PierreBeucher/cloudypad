@@ -11,8 +11,8 @@ function create_destroy_aws() {
         --region eu-central-1 \
         --spot \
         --cost-alert \
-        --cost-limit 100 \
-        --cost-notification-email "pierre@crafteo.io" \
+        --cost-limit 2 \
+        --cost-notification-email "test@test.com" \
         --yes --overwrite-existing --skip-pairing
 
     $cloudypad_cmd update aws \
