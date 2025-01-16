@@ -361,7 +361,7 @@ export interface PulumiStackConfigAws {
     publicIpType: PUBLIC_IP_TYPE
     useSpot: boolean
     billingAlert?: {
-        limit: string
+        limit: number
         notificationEmail: string
     }
 }
@@ -390,7 +390,7 @@ export class AwsPulumiClient extends InstancePulumiClient<PulumiStackConfigAws, 
         
         if(config.billingAlert){
             await stack.setConfig("billingAlertEnabled", { value: "true"})
-            await stack.setConfig("billingAlertLimit", { value: config.billingAlert.limit})
+            await stack.setConfig("billingAlertLimit", { value: config.billingAlert.limit.toString()})
             await stack.setConfig("billingAlertNotificationEmail", { value: config.billingAlert.notificationEmail})
         } else {
             await stack.setConfig("billingAlertEnabled", { value: "false"})

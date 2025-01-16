@@ -55,7 +55,7 @@ Do you want to proceed?`,
             rootDiskSizeGB: this.args.input.diskSize,
             publicSshKeyContent: await parseSshPrivateKeyFileToPublic(this.args.input.ssh.privateKeyPath),
             useSpot: this.args.input.useSpot,
-            costAlert: this.args.input.costAlert,
+            costAlert: this.args.input.costAlert ?? undefined,
         }
 
         await pulumiClient.setConfig(pulumiConfig)

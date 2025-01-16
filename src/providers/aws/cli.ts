@@ -214,7 +214,7 @@ export class AwsCliCommandGenerator extends CliCommandGenerator {
                 this.analytics.sendEvent(RUN_COMMAND_CREATE, { provider: CLOUDYPAD_PROVIDER_AWS })
                 
                 try {
-                    await new InteractiveInstanceInitializer({ 
+                    await new InteractiveInstanceInitializer<AwsCreateCliArgs>({ 
                         inputPrompter: new AwsInputPrompter(),
                         provider: CLOUDYPAD_PROVIDER_AWS,
                     }).initializeInstance(cliArgs)
