@@ -64,7 +64,7 @@ describe('Instance initializer', () => {
         }).initializeInstance(TEST_CLI_ARGS, { skipPostInitInfo: true })
 
         // Check state has been written
-        const state = await new StateLoader().loadInstanceStateSafe(instanceName)
+        const state = await new StateLoader().loadAndMigrateInstanceState(instanceName)
 
         const expectState: GcpInstanceStateV1 = {
             version: "1",

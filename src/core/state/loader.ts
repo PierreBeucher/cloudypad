@@ -5,6 +5,7 @@ import { getLogger } from '../../log/utils'
 import { AnonymousStateParser } from './parser'
 import { BaseStateManager } from './base-manager'
 import { InstanceStateV1 } from './state'
+import { StateMigrator } from './migrator'
 
 export interface StateLoaderArgs {
 
@@ -76,7 +77,13 @@ export class StateLoader extends BaseStateManager {
         }
     }
 
-    async loadInstanceStateSafe(instanceName: string): Promise<InstanceStateV1> {
+    /**
+     * Load and migrate an instance state to the latest version safely (by validating schema and throwing on error)
+     * This method should be called before trying to parse the state for a provider
+     */
+    async loadAndMigrateInstanceState(instanceName: string): Promise<InstanceStateV1> {
+        await new StateMigrator({ dataRootDir: this.dataRootDir }).ensureInstanceStateV1(instanceName)
+
         // state is unchecked, any is acceptable at this point
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const rawState = await this.loadRawInstanceState(instanceName) as any

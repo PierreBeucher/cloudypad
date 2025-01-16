@@ -23,10 +23,8 @@ export class InstanceManagerBuilder {
         return new StateLoader().listInstances()
     }
 
-    private async loadAndMigrateState(instanceName: string): Promise<InstanceStateV1>{
-        await new StateMigrator().ensureInstanceStateV1(instanceName)
-
-        const state = await new StateLoader().loadInstanceStateSafe(instanceName)
+    private async loadAnonymousState(instanceName: string): Promise<InstanceStateV1>{
+        const state = await new StateLoader().loadAndMigrateInstanceState(instanceName)
         return state
     }
 
@@ -47,7 +45,7 @@ export class InstanceManagerBuilder {
     }
     
     async buildInstanceManager(name: string): Promise<InstanceManager>{
-        const state = await this.loadAndMigrateState(name)
+        const state = await this.loadAnonymousState(name)
 
         if (state.provision.provider === CLOUDYPAD_PROVIDER_AWS) {
             return new GenericInstanceManager({
@@ -73,31 +71,4 @@ export class InstanceManagerBuilder {
             throw new Error(`Unknown provider '${state.provision.provider}' in state: ${JSON.stringify(state)}`)
         }
     }
-
-    // async buildAwsInstanceUpdater(instanceName: string): Promise<InstanceUpdater<AwsInstanceStateV1>> {
-    //     const rawState = await this.loadAndMigrateState(instanceName)
-    //     const stateWriter = new StateWriter({ state: this.parseAwsState(rawState) })
-    //     return new InstanceUpdater({ stateWriter: stateWriter })
-    // }
-    
-    // async buildGcpInstanceUpdater(instanceName: string): Promise<InstanceUpdater<GcpInstanceStateV1>> {
-    //     const rawState = await this.loadAndMigrateState(instanceName)
-    //     const stateWriter = new StateWriter({ state: this.parseGcpState(rawState) })
-    //     return new InstanceUpdater({ stateWriter: stateWriter })
-    // }
-    
-    // async buildAzureInstanceUpdater(instanceName: string): Promise<InstanceUpdater<AzureInstanceStateV1>> {
-    //     const rawState = await this.loadAndMigrateState(instanceName)
-    //     const stateWriter = new StateWriter({ state: this.parseAzureState(rawState) })
-    //     return new InstanceUpdater({ stateWriter: stateWriter })
-    // }
-    
-    // async buildPaperspaceInstanceUpdater(instanceName: string): Promise<InstanceUpdater<PaperspaceInstanceStateV1>> {
-    //     const rawState = await this.loadAndMigrateState(instanceName)
-    //     const stateWriter = new StateWriter({ state: this.parsePaperspaceState(rawState) })
-    //     return new InstanceUpdater({ stateWriter: stateWriter })
-    // }
-    
-
-
 }

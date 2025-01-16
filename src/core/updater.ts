@@ -43,7 +43,7 @@ export class InstanceUpdater<ST extends InstanceStateV1, A extends UpdateCliArgs
         
         // Load existing state
         const instanceName = cliArgs.name
-        const rawState = await new StateLoader().loadInstanceStateSafe(instanceName)
+        const rawState = await new StateLoader().loadAndMigrateInstanceState(instanceName)
         const state = this.stateParser.parse(rawState)
 
         // Merge existing input with provided CLI args

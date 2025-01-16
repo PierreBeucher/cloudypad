@@ -18,7 +18,7 @@ describe('StateWriter', function () {
         const dataDir = mkdtempSync(path.join(tmpdir(), 'statewriter-test-'))
 
         const loader = new StateLoader({ dataRootDir: path.resolve(__dirname, "v1-root-data-dir")})
-        const state = await loader.loadInstanceStateSafe(instanceName)
+        const state = await loader.loadAndMigrateInstanceState(instanceName)
         const awState = new AwsStateParser().parse(state)
 
         const writer = new StateWriter<AwsInstanceStateV1>({

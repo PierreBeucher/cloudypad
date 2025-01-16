@@ -1,5 +1,5 @@
 import * as assert from 'assert';
-import { DUMMY_AWS_PULUMI_OUTPUT, DUMMY_SSH_KEY_PATH, loadAnonymousState } from '../utils';
+import { DUMMY_AWS_PULUMI_OUTPUT, DUMMY_SSH_KEY_PATH, loadDumyAnonymousStateV1 } from '../utils';
 import { StateLoader } from '../../../src/core/state/loader';
 import { InstanceUpdater } from '../../../src/core/updater';
 import { InstanceStateV1 } from '../../../src/core/state/state';
@@ -16,7 +16,7 @@ describe('InstanceUpdater', () => {
     it('should update instance state with provided arguments', async () => {
         
         // Load known state into dummy writer after changing its name to avoid collision
-        const awsState = new AwsStateParser().parse(loadAnonymousState("aws-dummy"))
+        const awsState = new AwsStateParser().parse(loadDumyAnonymousStateV1("aws-dummy"))
         const instanceName = "aws-dummy-test-update"
         awsState.name = instanceName
         await new StateWriter({ state: awsState }).persistStateNow()
@@ -66,7 +66,7 @@ describe('InstanceUpdater', () => {
 
         // Check dummy state after update
         const loader = new StateLoader()
-        const updatedState = await loader.loadInstanceStateSafe(instanceName)
+        const updatedState = await loader.loadAndMigrateInstanceState(instanceName)
         
         assert.deepEqual(expectedState, updatedState)
     })

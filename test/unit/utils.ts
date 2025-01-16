@@ -38,6 +38,9 @@ export const DUMMY_AZURE_PULUMI_OUTPUT: AzurePulumiOutput = { vmName: "dummy-az"
  */
 export const DUMMY_GCP_PULUMI_OUTPUT: GcpPulumiOutput = { instanceName: "dummy-gcp", publicIp: "127.0.0.1"}
 
+export const DUMMY_V1_ROOT_DATA_DIR = path.resolve(__dirname, "core", "state", "v1-root-data-dir")
+export const DUMMY_V0_ROOT_DATA_DIR = path.resolve(__dirname, "core", "state", "v0-root-data-dir")
+
 /**
  * Dummy output returned by Paperspace client during unit test
  */
@@ -51,13 +54,18 @@ export const DUMMY_PAPERSPACE_MACHINE: PaperspaceMachine = {
     publicIpType: PUBLIC_IP_TYPE_STATIC
 }
 
-export function loadRawState(instanceName: string): unknown {
-    const filePath = path.resolve(__dirname, 'core', 'state', 'v1-root-data-dir', 'instances', instanceName, 'state.yml')
+export function loadRawDummyStateV0(instanceName: string): unknown {
+    const filePath = path.resolve(DUMMY_V0_ROOT_DATA_DIR, 'instances', instanceName, 'config.yml')
     return yaml.load(fs.readFileSync(filePath, 'utf-8'))
 }
 
-export function loadAnonymousState(instanceName: string): InstanceStateV1 {
-    const rawState = loadRawState(instanceName)
+export function loadRawDummyStateV1(instanceName: string): unknown {
+    const filePath = path.resolve(DUMMY_V1_ROOT_DATA_DIR, 'instances', instanceName, 'state.yml')
+    return yaml.load(fs.readFileSync(filePath, 'utf-8'))
+}
+
+export function loadDumyAnonymousStateV1(instanceName: string): InstanceStateV1 {
+    const rawState = loadRawDummyStateV1(instanceName)
     return new AnonymousStateParser().parse(rawState)
 }
 
