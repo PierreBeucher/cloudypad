@@ -22,7 +22,7 @@ describe('AWS input prompter', () => {
             costAlert: {
                 limit: 999,
                 notificationEmail: "dummy@crafteo.io",
-            },
+            }
         },
         configuration: {
             ...DEFAULT_COMMON_INPUT.configuration
@@ -39,7 +39,7 @@ describe('AWS input prompter', () => {
         instanceType: TEST_INPUT.provision.instanceType,
         region: TEST_INPUT.provision.region,
         spot: TEST_INPUT.provision.useSpot,
-        costLimit: TEST_INPUT.provision.costAlert?.limit?.toString(),
+        costLimit: TEST_INPUT.provision.costAlert?.limit,
         costNotificationEmail: TEST_INPUT.provision.costAlert?.notificationEmail,
     }
 

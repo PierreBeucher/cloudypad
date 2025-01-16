@@ -53,6 +53,10 @@ export class PaperspaceInputPrompter extends AbstractInputPrompter<PaperspaceCre
         const region = await this.region(defaultInput.provision?.region)
         const sshUser = "paperspace" // Paperspace uses 'paperspace' SSH user, enforce it
 
+        if(!createOptions.autoApprove){
+            await this.promptBillingAlertSetup()
+        }
+
         const specificInput = {
             provision: {
                 apiKey: apiKey,
@@ -73,6 +77,15 @@ export class PaperspaceInputPrompter extends AbstractInputPrompter<PaperspaceCre
         )
 
         return psInput
+    }
+
+    protected async promptBillingAlertSetup() {
+        await input({
+            message: "To prevent accidental overcost, it is advised to setup cost alerts. Unfortunately, Paperspace does not support automation of this feature yet.\n" +
+                "  Please go to Paperspace console and setup alerts for your account: https://console.paperspace.com\n" +
+                "  Billing > Alerts > Manage Billing Alerts\n\n" +
+                "  Press Enter to continue..."
+        })
     }
 
     protected async machineType(machineType?: string): Promise<string> {

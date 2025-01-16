@@ -307,6 +307,15 @@ export function costAlertCliArgsIntoConfig(args: { costAlert?: boolean, costLimi
             notificationEmail: args.costNotificationEmail,
         }
     } else if (args.costAlert === undefined){
+        // if cost alert is undefined but either costLimit or costNotificationEmail is provided
+        // enable cost alert and prompt for missing options
+        if(args.costLimit || args.costNotificationEmail){
+            return {
+                limit: args.costLimit,
+                notificationEmail: args.costNotificationEmail,
+            }
+        }
+        
         return undefined
     }
 }

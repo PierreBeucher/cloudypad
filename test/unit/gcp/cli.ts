@@ -22,10 +22,14 @@ describe('GCP input prompter', () => {
             acceleratorType: "nvidia-tesla-p4",
             projectId: "crafteo-sandbox",
             useSpot: true,
+            costAlert: {
+                notificationEmail: "test@test.com",
+                limit: 100
+            }
         }, 
         configuration: {
             ...DEFAULT_COMMON_INPUT.configuration
-        }
+        },
     }
 
     /**
@@ -44,6 +48,8 @@ describe('GCP input prompter', () => {
         publicIpType: TEST_INPUT.provision.publicIpType,
         gpuType: TEST_INPUT.provision.acceleratorType,
         spot: TEST_INPUT.provision.useSpot,
+        costNotificationEmail: TEST_INPUT.provision.costAlert?.notificationEmail,
+        costLimit: TEST_INPUT.provision.costAlert?.limit,
     }
 
     it('should convert CLI args into partial input', () => {

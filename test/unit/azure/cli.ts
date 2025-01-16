@@ -20,6 +20,10 @@ describe('Azure input prompter', () => {
             publicIpType: PUBLIC_IP_TYPE_STATIC,
             location: "francecentral",
             useSpot: true,
+            costAlert: {
+                notificationEmail: "test@test.com",
+                limit: 100
+            }
         }, 
         configuration: {
             ...DEFAULT_COMMON_INPUT.configuration
@@ -37,6 +41,8 @@ describe('Azure input prompter', () => {
         location: TEST_INPUT.provision.location,
         subscriptionId: TEST_INPUT.provision.subscriptionId,
         vmSize: TEST_INPUT.provision.vmSize,
+        costNotificationEmail: TEST_INPUT.provision.costAlert?.notificationEmail,
+        costLimit: TEST_INPUT.provision.costAlert?.limit,
     }
 
     it('should return provided inputs without prompting when full input provider', async () => {
