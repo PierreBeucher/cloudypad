@@ -1,4 +1,4 @@
-import { parseSshPrivateKeyFileToPublic } from '../../tools/ssh';
+import { SshKeyLoader } from '../../tools/ssh';
 import { confirm } from '@inquirer/prompts';
 import { AbstractInstanceProvisioner, InstanceProvisionerArgs, InstanceProvisionOptions } from '../../core/provisioner';
 import { GcpPulumiClient, PulumiStackConfigGcp } from '../../tools/pulumi/gcp';
@@ -59,7 +59,7 @@ Do you want to proceed?`,
             region: this.args.input.region,
             zone: this.args.input.zone,
             rootDiskSize: this.args.input.diskSize,
-            publicSshKeyContent: await parseSshPrivateKeyFileToPublic(this.args.input.ssh.privateKeyPath),
+            publicSshKeyContent: new SshKeyLoader().parseSshPrivateKeyFileToPublic(this.args.input.ssh.privateKeyPath),
             useSpot: this.args.input.useSpot,
             costAlert: this.args.input.costAlert ?? undefined,
         }

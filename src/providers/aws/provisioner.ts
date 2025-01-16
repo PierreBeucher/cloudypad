@@ -1,4 +1,4 @@
-import { parseSshPrivateKeyFileToPublic } from '../../tools/ssh';
+import { SshKeyLoader } from '../../tools/ssh';
 import { confirm } from '@inquirer/prompts';
 import { AwsPulumiClient, PulumiStackConfigAws } from '../../tools/pulumi/aws';
 import { AbstractInstanceProvisioner, InstanceProvisionerArgs, InstanceProvisionOptions } from '../../core/provisioner';
@@ -51,7 +51,7 @@ Do you want to proceed?`,
             publicIpType: this.args.input.publicIpType,
             region: this.args.input.region,
             rootVolumeSizeGB: this.args.input.diskSize,
-            publicSshKeyContent: await parseSshPrivateKeyFileToPublic(this.args.input.ssh.privateKeyPath),
+            publicSshKeyContent: new SshKeyLoader().parseSshPrivateKeyFileToPublic(this.args.input.ssh.privateKeyPath),
             useSpot: this.args.input.useSpot,
             billingAlert: this.args.input.costAlert ?? undefined,
         }

@@ -1,6 +1,6 @@
 name: paperspace-dummy
 ssh:
-  privateKeyPath: /home/pbeucher/.ssh/id_ed25519
+  privateKeyPath: /dummy/ssh/key/id_rsa
   user: paperspace
 status:
   initalized: true
