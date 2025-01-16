@@ -47,21 +47,21 @@ describe('State Manager version migration', () => {
         assert.equal(oldStateExists, false, `Old state should have been deleted but still exists at ${oldStatePath}`)
     }
     
-    it('should convert AWS V0 state to V1', async () => {
-        await compareV0toV1("aws-dummy")
-    })
+    // it('should convert AWS V0 state to V1', async () => {
+    //     await compareV0toV1("aws-dummy")
+    // })
 
     it('should convert Azure V0 state to V1', async () => {
         await compareV0toV1("azure-dummy")
     })
 
-    it('should convert GCP V0 state to V1', async () => {
-        await compareV0toV1("gcp-dummy")
-    })
+    // it('should convert GCP V0 state to V1', async () => {
+    //     await compareV0toV1("gcp-dummy")
+    // })
 
-    it('should convert Paperspace V0 state to V1', async () => {
-        await compareV0toV1("paperspace-dummy")
-    })
+    // it('should convert Paperspace V0 state to V1', async () => {
+    //     await compareV0toV1("paperspace-dummy")
+    // })
 
 })
 

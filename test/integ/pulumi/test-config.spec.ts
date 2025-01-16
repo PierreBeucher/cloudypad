@@ -20,6 +20,7 @@ export const azureInput: PulumiStackConfigAzure = {
     location: "francecentral",
     vmSize: "Standard_NC8as_T4_v3",
     rootDiskSizeGB: 100,
+    rootDiskType: AZURE_SUPPORTED_DISK_TYPES.STANDARD_LRS,
     publicSshKeyContent: pubKey,
     publicIpType: PUBLIC_IP_TYPE_STATIC,
     useSpot: false

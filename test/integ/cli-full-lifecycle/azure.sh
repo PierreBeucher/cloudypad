@@ -7,6 +7,7 @@ function create_destroy_azure() {
         --private-ssh-key ~/.ssh/id_ed25519 \
         --vm-size Standard_NC8as_T4_v3 \
         --disk-size 100 \
+        --disk-type Standard_LRS \
         --public-ip-type static \
         --location "francecentral" \
         --spot \

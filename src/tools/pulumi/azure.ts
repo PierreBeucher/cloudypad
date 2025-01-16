@@ -14,7 +14,7 @@ interface PortDefinition {
 
 interface VolumeArgs {
     sizeGb: pulumi.Input<number>
-    type?: pulumi.Input<string>
+    type: pulumi.Input<string>
     deviceName: string
 }
 
@@ -148,7 +148,7 @@ class CloudyPadAzureInstance extends pulumi.ComponentResource {
                 osDisk: {
                     createOption: "FromImage",
                     managedDisk: {
-                        storageAccountType: args.osDisk.type || "Standard_LRS"
+                        storageAccountType: args.osDisk.type
                     },
                     diskSizeGB: args.osDisk.sizeGb,
                     name: `${name}-osdisk`,
@@ -159,9 +159,12 @@ class CloudyPadAzureInstance extends pulumi.ComponentResource {
             tags: globalTags
         }, {
             ...commonPulumiOpts,
-            // ignore imageReference change to avoid destroying instance on update
+            // ignore imageReference and storageAccountType change to avoid destroying instance on update
             // TODO support such change while keeping user's data
-            ignoreChanges: [ "storageProfile.imageReference" ]
+            ignoreChanges: [ 
+                "storageProfile.imageReference",
+                "storageProfile.osDisk.managedDisk.storageAccountType",
+            ]
         })
 
         this.resourceGroupName = resourceGroup.name
@@ -223,6 +226,7 @@ async function azurePulumiProgram(): Promise<Record<string, any> | void> {
     const vmSize = config.require("vmSize")
     const publicKeyContent = config.require("publicSshKeyContent")
     const rootDiskSizeGB = config.requireNumber("rootDiskSizeGB")
+    const rootDiskType = config.require("rootDiskType")
     const publicIpType = config.require("publicIpType")
     const useSpot = config.requireBoolean("useSpot")
     const costAlert = config.getObject<CostAlertOptions>("costAlert")
@@ -233,7 +237,7 @@ async function azurePulumiProgram(): Promise<Record<string, any> | void> {
         vmSize: vmSize,
         publicKeyContent: publicKeyContent,
         osDisk: {
-            type: "Standard_LRS",
+            type: rootDiskType,
             sizeGb: rootDiskSizeGB,
             deviceName: `${instanceName}-osdisk`
         },
@@ -268,6 +272,7 @@ export interface PulumiStackConfigAzure {
     location: string
     vmSize: string
     rootDiskSizeGB: number
+    rootDiskType: string
     publicSshKeyContent: string
     publicIpType: PUBLIC_IP_TYPE
     useSpot: boolean,
@@ -296,6 +301,7 @@ export class AzurePulumiClient extends InstancePulumiClient<PulumiStackConfigAzu
 
         await stack.setConfig("vmSize", { value: config.vmSize})
         await stack.setConfig("rootDiskSizeGB", { value: config.rootDiskSizeGB.toString()})
+        await stack.setConfig("rootDiskType", { value: config.rootDiskType})
         await stack.setConfig("publicSshKeyContent", { value: config.publicSshKeyContent})
         await stack.setConfig("publicIpType", { value: config.publicIpType})
         await stack.setConfig("useSpot", { value: config.useSpot.toString()})

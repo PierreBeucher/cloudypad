@@ -1,5 +1,5 @@
 import * as assert from 'assert';
-import { AzureInstanceInput } from '../../../src/providers/azure/state';
+import { AZURE_SUPPORTED_DISK_TYPES, AzureInstanceInput } from '../../../src/providers/azure/state';
 import { PUBLIC_IP_TYPE_STATIC } from '../../../src/core/const';
 import { DEFAULT_COMMON_INPUT } from '../utils';
 import { AzureCreateCliArgs, AzureInputPrompter } from '../../../src/providers/azure/cli';
@@ -17,6 +17,7 @@ describe('Azure input prompter', () => {
             subscriptionId: "1234-5689-0000",
             vmSize: "Standard_NC8as_T4_v3",
             diskSize: 200,
+            diskType: AZURE_SUPPORTED_DISK_TYPES.STANDARD_LRS,
             publicIpType: PUBLIC_IP_TYPE_STATIC,
             location: "francecentral",
             useSpot: true,
@@ -36,6 +37,7 @@ describe('Azure input prompter', () => {
         overwriteExisting: false,
         privateSshKey: TEST_INPUT.provision.ssh.privateKeyPath,
         diskSize: TEST_INPUT.provision.diskSize,
+        diskType: TEST_INPUT.provision.diskType,
         publicIpType: TEST_INPUT.provision.publicIpType,
         spot: TEST_INPUT.provision.useSpot,
         location: TEST_INPUT.provision.location,

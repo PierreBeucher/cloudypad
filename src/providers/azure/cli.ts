@@ -1,4 +1,4 @@
-import { AzureInstanceInput, AzureStateParser, AzureInstanceStateV1 } from "./state"
+import { AzureInstanceInput, AzureStateParser, AzureInstanceStateV1, AZURE_SUPPORTED_DISK_TYPES } from "./state"
 import { CommonInstanceInput } from "../../core/state/state"
 import { input, select, confirm } from '@inquirer/prompts';
 import { AbstractInputPrompter, costAlertCliArgsIntoConfig, PromptOptions } from "../../core/cli/prompter";
@@ -17,6 +17,7 @@ export interface AzureCreateCliArgs extends CreateCliArgs {
     location?: string
     vmSize?: string
     diskSize?: number
+    diskType?: string
     publicIpType?: PUBLIC_IP_TYPE
     spot?: boolean,
     costAlert?: boolean,
@@ -24,7 +25,7 @@ export interface AzureCreateCliArgs extends CreateCliArgs {
     costNotificationEmail?: string
 }
 
-export type AzureUpdateCliArgs = UpdateCliArgs & Omit<AzureCreateCliArgs, "subscriptionId" | "resourceGroupName" | "location" >
+export type AzureUpdateCliArgs = UpdateCliArgs & Omit<AzureCreateCliArgs, "subscriptionId" | "resourceGroupName" | "location" | "diskType" >
 
 
 export const AZURE_SUPPORTED_GPU = [
@@ -75,6 +76,7 @@ export class AzureInputPrompter extends AbstractInputPrompter<AzureCreateCliArgs
                 },
                 vmSize: cliArgs.vmSize,
                 diskSize: cliArgs.diskSize,
+                diskType: cliArgs.diskType, 
                 publicIpType: cliArgs.publicIpType,
                 location: cliArgs.location,
                 subscriptionId: cliArgs.subscriptionId,
@@ -97,6 +99,7 @@ export class AzureInputPrompter extends AbstractInputPrompter<AzureCreateCliArgs
         const useSpot = await this.useSpotInstance(defaultInput.provision?.useSpot)
         const location = await this.location(subscriptionId, defaultInput.provision?.location)
         const vmSize = await this.instanceType(subscriptionId, location, useSpot,defaultInput.provision?.vmSize)
+        const diskType = await this.diskType(defaultInput.provision?.diskType)
         const diskSize = await this.diskSize(defaultInput.provision?.diskSize)
         const publicIpType = await this.publicIpType(defaultInput.provision?.publicIpType)
         const costAlert = await this.costAlert(defaultInput.provision?.costAlert)
@@ -107,6 +110,7 @@ export class AzureInputPrompter extends AbstractInputPrompter<AzureCreateCliArgs
             {
                 provision: {
                     diskSize: diskSize,
+                    diskType: diskType,
                     vmSize: vmSize,
                     publicIpType: publicIpType,
                     location: location,
@@ -209,6 +213,27 @@ export class AzureInputPrompter extends AbstractInputPrompter<AzureCreateCliArgs
 
     }
 
+    private async diskType(diskType?: string): Promise<string> {
+        if (diskType) {
+            return diskType
+        }
+
+        const choices = [
+            { name: "Standard HDD (cheap but slow)", value: "Standard_LRS" },
+            { name: "Standard SSD (faster, a bit more expensive)", value: "StandardSSD_LRS" },
+            { name: "Premium SSD (fastest, most expensive)", value: "Premium_LRS" },
+        ]
+
+        const selectedDiskType = await select({
+            message: 'Enter desired disk type ',
+            choices: choices,
+        })
+
+        return selectedDiskType
+
+    }
+
+
     private async location(subscriptionId: string, location?: string): Promise<string> {
         if (location) {
             return location
@@ -272,6 +297,7 @@ export class AzureCliCommandGenerator extends CliCommandGenerator {
             .option('--vm-size <vmsize>', 'Virtual machine size')
             .option('--location <location>', 'Location in which to deploy instance')
             .option('--subscription-id <subscriptionid>', 'Subscription ID in which to deploy resources')
+            .option('--disk-type <disktype>', `Disk type. One of ${Object.values(AZURE_SUPPORTED_DISK_TYPES).join(', ')}`)
             .action(async (cliArgs) => {
                 this.analytics.sendEvent(RUN_COMMAND_CREATE, { provider: CLOUDYPAD_PROVIDER_AZURE })
 

@@ -33,6 +33,7 @@ You are about to provision Azure machine with the following details:
     VM Size: ${this.args.input.vmSize}
     Spot instance: ${this.args.input.useSpot}
     Public IP Type: ${this.args.input.publicIpType}
+    Disk type: ${this.args.input.diskType}
     Disk size: ${this.args.input.diskSize}
     Cost Alert: ${this.args.input.costAlert?.limit ? `enabled, limit: ${this.args.input.costAlert.limit}$, ` + 
         `notification email: ${this.args.input.costAlert.notificationEmail}` : 'None.'}
@@ -53,6 +54,7 @@ Do you want to proceed?`,
             vmSize: this.args.input.vmSize,
             publicIpType: this.args.input.publicIpType,
             rootDiskSizeGB: this.args.input.diskSize,
+            rootDiskType: this.args.input.diskType,
             publicSshKeyContent: new SshKeyLoader().parseSshPrivateKeyFileToPublic(this.args.input.ssh.privateKeyPath),
             useSpot: this.args.input.useSpot,
             costAlert: this.args.input.costAlert ?? undefined,
