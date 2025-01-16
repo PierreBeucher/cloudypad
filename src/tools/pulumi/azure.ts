@@ -148,7 +148,7 @@ class CloudyPadAzureInstance extends pulumi.ComponentResource {
                 osDisk: {
                     createOption: "FromImage",
                     managedDisk: {
-                        storageAccountType: args.osDisk.type || "Standard_LRS"
+                        storageAccountType: args.osDisk.type || az.compute.StorageAccountTypes.StandardSSD_LRS,
                     },
                     diskSizeGB: args.osDisk.sizeGb,
                     name: `${name}-osdisk`,
@@ -159,9 +159,12 @@ class CloudyPadAzureInstance extends pulumi.ComponentResource {
             tags: globalTags
         }, {
             ...commonPulumiOpts,
-            // ignore imageReference change to avoid destroying instance on update
+            // ignore imageReference and storageAccountType change to avoid destroying instance on update
             // TODO support such change while keeping user's data
-            ignoreChanges: [ "storageProfile.imageReference" ]
+            ignoreChanges: [ 
+                "storageProfile.imageReference",
+                "storageProfile.osDisk.managedDisk.storageAccountType",
+            ]
         })
 
         this.resourceGroupName = resourceGroup.name
