@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.13.0](https://github.com/PierreBeucher/cloudypad/compare/v0.12.0...v0.13.0) (2025-01-16)
+
+
+### Features
+
+* check and warn about AWS quota on create ([9e0591a](https://github.com/PierreBeucher/cloudypad/commit/9e0591a2f45c844b7373b55b9d497d77c416e530))
+* check and warn about Azure quota on create ([7bd0590](https://github.com/PierreBeucher/cloudypad/commit/7bd0590861276675948df0a4f584430eeccdccd3))
+* clear prompt to inform about GPU and quota increase need ([9bf67dc](https://github.com/PierreBeucher/cloudypad/commit/9bf67dc04403b0fca8c3b3879c9af749747963db))
+* setup cost alerts for AWS on create/update ([7da54fb](https://github.com/PierreBeucher/cloudypad/commit/7da54fb335bec3135bd071fac37e9300d2505597))
+* setup cost alerts for Azure on create/update ([4e7b785](https://github.com/PierreBeucher/cloudypad/commit/4e7b785703f4b0dbc23f4a11dff7288e2d5f18ec))
+* setup cost alerts for Google Cloud Platform (GCP) on create/update ([12f0982](https://github.com/PierreBeucher/cloudypad/commit/12f0982f9b28e9423803c6123dc5d44f9affb96a))
+
 ## [0.12.0](https://github.com/PierreBeucher/cloudypad/compare/v0.11.0...v0.12.0) (2025-01-07)
 
 
