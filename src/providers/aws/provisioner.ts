@@ -1,6 +1,6 @@
 import { SshKeyLoader } from '../../tools/ssh';
 import { confirm } from '@inquirer/prompts';
-import { AwsPulumiClient, PulumiStackConfigAws } from '../../tools/pulumi/aws';
+import { AwsPulumiClient, PulumiStackConfigAws } from './pulumi';
 import { AbstractInstanceProvisioner, InstanceProvisionerArgs, InstanceProvisionOptions } from '../../core/provisioner';
 import { AwsClient } from '../../tools/aws';
 import { AwsProvisionInputV1, AwsProvisionOutputV1 } from './state';

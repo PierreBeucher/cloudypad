@@ -1,7 +1,7 @@
 import { SshKeyLoader } from '../../tools/ssh';
 import { confirm } from '@inquirer/prompts';
 import { AbstractInstanceProvisioner, InstanceProvisionerArgs, InstanceProvisionOptions } from '../../core/provisioner';
-import { GcpPulumiClient, PulumiStackConfigGcp } from '../../tools/pulumi/gcp';
+import { GcpPulumiClient, PulumiStackConfigGcp } from './gcp';
 import { GcpClient } from '../../tools/gcp';
 import { GcpProvisionInputV1, GcpProvisionOutputV1} from './state';
 
