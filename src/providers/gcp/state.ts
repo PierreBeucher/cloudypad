@@ -1,5 +1,5 @@
 import { z } from "zod"
-import { CommonProvisionOutputV1Schema, CommonProvisionInputV1Schema, InstanceStateV1Schema, AbstractInstanceInputs } from "../../core/state/state"
+import { CommonProvisionOutputV1Schema, CommonProvisionInputV1Schema, InstanceStateV1Schema, AbstractInstanceInputs, CostAlertSchema } from "../../core/state/state"
 import { CLOUDYPAD_PROVIDER_GCP, PUBLIC_IP_TYPE_DYNAMIC, PUBLIC_IP_TYPE_STATIC } from "../../core/const"
 
 const GcpProvisionOutputV1Schema = CommonProvisionOutputV1Schema.extend({
@@ -15,6 +15,7 @@ const GcpProvisionInputV1Schema = CommonProvisionInputV1Schema.extend({
     region: z.string().describe("GCP region"),
     zone: z.string().describe("GCP zone"),
     useSpot: z.boolean().describe("Whether to use spot instances"),
+    costAlert: CostAlertSchema,
 })
 
 const GcpInstanceStateV1Schema = InstanceStateV1Schema.extend({

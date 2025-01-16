@@ -3,6 +3,7 @@ import * as pulumi from "@pulumi/pulumi"
 import { OutputMap } from "@pulumi/pulumi/automation"
 import { InstancePulumiClient } from "./client"
 import { PUBLIC_IP_TYPE_DYNAMIC, PUBLIC_IP_TYPE_STATIC } from "../../core/const"
+import { CostAlertOptions } from "../../core/provisioner"
 
 interface PortDefinition {
     from: pulumi.Input<number>,
@@ -20,6 +21,11 @@ interface CloudyPadGCEInstanceArgs {
         sizeGb?: pulumi.Input<number>
     }
     useSpot?: pulumi.Input<boolean>
+    projectId: pulumi.Input<string>
+    costAlert?: {
+        limit: pulumi.Input<number>
+        notificationEmail: pulumi.Input<string>
+    }
 }
 
 /**
@@ -120,11 +126,111 @@ class CloudyPadGCEInstance extends pulumi.ComponentResource {
 
             return ni[0].accessConfigs[0].natIp
         })
+
+        if(args.costAlert){ 
+            const budgetEmailNotifChannel = new gcp.monitoring.NotificationChannel(`${name}-budget-email-notif-channel`, {
+                displayName: `Cloudy Pad ${name} budget alert email channel`,
+                type: "email",
+                labels: {
+                    email_address: args.costAlert.notificationEmail,
+                },
+            }, commonPulumiOpts)
+
+            const project = gcp.organizations.getProjectOutput({ projectId: args.projectId })
+
+            const budgetArgs = pulumi.all([project, args.costAlert, budgetEmailNotifChannel.id]).apply(([project, costAlert, budgetEmailNotifChannelId]) => {
+                return {
+                    billingAccount: project.billingAccount,
+                    displayName: `Cloudy Pad ${name} budget`,
+                    amount: {
+                        specifiedAmount: {
+                            // Don't force currency code otherwise API call fails with 400
+                            // See https://github.com/hashicorp/terraform-provider-google/issues/19796#issuecomment-2419676946
+                            // currencyCode: "USD", 
+                            units: costAlert.limit.toString(),
+                        },
+                    },  
+                    thresholdRules: [
+                        {
+                        thresholdPercent: 1.0,
+                        spendBasis: "CURRENT_SPEND",
+                    }, 
+                    {
+                        thresholdPercent: 0.8,
+                        spendBasis: "CURRENT_SPEND",
+                    },
+                    {
+                        thresholdPercent: 0.5,
+                        spendBasis: "CURRENT_SPEND",
+                        },
+                    ],
+                    budgetFilter: {
+                        projects: [
+                            `projects/${project.number}`
+                        ],
+                    },
+                    allUpdatesRule: {
+                        monitoringNotificationChannels: [budgetEmailNotifChannelId],
+                    }
+                }
+            })
+            
+            budgetArgs.apply(b => {
+                console.info(`Budget args: ${JSON.stringify(b, null, 2)}`)
+            })
+
+            const gcpProvider = new gcp.Provider("gcp-provider", {
+                project: args.projectId,
+                billingProject: args.projectId,
+                userProjectOverride: true,
+            })
+
+            new gcp.billing.Budget(`${name}-budget`, {
+                billingAccount: project.apply(p => p.billingAccount),
+                displayName: `Cloudy Pad ${name} budget`,
+                amount: {
+                    specifiedAmount: {
+                        // Don't force currency code otherwise API call fails with 400
+                        // See https://github.com/hashicorp/terraform-provider-google/issues/19796#issuecomment-2419676946
+                        // currencyCode: "USD",
+                        units: args.costAlert.limit.toString(),
+                    },
+                },  
+                thresholdRules: [
+                    {
+                        thresholdPercent: 1.0,
+                        spendBasis: "CURRENT_SPEND",
+                    }, 
+                    {
+                        thresholdPercent: 0.8,
+                        spendBasis: "CURRENT_SPEND",
+                    },
+                    {
+                        thresholdPercent: 0.5,
+                        spendBasis: "CURRENT_SPEND",
+                    },
+                ],
+                budgetFilter: {
+                    projects: [
+                        pulumi.interpolate`projects/${project.number}`
+                    ],
+                },
+                allUpdatesRule: {
+                    monitoringNotificationChannels: [budgetEmailNotifChannel.id],
+                },
+            }, {
+                ...commonPulumiOpts,
+                provider: gcpProvider,
+            })  
+        }
     }
 }
 
 /* eslint-disable  @typescript-eslint/no-explicit-any */
 async function gcpPulumiProgram(): Promise<Record<string, any> | void> {
+
+    const gcpConfig = new pulumi.Config("gcp")
+    const projectId = gcpConfig.require("project")
 
     const config = new pulumi.Config()
     const machineType = config.require("machineType")
@@ -133,11 +239,13 @@ async function gcpPulumiProgram(): Promise<Record<string, any> | void> {
     const publicIpType = config.require("publicIpType")
     const publicKeyContent = config.require("publicSshKeyContent")
     const useSpot = config.requireBoolean("useSpot")
+    const costAlert = config.getObject<CostAlertOptions>("costAlert")
 
     const instanceName = pulumi.getStack()
 
 
     const instance = new CloudyPadGCEInstance(instanceName, {
+        projectId: projectId,
         machineType: machineType,
         acceleratorType: acceleratorType, 
         publicKeyContent: publicKeyContent,
@@ -155,6 +263,7 @@ async function gcpPulumiProgram(): Promise<Record<string, any> | void> {
             { from: 48200, to: 48210, protocol: "udp" }, 
         ],
         useSpot: useSpot,
+        costAlert: costAlert,
     })
 
     return {
@@ -174,6 +283,7 @@ export interface PulumiStackConfigGcp {
     publicSshKeyContent: string
     publicIpType: string
     useSpot: boolean
+    costAlert?: CostAlertOptions
 }
 
 export interface GcpPulumiOutput {
@@ -201,6 +311,10 @@ export class GcpPulumiClient extends InstancePulumiClient<PulumiStackConfigGcp, 
         await stack.setConfig("publicSshKeyContent", { value: config.publicSshKeyContent })
         await stack.setConfig("publicIpType", { value: config.publicIpType })
         await stack.setConfig("useSpot", { value: config.useSpot.toString() })
+
+        if(config.costAlert){
+            await stack.setConfig("costAlert", { value: JSON.stringify(config.costAlert)})
+        }
 
         const allConfs = await stack.getAllConfig()
         this.logger.debug(`Config after update: ${JSON.stringify(allConfs)}`)

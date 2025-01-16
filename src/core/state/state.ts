@@ -35,7 +35,12 @@ const InstanceStateV1Schema = z.object({
     })
 })
 
-export { InstanceStateV1Schema, CommonProvisionOutputV1Schema, CommonProvisionInputV1Schema }
+const CostAlertSchema = z.object({
+    limit: z.number().describe("Cost alert limit"),
+    notificationEmail: z.string().describe("Cost alert notification email"),
+}).nullish().describe("Cost alert configuration")
+
+export { InstanceStateV1Schema, CommonProvisionOutputV1Schema, CommonProvisionInputV1Schema, CostAlertSchema }
 
 /**
  * State representation of Cloudy Pad instance.

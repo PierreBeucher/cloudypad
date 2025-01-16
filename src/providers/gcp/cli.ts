@@ -1,13 +1,13 @@
 import { GcpInstanceInput } from "./state"
 import { CommonInstanceInput } from "../../core/state/state"
 import { input, select } from '@inquirer/prompts';
-import { AbstractInputPrompter, InstanceCreateOptions } from "../../core/cli/prompter";
+import { AbstractInputPrompter, costAlertCliArgsIntoConfig, InstanceCreateOptions } from "../../core/cli/prompter";
 import { GcpClient } from "../../tools/gcp";
 import lodash from 'lodash'
 import { CLOUDYPAD_PROVIDER_GCP, PUBLIC_IP_TYPE } from "../../core/const";
 import { PartialDeep } from "type-fest";
 import { InteractiveInstanceInitializer } from "../../core/initializer";
-import { CLI_OPTION_DISK_SIZE, CLI_OPTION_PUBLIC_IP_TYPE, CLI_OPTION_SPOT, CliCommandGenerator, CreateCliArgs } from "../../core/cli/command";
+import { CLI_OPTION_COST_ALERT, CLI_OPTION_COST_LIMIT, CLI_OPTION_COST_NOTIFICATION_EMAIL, CLI_OPTION_DISK_SIZE, CLI_OPTION_PUBLIC_IP_TYPE, CLI_OPTION_SPOT, CliCommandGenerator, CreateCliArgs } from "../../core/cli/command";
 import { InstanceManagerBuilder } from "../../core/manager-builder";
 import { RUN_COMMAND_CREATE, RUN_COMMAND_UPDATE } from "../../tools/analytics/events";
 
@@ -19,7 +19,10 @@ export interface GcpCreateCliArgs extends CreateCliArgs {
     diskSize?: number
     publicIpType?: PUBLIC_IP_TYPE
     gpuType?: string
-    spot?: boolean
+    spot?: boolean,
+    costAlert?: boolean
+    costLimit?: number
+    costNotificationEmail?: string
 }
 
 export class GcpInputPrompter extends AbstractInputPrompter<GcpCreateCliArgs, GcpInstanceInput> {
@@ -39,6 +42,7 @@ export class GcpInputPrompter extends AbstractInputPrompter<GcpCreateCliArgs, Gc
                 acceleratorType: cliArgs.gpuType,
                 projectId: cliArgs.projectId,
                 useSpot: cliArgs.spot,
+                costAlert: costAlertCliArgsIntoConfig(cliArgs),
             },
             configuration: {}
         }
@@ -63,6 +67,7 @@ export class GcpInputPrompter extends AbstractInputPrompter<GcpCreateCliArgs, Gc
         const useSpot = await this.useSpotInstance(defaultInput.provision?.useSpot)
         const diskSize = await this.diskSize(defaultInput.provision?.diskSize)
         const publicIpType = await this.publicIpType(defaultInput.provision?.publicIpType)
+        const costAlert = await this.costAlert(defaultInput.provision?.costAlert)
         
         const gcpInput: GcpInstanceInput = lodash.merge(
             {},
@@ -77,6 +82,7 @@ export class GcpInputPrompter extends AbstractInputPrompter<GcpCreateCliArgs, Gc
                     zone: zone,
                     acceleratorType: acceleratorType,
                     useSpot: useSpot,
+                    costAlert: costAlert,
                 },
             }
         )
@@ -223,6 +229,9 @@ export class GcpCliCommandGenerator extends CliCommandGenerator {
             .addOption(CLI_OPTION_SPOT)
             .addOption(CLI_OPTION_DISK_SIZE)
             .addOption(CLI_OPTION_PUBLIC_IP_TYPE)
+            .addOption(CLI_OPTION_COST_ALERT)
+            .addOption(CLI_OPTION_COST_LIMIT)
+            .addOption(CLI_OPTION_COST_NOTIFICATION_EMAIL)
             .option('--machine-type <machinetype>', 'Machine type to use for the instance')
             .option('--region <region>', 'Region in which to deploy instance')
             .option('--zone <zone>', 'Zone within the region to deploy the instance')
@@ -231,7 +240,7 @@ export class GcpCliCommandGenerator extends CliCommandGenerator {
             .action(async (cliArgs) => {
                 this.analytics.sendEvent(RUN_COMMAND_CREATE, { provider: CLOUDYPAD_PROVIDER_GCP })
                 try {
-                    await new InteractiveInstanceInitializer({ 
+                    await new InteractiveInstanceInitializer<GcpCreateCliArgs>({ 
                         inputPrompter: new GcpInputPrompter(),
                         provider: CLOUDYPAD_PROVIDER_GCP,
                     }).initializeInstance(cliArgs)
@@ -246,6 +255,9 @@ export class GcpCliCommandGenerator extends CliCommandGenerator {
         return this.getBaseUpdateCommand(CLOUDYPAD_PROVIDER_GCP)
             .addOption(CLI_OPTION_DISK_SIZE)
             .addOption(CLI_OPTION_PUBLIC_IP_TYPE)
+            .addOption(CLI_OPTION_COST_ALERT)
+            .addOption(CLI_OPTION_COST_LIMIT)
+            .addOption(CLI_OPTION_COST_NOTIFICATION_EMAIL)
             .option('--machine-type <machinetype>', 'Machine type to use for the instance')
             .option('--gpu-type <gputype>', 'Type of accelerator (e.g., GPU) to attach to the instance')
             .action(async (cliArgs) => {

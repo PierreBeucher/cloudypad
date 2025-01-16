@@ -56,8 +56,12 @@ export class GcpClient {
         } catch (e) {
             this.logger.error(`Couldn't check Google Cloud authentication: ${JSON.stringify(e)}`)
             this.logger.error(`Is your local Google Cloud authentication configured ?`)
+            this.logger.error(`Make sure you authenticated with Google Application Default Credentials using gcloud auth application-default login`)
             
-            throw new Error(`Couldn't check Google Cloud authentication: ${JSON.stringify(e)}`)
+            throw new Error(`Couldn't check Google Cloud authentication.` + 
+                `Make sure you authenticated with Google Application Default Credentials using gcloud auth application-default login`,
+                { cause: e }
+            )
         }
     }
 
