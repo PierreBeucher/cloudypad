@@ -125,20 +125,6 @@ class CloudyPadEC2Instance extends pulumi.ComponentResource {
                         notificationType: "ACTUAL",
                         subscriberEmailAddresses: [args.billingAlert.notificationEmail],
                     },
-                    {
-                        comparisonOperator: "GREATER_THAN",
-                        threshold: 150,
-                        thresholdType: "PERCENTAGE",
-                        notificationType: "ACTUAL",
-                        subscriberEmailAddresses: [args.billingAlert.notificationEmail],
-                    },
-                    {
-                        comparisonOperator: "GREATER_THAN",
-                        threshold: 200,
-                        thresholdType: "PERCENTAGE",
-                        notificationType: "ACTUAL",
-                        subscriberEmailAddresses: [args.billingAlert.notificationEmail],
-                    }
                 ]
             })
         }

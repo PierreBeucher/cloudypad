@@ -104,30 +104,6 @@ export abstract class AbstractInputPrompter<A extends CreateCliArgs, I extends C
         return input
     }
 
-    // /**
-    //  * Using provided CLI arguments and current instance state, prompt user to provide a complete instance input.
-    //  * @param instanceName existing instance name for which to complete input
-    //  * @param cliArgs CLI arguments
-    //  * @returns 
-    //  */
-    // async completeCliArgsWithExistingState(instanceName: string, cliArgs: A): Promise<I> {
-    //     const existingInput = await this.generateInputFromState(instanceName)
-    //     const cliInput = this.cliArgsIntoInput(cliArgs)
-    //     const commonInput = lodash.merge({}, existingInput, cliInput)
-    //     return this.promptInput(commonInput, { 
-    //         // since we already have an existing state, we want to overwrite it
-    //         // and won't need to warn about quota
-    //         overwriteExisting: true, 
-    //         skipQuotaWarning: true,
-    //     })
-    // }
-
-    // /**
-    //  * Generate a partial input from the current instance state.
-    //  * @param instanceName existing instance name for which to generate input
-    //  */
-    // protected abstract generateInputFromState(instanceName: string): Promise<PartialDeep<I>>
-
     protected async instanceName(_instanceName?: string): Promise<string> {
         let instanceName: string
         
@@ -268,7 +244,8 @@ export abstract class AbstractInputPrompter<A extends CreateCliArgs, I extends C
         this.logger.debug(`Prompting for billing alert with costAlert: ${JSON.stringify(costAlert)}`)
 
         const costAlertEnabled = costAlert === null ? false : costAlert !== undefined ? true : await confirm({
-            message: "Do you want to enable billing alert? You'll receive an email when cost exceeds defined limit.",
+            message: "Do you want to enable billing alert? Set a cost limit and get email alerts when spending reaches 50%, 80%, and 100% of the limit.\n" +
+                "  Example for $20 limit: get emails alerts at $10, $16, and $20.",
             default: true,
         })
 
@@ -310,7 +287,7 @@ export abstract class AbstractInputPrompter<A extends CreateCliArgs, I extends C
     private async promptBillingAlertLimit(): Promise<number>{
         const costLimit = await input({
             message: "Enter billing alert limit (USD):",
-            default: "100",
+            default: "30",
         })
 
         // check if it's a number
