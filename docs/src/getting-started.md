@@ -45,7 +45,8 @@ cloudypad create
 # 🥳 Your Cloudy Pad instance is ready !
 ```
 
-Cloudy Pad will:
+Cloudy Pad will guide you through creation process:
+- Prompt important information (eg. machine type, GPU, cost alerts, etc.) 
 - Create a new Cloud machine and related configurations automatically (you can also use an existing machine)
 - Install GPU drivers and [Wolf gaming server](https://games-on-whales.github.io/wolf/stable/)
 - Help your Pair with Moonlight
