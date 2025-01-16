@@ -1,15 +1,16 @@
-import { PaperspaceInstanceInput } from "./state"
+import { PaperspaceInstanceInput, PaperspaceInstanceStateV1, PaperspaceStateParser } from "./state"
 import { CommonInstanceInput } from "../../core/state/state"
-import { AbstractInputPrompter, InstanceCreateOptions } from "../../core/cli/prompter";
+import { AbstractInputPrompter, PromptOptions } from "../../core/cli/prompter";
 import { select, input, password } from '@inquirer/prompts';
 import { fetchApiKeyFromEnvironment } from './client/client';
 import lodash from 'lodash'
 import { PartialDeep } from "type-fest";
 import { CLOUDYPAD_PROVIDER_PAPERSPACE, PUBLIC_IP_TYPE } from "../../core/const";
-import { CLI_OPTION_DISK_SIZE, CLI_OPTION_PUBLIC_IP_TYPE, CLI_OPTION_SPOT, CliCommandGenerator, CreateCliArgs } from "../../core/cli/command";
+import { CLI_OPTION_DISK_SIZE, CLI_OPTION_PUBLIC_IP_TYPE, CLI_OPTION_SPOT, CliCommandGenerator, CreateCliArgs, UpdateCliArgs } from "../../core/cli/command";
 import { InteractiveInstanceInitializer } from "../../core/initializer";
 import { InstanceManagerBuilder } from "../../core/manager-builder";
 import { RUN_COMMAND_CREATE, RUN_COMMAND_UPDATE } from "../../tools/analytics/events";
+import { InstanceUpdater } from "../../core/updater";
 
 export interface PaperspaceCreateCliArgs extends CreateCliArgs {
     apiKeyFile?: string
@@ -18,6 +19,8 @@ export interface PaperspaceCreateCliArgs extends CreateCliArgs {
     publicIpType?: PUBLIC_IP_TYPE
     region?: string
 }
+
+export type PaperspaceUpdateCliArgs = UpdateCliArgs & Omit<PaperspaceCreateCliArgs, "region">
 
 export class PaperspaceInputPrompter extends AbstractInputPrompter<PaperspaceCreateCliArgs, PaperspaceInstanceInput> {
     
@@ -38,11 +41,11 @@ export class PaperspaceInputPrompter extends AbstractInputPrompter<PaperspaceCre
         }
     }
 
-    protected async promptSpecificInput(defaultInput: CommonInstanceInput & PartialDeep<PaperspaceInstanceInput>, createOptions: InstanceCreateOptions): Promise<PaperspaceInstanceInput> {
+    protected async promptSpecificInput(defaultInput: CommonInstanceInput & PartialDeep<PaperspaceInstanceInput>, createOptions: PromptOptions): Promise<PaperspaceInstanceInput> {
 
         this.logger.debug(`Starting Paperspace prompt with defaultInput: ${JSON.stringify(defaultInput)} and createOptions: ${JSON.stringify(createOptions)}`)
 
-        if(!createOptions.autoApprove){
+        if(!createOptions.autoApprove && !createOptions.skipQuotaWarning){
             await this.informCloudProviderQuotaWarning(CLOUDYPAD_PROVIDER_PAPERSPACE, "https://cloudypad.gg/cloud-provider-setup/paperspace.html")
         }
         
@@ -187,14 +190,11 @@ export class PaperspaceCliCommandGenerator extends CliCommandGenerator {
             .action(async (cliArgs) => {
                 this.analytics.sendEvent(RUN_COMMAND_UPDATE, { provider: CLOUDYPAD_PROVIDER_PAPERSPACE })
                 try {
-                    const input = new PaperspaceInputPrompter().cliArgsIntoInput(cliArgs)
-                    const updater = await new InstanceManagerBuilder().buildPaperspaceInstanceUpdater(cliArgs.name)
-                    await updater.update({
-                        provisionInput: input.provision,
-                        configurationInput: input.configuration,
-                    }, { 
-                        autoApprove: cliArgs.yes
-                    })
+                    await new InstanceUpdater<PaperspaceInstanceStateV1, PaperspaceUpdateCliArgs>({
+                        stateParser: new PaperspaceStateParser(),
+                        inputPrompter: new PaperspaceInputPrompter()
+                    }).update(cliArgs)
+                    
                     console.info(`Updated instance ${cliArgs.name}`)
                     
                 } catch (error) {

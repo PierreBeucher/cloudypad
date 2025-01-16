@@ -2,7 +2,7 @@ import * as fs from 'fs'
 import * as yaml from 'js-yaml'
 import * as path from 'path'
 import { getLogger } from '../../log/utils'
-import { StateParser } from './parser'
+import { AnonymousStateParser } from './parser'
 import { BaseStateManager } from './base-manager'
 import { InstanceStateV1 } from './state'
 
@@ -85,8 +85,8 @@ export class StateLoader extends BaseStateManager {
             throw new Error(`Unknown state version '${rawState.version}'`)
         }
 
-        const parser = new StateParser()
-        return parser.parseBaseStateV1(rawState)
+        const parser = new AnonymousStateParser()
+        return parser.parse(rawState)
     }
 
     private ensureInstanceParentDirExists() {

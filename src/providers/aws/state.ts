@@ -1,6 +1,7 @@
 import { z } from "zod"
 import { CommonProvisionOutputV1Schema, CommonProvisionInputV1Schema, InstanceStateV1Schema, AbstractInstanceInputs } from "../../core/state/state"
 import { CLOUDYPAD_PROVIDER_AWS, PUBLIC_IP_TYPE_DYNAMIC, PUBLIC_IP_TYPE_STATIC } from "../../core/const"
+import { GenericStateParser } from "../../core/state/parser"
 
 const AwsProvisionOutputV1Schema = CommonProvisionOutputV1Schema.extend({
     instanceId: z.string().describe("AWS instance ID"),
@@ -40,6 +41,17 @@ export {
     AwsProvisionOutputV1,
     AwsProvisionInputV1,
     AwsInstanceInput,
+}
+
+export class AwsStateParser extends GenericStateParser<AwsInstanceStateV1> {
+
+    constructor() {
+        super({ zodSchema: AwsInstanceStateV1Schema })
+    }
+
+    parse(rawState: unknown): AwsInstanceStateV1 {
+        return this.zodParseSafe(rawState, AwsInstanceStateV1Schema)
+    }
 }
 
 // V0

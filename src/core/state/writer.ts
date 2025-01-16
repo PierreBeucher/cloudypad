@@ -1,7 +1,7 @@
 import * as fs from 'fs'
 import * as yaml from 'js-yaml'
 import { getLogger } from '../../log/utils'
-import { StateParser } from './parser'
+import { AnonymousStateParser } from './parser'
 import { BaseStateManager } from './base-manager'
 import { InstanceStateV1 } from './state'
 import lodash from 'lodash'
@@ -46,8 +46,8 @@ export class StateWriter<ST extends InstanceStateV1> extends BaseStateManager {
 
         // Parse to make sure a buggy state isn't persisted to disk
         // Throws error if marlformed state
-        const parser = new StateParser()
-        parser.parseBaseStateV1(unsafeState)
+        const parser = new AnonymousStateParser()
+        parser.parse(unsafeState)
         const safeState = unsafeState
 
         this.state = safeState

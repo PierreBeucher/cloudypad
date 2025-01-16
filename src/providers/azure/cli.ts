@@ -1,15 +1,15 @@
-import { AzureInstanceInput } from "./state"
+import { AzureInstanceInput, AzureStateParser, AzureInstanceStateV1 } from "./state"
 import { CommonInstanceInput } from "../../core/state/state"
 import { input, select, confirm } from '@inquirer/prompts';
-import { AbstractInputPrompter, costAlertCliArgsIntoConfig, InstanceCreateOptions } from "../../core/cli/prompter";
+import { AbstractInputPrompter, costAlertCliArgsIntoConfig, PromptOptions } from "../../core/cli/prompter";
 import { AzureClient } from "../../tools/azure";
 import lodash from 'lodash'
 import { CLOUDYPAD_PROVIDER_AZURE, PUBLIC_IP_TYPE } from "../../core/const";
 import { PartialDeep } from "type-fest";
-import { CLI_OPTION_COST_ALERT, CLI_OPTION_COST_LIMIT, CLI_OPTION_COST_NOTIFICATION_EMAIL, CLI_OPTION_DISK_SIZE, CLI_OPTION_PUBLIC_IP_TYPE, CLI_OPTION_SPOT, CliCommandGenerator, CreateCliArgs } from "../../core/cli/command";
+import { CLI_OPTION_COST_ALERT, CLI_OPTION_COST_LIMIT, CLI_OPTION_COST_NOTIFICATION_EMAIL, CLI_OPTION_DISK_SIZE, CLI_OPTION_PUBLIC_IP_TYPE, CLI_OPTION_SPOT, CliCommandGenerator, CreateCliArgs, UpdateCliArgs } from "../../core/cli/command";
 import { InteractiveInstanceInitializer } from "../../core/initializer";
-import { InstanceManagerBuilder } from "../../core/manager-builder";
 import { RUN_COMMAND_CREATE, RUN_COMMAND_UPDATE } from "../../tools/analytics/events";
+import { InstanceUpdater } from "../../core/updater";
 
 export interface AzureCreateCliArgs extends CreateCliArgs {
     subscriptionId?: string
@@ -23,6 +23,9 @@ export interface AzureCreateCliArgs extends CreateCliArgs {
     costLimit?: number,
     costNotificationEmail?: string
 }
+
+export type AzureUpdateCliArgs = UpdateCliArgs & Omit<AzureCreateCliArgs, "subscriptionId" | "resourceGroupName" | "location" >
+
 
 export const AZURE_SUPPORTED_GPU = [
     { machineType: "Standard_NC4as_T4_v3", gpuType: "NVIDIA", gpuName: "Tesla T4", quotaName: "Standard NCASv3_T4 Family" },
@@ -82,11 +85,11 @@ export class AzureInputPrompter extends AbstractInputPrompter<AzureCreateCliArgs
         }
     }
 
-    protected async promptSpecificInput(defaultInput: CommonInstanceInput & PartialDeep<AzureInstanceInput>, createOptions: InstanceCreateOptions): Promise<AzureInstanceInput> {
+    protected async promptSpecificInput(defaultInput: CommonInstanceInput & PartialDeep<AzureInstanceInput>, createOptions: PromptOptions): Promise<AzureInstanceInput> {
 
         this.logger.debug(`Starting Azure prompt with defaultInput: ${JSON.stringify(defaultInput)} and createOptions: ${JSON.stringify(createOptions)}`)
         
-        if(!createOptions.autoApprove){
+        if(!createOptions.autoApprove && !createOptions.skipQuotaWarning){
             await this.informCloudProviderQuotaWarning(CLOUDYPAD_PROVIDER_AZURE, "https://cloudypad.gg/cloud-provider-setup/azure.html")
         }
 
@@ -296,14 +299,11 @@ export class AzureCliCommandGenerator extends CliCommandGenerator {
                 this.analytics.sendEvent(RUN_COMMAND_UPDATE, { provider: CLOUDYPAD_PROVIDER_AZURE })
 
                 try {
-                    const input = new AzureInputPrompter().cliArgsIntoInput(cliArgs)
-                    const updater = await new InstanceManagerBuilder().buildAzureInstanceUpdater(cliArgs.name)
-                    await updater.update({
-                        provisionInput: input.provision,
-                        configurationInput: input.configuration,
-                    }, { 
-                        autoApprove: cliArgs.yes
-                    })
+                    await new InstanceUpdater<AzureInstanceStateV1, AzureUpdateCliArgs>({
+                        stateParser: new AzureStateParser(),
+                        inputPrompter: new AzureInputPrompter()
+                    }).update(cliArgs)
+                    
                     console.info(`Updated instance ${cliArgs.name}`)
                     
                 } catch (error) {

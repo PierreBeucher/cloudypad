@@ -6,8 +6,7 @@ import { mkdtempSync } from 'fs'
 import yaml from 'js-yaml'
 import { StateWriter } from '../../../../src/core/state/writer'
 import { StateLoader } from '../../../../src/core/state/loader'
-import { StateParser } from '../../../../src/core/state/parser'
-import { AwsInstanceStateV1 } from '../../../../src/providers/aws/state'
+import { AwsInstanceStateV1, AwsStateParser } from '../../../../src/providers/aws/state'
 import lodash from 'lodash'
 
 describe('StateWriter', function () {
@@ -20,7 +19,7 @@ describe('StateWriter', function () {
 
         const loader = new StateLoader({ dataRootDir: path.resolve(__dirname, "v1-root-data-dir")})
         const state = await loader.loadInstanceStateSafe(instanceName)
-        const awState = new StateParser().parseAwsStateV1(state)
+        const awState = new AwsStateParser().parse(state)
 
         const writer = new StateWriter<AwsInstanceStateV1>({
             state: awState,

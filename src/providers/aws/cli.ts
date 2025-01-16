@@ -1,15 +1,16 @@
-import { AwsInstanceInput } from "./state"
+import { AwsInstanceInput, AwsInstanceStateV1, AwsStateParser } from "./state"
 import { CommonInstanceInput } from "../../core/state/state"
 import { input, select, confirm } from '@inquirer/prompts';
 import { AwsClient, EC2_QUOTA_CODE_ALL_G_AND_VT_SPOT_INSTANCES, EC2_QUOTA_CODE_RUNNING_ON_DEMAND_G_AND_VT_INSTANCES } from "../../tools/aws";
-import { AbstractInputPrompter, costAlertCliArgsIntoConfig, InstanceCreateOptions } from "../../core/cli/prompter";
+import { AbstractInputPrompter, costAlertCliArgsIntoConfig, PromptOptions } from "../../core/cli/prompter";
 import lodash from 'lodash'
 import { CLI_OPTION_COST_NOTIFICATION_EMAIL, CLI_OPTION_COST_ALERT, CLI_OPTION_COST_LIMIT, CLI_OPTION_DISK_SIZE, CLI_OPTION_PUBLIC_IP_TYPE, CLI_OPTION_SPOT, CliCommandGenerator, CreateCliArgs, UpdateCliArgs } from "../../core/cli/command";
 import { CLOUDYPAD_PROVIDER_AWS, PUBLIC_IP_TYPE } from "../../core/const";
 import { InteractiveInstanceInitializer } from "../../core/initializer";
 import { PartialDeep } from "type-fest";
-import { InstanceManagerBuilder } from "../../core/manager-builder";
 import { RUN_COMMAND_CREATE, RUN_COMMAND_UPDATE } from "../../tools/analytics/events";
+import { StateLoader } from "../../core/state/loader";
+import { InstanceUpdater } from "../../core/updater";
 
 export interface AwsCreateCliArgs extends CreateCliArgs {
     spot?: boolean
@@ -56,10 +57,10 @@ export class AwsInputPrompter extends AbstractInputPrompter<AwsCreateCliArgs, Aw
         }
     }
 
-    protected async promptSpecificInput(defaultInput: CommonInstanceInput & PartialDeep<AwsInstanceInput>, createOptions: InstanceCreateOptions): Promise<AwsInstanceInput> {
+    protected async promptSpecificInput(defaultInput: CommonInstanceInput & PartialDeep<AwsInstanceInput>, createOptions: PromptOptions): Promise<AwsInstanceInput> {
 
         this.logger.debug(`Starting AWS prompt with defaultInput: ${JSON.stringify(defaultInput)} and createOptions: ${JSON.stringify(createOptions)}`)
-        if(!createOptions.autoApprove){
+        if(!createOptions.autoApprove && !createOptions.skipQuotaWarning){
             await this.informCloudProviderQuotaWarning(CLOUDYPAD_PROVIDER_AWS, "https://cloudypad.gg/cloud-provider-setup/aws.html")
         }
 
@@ -237,14 +238,11 @@ export class AwsCliCommandGenerator extends CliCommandGenerator {
                 this.analytics.sendEvent(RUN_COMMAND_UPDATE, { provider: CLOUDYPAD_PROVIDER_AWS })
 
                 try {
-                    const input = new AwsInputPrompter().cliArgsIntoInput(cliArgs)
-                    const updater = await new InstanceManagerBuilder().buildAwsInstanceUpdater(cliArgs.name)
-                    await updater.update({
-                        provisionInput: input.provision,
-                        configurationInput: input.configuration,
-                    }, { 
-                        autoApprove: cliArgs.yes
-                    })
+                    await new InstanceUpdater<AwsInstanceStateV1, AwsUpdateCliArgs>({
+                        stateParser: new AwsStateParser(),
+                        inputPrompter: new AwsInputPrompter()
+                    }).update(cliArgs)
+                    
                     console.info(`Updated instance ${cliArgs.name}`)
                     
                 } catch (error) {

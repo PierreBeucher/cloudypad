@@ -1,12 +1,21 @@
 import { PartialDeep } from "type-fest"
-import { InstanceProvisionOptions } from "./provisioner"
 import { InstanceStateV1 } from "./state/state"
 import { StateWriter } from "./state/writer"
-import { getLogger } from "../log/utils"
+import { getLogger, Logger } from "../log/utils"
 import { InstanceManagerBuilder } from "./manager-builder"
+import { StateLoader } from "./state/loader"
+import { UpdateCliArgs } from "./cli/command"
+import { GenericStateParser } from "./state/parser"
+import { AbstractInputPrompter } from "./cli/prompter"
+import * as lodash from "lodash"
 
-export interface InstanceUpdaterArgs<ST extends InstanceStateV1> {
-    stateWriter: StateWriter<ST>
+export interface InstanceUpdaterArgs<ST extends InstanceStateV1, A extends UpdateCliArgs> {
+    stateParser: GenericStateParser<ST>
+    inputPrompter: AbstractInputPrompter<A, { 
+        instanceName: string, 
+        provision: ST["provision"]["input"], 
+        configuration: ST["configuration"]["input"] 
+    }>  
 }
 
 export interface InstanceUpdateArgs<ST extends InstanceStateV1> {
@@ -14,34 +23,60 @@ export interface InstanceUpdateArgs<ST extends InstanceStateV1> {
     configurationInput?: PartialDeep<ST["configuration"]["input"]>
 }
 
-export class InstanceUpdater<ST extends InstanceStateV1> {
+export class InstanceUpdater<ST extends InstanceStateV1, A extends UpdateCliArgs> {
 
-    protected readonly logger
-    protected readonly stateWriter: StateWriter<ST>
+    private logger: Logger
+    private stateParser: GenericStateParser<ST>
+    private inputPrompter: AbstractInputPrompter<A, { 
+        instanceName: string, 
+        provision: ST["provision"]["input"], 
+        configuration: ST["configuration"]["input"] 
+    }>  
 
-    constructor(args: InstanceUpdaterArgs<ST>){
-        this.stateWriter = args.stateWriter
-        this.logger = getLogger(args.stateWriter.instanceName())
+    constructor(args: InstanceUpdaterArgs<ST, A>) {
+        this.logger = getLogger(InstanceUpdater.name)
+        this.stateParser = args.stateParser
+        this.inputPrompter = args.inputPrompter
     }
 
-    async update(updates: InstanceUpdateArgs<ST>, opts?: InstanceProvisionOptions): Promise<void> {
-
-        const intanceName = this.stateWriter.instanceName()
-        this.logger.debug(`Updating instance ${intanceName} with ${JSON.stringify(updates)} and options ${JSON.stringify(opts)}`)
-
-        if(updates.provisionInput) {
-            await this.stateWriter.updateProvisionInput(updates.provisionInput)
-        }
+    async update(cliArgs: A): Promise<void> {
         
-        if(updates.configurationInput) {
-            await this.stateWriter.updateConfigurationInput(updates.configurationInput)
+        // Load existing state
+        const instanceName = cliArgs.name
+        const rawState = await new StateLoader().loadInstanceStateSafe(instanceName)
+        const state = this.stateParser.parse(rawState)
+
+        // Merge existing input with provided CLI args
+        const stateInput: { 
+            instanceName: string, 
+            provision: ST["provision"]["input"], 
+            configuration: ST["configuration"]["input"] 
+        } = {
+            instanceName: instanceName,
+            provision: state.provision.input,
+            configuration: state.configuration.input
         }
+        const cliInput = this.inputPrompter.cliArgsIntoInput(cliArgs)
+        const existingInput = lodash.merge({}, stateInput, cliInput)
+
+        // Complete to full input, prompt user for missing values
+        const fullInput = await this.inputPrompter.promptInput(existingInput, {
+            overwriteExisting: true,
+            skipQuotaWarning: true
+        })
+
+        // Do update
+        this.logger.debug(`Updating instance ${instanceName} with ${JSON.stringify(fullInput)}`)
+
+        const stateWriter = new StateWriter<ST>({ state: state })
+        await stateWriter.setProvisionInput(fullInput.provision)
+        await stateWriter.setConfigurationInput(fullInput.configuration)
         
-        this.logger.debug(`State after update ${JSON.stringify(this.stateWriter.cloneState())}`)
+        this.logger.debug(`State after update ${JSON.stringify(stateWriter.cloneState())}`)
 
-        const manager = await new InstanceManagerBuilder().buildInstanceManager(this.stateWriter.instanceName())
+        const manager = await new InstanceManagerBuilder().buildInstanceManager(instanceName)
 
-        await manager.provision(opts)
+        await manager.provision({ autoApprove: cliArgs.yes })
         await manager.configure()
     }
 

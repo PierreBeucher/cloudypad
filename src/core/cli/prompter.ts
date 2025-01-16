@@ -4,10 +4,10 @@ import * as os from 'os';
 import { PartialDeep } from "type-fest"
 import { input, select, confirm } from '@inquirer/prompts';
 import lodash from 'lodash'
-import { CommonInstanceInput } from "../state/state";
+import { CommonConfigurationInputV1, CommonInstanceInput, CommonProvisionInputV1 } from "../state/state";
 import { getLogger } from "../../log/utils";
 import { PUBLIC_IP_TYPE, PUBLIC_IP_TYPE_DYNAMIC, PUBLIC_IP_TYPE_STATIC } from '../const';
-import { CreateCliArgs } from './command';
+import { CreateCliArgs, UpdateCliArgs } from './command';
 import { StateLoader } from '../state/loader';
 import { CostAlertOptions } from '../provisioner';
 const { kebabCase } = lodash
@@ -21,9 +21,14 @@ export interface InputPrompter {
     completeCliInput(cliArgs: CreateCliArgs): Promise<CommonInstanceInput>
 }
 
-export interface InstanceCreateOptions {
+export interface PromptOptions {
     autoApprove?: boolean
     overwriteExisting?: boolean
+
+    /**
+     * If provider emits a quota warning, skip it.
+     */
+    skipQuotaWarning?: boolean
 }
 
 export abstract class AbstractInputPrompter<A extends CreateCliArgs, I extends CommonInstanceInput> implements InputPrompter {
@@ -34,16 +39,16 @@ export abstract class AbstractInputPrompter<A extends CreateCliArgs, I extends C
      * Prompt user for additional provider-specific inputs based on common provider inputs.
      * Returns a fully valid state for instance initialization. 
      */
-    async promptInput(partialInput: PartialDeep<I>, createOptions: InstanceCreateOptions): Promise<I> {
+    async promptInput(partialInput: PartialDeep<I>, createOptions: PromptOptions): Promise<I> {
         const commonInput = await this.promptCommonInput(partialInput, createOptions)
         const commonInputWithPartial = lodash.merge({}, commonInput, partialInput)
         const finalInput = await this.promptSpecificInput(commonInputWithPartial, createOptions)
         return finalInput
     }
     
-    private async promptCommonInput(partialInput: PartialDeep<CommonInstanceInput>, createOptions: InstanceCreateOptions): Promise<CommonInstanceInput> {
+    private async promptCommonInput(partialInput: PartialDeep<CommonInstanceInput>, createOptions: PromptOptions): Promise<CommonInstanceInput> {
 
-        this.logger.debug(`Initializing instance with default config ${JSON.stringify(partialInput)} and create options ${JSON.stringify(createOptions)}`)
+        this.logger.debug(`Prompting common input with default inputs ${JSON.stringify(partialInput)} and create options ${JSON.stringify(createOptions)}`)
         
         const instanceName = await this.instanceName(partialInput.instanceName)
         
@@ -73,7 +78,7 @@ export abstract class AbstractInputPrompter<A extends CreateCliArgs, I extends C
     /**
      * Prompt provider-specific input using known common Input and passed default input
      */
-    protected abstract promptSpecificInput(defaultInput: CommonInstanceInput & PartialDeep<I>, createOptions: InstanceCreateOptions): Promise<I>
+    protected abstract promptSpecificInput(defaultInput: CommonInstanceInput & PartialDeep<I>, createOptions: PromptOptions): Promise<I>
 
     /**
      * Transform CLI arguments into known Input interface
@@ -98,6 +103,30 @@ export abstract class AbstractInputPrompter<A extends CreateCliArgs, I extends C
         const input = await this.promptInput(partialInput, { overwriteExisting: cliArgs.overwriteExisting, autoApprove: cliArgs.yes })
         return input
     }
+
+    // /**
+    //  * Using provided CLI arguments and current instance state, prompt user to provide a complete instance input.
+    //  * @param instanceName existing instance name for which to complete input
+    //  * @param cliArgs CLI arguments
+    //  * @returns 
+    //  */
+    // async completeCliArgsWithExistingState(instanceName: string, cliArgs: A): Promise<I> {
+    //     const existingInput = await this.generateInputFromState(instanceName)
+    //     const cliInput = this.cliArgsIntoInput(cliArgs)
+    //     const commonInput = lodash.merge({}, existingInput, cliInput)
+    //     return this.promptInput(commonInput, { 
+    //         // since we already have an existing state, we want to overwrite it
+    //         // and won't need to warn about quota
+    //         overwriteExisting: true, 
+    //         skipQuotaWarning: true,
+    //     })
+    // }
+
+    // /**
+    //  * Generate a partial input from the current instance state.
+    //  * @param instanceName existing instance name for which to generate input
+    //  */
+    // protected abstract generateInputFromState(instanceName: string): Promise<PartialDeep<I>>
 
     protected async instanceName(_instanceName?: string): Promise<string> {
         let instanceName: string
@@ -231,8 +260,10 @@ export abstract class AbstractInputPrompter<A extends CreateCliArgs, I extends C
      * 
      * @param costAlert - Cost alert options. If undefined, prompt user for cost alert options.
      * If null, cost alert is explicitely disabled. If set, cost alert is enabled and prompt for missing options.
+     * 
+     * @returns CostAlertOptions if cost alert is enabled, null if cost alert is disabled
      */
-    protected async costAlert(costAlert: Partial<CostAlertOptions> | undefined | null): Promise<CostAlertOptions | undefined> {
+    protected async costAlert(costAlert: Partial<CostAlertOptions> | undefined | null): Promise<CostAlertOptions | null> {
         
         this.logger.debug(`Prompting for billing alert with costAlert: ${JSON.stringify(costAlert)}`)
 
@@ -252,7 +283,7 @@ export abstract class AbstractInputPrompter<A extends CreateCliArgs, I extends C
             }
         }
 
-        return undefined
+        return null
     }
 
     private async promptBillingAlertEmail(): Promise<string>{ 

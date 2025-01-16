@@ -20,7 +20,7 @@ export interface CreateCliArgs {
 /**
  * Arguments any Provider can take as parameter for update command
  */
-export type UpdateCliArgs = Omit<CreateCliArgs, "name" | "privateSshKey">
+export type UpdateCliArgs = Omit<CreateCliArgs, | "privateSshKey"> & { name: string }
 
 
 export const CLI_OPTION_INSTANCE_NAME = new Option('--name <name>', 'Instance name')

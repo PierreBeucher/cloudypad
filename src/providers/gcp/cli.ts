@@ -1,15 +1,15 @@
-import { GcpInstanceInput } from "./state"
+import { GcpInstanceInput, GcpInstanceStateV1, GcpStateParser } from "./state"
 import { CommonInstanceInput } from "../../core/state/state"
 import { input, select } from '@inquirer/prompts';
-import { AbstractInputPrompter, costAlertCliArgsIntoConfig, InstanceCreateOptions } from "../../core/cli/prompter";
+import { AbstractInputPrompter, costAlertCliArgsIntoConfig, PromptOptions } from "../../core/cli/prompter";
 import { GcpClient } from "../../tools/gcp";
 import lodash from 'lodash'
 import { CLOUDYPAD_PROVIDER_GCP, PUBLIC_IP_TYPE } from "../../core/const";
 import { PartialDeep } from "type-fest";
 import { InteractiveInstanceInitializer } from "../../core/initializer";
-import { CLI_OPTION_COST_ALERT, CLI_OPTION_COST_LIMIT, CLI_OPTION_COST_NOTIFICATION_EMAIL, CLI_OPTION_DISK_SIZE, CLI_OPTION_PUBLIC_IP_TYPE, CLI_OPTION_SPOT, CliCommandGenerator, CreateCliArgs } from "../../core/cli/command";
-import { InstanceManagerBuilder } from "../../core/manager-builder";
+import { CLI_OPTION_COST_ALERT, CLI_OPTION_COST_LIMIT, CLI_OPTION_COST_NOTIFICATION_EMAIL, CLI_OPTION_DISK_SIZE, CLI_OPTION_PUBLIC_IP_TYPE, CLI_OPTION_SPOT, CliCommandGenerator, CreateCliArgs, UpdateCliArgs } from "../../core/cli/command";
 import { RUN_COMMAND_CREATE, RUN_COMMAND_UPDATE } from "../../tools/analytics/events";
+import { InstanceUpdater } from "../../core/updater";
 
 export interface GcpCreateCliArgs extends CreateCliArgs {
     projectId?: string
@@ -24,6 +24,11 @@ export interface GcpCreateCliArgs extends CreateCliArgs {
     costLimit?: number
     costNotificationEmail?: string
 }
+
+/**
+ * Possible update arguments for GCP update. Use create arguments as reference and remove fields that cannot be updated.
+ */
+export type GcpUpdateCliArgs = UpdateCliArgs & Omit<GcpCreateCliArgs, "projectId" | "region" | "zone">
 
 export class GcpInputPrompter extends AbstractInputPrompter<GcpCreateCliArgs, GcpInstanceInput> {
     
@@ -48,11 +53,11 @@ export class GcpInputPrompter extends AbstractInputPrompter<GcpCreateCliArgs, Gc
         }
     }
 
-    protected async promptSpecificInput(defaultInput: CommonInstanceInput & PartialDeep<GcpInstanceInput>, createOptions: InstanceCreateOptions): Promise<GcpInstanceInput> {
+    protected async promptSpecificInput(defaultInput: CommonInstanceInput & PartialDeep<GcpInstanceInput>, createOptions: PromptOptions): Promise<GcpInstanceInput> {
 
         this.logger.debug(`Starting Gcp prompt with defaultInput: ${JSON.stringify(defaultInput)} and createOptions: ${JSON.stringify(createOptions)}`)
 
-        if(!createOptions.autoApprove){
+        if(!createOptions.autoApprove && !createOptions.skipQuotaWarning){
             await this.informCloudProviderQuotaWarning(CLOUDYPAD_PROVIDER_GCP, "https://cloudypad.gg/cloud-provider-setup/gcp.html")
         }
         
@@ -263,16 +268,13 @@ export class GcpCliCommandGenerator extends CliCommandGenerator {
             .action(async (cliArgs) => {
                 this.analytics.sendEvent(RUN_COMMAND_UPDATE, { provider: CLOUDYPAD_PROVIDER_GCP })
                 try {
-                    const input = new GcpInputPrompter().cliArgsIntoInput(cliArgs)
-                    const updater = await new InstanceManagerBuilder().buildGcpInstanceUpdater(cliArgs.name)
-                    await updater.update({
-                        provisionInput: input.provision,
-                        configurationInput: input.configuration,
-                    }, { 
-                        autoApprove: cliArgs.yes
-                    })
+                    await new InstanceUpdater<GcpInstanceStateV1, GcpUpdateCliArgs>({
+                        stateParser: new GcpStateParser(),
+                        inputPrompter: new GcpInputPrompter()
+                    }).update(cliArgs)
+
                     console.info(`Updated instance ${cliArgs.name}`)
-                    
+
                 } catch (error) {
                     throw new Error('Error updating GCP instance:', { cause: error })
                 }
