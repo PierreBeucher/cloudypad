@@ -1,5 +1,5 @@
 import { Command } from '@commander-js/extra-typings';
-import { setLogVerbosity } from './log/utils';
+import { getLogger, setLogVerbosity } from './log/utils';
 import { InstanceManagerBuilder } from './core/manager-builder';
 import { GcpCliCommandGenerator } from './providers/gcp/cli';
 import { AzureCliCommandGenerator } from './providers/azure/cli';
@@ -8,6 +8,33 @@ import { PaperspaceCliCommandGenerator } from './providers/paperspace/cli';
 import { AnalyticsManager } from './tools/analytics/manager';
 import { RUN_COMMAND_CONFIGURE, RUN_COMMAND_DESTROY, RUN_COMMAND_GET, RUN_COMMAND_LIST, RUN_COMMAND_PAIR, RUN_COMMAND_PROVISION, RUN_COMMAND_RESTART, RUN_COMMAND_START, RUN_COMMAND_STOP } from './tools/analytics/events';
 import { CLOUDYPAD_VERSION } from './core/const';
+
+const logger = getLogger("program")
+
+export function handleErrorAnalytics(e: unknown){
+    const eventProps = e instanceof Error ? { errorMessage: e.message, stackTrace: e.stack } : { errorMessage: String(e), stackTrace: "unknown" }
+    AnalyticsManager.get().sendEvent("error", eventProps)
+}
+
+export async function shutdownAnalytics(){
+    await AnalyticsManager.get().shutdown()
+}
+
+export async function cleanupAndExit(exitCode: number){
+    await shutdownAnalytics()
+    process.exit(exitCode)
+}
+
+export function logFullError(e: unknown, prefix?: string){
+    if(e instanceof Error){
+        prefix ? logger.error(prefix, e) : logger.error(e)
+        if(e.cause){
+            logFullError(e.cause, "Caused by:")
+        }
+    } else {
+        logger.error("Unknown error", e)
+    }
+}
 
 export function buildProgram(){
 
@@ -65,7 +92,7 @@ export function buildProgram(){
                 }
                 
             } catch (error) {
-                console.error('Error listing instances:', error)
+                throw new Error('Failed to list instances', { cause: error })
             }
         })
     
@@ -89,7 +116,7 @@ export function buildProgram(){
                 }
     
             } catch (error) {
-                console.error(`Error starting instance ${name}:`, error)
+                throw new Error(`Failed to start instance ${name}`, { cause: error })
             }
         })
     
@@ -113,7 +140,7 @@ export function buildProgram(){
                 }
     
             } catch (error) {
-                console.error(`Error stopping instance ${name}:`, error)
+                throw new Error(`Failed to stop instance ${name}`, { cause: error })
             }
         })
     
@@ -131,7 +158,7 @@ export function buildProgram(){
                 await m.restart({ wait: opts.wait, waitTimeoutSeconds: opts.timeout})
                 
             } catch (error) {
-                console.error(`Error restarting instance ${name}:`, error)
+                throw new Error(`Failed to restart instance ${name}`, { cause: error })
             }
         })
     
@@ -147,7 +174,7 @@ export function buildProgram(){
     
                 console.info(details)
             } catch (error) {
-                console.error(`Error getting details of instance ${name}:`, error)
+                throw new Error(`Failed to get details of instance ${name}`, { cause: error })
             }
         })
     
@@ -164,7 +191,7 @@ export function buildProgram(){
     
                 console.info(`Provisioned instance ${name}`)
             } catch (error) {
-                console.error(`Error provisioning instance ${name}:`, error)
+                throw new Error(`Failed to provision instance ${name}`, { cause: error })
             }
         })
     
@@ -181,7 +208,7 @@ export function buildProgram(){
                 console.info("")
                 console.info(`Configured instance ${name}`)
             } catch (error) {
-                console.error(`Error configuring instance ${name}:`, error)
+                throw new Error(`Failed to configure instance ${name}`, { cause: error })
             }
         })
     
@@ -200,7 +227,7 @@ export function buildProgram(){
                 console.info(`Destroyed instance ${name}`)
     
             } catch (error) {
-                console.error(`Error destroying instance ${name}:`, error)
+                throw new Error(`Failed to destroy instance ${name}`, { cause: error })
             }
         })
     
@@ -212,9 +239,11 @@ export function buildProgram(){
                 const m = await new InstanceManagerBuilder().buildInstanceManager(name)
                 await m.pair()
             } catch (error) {
-                console.error('Error creating new instance:', error)
+                throw new Error('Failed to pair instance', { cause: error })
             }
         })
     
     return program
 }
+
+

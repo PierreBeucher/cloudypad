@@ -1,5 +1,5 @@
 import * as fs from 'fs'
-import { InlineProgramArgs, LocalWorkspace, LocalWorkspaceOptions, OutputMap, PulumiFn, Stack } from "@pulumi/pulumi/automation";
+import { CommandError, InlineProgramArgs, LocalWorkspace, LocalWorkspaceOptions, OutputMap, PulumiFn, Stack } from "@pulumi/pulumi/automation";
 import { getLogger, Logger } from '../../log/utils';
 import { DataRootDirManager } from '../../core/data-dir';
 
@@ -88,26 +88,56 @@ export abstract class InstancePulumiClient<ConfigType, OutputType> {
 
     async up(){
 
-        const stack = await this.getStack()
+        try {
 
-        this.logger.debug(`Running Pulumi up: ${stack.name}`)
-        this.logger.debug(`Config before up: ${JSON.stringify(await stack.getAllConfig())}`)
+            const stack = await this.getStack()
 
-        // Always cancel in case command was interrupted before
-        // Considering use case it's unlikely a parallel update might occur
-        // But it's likely that user will interrupt leaving stack with a lock which would stuck otherwise
-        // Might become a flag later
-        await stack.cancel()
+            this.logger.debug(`Running Pulumi up: ${stack.name}`)
+            this.logger.debug(`Config before up: ${JSON.stringify(await stack.getAllConfig())}`)
 
-        const upRes = await stack.up({ onOutput: this.stackLogOnOutput, color: LOG_ON_OUTPUT_COLOR, refresh: true })
-        
-        this.logger.trace(`Up result: ${JSON.stringify(upRes)}`)
-        
-        const outputs = await stack.outputs()
+            // Always cancel in case command was interrupted before
+            // Considering use case it's unlikely a parallel update might occur
+            // But it's likely that user will interrupt leaving stack with a lock which would stuck otherwise
+            // Might become a flag later
+            await stack.cancel()
 
-        this.logger.debug(`Up outputs: ${JSON.stringify(outputs)}`)
+            const upRes = await stack.up({ onOutput: this.stackLogOnOutput, color: LOG_ON_OUTPUT_COLOR, refresh: true })
+            
+            this.logger.trace(`Up result: ${JSON.stringify(upRes)}`)
+            
+            const outputs = await stack.outputs()
 
-        return this.buildTypedOutput(outputs)
+            this.logger.debug(`Up outputs: ${JSON.stringify(outputs)}`)
+
+            return this.buildTypedOutput(outputs)
+
+        } catch (e) {
+            if(e instanceof CommandError) {
+                try {
+                    // CommandError contains the entire Pulumi output stderr/stdout in message and stack field which renders error unusable as-is
+                    // Instead transform private commandResult objecft fields which may actually be useful
+                    const commandResultJson = JSON.parse(JSON.stringify(e))
+
+                    const pulumiErrorData = {
+                        code: commandResultJson.code,
+                        command: commandResultJson.err?.command,
+                        exitCode: commandResultJson.err?.exitCode,
+                        failed: commandResultJson.err?.failed,
+                        timedOut: commandResultJson.err?.timedOut,
+                        isCanceled: commandResultJson.err?.isCanceled,
+                        killed: commandResultJson.err?.killed
+                    }
+                    
+                    throw new Error(`Pulumi up command failure. See above error logs for details. Error data: ${JSON.stringify(pulumiErrorData)}`)
+
+                } catch (e) {
+                    // Throw anyway if somehow we couldn't parse original PulumiError error
+                    throw new Error(`Pulumi up command failure. See above error logs for details.`)
+                }
+            } else {
+                throw new Error(`Pulumi up failure`, { cause: e })
+            }
+        }
     }
 
     async preview(){

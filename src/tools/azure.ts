@@ -47,9 +47,7 @@ export class AzureClient {
             const token = await creds.getToken("https://management.azure.com/.default")
             AzureClient.staticLogger.debug(`Azure authentication successful: got token expiring on ${token.expiresOnTimestamp}`)
         } catch (e) {
-            AzureClient.staticLogger.error(`Couldn't check Azure authentication: ${JSON.stringify(e)}`)
-            AzureClient.staticLogger.error(`Is your local Azure authentication configured?`)
-            throw new Error(`Couldn't check Azure authentication: ${JSON.stringify(e)}`)
+            throw new Error(`Couldn't check Azure authentication. Did you configure your Azure credentials?`, { cause: e })
         }
     }
 
@@ -94,8 +92,7 @@ export class AzureClient {
                 await this.withTimeout(poller.pollUntilDone(), waitTimeout * 1000)
             }
         } catch (error) {
-            this.logger.error(`Failed to start virtual machine ${vmName}:`, { cause: error })
-            throw error
+            throw new Error(`Failed to start virtual machine ${vmName}`, { cause: error })
         }
     }
 
@@ -113,8 +110,7 @@ export class AzureClient {
             }
 
         } catch (error) {
-            this.logger.error(`Failed to stop virtual machine ${vmName}:`, { cause: error })
-            throw error
+            throw new Error(`Failed to stop virtual machine ${vmName}`, { cause: error })
         }
     }
 
@@ -132,8 +128,7 @@ export class AzureClient {
             }
 
         } catch (error) {
-            this.logger.error(`Failed to restart virtual machine ${vmName}:`, error)
-            throw error
+            throw new Error(`Failed to restart virtual machine ${vmName}`, { cause: error })
         }
     }
 

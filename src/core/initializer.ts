@@ -1,7 +1,7 @@
 import { getLogger } from "../log/utils"
 import { CLOUDYPAD_PROVIDER } from "./const"
 import { CreateCliArgs } from "./cli/command"
-import { InputPrompter } from "./cli/prompter"
+import { InputPrompter, UserVoluntaryInterruptionError } from "./cli/prompter"
 import { InstanceManagerBuilder } from "./manager-builder"
 import { StateInitializer } from "./state/initializer"
 import { confirm } from '@inquirer/prompts'
@@ -60,9 +60,16 @@ export class InteractiveInstanceInitializer<A extends CreateCliArgs> {
             this.showPostInitInfo(options)
             this.analyticsEvent("create_instance_finish")
         } catch (error) {
+
+            if(error instanceof UserVoluntaryInterruptionError){
+                console.info("Instance initialization cancelled.")
+                this.analyticsEvent("create_instance_user_voluntary_interruption")
+                return
+            }
+
             const errMsg = error instanceof Error ? error.message : String(error)
             this.analyticsEvent("create_instance_error", { errorMessage: errMsg })
-            throw new Error(`Error initializing instance: ${errMsg}`, { cause: error})
+            throw new Error(`Instance initialization failed`, { cause: error })
         }
     }
 

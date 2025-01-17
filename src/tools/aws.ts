@@ -92,10 +92,7 @@ export class AwsClient {
             const callerIdentity = await this.stsClient.send(new GetCallerIdentityCommand({}))
             this.logger.debug(`Currently authenticated as ${callerIdentity.UserId} on account ${callerIdentity.Account}`)
         } catch (e) {
-            this.logger.error(`Couldn't check AWS authentication`, e)
-            this.logger.error(`Is your local AWS config properly set ?`)
-            
-            throw new Error(`Couldn't check AWS authentication ` + e)
+            throw new Error(`Couldn't check AWS authentication. Did you configure your AWS credentials ?`, { cause: e })
         }
     }
 
@@ -136,8 +133,7 @@ export class AwsClient {
                 this.logger.trace(`Instance ${instanceId} is now running`)
             }
         } catch (error) {
-            this.logger.error(`Failed to start EC2 instance ${instanceId}:`, error)
-            throw error
+            throw new Error(`Failed to start EC2 instance ${instanceId}`, { cause: error })
         }
     }
 
@@ -165,8 +161,7 @@ export class AwsClient {
                 this.logger.trace(`Instance ${instanceId} is now stopped`)
             }
         } catch (error) {
-            this.logger.error(`Failed to stop EC2 instance ${instanceId}:`, error)
-            throw error
+            throw new Error(`Failed to stop EC2 instance ${instanceId}`, { cause: error })
         }
     }
     
@@ -194,8 +189,7 @@ export class AwsClient {
                 this.logger.trace(`Instance ${instanceId} is now fully restarted and running`)
             }
         } catch (error) {
-            this.logger.error(`Failed to restart EC2 instance ${instanceId}:`, error)
-            throw error
+            throw new Error(`Failed to restart EC2 instance ${instanceId}`, { cause: error })
         }
     }
 
@@ -219,8 +213,7 @@ export class AwsClient {
             
             return response.Quota?.Value
         } catch (error) {
-            this.logger.error(`Failed to check quota code ${quotaCode} in region ${this.region}:`, error)
-            throw error
+            throw new Error(`Failed to check quota code ${quotaCode} in region ${this.region}`, { cause: error })
         }
     }
 
@@ -245,7 +238,7 @@ export class AwsClient {
             }
 
         } catch (error) {
-            throw new Error(`Failed to fetch instance details for instance type ${JSON.stringify(instanceTypes)} in region ${this.region}:`, { cause: error })
+            throw new Error(`Failed to fetch instance details for instance type ${JSON.stringify(instanceTypes)} in region ${this.region}`, { cause: error })
         }
     }
 
@@ -276,7 +269,7 @@ export class AwsClient {
                 .map(offering => String(offering.InstanceType))
 
         } catch (error) {
-            throw new Error(`Failed to check availability of instance type ${instanceTypes} in region ${this.region}:`, { cause: error })
+            throw new Error(`Failed to check availability of instance type ${instanceTypes} in region ${this.region}`, { cause: error })
         }
     }
 

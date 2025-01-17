@@ -308,7 +308,7 @@ export class AzureCliCommandGenerator extends CliCommandGenerator {
                     }).initializeInstance(cliArgs)
                     
                 } catch (error) {
-                    throw new Error('Error creating Azure instance:', { cause: error })
+                    throw new Error('Azure instance initilization failed', { cause: error })
                 }
             })
     }
@@ -333,7 +333,7 @@ export class AzureCliCommandGenerator extends CliCommandGenerator {
                     console.info(`Updated instance ${cliArgs.name}`)
                     
                 } catch (error) {
-                    throw new Error('Error updating Azure instance:', { cause: error })
+                    throw new Error('Azure instance update failed', { cause: error })
                 }
             })
     }

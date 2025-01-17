@@ -9,8 +9,8 @@ import { CLOUDYPAD_PROVIDER_AWS, PUBLIC_IP_TYPE } from "../../core/const";
 import { InteractiveInstanceInitializer } from "../../core/initializer";
 import { PartialDeep } from "type-fest";
 import { RUN_COMMAND_CREATE, RUN_COMMAND_UPDATE } from "../../tools/analytics/events";
-import { StateLoader } from "../../core/state/loader";
 import { InstanceUpdater } from "../../core/updater";
+import { cleanupAndExit, handleErrorAnalytics, logFullError } from "../../program";
 
 export interface AwsCreateCliArgs extends CreateCliArgs {
     spot?: boolean
@@ -221,7 +221,19 @@ export class AwsCliCommandGenerator extends CliCommandGenerator {
                     }).initializeInstance(cliArgs)
                     
                 } catch (error) {
-                    throw new Error('Error creating AWS instance:', { cause: error })
+                    logFullError(error)
+                
+                    console.error("")
+                    console.error("Oops, something went wrong 😨 Full error is shown above.")
+                    console.error("")
+                    console.error("If you think this is a bug, please file an issue with full error: https://github.com/PierreBeucher/cloudypad/issues")
+                    console.error("")
+                    console.error("⚠️ Your instance was not created successfully. To cleanup resources and avoid leaving orphaned resources which may be charged, run:")
+                    console.error("")
+                    console.error("    cloudypad destroy <instance-name>")
+
+                    handleErrorAnalytics(error)
+                    await cleanupAndExit(1)
                 }
             })
     }
@@ -246,7 +258,7 @@ export class AwsCliCommandGenerator extends CliCommandGenerator {
                     console.info(`Updated instance ${cliArgs.name}`)
                     
                 } catch (error) {
-                    throw new Error('Error updating AWS instance:', { cause: error })
+                    throw new Error('Instance update failed', { cause: error })
                 }
             })
     }
