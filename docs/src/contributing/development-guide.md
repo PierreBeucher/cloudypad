@@ -5,6 +5,7 @@
   - [Unit tests](#unit-tests)
   - [Integration tests](#integration-tests)
   - [Development](#development)
+  - [Local Pulumi stack manipulation](#local-pulumi-stack-manipulation)
   - [Scripts](#scripts)
 - [Adding a new provider](#adding-a-new-provider)
   - [Provider components](#provider-components)
@@ -82,6 +83,21 @@ ansible-playbook -i /tmp/nix-shell.fD63LM/cloudypad-BX2kYb/inventory.yml ansible
 ```
 
 Will eventually add an easier way to pass custom Ansible options such as `--ansible-additional-flag` option or environment variable. 
+
+### Local Pulumi stack manipulation
+
+Nix development shell automatically set `PULUMI_BACKEND_URL` and `PULUMI_CONFIG_PASSPHRASE` environment variables, allowing to manipulate Pulumi stacks locally.
+
+```sh
+# List stacks
+pulumi stack ls -a
+
+# Show stack resources
+pulumi stack -s <organization/CloudyPad-XXX/STACK> --show-ids
+
+# Destroy stack
+pulumi destroy -s <organization/CloudyPad-XXX/STACK>
+```
 
 ### Scripts
 

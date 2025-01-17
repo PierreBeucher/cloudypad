@@ -1,6 +1,6 @@
 import * as az from "@pulumi/azure-native"
 import * as pulumi from "@pulumi/pulumi"
-import { InstancePulumiClient } from "./client"
+import { InstancePulumiClient } from "../../tools/pulumi/client"
 import { OutputMap } from "@pulumi/pulumi/automation"
 import { PUBLIC_IP_TYPE, PUBLIC_IP_TYPE_STATIC } from "../../core/const"
 import { CostAlertOptions } from "../../core/provisioner"

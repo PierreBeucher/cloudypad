@@ -1,6 +1,6 @@
 import { SshKeyLoader } from '../../tools/ssh'
 import { confirm } from '@inquirer/prompts'
-import { AzurePulumiClient, PulumiStackConfigAzure } from '../../tools/pulumi/azure'
+import { AzurePulumiClient, PulumiStackConfigAzure } from './pulumi'
 import { AbstractInstanceProvisioner, InstanceProvisionerArgs, InstanceProvisionOptions } from '../../core/provisioner'
 import { AzureClient } from '../../tools/azure'
 import { AzureProvisionInputV1, AzureProvisionOutputV1 } from './state'

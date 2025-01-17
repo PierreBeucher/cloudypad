@@ -1,7 +1,7 @@
 import * as aws from "@pulumi/aws";
 import * as pulumi from "@pulumi/pulumi";
 import { OutputMap } from "@pulumi/pulumi/automation";
-import { InstancePulumiClient } from "./client";
+import { InstancePulumiClient } from "../../tools/pulumi/client";
 import { PUBLIC_IP_TYPE, PUBLIC_IP_TYPE_DYNAMIC, PUBLIC_IP_TYPE_STATIC } from "../../core/const";
 
 interface PortDefinition {
