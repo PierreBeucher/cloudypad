@@ -25,8 +25,7 @@ export class GcpClient {
             GcpClient.staticLogger.debug(`List projects response: ${JSON.stringify(projects)}`)
             return projects
         } catch (error) {
-            GcpClient.staticLogger.error(`Failed to list Google Cloud projects:`, error)
-            throw error
+            throw new Error(`Failed to list Google Cloud projects`, { cause: error })
         }
     }
 
@@ -54,10 +53,6 @@ export class GcpClient {
             const creds = await this.auth.getApplicationDefault()
             this.logger.debug(`Google Cloud authenticated with project ${creds.projectId}`)
         } catch (e) {
-            this.logger.error(`Couldn't check Google Cloud authentication: ${JSON.stringify(e)}`)
-            this.logger.error(`Is your local Google Cloud authentication configured ?`)
-            this.logger.error(`Make sure you authenticated with Google Application Default Credentials using gcloud auth application-default login`)
-            
             throw new Error(`Couldn't check Google Cloud authentication.` + 
                 `Make sure you authenticated with Google Application Default Credentials using gcloud auth application-default login`,
                 { cause: e }
@@ -72,8 +67,7 @@ export class GcpClient {
             this.logger.debug(`List instances response: ${JSON.stringify(instances)}`)
             return instances
         } catch (error) {
-            this.logger.error(`Failed to list Google Cloud instances:`, error)
-            throw error
+            throw new Error(`Failed to list Google Cloud instances`, { cause: error })
         }
     }
 
@@ -95,8 +89,7 @@ export class GcpClient {
 
             this.logger.debug(`Started Google Cloud instance ${instanceName}, response: ${JSON.stringify(response)}`)
         } catch (error) {
-            this.logger.error(`Failed to start GCP instance ${instanceName}:`, error)
-            throw error
+            throw new Error(`Failed to start GCP instance ${instanceName}`, { cause: error })
         }
     }
 
@@ -118,8 +111,7 @@ export class GcpClient {
             
             this.logger.debug(`Stopped Google Cloud instance ${instanceName}, response: ${JSON.stringify(response)}`)
         } catch (error) {
-            this.logger.error(`Failed to stop Google Cloud instance ${instanceName}:`, error)
-            throw error
+            throw new Error(`Failed to stop Google Cloud instance ${instanceName}`, { cause: error })
         }
     }
    
@@ -141,8 +133,7 @@ export class GcpClient {
             this.logger.debug(`List regions response: ${JSON.stringify(regions)}`)
             return regions
         } catch (error) {
-            this.logger.error(`Failed to list Google Cloud regions:`, error)
-            throw error
+            throw new Error(`Failed to list Google Cloud regions`, { cause: error })
         }
     }
     
@@ -160,8 +151,7 @@ export class GcpClient {
             // Only return names
             return region.zones.map(z => z.substring(z.lastIndexOf('/')+1, z.length))
         } catch (error) {
-            this.logger.error(`Failed to list Google Cloud zones in region ${regionName}:`, error)
-            throw error
+            throw new Error(`Failed to list Google Cloud zones in region ${regionName}`, { cause: error })
         }
     }
 
@@ -173,8 +163,7 @@ export class GcpClient {
             this.logger.trace(`List machine types response: ${JSON.stringify(machineTypes)}`) // very bverbose, use trace
             return machineTypes
         } catch (error) {
-            this.logger.error(`Failed to list Google Cloud machine types in zone ${zone}:`, error)
-            throw error
+            throw new Error(`Failed to list Google Cloud machine types in zone ${zone}`, { cause: error })
         }
     }
 
@@ -185,8 +174,7 @@ export class GcpClient {
             this.logger.debug(`List accelerator types response: ${JSON.stringify(acceleratorTypes)}`)
             return acceleratorTypes
         } catch (error) {
-            this.logger.error(`Failed to list Google Cloud accelerator types in zone ${zone}:`, error)
-            throw error
+            throw new Error(`Failed to list Google Cloud accelerator types in zone ${zone}`, { cause: error })
         }
     }
 
@@ -222,7 +210,7 @@ export class GcpClient {
 
         if (operation.status === 'DONE') {
             if (operation.error) {
-                throw new Error(`Operation ${operationName} failed with errors: ${JSON.stringify(operation.error)}`)
+                throw new Error(`Operation ${operationName} failed.`, { cause: operation.error })
             }
             this.logger.debug(`Operation ${operationName} completed successfully`)
         }

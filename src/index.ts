@@ -9,12 +9,9 @@
 //
 
 import { ConfigManager } from "./core/config/manager"
-import { getLogger } from "./log/utils"
-import { buildProgram } from "./program"
+import { buildProgram, shutdownAnalytics, cleanupAndExit, handleErrorAnalytics, logFullError } from "./program"
 import { AnalyticsInitializer } from "./tools/analytics/initializer"
 import { AnalyticsManager } from "./tools/analytics/manager"
-
-const logger = getLogger("main")
 
 async function main(){
     try {
@@ -27,18 +24,19 @@ async function main(){
         await AnalyticsManager.get().shutdown()
         
     } catch (e){
-        logger.error("Oops, something went wrong 😨", e)
-        logger.error("If you think this is a bug, please file an issue with error logs: https://github.com/PierreBeucher/cloudypad/issues")
+        // This is a generic catch-all error handler. It logs the full error and sends it to analytics.
+        // Program parseAsync() may catch error earlier
+        logFullError(e)
 
-        const eventProps = e instanceof Error ? { errorMessage: e.message, stackTrace: e.stack } : { errorMessage: String(e), stackTrace: "unknown" }
-        const analytics = AnalyticsManager.get()
-        analytics.sendEvent("error", eventProps)
-        await analytics.shutdown()
+        console.error("Oops, something went wrong 😨 Full error is shown above.")
+        console.error("")
+        console.error("If you think this is a bug, please file an issue with full error: https://github.com/PierreBeucher/cloudypad/issues")
 
-        process.exit(1)
+        handleErrorAnalytics(e)
+        await cleanupAndExit(1)
     }
 }
 
-main().finally(() => {
-    logger.debug("Main function finished. Exiting...")
+main().finally(async () => {
+    await shutdownAnalytics()
 })

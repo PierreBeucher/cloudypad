@@ -166,8 +166,7 @@ export class ConfigManager {
 
             this.logger.debug(`Wrote parsed config ${JSON.stringify(parsedConfig)} at ${this.configPath}...`)
         } catch (e) {
-            this.logger.error(`Couldn't write config ${JSON.stringify(unsafeConfig)} at ${this.configPath}`, e)
-            throw new Error(`Couldn't write config ${JSON.stringify(unsafeConfig)} at ${this.configPath}: ${e}`)
+            throw new Error(`Couldn't write config ${JSON.stringify(unsafeConfig)} at ${this.configPath}`, { cause: e })
         }
     }
 
@@ -176,7 +175,7 @@ export class ConfigManager {
         if (result.success) {
             return result.data as z.infer<T>
         } else {
-            throw new Error(`Couldn't parse Config with Zod. Config is either corrupted or not compatible with this Cloudy Pad version. If you think this is a bug, please create an issue. Error state: ${JSON.stringify(data)}; Zod error: ${JSON.stringify(result.error.format())}`)
+            throw new Error(`Couldn't parse Config with Zod. Config is either corrupted or not compatible with this Cloudy Pad version. If you think this is a bug, please create an issue. Error state: ${JSON.stringify(data)}; Zod error: ${JSON.stringify(result.error.format())}`, { cause: result.error })
         }
     }
 }

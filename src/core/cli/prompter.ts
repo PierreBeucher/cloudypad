@@ -3,11 +3,12 @@ import * as path from 'path';
 import * as os from 'os';
 import { PartialDeep } from "type-fest"
 import { input, select, confirm } from '@inquirer/prompts';
+import { ExitPromptError } from '@inquirer/core';
 import lodash from 'lodash'
-import { CommonConfigurationInputV1, CommonInstanceInput, CommonProvisionInputV1 } from "../state/state";
+import { CommonInstanceInput } from "../state/state";
 import { getLogger } from "../../log/utils";
 import { PUBLIC_IP_TYPE, PUBLIC_IP_TYPE_DYNAMIC, PUBLIC_IP_TYPE_STATIC } from '../const';
-import { CreateCliArgs, UpdateCliArgs } from './command';
+import { CreateCliArgs } from './command';
 import { StateLoader } from '../state/loader';
 import { CostAlertOptions } from '../provisioner';
 const { kebabCase } = lodash
@@ -31,6 +32,11 @@ export interface PromptOptions {
     skipQuotaWarning?: boolean
 }
 
+/**
+ * Error thrown when user voluntarily interrupts or refuse a prompt.
+ */
+export class UserVoluntaryInterruptionError extends Error { }
+
 export abstract class AbstractInputPrompter<A extends CreateCliArgs, I extends CommonInstanceInput> implements InputPrompter {
 
     protected readonly logger = getLogger(AbstractInputPrompter.name)
@@ -40,10 +46,18 @@ export abstract class AbstractInputPrompter<A extends CreateCliArgs, I extends C
      * Returns a fully valid state for instance initialization. 
      */
     async promptInput(partialInput: PartialDeep<I>, createOptions: PromptOptions): Promise<I> {
-        const commonInput = await this.promptCommonInput(partialInput, createOptions)
-        const commonInputWithPartial = lodash.merge({}, commonInput, partialInput)
-        const finalInput = await this.promptSpecificInput(commonInputWithPartial, createOptions)
-        return finalInput
+        try {
+            const commonInput = await this.promptCommonInput(partialInput, createOptions)
+            const commonInputWithPartial = lodash.merge({}, commonInput, partialInput)
+            const finalInput = await this.promptSpecificInput(commonInputWithPartial, createOptions)
+            return finalInput
+        } catch (error) {
+            if(error instanceof ExitPromptError){
+                throw new UserVoluntaryInterruptionError(`User voluntarily interrupted prompt`, { cause: error })
+            }
+
+            throw new Error(`Failed to prompt input`, { cause: error })
+        }
     }
     
     private async promptCommonInput(partialInput: PartialDeep<CommonInstanceInput>, createOptions: PromptOptions): Promise<CommonInstanceInput> {

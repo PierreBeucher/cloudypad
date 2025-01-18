@@ -301,8 +301,7 @@ export class PaperspaceClient {
             return result
 
         } catch (error) {
-            this.logger.error('Error listing machines:', error)
-            throw new Error('Failed to list machines')
+            throw new Error('Failed to list machines', { cause: error })
         }
     }
 
@@ -317,8 +316,7 @@ export class PaperspaceClient {
                 return false
             }
             
-            this.logger.error(`Error checking machine ${machineId} existence:`, e)
-            throw e
+            throw new Error(`Failed to check machine ${machineId} existence`, { cause: e })
         }   
         return true
     }
@@ -331,9 +329,7 @@ export class PaperspaceClient {
 
             return foundIp !== undefined
         } catch (e){
-            
-            this.logger.error(`Error checking public IP ${ip} existence:`, e)
-            throw e 
+            throw new Error(`Failed to check public IP ${ip} existence`, { cause: e })
         }
     }
 

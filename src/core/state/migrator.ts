@@ -272,8 +272,8 @@ export class StateMigrator extends BaseStateManager {
                 throw new Error(`Unknwon provider in state ${JSON.stringify(providerV0)}`)
             }
         } catch (e) {
-            this.logger.error(e)
-            throw new Error(`Unable to migrate State from V0 to V1. Please create an issue with full error log and state: ${JSON.stringify(rawState)}`)
+            throw new Error(`Unable to migrate State from V0 to V1.` + 
+                `Please create an issue with full error log and state: ${JSON.stringify(rawState)}`, { cause: e })
         }
         return stateV1
 

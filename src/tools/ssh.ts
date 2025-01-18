@@ -165,6 +165,7 @@ export class SSHClient {
             this.client.dispose()
         } catch (e) {
             this.logger.error(`Disposing client ${this.args.clientName}: ${e}`, e)
+            // Voluntarily do not rethrow error as cleanup error is not critical
         }
     }
     
