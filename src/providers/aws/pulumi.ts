@@ -275,7 +275,7 @@ async function awsPulumiProgram(): Promise<Record<string, any> | void> {
                 // Use a specific version as much as possible to avoid reproducibility issues
                 // Can't use AMI ID as it's region dependent 
                 // and specifying AMI for all regions may not yield expected results and would be hard to maintain
-                values: ["ubuntu/images/hvm-ssd/ubuntu-jammy-22.04-amd64-server-20241120"],
+                values: ["ubuntu/images/hvm-ssd-gp3/ubuntu-noble-24.04-amd64-server-20250115"],
             },
             {
                 name: "virtualization-type",
@@ -319,16 +319,19 @@ async function awsPulumiProgram(): Promise<Record<string, any> | void> {
             enabled: useSpot
         },
         billingAlert: billingAlert,
-        ingressPorts: [ // SSH + Wolf ports
+        ingressPorts: [
             { from: 22, protocol: "tcp" }, // HTTP
             { from: 80, protocol: "Tcp" }, // HTTP
             { from: 443, protocol: "Tcp" }, // HTTPS
             { from: 47984, protocol: "tcp" }, // HTTP
             { from: 47989, protocol: "tcp" }, // HTTPS
             { from: 48010, protocol: "tcp" }, // RTSP
-            { from: 47999, protocol: "udp" }, // Control
-            { from: 48100, to: 48110, protocol: "udp" }, // Video (up to 10 users)
-            { from: 48200, to: 48210, protocol: "udp" }, // Audio (up to 10 users)
+            
+            { from: 47998, protocol: "udp" },
+            { from: 47999, protocol: "udp" },
+            { from: 48000, protocol: "udp" },
+            { from: 48002, protocol: "udp" },
+            { from: 48010, protocol: "udp" },
         ]
     })
 

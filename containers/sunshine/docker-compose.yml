@@ -1,0 +1,6 @@
+# Build and debug compose file, not usable to run container
+services:
+  cloudy:
+    build: .
+    image: ghcr.io/pierrebeucher/cloudypad/sunshine:dev
+    entrypoint: ["/bin/bash"]

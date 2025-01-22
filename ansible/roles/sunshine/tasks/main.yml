@@ -1,0 +1,40 @@
+# ---
+- name: Ensure Sunshine project directory exists
+  file:
+    path: "{{ sunshine_project_dir }}"
+    state: directory
+    mode: '0750'
+
+- name: Ensure Sunshine data directory exists
+  become: true # required since container user may not match host user. TODO fix this
+  file:
+    path: "{{ sunshine_data_dir }}"
+    state: directory
+    mode: '0750'
+
+- name: import Nvidia tasks
+  import_tasks: nvidia.yml
+  when: sunshine_nvidia_enable
+
+# List of Compose files to use depending on GPU used
+- name: Set Docker Compose files
+  set_fact:
+    sunshine_compose_files: "{{ 
+      ['docker-compose.yml'] 
+      + (['docker-compose.nvidia.yml'] if sunshine_nvidia_enable else []) 
+    }}"
+
+- name: Copy Docker Compose files
+  ansible.builtin.template:
+    src: "{{ item }}"
+    dest: "{{ sunshine_project_dir }}/{{ item }}"
+    mode: '0644'
+  loop: "{{ sunshine_compose_files }}"
+
+- name: Deploy Sunshine container
+  community.docker.docker_compose_v2:
+    project_src: "{{ sunshine_project_dir }}"
+    build: always
+    state: present
+    files: "{{ sunshine_compose_files }}"
+    pull: always
