@@ -63,12 +63,36 @@
     state: restarted
   when: gdm_config is changed
 
+- name: Ensure home .config directory exists
+  file:
+    path: /home/sunshine/.config
+    state: directory
+    owner: sunshine
+    group: sunshine
+    mode: '0755'
+
+- name: Ensure home sunshine config directory exists
+  file:
+    path: /home/sunshine/.config/sunshine
+    state: directory
+    owner: sunshine
+    group: sunshine
+    mode: '0755'
+
+- name: copy Sunshine config file
+  ansible.builtin.copy:
+    src: sunshine.conf
+    dest: /home/sunshine/.config/sunshine/sunshine.conf
+    owner: sunshine
+    group: sunshine
+    mode: '0660'
+
 - name: Ensure sunshine user exists
   ansible.builtin.user:
     name: sunshine
     home: /home/sunshine
     shell: /bin/bash
-    groups: input,video # ,sound
+    groups: input,video,render # ,sound
     password: $6$Aib4IX3lIJAcbpis$yMc2n5Ii.Xwzh74dV8w.MqP/gn8Xm8R0MUE4JYYUJoP2yxJmZL3dwV07DAYhDPbe151ZhuTIXYYQZFFpAAB.p/
     state: present
     createhome: yes
@@ -109,14 +133,10 @@
     state: started
     # scope: user
 
-# TODO
-# - name: configure autologin for sunshine user
-
-# - name: 
-# - name: setup X config with dummy display
-#   copy:
-#     src: x11-virtscreen.conf
-#     dest: /etc/X11/xorg.conf.d/30-virtscreen.conf
+- name: setup X config with dummy display
+  copy:
+    src: x11-virtscreen.conf
+    dest: /etc/X11/xorg.conf.d/30-virtscreen.conf
 
 # - name: Create systemd user service for Sunshine
 #   copy:
