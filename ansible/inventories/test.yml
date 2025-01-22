@@ -1,6 +1,6 @@
 all:
   hosts:
-    "35.180.68.139":
+    "3.66.249.215":
       ansible_user: ubuntu
       # vars:
       #   docker_users:

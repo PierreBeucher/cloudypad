@@ -14,7 +14,6 @@
     state: present
     update_cache: yes
 
-
 - name: Download Sunshine deb package
   get_url:
     url: https://github.com/LizardByte/Sunshine/releases/download/v2025.118.151840/sunshine-ubuntu-24.04-amd64.deb
@@ -41,10 +40,83 @@
       - libgl1-mesa-dri
     state: present
 
-- name: setup X config with dummy display
+- name: Install GDM display manager
+  apt:
+    name:
+    - gdm3
+    - ubuntu-desktop-minimal
+    state: present
+    update_cache: yes
+
+- name: Configure GDM for autologin
   copy:
-    src: x11-virtscreen.conf
-    dest: /etc/X11/xorg.conf.d/30-virtscreen.conf
+    src: gdm.conf
+    dest: /etc/gdm3/custom.conf
+    owner: root
+    group: root
+    mode: '0644'
+  register: gdm_config
+
+- name: Restart display-manager
+  systemd:
+    name: display-manager
+    state: restarted
+  when: gdm_config is changed
+
+- name: Ensure sunshine user exists
+  ansible.builtin.user:
+    name: sunshine
+    home: /home/sunshine
+    shell: /bin/bash
+    groups: input,video # ,sound
+    password: $6$Aib4IX3lIJAcbpis$yMc2n5Ii.Xwzh74dV8w.MqP/gn8Xm8R0MUE4JYYUJoP2yxJmZL3dwV07DAYhDPbe151ZhuTIXYYQZFFpAAB.p/
+    state: present
+    createhome: yes
+
+- name: Setup sunshine systemd service
+  ansible.builtin.copy:
+    dest: /etc/systemd/system/sunshine.service
+    content: |
+      [Unit]
+      Description=Sunshine server
+      WantedBy=graphical-session.target
+      PartOf=graphical-session.target
+      Wants=graphical-session.target
+      After=graphical-session.target
+      StartLimitIntervalSec=500
+      StartLimitBurst=5
+
+      [Service]
+      ExecStart=/usr/bin/sunshine
+      Restart=on-failure
+      RestartSec=5s
+      User=sunshine
+      Group=sunshine
+
+      [Install]
+      WantedBy=graphical-session.target
+
+- name: Reload systemd to apply sunshine service
+  ansible.builtin.systemd:
+    daemon_reload: yes
+
+- name: Enable and start sunshine service
+  # become: true
+  # become_user: sunshine
+  ansible.builtin.systemd:
+    name: sunshine.service
+    enabled: true
+    state: started
+    # scope: user
+
+# TODO
+# - name: configure autologin for sunshine user
+
+# - name: 
+# - name: setup X config with dummy display
+#   copy:
+#     src: x11-virtscreen.conf
+#     dest: /etc/X11/xorg.conf.d/30-virtscreen.conf
 
 # - name: Create systemd user service for Sunshine
 #   copy:

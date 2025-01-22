@@ -1,5 +1,5 @@
 ---
-- name: Install Sunshine AppImage on Ubuntu 22.04
+- name: Sunshine Ubuntu 24.04
   hosts: all
   roles:
     - role: roles/x11
