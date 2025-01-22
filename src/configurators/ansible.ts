@@ -33,7 +33,7 @@ export class AnsibleConfigurator<ST extends InstanceStateV1> extends AbstractIns
 
         this.logger.debug(`Running Ansible configuration`)
 
-        const playbookPath = path.resolve(__dirname, "..", "..", "ansible", "playbook.yml"); // TODO more specific
+        const playbookPath = path.resolve(__dirname, "..", "..", "ansible", "sunshine.yml"); // TODO more specific
 
         this.logger.debug(`Using playbook ${playbookPath}`)
 

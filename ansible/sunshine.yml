@@ -1,0 +1,17 @@
+---
+- name: Install Sunshine AppImage on Ubuntu 22.04
+  hosts: all
+  roles:
+    - role: roles/x11
+      tags: [ x11 ]
+      become: true
+    - role: roles/nvidia-driver
+      tags: [ nvidia ]
+      become: true
+      vars:
+        nvidia_driver_module_params: |
+          # nvidia-drm module is required by Wolf
+          options nvidia-drm modeset=1
+    - role: roles/sunshine
+      tags: [ sunshine ]
+      become: true
