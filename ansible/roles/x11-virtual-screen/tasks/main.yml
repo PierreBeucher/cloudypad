@@ -1,0 +1,14 @@
+# TODO handle non-nvidia virtual display
+- name: Install nvidia virtual display required packages
+  apt:
+    name:
+      # Required for Nvidia virtual display
+      - mesa-utils
+      - mesa-vulkan-drivers
+      - libgl1-mesa-dri
+    state: present
+
+- name: setup X config with dummy NVIDIA display
+  copy:
+    src: x11-virtscreen.conf
+    dest: /etc/X11/xorg.conf.d/30-virtscreen.conf

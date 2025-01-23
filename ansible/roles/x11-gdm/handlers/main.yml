@@ -1,0 +1,4 @@
+- name: Restart display-manager
+  systemd:
+    name: display-manager
+    state: restarted

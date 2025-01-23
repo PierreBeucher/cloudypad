@@ -31,37 +31,16 @@
     name: uinput
     state: present
 
-- name: Install nvidia virtual display required packages
-  apt:
-    name:
-      # Required for Nvidia virtual display
-      - mesa-utils
-      - mesa-vulkan-drivers
-      - libgl1-mesa-dri
+- name: Ensure sunshine user exists
+  ansible.builtin.user:
+    name: sunshine
+    home: /home/sunshine
+    shell: /bin/bash
+    groups: input,video,render # ,sound
+    # TODO remove password, useful ?
+    password: $6$Aib4IX3lIJAcbpis$yMc2n5Ii.Xwzh74dV8w.MqP/gn8Xm8R0MUE4JYYUJoP2yxJmZL3dwV07DAYhDPbe151ZhuTIXYYQZFFpAAB.p/
     state: present
-
-- name: Install GDM display manager
-  apt:
-    name:
-    - gdm3
-    - ubuntu-desktop-minimal
-    state: present
-    update_cache: yes
-
-- name: Configure GDM for autologin
-  copy:
-    src: gdm.conf
-    dest: /etc/gdm3/custom.conf
-    owner: root
-    group: root
-    mode: '0644'
-  register: gdm_config
-
-- name: Restart display-manager
-  systemd:
-    name: display-manager
-    state: restarted
-  when: gdm_config is changed
+    createhome: yes
 
 - name: Ensure home .config directory exists
   file:
@@ -87,15 +66,13 @@
     group: sunshine
     mode: '0660'
 
-- name: Ensure sunshine user exists
-  ansible.builtin.user:
-    name: sunshine
-    home: /home/sunshine
-    shell: /bin/bash
-    groups: input,video,render # ,sound
-    password: $6$Aib4IX3lIJAcbpis$yMc2n5Ii.Xwzh74dV8w.MqP/gn8Xm8R0MUE4JYYUJoP2yxJmZL3dwV07DAYhDPbe151ZhuTIXYYQZFFpAAB.p/
-    state: present
-    createhome: yes
+- name: Copy sunshine service script
+  ansible.builtin.copy:
+    src: sunshine-start.sh
+    dest: /usr/local/bin/sunshine-start.sh
+    owner: root
+    group: root
+    mode: '0755'
 
 - name: Setup sunshine systemd service
   ansible.builtin.copy:
@@ -111,11 +88,12 @@
       StartLimitBurst=5
 
       [Service]
-      ExecStart=/usr/bin/sunshine
+      ExecStart=/usr/local/bin/sunshine-start.sh
       Restart=on-failure
       RestartSec=5s
       User=sunshine
       Group=sunshine
+      Environment="DISPLAY=:0"
 
       [Install]
       WantedBy=graphical-session.target
@@ -125,40 +103,7 @@
     daemon_reload: yes
 
 - name: Enable and start sunshine service
-  # become: true
-  # become_user: sunshine
   ansible.builtin.systemd:
     name: sunshine.service
     enabled: true
     state: started
-    # scope: user
-
-- name: setup X config with dummy display
-  copy:
-    src: x11-virtscreen.conf
-    dest: /etc/X11/xorg.conf.d/30-virtscreen.conf
-
-# - name: Create systemd user service for Sunshine
-#   copy:
-#     dest: ~/.config/systemd/user/sunshine.service
-#     content: |
-#       [Unit]
-#       Description=Sunshine self-hosted game stream host for Moonlight.
-#       StartLimitIntervalSec=500
-#       StartLimitBurst=5
-
-#       [Service]
-#       ExecStart=/usr/local/bin/sunshine
-#       Restart=on-failure
-#       RestartSec=5s
-
-#       [Install]
-#       WantedBy=default.target
-
-# - name: Start Sunshine service
-#   systemd:
-#     scope: user
-#     daemon_reload: yes
-#     name: sunshine
-#     state: started
-#     enabled: yes

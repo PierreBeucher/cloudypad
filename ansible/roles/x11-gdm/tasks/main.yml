@@ -1,0 +1,29 @@
+
+- name: Install Xorg and related packages
+  apt:
+    name:
+      - xorg
+      - openbox
+      - x11-xserver-utils
+      - xinit
+    state: present
+    update_cache: yes
+
+- name: Install GDM display manager
+  apt:
+    name:
+    - gdm3
+    - ubuntu-desktop-minimal
+    state: present
+    update_cache: yes
+
+- name: Configure GDM for autologin
+  copy:
+    src: gdm.conf
+    dest: /etc/gdm3/custom.conf
+    owner: root
+    group: root
+    mode: '0644'
+  notify:
+    - Restart display-manager
+
