@@ -23,6 +23,15 @@
     - role: roles/x11-virtual-screen
       tags: [ x11, gdm ]
       become: true
-    - role: roles/sunshine
+    - role: roles/sunshine-install
       tags: [ sunshine ]
       become: true
+
+# Install sunshine service for sunshine user so that it can be started on startup with auto-login
+- name: Sunshine Ubuntu 24.04
+  hosts: all
+  vars:
+    ansible_user: sunshine
+  roles:  
+    - role: roles/sunshine-user-service
+      tags: [ sunshine-user ]

@@ -1,0 +1,58 @@
+
+- name: Ensure directories exist
+  file:
+    path: "{{ item }}"
+    state: directory
+    owner: sunshine
+    group: sunshine
+    mode: "0755"
+  loop:
+    - /home/sunshine/.config
+    - /home/sunshine/.config/sunshine
+    - /home/sunshine/.local/bin
+    - /home/sunshine/.config/systemd
+    - /home/sunshine/.config/systemd/user
+
+- name: Copy sunshine config file
+  ansible.builtin.copy:
+    src: sunshine.conf
+    dest: /home/sunshine/.config/sunshine/sunshine.conf
+    owner: sunshine
+    group: sunshine
+    mode: "0660"
+  
+- name: Copy sunshine startup script
+  ansible.builtin.copy:
+    src: sunshine-start.sh
+    dest: /home/sunshine/.local/bin/sunshine-start.sh
+    owner: sunshine
+    group: sunshine
+    mode: "0755"  
+
+- name: Setup sunshine systemd user service
+  ansible.builtin.copy:
+    dest: /home/sunshine/.config/systemd/user/sunshine.service
+    content: |
+      [Unit]
+      Description=Sunshine server
+      After=graphical-session.target
+
+      [Service]
+      ExecStart=/home/sunshine/.local/bin/sunshine-start.sh
+      Restart=on-failure
+      RestartSec=5s
+
+      [Install]
+      WantedBy=default.target
+
+# - name: Reload systemd user daemon to apply sunshine service
+#   ansible.builtin.systemd:
+#     daemon_reload: yes
+
+- name: Enable and start sunshine user service
+  ansible.builtin.systemd:
+    name: sunshine.service
+    enabled: true
+    state: started
+    scope: user
+    daemon_reload: true

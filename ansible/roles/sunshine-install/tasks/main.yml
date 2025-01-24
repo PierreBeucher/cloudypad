@@ -1,0 +1,43 @@
+# ---
+- name: Install dependencies for Sunshine
+  apt:
+    name:
+      - libevdev2
+      - libopus0
+      - libpulse0
+      - libva2
+      - libva-drm2
+      - libwayland-client0
+      - miniupnpc
+      - libayatana-appindicator3-1
+      - libnotify4
+    state: present
+    update_cache: yes
+
+- name: Download Sunshine deb package
+  get_url:
+    url: https://github.com/LizardByte/Sunshine/releases/download/v2025.118.151840/sunshine-ubuntu-24.04-amd64.deb
+    dest: /tmp/sunshine.deb
+
+# Deb installer also:
+# - set cap_sys_admin+p
+# - set udev rules in /lib/udev/rules.d/60-sunshine.rules
+- name: Install Sunshine deb package
+  apt:
+    deb: /tmp/sunshine.deb
+
+- name: Load uinput module
+  modprobe:
+    name: uinput
+    state: present
+
+- name: Ensure sunshine user exists
+  ansible.builtin.user:
+    name: sunshine
+    home: /home/sunshine
+    shell: /bin/bash
+    groups: input,video,render # ,sound
+    # TODO remove password, useful ?
+    password: $6$Aib4IX3lIJAcbpis$yMc2n5Ii.Xwzh74dV8w.MqP/gn8Xm8R0MUE4JYYUJoP2yxJmZL3dwV07DAYhDPbe151ZhuTIXYYQZFFpAAB.p/
+    state: present
+    createhome: yes
