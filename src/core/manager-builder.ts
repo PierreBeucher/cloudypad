@@ -8,12 +8,10 @@ import { GenericInstanceManager, InstanceManager } from './manager';
 import { StateLoader } from './state/loader';
 import { StateWriter } from './state/writer';
 import { InstanceStateV1 } from './state/state';
-import { StateMigrator } from './state/migrator';
 import { AwsInstanceStateV1, AwsStateParser } from '../providers/aws/state';
 import { AzureInstanceStateV1, AzureStateParser } from '../providers/azure/state';
 import { GcpInstanceStateV1, GcpStateParser } from '../providers/gcp/state';
 import { PaperspaceInstanceStateV1, PaperspaceStateParser } from '../providers/paperspace/state';
-import { InstanceUpdater } from './updater';
 
 export class InstanceManagerBuilder {
 

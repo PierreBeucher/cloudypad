@@ -18,13 +18,14 @@ export interface SubManagerFactory<ST extends InstanceStateV1> {
 export abstract class AbstractSubManagerFactory<ST extends InstanceStateV1> {
 
     async buildProvisioner(state: ST): Promise<InstanceProvisioner> {
-        return this.doBuildProvisioner(state.name, state.provision.input, state.provision.output)
+        return this.doBuildProvisioner(state.name, state.provision.input, state.provision.output, state.configuration.input)
     }
 
     protected abstract doBuildProvisioner(
         name: string, 
-        input: ST["provision"]["input"], 
-        output: ST["provision"]["output"]
+        provisionInput: ST["provision"]["input"], 
+        provisionOutput: ST["provision"]["output"],
+        configurationInput: ST["configuration"]["input"],
     ): Promise<InstanceProvisioner>
     
     async buildRunner(state: ST): Promise<InstanceRunner> {
@@ -32,13 +33,14 @@ export abstract class AbstractSubManagerFactory<ST extends InstanceStateV1> {
             throw new Error(`Can't build Instance Runner for ${state.name}: no provision output in state. Was instance fully provisioned ?`)
         }
 
-        return this.doBuildRunner(state.name, state.provision.input, state.provision.output)
+        return this.doBuildRunner(state.name, state.provision.input, state.provision.output, state.configuration.input)
     }
 
     protected abstract doBuildRunner(
         name: string, 
-        input: ST["provision"]["input"], 
-        output: NonNullable<ST["provision"]["output"]>
+        provisionInput: ST["provision"]["input"], 
+        provisionOutput: NonNullable<ST["provision"]["output"]>,
+        configurationInput: ST["configuration"]["input"],
     ): Promise<InstanceRunner>
     
     async buildConfigurator(state: ST): Promise<InstanceConfigurator> {

@@ -12,15 +12,15 @@ export class GcpInstanceRunner extends AbstractInstanceRunner<GcpProvisionInputV
     constructor(args: GcpInstanceRunnerArgs) {
         super(CLOUDYPAD_PROVIDER_GCP, args)
 
-        this.client = new GcpClient(args.instanceName, args.input.projectId)
+        this.client = new GcpClient(args.instanceName, args.provisionInput.projectId)
     }
 
     private getinstanceName(): string{
-        return this.args.instanceName, this.args.output.instanceName
+        return this.args.instanceName
     }
 
     private getZone(): string{
-        return this.args.instanceName, this.args.input.zone
+        return this.args.provisionInput.zone
     }
 
     async doStart(opts?: StartStopOptions) {

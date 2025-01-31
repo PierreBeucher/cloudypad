@@ -17,3 +17,7 @@ provision:
 configuration:
   configurator: ansible
   input: {}
+  #   sunshine:
+  #     enable: true
+  #     username: sunshine
+  #     passwordBase64: sunshine

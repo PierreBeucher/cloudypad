@@ -6,7 +6,7 @@ import { fetchApiKeyFromEnvironment } from './client/client';
 import lodash from 'lodash'
 import { PartialDeep } from "type-fest";
 import { CLOUDYPAD_PROVIDER_PAPERSPACE, PUBLIC_IP_TYPE } from "../../core/const";
-import { CLI_OPTION_DISK_SIZE, CLI_OPTION_PUBLIC_IP_TYPE, CLI_OPTION_SPOT, CliCommandGenerator, CreateCliArgs, UpdateCliArgs } from "../../core/cli/command";
+import { CLI_OPTION_DISK_SIZE, CLI_OPTION_PUBLIC_IP_TYPE, CLI_OPTION_SPOT, CLI_OPTION_STREAMING_SERVER, CliCommandGenerator, CreateCliArgs, UpdateCliArgs } from "../../core/cli/command";
 import { InteractiveInstanceInitializer } from "../../core/initializer";
 import { InstanceManagerBuilder } from "../../core/manager-builder";
 import { RUN_COMMAND_CREATE, RUN_COMMAND_UPDATE } from "../../tools/analytics/events";
@@ -24,20 +24,16 @@ export type PaperspaceUpdateCliArgs = UpdateCliArgs & Omit<PaperspaceCreateCliAr
 
 export class PaperspaceInputPrompter extends AbstractInputPrompter<PaperspaceCreateCliArgs, PaperspaceInstanceInput> {
     
-    doTransformCliArgsIntoInput(cliArgs: PaperspaceCreateCliArgs): PartialDeep<PaperspaceInstanceInput> {
+    buildProvisionerInputFromCliArgs(cliArgs: PaperspaceCreateCliArgs): PartialDeep<PaperspaceInstanceInput> {
         return {
             instanceName: cliArgs.name,
             provision: {
-                ssh: {
-                    privateKeyPath: cliArgs.privateSshKey
-                },
                 apiKey: cliArgs.apiKeyFile,
                 machineType: cliArgs.machineType,
                 diskSize: cliArgs.diskSize,
                 publicIpType: cliArgs.publicIpType,
                 region: cliArgs.region,
             },
-            configuration: {}
         }
     }
 
@@ -164,6 +160,7 @@ export class PaperspaceCliCommandGenerator extends CliCommandGenerator {
             .addOption(CLI_OPTION_SPOT)
             .addOption(CLI_OPTION_DISK_SIZE)
             .addOption(CLI_OPTION_PUBLIC_IP_TYPE)
+            .addOption(CLI_OPTION_STREAMING_SERVER)
             .option('--api-key-file <apikeyfile>', 'Path to Paperspace API key file')
             .option('--machine-type <type>', 'Machine type')
             .option('--region <region>', 'Region in which to deploy instance')

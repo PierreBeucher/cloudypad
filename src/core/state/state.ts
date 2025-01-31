@@ -16,9 +16,18 @@ const CommonProvisionInputV1Schema = z.object({
     }).describe("SSH access configuration"),
 }).passthrough()
 
-const CommonConfigurationOutputV1Schema = z.object({}).passthrough()
+const CommonConfigurationInputV1Schema = z.object({
+    sunshine: z.object({
+        enable: z.boolean().describe("Whether to enable Sunshine streaming server"),
+        passwordBase64: z.string().describe("Sunshine web UI password (base64 encoded)"),
+        username: z.string().describe("Sunshine web UI username"),
+    }).nullish(),
+    wolf: z.object({
+        enable: z.boolean().describe("Whether to enable Wolf streaming server"),
+    }).nullish(),
+}).passthrough()
 
-const CommonConfigurationInputV1Schema = z.object({}).passthrough()
+const CommonConfigurationOutputV1Schema = z.object({}).passthrough()
 
 const InstanceStateV1Schema = z.object({
     version: z.literal("1").describe("State schema version, always 1"),

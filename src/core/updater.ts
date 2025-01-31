@@ -56,8 +56,14 @@ export class InstanceUpdater<ST extends InstanceStateV1, A extends UpdateCliArgs
             provision: state.provision.input,
             configuration: state.configuration.input
         }
-        const cliInput = this.inputPrompter.cliArgsIntoInput(cliArgs)
+        const cliInput = this.inputPrompter.cliArgsIntoPartialInput(cliArgs)
+
+        this.logger.debug(`Loaded state input for update ${JSON.stringify(stateInput)}`)
+        this.logger.debug(`Loaded CLI input for update ${JSON.stringify(cliInput)}`)
+
         const existingInput = lodash.merge({}, stateInput, cliInput)
+
+        this.logger.debug(`Loaded input for update ${JSON.stringify(existingInput)}`)
 
         // Complete to full input, prompt user for missing values
         const fullInput = await this.inputPrompter.promptInput(existingInput, {

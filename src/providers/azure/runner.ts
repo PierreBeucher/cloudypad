@@ -12,15 +12,15 @@ export class AzureInstanceRunner extends AbstractInstanceRunner<AzureProvisionIn
     constructor(args: AzureInstanceRunnerArgs) {
         super(CLOUDYPAD_PROVIDER_AZURE, args)
 
-        this.client = new AzureClient(args.instanceName, args.input.subscriptionId)
+        this.client = new AzureClient(args.instanceName, args.provisionInput.subscriptionId)
     }
 
     private getVmName() {
-        return this.args.output.vmName
+        return this.args.provisionOutput.vmName
     }
 
     private getResourceGroupName(){
-        return this.args.output.resourceGroupName
+        return this.args.provisionOutput.resourceGroupName
     }
 
     async doStart(opts?: StartStopOptions) {

@@ -23,20 +23,20 @@ export class AwsProvisioner extends AbstractInstanceProvisioner<AwsProvisionInpu
         if(opts?.autoApprove){
             confirmCreation = opts.autoApprove
         } else {
+            const humanReadableArgs = (obj: any, parentKey = ''): string => {
+                return Object.keys(obj).map(key => {
+                    const fullKey = parentKey ? `${parentKey} ${key}` : key;
+                    if (typeof obj[key] === 'object' && obj[key] !== null) {
+                        return humanReadableArgs(obj[key], fullKey);
+                    }
+                    return `${fullKey.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())}: ${obj[key]}`;
+                }).join('\n    ');
+            };
+
             confirmCreation = await confirm({
-                message: `
-You are about to provision AWS machine with the following details:
-    Instance name: ${this.args.instanceName}
-    Spot instance: ${this.args.input.useSpot}
-    SSH key: ${this.args.input.ssh.privateKeyPath}
-    AWS Region: ${this.args.input.region}
-    Instance Type: ${this.args.input.instanceType}
-    Public IP Type: ${this.args.input.publicIpType}
-    Disk size: ${this.args.input.diskSize}
-    Cost Alert: ${this.args.input.costAlert?.limit ? `enabled, limit: ${this.args.input.costAlert.limit}$, ` + 
-        `notification email: ${this.args.input.costAlert.notificationEmail}` : 'None.'}
-    
-Do you want to proceed?`,
+                message: `You are about to provision AWS machine with the following details:\n` + 
+                `    ${this.inputToHumanReadableString(this.args)}` +
+                `\nDo you want to proceed?`,
                 default: true,
             })
         }
@@ -47,13 +47,13 @@ Do you want to proceed?`,
 
         const pulumiClient = new AwsPulumiClient(this.args.instanceName)
         const pulumiConfig: PulumiStackConfigAws = {
-            instanceType: this.args.input.instanceType,
-            publicIpType: this.args.input.publicIpType,
-            region: this.args.input.region,
-            rootVolumeSizeGB: this.args.input.diskSize,
-            publicSshKeyContent: new SshKeyLoader().parseSshPrivateKeyFileToPublic(this.args.input.ssh.privateKeyPath),
-            useSpot: this.args.input.useSpot,
-            billingAlert: this.args.input.costAlert ?? undefined,
+            instanceType: this.args.provisionInput.instanceType,
+            publicIpType: this.args.provisionInput.publicIpType,
+            region: this.args.provisionInput.region,
+            rootVolumeSizeGB: this.args.provisionInput.diskSize,
+            publicSshKeyContent: new SshKeyLoader().parseSshPrivateKeyFileToPublic(this.args.provisionInput.ssh.privateKeyPath),
+            useSpot: this.args.provisionInput.useSpot,
+            billingAlert: this.args.provisionInput.costAlert ?? undefined,
         }
 
         await pulumiClient.setConfig(pulumiConfig)
@@ -70,12 +70,12 @@ Do you want to proceed?`,
         const pulumiClient = new AwsPulumiClient(this.args.instanceName)
         await pulumiClient.destroy()
 
-        this.args.output = undefined
-        this.args.output = undefined
+        this.args.provisionOutput = undefined
+        this.args.provisionOutput = undefined
     }
 
     async doVerifyConfig() {
-        const client = new AwsClient(this.args.instanceName, this.args.input.region)
+        const client = new AwsClient(this.args.instanceName, this.args.provisionInput.region)
         await client.checkAuth()
     }
 }

@@ -1,5 +1,5 @@
 import * as assert from 'assert';
-import { DUMMY_AWS_PULUMI_OUTPUT, DUMMY_SSH_KEY_PATH, loadDumyAnonymousStateV1 } from '../utils';
+import { DEFAULT_COMMON_INPUT, DUMMY_AWS_PULUMI_OUTPUT, DUMMY_SSH_KEY_PATH, loadDumyAnonymousStateV1 } from '../utils';
 import { StateLoader } from '../../../src/core/state/loader';
 import { InstanceUpdater } from '../../../src/core/updater';
 import { InstanceStateV1 } from '../../../src/core/state/state';
@@ -8,6 +8,7 @@ import lodash from 'lodash'
 import { AwsUpdateCliArgs } from '../../../src/providers/aws/cli';
 import { AwsInputPrompter } from '../../../src/providers/aws/cli';
 import { AwsInstanceStateV1, AwsStateParser } from '../../../src/providers/aws/state';
+import { STREAMING_SERVER_SUNSHINE } from '../../../src/core/cli/prompter';
 
 describe('InstanceUpdater', () => {
 
@@ -37,7 +38,10 @@ describe('InstanceUpdater', () => {
             costLimit: (awsState.provision.input.costAlert?.limit ?? 0) + 100,
             costNotificationEmail: "test@test.com",
             instanceType: "t2.micro",
-            yes: true
+            yes: true,
+            streamingServer: STREAMING_SERVER_SUNSHINE,
+            sunshineUsername: "sunshineUser",
+            sunshinePassword: "sunshinePassword"
         })
 
         // Update should have triggered state update with provisioning + configuration
@@ -59,6 +63,13 @@ describe('InstanceUpdater', () => {
                     }
                 }, 
                 configuration: {
+                    input: {
+                        sunshine: {
+                            enable: true,
+                            username: "sunshineUser",
+                            passwordBase64: "sunshinePassword"
+                        }
+                    },
                     output: {}
                 }
             }
