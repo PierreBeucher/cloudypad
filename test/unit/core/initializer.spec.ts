@@ -1,10 +1,10 @@
 import * as assert from 'assert';
-import { GcpInstanceInput, GcpInstanceStateV1 } from '../../../src/providers/gcp/state';
-import { CLOUDYPAD_CONFIGURATOR_ANSIBLE, CLOUDYPAD_PROVIDER_GCP, PUBLIC_IP_TYPE_STATIC } from '../../../src/core/const';
+import { GcpInstanceInput } from '../../../src/providers/gcp/state';
+import { CLOUDYPAD_PROVIDER_GCP, PUBLIC_IP_TYPE_STATIC } from '../../../src/core/const';
 import { DEFAULT_COMMON_INPUT } from '../utils';
 import { InteractiveInstanceInitializer } from '../../../src/core/initializer';
 import { GcpCreateCliArgs, GcpInputPrompter } from '../../../src/providers/gcp/cli';
-import { StateLoader } from '../../../src/core/state/loader';
+import { STREAMING_SERVER_SUNSHINE } from '../../../src/core/cli/prompter';
 
 describe('Instance initializer', () => {
 
@@ -46,6 +46,9 @@ describe('Instance initializer', () => {
         gpuType: TEST_INPUT.provision.acceleratorType,
         spot: TEST_INPUT.provision.useSpot,
         costAlert: false,
+        streamingServer: STREAMING_SERVER_SUNSHINE,
+        sunshineUser: TEST_INPUT.configuration.sunshine?.username,
+        sunshinePassword: TEST_INPUT.configuration.sunshine?.passwordBase64,
     }
 
     const TEST_CLI_ARGS_ALREADY_EXISTING: GcpCreateCliArgs = {

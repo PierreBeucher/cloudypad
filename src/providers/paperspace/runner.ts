@@ -13,22 +13,22 @@ export class PaperspaceInstanceRunner extends AbstractInstanceRunner<PaperspaceP
     constructor(args: PaperspaceInstanceRunnerArgs) {
         super(CLOUDYPAD_PROVIDER_PAPERSPACE, args)
 
-        this.client = new PaperspaceClient({ name: this.args.instanceName, apiKey: this.args.input.apiKey})
+        this.client = new PaperspaceClient({ name: this.args.instanceName, apiKey: this.args.provisionInput.apiKey})
     }
 
     async doStart(opts?: StartStopOptions) {
-        await this.client.startMachine(this.args.output.machineId)
-        await this.client.waitForMachineState(this.args.output.machineId, MachinesCreate200ResponseDataStateEnum.Ready)
+        await this.client.startMachine(this.args.provisionOutput.machineId)
+        await this.client.waitForMachineState(this.args.provisionOutput.machineId, MachinesCreate200ResponseDataStateEnum.Ready)
     }
 
     async doStop(opts?: StartStopOptions) {
-        await this.client.stopMachine(this.args.output.machineId)
-        await this.client.waitForMachineState(this.args.output.machineId, MachinesCreate200ResponseDataStateEnum.Off)
+        await this.client.stopMachine(this.args.provisionOutput.machineId)
+        await this.client.waitForMachineState(this.args.provisionOutput.machineId, MachinesCreate200ResponseDataStateEnum.Off)
     }
 
     async doRestart(opts?: StartStopOptions) {
-        await this.client.restartMachine(this.args.output.machineId)
-        await this.client.waitForMachineState(this.args.output.machineId, MachinesCreate200ResponseDataStateEnum.Ready)
+        await this.client.restartMachine(this.args.provisionOutput.machineId)
+        await this.client.waitForMachineState(this.args.provisionOutput.machineId, MachinesCreate200ResponseDataStateEnum.Ready)
     }
 
 }

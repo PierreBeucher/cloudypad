@@ -11,4 +11,4 @@ export CLOUDYPAD_IMAGE="crafteo/cloudypad:local"
 # Faster with local script but may miss container image issue
 
 task build-local > /dev/null && cloudypad_cmd="./cloudypad.sh"
-# cloudypad_cmd="npx ts-node src/index.ts"
+# cloudypad_cmd="npx tsx src/index.ts"

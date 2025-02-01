@@ -5,6 +5,7 @@ import { DEFAULT_COMMON_INPUT } from '../utils';
 import { AzureCreateCliArgs, AzureInputPrompter } from '../../../src/providers/azure/cli';
 import { PartialDeep } from 'type-fest';
 import lodash from 'lodash'
+import { STREAMING_SERVER_SUNSHINE } from '../../../src/core/cli/prompter';
 
 describe('Azure input prompter', () => {
 
@@ -45,6 +46,9 @@ describe('Azure input prompter', () => {
         vmSize: TEST_INPUT.provision.vmSize,
         costNotificationEmail: TEST_INPUT.provision.costAlert?.notificationEmail,
         costLimit: TEST_INPUT.provision.costAlert?.limit,
+        streamingServer: STREAMING_SERVER_SUNSHINE,
+        sunshineUser: TEST_INPUT.configuration.sunshine?.username,
+        sunshinePassword: TEST_INPUT.configuration.sunshine?.passwordBase64 ? Buffer.from(TEST_INPUT.configuration.sunshine.passwordBase64, 'base64').toString('utf-8') : undefined,
     }
 
     it('should return provided inputs without prompting when full input provider', async () => {
@@ -55,7 +59,7 @@ describe('Azure input prompter', () => {
     it('should convert CLI args into partial input', () => {
         
         const prompter = new AzureInputPrompter()
-        const result = prompter.cliArgsIntoInput(TEST_CLI_ARGS)
+        const result = prompter.cliArgsIntoPartialInput(TEST_CLI_ARGS)
 
         const expected: PartialDeep<AzureInstanceInput> = {
             ...TEST_INPUT,

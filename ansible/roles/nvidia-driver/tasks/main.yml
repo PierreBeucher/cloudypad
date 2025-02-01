@@ -89,3 +89,7 @@
   reboot:
     post_reboot_delay: 10
   when: nvidia_driver_module_file_result.changed or nvidia_dev_systemd_unit.changed or nvidia_dev_script.changed
+
+- name: install NVIDIA container toolkit
+  import_tasks: container-toolkit.yml
+  tags: [ nvidia-container-toolkit ]

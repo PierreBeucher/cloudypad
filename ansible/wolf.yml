@@ -1,3 +1,4 @@
+# Deploy Wolf streaming server
 - name: "Wait for machine to be reachable (timeout: 10min)"
   hosts: all
   gather_facts: false

@@ -1,0 +1,19 @@
+- name: Get current NVIDIA driver version
+  slurp:
+    src: /sys/module/nvidia/version
+  register: sunshine_nvidia_driver_version_file
+  ignore_errors: true # expected that version file may not yet exist if driver not installed
+
+- name: Set NVIDIA driver version var
+  when: sunshine_nvidia_driver_version_file is success
+  set_fact:
+    sunshine_nvidia_driver_version: "{{ sunshine_nvidia_driver_version_file.content | b64decode | trim }}"
+
+- name: Fail if Nvidia driver version can't be found
+  when: sunshine_nvidia_driver_version_file is not success
+  fail: 
+    msg: Couldn't infer Nvidia driver version from host /sys/module/nvidia/version. Is Nvidia driver installed and loaded ?
+
+- name: Show NVIDIA driver version
+  ansible.builtin.debug:
+    msg: "Found NVIDIA driver version: {{ sunshine_nvidia_driver_version }}"

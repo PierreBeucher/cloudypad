@@ -18,7 +18,14 @@ export const DEFAULT_COMMON_INPUT: CommonInstanceInput = {
             user: "ubuntu"
         }
     },
-    configuration: {}
+    configuration: {
+        sunshine: {
+            enable: true,
+            username: "sunshine",
+            passwordBase64: "c3Vuc2hpbmVQYXNzd29yZA==" // 'sunshinePassword' in base64
+        },
+        wolf: undefined
+    }
 }
 
 export const DUMMY_SSH_KEY_PATH = path.resolve(__dirname, '..', 'resources', 'ssh-key')

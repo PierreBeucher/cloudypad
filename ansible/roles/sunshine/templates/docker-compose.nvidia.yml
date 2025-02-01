@@ -1,0 +1,16 @@
+# Docker Compose override to enable Nvidia GPU in container
+services:
+  cloudy:
+    runtime: nvidia
+    environment:
+      # Enable Nvidia to trigger specific behaviors in container
+      NVIDIA_ENABLE: true
+      # Nvidia driver version matching host driver
+      NVIDIA_DRIVER_VERSION: "{{ sunshine_nvidia_driver_version }}"
+    deploy:
+      resources:
+        reservations:
+          # Enable GPU in container
+          # See https://docs.docker.com/compose/how-tos/gpu-support/#enabling-gpu-access-to-service-containers
+          devices:
+            - capabilities: [gpu]

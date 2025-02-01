@@ -1,5 +1,6 @@
 import { CLOUDYPAD_PROVIDER_AWS } from '../../core/const';
 import { AbstractInstanceRunner, InstanceRunnerArgs, StartStopOptions } from '../../core/runner';
+import { CommonConfigurationInputV1 } from '../../core/state/state';
 import { AwsClient } from '../../tools/aws';
 import { AwsProvisionInputV1, AwsProvisionOutputV1 } from './state';
 
@@ -12,11 +13,11 @@ export class AwsInstanceRunner extends AbstractInstanceRunner<AwsProvisionInputV
     constructor(args: AwsInstanceRunnerArgs) {
         super(CLOUDYPAD_PROVIDER_AWS, args)
 
-        this.awsClient = new AwsClient(args.instanceName, args.input.region)
+        this.awsClient = new AwsClient(args.instanceName, args.provisionInput.region)
     }
 
     private getInstanceId(){
-        return this.args.output.instanceId
+        return this.args.provisionOutput.instanceId
     }
 
     async doStart(opts?: StartStopOptions) {

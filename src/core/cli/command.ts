@@ -15,6 +15,9 @@ export interface CreateCliArgs {
     yes?: boolean // auto approve
     overwriteExisting?: boolean
     skipPairing?: boolean
+    streamingServer?: string
+    sunshineUser?: string
+    sunshinePassword?: string
 }
 
 /**
@@ -27,7 +30,9 @@ export const CLI_OPTION_INSTANCE_NAME = new Option('--name <name>', 'Instance na
 export const CLI_OPTION_PRIVATE_SSH_KEY = new Option('--private-ssh-key <path>', 'Path to private SSH key to use to connect to instance')
 export const CLI_OPTION_AUTO_APPROVE = new Option('--yes', 'Do not prompt for approval, automatically approve and continue')
 export const CLI_OPTION_OVERWRITE_EXISTING = new Option('--overwrite-existing', 'If an instance with the same name already exists, override without warning prompt')
-export const CLI_OPTION_SPOT = new Option('--spot', 'Enable Spot instance. Spot instances are cheaper (usually 20% to 70% off) but may be restarted any time.')
+export const CLI_OPTION_SPOT = new Option('--spot [disable|no|false|0]', 'Enable Spot instance. Spot instances are cheaper' + 
+        '(usually 20% to 70% off) but may be restarted any time.')
+    .argParser(parseFalseOrDisable)
 export const CLI_OPTION_DISK_SIZE = new Option('--disk-size <size>', 'Disk size in GB')
     .argParser(parseInt)
 export const CLI_OPTION_PUBLIC_IP_TYPE = new Option('--public-ip-type <type>', `Public IP type. Either ${PUBLIC_IP_TYPE_STATIC} or ${PUBLIC_IP_TYPE_DYNAMIC}`)
@@ -35,10 +40,9 @@ export const CLI_OPTION_PUBLIC_IP_TYPE = new Option('--public-ip-type <type>', `
 export const CLI_OPTION_SKIP_PAIRING = new Option('--skip-pairing', 'Skip Moonlight pairing after initial provisioning and configuration')
 
 export const CLI_OPTION_COST_ALERT = new Option('--cost-alert [disable|no|false|0]', 'Enable or disable cost alert.' + 
-    'Will prompt for cost alert limit and notification email unless --cost-limit and --cost-notification-email are provided. ' +
-    'Passing "disable", "no", "0" or "false" will disable cost alerts.').argParser((value) => {
-        return value === "disable" || value === "no" || value === "false" || value === "0" ? false : true
-    })
+        'Will prompt for cost alert limit and notification email unless --cost-limit and --cost-notification-email are provided. ' +
+        'Passing "disable", "no", "0" or "false" will disable cost alerts.')
+    .argParser(parseFalseOrDisable)
 export const CLI_OPTION_COST_LIMIT = new Option('--cost-limit <limit>', 'Cost alert limit (USD). Imply --cost-alert.').argParser((l) => {
     if(isNaN(parseInt(l))) {
         throw new Error('Cost alert limit must be a valid number')
@@ -46,6 +50,15 @@ export const CLI_OPTION_COST_LIMIT = new Option('--cost-limit <limit>', 'Cost al
     return parseInt(l)
 })
 export const CLI_OPTION_COST_NOTIFICATION_EMAIL = new Option('--cost-notification-email <email>', 'Cost alert notification email. Imply --cost-alert.')
+
+export const CLI_OPTION_STREAMING_SERVER = new Option('--streaming-server <name>', 'Streaming server to use. Either "sunshine" or "wolf"')
+export const CLI_OPTION_SUNSHINE_USERNAME = new Option('--sunshine-user <name>', 'Sunshine username (ignored if streaming server is not sunshine)')
+export const CLI_OPTION_SUNSHINE_PASSWORD = new Option('--sunshine-password <password>', 'Sunshine password (ignored if streaming server is not sunshine)')
+
+function parseFalseOrDisable(value: string){
+    return value === "disable" || value === "no" || value === "false" || value === "0" ? false : true
+}
+
 
 /**
  * Helper to create a Commander CLI sub-commands for create and update commands.
