@@ -1,4 +1,5 @@
 # Build and debug compose file, not usable to run container
+# See ansible/roles/sunshine/templates/docker-compose*.yml for example usage with Compose
 services:
   cloudy:
     build: .

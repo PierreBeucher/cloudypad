@@ -64,6 +64,10 @@ cloudypad create aws \
   --public-ip-type static \
   --region eu-central-1 \
   --spot \
+  --streaming-server [sunshine|wolf] \
+  --cost-alert [disable|no|false|0] \
+  --cost-limit 40 \
+  --cost-notification-email me@example.com \
   --yes --overwrite-existing
 ```
 
@@ -102,7 +106,7 @@ cloudypad [start|top|restart] mypad --wait --timeout 180
 Destroy instance:
 
 ```sh
-cloudypad destroy mypad
+cloudypad destroy mypad [--yes]
 ```
 
 ## Instance deployment lifecycle
