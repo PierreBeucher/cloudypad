@@ -1,5 +1,11 @@
 # Streaming servers: Sunshine and Wolf
 
+- [Choose your streaming server](#choose-your-streaming-server)
+- [Sunshine](#sunshine)
+  - [Accessing web interface and configuration](#accessing-web-interface-and-configuration)
+- [Wolf](#wolf)
+
+## Choose your streaming server
 Cloudy Pad supports two streaming servers:
 - [Sunshine](https://github.com/LizardByte/Sunshine)
 - [Wolf](https://games-on-whales.github.io/wolf/stable/)
@@ -17,7 +23,7 @@ For security reasons Sunshine interface is not exposed on the internet. You must
 Get your instance IP address:
 
 ```sh
-$ cloudypad get <instance-name>
+cloudypad get <instance-name>
 ```
 
 Showing something like this:
@@ -25,6 +31,10 @@ Showing something like this:
 ```json
 {
   "provision": {
+    "ssh": {
+      "user": "ubuntu", //<USER>
+      //[...]
+    },
     "output": {
       "host": "10.234.56.78", // <INSTANCE_IP>
     },
@@ -52,16 +62,16 @@ echo "c3Vuc2hpbmU=" | base64 -d
 Run an SSH tunnel:
 
 ```sh
-$ ssh -L 47990:localhost:47990 <INSTANCE_IP>
+ssh -L 47990:localhost:47990 <USER>@<INSTANCE_IP>
 ```
 
-Open your browser and go to `https://localhost:47990`. Sunshine's default certificate will probably not be trusted by your browser as it's self-signed, you can safely ignore this error. 
+Open your browser and go to [`https://localhost:47990`](https://localhost:47990). Sunshine's default certificate will probably not be trusted by your browser as it's self-signed, you can safely ignore this error. 
 
 Use login/password entered during instance creation, also shown by `cloudypad get <instance-name>`.
 
-Note: future versions of Cloudy Pad will either:
+Note: future versions of Cloudy Pad will either
 - Allow secure remote access via internet with valid HTTPS (TLS) certificate
-- More automation to run SSH tunnel for you
+- Provide more automation to run SSH tunnel for you
 
 ## Wolf
 
