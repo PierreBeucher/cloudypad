@@ -1,3 +1,5 @@
+sunshine_name = $SUNSHINE_SERVER_NAME
+
 origin_web_ui_allowed = lan
 min_log_level = info
 

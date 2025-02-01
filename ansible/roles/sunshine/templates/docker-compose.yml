@@ -44,3 +44,4 @@ services:
       # If unset or empty, can be set via Web UI directly
       SUNSHINE_WEB_PASSWORD: {{ sunshine_web_password_base64 | b64decode | quote }}
       SUNSHINE_WEB_USERNAME: {{ sunshine_web_username | quote }}
+      SUNSHINE_SERVER_NAME: {{ sunshine_server_name | quote }}

@@ -57,6 +57,7 @@ export class AnsibleConfigurator<ST extends InstanceStateV1> extends AbstractIns
                         ansible_user: ssh.user,
                         ansible_ssh_private_key_file: ssh.privateKeyPath,
                         wolf_instance_name: this.args.instanceName,
+                        sunshine_server_name: this.args.instanceName,
                         sunshine_web_username: this.args.configurationInput.sunshine?.username,
                         sunshine_web_password_base64: this.args.configurationInput.sunshine?.passwordBase64,
                         sunshine_nvidia_enable: false

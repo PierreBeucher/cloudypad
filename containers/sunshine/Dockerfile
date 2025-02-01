@@ -147,6 +147,10 @@ ENV CLOUDYPAD_DATA_DIR=/cloudy/data
 ENV CLOUDYPAD_LOG_DIR=/cloudy/log
 ENV CLOUDYPAD_CONF_DIR=/cloudy/conf
 
+# Default name for Sunshine server (as shown by Moonlight)
+# Used in sunshine.conf templates
+ENV SUNSHINE_SERVER_NAME="Sunshine"
+
 #
 # XDG directories used by some services
 # Some program expect these paths to exist (or would use some default location)

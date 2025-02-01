@@ -2,6 +2,8 @@
 # Assumes Nvidia drivers are installed
 sunshine_nvidia_enable: true
 
+sunshine_server_name: Sunshine
+
 # Directory where Sunshine Docker Compose files and other configuration are copied
 sunshine_project_dir: "{{ ansible_user_dir }}/sunshine"
 
