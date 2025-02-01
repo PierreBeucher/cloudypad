@@ -144,8 +144,8 @@ export abstract class AbstractInputPrompter<A extends CreateCliArgs, I extends C
             configuration: {
                 sunshine: cliArgs.streamingServer == STREAMING_SERVER_SUNSHINE ? {
                     enable: true,
-                    username: cliArgs.sunshineUsername,
-                    passwordBase64: cliArgs.sunshinePassword,
+                    username: cliArgs.sunshineUser,
+                    passwordBase64: cliArgs.sunshinePassword ? Buffer.from(cliArgs.sunshinePassword).toString('base64') : undefined,
                 } : undefined,
                 wolf: cliArgs.streamingServer == STREAMING_SERVER_WOLF ? {
                     enable: true,
@@ -408,13 +408,12 @@ export abstract class AbstractInputPrompter<A extends CreateCliArgs, I extends C
         })
     }
 
-    private async promptSunshinePasswordBase64(_sunshinePassword?: string): Promise<string> {
-        let sunshinePassword: string
-        if(_sunshinePassword){
-            sunshinePassword = _sunshinePassword
+    private async promptSunshinePasswordBase64(_sunshinePasswordBase64?: string): Promise<string> {
+        if(_sunshinePasswordBase64){
+            return _sunshinePasswordBase64
         } else {
 
-            sunshinePassword = await password({
+            const sunshinePassword = await password({
                 message: "Enter Sunshine Web UI password:",
             })
 
@@ -431,9 +430,9 @@ export abstract class AbstractInputPrompter<A extends CreateCliArgs, I extends C
                 console.warn("Passwords do not match.")
                 return this.promptSunshinePasswordBase64()
             }
+            
+            return Buffer.from(sunshinePassword).toString('base64')
         }
-
-        return Buffer.from(sunshinePassword).toString('base64')
     }
 }
 

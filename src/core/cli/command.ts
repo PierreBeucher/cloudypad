@@ -16,7 +16,7 @@ export interface CreateCliArgs {
     overwriteExisting?: boolean
     skipPairing?: boolean
     streamingServer?: string
-    sunshineUsername?: string
+    sunshineUser?: string
     sunshinePassword?: string
 }
 
@@ -52,7 +52,8 @@ export const CLI_OPTION_COST_LIMIT = new Option('--cost-limit <limit>', 'Cost al
 export const CLI_OPTION_COST_NOTIFICATION_EMAIL = new Option('--cost-notification-email <email>', 'Cost alert notification email. Imply --cost-alert.')
 
 export const CLI_OPTION_STREAMING_SERVER = new Option('--streaming-server <name>', 'Streaming server to use. Either "sunshine" or "wolf"')
-
+export const CLI_OPTION_SUNSHINE_USERNAME = new Option('--sunshine-user <name>', 'Sunshine username (ignored if streaming server is not sunshine)')
+export const CLI_OPTION_SUNSHINE_PASSWORD = new Option('--sunshine-password <password>', 'Sunshine password (ignored if streaming server is not sunshine)')
 
 function parseFalseOrDisable(value: string){
     return value === "disable" || value === "no" || value === "false" || value === "0" ? false : true

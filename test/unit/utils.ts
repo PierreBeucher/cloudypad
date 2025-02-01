@@ -22,9 +22,9 @@ export const DEFAULT_COMMON_INPUT: CommonInstanceInput = {
         sunshine: {
             enable: true,
             username: "sunshine",
-            passwordBase64: "NXVuU2gxbjMK" // 'sunshine' in base64
+            passwordBase64: "c3Vuc2hpbmVQYXNzd29yZA==" // 'sunshinePassword' in base64
         },
-        wolf: null
+        wolf: undefined
     }
 }
 

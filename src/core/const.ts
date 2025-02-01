@@ -47,6 +47,7 @@ export interface SimplePortDefinition {
  * See https://games-on-whales.github.io/wolf/stable/user/quickstart.html
  */
 export const CLOUDYPAD_WOLF_PORTS: SimplePortDefinition[] = [
+    { port: 22, protocol: 'tcp' }, // SSH
     { port: 47984, protocol: 'tcp' }, // HTTPS
     { port: 47989, protocol: 'tcp' }, // HTTP
     { port: 47999, protocol: 'udp' }, // Control
@@ -82,6 +83,7 @@ export const CLOUDYPAD_WOLF_PORTS: SimplePortDefinition[] = [
  * See archive: https://web.archive.org/web/20241228223157/https://docs.lizardbyte.dev/projects/sunshine/en/latest/about/advanced_usage.html#port
  */
 export const CLOUDYPAD_SUNSHINE_PORTS: SimplePortDefinition[] = [
+    { port: 22, protocol: 'tcp' }, // SSH
     { port: 47984, protocol: 'tcp' }, // HTTPS
     { port: 47989, protocol: 'tcp' }, // HTTP
     { port: 47990, protocol: 'tcp' }, // Web

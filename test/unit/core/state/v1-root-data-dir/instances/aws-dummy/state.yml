@@ -20,4 +20,4 @@ configuration:
   #   sunshine:
   #     enable: true
   #     username: sunshine
-  #     passwordBase64: sunshine
+  #     passwordBase64: c3Vuc2hpbmU=

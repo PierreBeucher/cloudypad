@@ -40,7 +40,7 @@ describe('InstanceUpdater', () => {
             instanceType: "t2.micro",
             yes: true,
             streamingServer: STREAMING_SERVER_SUNSHINE,
-            sunshineUsername: "sunshineUser",
+            sunshineUser: "sunshineUser",
             sunshinePassword: "sunshinePassword"
         })
 
@@ -67,7 +67,7 @@ describe('InstanceUpdater', () => {
                         sunshine: {
                             enable: true,
                             username: "sunshineUser",
-                            passwordBase64: "sunshinePassword"
+                            passwordBase64: "c3Vuc2hpbmVQYXNzd29yZA=="
                         }
                     },
                     output: {}

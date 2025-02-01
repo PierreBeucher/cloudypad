@@ -47,7 +47,7 @@ describe('Instance initializer', () => {
         spot: TEST_INPUT.provision.useSpot,
         costAlert: false,
         streamingServer: STREAMING_SERVER_SUNSHINE,
-        sunshineUsername: TEST_INPUT.configuration.sunshine?.username,
+        sunshineUser: TEST_INPUT.configuration.sunshine?.username,
         sunshinePassword: TEST_INPUT.configuration.sunshine?.passwordBase64,
     }
 

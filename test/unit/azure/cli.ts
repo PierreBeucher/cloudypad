@@ -47,8 +47,8 @@ describe('Azure input prompter', () => {
         costNotificationEmail: TEST_INPUT.provision.costAlert?.notificationEmail,
         costLimit: TEST_INPUT.provision.costAlert?.limit,
         streamingServer: STREAMING_SERVER_SUNSHINE,
-        sunshineUsername: TEST_INPUT.configuration.sunshine?.username,
-        sunshinePassword: TEST_INPUT.configuration.sunshine?.passwordBase64,
+        sunshineUser: TEST_INPUT.configuration.sunshine?.username,
+        sunshinePassword: TEST_INPUT.configuration.sunshine?.passwordBase64 ? Buffer.from(TEST_INPUT.configuration.sunshine.passwordBase64, 'base64').toString('utf-8') : undefined,
     }
 
     it('should return provided inputs without prompting when full input provider', async () => {
