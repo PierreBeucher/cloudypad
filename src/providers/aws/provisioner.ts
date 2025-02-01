@@ -54,6 +54,7 @@ export class AwsProvisioner extends AbstractInstanceProvisioner<AwsProvisionInpu
             publicSshKeyContent: new SshKeyLoader().parseSshPrivateKeyFileToPublic(this.args.provisionInput.ssh.privateKeyPath),
             useSpot: this.args.provisionInput.useSpot,
             billingAlert: this.args.provisionInput.costAlert ?? undefined,
+            ingressPorts: this.getStreamingServerPorts()
         }
 
         await pulumiClient.setConfig(pulumiConfig)

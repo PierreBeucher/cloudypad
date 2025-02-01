@@ -1,4 +1,5 @@
 import { getLogger, Logger } from "../log/utils"
+import { CLOUDYPAD_SUNSHINE_PORTS, CLOUDYPAD_WOLF_PORTS, SimplePortDefinition } from "./const"
 import { CommonProvisionInputV1, CommonProvisionOutputV1, CommonConfigurationInputV1 } from "./state/state"
 import { confirm } from '@inquirer/prompts'
 
@@ -139,6 +140,19 @@ export abstract class AbstractInstanceProvisioner<PC extends CommonProvisionInpu
         const provision = humanReadableArgs(this.args.provisionInput)
         const configuration = humanReadableArgs(this.args.configurationInput)
         return `${provision}\n    ${configuration}`
+    }
+
+    /**
+     * Return ports to expose on this instance for its current streaming server
+     */
+    protected getStreamingServerPorts(): SimplePortDefinition[] {
+        if (this.args.configurationInput.sunshine?.enable) {
+            return CLOUDYPAD_SUNSHINE_PORTS
+        } else if (this.args.configurationInput.wolf?.enable) {
+            return CLOUDYPAD_WOLF_PORTS
+        } else {
+            throw new Error(`Can't define ports to expose for instance ${this.args.instanceName}: unknown streaming server. This is probably a bug.`)
+        }
     }
 
 }

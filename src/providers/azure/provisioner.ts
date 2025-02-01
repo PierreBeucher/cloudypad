@@ -58,6 +58,7 @@ Do you want to proceed?`,
             publicSshKeyContent: new SshKeyLoader().parseSshPrivateKeyFileToPublic(this.args.provisionInput.ssh.privateKeyPath),
             useSpot: this.args.provisionInput.useSpot,
             costAlert: this.args.provisionInput.costAlert ?? undefined,
+            securityGroupPorts: this.getStreamingServerPorts()
         }
 
         await pulumiClient.setConfig(pulumiConfig)

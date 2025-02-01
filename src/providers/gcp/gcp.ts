@@ -2,7 +2,7 @@ import * as gcp from "@pulumi/gcp"
 import * as pulumi from "@pulumi/pulumi"
 import { OutputMap } from "@pulumi/pulumi/automation"
 import { InstancePulumiClient } from "../../tools/pulumi/client"
-import { PUBLIC_IP_TYPE_DYNAMIC, PUBLIC_IP_TYPE_STATIC } from "../../core/const"
+import { PUBLIC_IP_TYPE_DYNAMIC, PUBLIC_IP_TYPE_STATIC, SimplePortDefinition } from "../../core/const"
 import { CostAlertOptions } from "../../core/provisioner"
 
 interface PortDefinition {
@@ -26,6 +26,7 @@ interface CloudyPadGCEInstanceArgs {
         limit: pulumi.Input<number>
         notificationEmail: pulumi.Input<string>
     }
+    firewallAllowPorts: pulumi.Input<pulumi.Input<gcp.types.input.compute.FirewallAllow>[]> 
 }
 
 /**
@@ -59,10 +60,7 @@ class CloudyPadGCEInstance extends pulumi.ComponentResource {
         new gcp.compute.Firewall(`${name}-firewall`, {
             name: gcpResourceNamePrefix,
             network: network.id,
-            allows: args.ingressPorts?.map(p => ({
-                ports: [p.from.toString(), p.to?.toString() || p.from.toString()],
-                protocol: p.protocol || "all",
-            })),
+            allows: args.firewallAllowPorts,
             sourceRanges: ["0.0.0.0/0"],
             direction: "INGRESS",
         }, commonPulumiOpts)
@@ -240,9 +238,9 @@ async function gcpPulumiProgram(): Promise<Record<string, any> | void> {
     const publicKeyContent = config.require("publicSshKeyContent")
     const useSpot = config.requireBoolean("useSpot")
     const costAlert = config.getObject<CostAlertOptions>("costAlert")
+    const firewallAllowPorts = config.requireObject<SimplePortDefinition[]>("firewallAllowPorts")
 
     const instanceName = pulumi.getStack()
-
 
     const instance = new CloudyPadGCEInstance(instanceName, {
         projectId: projectId,
@@ -264,6 +262,10 @@ async function gcpPulumiProgram(): Promise<Record<string, any> | void> {
         ],
         useSpot: useSpot,
         costAlert: costAlert,
+        firewallAllowPorts: firewallAllowPorts.map(p => ({
+            ports: [p.port.toString()],
+            protocol: p.protocol,
+        })),
     })
 
     return {
@@ -284,6 +286,7 @@ export interface PulumiStackConfigGcp {
     publicIpType: string
     useSpot: boolean
     costAlert?: CostAlertOptions
+    firewallAllowPorts: SimplePortDefinition[]
 }
 
 export interface GcpPulumiOutput {
@@ -311,6 +314,7 @@ export class GcpPulumiClient extends InstancePulumiClient<PulumiStackConfigGcp, 
         await stack.setConfig("publicSshKeyContent", { value: config.publicSshKeyContent })
         await stack.setConfig("publicIpType", { value: config.publicIpType })
         await stack.setConfig("useSpot", { value: config.useSpot.toString() })
+        await stack.setConfig("firewallAllowPorts", { value: JSON.stringify(config.firewallAllowPorts)})
 
         if(config.costAlert){
             await stack.setConfig("costAlert", { value: JSON.stringify(config.costAlert)})

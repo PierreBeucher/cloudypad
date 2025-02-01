@@ -2,7 +2,7 @@ import * as az from "@pulumi/azure-native"
 import * as pulumi from "@pulumi/pulumi"
 import { InstancePulumiClient } from "../../tools/pulumi/client"
 import { OutputMap } from "@pulumi/pulumi/automation"
-import { PUBLIC_IP_TYPE, PUBLIC_IP_TYPE_STATIC } from "../../core/const"
+import { PUBLIC_IP_TYPE, PUBLIC_IP_TYPE_STATIC, SimplePortDefinition } from "../../core/const"
 import { CostAlertOptions } from "../../core/provisioner"
 
 interface PortDefinition {
@@ -19,7 +19,7 @@ interface VolumeArgs {
 }
 
 interface CloudyPadVMArgs {
-    networkSecurityGroupRules?: PortDefinition[]
+    networkSecurityGroupRules?: pulumi.Input<pulumi.Input<az.types.input.network.SecurityRuleArgs>[]>
     publicKeyContent?: pulumi.Input<string>
     tags?: pulumi.Input<{ [key: string]: pulumi.Input<string> }>
     vmSize: pulumi.Input<string>
@@ -72,17 +72,7 @@ class CloudyPadAzureInstance extends pulumi.ComponentResource {
 
         const nsg = new az.network.NetworkSecurityGroup(`${name}-nsg`, {
             resourceGroupName: resourceGroup.name,
-            securityRules: args.networkSecurityGroupRules?.map((rule, index) => ({
-                name: `${name}-rule-${index}`,
-                protocol: rule.protocol || "*",
-                sourcePortRange: "*",
-                destinationPortRange: rule.to ? `${rule.from}-${rule.to}` : `${rule.from}`,
-                sourceAddressPrefix: rule.sourceAddressPrefix || "*",
-                destinationAddressPrefix: "*",
-                access: "Allow",
-                priority: 100 + index,
-                direction: "Inbound",
-            })),
+            securityRules: args.networkSecurityGroupRules,
             tags: globalTags
         }, commonPulumiOpts)
 
@@ -230,8 +220,10 @@ async function azurePulumiProgram(): Promise<Record<string, any> | void> {
     const publicIpType = config.require("publicIpType")
     const useSpot = config.requireBoolean("useSpot")
     const costAlert = config.getObject<CostAlertOptions>("costAlert")
+    const securityGroupPorts = config.requireObject<SimplePortDefinition[]>("securityGroupPorts")
 
     const instanceName = pulumi.getStack()
+
 
     const instance = new CloudyPadAzureInstance(instanceName, {
         vmSize: vmSize,
@@ -242,18 +234,17 @@ async function azurePulumiProgram(): Promise<Record<string, any> | void> {
             deviceName: `${instanceName}-osdisk`
         },
         publicIpType: publicIpType,
-        networkSecurityGroupRules: [
-            { from: 22, protocol: "Tcp", sourceAddressPrefix: "*" }, // SSH
-            { from: 80, protocol: "Tcp", sourceAddressPrefix: "*" }, // HTTP
-            { from: 443, protocol: "Tcp", sourceAddressPrefix: "*" }, // HTTPS
-            { from: 47984, protocol: "tcp" }, // HTTP
-            { from: 47989, protocol: "tcp" }, // HTTPS
-            { from: 48010, protocol: "tcp" }, // RTSP
-            { from: 47999, protocol: "udp" }, // Control
-            { from: 48100, to: 48110, protocol: "udp" }, // Video (up to 10 users)
-            { from: 48200, to: 48210, protocol: "udp" }, // Audio (up to 10 users)
-        ],
-        
+        networkSecurityGroupRules: securityGroupPorts.map((p, index) => ({
+            name: `${instanceName}-rule-${index}`,
+            protocol: p.protocol,
+            sourcePortRange: "*",
+            destinationPortRange: p.port.toString(),
+            sourceAddressPrefix: "*",
+            destinationAddressPrefix: "*",
+            access: "Allow",
+            priority: 100 + index,
+            direction: "Inbound",
+        })),
         // Spot config if enabled
         priority: useSpot ? "Spot" : undefined,
         evictionPolicy: useSpot ? "Deallocate" : undefined,
@@ -276,7 +267,8 @@ export interface PulumiStackConfigAzure {
     publicSshKeyContent: string
     publicIpType: PUBLIC_IP_TYPE
     useSpot: boolean,
-    costAlert?: CostAlertOptions
+    costAlert?: CostAlertOptions,
+    securityGroupPorts: SimplePortDefinition[]
 }
 
 export interface AzurePulumiOutput {
@@ -305,6 +297,7 @@ export class AzurePulumiClient extends InstancePulumiClient<PulumiStackConfigAzu
         await stack.setConfig("publicSshKeyContent", { value: config.publicSshKeyContent})
         await stack.setConfig("publicIpType", { value: config.publicIpType})
         await stack.setConfig("useSpot", { value: config.useSpot.toString()})
+        await stack.setConfig("securityGroupPorts", { value: JSON.stringify(config.securityGroupPorts)})
 
         if(config.costAlert){
             await stack.setConfig("costAlert", { value: JSON.stringify(config.costAlert)})
