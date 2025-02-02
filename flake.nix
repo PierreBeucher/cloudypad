@@ -41,8 +41,7 @@
               gnumake
               pulumi-bin
               pulumiPackages.pulumi-language-nodejs
-              nodejs
-              nodePackages.pnpm
+              nodejs_22
               go-task
               gettext
               typescript
