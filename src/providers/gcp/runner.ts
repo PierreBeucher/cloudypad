@@ -16,7 +16,7 @@ export class GcpInstanceRunner extends AbstractInstanceRunner<GcpProvisionInputV
     }
 
     private getinstanceName(): string{
-        return this.args.instanceName
+        return `cloudypad-${this.args.instanceName}`
     }
 
     private getZone(): string{
