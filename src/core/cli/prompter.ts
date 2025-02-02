@@ -81,16 +81,21 @@ export abstract class AbstractInputPrompter<A extends CreateCliArgs, I extends C
         const sshUser = "ubuntu" // Harcoded default for now since we only support Ubuntu
 
         const streamingServer = await this.promptStreamingServer(partialInput.configuration?.sunshine?.enable, partialInput.configuration?.wolf?.enable)
+
+        if(streamingServer.sunshineEnabled && streamingServer.wolfEnabled){
+            throw new Error("Sunshine and Wolf cannot be enabled both at the same time")
+        }
         
+        // Force null value for sunshine and wolf as 'undefined' would not override previous existing value in persisted state
         let sunshineConfig = streamingServer.sunshineEnabled ? {
             enable: streamingServer.sunshineEnabled,
             username: await this.promptSunshineUsername(partialInput.configuration?.sunshine?.username),
             passwordBase64: await this.promptSunshinePasswordBase64(partialInput.configuration?.sunshine?.passwordBase64),
-        } : undefined
+        } : null
 
         let wolfConfig = streamingServer.wolfEnabled ? {
             enable: streamingServer.wolfEnabled,
-        } : undefined
+        } : null
 
 
         return {
