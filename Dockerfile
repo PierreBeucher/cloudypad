@@ -91,6 +91,10 @@ RUN npm ci --omit dev
 COPY --from=tsc /build/dist dist/
 COPY LICENSE.txt .
 
+# Temporary to remove deprecation warning
+# Should be fixed ASAP with deps bump
+ENV NODE_NO_WARNINGS=1
+
 RUN npm install --global
 
 ENTRYPOINT  ["cloudypad"]
