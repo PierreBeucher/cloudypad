@@ -179,7 +179,7 @@ create_push_release_branch $release_version
 build_cloudypad_cli_image $release_version
 build_cloudypad_sunshine_image $release_version
 
-# create_release_pr_and_merge_in_release_branch $release_version
-# merge_release_branch_in_master $release_version
+create_release_pr_and_merge_in_release_branch $release_version
+merge_release_branch_in_master $release_version
 
 echo "Release done ! ✨"
