@@ -14,67 +14,67 @@ describe('StateLoader', function () {
         })
     }
 
-    // describe('listInstances()', function () {
+    describe('listInstances()', function () {
         
-    //     it('should list all instance directories with valid state files', function () {
-    //         const loader = createLoader()
-    //         const instances = loader.listInstances()
+        it('should list all instance directories with valid state files', function () {
+            const loader = createLoader()
+            const instances = loader.listInstances()
 
-    //         const expectedInstances = [
-    //             'aws-dummy', 
-    //             'azure-dummy', 
-    //             'gcp-dummy', 
-    //             'paperspace-dummy', 
-    //             'missing-state-file', 
-    //             'wrong-state-version'
-    //         ]
-    //         assert.deepStrictEqual(instances.sort(), expectedInstances.sort())
-    //     })
+            const expectedInstances = [
+                'aws-dummy', 
+                'azure-dummy', 
+                'gcp-dummy', 
+                'paperspace-dummy', 
+                'missing-state-file', 
+                'wrong-state-version'
+            ]
+            assert.deepStrictEqual(instances.sort(), expectedInstances.sort())
+        })
 
-    //     it('should list no instances without error with empty data root dir', function () {
-    //         const loader = createLoader(createTempTestDir("state-loader-list-empty"))
-    //         const emptyInstances = loader.listInstances()
+        it('should list no instances without error with empty data root dir', function () {
+            const loader = createLoader(createTempTestDir("state-loader-list-empty"))
+            const emptyInstances = loader.listInstances()
 
-    //         assert.equal(emptyInstances.length, 0)
-    //     })
-    // })
+            assert.equal(emptyInstances.length, 0)
+        })
+    })
 
-    // describe('instanceExists()', function () {
+    describe('instanceExists()', function () {
         
-    //     it('should return true for existing instance with valid state file', async function () {
-    //         const loader = createLoader()
-    //         const exists = await loader.instanceExists('aws-dummy')
-    //         assert.strictEqual(exists, true)
-    //     })
+        it('should return true for existing instance with valid state file', async function () {
+            const loader = createLoader()
+            const exists = await loader.instanceExists('aws-dummy')
+            assert.strictEqual(exists, true)
+        })
 
-    //     it('should return false for non-existing instance', async function () {
-    //         const loader = createLoader()
-    //         const exists = await loader.instanceExists('nonexistent-instance')
-    //         assert.strictEqual(exists, false)
-    //     })
+        it('should return false for non-existing instance', async function () {
+            const loader = createLoader()
+            const exists = await loader.instanceExists('nonexistent-instance')
+            assert.strictEqual(exists, false)
+        })
 
-    //     it('should return false if state file is missing', async function () {
-    //         const loader = new StateLoader({
-    //             dataRootDir: path.resolve(__dirname, 'v1-root-data-dir-with-missing-state')
-    //         })
-    //         const exists = await loader.instanceExists('missing-state-instance')
-    //         assert.strictEqual(exists, false)
-    //     })
-    // })
+        it('should return false if state file is missing', async function () {
+            const loader = new StateLoader({
+                dataRootDir: path.resolve(__dirname, 'v1-root-data-dir-with-missing-state')
+            })
+            const exists = await loader.instanceExists('missing-state-instance')
+            assert.strictEqual(exists, false)
+        })
+    })
 
     describe('loadInstanceStateSafe()', function () {
         
-        // it('should load and parse state for a valid instance', async function () {
-        //     const loader = createLoader()
-        //     const parsedState = await loader.loadAndMigrateInstanceState('aws-dummy')
+        it('should load and parse state for a valid instance', async function () {
+            const loader = createLoader()
+            const parsedState = await loader.loadAndMigrateInstanceState('aws-dummy')
 
-        //     const expectedState = yaml.load(fs.readFileSync(
-        //         path.resolve(__dirname, 'v1-root-data-dir/instances/aws-dummy/state.yml'),
-        //         'utf-8'
-        //     )) as AwsInstanceStateV1
+            const expectedState = yaml.load(fs.readFileSync(
+                path.resolve(__dirname, 'v1-root-data-dir/instances/aws-dummy/state.yml'),
+                'utf-8'
+            )) as AwsInstanceStateV1
 
-        //     assert.deepEqual(parsedState, expectedState)
-        // })
+            assert.deepEqual(parsedState, expectedState)
+        })
 
         it('should load and migrate legacy state', async function () {
             // Copy v0 state to a temp dir and check migration
@@ -89,12 +89,12 @@ describe('StateLoader', function () {
             assert.deepEqual(parsedState, expectedState)
         })
 
-        // it('should throw an error for unsupported state version', async function () {
-        //     const loader = createLoader()
+        it('should throw an error for unsupported state version', async function () {
+            const loader = createLoader()
 
-        //     await assert.rejects(async () => {
-        //         await loader.loadAndMigrateInstanceState('wrong-state-version')
-        //     }, /Unknown state version/)
-        // })
+            await assert.rejects(async () => {
+                await loader.loadAndMigrateInstanceState('wrong-state-version')
+            }, /Unknown state version/)
+        })
     })
 })

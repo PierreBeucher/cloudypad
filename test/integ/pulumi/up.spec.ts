@@ -1,7 +1,7 @@
 import { AwsPulumiClient } from "../../../src/providers/aws/pulumi"
 import { AzurePulumiClient } from "../../../src/providers/azure/pulumi";
 import { InstancePulumiClient } from "../../../src/tools/pulumi/client";
-import { GcpPulumiClient } from "../../../src/providers/gcp/gcp";
+import { GcpPulumiClient } from "../../../src/providers/gcp/pulumi";
 import { awsInput, azureInput, gcpInput } from "./test-config.spec"
 
 /**

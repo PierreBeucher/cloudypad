@@ -8,7 +8,7 @@ import lodash from 'lodash'
 import { AwsUpdateCliArgs } from '../../../src/providers/aws/cli';
 import { AwsInputPrompter } from '../../../src/providers/aws/cli';
 import { AwsInstanceStateV1, AwsStateParser } from '../../../src/providers/aws/state';
-import { STREAMING_SERVER_SUNSHINE } from '../../../src/core/cli/prompter';
+import { STREAMING_SERVER_SUNSHINE, STREAMING_SERVER_WOLF } from '../../../src/core/cli/prompter';
 
 describe('InstanceUpdater', () => {
 
@@ -39,9 +39,7 @@ describe('InstanceUpdater', () => {
             costNotificationEmail: "test@test.com",
             instanceType: "t2.micro",
             yes: true,
-            streamingServer: STREAMING_SERVER_SUNSHINE,
-            sunshineUser: "sunshineUser",
-            sunshinePassword: "sunshinePassword"
+            streamingServer: STREAMING_SERVER_WOLF
         })
 
         // Update should have triggered state update with provisioning + configuration
@@ -64,10 +62,8 @@ describe('InstanceUpdater', () => {
                 }, 
                 configuration: {
                     input: {
-                        sunshine: {
-                            enable: true,
-                            username: "sunshineUser",
-                            passwordBase64: "c3Vuc2hpbmVQYXNzd29yZA=="
+                        wolf: {
+                            enable: true
                         }
                     },
                     output: {}
