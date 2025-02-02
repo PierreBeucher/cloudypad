@@ -40,9 +40,10 @@ update_versions_in_package_files() {
 }
 
 build_docker() {
-  docker_repo=$1
-  docker_tag=$2
-  docker_platforms=$3
+  docker_build_context=$1
+  docker_repo=$2
+  docker_tag=$3
+  docker_platforms=$4
 
   echo "Building + pushing Docker image $docker_repo:$docker_tag and $docker_repo:latest..."
 
@@ -51,14 +52,14 @@ build_docker() {
     docker buildx build \
       -t $docker_repo:$docker_tag -t $docker_repo:latest \
       --platform=$docker_platforms \
-      .
+      $docker_build_context
   else
     echo "Building + pushing Docker image $docker_repo:$docker_tag and $docker_repo:latest..."
     docker buildx build \
       -t $docker_repo:$docker_tag -t $docker_repo:latest \
       --platform=$docker_platforms \
       --push \
-      .
+      $docker_build_context
   fi
 }
 
@@ -69,7 +70,7 @@ build_cloudypad_cli_image() {
 
   echo "Building + pushing Cloudy Pad CLI image $cloudypad_cli_docker_repo:$release_version and $cloudypad_cli_docker_repo:latest..."
 
-  build_docker $cloudypad_cli_docker_repo $release_version "linux/amd64,linux/arm64"
+  build_docker ./ $cloudypad_cli_docker_repo $release_version "linux/amd64,linux/arm64"
 
 }
 
@@ -80,7 +81,7 @@ build_cloudypad_sunshine_image() {
 
   echo "Building + pushing Sunshine image $sunshine_image_docker_repo:$release_version and $sunshine_image_docker_repo:latest..."
 
-  build_docker $sunshine_image_docker_repo $release_version "linux/amd64"
+  build_docker ./containers/sunshine $sunshine_image_docker_repo $release_version "linux/amd64"
 }
 
 create_push_release_branch() {
