@@ -1,5 +1,21 @@
 # Changelog
 
+## [0.14.0](https://github.com/PierreBeucher/cloudypad/compare/v0.13.0...v0.14.0) (2025-02-02)
+
+
+### Features
+
+* allow Azure disk type selection (HDD, SSD or Premium SSD) ([f21ccae](https://github.com/PierreBeucher/cloudypad/commit/f21ccaeb228dc8925f834efc635729c8b7de1c3f))
+* better error handling ([0b28b96](https://github.com/PierreBeucher/cloudypad/commit/0b28b96d6fa060a108b4427ac851dfe58c0f5cb7))
+* Sunshine deployment with Docker container and Ansible ([40d626a](https://github.com/PierreBeucher/cloudypad/commit/40d626a48dac4e604e26f95312ba1b5035737c02))
+* support Sunshine streaming server ☀️ ([f3127aa](https://github.com/PierreBeucher/cloudypad/commit/f3127aab672040eb25747c92939281a7cb682667))
+* use Azure StandardSSD_LRS by default (better performance) ([3248637](https://github.com/PierreBeucher/cloudypad/commit/3248637de7ba2f99bfaccdeeb03358d14a75e4fd))
+
+
+### Bug Fixes
+
+* gcp start/stop/restart potentially using wrong instance name ([9179c86](https://github.com/PierreBeucher/cloudypad/commit/9179c86860a89eca5a1be395202e9305f358e84b))
+
 ## [0.13.0](https://github.com/PierreBeucher/cloudypad/compare/v0.12.0...v0.13.0) (2025-01-16)
 
 
