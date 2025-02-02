@@ -12,7 +12,7 @@ export class PaperspaceProvisioner extends AbstractInstanceProvisioner<Paperspac
 
     constructor(args: PaperspaceProvisionerArgs) {
         super(args)
-        this.client = new PaperspaceClient({ name: this.args.instanceName, apiKey: this.args.input.apiKey })
+        this.client = new PaperspaceClient({ name: this.args.instanceName, apiKey: this.args.provisionInput.apiKey })
     }
 
     async doProvision(opts?: InstanceProvisionOptions) {
@@ -44,11 +44,11 @@ export class PaperspaceProvisioner extends AbstractInstanceProvisioner<Paperspac
                 message: `
 You are about to provision Paperspace instance with the following details:
     Instance name: ${pspaceMachineName}
-    SSH key: ${this.args.input.ssh.privateKeyPath}
-    Region: ${this.args.input.region}
-    Machine Type: ${this.args.input.machineType}
-    Disk Size: ${this.args.input.diskSize} GB
-    Public IP Type: ${this.args.input.publicIpType}
+    SSH key: ${this.args.provisionInput.ssh.privateKeyPath}
+    Region: ${this.args.provisionInput.region}
+    Machine Type: ${this.args.provisionInput.machineType}
+    Disk Size: ${this.args.provisionInput.diskSize} GB
+    Public IP Type: ${this.args.provisionInput.publicIpType}
 Do you want to proceed?`,
                 default: true,
             })
@@ -60,10 +60,10 @@ Do you want to proceed?`,
 
         const createArgs: MachinesCreateRequest = {
             name: pspaceMachineName,
-            region: this.args.input.region,
-            machineType: this.args.input.machineType,
-            diskSize: this.args.input.diskSize,
-            publicIpType: this.args.input.publicIpType,
+            region: this.args.provisionInput.region,
+            machineType: this.args.provisionInput.machineType,
+            diskSize: this.args.provisionInput.diskSize,
+            publicIpType: this.args.provisionInput.publicIpType,
             startOnCreate: true,
 
             // TODO Always create an Ubuntu 22.04 based on public template "t0nspur5"
@@ -92,13 +92,13 @@ Do you want to proceed?`,
     }
 
     async doDestroy(){
-        if(this.args.output){
-            const machineExists = await this.client.machineExists(this.args.output?.machineId)
+        if(this.args.provisionOutput){
+            const machineExists = await this.client.machineExists(this.args.provisionOutput?.machineId)
 
             if(!machineExists){
-                this.logger.warn(`Nothing to delete: machine ${this.args.output.machineId} not found. Was it already deleted ?`)
+                this.logger.warn(`Nothing to delete: machine ${this.args.provisionOutput.machineId} not found. Was it already deleted ?`)
             } else {
-                await this.client.deleteMachine(this.args.output.machineId, true)
+                await this.client.deleteMachine(this.args.provisionOutput.machineId, true)
             }
         } else {
             this.logger.warn(`Nothing to delete: no output for instance ${this.args.instanceName}. Was instance fully provisioned ?`)

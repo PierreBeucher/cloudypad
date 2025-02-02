@@ -1,0 +1,27 @@
+# Whether to enable Nvidia
+# Assumes Nvidia drivers are installed
+sunshine_nvidia_enable: true
+
+sunshine_server_name: Sunshine
+
+# Directory where Sunshine Docker Compose files and other configuration are copied
+sunshine_project_dir: "{{ ansible_user_dir }}/sunshine"
+
+# Directory where Sunshine and other data (eg. Steam game files) are persisted
+# Bind mounted in Sunshine container for persistence
+# Changing this value will cause to lose track of existing data unless they are moved as well
+sunshine_data_dir: "{{ sunshine_project_dir }}/data"
+
+# Set the Nvidia driver version to install additional components in container on startup
+# If not set, Nvidia driver version will be inferred from host
+# Set to force use of specific Nvidia driver version
+# A mismatch between host version and container version may yield unexpected results
+# sunshine_nvidia_driver_version: 
+
+# Sunshine Web UI username and password (base64 encoded)
+sunshine_web_username: ""
+sunshine_web_password_base64: ""
+
+# Sunshine container image to use 
+sunshine_image_tag: "dev"
+sunshine_image_repo: "ghcr.io/pierrebeucher/cloudypad/sunshine"

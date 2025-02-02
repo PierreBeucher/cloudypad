@@ -2,30 +2,22 @@ import * as aws from "@pulumi/aws";
 import * as pulumi from "@pulumi/pulumi";
 import { OutputMap } from "@pulumi/pulumi/automation";
 import { InstancePulumiClient } from "../../tools/pulumi/client";
-import { PUBLIC_IP_TYPE, PUBLIC_IP_TYPE_DYNAMIC, PUBLIC_IP_TYPE_STATIC } from "../../core/const";
-
-interface PortDefinition {
-    from: pulumi.Input<number>,
-    to?: pulumi.Input<number>,
-    protocol?: pulumi.Input<string>,
-    cidrBlocks?: pulumi.Input<string>[]
-    ipv6CirdBlocks?: pulumi.Input<string>[]
-}
+import { PUBLIC_IP_TYPE, PUBLIC_IP_TYPE_DYNAMIC, PUBLIC_IP_TYPE_STATIC, SimplePortDefinition } from "../../core/const";
 
 interface VolumeArgs {
-    size: pulumi.Input<number>;
-    type?: pulumi.Input<string>;
-    deviceName: string;
-    encrypted?: pulumi.Input<boolean>;
-    availabilityZone?: pulumi.Input<string>;
-    iops?: pulumi.Input<number>;
-    throughput?: pulumi.Input<number>;
+    size: pulumi.Input<number>
+    type?: pulumi.Input<string>
+    deviceName: string
+    encrypted?: pulumi.Input<boolean>
+    availabilityZone?: pulumi.Input<string>
+    iops?: pulumi.Input<number>
+    throughput?: pulumi.Input<number>
 }
 
 interface CloudyPadEC2instanceArgs {
-    vpcId?: pulumi.Input<string>;
-    subnetId?: pulumi.Input<string>;
-    ingressPorts?: PortDefinition[];
+    vpcId?: pulumi.Input<string>
+    subnetId?: pulumi.Input<string>
+    ingressPorts?: pulumi.Input<pulumi.Input<aws.types.input.ec2.SecurityGroupIngress>[]>
     publicKeyContent?: pulumi.Input<string>
     existingKeyPair?: pulumi.Input<string>
     tags?: pulumi.Input<{ [key: string]: pulumi.Input<string> }>
@@ -131,15 +123,7 @@ class CloudyPadEC2Instance extends pulumi.ComponentResource {
 
         this.securityGroup = new aws.ec2.SecurityGroup(`${name}-sg`, {
             vpcId: args.vpcId,
-            ingress: args.ingressPorts?.map(p => {
-                return { 
-                    fromPort: p.from, 
-                    toPort: p.to || p.from, 
-                    protocol: p.protocol || "all", 
-                    cidrBlocks: p.cidrBlocks || ["0.0.0.0/0"],
-                    ipv6CidrBlocks: p.ipv6CirdBlocks || ["::/0"]
-                }
-            }),
+            ingress: args.ingressPorts,
             egress: [{
                 fromPort: 0,
                 toPort: 0,
@@ -260,7 +244,8 @@ async function awsPulumiProgram(): Promise<Record<string, any> | void> {
     const publicIpType = config.require("publicIpType");
     const publicKeyContent = config.require("publicSshKeyContent");
     const useSpot = config.requireBoolean("useSpot");
-    
+    const ingressPorts = config.requireObject<SimplePortDefinition[]>("ingressPorts")
+
     const billingAlertEnabled = config.requireBoolean("billingAlertEnabled");
     const billingAlertLimit = config.get("billingAlertLimit");
     const billingAlertNotificationEmail = config.get("billingAlertNotificationEmail");
@@ -275,7 +260,7 @@ async function awsPulumiProgram(): Promise<Record<string, any> | void> {
                 // Use a specific version as much as possible to avoid reproducibility issues
                 // Can't use AMI ID as it's region dependent 
                 // and specifying AMI for all regions may not yield expected results and would be hard to maintain
-                values: ["ubuntu/images/hvm-ssd/ubuntu-jammy-22.04-amd64-server-20241120"],
+                values: ["ubuntu/images/hvm-ssd-gp3/ubuntu-noble-24.04-amd64-server-20250115"],
             },
             {
                 name: "virtualization-type",
@@ -319,17 +304,13 @@ async function awsPulumiProgram(): Promise<Record<string, any> | void> {
             enabled: useSpot
         },
         billingAlert: billingAlert,
-        ingressPorts: [ // SSH + Wolf ports
-            { from: 22, protocol: "tcp" }, // HTTP
-            { from: 80, protocol: "Tcp" }, // HTTP
-            { from: 443, protocol: "Tcp" }, // HTTPS
-            { from: 47984, protocol: "tcp" }, // HTTP
-            { from: 47989, protocol: "tcp" }, // HTTPS
-            { from: 48010, protocol: "tcp" }, // RTSP
-            { from: 47999, protocol: "udp" }, // Control
-            { from: 48100, to: 48110, protocol: "udp" }, // Video (up to 10 users)
-            { from: 48200, to: 48210, protocol: "udp" }, // Audio (up to 10 users)
-        ]
+        ingressPorts: ingressPorts.map(p => ({
+            fromPort: p.port, 
+            toPort: p.port, 
+            protocol: p.protocol, 
+            cidrBlocks: ["0.0.0.0/0"],
+            ipv6CidrBlocks: ["::/0"]
+        }))
     })
 
     return {
@@ -349,7 +330,8 @@ export interface PulumiStackConfigAws {
     billingAlert?: {
         limit: number
         notificationEmail: string
-    }
+    },
+    ingressPorts: SimplePortDefinition[]
 }
 
 export interface AwsPulumiOutput {
@@ -373,7 +355,8 @@ export class AwsPulumiClient extends InstancePulumiClient<PulumiStackConfigAws, 
         await stack.setConfig("publicSshKeyContent", { value: config.publicSshKeyContent})
         await stack.setConfig("publicIpType", { value: config.publicIpType})
         await stack.setConfig("useSpot", { value: config.useSpot.toString()})
-        
+        await stack.setConfig("ingressPorts", { value: JSON.stringify(config.ingressPorts)})
+
         if(config.billingAlert){
             await stack.setConfig("billingAlertEnabled", { value: "true"})
             await stack.setConfig("billingAlertLimit", { value: config.billingAlert.limit.toString()})

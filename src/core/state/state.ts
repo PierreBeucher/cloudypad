@@ -16,9 +16,37 @@ const CommonProvisionInputV1Schema = z.object({
     }).describe("SSH access configuration"),
 }).passthrough()
 
-const CommonConfigurationOutputV1Schema = z.object({}).passthrough()
+const CommonConfigurationInputV1Schema = z.object({
+    // Set both sunshine and wolf nullish as enabling one should enforce disabling the other.
+    // As optional (~= undefined) could cause a race condition where both are enabled
+    // (eg. merging a state with Sunshine enabled but "undefined" in memory would keep it enabled
+    // whereas a null value would force value to become "null" in state)
+    sunshine: z.object({
+        enable: z.boolean().describe("Whether to enable Sunshine streaming server"),
+        passwordBase64: z.string().describe("Sunshine web UI password (base64 encoded)"),
+        username: z.string().describe("Sunshine web UI username"),
+    })
+    .nullish(), 
+    wolf: z.object({
+        enable: z.boolean().describe("Whether to enable Wolf streaming server"),
+    })
+    .nullish()
+})
+.passthrough()
+// Only one of Sunshine or Wolf can be enabled at the same time
+.refine((data) => !(data.sunshine?.enable && data.wolf?.enable), {
+    message: "Sunshine and Wolf cannot be enabled both at the same time",
+})
+.transform((data) => {
+    // If neither Sunshine nor Wolf enabled, enable Wolf
+    if(!data.sunshine?.enable && !data.wolf?.enable){
+        data.wolf = { enable: true }
+        data.sunshine = null
+    }
+    return data
+})
 
-const CommonConfigurationInputV1Schema = z.object({}).passthrough()
+const CommonConfigurationOutputV1Schema = z.object({}).passthrough()
 
 const InstanceStateV1Schema = z.object({
     version: z.literal("1").describe("State schema version, always 1"),

@@ -16,4 +16,9 @@ provision:
       privateKeyPath: /dummy/ssh/key/id_rsa
 configuration:
   configurator: ansible
-  input: {}
+  input:
+    sunshine:
+      enable: true
+      username: sunshine
+      passwordBase64: c3Vuc2hpbmU=
+    wolf: null

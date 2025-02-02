@@ -16,4 +16,7 @@ provision:
       privateKeyPath: /dummy/ssh/key/id_rsa
 configuration:
   configurator: ansible
-  input: {}
+  input:
+    sunshine: null
+    wolf:
+      enable: true

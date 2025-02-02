@@ -1,7 +1,7 @@
 import { SshKeyLoader } from '../../tools/ssh';
 import { confirm } from '@inquirer/prompts';
 import { AbstractInstanceProvisioner, InstanceProvisionerArgs, InstanceProvisionOptions } from '../../core/provisioner';
-import { GcpPulumiClient, PulumiStackConfigGcp } from './gcp';
+import { GcpPulumiClient, PulumiStackConfigGcp } from './pulumi';
 import { GcpClient } from '../../tools/gcp';
 import { GcpProvisionInputV1, GcpProvisionOutputV1} from './state';
 
@@ -19,7 +19,7 @@ export class GcpProvisioner extends AbstractInstanceProvisioner<GcpProvisionInpu
 
         await this.verifyConfig()
 
-        this.logger.debug(`Provisioning Google Cloud instance with ${JSON.stringify(this.args.input)}`)
+        this.logger.debug(`Provisioning Google Cloud instance with ${JSON.stringify(this.args.provisionInput)}`)
 
         
         let confirmCreation: boolean
@@ -30,16 +30,16 @@ export class GcpProvisioner extends AbstractInstanceProvisioner<GcpProvisionInpu
                 message: `
 You are about to provision Google Cloud machine with the following details:
     Instance name: ${this.args.instanceName}
-    SSH key: ${this.args.input.ssh.privateKeyPath}
-    Region: ${this.args.input.region}
-    Project ID: ${this.args.input.projectId}
-    Machine Type: ${this.args.input.machineType}
-    Use Spot: ${this.args.input.useSpot}
-    GPU Type: ${this.args.input.acceleratorType}
-    Public IP Type: ${this.args.input.publicIpType}
-    Disk size: ${this.args.input.diskSize}
-    Cost Alert: ${this.args.input.costAlert?.limit ? `enabled, limit: ${this.args.input.costAlert.limit}$, ` + 
-        `notification email: ${this.args.input.costAlert.notificationEmail}` : 'None.'}
+    SSH key: ${this.args.provisionInput.ssh.privateKeyPath}
+    Region: ${this.args.provisionInput.region}
+    Project ID: ${this.args.provisionInput.projectId}
+    Machine Type: ${this.args.provisionInput.machineType}
+    Use Spot: ${this.args.provisionInput.useSpot}
+    GPU Type: ${this.args.provisionInput.acceleratorType}
+    Public IP Type: ${this.args.provisionInput.publicIpType}
+    Disk size: ${this.args.provisionInput.diskSize}
+    Cost Alert: ${this.args.provisionInput.costAlert?.limit ? `enabled, limit: ${this.args.provisionInput.costAlert.limit}$, ` + 
+        `notification email: ${this.args.provisionInput.costAlert.notificationEmail}` : 'None.'}
 
 Do you want to proceed?`,
                 default: true,
@@ -52,16 +52,17 @@ Do you want to proceed?`,
 
         const pulumiClient = new GcpPulumiClient(this.args.instanceName)
         const pulumiConfig: PulumiStackConfigGcp = {
-            machineType: this.args.input.machineType,
-            acceleratorType: this.args.input.acceleratorType,
-            projectId: this.args.input.projectId,
-            publicIpType: this.args.input.publicIpType,
-            region: this.args.input.region,
-            zone: this.args.input.zone,
-            rootDiskSize: this.args.input.diskSize,
-            publicSshKeyContent: new SshKeyLoader().parseSshPrivateKeyFileToPublic(this.args.input.ssh.privateKeyPath),
-            useSpot: this.args.input.useSpot,
-            costAlert: this.args.input.costAlert ?? undefined,
+            machineType: this.args.provisionInput.machineType,
+            acceleratorType: this.args.provisionInput.acceleratorType,
+            projectId: this.args.provisionInput.projectId,
+            publicIpType: this.args.provisionInput.publicIpType,
+            region: this.args.provisionInput.region,
+            zone: this.args.provisionInput.zone,
+            rootDiskSize: this.args.provisionInput.diskSize,
+            publicSshKeyContent: new SshKeyLoader().parseSshPrivateKeyFileToPublic(this.args.provisionInput.ssh.privateKeyPath),
+            useSpot: this.args.provisionInput.useSpot,
+            costAlert: this.args.provisionInput.costAlert ?? undefined,
+            firewallAllowPorts: this.getStreamingServerPorts()
         }
 
         await pulumiClient.setConfig(pulumiConfig)
@@ -78,11 +79,11 @@ Do you want to proceed?`,
         const pulumiClient = new GcpPulumiClient(this.args.instanceName)
         await pulumiClient.destroy()
 
-        this.args.output = undefined
+        this.args.provisionOutput = undefined
     }
 
     async doVerifyConfig() {
-        const client = new GcpClient(this.args.instanceName, this.args.input.projectId)
+        const client = new GcpClient(this.args.instanceName, this.args.provisionInput.projectId)
         await client.checkAuth()
     }
 }

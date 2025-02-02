@@ -13,6 +13,9 @@ function create_destroy_aws() {
         --cost-alert \
         --cost-limit 2 \
         --cost-notification-email "test@test.com" \
+        --streaming-server sunshine \
+        --sunshine-user sunshine \
+        --sunshine-password 'S3un$h1ne!"' \
         --yes --overwrite-existing --skip-pairing
 
     $cloudypad_cmd update aws \

@@ -2,7 +2,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';
 import { PartialDeep } from "type-fest"
-import { input, select, confirm } from '@inquirer/prompts';
+import { input, select, confirm, password } from '@inquirer/prompts';
 import { ExitPromptError } from '@inquirer/core';
 import lodash from 'lodash'
 import { CommonInstanceInput } from "../state/state";
@@ -21,6 +21,9 @@ export interface InputPrompter {
      */
     completeCliInput(cliArgs: CreateCliArgs): Promise<CommonInstanceInput>
 }
+
+export const STREAMING_SERVER_SUNSHINE = "sunshine"
+export const STREAMING_SERVER_WOLF = "wolf"
 
 export interface PromptOptions {
     autoApprove?: boolean
@@ -77,6 +80,24 @@ export abstract class AbstractInputPrompter<A extends CreateCliArgs, I extends C
         const sshKey = await this.privateSshKey(partialInput.provision?.ssh?.privateKeyPath)
         const sshUser = "ubuntu" // Harcoded default for now since we only support Ubuntu
 
+        const streamingServer = await this.promptStreamingServer(partialInput.configuration?.sunshine?.enable, partialInput.configuration?.wolf?.enable)
+
+        if(streamingServer.sunshineEnabled && streamingServer.wolfEnabled){
+            throw new Error("Sunshine and Wolf cannot be enabled both at the same time")
+        }
+        
+        // Force null value for sunshine and wolf as 'undefined' would not override previous existing value in persisted state
+        let sunshineConfig = streamingServer.sunshineEnabled ? {
+            enable: streamingServer.sunshineEnabled,
+            username: await this.promptSunshineUsername(partialInput.configuration?.sunshine?.username),
+            passwordBase64: await this.promptSunshinePasswordBase64(partialInput.configuration?.sunshine?.passwordBase64),
+        } : null
+
+        let wolfConfig = streamingServer.wolfEnabled ? {
+            enable: streamingServer.wolfEnabled,
+        } : null
+
+
         return {
             instanceName: instanceName,
             provision: {
@@ -85,7 +106,10 @@ export abstract class AbstractInputPrompter<A extends CreateCliArgs, I extends C
                     user: sshUser
                 }
             },
-            configuration: {}
+            configuration: {
+                sunshine: sunshineConfig,
+                wolf: wolfConfig
+            }
         }
     }
 
@@ -95,25 +119,63 @@ export abstract class AbstractInputPrompter<A extends CreateCliArgs, I extends C
     protected abstract promptSpecificInput(defaultInput: CommonInstanceInput & PartialDeep<I>, createOptions: PromptOptions): Promise<I>
 
     /**
-     * Transform CLI arguments into known Input interface
+     * Transform CLI arguments into known Input interface:
+     * - Use a generic function to common inputs into a Partial Input object
+     * - Use a provider-specific function to provider-specific inputs into a Partial Input object
+     * - Merge both and return the still potentially partial Input (which can be completed by prompting user)
      */
-    cliArgsIntoInput(cliArgs: A): PartialDeep<I> {
+    cliArgsIntoPartialInput(cliArgs: A): PartialDeep<I> {
         this.logger.debug(`Parsing CLI args ${JSON.stringify(cliArgs)} into Input interface...`)
 
-        const result = this.doTransformCliArgsIntoInput(cliArgs)
-        
+        const provisionerInput = this.buildProvisionerInputFromCliArgs(cliArgs)
+        const commonInput = this.buildCommonInputFromCliArgs(cliArgs)
+        const result = lodash.merge({}, commonInput, provisionerInput)
         this.logger.debug(`Parsed CLI args ${JSON.stringify(cliArgs)} into ${JSON.stringify(result)}`)
 
         return result
     }
 
     /**
-     * Transform CLI arguments into known Input interface
+     * Given CLI arguments, return partial Input for common elements.
      */
-    protected abstract doTransformCliArgsIntoInput(cliArgs: A): PartialDeep<I>
+    private buildCommonInputFromCliArgs(cliArgs: A): PartialDeep<CommonInstanceInput> {
+        return {
+            instanceName: cliArgs.name,
+            provision: {
+                ssh: {
+                    privateKeyPath: cliArgs.privateSshKey,
+                }
+            },
+            configuration: {
+                sunshine: cliArgs.streamingServer == STREAMING_SERVER_SUNSHINE ? {
+                    enable: true,
+                    username: cliArgs.sunshineUser,
+                    passwordBase64: cliArgs.sunshinePassword ? Buffer.from(cliArgs.sunshinePassword).toString('base64') : undefined,
+                } : undefined,
+                wolf: cliArgs.streamingServer == STREAMING_SERVER_WOLF ? {
+                    enable: true,
+                } : undefined,
+            }
+        }
+    }
 
+    /**
+     * Given CLI arguments, return provider-specific partial input.
+     * This method should return an Input object with provider-specific inputs
+     * taken from CLI args.
+     */
+    protected abstract buildProvisionerInputFromCliArgs(cliArgs: A): PartialDeep<I>
+
+    /**
+     * Convert partial CLI arguments into full, concret Input interface to be used by managers:
+     * - Use provided CLI args to create a partial Input object
+     * - Prompt user for remaining inputs
+     * 
+     * @param cliArgs 
+     * @returns 
+     */
     async completeCliInput(cliArgs: A): Promise<I> {
-        const partialInput = this.cliArgsIntoInput(cliArgs)
+        const partialInput = this.cliArgsIntoPartialInput(cliArgs)
         const input = await this.promptInput(partialInput, { overwriteExisting: cliArgs.overwriteExisting, autoApprove: cliArgs.yes })
         return input
     }
@@ -311,6 +373,71 @@ export abstract class AbstractInputPrompter<A extends CreateCliArgs, I extends C
         }
 
         return Number.parseInt(costLimit)
+    }
+
+    private async promptStreamingServer(sunshineEnabled?: boolean, wolfEnabled?: boolean): Promise<{ sunshineEnabled: boolean, wolfEnabled: boolean }>{
+        if(sunshineEnabled && wolfEnabled){
+            throw new Error("Cannot enable both Sunshine and Wolf streaming servers")
+        }
+
+        // If one of the streaming server is enabled, return without prompting
+        if(sunshineEnabled || wolfEnabled){
+            return {
+                sunshineEnabled: sunshineEnabled ?? false,
+                wolfEnabled: wolfEnabled ?? false,
+            }
+        }
+
+        const streamingServer = await select({
+            message: 'Choose a streaming server:',
+            choices: [
+                { name: "Sunshine", value: STREAMING_SERVER_SUNSHINE },
+                { name: "Wolf", value: STREAMING_SERVER_WOLF },
+            ],
+        })
+
+        return {
+            sunshineEnabled: streamingServer === STREAMING_SERVER_SUNSHINE,
+            wolfEnabled: streamingServer === STREAMING_SERVER_WOLF,
+        }
+    }
+
+    private async promptSunshineUsername(_sunshineUsername?: string): Promise<string> {
+        if(_sunshineUsername){
+            return _sunshineUsername
+        }
+
+        return await input({
+            message: "Enter Sunshine Web UI username:",
+            default: STREAMING_SERVER_SUNSHINE,
+        })
+    }
+
+    private async promptSunshinePasswordBase64(_sunshinePasswordBase64?: string): Promise<string> {
+        if(_sunshinePasswordBase64){
+            return _sunshinePasswordBase64
+        } else {
+
+            const sunshinePassword = await password({
+                message: "Enter Sunshine Web UI password:",
+            })
+
+            if(sunshinePassword.length == 0){
+                console.warn("Password cannot be empty.")
+                return this.promptSunshinePasswordBase64()
+            }
+
+            const sunshinePasswordConfirm = await password({
+                message: "Confirm Sunshine Web UI password:",
+            })
+
+            if(sunshinePassword !== sunshinePasswordConfirm){
+                console.warn("Passwords do not match.")
+                return this.promptSunshinePasswordBase64()
+            }
+            
+            return Buffer.from(sunshinePassword).toString('base64')
+        }
     }
 }
 

@@ -4,7 +4,7 @@ import fs, { mkdtempSync } from "fs"
 import yaml from 'js-yaml'
 import { AwsPulumiOutput } from "../../src/providers/aws/pulumi";
 import { AzurePulumiOutput } from "../../src/providers/azure/pulumi";
-import { GcpPulumiOutput } from "../../src/providers/gcp/gcp";
+import { GcpPulumiOutput } from "../../src/providers/gcp/pulumi";
 import { PaperspaceMachine } from "../../src/providers/paperspace/client/client";
 import { PUBLIC_IP_TYPE_STATIC } from "../../src/core/const";
 import { tmpdir } from "os";
@@ -18,7 +18,14 @@ export const DEFAULT_COMMON_INPUT: CommonInstanceInput = {
             user: "ubuntu"
         }
     },
-    configuration: {}
+    configuration: {
+        sunshine: {
+            enable: true,
+            username: "sunshine",
+            passwordBase64: "c3Vuc2hpbmVQYXNzd29yZA==" // 'sunshinePassword' in base64
+        },
+        wolf: undefined
+    }
 }
 
 export const DUMMY_SSH_KEY_PATH = path.resolve(__dirname, '..', 'resources', 'ssh-key')

@@ -1,4 +1,4 @@
-ARG NODE_VERSION="20.16.0-bookworm-slim"
+ARG NODE_VERSION="22.13.1-bookworm-slim"
 FROM node:${NODE_VERSION} AS build
 
 RUN apt update && apt install -y \
@@ -50,11 +50,17 @@ FROM node:${NODE_VERSION}
 
 # Global tooling
 RUN apt update && apt install -y \
-    python3 \
-    ansible \
+    python3-pip \
     curl \
+    ssh \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
+
+# Ansible via pip to use fixed version for better reproducibility
+# Can't use pipx yet for global install as major distrib have an older version (1.1.0) 
+# which does not support pipx ensurepath --global
+# Python warns about break-system-packages but should be fine
+RUN pip3 install ansible==11.2.0 --break-system-packages
 
 # Required for Azure DefaultAzureCredential
 RUN curl -sL https://aka.ms/InstallAzureCLIDeb -o install.sh && chmod +x install.sh && ./install.sh -y
@@ -84,6 +90,10 @@ RUN npm ci --omit dev
 # Copy built app directly
 COPY --from=tsc /build/dist dist/
 COPY LICENSE.txt .
+
+# Temporary to remove deprecation warning
+# Should be fixed ASAP with deps bump
+ENV NODE_NO_WARNINGS=1
 
 RUN npm install --global
 

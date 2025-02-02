@@ -6,6 +6,7 @@ import { GcpCreateCliArgs, GcpInputPrompter } from '../../../src/providers/gcp/c
 import lodash from 'lodash'
 import { PartialDeep } from 'type-fest';
 import { StateWriter } from '../../../src/core/state/writer';
+import { STREAMING_SERVER_SUNSHINE } from '../../../src/core/cli/prompter';
 
 describe('GCP input prompter', () => {
 
@@ -51,12 +52,15 @@ describe('GCP input prompter', () => {
         spot: TEST_INPUT.provision.useSpot,
         costNotificationEmail: TEST_INPUT.provision.costAlert?.notificationEmail,
         costLimit: TEST_INPUT.provision.costAlert?.limit,
+        streamingServer: STREAMING_SERVER_SUNSHINE,
+        sunshineUser: TEST_INPUT.configuration.sunshine?.username,
+        sunshinePassword: TEST_INPUT.configuration.sunshine?.passwordBase64 ? Buffer.from(TEST_INPUT.configuration.sunshine.passwordBase64, 'base64').toString('utf-8') : undefined,
     }
 
     it('should convert CLI args into partial input', () => {
         
         const prompter = new GcpInputPrompter()
-        const result = prompter.cliArgsIntoInput(TEST_CLI_ARGS)
+        const result = prompter.cliArgsIntoPartialInput(TEST_CLI_ARGS)
 
         const expected: PartialDeep<GcpInstanceInput> = {
             ...TEST_INPUT,
@@ -78,7 +82,7 @@ describe('GCP input prompter', () => {
     it('should convert CLI args into partial input', () => {
         
         const prompter = new GcpInputPrompter()
-        const result = prompter.cliArgsIntoInput(TEST_CLI_ARGS)
+        const result = prompter.cliArgsIntoPartialInput(TEST_CLI_ARGS)
 
         const expected: PartialDeep<GcpInstanceInput> = {
             ...TEST_INPUT,

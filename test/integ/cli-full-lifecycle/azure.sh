@@ -14,6 +14,7 @@ function create_destroy_azure() {
         --subscription-id 0dceb5ed-9096-4db7-b430-2609e7cc6a15 \
         --cost-limit 2 \
         --cost-notification-email "test@test.com" \
+        --streaming-server wolf \
         --yes --overwrite-existing --skip-pairing
 
     $cloudypad_cmd update azure \

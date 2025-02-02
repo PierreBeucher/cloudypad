@@ -7,7 +7,7 @@ import { getLogger } from '../../log/utils'
 import { CLOUDYPAD_CONFIGURATOR_ANSIBLE, CLOUDYPAD_PROVIDER, CLOUDYPAD_PROVIDER_AWS, CLOUDYPAD_PROVIDER_AZURE, CLOUDYPAD_PROVIDER_GCP, CLOUDYPAD_PROVIDER_PAPERSPACE, PUBLIC_IP_TYPE_DYNAMIC, PUBLIC_IP_TYPE_STATIC } from '../const'
 import { AZURE_SUPPORTED_DISK_TYPES, AzureInstanceStateV1 } from '../../providers/azure/state'
 import { GcpInstanceStateV1 } from '../../providers/gcp/state'
-import { InstanceStateV0 } from './state'
+import { CommonConfigurationInputV1, InstanceStateV0 } from './state'
 import { AnyInstanceStateV1 } from './parser'
 import { BaseStateManager } from './base-manager'
 import { StateWriter } from './writer'
@@ -79,6 +79,13 @@ export class StateMigrator extends BaseStateManager {
 
         let providerName: CLOUDYPAD_PROVIDER
 
+        const defaultConfigurationInput: CommonConfigurationInputV1 = {
+            sunshine: null,
+            wolf: {
+                enable: true
+            }
+        }
+
         try {
             if(!stateV0.ssh || !stateV0.ssh.user || !stateV0.ssh.privateKeyPath) {
                 throw new Error("Missing SSH config in state. Was instance fully configured ?")
@@ -111,7 +118,7 @@ export class StateMigrator extends BaseStateManager {
                     },
                     configuration: {
                         configurator: CLOUDYPAD_CONFIGURATOR_ANSIBLE,
-                        input: {}
+                        input: defaultConfigurationInput
                     }
                 }
 
@@ -158,7 +165,7 @@ export class StateMigrator extends BaseStateManager {
                     },
                     configuration: {
                         configurator: CLOUDYPAD_CONFIGURATOR_ANSIBLE,
-                        input: {}
+                        input: defaultConfigurationInput
                     },
 
                 }
@@ -206,7 +213,7 @@ export class StateMigrator extends BaseStateManager {
                     },
                     configuration: {
                         configurator: CLOUDYPAD_CONFIGURATOR_ANSIBLE,
-                        input: {}
+                        input: defaultConfigurationInput
                     },
                 }
 
@@ -251,7 +258,7 @@ export class StateMigrator extends BaseStateManager {
                     },
                     configuration: {
                         configurator: CLOUDYPAD_CONFIGURATOR_ANSIBLE,
-                        input: {}
+                        input: defaultConfigurationInput
                     }
                 }
 

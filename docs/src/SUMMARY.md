@@ -8,6 +8,7 @@
 
 - [Installation](./usage/installation.md)
 - [`cloudypad` CLI reference](./usage/cli.md)
+- [Streaming servers: Sunshine and Wolf](./usage/streaming-server.md)
 - [Connect to instance with SSH](./usage/ssh.md)
 - [FAQ](./usage/faq.md)
 

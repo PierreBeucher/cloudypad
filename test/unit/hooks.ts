@@ -8,7 +8,7 @@ import { InstancePulumiClient } from '../../src/tools/pulumi/client';
 import { AbstractInstanceRunner } from '../../src/core/runner';
 import { AbstractInstanceProvisioner } from '../../src/core/provisioner';
 import { AzurePulumiClient } from '../../src/providers/azure/pulumi';
-import { GcpPulumiClient } from '../../src/providers/gcp/gcp';
+import { GcpPulumiClient } from '../../src/providers/gcp/pulumi';
 import { PaperspaceClient, PaperspaceMachine } from '../../src/providers/paperspace/client/client';
 import { DUMMY_AWS_PULUMI_OUTPUT, DUMMY_AZURE_PULUMI_OUTPUT, DUMMY_GCP_PULUMI_OUTPUT, DUMMY_PAPERSPACE_MACHINE } from './utils';
 import { DataRootDirManager } from '../../src/core/data-dir';

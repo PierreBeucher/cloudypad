@@ -32,3 +32,65 @@ export type PUBLIC_IP_TYPE = typeof PUBLIC_IP_TYPE_DYNAMIC | typeof PUBLIC_IP_TY
  * Current Cloudy Pad version
  */
 export const CLOUDYPAD_VERSION = version
+
+/**
+ * Simple port definition (number and protocol)
+ * used to defined ports to expose on instance
+ */
+export interface SimplePortDefinition {
+    port: number
+    protocol: string
+}
+
+/**
+ * Ports used by Wolf
+ * See https://games-on-whales.github.io/wolf/stable/user/quickstart.html
+ */
+export const CLOUDYPAD_WOLF_PORTS: SimplePortDefinition[] = [
+    { port: 22, protocol: 'tcp' }, // SSH
+    { port: 47984, protocol: 'tcp' }, // HTTPS
+    { port: 47989, protocol: 'tcp' }, // HTTP
+    { port: 47999, protocol: 'udp' }, // Control
+    { port: 48010, protocol: 'tcp' }, // RTSP
+    { port: 48100, protocol: 'udp' }, // Video (up to 10 users, you can open more ports if needed)
+    { port: 48101, protocol: 'udp' },
+    { port: 48102, protocol: 'udp' },
+    { port: 48103, protocol: 'udp' },
+    { port: 48104, protocol: 'udp' },
+    { port: 48105, protocol: 'udp' },
+    { port: 48106, protocol: 'udp' },
+    { port: 48107, protocol: 'udp' },
+    { port: 48108, protocol: 'udp' },
+    { port: 48109, protocol: 'udp' },
+    { port: 48110, protocol: 'udp' },
+    { port: 48200, protocol: 'udp' }, // Audio (up to 10 users, you can open more ports if needed)
+    { port: 48201, protocol: 'udp' },
+    { port: 48202, protocol: 'udp' },
+    { port: 48203, protocol: 'udp' },
+    { port: 48204, protocol: 'udp' },
+    { port: 48205, protocol: 'udp' },
+    { port: 48206, protocol: 'udp' },
+    { port: 48207, protocol: 'udp' },
+    { port: 48208, protocol: 'udp' },
+    { port: 48209, protocol: 'udp' },
+    { port: 48210, protocol: 'udp' },
+]
+
+/**
+ * Ports used by Sunshine
+ * See https://github.com/moonlight-stream/moonlight-docs/wiki/Setup-Guide#manual-port-forwarding-advanced
+ * Used to be documented clearly in doc but not anymore
+ * See archive: https://web.archive.org/web/20241228223157/https://docs.lizardbyte.dev/projects/sunshine/en/latest/about/advanced_usage.html#port
+ */
+export const CLOUDYPAD_SUNSHINE_PORTS: SimplePortDefinition[] = [
+    { port: 22, protocol: 'tcp' }, // SSH
+    { port: 47984, protocol: 'tcp' }, // HTTPS
+    { port: 47989, protocol: 'tcp' }, // HTTP
+    { port: 47990, protocol: 'tcp' }, // Web
+    { port: 48010, protocol: 'tcp' }, // RTSP
+
+    { port: 47998, protocol: 'udp' }, // Video
+    { port: 47999, protocol: 'udp' }, // Control
+    { port: 48000, protocol: 'udp' }, // Audio
+    { port: 48002, protocol: 'udp' }, // Mic (unused)
+]

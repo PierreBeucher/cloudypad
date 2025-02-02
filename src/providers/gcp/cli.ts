@@ -7,7 +7,7 @@ import lodash from 'lodash'
 import { CLOUDYPAD_PROVIDER_GCP, PUBLIC_IP_TYPE } from "../../core/const";
 import { PartialDeep } from "type-fest";
 import { InteractiveInstanceInitializer } from "../../core/initializer";
-import { CLI_OPTION_COST_ALERT, CLI_OPTION_COST_LIMIT, CLI_OPTION_COST_NOTIFICATION_EMAIL, CLI_OPTION_DISK_SIZE, CLI_OPTION_PUBLIC_IP_TYPE, CLI_OPTION_SPOT, CliCommandGenerator, CreateCliArgs, UpdateCliArgs } from "../../core/cli/command";
+import { CLI_OPTION_COST_ALERT, CLI_OPTION_COST_LIMIT, CLI_OPTION_COST_NOTIFICATION_EMAIL, CLI_OPTION_DISK_SIZE, CLI_OPTION_PUBLIC_IP_TYPE, CLI_OPTION_SPOT, CLI_OPTION_STREAMING_SERVER, CLI_OPTION_SUNSHINE_PASSWORD, CLI_OPTION_SUNSHINE_USERNAME, CliCommandGenerator, CreateCliArgs, UpdateCliArgs } from "../../core/cli/command";
 import { RUN_COMMAND_CREATE, RUN_COMMAND_UPDATE } from "../../tools/analytics/events";
 import { InstanceUpdater } from "../../core/updater";
 
@@ -32,13 +32,9 @@ export type GcpUpdateCliArgs = UpdateCliArgs & Omit<GcpCreateCliArgs, "projectId
 
 export class GcpInputPrompter extends AbstractInputPrompter<GcpCreateCliArgs, GcpInstanceInput> {
     
-    protected doTransformCliArgsIntoInput(cliArgs: GcpCreateCliArgs): PartialDeep<GcpInstanceInput> {
+    protected buildProvisionerInputFromCliArgs(cliArgs: GcpCreateCliArgs): PartialDeep<GcpInstanceInput> {
         return {
-            instanceName: cliArgs.name,
             provision:{ 
-                ssh: {
-                    privateKeyPath: cliArgs.privateSshKey
-                },
                 machineType: cliArgs.machineType,
                 diskSize: cliArgs.diskSize,
                 publicIpType: cliArgs.publicIpType,
@@ -49,7 +45,6 @@ export class GcpInputPrompter extends AbstractInputPrompter<GcpCreateCliArgs, Gc
                 useSpot: cliArgs.spot,
                 costAlert: costAlertCliArgsIntoConfig(cliArgs),
             },
-            configuration: {}
         }
     }
 
@@ -237,6 +232,9 @@ export class GcpCliCommandGenerator extends CliCommandGenerator {
             .addOption(CLI_OPTION_COST_ALERT)
             .addOption(CLI_OPTION_COST_LIMIT)
             .addOption(CLI_OPTION_COST_NOTIFICATION_EMAIL)
+            .addOption(CLI_OPTION_STREAMING_SERVER)
+            .addOption(CLI_OPTION_SUNSHINE_USERNAME)
+            .addOption(CLI_OPTION_SUNSHINE_PASSWORD)
             .option('--machine-type <machinetype>', 'Machine type to use for the instance')
             .option('--region <region>', 'Region in which to deploy instance')
             .option('--zone <zone>', 'Zone within the region to deploy the instance')

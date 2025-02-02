@@ -1,0 +1,48 @@
+services:
+  cloudy:
+    image: {{ sunshine_image_repo }}:{{ sunshine_image_tag }}
+    container_name: cloudy
+    # Need generous shared memory size as some services (eg. Steam) require a lot
+    shm_size: "2G"
+    # Privileged required to run Steam with bwrap (sandboxing)
+    privileged: true
+    # Always start container on machine startup unless specifically stopped
+    restart: unless-stopped
+    # uinput is used by Susnhine to emulate input devices (keyboard, mouse, etc.)
+    devices:
+    - /dev/uinput
+    volumes:
+    # Allow input access from container (keyboard, mouse, etc
+    # TODO maybe not required from fully headless setup
+    - /dev/input:/dev/input
+    # Cloudy Pad data and XDG_DATA_HOME where data should be persisted (game files, Sunshine state, etc.)
+    - "{{ sunshine_data_dir }}:/cloudy/data"
+    # Allow container to read/write/manage attributes on character device 13
+    # 13 matches /dev/input mouse, keyboard, etc. devices
+    # thus allowing process in container to manage input which we need for Sunshine
+    device_cgroup_rules:
+      - 'c 13:* rmw'
+    ports:
+      - "47984:47984/tcp" # HTTPS
+      - "47989:47989/tcp" # HTTP
+      - "47990:47990/tcp" # Web
+      - "48010:48010/tcp" # RTSP
+
+      - "47998:47998/udp" # Video
+      - "47999:47999/udp" # Control
+      - "48000:48000/udp" # Audio
+      - "48002:48002/udp" # Mic (unused)
+    environment:
+      # Desired keyboard layout
+      # See available layouts: https://man.archlinux.org/man/xkeyboard-config.7#LAYOUTS
+      # TOTO support models, variants and options
+      #
+      # Passed to Xorg config as per https://wiki.archlinux.org/title/Xorg/Keyboard_configuration#Using_X_configuration_files
+      KEYBOARD_LAYOUT: fr
+
+      # Sunshine Web UI password
+      # If unset or empty, can be set via Web UI directly
+      # Replace $ by $$ to avoid unwanted variable interpolation by Compose (See https://docs.docker.com/reference/compose-file/interpolation/)
+      SUNSHINE_WEB_PASSWORD: {{ sunshine_web_password_base64 | b64decode | replace('$', '$$') | quote }}
+      SUNSHINE_WEB_USERNAME: {{ sunshine_web_username | quote }}
+      SUNSHINE_SERVER_NAME: {{ sunshine_server_name | quote }}

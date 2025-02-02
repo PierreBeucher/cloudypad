@@ -5,6 +5,7 @@ import { DEFAULT_COMMON_INPUT } from '../utils';
 import { PaperspaceCreateCliArgs, PaperspaceInputPrompter } from '../../../src/providers/paperspace/cli';
 import { PartialDeep } from 'type-fest';
 import lodash from 'lodash'
+import { STREAMING_SERVER_SUNSHINE } from '../../../src/core/cli/prompter';
 
 describe('Paperspace input prompter', () => {
 
@@ -39,6 +40,9 @@ describe('Paperspace input prompter', () => {
         diskSize: TEST_INPUT.provision.diskSize,
         publicIpType: TEST_INPUT.provision.publicIpType,
         apiKeyFile: TEST_INPUT.provision.apiKey,
+        streamingServer: STREAMING_SERVER_SUNSHINE,
+        sunshineUser: TEST_INPUT.configuration.sunshine?.username,
+        sunshinePassword: TEST_INPUT.configuration.sunshine?.passwordBase64 ? Buffer.from(TEST_INPUT.configuration.sunshine.passwordBase64, 'base64').toString('utf-8') : undefined,
     }
     
     it('should return provided inputs without prompting when full input provider', async () => {
@@ -49,7 +53,7 @@ describe('Paperspace input prompter', () => {
     it('should convert CLI args into partial input', () => {
         
         const prompter = new PaperspaceInputPrompter()
-        const result = prompter.cliArgsIntoInput(TEST_CLI_ARGS)
+        const result = prompter.cliArgsIntoPartialInput(TEST_CLI_ARGS)
 
         const expected: PartialDeep<PaperspaceInstanceInput> = {
             ...TEST_INPUT,
