@@ -21,3 +21,7 @@ sunshine_data_dir: "{{ sunshine_project_dir }}/data"
 # Sunshine Web UI username and password (base64 encoded)
 sunshine_web_username: ""
 sunshine_web_password_base64: ""
+
+# Sunshine container image to use 
+sunshine_image_tag: "dev"
+sunshine_image_repo: "ghcr.io/pierrebeucher/cloudypad/sunshine"

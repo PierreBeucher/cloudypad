@@ -1,6 +1,6 @@
 services:
   cloudy:
-    image: ghcr.io/pierrebeucher/cloudypad/sunshine:dev
+    image: {{ sunshine_image_repo }}:{{ sunshine_image_tag }}
     container_name: cloudy
     # Need generous shared memory size as some services (eg. Steam) require a lot
     shm_size: "2G"
