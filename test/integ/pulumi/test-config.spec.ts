@@ -13,7 +13,8 @@ export const awsInput: PulumiStackConfigAws = {
     rootVolumeSizeGB: 100,
     publicSshKeyContent: pubKey,
     publicIpType: PUBLIC_IP_TYPE_STATIC,
-    useSpot: false
+    useSpot: false,
+    ingressPorts: [{ port: 22, protocol: "tcp" }],
 }
 
 export const azureInput: PulumiStackConfigAzure = {
@@ -24,7 +25,8 @@ export const azureInput: PulumiStackConfigAzure = {
     rootDiskType: AZURE_SUPPORTED_DISK_TYPES.STANDARD_LRS,
     publicSshKeyContent: pubKey,
     publicIpType: PUBLIC_IP_TYPE_STATIC,
-    useSpot: false
+    useSpot: false,
+    securityGroupPorts: [{ port: 22, protocol: "tcp" }],
 }
 
 export const gcpInput: PulumiStackConfigGcp = {
@@ -36,5 +38,6 @@ export const gcpInput: PulumiStackConfigGcp = {
     rootDiskSize: 100,
     publicSshKeyContent: pubKey,
     publicIpType: PUBLIC_IP_TYPE_STATIC,
-    useSpot: false        
+    useSpot: false,
+    firewallAllowPorts: [{ port: 22, protocol: "tcp" }],
 }
