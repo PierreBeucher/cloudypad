@@ -45,6 +45,12 @@ tasks:
   test-integ-ts-specs-aws:
     - npx mocha --config test/integ/.mocharc.json test/integ/aws --recursive
 
+  test-integ-ts-specs-azure:
+    - npx mocha --config test/integ/.mocharc.json test/integ/azure --recursive
+  
+  test-integ-ts-specs-gcp:
+    - npx mocha --config test/integ/.mocharc.json test/integ/gcp --recursive
+
   test-integ-ts-specs-pulumi:
     - npx mocha --config test/integ/.mocharc.json test/integ/pulumi --recursive
 

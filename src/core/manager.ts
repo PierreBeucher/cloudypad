@@ -2,7 +2,7 @@ import { InstanceStateV1 } from './state/state';
 import { DestroyOptions, InstanceProvisioner, InstanceProvisionOptions } from './provisioner';
 import { InstanceConfigurator } from './configurator';
 import { getLogger } from '../log/utils';
-import { InstanceRunner, StartStopOptions } from './runner';
+import { InstanceRunner, InstanceRunningStatus, StartStopOptions } from './runner';
 import { StateWriter } from './state/writer';
 import { AnsibleConfigurator } from '../configurators/ansible';
 
@@ -85,6 +85,7 @@ export interface InstanceManager {
     restart(opts?: StartStopOptions): Promise<void>
     pair(): Promise<void>
     getStateJSON(): string
+    getInstanceStatus(): Promise<InstanceRunningStatus>
 }
 
 export interface InstanceManagerArgs<ST extends InstanceStateV1> {
@@ -153,6 +154,11 @@ export class GenericInstanceManager<ST extends InstanceStateV1> implements Insta
     async pair(): Promise<void> {
         const runner = await this.buildRunner()
         await runner.pair()
+    }
+
+    async getInstanceStatus(): Promise<InstanceRunningStatus> {
+        const runner = await this.buildRunner()
+        return runner.instanceStatus()
     }
     
     private async buildRunner(){

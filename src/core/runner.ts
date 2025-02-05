@@ -15,6 +15,15 @@ export interface InstanceRunnerOptions  {
     autoApprove?: boolean
 }
 
+export enum InstanceRunningStatus {
+    Running = 'running',
+    Stopped = 'stopped',
+    Restarting = 'restarting',
+    Starting = 'starting',
+    Stopping = 'stopping',
+    Unknown = 'unknown'
+}
+
 /**
  * Instance Runner manages running time lifecycle of instances: start/stop/restart
  * and utility functions like pairing and fetching Moonlight PIN
@@ -24,6 +33,11 @@ export interface InstanceRunner {
     start(opts?: StartStopOptions): Promise<void>
     stop(opts?: StartStopOptions): Promise<void>
     restart(opts?: StartStopOptions): Promise<void>
+
+    /**
+     * Returns the current running status of the instance
+     */
+    instanceStatus(): Promise<InstanceRunningStatus>
 
     pair(): Promise<void>
 }
@@ -72,9 +86,15 @@ export abstract class AbstractInstanceRunner<C extends CommonProvisionInputV1, O
         await this.doRestart(opts)
     }
 
+    async instanceStatus(): Promise<InstanceRunningStatus> {
+        this.logger.info(`Getting instance state for ${this.args.instanceName}`) 
+        return this.doGetInstanceStatus()
+    }
+
     protected abstract doStart(opts?: StartStopOptions): Promise<void>
     protected abstract doStop(opts?: StartStopOptions): Promise<void>
     protected abstract doRestart(opts?: StartStopOptions): Promise<void>
+    protected abstract doGetInstanceStatus(): Promise<InstanceRunningStatus>
 
     async pair(){
         

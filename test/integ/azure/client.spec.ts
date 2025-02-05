@@ -1,5 +1,5 @@
 import * as assert from 'assert'
-import { AzureClient } from '../../../src/tools/azure'
+import { AzureClient, AzureVmStatus } from '../../../src/tools/azure'
 import { AZURE_SUPPORTED_GPU } from '../../../src/providers/azure/cli'
 
 describe('AzureClient', () => {
@@ -31,6 +31,13 @@ describe('AzureClient', () => {
         it('should return list of machine sizes without error', async () => {
             const sizes = await client.listMachineSizes("francecentral")
             assert.equal(sizes.length > 0, true)
+        }).timeout(60000)
+    })
+
+    describe('getInstanceStatus', () => {
+        it('should return instance status without error', async () => {
+            const status = await client.getInstanceStatus("test-deleteme_group", "test-deleteme")
+            assert.equal(status, AzureVmStatus.Deallocated)
         }).timeout(60000)
     })
 })

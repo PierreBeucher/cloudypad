@@ -1,5 +1,5 @@
 import { CLOUDYPAD_PROVIDER_PAPERSPACE } from "../../core/const"
-import { AbstractInstanceRunner, InstanceRunnerArgs, StartStopOptions } from "../../core/runner"
+import { AbstractInstanceRunner, InstanceRunnerArgs, InstanceRunningStatus, StartStopOptions } from "../../core/runner"
 import { PaperspaceClient } from "./client/client"
 import { MachinesCreate200ResponseDataStateEnum } from "./client/generated-api"
 import { PaperspaceProvisionInputV1, PaperspaceProvisionOutputV1 } from "./state"
@@ -29,6 +29,10 @@ export class PaperspaceInstanceRunner extends AbstractInstanceRunner<PaperspaceP
     async doRestart(opts?: StartStopOptions) {
         await this.client.restartMachine(this.args.provisionOutput.machineId)
         await this.client.waitForMachineState(this.args.provisionOutput.machineId, MachinesCreate200ResponseDataStateEnum.Ready)
+    }
+
+    async doGetInstanceStatus(): Promise<InstanceRunningStatus> {
+        throw new Error("Not implemented")
     }
 
 }

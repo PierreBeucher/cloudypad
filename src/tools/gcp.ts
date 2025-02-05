@@ -13,6 +13,22 @@ const DEFAULT_START_STOP_OPTION_WAIT=false
 // Generous default timeout as G instances are sometime long to stop
 const DEFAULT_START_STOP_OPTION_WAIT_TIMEOUT=60
 
+/**
+ * Google VM statuses
+ * Based on API reference https://cloud.google.com/compute/docs/reference/rest/v1/instances
+ */
+export enum GcpInstanceStatus {
+    Provisioning = "PROVISIONING",
+    Staging = "STAGING",
+    Running = "RUNNING",
+    Stopping = "STOPPING",
+    Suspending = "SUSPENDING",
+    Suspended = "SUSPENDED",
+    Repairing = "REPAIRING",
+    Terminated = "TERMINATED", // Stopped
+    Unknown = "UNKNOWN"
+}
+
 export class GcpClient {
 
     private static readonly staticLogger =  getLogger(GcpClient.name)
@@ -175,6 +191,45 @@ export class GcpClient {
             return acceleratorTypes
         } catch (error) {
             throw new Error(`Failed to list Google Cloud accelerator types in zone ${zone}`, { cause: error })
+        }
+    }
+
+    async getInstanceState(zone: string, instanceId: string): Promise<GcpInstanceStatus | undefined> {
+        this.logger.debug(`Describing instance status for ${instanceId}`)
+        
+        try {
+            this.logger.debug(`Getting Google Cloud instance status for ${instanceId}`)
+            const [instance] = await this.instances.get({
+                instance: instanceId,
+                project: this.projectId,
+                zone: zone
+            })
+
+            switch(instance.status) {
+                case GcpInstanceStatus.Provisioning:
+                    return GcpInstanceStatus.Provisioning;
+                case GcpInstanceStatus.Staging:
+                    return GcpInstanceStatus.Staging;
+                case GcpInstanceStatus.Running:
+                    return GcpInstanceStatus.Running;
+                case GcpInstanceStatus.Stopping:
+                    return GcpInstanceStatus.Stopping;
+                case GcpInstanceStatus.Suspending:
+                    return GcpInstanceStatus.Suspending;
+                case GcpInstanceStatus.Suspended:
+                    return GcpInstanceStatus.Suspended;
+                case GcpInstanceStatus.Repairing:
+                    return GcpInstanceStatus.Repairing;
+                case GcpInstanceStatus.Terminated:
+                    return GcpInstanceStatus.Terminated;
+                case GcpInstanceStatus.Unknown:
+                default:
+                    return GcpInstanceStatus.Unknown;
+            }
+
+            
+        } catch (error) {
+            throw new Error(`Failed to get instance ${instanceId} status`, { cause: error })
         }
     }
 
