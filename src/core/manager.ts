@@ -7,6 +7,31 @@ import { StateWriter } from './state/writer';
 import { AnsibleConfigurator } from '../configurators/ansible';
 
 /**
+ * Instance details suitable for end users, hiding or simplyfing internal details
+ */
+export interface CloudyPadInstanceDetails {
+    /**
+     * instance name
+     */
+    name: string
+
+    /**
+     * Public hostname (IP or address)
+     */
+    hostname: string
+
+    /**
+     * Instance running status
+     */
+    status: InstanceRunningStatus
+
+    /**
+     * Moonlight pairing port
+     */
+    pairingPort: number
+}
+
+/**
  * Used by InstanceManager to build sub-managers
  */
 export interface SubManagerFactory<ST extends InstanceStateV1> {
@@ -85,8 +110,8 @@ export interface InstanceManager {
     restart(opts?: StartStopOptions): Promise<void>
     pairInteractive(): Promise<void>
     pairSendPin(pin: string): Promise<boolean>
+    getInstanceDetails(): Promise<CloudyPadInstanceDetails>
     getStateJSON(): string
-    getInstanceStatus(): Promise<InstanceRunningStatus>
 }
 
 export interface InstanceManagerArgs<ST extends InstanceStateV1> {
@@ -172,6 +197,19 @@ export class GenericInstanceManager<ST extends InstanceStateV1> implements Insta
     
     private async buildProvisioner(){
         return this.factory.buildProvisioner(this.stateWriter.cloneState())
+    }
+
+    public async getInstanceDetails(): Promise<CloudyPadInstanceDetails> {
+        const runner = await this.buildRunner()
+        const state = this.stateWriter.cloneState()
+        const details: CloudyPadInstanceDetails = {
+            name: state.name,
+            hostname: state.provision.output?.host ?? "unknown",
+            pairingPort: 47989, // hardcoded for now*
+            status: await runner.instanceStatus(),
+        }
+
+        return details
     }
 
     public getStateJSON(){
