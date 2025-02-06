@@ -26,6 +26,10 @@ export class WolfMoonlightPairer extends AbstractMoonlightPairer implements Moon
         this.args = args
     }
 
+    pairSendPin(pin: string): Promise<boolean> {
+        throw new Error("Not implemented")
+    }
+
     protected async doPair(){
         
         try {

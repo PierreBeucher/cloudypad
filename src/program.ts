@@ -237,7 +237,7 @@ export function buildProgram(){
             try {
                 analyticsClient.sendEvent(RUN_COMMAND_PAIR)
                 const m = await new InstanceManagerBuilder().buildInstanceManager(name)
-                await m.pair()
+                await m.pairInteractive()
             } catch (error) {
                 throw new Error('Failed to pair instance', { cause: error })
             }

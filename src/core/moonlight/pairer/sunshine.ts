@@ -33,6 +33,16 @@ export class SunshineMoonlightPairer extends AbstractMoonlightPairer implements 
         this.args = args
     }
 
+    private buildSshClient(): SSHClient {
+        return new SSHClient({
+            clientName: SunshineMoonlightPairer.name,
+            host: this.args.host,
+            port: 22,
+            user: this.args.ssh.user,
+            privateKeyPath: this.args.ssh.privateKeyPath
+        })
+    }
+
     protected async doPair() {
 
         const pin = this.makePin()
@@ -43,13 +53,7 @@ export class SunshineMoonlightPairer extends AbstractMoonlightPairer implements 
         console.info()
         console.info('Sending PIN to Sunshine API...')
         
-        const ssh = new SSHClient({
-            clientName: SunshineMoonlightPairer.name,
-            host: this.args.host,
-            port: 22,
-            user: this.args.ssh.user,
-            privateKeyPath: this.args.ssh.privateKeyPath
-        })
+        const ssh = this.buildSshClient()
 
         try {
             await ssh.connect()
@@ -78,12 +82,28 @@ export class SunshineMoonlightPairer extends AbstractMoonlightPairer implements 
         
     }
 
-    private async tryPin( ssh: SSHClient, pin: string): Promise<boolean>{
+    async pairSendPin(pin: string): Promise<boolean> {
+        const sshClient = this.buildSshClient()
+        let pinResult = false
+        try {
+            await sshClient.connect()
+            pinResult = await this.tryPin(sshClient, pin)
+        } catch (error) {
+            throw new Error(`Failed to send pin to Sunshine API.`, { cause: error })
+        } finally {
+            sshClient.dispose()
+        }
+
+        return pinResult
+    }
+
+    private async tryPin(ssh: SSHClient, pin: string): Promise<boolean>{
 
         this.logger.debug(`Trying to send pin to Sunshine API... (enable trace logs to see raw outputs)`)
 
         const result = await ssh.command([
             'curl',
+            '-v',
             '-u',
             `${this.args.sunshine.username}:${this.args.sunshine.password}`,
             '-X',
@@ -109,6 +129,5 @@ export class SunshineMoonlightPairer extends AbstractMoonlightPairer implements 
             this.logger.warn(`Failed to parse Sunshine API JSON response from raw output ${JSON.stringify(result.stdout)}. If you think this is a bug please report it.`, error);
             return false
         }
-
     }
 }

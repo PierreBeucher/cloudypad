@@ -83,7 +83,8 @@ export interface InstanceManager {
     start(opts?: StartStopOptions): Promise<void>
     stop(opts?: StartStopOptions): Promise<void>
     restart(opts?: StartStopOptions): Promise<void>
-    pair(): Promise<void>
+    pairInteractive(): Promise<void>
+    pairSendPin(pin: string): Promise<boolean>
     getStateJSON(): string
     getInstanceStatus(): Promise<InstanceRunningStatus>
 }
@@ -151,14 +152,14 @@ export class GenericInstanceManager<ST extends InstanceStateV1> implements Insta
         await runner.restart(opts)
     }
 
-    async pair(): Promise<void> {
+    async pairInteractive(): Promise<void> {
         const runner = await this.buildRunner()
-        await runner.pair()
+        await runner.pairInteractive()
     }
 
-    async getInstanceStatus(): Promise<InstanceRunningStatus> {
+    async pairSendPin(pin: string): Promise<boolean> {
         const runner = await this.buildRunner()
-        return runner.instanceStatus()
+        return runner.pairSendPin(pin)
     }
     
     private async buildRunner(){

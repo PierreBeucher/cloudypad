@@ -39,7 +39,16 @@ export interface InstanceRunner {
      */
     instanceStatus(): Promise<InstanceRunningStatus>
 
-    pair(): Promise<void>
+    /**
+     * Interactively pair with Moonlight. This is only suitable for interactive (eg. CLI) use
+     */
+    pairInteractive(): Promise<void>
+
+    /**
+     * Send pairing PIN to the instance
+     * @returns true if the PIN was valid and pairing was successful, false otherwise
+     */
+    pairSendPin(pin: string): Promise<boolean>
 }
 
 export interface InstanceRunnerArgs<C extends CommonProvisionInputV1, O extends CommonProvisionOutputV1>  {
@@ -96,12 +105,9 @@ export abstract class AbstractInstanceRunner<C extends CommonProvisionInputV1, O
     protected abstract doRestart(opts?: StartStopOptions): Promise<void>
     protected abstract doGetInstanceStatus(): Promise<InstanceRunningStatus>
 
-    async pair(){
-        
-        let pairer: MoonlightPairer
-        
+    private buildMoonlightPairer(): MoonlightPairer {
         if(this.args.configurationInput.sunshine?.enable){
-            pairer = new SunshineMoonlightPairer({
+            return new SunshineMoonlightPairer({
                 instanceName: this.args.instanceName,
                 host: this.args.provisionOutput.host,
                 ssh: {
@@ -114,7 +120,7 @@ export abstract class AbstractInstanceRunner<C extends CommonProvisionInputV1, O
                 }
             })
         } else if(this.args.configurationInput.wolf?.enable){
-            pairer = new WolfMoonlightPairer({
+            return new WolfMoonlightPairer({
                 instanceName: this.args.instanceName,
                 host: this.args.provisionOutput.host,
                 ssh: {
@@ -125,8 +131,16 @@ export abstract class AbstractInstanceRunner<C extends CommonProvisionInputV1, O
         } else {
             throw new Error(`No Moonlight pairer found for instance ${this.args.instanceName}, neither Sunshine nor Wolf is enabled`)
         }
+    }
 
-        await pairer.pair()
+    async pairSendPin(pin: string): Promise<boolean> {
+        const pairer = this.buildMoonlightPairer()
+        return pairer.pairSendPin(pin)
+    }
+    
+    async pairInteractive(){
+        const pairer = this.buildMoonlightPairer()
+        await pairer.pairInteractive()
     }
 
    
