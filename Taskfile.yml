@@ -12,13 +12,17 @@ tasks:
   run-local-no-build:
     cmd: >-
       CLOUDYPAD_IMAGE="crafteo/cloudypad:local" ./cloudypad.sh {{.CLI_ARGS}}
-
   #
   # Build and test
   #
 
   test-unit:
     cmd: npx mocha --config test/unit/.mocharc.json ./test/unit --recursive
+
+  build-npm-tar:
+    cmds:
+    - npm run build
+    - (cd dist && npm pack)
 
   build-local:
     cmd: docker build -t crafteo/cloudypad:local .
