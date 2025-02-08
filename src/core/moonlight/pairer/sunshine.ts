@@ -2,7 +2,7 @@ import { AnalyticsClient } from "../../../tools/analytics/client"
 import * as fs from 'fs'
 import { getLogger } from '../../../log/utils';
 import { AnalyticsManager } from "../../../tools/analytics/manager";
-import { AbstractMoonlightPairer, MoonlightPairer } from "./abstract";
+import { AbstractMoonlightPairer, makePin, MoonlightPairer } from "./abstract";
 import { SSHClient } from "../../../tools/ssh";
 import { confirm } from '@inquirer/prompts';
 
@@ -45,7 +45,7 @@ export class SunshineMoonlightPairer extends AbstractMoonlightPairer implements 
 
     protected async doPair() {
 
-        const pin = this.makePin()
+        const pin = makePin()
 
         console.info(`Run this command in another terminal to pair your instance:`)
         console.info()

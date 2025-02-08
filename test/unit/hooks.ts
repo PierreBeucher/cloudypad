@@ -32,7 +32,8 @@ export const mochaHooks = {
 
         sinon.stub(AbstractInstanceRunner.prototype, 'stop').resolves()
         sinon.stub(AbstractInstanceRunner.prototype, 'start').resolves()
-        sinon.stub(AbstractInstanceRunner.prototype, 'pair').resolves()
+        sinon.stub(AbstractInstanceRunner.prototype, 'pairSendPin').resolves()
+        sinon.stub(AbstractInstanceRunner.prototype, 'pairInteractive').resolves()
 
         sinon.stub(AbstractInstanceProvisioner.prototype, 'verifyConfig').resolves()
         // don't sub provision() and destroy() as they have logic we want to test

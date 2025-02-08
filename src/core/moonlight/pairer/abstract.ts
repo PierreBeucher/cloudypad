@@ -46,16 +46,17 @@ export abstract class AbstractMoonlightPairer implements MoonlightPairer {
     }
 
     protected abstract doPair(): Promise<void>
+}
 
-    /**
-     * Generate a random 4-digit PIN suitable for Moonlight pairing
-     */
-    protected makePin(){
-        let result = '';
-        const charSet = '0123456789';
-        for (let i = 0; i < 4; i++) {
-            result += charSet.charAt(Math.floor(Math.random() * charSet.length));
-        }
-        return result;
+
+/**
+ * Generate a random 4-digit PIN suitable for Moonlight pairing
+ */
+export function makePin(): string {
+    let result = '';
+    const charSet = '0123456789';
+    for (let i = 0; i < 4; i++) {
+        result += charSet.charAt(Math.floor(Math.random() * charSet.length));
     }
+    return result;
 }
