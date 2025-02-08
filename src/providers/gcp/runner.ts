@@ -1,6 +1,6 @@
 import { CLOUDYPAD_PROVIDER_GCP } from '../../core/const';
-import { AbstractInstanceRunner, InstanceRunnerArgs, StartStopOptions } from '../../core/runner';
-import { GcpClient } from '../../tools/gcp';
+import { AbstractInstanceRunner, InstanceRunnerArgs, InstanceRunningStatus, StartStopOptions } from '../../core/runner';
+import { GcpClient, GcpInstanceStatus } from '../../tools/gcp';
 import { GcpProvisionInputV1, GcpProvisionOutputV1 } from './state';
 
 export type GcpInstanceRunnerArgs = InstanceRunnerArgs<GcpProvisionInputV1, GcpProvisionOutputV1>
@@ -33,5 +33,27 @@ export class GcpInstanceRunner extends AbstractInstanceRunner<GcpProvisionInputV
 
     async doRestart(opts?: StartStopOptions) {
         await this.client.restartInstance(this.getZone(), this.getinstanceName(), opts)
+    }
+
+    async doGetInstanceStatus(): Promise<InstanceRunningStatus> {
+        const status = await this.client.getInstanceState(this.getZone(), this.getinstanceName())
+        
+        switch(status) {
+            case GcpInstanceStatus.Provisioning:
+            case GcpInstanceStatus.Staging:
+                return InstanceRunningStatus.Starting;
+            case GcpInstanceStatus.Running:
+                return InstanceRunningStatus.Running;
+            case GcpInstanceStatus.Stopping:
+            case GcpInstanceStatus.Suspending:
+                return InstanceRunningStatus.Stopping;
+            case GcpInstanceStatus.Suspended:
+            case GcpInstanceStatus.Repairing:
+            case GcpInstanceStatus.Terminated:
+                return InstanceRunningStatus.Stopped;
+            case GcpInstanceStatus.Unknown:
+            default:
+                return InstanceRunningStatus.Unknown;
+        }
     }
 }

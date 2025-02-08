@@ -1,4 +1,4 @@
-import { EC2Client, DescribeInstancesCommand, Instance, StartInstancesCommand, StopInstancesCommand, RebootInstancesCommand, waitUntilInstanceRunning, waitUntilInstanceStopped, DescribeInstanceTypesCommand, _InstanceType, InstanceTypeInfo, InstanceTypeOffering, DescribeInstanceTypeOfferingsCommand } from '@aws-sdk/client-ec2'
+import { EC2Client, DescribeInstancesCommand, Instance, StartInstancesCommand, StopInstancesCommand, RebootInstancesCommand, waitUntilInstanceRunning, waitUntilInstanceStopped, DescribeInstanceTypesCommand, _InstanceType, InstanceTypeInfo, InstanceTypeOffering, DescribeInstanceTypeOfferingsCommand, DescribeInstanceStatusCommand, InstanceStateName } from '@aws-sdk/client-ec2'
 import { STSClient, GetCallerIdentityCommand } from '@aws-sdk/client-sts'
 import { getLogger, Logger } from '../log/utils'
 import { loadConfig } from "@smithy/node-config-provider"
@@ -190,6 +190,32 @@ export class AwsClient {
             }
         } catch (error) {
             throw new Error(`Failed to restart EC2 instance ${instanceId}`, { cause: error })
+        }
+    }
+
+    async getInstanceState(instanceId: string): Promise<InstanceStateName | undefined> {
+        this.logger.debug(`Describing instance status for ${instanceId}`)
+        
+        try {
+            const command = new DescribeInstanceStatusCommand({
+                InstanceIds: [instanceId],
+                IncludeAllInstances: true,
+            })
+            const response = await this.ec2Client.send(command)
+            
+            this.logger.debug(`Instance status response: ${JSON.stringify(response)}`)
+
+            if(!response.InstanceStatuses || response.InstanceStatuses.length === 0) {
+                throw new Error(`Instance not found (or AWS API returned an empty response): '${instanceId}'`)
+            }
+
+            const state = response.InstanceStatuses[0].InstanceState?.Name
+
+            this.logger.debug(`Found instance ${instanceId} status: ${state}`)
+            
+            return state
+        } catch (error) {
+            throw new Error(`Failed to get instance ${instanceId} status`, { cause: error })
         }
     }
 

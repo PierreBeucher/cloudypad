@@ -1,6 +1,6 @@
 import { CLOUDYPAD_PROVIDER_AZURE } from '../../core/const'
-import { AbstractInstanceRunner, InstanceRunnerArgs, StartStopOptions } from '../../core/runner'
-import { AzureClient } from '../../tools/azure'
+import { AbstractInstanceRunner, InstanceRunnerArgs, InstanceRunningStatus, StartStopOptions } from '../../core/runner'
+import { AzureClient, AzureVmStatus } from '../../tools/azure'
 import { AzureProvisionInputV1, AzureProvisionOutputV1 } from './state'
 
 export type AzureInstanceRunnerArgs = InstanceRunnerArgs<AzureProvisionInputV1, AzureProvisionOutputV1>
@@ -44,5 +44,27 @@ export class AzureInstanceRunner extends AbstractInstanceRunner<AzureProvisionIn
         const resourceGroupName = this.getResourceGroupName()
 
         await this.client.restartInstance(resourceGroupName, vmName, opts)
+    }
+
+    async doGetInstanceStatus(): Promise<InstanceRunningStatus> {
+        const vmName = this.getVmName()
+        const resourceGroupName = this.getResourceGroupName()
+
+        const status = await this.client.getInstanceStatus(resourceGroupName, vmName)
+
+        switch(status) {
+            case AzureVmStatus.Running:
+                return InstanceRunningStatus.Running
+            case AzureVmStatus.Deallocated:
+                return InstanceRunningStatus.Stopped
+            case AzureVmStatus.Starting:
+                return InstanceRunningStatus.Starting
+            case AzureVmStatus.Deallocating:
+                return InstanceRunningStatus.Stopping
+            case AzureVmStatus.Unknown:
+                return InstanceRunningStatus.Unknown
+            default:
+                return InstanceRunningStatus.Unknown
+        }
     }
 }

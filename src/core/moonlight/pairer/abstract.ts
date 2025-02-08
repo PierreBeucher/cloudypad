@@ -7,7 +7,9 @@ import { AnalyticsClient } from "../../../tools/analytics/client"
  * Moonlight pairing interface. Automates pairing process between Moonlight and streaming server.
  */
 export interface MoonlightPairer {
-    pair(): Promise<void>
+    pairInteractive(): Promise<void>
+    
+    pairSendPin(pin: string): Promise<boolean>
 }
 
 export interface AbstractMoonlightPairerArgs {
@@ -23,8 +25,10 @@ export abstract class AbstractMoonlightPairer implements MoonlightPairer {
     constructor(args: AbstractMoonlightPairerArgs){
         this.instanceName = args.instanceName
     }
+    
+    abstract pairSendPin(pin: string): Promise<boolean>
 
-    async pair(){
+    async pairInteractive(){
         
         this.logger.debug(`Pairing instance ${this.instanceName} with Sunshine`)
 
@@ -42,16 +46,17 @@ export abstract class AbstractMoonlightPairer implements MoonlightPairer {
     }
 
     protected abstract doPair(): Promise<void>
+}
 
-    /**
-     * Generate a random 4-digit PIN suitable for Moonlight pairing
-     */
-    protected makePin(){
-        let result = '';
-        const charSet = '0123456789';
-        for (let i = 0; i < 4; i++) {
-            result += charSet.charAt(Math.floor(Math.random() * charSet.length));
-        }
-        return result;
+
+/**
+ * Generate a random 4-digit PIN suitable for Moonlight pairing
+ */
+export function makePin(): string {
+    let result = '';
+    const charSet = '0123456789';
+    for (let i = 0; i < 4; i++) {
+        result += charSet.charAt(Math.floor(Math.random() * charSet.length));
     }
+    return result;
 }

@@ -268,7 +268,7 @@ export abstract class AbstractInputPrompter<A extends CreateCliArgs, I extends C
     }
 
     protected async useSpotInstance(useSpot?: boolean): Promise<boolean>{
-        if (useSpot) {
+        if (useSpot !== undefined) {
             return useSpot;
         }
 

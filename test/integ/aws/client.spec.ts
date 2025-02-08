@@ -40,9 +40,9 @@ describe('AWS Client Integration Tests', () => {
 
         let result: { [ region: string]: _InstanceType[] } = {}
         const expected = {
-            "eu-central-1": ["g4dn.2xlarge", "g4dn.4xlarge", "g4dn.xlarge", "g5.2xlarge", "g5.4xlarge", "g5.xlarge"].sort(),
+            "eu-central-1": ["g4dn.2xlarge", "g4dn.4xlarge", "g4dn.xlarge", "g5.2xlarge", "g5.4xlarge", "g5.xlarge", "g5.8xlarge"].sort(),
             "eu-west-3": ["g4dn.2xlarge", "g4dn.4xlarge", "g4dn.xlarge"].sort(),
-            "us-east-1": ["g4dn.2xlarge", "g4dn.4xlarge", "g4dn.xlarge", "g5.2xlarge", "g5.4xlarge", "g5.xlarge"].sort()
+            "us-east-1": ["g4dn.2xlarge", "g4dn.4xlarge", "g4dn.xlarge", "g5.2xlarge", "g5.4xlarge", "g5.xlarge", "g5.8xlarge"].sort()
         }
         for(const region of regions){
             const awsClient = new AwsClient('integ-test', region)
@@ -69,4 +69,11 @@ describe('AWS Client Integration Tests', () => {
             await awsClient.getInstanceTypeDetails(instanceTypes)
         }, /Failed to fetch instance details for instance type/)    
     }).timeout(60000)
+
+    it('should get instance state', async () => {
+        const instanceId = 'i-08a558204090d96a7'
+        const awsClient = new AwsClient('integ-test', 'eu-west-3')
+        const state = await awsClient.getInstanceState(instanceId)
+        assert.equal(state, 'stopped')
+    })
 }) 

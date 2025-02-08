@@ -4,7 +4,7 @@ import Docker from 'dockerode';
 import axios from 'axios';
 import { URL } from 'url'
 import { buildAxiosError } from '../../../tools/axios';
-import { AbstractMoonlightPairer, MoonlightPairer } from "./abstract";
+import { AbstractMoonlightPairer, makePin, MoonlightPairer } from "./abstract";
 
 export interface WolfMoonlightPairerArgs {
     instanceName: string
@@ -24,6 +24,10 @@ export class WolfMoonlightPairer extends AbstractMoonlightPairer implements Moon
             instanceName: args.instanceName
         })
         this.args = args
+    }
+
+    pairSendPin(pin: string): Promise<boolean> {
+        throw new Error("Not implemented")
     }
 
     protected async doPair(){
@@ -179,7 +183,7 @@ export class WolfMoonlightPairer extends AbstractMoonlightPairer implements Moon
 
     private async pairAuto(docker: Docker, host: string) {
 
-        const pin = this.makePin()
+        const pin = makePin()
 
         console.info(`Run this command to pair your instance:`)
         console.info()

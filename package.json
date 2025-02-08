@@ -2,14 +2,15 @@
   "name": "cloudypad",
   "version": "0.14.0",
   "description": "",
-  "main": "index.js",
   "scripts": {
     "test": "mocha",
     "build": "rm -rf dist/ && tsc && npm run copy-ansible",
     "copy-ansible": "cp -r ansible dist/ansible"
   },
+  "main": "./dist/src/index.js",
+  "types": "./dist/src/index.d.ts",
   "bin": {
-    "cloudypad": "./dist/src/index.js"
+    "cloudypad": "./dist/src/cli.js"
   },
   "author": "",
   "license": "ISC",

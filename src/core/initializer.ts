@@ -121,7 +121,7 @@ export class InteractiveInstanceInitializer<A extends CreateCliArgs> {
             this.analyticsEvent("create_instance_start_pairing")
             this.logger.info(`Initializing ${instanceName}: pairing...}`)
             
-            await manager.pair()
+            await manager.pairInteractive()
             
             this.analyticsEvent("create_instance_finish_pairing")
             this.logger.info(`Initializing ${instanceName}: pairing done.}`)

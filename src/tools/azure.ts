@@ -22,6 +22,17 @@ const DEFAULT_START_STOP_OPTION_WAIT=false
 // Generous default timeout as G instances are sometime long to stop
 const DEFAULT_START_STOP_OPTION_WAIT_TIMEOUT=60
 
+/**
+ * Azure API doesn't document all possible status, let's try to cover them here
+ */
+export enum AzureVmStatus {
+    Starting = "VM starting",
+    Running = "VM running",
+    Deallocated = "VM deallocated", // stopped
+    Deallocating = "VM deallocating", // stopping
+    Unknown = "VM status unknown"
+}
+
 export class AzureClient {
 
     private static readonly staticLogger = getLogger(AzureClient.name)
@@ -177,6 +188,33 @@ export class AzureClient {
 
         } catch (error) {
             throw new Error(`Failed to check quota ${quotaName} in location ${location}`, { cause: error })
+        }
+    }
+
+    async getInstanceStatus(resourceGroupName: string, vmName: string): Promise<AzureVmStatus | undefined> {
+        this.logger.debug(`Getting Azure virtual machine state: ${vmName}`)
+        try  {
+            const vm = await this.computeClient.virtualMachines.instanceView(resourceGroupName, vmName)
+
+            const status = vm.statuses?.find(s => s.code?.startsWith("PowerState/"))?.displayStatus;
+
+            this.logger.debug(`Found Azure virtual machine state: ${status}`)
+
+            switch(status){
+                case AzureVmStatus.Starting:
+                    return AzureVmStatus.Starting
+                case AzureVmStatus.Running:
+                    return AzureVmStatus.Running
+                case AzureVmStatus.Deallocated:
+                    return AzureVmStatus.Deallocated
+                case AzureVmStatus.Deallocating:
+                    return AzureVmStatus.Deallocating
+                default:
+                    return AzureVmStatus.Unknown
+            }
+
+        } catch (error) {
+            throw new Error(`Failed to get Azure virtual machine status: ${vmName}`, { cause: error })
         }
     }
 
