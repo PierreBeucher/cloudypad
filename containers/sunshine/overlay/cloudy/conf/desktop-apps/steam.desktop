@@ -1,0 +1,12 @@
+# Desktop entry taken from /usr/share/applications/steam.desktop
+[Desktop Entry]
+Name=Steam
+Exec=/usr/bin/steam %U
+Icon=steam
+Terminal=true
+Type=Application
+Categories=Network;FileTransfer;Game;
+MimeType=x-scheme-handler/steam;x-scheme-handler/steamlink;
+Actions=Store;Community;Library;Servers;Screenshots;News;Settings;BigPicture;Friends;
+PrefersNonDefaultGPU=true
+X-KDE-RunOnDiscreteGpu=true

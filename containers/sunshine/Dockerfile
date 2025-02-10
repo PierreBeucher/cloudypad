@@ -132,6 +132,12 @@ RUN --mount=type=cache,target=/var/cache --mount=type=tmpfs,target=/var/log \
     apt remove -y xfce4-panel && \
     apt clean
 
+# Install sudo
+RUN --mount=type=cache,target=/var/cache --mount=type=tmpfs,target=/var/log \
+    apt update && \
+    apt install -y sudo && \
+    apt clean
+
 # # TODO Local (for debug)
 # # Keep here ?
 RUN --mount=type=cache,target=/var/cache --mount=type=tmpfs,target=/var/log \
@@ -153,6 +159,7 @@ ENV CLOUDYPAD_LOG_DIR=/cloudy/log
 ENV CLOUDYPAD_CONF_DIR=/cloudy/conf
 # TODO as tmpfs ? 
 ENV CLOUDYPAD_RUNTIME_DIR=/cloudy/runtime 
+ENV CLOUDYPAD_BIN_DIR=/cloudy/bin
 
 # Default name for Sunshine server (as shown by Moonlight)
 # Used in sunshine.conf templates
@@ -184,6 +191,9 @@ ENV KEYBOARD_LAYOUT="fr"
 RUN useradd -m -d /home/cloudy -s /bin/bash -u 1001 $CLOUDYPAD_USER
 
 COPY overlay /
+
+# Allow user "cloudy" to stop container
+RUN echo "cloudy ALL=(ALL) NOPASSWD: ${CLOUDYPAD_BIN_DIR}/stop-supervisord.sh" > /etc/sudoers.d/cloudy-stop-container
 
 # Contain various Cloudy Pad scripts, add to PATH for easier use
 ENV PATH=$PATH:/cloudy/bin
