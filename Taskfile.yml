@@ -35,6 +35,24 @@ tasks:
       [ $(docker run crafteo/cloudypad:local --version) = $(cat package.json | jq .version -r) ] 
       || echo "Version in container image doesn't match package.json version"
 
+  #
+  # Local development
+  #
+
+  # For faster development workflow, build and import Sunshine image into dev VM
+  # - Build image locally as tar archive
+  # - Copy image to dev VM
+  # - Import image into dev VM
+  # - Run Sunshine container in dev VM
+  # Note: might as well use a bind mount from host to dev VM instead of scp
+  docker-sunshine-to-dev-vm:
+    cmds: 
+    - docker buildx build containers/sunshine/ -o type=docker,dest=./tmp/cloudypad.docker.tar -t ghcr.io/pierrebeucher/cloudypad/sunshine:local
+    - scp -i .vagrant/machines/default/virtualbox/private_key tmp/cloudypad.docker.tar vagrant@192.168.56.43:/tmp
+    - ssh -i .vagrant/machines/default/virtualbox/private_key vagrant@192.168.56.43 docker load -i /tmp/cloudypad.docker.tar
+    - ssh -i .vagrant/machines/default/virtualbox/private_key vagrant@192.168.56.43 
+      docker compose -f sunshine/docker-compose.yml -p sunshine up -d
+
   # Detect potential circular deps with Madge
   test-circular-deps:
     cmd: npx -y madge --ts-config ./tsconfig.json -c .
