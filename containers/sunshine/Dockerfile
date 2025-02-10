@@ -40,12 +40,6 @@ RUN --mount=type=cache,target=/var/cache --mount=type=tmpfs,target=/var/log \
     gettext-base 
 
 #
-# Desktop
-#
-RUN --mount=type=cache,target=/var/cache --mount=type=tmpfs,target=/var/log \
-    apt install -y xfce4
-
-#
 # Sunshine
 #
 RUN --mount=type=cache,target=/var/cache --mount=type=tmpfs,target=/var/log \
@@ -127,6 +121,17 @@ RUN --mount=type=cache,target=/var/cache --mount=type=tmpfs,target=/var/log \
     apt install -y ./steam.deb && \
     rm steam.deb
 
+#
+# Desktop
+#
+# Install xfce4 desktop environment
+# but remove xfce4-panel to void showinf uneeded/unwanted panels (see https://unix.stackexchange.com/questions/38048/how-to-remove-all-the-panels-in-xfce)
+#
+RUN --mount=type=cache,target=/var/cache --mount=type=tmpfs,target=/var/log \
+    apt install -y xfce4 && \
+    apt remove -y xfce4-panel && \
+    apt clean
+
 # # TODO Local (for debug)
 # # Keep here ?
 RUN --mount=type=cache,target=/var/cache --mount=type=tmpfs,target=/var/log \
@@ -146,6 +151,8 @@ ENV CLOUDYPAD_USER=cloudy
 ENV CLOUDYPAD_DATA_DIR=/cloudy/data
 ENV CLOUDYPAD_LOG_DIR=/cloudy/log
 ENV CLOUDYPAD_CONF_DIR=/cloudy/conf
+# TODO as tmpfs ? 
+ENV CLOUDYPAD_RUNTIME_DIR=/cloudy/runtime 
 
 # Default name for Sunshine server (as shown by Moonlight)
 # Used in sunshine.conf templates
@@ -157,11 +164,9 @@ ENV SUNSHINE_SERVER_NAME="Sunshine"
 # Setting proper XDG_* variables allow more control other config and data persistence
 # See https://specifications.freedesktop.org/basedir-spec/latest/
 # 
-ENV XDG_RUNTIME_DIR=/cloudy/runtime
+ENV XDG_RUNTIME_DIR=$CLOUDYPAD_RUNTIME_DIR
+ENV XDG_CONFIG_HOME=$CLOUDYPAD_CONF_DIR
 ENV XDG_CACHE_HOME=/home/$CLOUDYPAD_USER/.cache
-
-# TODO persist this folder ?
-ENV XDG_CONFIG_HOME=/home/$CLOUDYPAD_USER/.config
 
 # Write data in known directory for persistence
 # XDG_DATA_HOME is used by various programs (like Steam) to store data
