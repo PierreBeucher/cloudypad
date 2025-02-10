@@ -95,12 +95,26 @@ A local Virtual Machine can be created with Vagrant:
 vagrant up
 ```
 
+Machine IP is hardcoded in Vagrantfile to `192.168.56.43`.
+
 Can be used to run Sunshine container and test Ansible playbook easily.
 
 Fast Sunshine container build and import:
 
 ```sh
 task docker-sunshine-to-dev-vm
+```
+
+Ansible test:
+
+```sh
+ansible-playbook -i ansible/inventories/dev-vagrant.yml ansible/sunshine.yml -t sunshine
+```
+
+Connect to Sunshine web UI (Sunshine is forwarded to local machine):
+
+```sh
+http://localhost:47990
 ```
 
 ### Local Pulumi stack manipulation
