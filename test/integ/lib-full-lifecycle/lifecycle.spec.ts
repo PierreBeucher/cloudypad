@@ -44,6 +44,7 @@ describe('Lib full lifecycle', () => {
             streamingServer: STREAMING_SERVER_SUNSHINE,
             sunshineUser: "sunshine",
             sunshinePassword: "S3nshine!",
+            skipPairing: true,
             yes: true
         })
     }).timeout(360000)
@@ -90,5 +91,9 @@ describe('Lib full lifecycle', () => {
 
         await manager.pairSendPin(pin)
     }).timeout(10000)
-    
+
+    it('should destroy instance', async () => {
+        const manager = await getInstanceManager(instanceName)
+        await manager.destroy({ autoApprove: true })
+    }).timeout(360000)
 })
