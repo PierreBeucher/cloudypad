@@ -7,7 +7,7 @@ import { CommonConfigurationInputV1, CommonProvisionInputV1, CommonProvisionOutp
 import { AbstractInstanceConfigurator } from '../core/configurator';
 import { getLogger, Logger } from '../log/utils';
 import { AnsibleClient } from '../tools/ansible';
-import { CLOUDYPAD_VERSION } from '../core/const';
+import { CLOUDYPAD_SUNSHINE_IMAGE_REGISTRY, CLOUDYPAD_VERSION } from '../core/const';
 
 export interface AnsibleConfiguratorArgs {
     instanceName: string
@@ -62,7 +62,8 @@ export class AnsibleConfigurator<ST extends InstanceStateV1> extends AbstractIns
                         sunshine_web_username: this.args.configurationInput.sunshine?.username,
                         sunshine_web_password_base64: this.args.configurationInput.sunshine?.passwordBase64,
                         sunshine_nvidia_enable: true,
-                        sunshine_image_tag: CLOUDYPAD_VERSION,
+                        sunshine_image_tag: this.args.configurationInput.sunshine?.imageTag ?? CLOUDYPAD_VERSION,
+                        sunshine_image_registry: this.args.configurationInput.sunshine?.imageRegistry ?? CLOUDYPAD_SUNSHINE_IMAGE_REGISTRY,
                     },
                 },
             },

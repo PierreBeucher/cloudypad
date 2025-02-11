@@ -147,14 +147,18 @@ export abstract class AbstractInputPrompter<A extends CreateCliArgs, I extends C
                 }
             },
             configuration: {
-                sunshine: cliArgs.streamingServer == STREAMING_SERVER_SUNSHINE ? {
-                    enable: true,
+                // if streaming server is provided, set specific boolean to enable/disable it
+                // if unset, leave undefined to prompt or use existing value from state
+                sunshine: {
+                    enable: cliArgs.streamingServer ? cliArgs.streamingServer == STREAMING_SERVER_SUNSHINE : undefined,
                     username: cliArgs.sunshineUser,
                     passwordBase64: cliArgs.sunshinePassword ? Buffer.from(cliArgs.sunshinePassword).toString('base64') : undefined,
-                } : undefined,
-                wolf: cliArgs.streamingServer == STREAMING_SERVER_WOLF ? {
-                    enable: true,
-                } : undefined,
+                    imageRegistry: cliArgs.sunshineImageRegistry,
+                    imageTag: cliArgs.sunshineImageTag,
+                },
+                wolf: {
+                    enable: cliArgs.streamingServer ? cliArgs.streamingServer == STREAMING_SERVER_WOLF : undefined,
+                }
             }
         }
     }

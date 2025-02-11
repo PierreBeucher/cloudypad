@@ -25,6 +25,8 @@ const CommonConfigurationInputV1Schema = z.object({
         enable: z.boolean().describe("Whether to enable Sunshine streaming server"),
         passwordBase64: z.string().describe("Sunshine web UI password (base64 encoded)"),
         username: z.string().describe("Sunshine web UI username"),
+        imageTag: z.string().optional().describe("Sunshine container image tag. Default to current Cloudy Pad version"),
+        imageRegistry: z.string().optional().describe("Sunshine container image registry. Default to Cloudy Pad registry"),
     })
     .nullish(), 
     wolf: z.object({
