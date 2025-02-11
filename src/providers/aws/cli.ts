@@ -52,23 +52,23 @@ export class AwsInputPrompter extends AbstractInputPrompter<AwsCreateCliArgs, Aw
         }
     }
 
-    protected async promptSpecificInput(defaultInput: CommonInstanceInput & PartialDeep<AwsInstanceInput>, createOptions: PromptOptions): Promise<AwsInstanceInput> {
+    protected async promptSpecificInput(commonInput: CommonInstanceInput, partialInput: PartialDeep<AwsInstanceInput>, createOptions: PromptOptions): Promise<AwsInstanceInput> {
 
-        this.logger.debug(`Starting AWS prompt with defaultInput: ${JSON.stringify(defaultInput)} and createOptions: ${JSON.stringify(createOptions)}`)
+        this.logger.debug(`Starting AWS prompt with defaultInput: ${JSON.stringify(commonInput)} and createOptions: ${JSON.stringify(createOptions)}`)
         if(!createOptions.autoApprove && !createOptions.skipQuotaWarning){
             await this.informCloudProviderQuotaWarning(CLOUDYPAD_PROVIDER_AWS, "https://cloudypad.gg/cloud-provider-setup/aws.html")
         }
 
-        const region = await this.region(defaultInput.provision?.region)
-        const useSpot = await this.useSpotInstance(defaultInput.provision?.useSpot)
-        const instanceType = await this.instanceType(region, useSpot, defaultInput.provision?.instanceType)
-        const diskSize = await this.diskSize(defaultInput.provision?.diskSize)
-        const publicIpType = await this.publicIpType(defaultInput.provision?.publicIpType)
-        const costAlert = await this.costAlert(defaultInput.provision?.costAlert)
+        const region = await this.region(partialInput.provision?.region)
+        const useSpot = await this.useSpotInstance(partialInput.provision?.useSpot)
+        const instanceType = await this.instanceType(region, useSpot, partialInput.provision?.instanceType)
+        const diskSize = await this.diskSize(partialInput.provision?.diskSize)
+        const publicIpType = await this.publicIpType(partialInput.provision?.publicIpType)
+        const costAlert = await this.costAlert(partialInput.provision?.costAlert)
                 
         const awsInput: AwsInstanceInput = lodash.merge(
             {},
-            defaultInput, 
+            commonInput, 
             {
                 provision:{
                     diskSize: diskSize,

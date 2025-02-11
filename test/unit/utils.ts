@@ -28,9 +28,7 @@ export const DEFAULT_COMMON_INPUT: CommonInstanceInput = {
             imageTag: "local",
             imageRegistry: "dummy.registry.example.co"
         },
-        wolf: {
-            enable: false
-        }
+        wolf: undefined
     }
 }
 

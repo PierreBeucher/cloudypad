@@ -48,30 +48,30 @@ export class GcpInputPrompter extends AbstractInputPrompter<GcpCreateCliArgs, Gc
         }
     }
 
-    protected async promptSpecificInput(defaultInput: CommonInstanceInput & PartialDeep<GcpInstanceInput>, createOptions: PromptOptions): Promise<GcpInstanceInput> {
+    protected async promptSpecificInput(commonInput: CommonInstanceInput, partialInput: PartialDeep<GcpInstanceInput>, createOptions: PromptOptions): Promise<GcpInstanceInput> {
 
-        this.logger.debug(`Starting Gcp prompt with defaultInput: ${JSON.stringify(defaultInput)} and createOptions: ${JSON.stringify(createOptions)}`)
+        this.logger.debug(`Starting Gcp prompt with defaultInput: ${JSON.stringify(commonInput)} and createOptions: ${JSON.stringify(createOptions)}`)
 
         if(!createOptions.autoApprove && !createOptions.skipQuotaWarning){
             await this.informCloudProviderQuotaWarning(CLOUDYPAD_PROVIDER_GCP, "https://cloudypad.gg/cloud-provider-setup/gcp.html")
         }
         
-        const projectId = await this.project(defaultInput.provision?.projectId)
+        const projectId = await this.project(partialInput.provision?.projectId)
         
         const client = new GcpClient(GcpInputPrompter.name, projectId)
 
-        const region = await this.region(client, defaultInput.provision?.region)
-        const zone = await this.zone(client, region, defaultInput.provision?.zone)
-        const machineType = await this.machineType(client, zone, defaultInput.provision?.machineType)
-        const acceleratorType = await this.acceleratorType(client, zone, defaultInput.provision?.acceleratorType)
-        const useSpot = await this.useSpotInstance(defaultInput.provision?.useSpot)
-        const diskSize = await this.diskSize(defaultInput.provision?.diskSize)
-        const publicIpType = await this.publicIpType(defaultInput.provision?.publicIpType)
-        const costAlert = await this.costAlert(defaultInput.provision?.costAlert)
+        const region = await this.region(client, partialInput.provision?.region)
+        const zone = await this.zone(client, region, partialInput.provision?.zone)
+        const machineType = await this.machineType(client, zone, partialInput.provision?.machineType)
+        const acceleratorType = await this.acceleratorType(client, zone, partialInput.provision?.acceleratorType)
+        const useSpot = await this.useSpotInstance(partialInput.provision?.useSpot)
+        const diskSize = await this.diskSize(partialInput.provision?.diskSize)
+        const publicIpType = await this.publicIpType(partialInput.provision?.publicIpType)
+        const costAlert = await this.costAlert(partialInput.provision?.costAlert)
         
         const gcpInput: GcpInstanceInput = lodash.merge(
             {},
-            defaultInput,
+            commonInput,
             {
                 provision: {
                     projectId: projectId,

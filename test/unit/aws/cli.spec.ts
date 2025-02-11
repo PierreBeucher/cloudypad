@@ -61,6 +61,13 @@ describe('AWS input prompter', () => {
                 costAlert: {
                     limit: 999,
                     notificationEmail: "dummy@crafteo.io",
+                },
+            },
+            configuration: {
+                ...TEST_INPUT.configuration,
+                // cliArgsIntoPartialInput will leave this value specifically undefined
+                wolf: {
+                    enable: undefined
                 }
             }
         }

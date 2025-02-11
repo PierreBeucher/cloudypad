@@ -37,19 +37,19 @@ export class PaperspaceInputPrompter extends AbstractInputPrompter<PaperspaceCre
         }
     }
 
-    protected async promptSpecificInput(defaultInput: CommonInstanceInput & PartialDeep<PaperspaceInstanceInput>, createOptions: PromptOptions): Promise<PaperspaceInstanceInput> {
+    protected async promptSpecificInput(commonInput: CommonInstanceInput, partialInput: PartialDeep<PaperspaceInstanceInput>, createOptions: PromptOptions): Promise<PaperspaceInstanceInput> {
 
-        this.logger.debug(`Starting Paperspace prompt with defaultInput: ${JSON.stringify(defaultInput)} and createOptions: ${JSON.stringify(createOptions)}`)
+        this.logger.debug(`Starting Paperspace prompt with defaultInput: ${JSON.stringify(commonInput)} and createOptions: ${JSON.stringify(createOptions)}`)
 
         if(!createOptions.autoApprove && !createOptions.skipQuotaWarning){
             await this.informCloudProviderQuotaWarning(CLOUDYPAD_PROVIDER_PAPERSPACE, "https://cloudypad.gg/cloud-provider-setup/paperspace.html")
         }
         
-        const apiKey = await this.apiKey(defaultInput.provision?.apiKey)
-        const machineType = await this.machineType(defaultInput.provision?.machineType)
-        const diskSize = await this.diskSize(defaultInput.provision?.diskSize)
-        const publicIpType = await this.publicIpType(defaultInput.provision?.publicIpType)
-        const region = await this.region(defaultInput.provision?.region)
+        const apiKey = await this.apiKey(partialInput.provision?.apiKey)
+        const machineType = await this.machineType(partialInput.provision?.machineType)
+        const diskSize = await this.diskSize(partialInput.provision?.diskSize)
+        const publicIpType = await this.publicIpType(partialInput.provision?.publicIpType)
+        const region = await this.region(partialInput.provision?.region)
         const sshUser = "paperspace" // Paperspace uses 'paperspace' SSH user, enforce it
 
         if(!createOptions.autoApprove){
@@ -71,7 +71,7 @@ export class PaperspaceInputPrompter extends AbstractInputPrompter<PaperspaceCre
         
         const psInput: PaperspaceInstanceInput = lodash.merge(
             {},
-            defaultInput,
+            commonInput,
             specificInput
         )
 

@@ -22,15 +22,15 @@ const CommonConfigurationInputV1Schema = z.object({
     // (eg. merging a state with Sunshine enabled but "undefined" in memory would keep it enabled
     // whereas a null value would force value to become "null" in state)
     sunshine: z.object({
-        enable: z.boolean().describe("Whether to enable Sunshine streaming server"),
+        enable: z.literal(true).describe("Always true. If sunshine object is set, it means Sunshine is enabled. Otherwise sunshine key must be null, undefined or absent."),
         passwordBase64: z.string().describe("Sunshine web UI password (base64 encoded)"),
         username: z.string().describe("Sunshine web UI username"),
         imageTag: z.string().optional().describe("Sunshine container image tag. Default to current Cloudy Pad version"),
         imageRegistry: z.string().optional().describe("Sunshine container image registry. Default to Cloudy Pad registry"),
     })
-    .nullish(), 
+    .nullish(),
     wolf: z.object({
-        enable: z.boolean().describe("Whether to enable Wolf streaming server"),
+        enable: z.literal(true).describe("Always true. If wolf object is set, it means Wolf is enabled. Otherwise wolf key must be null, undefined or absent."),
     })
     .nullish()
 })

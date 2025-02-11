@@ -82,26 +82,26 @@ export class AzureInputPrompter extends AbstractInputPrompter<AzureCreateCliArgs
         }
     }
 
-    protected async promptSpecificInput(defaultInput: CommonInstanceInput & PartialDeep<AzureInstanceInput>, createOptions: PromptOptions): Promise<AzureInstanceInput> {
+    protected async promptSpecificInput(commonInput: CommonInstanceInput, partialInput: PartialDeep<AzureInstanceInput>, createOptions: PromptOptions): Promise<AzureInstanceInput> {
 
-        this.logger.debug(`Starting Azure prompt with defaultInput: ${JSON.stringify(defaultInput)} and createOptions: ${JSON.stringify(createOptions)}`)
+        this.logger.debug(`Starting Azure prompt with defaultInput: ${JSON.stringify(commonInput)} and createOptions: ${JSON.stringify(createOptions)}`)
         
         if(!createOptions.autoApprove && !createOptions.skipQuotaWarning){
             await this.informCloudProviderQuotaWarning(CLOUDYPAD_PROVIDER_AZURE, "https://cloudypad.gg/cloud-provider-setup/azure.html")
         }
 
-        const subscriptionId = await this.subscriptionId(defaultInput.provision?.subscriptionId)
-        const useSpot = await this.useSpotInstance(defaultInput.provision?.useSpot)
-        const location = await this.location(subscriptionId, defaultInput.provision?.location)
-        const vmSize = await this.instanceType(subscriptionId, location, useSpot,defaultInput.provision?.vmSize)
-        const diskType = await this.diskType(defaultInput.provision?.diskType)
-        const diskSize = await this.diskSize(defaultInput.provision?.diskSize)
-        const publicIpType = await this.publicIpType(defaultInput.provision?.publicIpType)
-        const costAlert = await this.costAlert(defaultInput.provision?.costAlert)
+        const subscriptionId = await this.subscriptionId(partialInput.provision?.subscriptionId)
+        const useSpot = await this.useSpotInstance(partialInput.provision?.useSpot)
+        const location = await this.location(subscriptionId, partialInput.provision?.location)
+        const vmSize = await this.instanceType(subscriptionId, location, useSpot,partialInput.provision?.vmSize)
+        const diskType = await this.diskType(partialInput.provision?.diskType)
+        const diskSize = await this.diskSize(partialInput.provision?.diskSize)
+        const publicIpType = await this.publicIpType(partialInput.provision?.publicIpType)
+        const costAlert = await this.costAlert(partialInput.provision?.costAlert)
         
         const azInput: AzureInstanceInput = lodash.merge(
             {},
-            defaultInput,
+            commonInput,
             {
                 provision: {
                     diskSize: diskSize,

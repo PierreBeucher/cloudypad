@@ -62,6 +62,12 @@ describe('GCP input prompter', () => {
             provision: {
                 ...TEST_INPUT.provision,
                 ssh: lodash.omit(TEST_INPUT.provision.ssh, "user")
+            },
+            configuration: {
+                ...TEST_INPUT.configuration,
+                wolf: {
+                    enable: undefined
+                }
             }
         }
         
@@ -84,6 +90,12 @@ describe('GCP input prompter', () => {
             provision: {
                 ...TEST_INPUT.provision,
                 ssh: lodash.omit(TEST_INPUT.provision.ssh, "user")
+            },
+            configuration: {
+                ...TEST_INPUT.configuration,
+                wolf: {
+                    enable: undefined
+                }
             }
         }
         
