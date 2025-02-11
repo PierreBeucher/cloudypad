@@ -22,4 +22,4 @@ sunshine_image_tag: "dev"
 sunshine_image_repo: "ghcr.io/pierrebeucher/cloudypad/sunshine"
 
 # Whether to force pull images when deploying Docker Compose Sunshine containers
-sunshine_compose_pull_images: true
+sunshine_compose_pull_images: always
