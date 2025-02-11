@@ -53,6 +53,14 @@ tasks:
     - ssh -i .vagrant/machines/default/virtualbox/private_key vagrant@192.168.56.43 
       docker compose -f sunshine/docker-compose.yml -p sunshine up -d
 
+  build-push-image-dev:
+    cmds:
+    - docker compose -f containers/sunshine/docker-compose.yml build
+    - docker compose -f containers/sunshine/docker-compose.yml push
+
+  #
+  # Tests
+
   # Detect potential circular deps with Madge
   test-circular-deps:
     cmd: npx -y madge --ts-config ./tsconfig.json -c .
