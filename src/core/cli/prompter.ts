@@ -51,6 +51,9 @@ export abstract class AbstractInputPrompter<A extends CreateCliArgs, I extends C
     async promptInput(partialInput: PartialDeep<I>, createOptions: PromptOptions): Promise<I> {
         try {
             const commonInput = await this.promptCommonInput(partialInput, createOptions)
+
+            this.logger.debug(`Prompting specific input with common input ${JSON.stringify(commonInput)}, ` + 
+                `partial input ${JSON.stringify(partialInput)} and create options ${JSON.stringify(createOptions)}`)
             const finalInput = await this.promptSpecificInput(commonInput, partialInput, createOptions)
             return finalInput
         } catch (error) {

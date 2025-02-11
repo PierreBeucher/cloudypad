@@ -54,7 +54,6 @@ export class AwsInputPrompter extends AbstractInputPrompter<AwsCreateCliArgs, Aw
 
     protected async promptSpecificInput(commonInput: CommonInstanceInput, partialInput: PartialDeep<AwsInstanceInput>, createOptions: PromptOptions): Promise<AwsInstanceInput> {
 
-        this.logger.debug(`Starting AWS prompt with defaultInput: ${JSON.stringify(commonInput)} and createOptions: ${JSON.stringify(createOptions)}`)
         if(!createOptions.autoApprove && !createOptions.skipQuotaWarning){
             await this.informCloudProviderQuotaWarning(CLOUDYPAD_PROVIDER_AWS, "https://cloudypad.gg/cloud-provider-setup/aws.html")
         }
