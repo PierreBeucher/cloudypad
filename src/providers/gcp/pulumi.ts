@@ -101,7 +101,7 @@ class CloudyPadGCEInstance extends pulumi.ComponentResource {
                 automaticRestart: args.useSpot ? false : true, // Must be false for spot
                 onHostMaintenance: "TERMINATE",
                 provisioningModel: args.useSpot ? "SPOT" : "STANDARD",
-                instanceTerminationAction: "STOP",
+                instanceTerminationAction: args.useSpot ? "STOP" : undefined, // instanceTerminationAction is only allowed for spot instances
                 preemptible: args.useSpot ?? false
             },
         }, {
