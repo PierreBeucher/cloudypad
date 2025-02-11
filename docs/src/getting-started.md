@@ -4,14 +4,26 @@ Cloudy Pad deploys a Cloud gaming gear using a Cloud provider of your choice:
 - 💰 While Cloudy Pad itself is free and open-source, charges may incur for Cloud provider usage. Make sure you [understand the costs](cost.md)
 - Cloudy Pad lets you play on Linux. Using Steam may require [Proton](https://github.com/ValveSoftware/Proton). You can check your game compatibility on [ProtonDB website](https://www.protondb.com/) or see [how to play games on Steam](#how-to-play-game-on-steam--why-does-my-steam-game-doesnt-launch-).
 
+---
+
+- [Prerequisites](#prerequisites)
+- [Installation](#installation)
+- [Cloud provider setup](#cloud-provider-setup)
+- [Deploy your instance](#deploy-your-instance)
+- [Run Moonlight and connect to your instance](#run-moonlight-and-connect-to-your-instance)
+- [Sign-in to Steam and play your game](#sign-in-to-steam-and-play-your-game)
+- [Stop your instance after gaming sessions](#stop-your-instance-after-gaming-sessions)
+- [Problem ?](#problem-)
+
 ## Prerequisites
 
+- [Moonlight](https://moonlight-stream.org/) streaming client
+  - Moonlight is client allowing you to connect to your instance and play your games
 - A Cloud provider account, one of:
   - AWS
   - Azure
   - Google Cloud
   - Paperspace
-- [Moonlight](https://moonlight-stream.org/) streaming client
 - [Docker](https://docs.docker.com/engine/install/) 
   - Rootless Docker is not supported yet
   - For MacOS, [OrbStack](https://orbstack.dev/) is recommended over Docker Desktop
@@ -24,15 +36,17 @@ Install latest version of `cloudypad` CLI:
 curl -fsSL https://raw.githubusercontent.com/PierreBeucher/cloudypad/master/install.sh | bash
 ```
 
-For other installation methods, see [Installation](#installation)
+[➡️ See Installation page](./installation.md) for more installation methods on Linux, Mac and Windows.
 
 ## Cloud provider setup
 
-You may need to setup a few things on your Cloud provider (eg. API key or SSH key). Checkout [per-Clouder setup specifities](./cloud-provider-setup).
+You may need to setup a few things on your Cloud provider (eg. API key or SSH key). 
 
-## Deploy your instance !
+[➡️ Checkout per-Cloud provider setup specifities](./cloud-provider-setup).
 
-Once ready, create your instance with `cloudypad` CLI:
+## Deploy your instance
+
+Create your instance with `cloudypad` CLI:
 
 ```sh
 cloudypad create
@@ -47,17 +61,22 @@ cloudypad create
 
 Cloudy Pad will guide you through creation process:
 - Prompt important information (eg. machine type, GPU, cost alerts, etc.) 
-- Create a new Cloud machine and related configurations automatically (you can also use an existing machine)
-- Install GPU drivers and [Wolf gaming server](https://games-on-whales.github.io/wolf/stable/)
-- Help your Pair with Moonlight
+- Create a new Cloud machine and related configurations automatically
+- Install GPU drivers and streaming server ([Wolf](https://games-on-whales.github.io/wolf/stable/) or [Sunshine](https://github.com/LizardByte/Sunshine))
+- Help your Pair with [Moonlight](https://moonlight-stream.org/) streaming client
 
-## Play your game
+## Run Moonlight and connect to your instance
 
-Run Moonlight and connect to your instance. Run Steam, login, install your game and enjoy.
+Run Moonlight, select your instance and run Steam. `cloudypad create` should have let you pair your Moonlight client with your instance. If needed, you can pair your Moonlight client with your instance manually:
 
-To connect with Steam, either:
+[➡️ See Moonlight setup and pairing guide](./usage/moonlight-setup.md)
+
+## Sign-in to Steam and play your game
+
+To sign-in to Steam, either:
 - Type your login and password directly
-- Use Steam smartphone app and scan QR code (run Steam app, log in to your account and click on shield button at the bottom) 
+  - 💡 **Copy/pasting your login and password in Moonlight**: use `CTRL+C` on your host and paste in Moonlight with `CTRL+SHIFT+ALT+V`
+- Use Steam mobile app and scan QR code: run Steam app on your phone, and click on shield 🛡️ button (bottom middle of the screen). Scan QR code from Moonlight.
 
 ## Stop your instance after gaming sessions
 
