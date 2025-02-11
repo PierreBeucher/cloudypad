@@ -4,7 +4,7 @@ set -e
 
 # Installation arguments
 # Override by setting related environment variable
-DEFAULT_CLOUDYPAD_SCRIPT_REF=v0.14.0
+DEFAULT_CLOUDYPAD_SCRIPT_REF=v0.15.0
 CLOUDYPAD_HOME=${CLOUDYPAD_HOME:-"$HOME/.cloudypad"}
 CLOUDYPAD_SCRIPT_REF=${CLOUDYPAD_SCRIPT_REF:-$DEFAULT_CLOUDYPAD_SCRIPT_REF}
 
