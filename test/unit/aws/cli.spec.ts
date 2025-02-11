@@ -1,7 +1,7 @@
 import * as assert from 'assert';
 import { AwsInstanceInput } from '../../../src/providers/aws/state';
 import { PUBLIC_IP_TYPE_STATIC } from '../../../src/core/const';
-import { DEFAULT_COMMON_INPUT } from "../utils";
+import { DEFAULT_COMMON_INPUT, DEFAULT_COMMON_CLI_ARGS } from "../utils";
 import { AwsCreateCliArgs, AwsInputPrompter } from '../../../src/providers/aws/cli';
 import lodash from 'lodash'
 import { PartialDeep } from 'type-fest';
@@ -31,10 +31,8 @@ describe('AWS input prompter', () => {
     }
 
     const TEST_CLI_ARGS: AwsCreateCliArgs = {
-        name: TEST_INPUT.instanceName,
-        yes: true,
-        overwriteExisting: false,
-        privateSshKey: TEST_INPUT.provision.ssh.privateKeyPath,
+        ...DEFAULT_COMMON_CLI_ARGS,
+        name: instanceName,
         diskSize: TEST_INPUT.provision.diskSize,
         publicIpType: TEST_INPUT.provision.publicIpType,
         instanceType: TEST_INPUT.provision.instanceType,
@@ -42,9 +40,6 @@ describe('AWS input prompter', () => {
         spot: TEST_INPUT.provision.useSpot,
         costLimit: TEST_INPUT.provision.costAlert?.limit,
         costNotificationEmail: TEST_INPUT.provision.costAlert?.notificationEmail,
-        streamingServer: STREAMING_SERVER_SUNSHINE,
-        sunshineUser: TEST_INPUT.configuration.sunshine?.username,
-        sunshinePassword: TEST_INPUT.configuration.sunshine?.passwordBase64 ? Buffer.from(TEST_INPUT.configuration.sunshine.passwordBase64, 'base64').toString('utf-8') : undefined,
     }
 
     it('should return provided inputs without prompting when full input provider', async () => {

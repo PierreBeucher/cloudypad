@@ -1,7 +1,7 @@
 import * as assert from 'assert';
 import { AZURE_SUPPORTED_DISK_TYPES, AzureInstanceInput } from '../../../src/providers/azure/state';
 import { PUBLIC_IP_TYPE_STATIC } from '../../../src/core/const';
-import { DEFAULT_COMMON_INPUT } from '../utils';
+import { DEFAULT_COMMON_CLI_ARGS, DEFAULT_COMMON_INPUT } from '../utils';
 import { AzureCreateCliArgs, AzureInputPrompter } from '../../../src/providers/azure/cli';
 import { PartialDeep } from 'type-fest';
 import lodash from 'lodash'
@@ -33,10 +33,8 @@ describe('Azure input prompter', () => {
     }
 
     const TEST_CLI_ARGS: AzureCreateCliArgs = {
-        name: TEST_INPUT.instanceName,
-        yes: true,
-        overwriteExisting: false,
-        privateSshKey: TEST_INPUT.provision.ssh.privateKeyPath,
+        ...DEFAULT_COMMON_CLI_ARGS,
+        name: instanceName,
         diskSize: TEST_INPUT.provision.diskSize,
         diskType: TEST_INPUT.provision.diskType,
         publicIpType: TEST_INPUT.provision.publicIpType,
@@ -46,9 +44,6 @@ describe('Azure input prompter', () => {
         vmSize: TEST_INPUT.provision.vmSize,
         costNotificationEmail: TEST_INPUT.provision.costAlert?.notificationEmail,
         costLimit: TEST_INPUT.provision.costAlert?.limit,
-        streamingServer: STREAMING_SERVER_SUNSHINE,
-        sunshineUser: TEST_INPUT.configuration.sunshine?.username,
-        sunshinePassword: TEST_INPUT.configuration.sunshine?.passwordBase64 ? Buffer.from(TEST_INPUT.configuration.sunshine.passwordBase64, 'base64').toString('utf-8') : undefined,
     }
 
     it('should return provided inputs without prompting when full input provider', async () => {
