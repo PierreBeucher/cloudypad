@@ -1,5 +1,25 @@
 # Changelog
 
+## [0.15.0](https://github.com/PierreBeucher/cloudypad/compare/v0.14.0...v0.15.0) (2025-02-11)
+
+
+### Features
+
+* add direct pairSendPin() method ([aeb07e8](https://github.com/PierreBeucher/cloudypad/commit/aeb07e85e5f79d3851f435e17b787fc40844fbe1))
+* add getInstanceDetails() manager method ([9347075](https://github.com/PierreBeucher/cloudypad/commit/93470755169b88583cb9ca067ba96df7dd539133))
+* allow override of Sunshine image version (tag) and registry ([7b6c6cb](https://github.com/PierreBeucher/cloudypad/commit/7b6c6cbdae74a4ad77f957f8bfe198f72482ffb9))
+* get instance status (running, stopped...) via InstanceManager ([8ba1a3d](https://github.com/PierreBeucher/cloudypad/commit/8ba1a3d623e75ef41b5fc156ef03af108f157568))
+* **lib:** instance name function and ssh config with details ([e149d77](https://github.com/PierreBeucher/cloudypad/commit/e149d77c4303a7e0ca0422e4987aeedd7bb1b9ab))
+* **sunshine:** setup minimal xfce4 environment ([4d5d595](https://github.com/PierreBeucher/cloudypad/commit/4d5d5951534b0c8f32c6f127764a89a88595d316))
+* **sunshine:** Steam and exit desktop apps ([d4fa6d5](https://github.com/PierreBeucher/cloudypad/commit/d4fa6d547ed98a49d89ecb029e4afdd572cd7387))
+* **sunshine:** Steam App in Sunshine ([467f9aa](https://github.com/PierreBeucher/cloudypad/commit/467f9aa78d25fe4810c01406293a0cc588777f76))
+
+
+### Bug Fixes
+
+* **gcp:** non-spot instanceTerminationAction is not allowed ([2417703](https://github.com/PierreBeucher/cloudypad/commit/241770301a147e1e4aac8a2a1b81295484d36b51))
+* passing "no/False" to spot args should not prompt ([d3b63dc](https://github.com/PierreBeucher/cloudypad/commit/d3b63dc863a3af3b70b63913a0c767f44a176eb5))
+
 ## [0.14.0](https://github.com/PierreBeucher/cloudypad/compare/v0.13.0...v0.14.0) (2025-02-02)
 
 
