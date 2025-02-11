@@ -2,7 +2,7 @@ import { PaperspaceProviderStateV0 } from '../../providers/paperspace/state'
 import { AwsProviderStateV0 } from '../../providers/aws/state'
 import { AzureProviderStateV0 } from '../../providers/azure/state'
 import { GcpProviderStateV0 } from '../../providers/gcp/state'
-import { z } from "zod"
+import { boolean, z } from "zod"
 import { CLOUDYPAD_CONFIGURATOR_LIST, CLOUDYPAD_PROVIDER_LIST } from "../const"
 
 const CommonProvisionOutputV1Schema = z.object({
@@ -22,13 +22,15 @@ const CommonConfigurationInputV1Schema = z.object({
     // (eg. merging a state with Sunshine enabled but "undefined" in memory would keep it enabled
     // whereas a null value would force value to become "null" in state)
     sunshine: z.object({
-        enable: z.boolean().describe("Whether to enable Sunshine streaming server"),
+        enable: z.boolean().describe("Whether Sunshine is enabled"),
         passwordBase64: z.string().describe("Sunshine web UI password (base64 encoded)"),
         username: z.string().describe("Sunshine web UI username"),
+        imageTag: z.string().optional().describe("Sunshine container image tag. Default to current Cloudy Pad version"),
+        imageRegistry: z.string().optional().describe("Sunshine container image registry. Default to Cloudy Pad registry"),
     })
-    .nullish(), 
+    .nullish(),
     wolf: z.object({
-        enable: z.boolean().describe("Whether to enable Wolf streaming server"),
+        enable: z.boolean().describe("Whether Wolf is enabled"),
     })
     .nullish()
 })

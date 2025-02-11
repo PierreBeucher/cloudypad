@@ -1,0 +1,8 @@
+# Desktop entry taken from /usr/share/applications/steam.desktop
+[Desktop Entry]
+Name=Exit session
+Exec=$CLOUDYPAD_BIN_DIR/stop-container-user.sh
+Icon=system-shutdown
+Terminal=true
+Type=Application
+Categories=Network;FileTransfer;Game;

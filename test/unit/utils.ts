@@ -9,6 +9,8 @@ import { PaperspaceMachine } from "../../src/providers/paperspace/client/client"
 import { PUBLIC_IP_TYPE_STATIC } from "../../src/core/const";
 import { tmpdir } from "os";
 import { AnonymousStateParser } from "../../src/core/state/parser";
+import { STREAMING_SERVER_SUNSHINE } from '../../src/core/cli/prompter';
+import { CreateCliArgs } from "../../src/core/cli/command";
 
 export const DEFAULT_COMMON_INPUT: CommonInstanceInput = {
     instanceName: "dummy-instance",
@@ -22,10 +24,25 @@ export const DEFAULT_COMMON_INPUT: CommonInstanceInput = {
         sunshine: {
             enable: true,
             username: "sunshine",
-            passwordBase64: "c3Vuc2hpbmVQYXNzd29yZA==" // 'sunshinePassword' in base64
+            passwordBase64: "c3Vuc2hpbmVQYXNzd29yZA==", // 'sunshinePassword' in base64,
+            imageTag: "local",
+            imageRegistry: "dummy.registry.example.co"
         },
         wolf: undefined
     }
+}
+
+export const DEFAULT_COMMON_CLI_ARGS: CreateCliArgs = {
+    name: DEFAULT_COMMON_INPUT.instanceName,
+    privateSshKey: DEFAULT_COMMON_INPUT.provision.ssh.privateKeyPath,
+    yes: true,
+    overwriteExisting: false,
+    skipPairing: true,
+    streamingServer: STREAMING_SERVER_SUNSHINE,
+    sunshineUser: DEFAULT_COMMON_INPUT.configuration.sunshine?.username,
+    sunshinePassword: DEFAULT_COMMON_INPUT.configuration.sunshine?.passwordBase64 ? Buffer.from(DEFAULT_COMMON_INPUT.configuration.sunshine.passwordBase64, 'base64').toString('utf-8') : undefined,
+    sunshineImageTag: DEFAULT_COMMON_INPUT.configuration.sunshine?.imageTag,
+    sunshineImageRegistry: DEFAULT_COMMON_INPUT.configuration.sunshine?.imageRegistry,
 }
 
 export const DUMMY_SSH_KEY_PATH = path.resolve(__dirname, '..', 'resources', 'ssh-key')

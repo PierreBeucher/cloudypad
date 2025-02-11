@@ -40,12 +40,6 @@ RUN --mount=type=cache,target=/var/cache --mount=type=tmpfs,target=/var/log \
     gettext-base 
 
 #
-# Desktop
-#
-RUN --mount=type=cache,target=/var/cache --mount=type=tmpfs,target=/var/log \
-    apt install -y xfce4
-
-#
 # Sunshine
 #
 RUN --mount=type=cache,target=/var/cache --mount=type=tmpfs,target=/var/log \
@@ -127,6 +121,23 @@ RUN --mount=type=cache,target=/var/cache --mount=type=tmpfs,target=/var/log \
     apt install -y ./steam.deb && \
     rm steam.deb
 
+#
+# Desktop
+#
+# Install xfce4 desktop environment
+# but remove xfce4-panel to void showinf uneeded/unwanted panels (see https://unix.stackexchange.com/questions/38048/how-to-remove-all-the-panels-in-xfce)
+#
+RUN --mount=type=cache,target=/var/cache --mount=type=tmpfs,target=/var/log \
+    apt install -y xfce4 && \
+    apt remove -y xfce4-panel && \
+    apt clean
+
+# Install sudo
+RUN --mount=type=cache,target=/var/cache --mount=type=tmpfs,target=/var/log \
+    apt update && \
+    apt install -y sudo && \
+    apt clean
+
 # # TODO Local (for debug)
 # # Keep here ?
 RUN --mount=type=cache,target=/var/cache --mount=type=tmpfs,target=/var/log \
@@ -146,6 +157,9 @@ ENV CLOUDYPAD_USER=cloudy
 ENV CLOUDYPAD_DATA_DIR=/cloudy/data
 ENV CLOUDYPAD_LOG_DIR=/cloudy/log
 ENV CLOUDYPAD_CONF_DIR=/cloudy/conf
+# TODO as tmpfs ? 
+ENV CLOUDYPAD_RUNTIME_DIR=/cloudy/runtime 
+ENV CLOUDYPAD_BIN_DIR=/cloudy/bin
 
 # Default name for Sunshine server (as shown by Moonlight)
 # Used in sunshine.conf templates
@@ -157,11 +171,9 @@ ENV SUNSHINE_SERVER_NAME="Sunshine"
 # Setting proper XDG_* variables allow more control other config and data persistence
 # See https://specifications.freedesktop.org/basedir-spec/latest/
 # 
-ENV XDG_RUNTIME_DIR=/cloudy/runtime
+ENV XDG_RUNTIME_DIR=$CLOUDYPAD_RUNTIME_DIR
+ENV XDG_CONFIG_HOME=$CLOUDYPAD_CONF_DIR
 ENV XDG_CACHE_HOME=/home/$CLOUDYPAD_USER/.cache
-
-# TODO persist this folder ?
-ENV XDG_CONFIG_HOME=/home/$CLOUDYPAD_USER/.config
 
 # Write data in known directory for persistence
 # XDG_DATA_HOME is used by various programs (like Steam) to store data
@@ -179,6 +191,9 @@ ENV KEYBOARD_LAYOUT="fr"
 RUN useradd -m -d /home/cloudy -s /bin/bash -u 1001 $CLOUDYPAD_USER
 
 COPY overlay /
+
+# Allow user "cloudy" to stop container
+RUN echo "cloudy ALL=(ALL) NOPASSWD: ${CLOUDYPAD_BIN_DIR}/stop-supervisord.sh" > /etc/sudoers.d/cloudy-stop-container
 
 # Contain various Cloudy Pad scripts, add to PATH for easier use
 ENV PATH=$PATH:/cloudy/bin

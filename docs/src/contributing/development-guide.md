@@ -5,6 +5,8 @@
   - [Unit tests](#unit-tests)
   - [Integration tests](#integration-tests)
   - [Development](#development)
+    - [Various dev tasks](#various-dev-tasks)
+    - [Development Virtual Machine](#development-virtual-machine)
   - [Local Pulumi stack manipulation](#local-pulumi-stack-manipulation)
   - [Scripts](#scripts)
 - [Adding a new provider](#adding-a-new-provider)
@@ -60,6 +62,7 @@ Development can be done under Nix development shell:
 nix develop
 ```
 
+#### Various dev tasks
 Run app directly with `npx`:
 
 ```sh
@@ -83,6 +86,36 @@ ansible-playbook -i /tmp/nix-shell.fD63LM/cloudypad-BX2kYb/inventory.yml ansible
 ```
 
 Will eventually add an easier way to pass custom Ansible options such as `--ansible-additional-flag` option or environment variable. 
+
+#### Development Virtual Machine
+
+A local Virtual Machine can be created with Vagrant:
+
+```sh
+vagrant up
+```
+
+Machine IP is hardcoded in Vagrantfile to `192.168.56.43`.
+
+Can be used to run Sunshine container and test Ansible playbook easily.
+
+Fast Sunshine container build and import:
+
+```sh
+task docker-sunshine-to-dev-vm
+```
+
+Ansible test:
+
+```sh
+ansible-playbook -i ansible/inventories/dev-vagrant.yml ansible/sunshine.yml -t sunshine
+```
+
+Connect to Sunshine web UI (Sunshine is forwarded to local machine):
+
+```sh
+http://localhost:47990
+```
 
 ### Local Pulumi stack manipulation
 

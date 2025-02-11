@@ -6,7 +6,7 @@ import { fetchApiKeyFromEnvironment } from './client/client';
 import lodash from 'lodash'
 import { PartialDeep } from "type-fest";
 import { CLOUDYPAD_PROVIDER_PAPERSPACE, PUBLIC_IP_TYPE } from "../../core/const";
-import { CLI_OPTION_DISK_SIZE, CLI_OPTION_PUBLIC_IP_TYPE, CLI_OPTION_SPOT, CLI_OPTION_STREAMING_SERVER, CLI_OPTION_SUNSHINE_PASSWORD, CLI_OPTION_SUNSHINE_USERNAME, CliCommandGenerator, CreateCliArgs, UpdateCliArgs } from "../../core/cli/command";
+import { CLI_OPTION_DISK_SIZE, CLI_OPTION_PUBLIC_IP_TYPE, CLI_OPTION_SPOT, CLI_OPTION_STREAMING_SERVER, CLI_OPTION_SUNSHINE_IMAGE_REGISTRY, CLI_OPTION_SUNSHINE_IMAGE_TAG, CLI_OPTION_SUNSHINE_PASSWORD, CLI_OPTION_SUNSHINE_USERNAME, CliCommandGenerator, CreateCliArgs, UpdateCliArgs } from "../../core/cli/command";
 import { InteractiveInstanceInitializer } from "../../core/initializer";
 import { InstanceManagerBuilder } from "../../core/manager-builder";
 import { RUN_COMMAND_CREATE, RUN_COMMAND_UPDATE } from "../../tools/analytics/events";
@@ -37,19 +37,17 @@ export class PaperspaceInputPrompter extends AbstractInputPrompter<PaperspaceCre
         }
     }
 
-    protected async promptSpecificInput(defaultInput: CommonInstanceInput & PartialDeep<PaperspaceInstanceInput>, createOptions: PromptOptions): Promise<PaperspaceInstanceInput> {
-
-        this.logger.debug(`Starting Paperspace prompt with defaultInput: ${JSON.stringify(defaultInput)} and createOptions: ${JSON.stringify(createOptions)}`)
+    protected async promptSpecificInput(commonInput: CommonInstanceInput, partialInput: PartialDeep<PaperspaceInstanceInput>, createOptions: PromptOptions): Promise<PaperspaceInstanceInput> {
 
         if(!createOptions.autoApprove && !createOptions.skipQuotaWarning){
             await this.informCloudProviderQuotaWarning(CLOUDYPAD_PROVIDER_PAPERSPACE, "https://cloudypad.gg/cloud-provider-setup/paperspace.html")
         }
         
-        const apiKey = await this.apiKey(defaultInput.provision?.apiKey)
-        const machineType = await this.machineType(defaultInput.provision?.machineType)
-        const diskSize = await this.diskSize(defaultInput.provision?.diskSize)
-        const publicIpType = await this.publicIpType(defaultInput.provision?.publicIpType)
-        const region = await this.region(defaultInput.provision?.region)
+        const apiKey = await this.apiKey(partialInput.provision?.apiKey)
+        const machineType = await this.machineType(partialInput.provision?.machineType)
+        const diskSize = await this.diskSize(partialInput.provision?.diskSize)
+        const publicIpType = await this.publicIpType(partialInput.provision?.publicIpType)
+        const region = await this.region(partialInput.provision?.region)
         const sshUser = "paperspace" // Paperspace uses 'paperspace' SSH user, enforce it
 
         if(!createOptions.autoApprove){
@@ -71,7 +69,7 @@ export class PaperspaceInputPrompter extends AbstractInputPrompter<PaperspaceCre
         
         const psInput: PaperspaceInstanceInput = lodash.merge(
             {},
-            defaultInput,
+            commonInput,
             specificInput
         )
 
@@ -163,6 +161,8 @@ export class PaperspaceCliCommandGenerator extends CliCommandGenerator {
             .addOption(CLI_OPTION_STREAMING_SERVER)
             .addOption(CLI_OPTION_SUNSHINE_USERNAME)
             .addOption(CLI_OPTION_SUNSHINE_PASSWORD)
+            .addOption(CLI_OPTION_SUNSHINE_IMAGE_TAG)
+            .addOption(CLI_OPTION_SUNSHINE_IMAGE_REGISTRY)
             .option('--api-key-file <apikeyfile>', 'Path to Paperspace API key file')
             .option('--machine-type <type>', 'Machine type')
             .option('--region <region>', 'Region in which to deploy instance')
@@ -184,6 +184,10 @@ export class PaperspaceCliCommandGenerator extends CliCommandGenerator {
         return this.getBaseUpdateCommand(CLOUDYPAD_PROVIDER_PAPERSPACE)
             .addOption(CLI_OPTION_DISK_SIZE)
             .addOption(CLI_OPTION_PUBLIC_IP_TYPE)
+            .addOption(CLI_OPTION_SUNSHINE_USERNAME)
+            .addOption(CLI_OPTION_SUNSHINE_PASSWORD)
+            .addOption(CLI_OPTION_SUNSHINE_IMAGE_TAG)
+            .addOption(CLI_OPTION_SUNSHINE_IMAGE_REGISTRY)
             .option('--api-key-file <apikeyfile>', 'Path to Paperspace API key file')
             .option('--machine-type <type>', 'Machine type')
             .action(async (cliArgs) => {

@@ -4,7 +4,7 @@ import { input, select, confirm } from '@inquirer/prompts';
 import { AwsClient, EC2_QUOTA_CODE_ALL_G_AND_VT_SPOT_INSTANCES, EC2_QUOTA_CODE_RUNNING_ON_DEMAND_G_AND_VT_INSTANCES } from "../../tools/aws";
 import { AbstractInputPrompter, costAlertCliArgsIntoConfig, PromptOptions } from "../../core/cli/prompter";
 import lodash from 'lodash'
-import { CLI_OPTION_COST_NOTIFICATION_EMAIL, CLI_OPTION_COST_ALERT, CLI_OPTION_COST_LIMIT, CLI_OPTION_DISK_SIZE, CLI_OPTION_PUBLIC_IP_TYPE, CLI_OPTION_SPOT, CliCommandGenerator, CreateCliArgs, UpdateCliArgs, CLI_OPTION_STREAMING_SERVER, CLI_OPTION_SUNSHINE_PASSWORD, CLI_OPTION_SUNSHINE_USERNAME } from "../../core/cli/command";
+import { CLI_OPTION_COST_NOTIFICATION_EMAIL, CLI_OPTION_COST_ALERT, CLI_OPTION_COST_LIMIT, CLI_OPTION_DISK_SIZE, CLI_OPTION_PUBLIC_IP_TYPE, CLI_OPTION_SPOT, CliCommandGenerator, CreateCliArgs, UpdateCliArgs, CLI_OPTION_STREAMING_SERVER, CLI_OPTION_SUNSHINE_PASSWORD, CLI_OPTION_SUNSHINE_USERNAME, CLI_OPTION_SUNSHINE_IMAGE_REGISTRY, CLI_OPTION_SUNSHINE_IMAGE_TAG } from "../../core/cli/command";
 import { CLOUDYPAD_PROVIDER_AWS, PUBLIC_IP_TYPE } from "../../core/const";
 import { InteractiveInstanceInitializer } from "../../core/initializer";
 import { PartialDeep } from "type-fest";
@@ -52,23 +52,22 @@ export class AwsInputPrompter extends AbstractInputPrompter<AwsCreateCliArgs, Aw
         }
     }
 
-    protected async promptSpecificInput(defaultInput: CommonInstanceInput & PartialDeep<AwsInstanceInput>, createOptions: PromptOptions): Promise<AwsInstanceInput> {
+    protected async promptSpecificInput(commonInput: CommonInstanceInput, partialInput: PartialDeep<AwsInstanceInput>, createOptions: PromptOptions): Promise<AwsInstanceInput> {
 
-        this.logger.debug(`Starting AWS prompt with defaultInput: ${JSON.stringify(defaultInput)} and createOptions: ${JSON.stringify(createOptions)}`)
         if(!createOptions.autoApprove && !createOptions.skipQuotaWarning){
             await this.informCloudProviderQuotaWarning(CLOUDYPAD_PROVIDER_AWS, "https://cloudypad.gg/cloud-provider-setup/aws.html")
         }
 
-        const region = await this.region(defaultInput.provision?.region)
-        const useSpot = await this.useSpotInstance(defaultInput.provision?.useSpot)
-        const instanceType = await this.instanceType(region, useSpot, defaultInput.provision?.instanceType)
-        const diskSize = await this.diskSize(defaultInput.provision?.diskSize)
-        const publicIpType = await this.publicIpType(defaultInput.provision?.publicIpType)
-        const costAlert = await this.costAlert(defaultInput.provision?.costAlert)
+        const region = await this.region(partialInput.provision?.region)
+        const useSpot = await this.useSpotInstance(partialInput.provision?.useSpot)
+        const instanceType = await this.instanceType(region, useSpot, partialInput.provision?.instanceType)
+        const diskSize = await this.diskSize(partialInput.provision?.diskSize)
+        const publicIpType = await this.publicIpType(partialInput.provision?.publicIpType)
+        const costAlert = await this.costAlert(partialInput.provision?.costAlert)
                 
         const awsInput: AwsInstanceInput = lodash.merge(
             {},
-            defaultInput, 
+            commonInput, 
             {
                 provision:{
                     diskSize: diskSize,
@@ -207,6 +206,8 @@ export class AwsCliCommandGenerator extends CliCommandGenerator {
             .addOption(CLI_OPTION_STREAMING_SERVER)
             .addOption(CLI_OPTION_SUNSHINE_USERNAME)
             .addOption(CLI_OPTION_SUNSHINE_PASSWORD)
+            .addOption(CLI_OPTION_SUNSHINE_IMAGE_TAG)
+            .addOption(CLI_OPTION_SUNSHINE_IMAGE_REGISTRY)
             .option('--instance-type <type>', 'EC2 instance type')
             .option('--region <region>', 'Region in which to deploy instance')
             .action(async (cliArgs) => {
@@ -243,10 +244,14 @@ export class AwsCliCommandGenerator extends CliCommandGenerator {
             .addOption(CLI_OPTION_COST_ALERT)
             .addOption(CLI_OPTION_COST_LIMIT)
             .addOption(CLI_OPTION_COST_NOTIFICATION_EMAIL)
+            .addOption(CLI_OPTION_SUNSHINE_USERNAME)
+            .addOption(CLI_OPTION_SUNSHINE_PASSWORD)
+            .addOption(CLI_OPTION_SUNSHINE_IMAGE_TAG)
+            .addOption(CLI_OPTION_SUNSHINE_IMAGE_REGISTRY)
             .option('--instance-type <type>', 'EC2 instance type')
             .action(async (cliArgs) => {
                 this.analytics.sendEvent(RUN_COMMAND_UPDATE, { provider: CLOUDYPAD_PROVIDER_AWS })
-
+                
                 try {
                     await new InstanceUpdater<AwsInstanceStateV1, AwsUpdateCliArgs>({
                         stateParser: new AwsStateParser(),

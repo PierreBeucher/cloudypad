@@ -37,4 +37,4 @@
     build: always
     state: present
     files: "{{ sunshine_compose_files }}"
-    pull: always
+    pull: "{{ sunshine_compose_pull_images }}"

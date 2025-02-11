@@ -29,6 +29,14 @@ export interface CloudyPadInstanceDetails {
      * Moonlight pairing port
      */
     pairingPort: number
+
+    /**
+     * SSH config
+     */
+    ssh: {
+        user: string
+        port: number
+    }
 }
 
 /**
@@ -102,6 +110,7 @@ export abstract class AbstractSubManagerFactory<ST extends InstanceStateV1> {
 }
 
 export interface InstanceManager {
+    name(): string
     configure(): Promise<void>
     provision(opts?: InstanceProvisionOptions): Promise<void>
     destroy(opts?: DestroyOptions): Promise<void>
@@ -112,6 +121,7 @@ export interface InstanceManager {
     pairSendPin(pin: string): Promise<boolean>
     getInstanceDetails(): Promise<CloudyPadInstanceDetails>
     getStateJSON(): string
+    
 }
 
 export interface InstanceManagerArgs<ST extends InstanceStateV1> {
@@ -141,6 +151,10 @@ export class GenericInstanceManager<ST extends InstanceStateV1> implements Insta
         this.stateWriter = args.stateWriter
         this.factory = args.factory
         this.logger = getLogger(args.stateWriter.instanceName())
+    }
+
+    name(): string {
+        return this.stateWriter.instanceName()
     }
 
     async configure(): Promise<void> {
@@ -207,6 +221,10 @@ export class GenericInstanceManager<ST extends InstanceStateV1> implements Insta
             hostname: state.provision.output?.host ?? "unknown",
             pairingPort: 47989, // hardcoded for now*
             status: await runner.instanceStatus(),
+            ssh: {
+                user: state.provision.input.ssh.user,
+                port: 22 // TODO as input or output
+            }
         }
 
         return details

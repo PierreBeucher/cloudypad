@@ -34,6 +34,11 @@ export type PUBLIC_IP_TYPE = typeof PUBLIC_IP_TYPE_DYNAMIC | typeof PUBLIC_IP_TY
 export const CLOUDYPAD_VERSION = version
 
 /**
+ * Default registry for Sunshine container image
+ */
+export const CLOUDYPAD_SUNSHINE_IMAGE_REGISTRY = "ghcr.io/pierrebeucher/cloudypad"
+
+/**
  * Simple port definition (number and protocol)
  * used to defined ports to expose on instance
  */

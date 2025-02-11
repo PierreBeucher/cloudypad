@@ -1,8 +1,0 @@
-all:
-  hosts:
-    "15.237.17.46":
-      ansible_user: ubuntu
-      # ansible_port: 47951
-      # vars:
-      #   docker_users:
-      #   - paperspace

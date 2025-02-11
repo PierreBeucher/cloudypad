@@ -51,8 +51,10 @@ export abstract class AbstractInputPrompter<A extends CreateCliArgs, I extends C
     async promptInput(partialInput: PartialDeep<I>, createOptions: PromptOptions): Promise<I> {
         try {
             const commonInput = await this.promptCommonInput(partialInput, createOptions)
-            const commonInputWithPartial = lodash.merge({}, commonInput, partialInput)
-            const finalInput = await this.promptSpecificInput(commonInputWithPartial, createOptions)
+
+            this.logger.debug(`Prompting specific input with common input ${JSON.stringify(commonInput)}, ` + 
+                `partial input ${JSON.stringify(partialInput)} and create options ${JSON.stringify(createOptions)}`)
+            const finalInput = await this.promptSpecificInput(commonInput, partialInput, createOptions)
             return finalInput
         } catch (error) {
             if(error instanceof ExitPromptError){
@@ -86,19 +88,20 @@ export abstract class AbstractInputPrompter<A extends CreateCliArgs, I extends C
             throw new Error("Sunshine and Wolf cannot be enabled both at the same time")
         }
         
-        // Force null value for sunshine and wolf as 'undefined' would not override previous existing value in persisted state
+        // Force null value for sunshine and wolf as an existing 'undefined' or {} on partial object would not override previous existing value in persisted state
         let sunshineConfig = streamingServer.sunshineEnabled ? {
             enable: streamingServer.sunshineEnabled,
             username: await this.promptSunshineUsername(partialInput.configuration?.sunshine?.username),
             passwordBase64: await this.promptSunshinePasswordBase64(partialInput.configuration?.sunshine?.passwordBase64),
+            imageRegistry: partialInput.configuration?.sunshine?.imageRegistry,
+            imageTag: partialInput.configuration?.sunshine?.imageTag,
         } : null
 
         let wolfConfig = streamingServer.wolfEnabled ? {
             enable: streamingServer.wolfEnabled,
         } : null
 
-
-        return {
+        const commonInput: CommonInstanceInput = {
             instanceName: instanceName,
             provision: {
                 ssh: {
@@ -111,12 +114,16 @@ export abstract class AbstractInputPrompter<A extends CreateCliArgs, I extends C
                 wolf: wolfConfig
             }
         }
+
+        this.logger.debug(`Prompted common input ${JSON.stringify(commonInput)}`)
+
+        return commonInput
     }
 
     /**
      * Prompt provider-specific input using known common Input and passed default input
      */
-    protected abstract promptSpecificInput(defaultInput: CommonInstanceInput & PartialDeep<I>, createOptions: PromptOptions): Promise<I>
+    protected abstract promptSpecificInput(commonInput: CommonInstanceInput, partialInput: PartialDeep<I>, createOptions: PromptOptions): Promise<I>
 
     /**
      * Transform CLI arguments into known Input interface:
@@ -147,14 +154,18 @@ export abstract class AbstractInputPrompter<A extends CreateCliArgs, I extends C
                 }
             },
             configuration: {
-                sunshine: cliArgs.streamingServer == STREAMING_SERVER_SUNSHINE ? {
-                    enable: true,
+                // if streaming server is provided, set specific boolean to enable/disable it
+                // if unset, leave undefined to prompt or use existing value from state
+                sunshine: {
+                    enable: cliArgs.streamingServer == STREAMING_SERVER_SUNSHINE ? true : undefined,
                     username: cliArgs.sunshineUser,
                     passwordBase64: cliArgs.sunshinePassword ? Buffer.from(cliArgs.sunshinePassword).toString('base64') : undefined,
-                } : undefined,
-                wolf: cliArgs.streamingServer == STREAMING_SERVER_WOLF ? {
-                    enable: true,
-                } : undefined,
+                    imageRegistry: cliArgs.sunshineImageRegistry,
+                    imageTag: cliArgs.sunshineImageTag,
+                },
+                wolf: {
+                    enable: cliArgs.streamingServer == STREAMING_SERVER_WOLF ? true : undefined,
+                }
             }
         }
     }

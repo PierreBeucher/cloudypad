@@ -1,7 +1,7 @@
 import * as assert from 'assert';
 import { GcpInstanceInput, GcpInstanceStateV1 } from '../../../src/providers/gcp/state';
 import { PUBLIC_IP_TYPE_STATIC } from '../../../src/core/const';
-import { DEFAULT_COMMON_INPUT } from '../utils';
+import { DEFAULT_COMMON_CLI_ARGS, DEFAULT_COMMON_INPUT } from '../utils';
 import { GcpCreateCliArgs, GcpInputPrompter } from '../../../src/providers/gcp/cli';
 import lodash from 'lodash'
 import { PartialDeep } from 'type-fest';
@@ -38,10 +38,8 @@ describe('GCP input prompter', () => {
      * CLI args that should not trigger interactive input
      */
     const TEST_CLI_ARGS: GcpCreateCliArgs = {
-        name: TEST_INPUT.instanceName,
-        yes: true,
-        overwriteExisting: true,
-        privateSshKey: TEST_INPUT.provision.ssh.privateKeyPath,
+        ...DEFAULT_COMMON_CLI_ARGS,
+        name: instanceName,
         projectId: TEST_INPUT.provision.projectId,
         region: TEST_INPUT.provision.region,
         zone: TEST_INPUT.provision.zone,
@@ -52,9 +50,6 @@ describe('GCP input prompter', () => {
         spot: TEST_INPUT.provision.useSpot,
         costNotificationEmail: TEST_INPUT.provision.costAlert?.notificationEmail,
         costLimit: TEST_INPUT.provision.costAlert?.limit,
-        streamingServer: STREAMING_SERVER_SUNSHINE,
-        sunshineUser: TEST_INPUT.configuration.sunshine?.username,
-        sunshinePassword: TEST_INPUT.configuration.sunshine?.passwordBase64 ? Buffer.from(TEST_INPUT.configuration.sunshine.passwordBase64, 'base64').toString('utf-8') : undefined,
     }
 
     it('should convert CLI args into partial input', () => {
@@ -67,6 +62,12 @@ describe('GCP input prompter', () => {
             provision: {
                 ...TEST_INPUT.provision,
                 ssh: lodash.omit(TEST_INPUT.provision.ssh, "user")
+            },
+            configuration: {
+                ...TEST_INPUT.configuration,
+                wolf: {
+                    enable: undefined
+                }
             }
         }
         
@@ -89,6 +90,12 @@ describe('GCP input prompter', () => {
             provision: {
                 ...TEST_INPUT.provision,
                 ssh: lodash.omit(TEST_INPUT.provision.ssh, "user")
+            },
+            configuration: {
+                ...TEST_INPUT.configuration,
+                wolf: {
+                    enable: undefined
+                }
             }
         }
         

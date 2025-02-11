@@ -7,7 +7,7 @@
   outputs = { self, nixpkgs, flake-utils }: 
     flake-utils.lib.eachDefaultSystem (system:
       let  
-        pkgs = nixpkgs.legacyPackages.${system}; 
+        pkgs = import nixpkgs { system = system; config.allowUnfree = true; };
         cloudypadVersion = "0.14.0";
       in {
         packages = rec {
@@ -56,6 +56,7 @@
               asciinema
               imagemagick_light
               ffmpeg
+              vagrant
 
               google-cloud-sdk
             ];

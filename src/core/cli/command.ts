@@ -18,13 +18,17 @@ export interface CreateCliArgs {
     streamingServer?: string
     sunshineUser?: string
     sunshinePassword?: string
+    sunshineImageTag?: string
+    sunshineImageRegistry?: string
 }
 
 /**
- * Arguments any Provider can take as parameter for update command
+ * Arguments any Provider can take as parameter for update command. Omit config that cannot/shouldn't be updated
+ * - privateSshKey: updating would recreated the instance entirely. Since root volume is used to persist data, it would be lost. 
+ *  May be supported once we persist data in a dedicated volume.
+ * - streamingServer: too complex to handle as it would leave behind existing streaming server data and config. Maybe possible in the future.
  */
-export type UpdateCliArgs = Omit<CreateCliArgs, | "privateSshKey"> & { name: string }
-
+export type UpdateCliArgs = Omit<CreateCliArgs, | "privateSshKey" | "streamingServer" > & { name: string }
 
 export const CLI_OPTION_INSTANCE_NAME = new Option('--name <name>', 'Instance name')
 export const CLI_OPTION_PRIVATE_SSH_KEY = new Option('--private-ssh-key <path>', 'Path to private SSH key to use to connect to instance')
@@ -54,6 +58,8 @@ export const CLI_OPTION_COST_NOTIFICATION_EMAIL = new Option('--cost-notificatio
 export const CLI_OPTION_STREAMING_SERVER = new Option('--streaming-server <name>', 'Streaming server to use. Either "sunshine" or "wolf"')
 export const CLI_OPTION_SUNSHINE_USERNAME = new Option('--sunshine-user <name>', 'Sunshine username (ignored if streaming server is not sunshine)')
 export const CLI_OPTION_SUNSHINE_PASSWORD = new Option('--sunshine-password <password>', 'Sunshine password (ignored if streaming server is not sunshine)')
+export const CLI_OPTION_SUNSHINE_IMAGE_TAG = new Option('--sunshine-image-tag <tag>', 'Sunshine container image tag (ignored if streaming server is not sunshine)')
+export const CLI_OPTION_SUNSHINE_IMAGE_REGISTRY = new Option('--sunshine-image-registry <registry>', 'Sunshine container image registry (ignored if streaming server is not sunshine)')
 
 function parseFalseOrDisable(value: string){
     return value === "disable" || value === "no" || value === "false" || value === "0" ? false : true

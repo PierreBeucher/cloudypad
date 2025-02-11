@@ -6,7 +6,7 @@ import { AzureClient } from "../../tools/azure";
 import lodash from 'lodash'
 import { CLOUDYPAD_PROVIDER_AZURE, PUBLIC_IP_TYPE } from "../../core/const";
 import { PartialDeep } from "type-fest";
-import { CLI_OPTION_COST_ALERT, CLI_OPTION_COST_LIMIT, CLI_OPTION_COST_NOTIFICATION_EMAIL, CLI_OPTION_DISK_SIZE, CLI_OPTION_PUBLIC_IP_TYPE, CLI_OPTION_SPOT, CLI_OPTION_STREAMING_SERVER, CLI_OPTION_SUNSHINE_PASSWORD, CLI_OPTION_SUNSHINE_USERNAME, CliCommandGenerator, CreateCliArgs, UpdateCliArgs } from "../../core/cli/command";
+import { CLI_OPTION_COST_ALERT, CLI_OPTION_COST_LIMIT, CLI_OPTION_COST_NOTIFICATION_EMAIL, CLI_OPTION_DISK_SIZE, CLI_OPTION_PUBLIC_IP_TYPE, CLI_OPTION_SPOT, CLI_OPTION_STREAMING_SERVER, CLI_OPTION_SUNSHINE_IMAGE_REGISTRY, CLI_OPTION_SUNSHINE_IMAGE_TAG, CLI_OPTION_SUNSHINE_PASSWORD, CLI_OPTION_SUNSHINE_USERNAME, CliCommandGenerator, CreateCliArgs, UpdateCliArgs } from "../../core/cli/command";
 import { InteractiveInstanceInitializer } from "../../core/initializer";
 import { RUN_COMMAND_CREATE, RUN_COMMAND_UPDATE } from "../../tools/analytics/events";
 import { InstanceUpdater } from "../../core/updater";
@@ -82,26 +82,24 @@ export class AzureInputPrompter extends AbstractInputPrompter<AzureCreateCliArgs
         }
     }
 
-    protected async promptSpecificInput(defaultInput: CommonInstanceInput & PartialDeep<AzureInstanceInput>, createOptions: PromptOptions): Promise<AzureInstanceInput> {
-
-        this.logger.debug(`Starting Azure prompt with defaultInput: ${JSON.stringify(defaultInput)} and createOptions: ${JSON.stringify(createOptions)}`)
+    protected async promptSpecificInput(commonInput: CommonInstanceInput, partialInput: PartialDeep<AzureInstanceInput>, createOptions: PromptOptions): Promise<AzureInstanceInput> {
         
         if(!createOptions.autoApprove && !createOptions.skipQuotaWarning){
             await this.informCloudProviderQuotaWarning(CLOUDYPAD_PROVIDER_AZURE, "https://cloudypad.gg/cloud-provider-setup/azure.html")
         }
 
-        const subscriptionId = await this.subscriptionId(defaultInput.provision?.subscriptionId)
-        const useSpot = await this.useSpotInstance(defaultInput.provision?.useSpot)
-        const location = await this.location(subscriptionId, defaultInput.provision?.location)
-        const vmSize = await this.instanceType(subscriptionId, location, useSpot,defaultInput.provision?.vmSize)
-        const diskType = await this.diskType(defaultInput.provision?.diskType)
-        const diskSize = await this.diskSize(defaultInput.provision?.diskSize)
-        const publicIpType = await this.publicIpType(defaultInput.provision?.publicIpType)
-        const costAlert = await this.costAlert(defaultInput.provision?.costAlert)
+        const subscriptionId = await this.subscriptionId(partialInput.provision?.subscriptionId)
+        const useSpot = await this.useSpotInstance(partialInput.provision?.useSpot)
+        const location = await this.location(subscriptionId, partialInput.provision?.location)
+        const vmSize = await this.instanceType(subscriptionId, location, useSpot,partialInput.provision?.vmSize)
+        const diskType = await this.diskType(partialInput.provision?.diskType)
+        const diskSize = await this.diskSize(partialInput.provision?.diskSize)
+        const publicIpType = await this.publicIpType(partialInput.provision?.publicIpType)
+        const costAlert = await this.costAlert(partialInput.provision?.costAlert)
         
         const azInput: AzureInstanceInput = lodash.merge(
             {},
-            defaultInput,
+            commonInput,
             {
                 provision: {
                     diskSize: diskSize,
@@ -292,6 +290,8 @@ export class AzureCliCommandGenerator extends CliCommandGenerator {
             .addOption(CLI_OPTION_STREAMING_SERVER)
             .addOption(CLI_OPTION_SUNSHINE_USERNAME)
             .addOption(CLI_OPTION_SUNSHINE_PASSWORD)
+            .addOption(CLI_OPTION_SUNSHINE_IMAGE_TAG)
+            .addOption(CLI_OPTION_SUNSHINE_IMAGE_REGISTRY)
             .option('--vm-size <vmsize>', 'Virtual machine size')
             .option('--location <location>', 'Location in which to deploy instance')
             .option('--subscription-id <subscriptionid>', 'Subscription ID in which to deploy resources')
@@ -318,6 +318,10 @@ export class AzureCliCommandGenerator extends CliCommandGenerator {
             .addOption(CLI_OPTION_COST_ALERT)
             .addOption(CLI_OPTION_COST_LIMIT)
             .addOption(CLI_OPTION_COST_NOTIFICATION_EMAIL)
+            .addOption(CLI_OPTION_SUNSHINE_USERNAME)
+            .addOption(CLI_OPTION_SUNSHINE_PASSWORD)
+            .addOption(CLI_OPTION_SUNSHINE_IMAGE_TAG)
+            .addOption(CLI_OPTION_SUNSHINE_IMAGE_REGISTRY)
             .option('--vm-size <vmsize>', 'Virtual machine size')
             .action(async (cliArgs) => {
                 this.analytics.sendEvent(RUN_COMMAND_UPDATE, { provider: CLOUDYPAD_PROVIDER_AZURE })

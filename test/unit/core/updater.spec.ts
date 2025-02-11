@@ -8,7 +8,7 @@ import lodash from 'lodash'
 import { AwsUpdateCliArgs } from '../../../src/providers/aws/cli';
 import { AwsInputPrompter } from '../../../src/providers/aws/cli';
 import { AwsInstanceStateV1, AwsStateParser } from '../../../src/providers/aws/state';
-import { STREAMING_SERVER_SUNSHINE, STREAMING_SERVER_WOLF } from '../../../src/core/cli/prompter';
+import { STREAMING_SERVER_WOLF } from '../../../src/core/cli/prompter';
 
 describe('InstanceUpdater', () => {
 
@@ -43,39 +43,43 @@ describe('InstanceUpdater', () => {
         })
 
         // Update should have triggered state update with provisioning + configuration
-        const expectedState = lodash.merge({},
-            awsState,
-            {
-                provision: {
-                    input: {
-                        diskSize: awsState.provision.input.diskSize + 100,
-                        instanceType: "t2.micro",
-                        costAlert: {
-                            limit: (awsState.provision.input.costAlert?.limit ?? 0) + 100,
-                            notificationEmail: "test@test.com"
-                        }
-                    },
-                    output: {
-                        host: DUMMY_AWS_PULUMI_OUTPUT.publicIp,
-                        instanceId: DUMMY_AWS_PULUMI_OUTPUT.instanceId
+        const expectedState = {
+            ...awsState,
+            provision: {
+                ...awsState.provision,
+                input: {
+                    ...awsState.provision.input,
+                    diskSize: awsState.provision.input.diskSize + 100,
+                    instanceType: "t2.micro",
+                    costAlert: {
+                        ...awsState.provision.input.costAlert,
+                        limit: (awsState.provision.input.costAlert?.limit ?? 0) + 100,
+                        notificationEmail: "test@test.com"
                     }
-                }, 
-                configuration: {
-                    input: {
-                        wolf: {
-                            enable: true
-                        }
-                    },
-                    output: {}
+                },
+                output: {
+                    ...awsState.provision.output,
+                    host: DUMMY_AWS_PULUMI_OUTPUT.publicIp,
+                    instanceId: DUMMY_AWS_PULUMI_OUTPUT.instanceId
                 }
+            },
+            configuration: {
+                ...awsState.configuration,
+                input: {
+                    sunshine: null,
+                    wolf: {
+                        enable: true
+                    }
+                },
+                output: {}
             }
-        )
+        }
 
         // Check dummy state after update
         const loader = new StateLoader()
         const updatedState = await loader.loadAndMigrateInstanceState(instanceName)
         
-        assert.deepEqual(expectedState, updatedState)
+        assert.deepEqual(updatedState, expectedState)
     })
 })
     

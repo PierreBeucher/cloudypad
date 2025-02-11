@@ -4,6 +4,7 @@ origin_web_ui_allowed = lan
 min_log_level = info
 
 # Keep state files in Cloudy Pad data dir to persist on container recreation
+# They are by default saved in XDG_CONFIG_HOME but this folder is not persisted voluntarily
 credentials_file = /cloudy/data/sunshine/sunshine_credentials.json
 file_state = /cloudy/data/sunshine/sunshine_state.json
 pkey = /cloudy/data/sunshine/pkey.pem
