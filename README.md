@@ -39,9 +39,9 @@ This project is still at an experimental phase. While working and allowing you t
 
 ## Getting started 🚀
 
-Not familiar with terms like _"Cloud gaming"_, _"Moonlight"_, _"Cloud Provider"_ _"terminal"_ or _"CLI"_ ? Visit [What's Cloud Gaming and how is Cloudy Pad useful ?](https://cloudypad.gg/what-is-cloud-gaming) first 😉
-
 [➡️ **Deploy your instance and start playing** 🎮](https://cloudypad.gg/getting-started) 
+
+Not familiar with terms like _"Cloud gaming"_, _"Moonlight"_, _"Cloud Provider"_ _"terminal"_ or _"CLI"_ ? Visit [What's Cloud Gaming and how is Cloudy Pad useful ?](https://cloudypad.gg/what-is-cloud-gaming) first 😉
 
 ### Problem ?
 
