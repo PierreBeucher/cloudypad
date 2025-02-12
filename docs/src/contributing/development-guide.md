@@ -102,7 +102,7 @@ Can be used to run Sunshine container and test Ansible playbook easily.
 Fast Sunshine container build and import:
 
 ```sh
-task docker-sunshine-to-dev-vm
+task dev-docker-sunshine-to-vm
 ```
 
 Ansible test:
