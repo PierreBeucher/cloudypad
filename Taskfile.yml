@@ -60,7 +60,7 @@ tasks:
     - ansible-playbook -i ansible/inventories/dev-vagrant.yml ansible/sunshine.yml -t sunshine
     - vagrant ssh -c "docker restart cloudy"
 
-  build-push-image-dev:
+  dev-docker-build-push-image:
     cmds:
     - docker compose -f containers/sunshine/docker-compose.yml build
     - docker compose -f containers/sunshine/docker-compose.yml push
