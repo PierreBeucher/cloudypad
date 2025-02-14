@@ -3,7 +3,9 @@ wolf_instance_name: wolf
 
 # Image versions to use for each apps
 # Lock version with hash for better reproducibility
-wolf_app_steam_image: ghcr.io/games-on-whales/steam:edge@sha256:9130e7b4cfe1e82979148e7ff89ef95886d5f7a2bf60a7ba4d0cdbf720347bf0
-wolf_app_lutris_image: ghcr.io/games-on-whales/lutris:edge@sha256:47efba06507c3d8b02e324ce3582ac355abb5a12985c30eec5f93828fa628b05
-wolf_app_pegasus_image: ghcr.io/games-on-whales/pegasus:edge@sha256:f8ab22c55bc2234475662766f53d75074b9b4e31abeb7840a21c847e6ec77559
-wolf_app_retroarch_image: ghcr.io/games-on-whales/retroarch:edge@sha256:c45d4473da0fd2294be61b8fc3bb30f5f713ef97a0aa41d0a6e7f0a94ed51330
+wolf_app_steam_image: ghcr.io/games-on-whales/steam:edge@sha256:6e69c8418a1fce5a773fc23c5b43c683862887b3f89627f2a12674ac21d87627
+wolf_app_lutris_image: ghcr.io/games-on-whales/lutris:edge@sha256:c0d7d397e5cb7df6934b16b21f89a13113b13a62f27061920b1835a39180ef3b
+wolf_app_pegasus_image: ghcr.io/games-on-whales/pegasus:edge@sha256:ad2842875a69933835e7c2e8bce03c575ea5b7f884b17117ee4afb51b999f25b
+wolf_app_retroarch_image: ghcr.io/games-on-whales/retroarch:edge@sha256:80e2f1b6c80ff16627a73657b03ac14d740ea44a352d7249e13a3fab885c0657
+wolf_app_prismlauncher_image: ghcr.io/games-on-whales/prismlauncher:edge@sha256:be44dce1313157826731e0b79c19ee60098848c346a490fc84b7a375f874914f
+wolf_app_firefox_image: ghcr.io/games-on-whales/firefox:edge@sha256:6ff2d01d8765295c5cb3be4e058566387ac268f0c063548164a064c48ff2f901

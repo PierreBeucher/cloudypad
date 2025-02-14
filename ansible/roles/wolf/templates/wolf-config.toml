@@ -1,24 +1,59 @@
-# A list of paired clients that will be allowed to stream
-paired_clients = []
-
-# The version of this config file
 config_version = 4
-
-# The name that will be displayed in Moonlight
 hostname = "{{ wolf_instance_name }}"
-
-# A unique identifier for this host
 uuid = "{{ wolf_instance_name | ansible.builtin.to_uuid }}"
 
-######################
-# Apps, the list of apps that will be shown in Moonlight
+paired_clients = []
+
 [[apps]]
 start_virtual_compositor = true
-title = "Steam"
+title = 'Firefox'
 
-[apps.runner]
-base_create_json = """
-{
+    [apps.runner]
+    base_create_json = '''{
+  "HostConfig": {
+    "IpcMode": "host",
+    "Privileged": false,
+    "CapAdd": ["NET_RAW", "MKNOD", "NET_ADMIN"],
+    "DeviceCgroupRules": ["c 13:* rmw", "c 244:* rmw"]
+  }
+}
+'''
+    devices = []
+    env = [ 'RUN_SWAY=1', 'MOZ_ENABLE_WAYLAND=1', 'GOW_REQUIRED_DEVICES=/dev/input/* /dev/dri/* /dev/nvidia*' ]
+    image = '{{ wolf_app_firefox_image }}'
+    mounts = []
+    name = 'WolfFirefox'
+    ports = []
+    type = 'docker'
+
+[[apps]]
+start_virtual_compositor = true
+title = 'RetroArch'
+
+    [apps.runner]
+    base_create_json = '''{
+  "HostConfig": {
+    "IpcMode": "host",
+    "CapAdd": ["NET_RAW", "MKNOD", "NET_ADMIN", "SYS_ADMIN", "SYS_NICE"],
+    "Privileged": false,
+    "DeviceCgroupRules": ["c 13:* rmw", "c 244:* rmw"]
+  }
+}
+'''
+    devices = []
+    env = [ 'RUN_SWAY=true', 'GOW_REQUIRED_DEVICES=/dev/input/* /dev/dri/* /dev/nvidia*' ]
+    image = '{{ wolf_app_retroarch_image }}'
+    mounts = []
+    name = 'WolfRetroarch'
+    ports = []
+    type = 'docker'
+
+[[apps]]
+start_virtual_compositor = true
+title = 'Steam'
+
+    [apps.runner]
+    base_create_json = '''{
   "HostConfig": {
     "IpcMode": "host",
     "CapAdd": ["SYS_ADMIN", "SYS_NICE", "SYS_PTRACE", "NET_RAW", "MKNOD", "NET_ADMIN"],
@@ -28,26 +63,21 @@ base_create_json = """
     "DeviceCgroupRules": ["c 13:* rmw", "c 244:* rmw"]
   }
 }
-"""
-ports = []
-devices = []
-env = [
-  "PROTON_LOG=1",
-  "RUN_SWAY=true",
-  "GOW_REQUIRED_DEVICES=/dev/input/* /dev/dri/* /dev/nvidia*",
-]
-mounts = []
-image = "{{ wolf_app_steam_image }}"
-name = "WolfSteam"
-type = "docker"
+'''
+    devices = []
+    env = [ 'PROTON_LOG=1', 'RUN_SWAY=true', 'GOW_REQUIRED_DEVICES=/dev/input/* /dev/dri/* /dev/nvidia*' ]
+    image = '{{ wolf_app_steam_image }}'
+    mounts = []
+    name = 'WolfSteam'
+    ports = []
+    type = 'docker'
 
 [[apps]]
 start_virtual_compositor = true
-title = "Pegasus"
+title = 'Pegasus'
 
-[apps.runner]
-base_create_json = """
-{
+    [apps.runner]
+    base_create_json = '''{
   "HostConfig": {
     "IpcMode": "host",
     "CapAdd": ["NET_RAW", "MKNOD", "NET_ADMIN", "SYS_ADMIN", "SYS_NICE"],
@@ -55,25 +85,21 @@ base_create_json = """
     "DeviceCgroupRules": ["c 13:* rmw", "c 244:* rmw"]
   }
 }
-"""
-ports = []
-devices = []
-env = [
-  "RUN_SWAY=1",
-  "GOW_REQUIRED_DEVICES=/dev/input/event* /dev/dri/* /dev/nvidia*",
-]
-mounts = []
-image = "{{ wolf_app_pegasus_image }}"
-name = "WolfPegasus"
-type = "docker"
+'''
+    devices = []
+    env = [ 'RUN_SWAY=1', 'GOW_REQUIRED_DEVICES=/dev/input/event* /dev/dri/* /dev/nvidia*' ]
+    image = '{{ wolf_app_pegasus_image }}'
+    mounts = []
+    name = 'WolfPegasus'
+    ports = []
+    type = 'docker'
 
 [[apps]]
 start_virtual_compositor = true
-title = "Lutris"
+title = 'Lutris'
 
-[apps.runner]
-base_create_json = """
-{
+    [apps.runner]
+    base_create_json = '''{
   "HostConfig": {
     "IpcMode": "host",
     "CapAdd": ["NET_RAW", "MKNOD", "NET_ADMIN", "SYS_ADMIN", "SYS_NICE"],
@@ -81,25 +107,21 @@ base_create_json = """
     "DeviceCgroupRules": ["c 13:* rmw", "c 244:* rmw"]
   }
 }
-"""
-ports = []
-devices = []
-env = [
-  "RUN_SWAY=1",
-  "GOW_REQUIRED_DEVICES=/dev/input/event* /dev/dri/* /dev/nvidia* /var/lutris/",
-]
-mounts = ["lutris:/var/lutris/:rw"]
-image = "{{ wolf_app_lutris_image }}"
-name = "WolfLutris"
-type = "docker"
+'''
+    devices = []
+    env = [ 'RUN_SWAY=1', 'GOW_REQUIRED_DEVICES=/dev/input/event* /dev/dri/* /dev/nvidia* /var/lutris/' ]
+    image = '{{ wolf_app_lutris_image }}'
+    mounts = [ 'lutris:/var/lutris/:rw' ]
+    name = 'WolfLutris'
+    ports = []
+    type = 'docker'
 
 [[apps]]
 start_virtual_compositor = true
-title = "RetroArch"
+title = 'Prismlauncher'
 
-[apps.runner]
-base_create_json = """
-{
+    [apps.runner]
+    base_create_json = '''{
   "HostConfig": {
     "IpcMode": "host",
     "CapAdd": ["NET_RAW", "MKNOD", "NET_ADMIN", "SYS_ADMIN", "SYS_NICE"],
@@ -107,233 +129,174 @@ base_create_json = """
     "DeviceCgroupRules": ["c 13:* rmw", "c 244:* rmw"]
   }
 }
-"""
-ports = []
-devices = []
-env = [
-  "RUN_SWAY=true",
-  "GOW_REQUIRED_DEVICES=/dev/input/* /dev/dri/* /dev/nvidia*",
-]
-mounts = []
-image = "{{ wolf_app_retroarch_image }}"
-name = "WolfRetroarch"
-type = "docker"
+'''
+    devices = []
+    env = [ 'RUN_SWAY=1', 'GOW_REQUIRED_DEVICES=/dev/input/event* /dev/dri/* /dev/nvidia* /var/lutris/' ]
+    image = '{{ wolf_app_prismlauncher_image }}'
+    mounts = []
+    name = 'Prismlauncher'
+    ports = []
+    type = 'docker'
 
 [[apps]]
+start_audio_server = false
 start_virtual_compositor = false
-title = "Test ball"
+title = 'Test ball'
 
-[apps.audio]
-source = "audiotestsrc wave=ticks is-live=true"
+    [apps.audio]
+    source = 'audiotestsrc wave=ticks is-live=true'
 
-[apps.video]
-source = """
-videotestsrc pattern=ball flip=true is-live=true !
+    [apps.runner]
+    run_cmd = "sh -c \"while :; do echo 'running...'; sleep 10; done\""
+    type = 'process'
+
+    [apps.video]
+    source = '''videotestsrc pattern=ball flip=true is-live=true !
 video/x-raw, framerate={fps}/1
-"""
+'''
 
-[apps.runner]
-run_cmd = "sh -c \"while :; do echo 'running...'; sleep 10; done\""
-type = "process"
-
-######################
-# Gstreamer: Video/Audio encoding pipelines and streaming settings
-[gstreamer]
-
-###########
-# Audio
-
-###
 [gstreamer.audio]
-default_sink = """
-rtpmoonlightpay_audio name=moonlight_pay packet_duration={packet_duration} encrypt={encrypt} aes_key="{aes_key}" aes_iv="{aes_iv}" !
-udpsink bind-port={host_port} host={client_ip} port={client_port} sync=true"""
-default_opus_encoder = """
-opusenc bitrate={bitrate} bitrate-type=cbr frame-size={packet_duration} bandwidth=fullband audio-type=restricted-lowdelay max-payload-size=1400"""
-default_audio_params = "audio/x-raw, channels={channels}, rate=48000"
-default_source = """
-pulsesrc device="{sink_name}" server="{server_name}"
-"""
+default_audio_params = 'queue max-size-buffers=3 leaky=downstream ! audiorate ! audioconvert'
+default_opus_encoder = 'opusenc bitrate={bitrate} bitrate-type=cbr frame-size={packet_duration} bandwidth=fullband audio-type=restricted-lowdelay max-payload-size=1400'
+default_sink = '''rtpmoonlightpay_audio name=moonlight_pay packet_duration={packet_duration} encrypt={encrypt} aes_key="{aes_key}" aes_iv="{aes_iv}" !
+udpsink bind-port={host_port} host={client_ip} port={client_port} sync=true'''
+default_source = 'interpipesrc listen-to={session_id}_audio is-live=true stream-sync=restart-ts max-bytes=0 max-buffers=3 block=false'
 
 [gstreamer.video]
-default_sink = """
-rtpmoonlightpay_video name=moonlight_pay payload_size={payload_size} fec_percentage={fec_percentage} min_required_fec_packets={min_required_fec_packets} !
-udpsink bind-port={host_port} host={client_ip} port={client_port} sync=true"""
-default_source = "appsrc name=wolf_wayland_source is-live=true block=false format=3 stream-type=0"
+default_sink = '''rtpmoonlightpay_video name=moonlight_pay payload_size={payload_size} fec_percentage={fec_percentage} min_required_fec_packets={min_required_fec_packets} !
+udpsink bind-port={host_port} host={client_ip} port={client_port} sync=true'''
+default_source = 'interpipesrc listen-to={session_id}_video is-live=true stream-sync=restart-ts max-buffers=1 block=false'
 
-##############
-# AV1 encoders
-###
-[[gstreamer.video.av1_encoders]]
-encoder_pipeline = """
-nvav1enc gop-size=-1 bitrate={bitrate} rc-mode=cbr zerolatency=true preset=p1 tune=ultra-low-latency multi-pass=two-pass-quarter !
-av1parse !
-video/x-av1, stream-format=obu-stream, alignment=frame, profile=main"""
-check_elements = ["nvav1enc", "cudaconvertscale", "cudaupload"]
-plugin_name = "nvcodec"
-
-[[gstreamer.video.av1_encoders]]
-encoder_pipeline = """
-qsvav1enc gop-size=0 ref-frames=1 bitrate={bitrate} rate-control=cbr low-latency=1 target-usage=6 !
-av1parse !
-video/x-av1, stream-format=obu-stream, alignment=frame, profile=main"""
-check_elements = ["qsvav1enc", "videoconvert"]
-plugin_name = "qsv"
-
-[[gstreamer.video.av1_encoders]]
-encoder_pipeline = """
-vaav1enc gop-size=0 ref-frames=1 bitrate={bitrate} rate-control=cbr !
-av1parse !
-video/x-av1, stream-format=obu-stream, alignment=frame, profile=main"""
-check_elements = ["vaav1enc", "videoconvert"]
-plugin_name = "vaapi"
-
-[[gstreamer.video.av1_encoders]]
-encoder_pipeline = """
-vaav1lpenc gop-size=0 ref-frames=1 bitrate={bitrate} rate-control=cbr !
-av1parse !
-video/x-av1, stream-format=obu-stream, alignment=frame, profile=main"""
-# LP = Low Power
-check_elements = ["vaav1lpenc", "videoconvert"]
-plugin_name = "vaapi"
-
-[[gstreamer.video.av1_encoders]]
-encoder_pipeline = """
-av1enc usage-profile=realtime end-usage=vbr target-bitrate={bitrate} !
-av1parse !
-video/x-av1, stream-format=obu-stream, alignment=frame, profile=main"""
-video_params = """
-videoscale !
-videoconvert !
-videorate !
-video/x-raw, width={width}, height={height}, framerate={fps}/1, format=I420,
-chroma-site={color_range}, colorimetry={color_space}"""
-check_elements = ["av1enc"]
-plugin_name = "aom"
-
-######################
-# HEVC encoders
-# Order here matters: Wolf will try them in order and pick the first one that's not failing
-###
-[[gstreamer.video.hevc_encoders]]
-encoder_pipeline = """
-nvh265enc gop-size=-1 bitrate={bitrate} aud=false rc-mode=cbr zerolatency=true preset=p1 tune=ultra-low-latency multi-pass=two-pass-quarter !
-h265parse !
-video/x-h265, profile=main, stream-format=byte-stream"""
-check_elements = ["nvh265enc", "cudaconvertscale", "cudaupload"]
-plugin_name = "nvcodec"
-
-[[gstreamer.video.hevc_encoders]]
-encoder_pipeline = """
-qsvh265enc b-frames=0 gop-size=0 idr-interval=1 ref-frames=1 bitrate={bitrate} rate-control=cbr low-latency=1 target-usage=6 !
-h265parse !
-video/x-h265, profile=main, stream-format=byte-stream"""
-check_elements = ["qsvh265enc", "videoconvert"]
-plugin_name = "qsv"
-
-[[gstreamer.video.hevc_encoders]]
-encoder_pipeline = """
-vah265lpenc aud=false b-frames=0 ref-frames=1 num-slices={slices_per_frame} bitrate={bitrate} mbbrc=1 rate-control=cbr target-usage=6 !
-h265parse !
-video/x-h265, profile=main, stream-format=byte-stream"""
-# lp: (Low Power)
-check_elements = ["vah265lpenc", "videoconvert"]
-plugin_name = "vaapi"
-
-[[gstreamer.video.hevc_encoders]]
-encoder_pipeline = """
-vah265enc aud=false b-frames=0 ref-frames=1 num-slices={slices_per_frame} bitrate={bitrate} mbbrc=1 rate-control=cbr target-usage=6 !
-h265parse !
-video/x-h265, profile=main, stream-format=byte-stream"""
-check_elements = ["vah265enc", "videoconvert"]
-plugin_name = "vaapi"
-
-[[gstreamer.video.hevc_encoders]]
-encoder_pipeline = """
-x265enc tune=zerolatency speed-preset=superfast bitrate={bitrate}
-option-string="info=0:keyint=-1:qp=28:repeat-headers=1:slices={slices_per_frame}:aud=0:annexb=1:log-level=3:open-gop=0:bframes=0:intra-refresh=0" !
-video/x-h265, profile=main, stream-format=byte-stream"""
-video_params = """
-videoscale !
-videoconvert !
-videorate !
-video/x-raw, width={width}, height={height}, framerate={fps}/1, format=I420,
-chroma-site={color_range}, colorimetry={color_space}"""
-check_elements = ["x265enc"]
-# SW Encoding
-plugin_name = "x265"
-
-[gstreamer.video.defaults.vaapi]
-video_params = """
-queue !
-videoconvert !
-video/x-raw, chroma-site={color_range}, width={width}, height={height}, format=NV12, colorimetry={color_space}"""
-
-[gstreamer.video.defaults.qsv]
-video_params = """
-queue !
-videoconvert !
-video/x-raw, chroma-site={color_range}, width={width}, height={height}, format=NV12, colorimetry={color_space}"""
-
-######################
-# Default settings for the main encoders
-# To avoid repetition between H264, HEVC and AV1 encoders
-[gstreamer.video.defaults.nvcodec]
-video_params = """
-queue !
+    [gstreamer.video.defaults.nvcodec]
+    video_params = '''queue leaky=downstream max-size-buffers=1 !
 cudaupload !
 cudaconvertscale !
-video/x-raw(memory:CUDAMemory), width={width}, height={height}, chroma-site={color_range}, format=NV12, colorimetry={color_space}, pixel-aspect-ratio=1/1"""
+video/x-raw(memory:CUDAMemory), width={width}, height={height}, chroma-site={color_range}, format=NV12, colorimetry={color_space}, pixel-aspect-ratio=1/1'''
 
-######################
-# H264 encoders
-# Order here matters: Wolf will try them in order and pick the first one that's not failing
-###
-[[gstreamer.video.h264_encoders]]
-encoder_pipeline = """
-nvh264enc preset=low-latency-hq zerolatency=true gop-size=0 rc-mode=cbr-ld-hq bitrate={bitrate} aud=false !
-h264parse !
-video/x-h264, profile=main, stream-format=byte-stream"""
-check_elements = ["nvh264enc", "cudaconvertscale", "cudaupload"]
-plugin_name = "nvcodec"
+    [gstreamer.video.defaults.qsv]
+    video_params = '''queue leaky=downstream max-size-buffers=1 !
+videoconvertscale !
+video/x-raw, chroma-site={color_range}, width={width}, height={height}, format=NV12, colorimetry={color_space}'''
 
-[[gstreamer.video.h264_encoders]]
-encoder_pipeline = """
-qsvh264enc b-frames=0 gop-size=0 idr-interval=1 ref-frames=1 bitrate={bitrate} rate-control=cbr target-usage=6  !
-h264parse !
-video/x-h264, profile=main, stream-format=byte-stream"""
-check_elements = ["qsvh264enc", "videoconvert"]
-plugin_name = "qsv"
+    [gstreamer.video.defaults.vaapi]
+    video_params = '''queue leaky=downstream max-size-buffers=1 !
+videoconvertscale !
+video/x-raw, chroma-site={color_range}, width={width}, height={height}, format=NV12, colorimetry={color_space}'''
 
-[[gstreamer.video.h264_encoders]]
-encoder_pipeline = """
-vah264lpenc aud=false b-frames=0 ref-frames=1 num-slices={slices_per_frame} bitrate={bitrate} target-usage=6 !
-h264parse !
-video/x-h264, profile=main, stream-format=byte-stream"""
-# lp: (Low Power)
-check_elements = ["vah264lpenc", "videoconvert"]
-plugin_name = "vaapi"
+    [[gstreamer.video.av1_encoders]]
+    check_elements = [ 'nvav1enc', 'cudaconvertscale', 'cudaupload' ]
+    encoder_pipeline = '''nvav1enc gop-size=-1 bitrate={bitrate} rc-mode=cbr zerolatency=true preset=p1 tune=ultra-low-latency multi-pass=two-pass-quarter !
+av1parse !
+video/x-av1, stream-format=obu-stream, alignment=frame, profile=main'''
+    plugin_name = 'nvcodec'
 
-[[gstreamer.video.h264_encoders]]
-encoder_pipeline = """
-vah264enc aud=false b-frames=0 ref-frames=1 num-slices={slices_per_frame} bitrate={bitrate} target-usage=6 !
-h264parse !
-video/x-h264, profile=main, stream-format=byte-stream"""
-check_elements = ["vah264enc", "videoconvert"]
-plugin_name = "vaapi"
+    [[gstreamer.video.av1_encoders]]
+    check_elements = [ 'qsvav1enc', 'videoconvertscale' ]
+    encoder_pipeline = '''qsvav1enc gop-size=0 ref-frames=1 bitrate={bitrate} rate-control=cbr low-latency=1 target-usage=6 !
+av1parse !
+video/x-av1, stream-format=obu-stream, alignment=frame, profile=main'''
+    plugin_name = 'qsv'
 
-[[gstreamer.video.h264_encoders]]
-encoder_pipeline = """
-x264enc pass=qual tune=zerolatency speed-preset=superfast b-adapt=false bframes=0 ref=1
-sliced-threads=true threads={slices_per_frame} option-string="slices={slices_per_frame}:keyint=infinite:open-gop=0"
-b-adapt=false bitrate={bitrate} aud=false !
-video/x-h264, profile=high, stream-format=byte-stream"""
-video_params = """
-videoscale !
-videoconvert !
+    [[gstreamer.video.av1_encoders]]
+    check_elements = [ 'vaav1enc', 'videoconvertscale' ]
+    encoder_pipeline = '''vaav1enc ref-frames=1 bitrate={bitrate} rate-control=cbr target-usage=6 !
+av1parse !
+video/x-av1, stream-format=obu-stream, alignment=frame, profile=main'''
+    plugin_name = 'vaapi'
+
+    [[gstreamer.video.av1_encoders]]
+    check_elements = [ 'vaav1lpenc', 'videoconvertscale' ]
+    encoder_pipeline = '''vaav1lpenc ref-frames=1 bitrate={bitrate} rate-control=cbr target-usage=6 !
+av1parse !
+video/x-av1, stream-format=obu-stream, alignment=frame, profile=main'''
+    plugin_name = 'vaapi'
+
+    [[gstreamer.video.av1_encoders]]
+    check_elements = [ 'av1enc' ]
+    encoder_pipeline = '''av1enc usage-profile=realtime end-usage=vbr target-bitrate={bitrate} !
+av1parse !
+video/x-av1, stream-format=obu-stream, alignment=frame, profile=main'''
+    plugin_name = 'aom'
+    video_params = '''videoconvertscale !
 videorate !
 video/x-raw, width={width}, height={height}, framerate={fps}/1, format=I420,
-chroma-site={color_range}, colorimetry={color_space}"""
-check_elements = ["x264enc"]
-# SW Encoding
-plugin_name = "x264"
+chroma-site={color_range}, colorimetry={color_space}'''
+
+    [[gstreamer.video.h264_encoders]]
+    check_elements = [ 'nvh264enc', 'cudaconvertscale', 'cudaupload' ]
+    encoder_pipeline = '''nvh264enc preset=low-latency-hq zerolatency=true gop-size=0 rc-mode=cbr-ld-hq bitrate={bitrate} aud=false !
+h264parse !
+video/x-h264, profile=main, stream-format=byte-stream'''
+    plugin_name = 'nvcodec'
+
+    [[gstreamer.video.h264_encoders]]
+    check_elements = [ 'qsvh264enc', 'videoconvertscale' ]
+    encoder_pipeline = '''qsvh264enc b-frames=0 gop-size=0 idr-interval=1 ref-frames=1 bitrate={bitrate} rate-control=cbr target-usage=6  !
+h264parse !
+video/x-h264, profile=main, stream-format=byte-stream'''
+    plugin_name = 'qsv'
+
+    [[gstreamer.video.h264_encoders]]
+    check_elements = [ 'vah264lpenc', 'videoconvertscale' ]
+    encoder_pipeline = '''vah264lpenc aud=false b-frames=0 ref-frames=1 num-slices={slices_per_frame} bitrate={bitrate} target-usage=6 !
+h264parse !
+video/x-h264, profile=main, stream-format=byte-stream'''
+    plugin_name = 'vaapi'
+
+    [[gstreamer.video.h264_encoders]]
+    check_elements = [ 'vah264enc', 'videoconvertscale' ]
+    encoder_pipeline = '''vah264enc aud=false b-frames=0 ref-frames=1 num-slices={slices_per_frame} bitrate={bitrate} target-usage=6 !
+h264parse !
+video/x-h264, profile=main, stream-format=byte-stream'''
+    plugin_name = 'vaapi'
+
+    [[gstreamer.video.h264_encoders]]
+    check_elements = [ 'x264enc' ]
+    encoder_pipeline = '''x264enc pass=qual tune=zerolatency speed-preset=superfast b-adapt=false bframes=0 ref=1
+sliced-threads=true threads={slices_per_frame} option-string="slices={slices_per_frame}:keyint=infinite:open-gop=0"
+b-adapt=false bitrate={bitrate} aud=false !
+video/x-h264, profile=high, stream-format=byte-stream'''
+    plugin_name = 'x264'
+    video_params = '''videoconvertscale !
+videorate !
+video/x-raw, width={width}, height={height}, framerate={fps}/1, format=I420,
+chroma-site={color_range}, colorimetry={color_space}'''
+
+    [[gstreamer.video.hevc_encoders]]
+    check_elements = [ 'nvh265enc', 'cudaconvertscale', 'cudaupload' ]
+    encoder_pipeline = '''nvh265enc gop-size=-1 bitrate={bitrate} aud=false rc-mode=cbr zerolatency=true preset=p1 tune=ultra-low-latency multi-pass=two-pass-quarter !
+h265parse !
+video/x-h265, profile=main, stream-format=byte-stream'''
+    plugin_name = 'nvcodec'
+
+    [[gstreamer.video.hevc_encoders]]
+    check_elements = [ 'qsvh265enc', 'videoconvertscale' ]
+    encoder_pipeline = '''qsvh265enc b-frames=0 gop-size=0 idr-interval=1 ref-frames=1 bitrate={bitrate} rate-control=cbr low-latency=1 target-usage=6 !
+h265parse !
+video/x-h265, profile=main, stream-format=byte-stream'''
+    plugin_name = 'qsv'
+
+    [[gstreamer.video.hevc_encoders]]
+    check_elements = [ 'vah265lpenc', 'videoconvertscale' ]
+    encoder_pipeline = '''vah265lpenc aud=false b-frames=0 ref-frames=1 num-slices={slices_per_frame} bitrate={bitrate} mbbrc=1 rate-control=cbr target-usage=6 !
+h265parse !
+video/x-h265, profile=main, stream-format=byte-stream'''
+    plugin_name = 'vaapi'
+
+    [[gstreamer.video.hevc_encoders]]
+    check_elements = [ 'vah265enc', 'videoconvertscale' ]
+    encoder_pipeline = '''vah265enc aud=false b-frames=0 ref-frames=1 num-slices={slices_per_frame} bitrate={bitrate} mbbrc=1 rate-control=cbr target-usage=6 !
+h265parse !
+video/x-h265, profile=main, stream-format=byte-stream'''
+    plugin_name = 'vaapi'
+
+    [[gstreamer.video.hevc_encoders]]
+    check_elements = [ 'x265enc' ]
+    encoder_pipeline = '''x265enc tune=zerolatency speed-preset=superfast bitrate={bitrate}
+option-string="info=0:keyint=-1:qp=28:repeat-headers=1:slices={slices_per_frame}:aud=0:annexb=1:log-level=3:open-gop=0:bframes=0:intra-refresh=0" !
+video/x-h265, profile=main, stream-format=byte-stream'''
+    plugin_name = 'x265'
+    video_params = '''videoconvertscale !
+videorate !
+video/x-raw, width={width}, height={height}, framerate={fps}/1, format=I420,
+chroma-site={color_range}, colorimetry={color_space}'''
