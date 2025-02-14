@@ -2,7 +2,7 @@ function create_destroy_gcp() {
     
     instance_name="test-create-destroy-gcp"
 
-    npx tsx src/index.ts create gcp \
+    $cloudypad_cmd create gcp \
         --name $instance_name \
         --private-ssh-key ~/.ssh/id_ed25519 \
         --machine-type n1-standard-8 \
@@ -18,6 +18,7 @@ function create_destroy_gcp() {
         --streaming-server sunshine \
         --sunshine-user sunshine \
         --sunshine-password 'S3un$h1ne!"' \
+        --sunshine-image-tag dev \
         --yes --overwrite-existing --skip-pairing
 
     $cloudypad_cmd update gcp \
