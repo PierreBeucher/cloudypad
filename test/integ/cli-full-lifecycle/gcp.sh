@@ -10,7 +10,7 @@ function create_destroy_gcp() {
         --public-ip-type static \
         --region "europe-west4" \
         --zone "europe-west4-b" \
-        --gpu-type "nvidia-tesla-p4" \
+        --gpu-type "nvidia-tesla-t4" \
         --project-id crafteo-sandbox \
         --spot \
         --cost-limit 2 \
