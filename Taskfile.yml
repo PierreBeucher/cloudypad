@@ -45,7 +45,7 @@ tasks:
   # - Import image into dev VM
   # - Run Sunshine container in dev VM
   # Note: might as well use a bind mount from host to dev VM instead of scp
-  docker-sunshine-to-dev-vm:
+  dev-docker-sunshine-to-vm:
     cmds: 
     - docker buildx build containers/sunshine/ -o type=docker,dest=./tmp/cloudypad.docker.tar -t ghcr.io/pierrebeucher/cloudypad/sunshine:local
     - scp -i .vagrant/machines/default/virtualbox/private_key tmp/cloudypad.docker.tar vagrant@192.168.56.43:/tmp
@@ -53,7 +53,14 @@ tasks:
     - ssh -i .vagrant/machines/default/virtualbox/private_key vagrant@192.168.56.43 
       docker compose -f sunshine/docker-compose.yml -p sunshine up -d
 
-  build-push-image-dev:
+  # Quick dev build + deploy for rapid Sunshine container feedback loop
+  dev-ansible-config:
+    cmds:
+    - task: dev-docker-sunshine-to-vm
+    - ansible-playbook -i ansible/inventories/dev-vagrant.yml ansible/sunshine.yml -t sunshine
+    - vagrant ssh -c "docker restart cloudy"
+
+  dev-docker-build-push-image:
     cmds:
     - docker compose -f containers/sunshine/docker-compose.yml build
     - docker compose -f containers/sunshine/docker-compose.yml push

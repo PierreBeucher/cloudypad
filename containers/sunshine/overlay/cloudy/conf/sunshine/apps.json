@@ -1,11 +1,24 @@
 {
-    "env": {
-      "PATH": "$(PATH):$(HOME)/.local/bin"
-    },
-    "apps": [
+  "env": {
+      "PATH": "$(PATH):$(HOME)\/.local\/bin"
+  },
+  "apps": [
       {
-        "name": "Steam",
-        "image-path": "steam.png"
+          "name": "Steam",
+          "image-path": "steam.png",
+          "prep-cmd": [
+              {
+                  "do": "sh -c \"setup-sunshine-screen-mode.sh > \/tmp\/sunshine-session-start.log 2>&1\"",
+                  "undo": ""
+              }
+          ],
+          "detached": [
+              ""
+          ],
+          "exclude-global-prep-cmd": "false",
+          "auto-detach": "true",
+          "wait-all": "true",
+          "exit-timeout": "5"
       }
-    ]
-  }
+  ]
+}

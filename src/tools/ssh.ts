@@ -66,7 +66,7 @@ export class SSHClient {
         this.logger.debug(`SSH command response: ${JSON.stringify(result)}`)
 
         if (result.code != 0 && !args?.ignoreNonZeroExitCode){
-            throw new SSHExecError(`Error running command: '${JSON.stringify(cmd)}'`, result)
+            throw new Error(`Error running command: '${JSON.stringify(cmd)}', SSH response: ${JSON.stringify(result)}`)
         }
 
         return result
