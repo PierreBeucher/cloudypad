@@ -8,7 +8,8 @@
     - [Various dev tasks](#various-dev-tasks)
     - [Development Virtual Machine](#development-virtual-machine)
   - [Local Pulumi stack manipulation](#local-pulumi-stack-manipulation)
-  - [Scripts](#scripts)
+- [Maintenance](#maintenance)
+  - [Updating Wolf version](#updating-wolf-version)
 - [Adding a new provider](#adding-a-new-provider)
   - [Provider components](#provider-components)
   - [Integrate provider in Core](#integrate-provider-in-core)
@@ -130,9 +131,22 @@ pulumi stack -s <organization/CloudyPad-XXX/STACK> --show-ids
 
 # Destroy stack
 pulumi destroy -s <organization/CloudyPad-XXX/STACK>
+
 ```
 
-### Scripts
+
+## Maintenance
+
+### Updating Wolf version
+
+Wolf is deployed via Docker Compose and templated config. To ensure reproducibility, Wolf version and apps images are pinned to a specific SHA.
+
+To update Wolf:
+
+- Update Wolf version in `ansible/roles/wolf/templates/docker-compose.nvidia.yml` (stable with SHA)
+- Update images versions in `ansible/roles/wolf/defaults/main.yml` to use latest stable (master with SHA)
+- Update Wolf config template in `ansible/roles/wolf/templates/wolf-config.toml` using default config
+  - Ensure proper Ansible templates variables are used
 
 ## Adding a new provider
 
