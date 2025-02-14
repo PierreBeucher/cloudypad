@@ -7,6 +7,12 @@ services:
       NVIDIA_ENABLE: true
       # Nvidia driver version matching host driver
       NVIDIA_DRIVER_VERSION: "{{ sunshine_nvidia_driver_version }}"
+
+      # Nvidia PCI bus ID suitable for X server config
+      # Must be in format "bus@domain:device.function"
+      # Use lspci to show available GPUs
+      # We need to enforce it here as X may fail to auto-detect proper PCI in some environments (eg. Azure)
+      NVIDIA_PCI_BUS_ID: "{{ nvidia_pci_bus_id }}"
     deploy:
       resources:
         reservations:

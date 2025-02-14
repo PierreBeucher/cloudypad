@@ -1,0 +1,9 @@
+all:
+  hosts:
+    "40.89.187.124":
+      ansible_user: ubuntu
+
+      sunshine_server_name: dev-nvidia
+      sunshine_nvidia_enable: true
+      sunshine_compose_pull_images: always
+      sunshine_image_tag: dev

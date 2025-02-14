@@ -15,6 +15,7 @@
 - name: import Nvidia tasks
   import_tasks: nvidia.yml
   when: sunshine_nvidia_enable
+  tags: [ nvidia ]
 
 # List of Compose files to use depending on GPU used
 - name: Set Docker Compose files

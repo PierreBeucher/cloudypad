@@ -4,7 +4,7 @@
   "description": "",
   "scripts": {
     "test": "mocha",
-    "build": "rm -rf dist/ && tsc && npm run copy-ansible",
+    "build": "rm -rf dist/ && tsc -p tsconfig.build.json && npm run copy-ansible",
     "copy-ansible": "cp -r ansible dist/ansible"
   },
   "main": "./dist/src/index.js",
@@ -12,7 +12,7 @@
   "bin": {
     "cloudypad": "./dist/src/cli.js"
   },
-  "author": "",
+  "author": "Pierre Beucher <pierre@crafteo.io>",
   "license": "ISC",
   "devDependencies": {
     "@eslint/js": "^9.18.0",

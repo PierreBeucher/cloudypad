@@ -16,6 +16,7 @@ function create_destroy_aws() {
         --streaming-server sunshine \
         --sunshine-user sunshine \
         --sunshine-password 'S3un$h1ne!"' \
+        --sunshine-image-tag dev \
         --yes --overwrite-existing --skip-pairing
 
     $cloudypad_cmd update aws \
