@@ -19,7 +19,7 @@ export class GcpProvisioner extends AbstractInstanceProvisioner<GcpProvisionInpu
 
         await this.verifyConfig()
 
-        this.logger.debug(`Provisioning Google Cloud instance with ${JSON.stringify(this.args.provisionInput)}`)
+        this.logger.debug(`Provisioning Google Cloud instance with ${JSON.stringify(this.args)} and options ${JSON.stringify(opts)}`)
 
         if(this.args.configurationInput.sunshine?.enable && this.args.provisionInput.acceleratorType == "nvidia-tesla-p4"){
             throw new Error("Sunshine streaming server does not support GCP nvidia-tesla-p4 accelerator type. Please use a different machine type or streaming server.")
@@ -30,21 +30,9 @@ export class GcpProvisioner extends AbstractInstanceProvisioner<GcpProvisionInpu
             confirmCreation = opts.autoApprove
         } else {
             confirmCreation = await confirm({
-                message: `
-You are about to provision Google Cloud machine with the following details:
-    Instance name: ${this.args.instanceName}
-    SSH key: ${this.args.provisionInput.ssh.privateKeyPath}
-    Region: ${this.args.provisionInput.region}
-    Project ID: ${this.args.provisionInput.projectId}
-    Machine Type: ${this.args.provisionInput.machineType}
-    Use Spot: ${this.args.provisionInput.useSpot}
-    GPU Type: ${this.args.provisionInput.acceleratorType}
-    Public IP Type: ${this.args.provisionInput.publicIpType}
-    Disk size: ${this.args.provisionInput.diskSize}
-    Cost Alert: ${this.args.provisionInput.costAlert?.limit ? `enabled, limit: ${this.args.provisionInput.costAlert.limit}$, ` + 
-        `notification email: ${this.args.provisionInput.costAlert.notificationEmail}` : 'None.'}
-
-Do you want to proceed?`,
+                message: `You are about to provision Google Cloud machine with the following details:\n` + 
+                `    ${this.inputToHumanReadableString(this.args)}` +
+                `\nDo you want to proceed?`,
                 default: true,
             })
         }

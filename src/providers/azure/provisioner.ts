@@ -17,28 +17,16 @@ export class AzureProvisioner extends AbstractInstanceProvisioner<AzureProvision
 
         this.logger.info(`Provisioning Azure instance ${this.args.instanceName}`)
 
-        this.logger.debug(`Provisioning Azure instance ${JSON.stringify(this.args)}`)
+        this.logger.debug(`Provisioning Azure instance with args ${JSON.stringify(this.args)} and options ${JSON.stringify(opts)}`)
 
         let confirmCreation: boolean
         if (opts?.autoApprove) {
             confirmCreation = opts.autoApprove
         } else {
             confirmCreation = await confirm({
-                message: `
-You are about to provision Azure machine with the following details:
-    Azure subscription: ${this.args.provisionInput.subscriptionId}
-    Azure location: ${this.args.provisionInput.location}
-    Instance name: ${this.args.instanceName}
-    SSH key: ${this.args.provisionInput.ssh.privateKeyPath}
-    VM Size: ${this.args.provisionInput.vmSize}
-    Spot instance: ${this.args.provisionInput.useSpot}
-    Public IP Type: ${this.args.provisionInput.publicIpType}
-    Disk type: ${this.args.provisionInput.diskType}
-    Disk size: ${this.args.provisionInput.diskSize}
-    Cost Alert: ${this.args.provisionInput.costAlert?.limit ? `enabled, limit: ${this.args.provisionInput.costAlert.limit}$, ` + 
-        `notification email: ${this.args.provisionInput.costAlert.notificationEmail}` : 'None.'}
-    
-Do you want to proceed?`,
+                message: `You are about to provision Azure machine with the following details:\n` + 
+                `    ${this.inputToHumanReadableString(this.args)}` +
+                `\nDo you want to proceed?`,
                 default: true,
             })
         }
