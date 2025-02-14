@@ -62,3 +62,10 @@ nix run github:PierreBeucher/cloudypad -- --version
 ## Upgrade
 
 To upgrade to the latest version of `cloudypad`, run the installation process again. It will check for the latest version and install it.
+
+Then, upgrade your instance(s) to get latest changes with:
+
+```sh
+cloudypad provision my-instance
+cloudypad configure my-instance
+```
