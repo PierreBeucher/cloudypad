@@ -1,5 +1,23 @@
 # Changelog
 
+## [0.16.0](https://github.com/PierreBeucher/cloudypad/compare/v0.15.0...v0.16.0) (2025-02-14)
+
+
+### Features
+
+* auto detect NVIDIA PCI bus ID ([02aab20](https://github.com/PierreBeucher/cloudypad/commit/02aab20bb9a8daa628f8ea0c3f3df63324d8b6fb))
+* automatically resize screen for Sunshine ([17f9796](https://github.com/PierreBeucher/cloudypad/commit/17f97960d846141ae9c424e8dd02ff84f56ffe7e))
+* bump Wolf and related images to latest stable ([d224126](https://github.com/PierreBeucher/cloudypad/commit/d224126e61853cd627eb88093cef0196ab471db9))
+* enforce no Sunshine support GCP with P4 ([79fb308](https://github.com/PierreBeucher/cloudypad/commit/79fb3081db002f29298d0db2b8bb4692ae462aaf))
+* **security:** enforce Sunshine encryption ([b581c1c](https://github.com/PierreBeucher/cloudypad/commit/b581c1cecc5cfe7fe66e776cfffe08710842c679))
+* **security:** enforce Sunshine encryption ([f33b8ba](https://github.com/PierreBeucher/cloudypad/commit/f33b8ba58e3aa22af033db01c0cc303acdf8df7b))
+
+
+### Bug Fixes
+
+* AWS instance type listing failure causing crash ([3e1f203](https://github.com/PierreBeucher/cloudypad/commit/3e1f2031c612ba9b0154443427381959319f13cf))
+* SSH error showing [object] in logs ([f1abe26](https://github.com/PierreBeucher/cloudypad/commit/f1abe26090c154131fe5eedb09b4fa9b80afa341))
+
 ## [0.15.0](https://github.com/PierreBeucher/cloudypad/compare/v0.14.0...v0.15.0) (2025-02-11)
 
 
