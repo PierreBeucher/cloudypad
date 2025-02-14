@@ -21,6 +21,9 @@ export class GcpProvisioner extends AbstractInstanceProvisioner<GcpProvisionInpu
 
         this.logger.debug(`Provisioning Google Cloud instance with ${JSON.stringify(this.args.provisionInput)}`)
 
+        if(this.args.configurationInput.sunshine?.enable && this.args.provisionInput.acceleratorType == "nvidia-tesla-p4"){
+            throw new Error("Sunshine streaming server does not support GCP nvidia-tesla-p4 accelerator type. Please use a different machine type or streaming server.")
+        }
         
         let confirmCreation: boolean
         if(opts?.autoApprove){
