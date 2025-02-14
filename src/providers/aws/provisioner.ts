@@ -23,16 +23,7 @@ export class AwsProvisioner extends AbstractInstanceProvisioner<AwsProvisionInpu
         if(opts?.autoApprove){
             confirmCreation = opts.autoApprove
         } else {
-            const humanReadableArgs = (obj: any, parentKey = ''): string => {
-                return Object.keys(obj).map(key => {
-                    const fullKey = parentKey ? `${parentKey} ${key}` : key;
-                    if (typeof obj[key] === 'object' && obj[key] !== null) {
-                        return humanReadableArgs(obj[key], fullKey);
-                    }
-                    return `${fullKey.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())}: ${obj[key]}`;
-                }).join('\n    ');
-            };
-
+            
             confirmCreation = await confirm({
                 message: `You are about to provision AWS machine with the following details:\n` + 
                 `    ${this.inputToHumanReadableString(this.args)}` +

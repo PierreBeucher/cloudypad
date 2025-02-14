@@ -1,4 +1,4 @@
-import { EC2Client, DescribeInstancesCommand, Instance, StartInstancesCommand, StopInstancesCommand, RebootInstancesCommand, waitUntilInstanceRunning, waitUntilInstanceStopped, DescribeInstanceTypesCommand, _InstanceType, InstanceTypeInfo, InstanceTypeOffering, DescribeInstanceTypeOfferingsCommand, DescribeInstanceStatusCommand, InstanceStateName } from '@aws-sdk/client-ec2'
+import { EC2Client, DescribeInstancesCommand, Instance, StartInstancesCommand, StopInstancesCommand, RebootInstancesCommand, waitUntilInstanceRunning, waitUntilInstanceStopped, DescribeInstanceTypesCommand, _InstanceType, InstanceTypeInfo, InstanceTypeOffering, DescribeInstanceTypeOfferingsCommand, DescribeInstanceStatusCommand, InstanceStateName, paginateDescribeInstances, paginateDescribeInstanceTypes, paginateDescribeInstanceTypeOfferings } from '@aws-sdk/client-ec2'
 import { STSClient, GetCallerIdentityCommand } from '@aws-sdk/client-sts'
 import { getLogger, Logger } from '../log/utils'
 import { loadConfig } from "@smithy/node-config-provider"
@@ -97,15 +97,18 @@ export class AwsClient {
     }
 
     async listInstances(): Promise<Instance[]>{
-        const describeInstancesCommand = new DescribeInstancesCommand({})
 
-        this.logger.debug(`Listing AWS instances: ${JSON.stringify(describeInstancesCommand)}`)
+        this.logger.debug(`Listing AWS instances`)
 
-        const instancesData = await this.ec2Client.send(describeInstancesCommand)
+        const paginator = paginateDescribeInstances({ client: this.ec2Client }, {})
         
-        this.logger.trace(`Describe instances response: ${JSON.stringify(instancesData)}`)
+        let instances: Instance[] = []
+        for await (const page of paginator) {
+            instances = instances.concat(page.Reservations?.flatMap(reservation => reservation.Instances).filter(instance => instance !== undefined) || [])
+        }
+
+        this.logger.trace(`Described instances, found: ${JSON.stringify(instances)}`)
         
-        const instances = instancesData.Reservations?.flatMap(reservation => reservation.Instances).filter(instance => instance !== undefined) || []
         return instances
     }
 
@@ -250,15 +253,21 @@ export class AwsClient {
      */
     async getInstanceTypeDetails(instanceTypes: string[]): Promise<InstanceTypeInfo[]> {
         
+        this.logger.debug(`Fetching instance type details for ${JSON.stringify(instanceTypes)} in region ${this.region}`)
+
         try {
             const internalInstanceTypes = stringsToInstanceTypes(instanceTypes)
-            const command = new DescribeInstanceTypesCommand({
-                InstanceTypes: internalInstanceTypes,
-            })
-            const response = await this.ec2Client.send(command)
+            let foundInstanceTypes: InstanceTypeInfo[] = [];
             
-            if (response.InstanceTypes && response.InstanceTypes.length > 0) {
-                return response.InstanceTypes
+            const paginator = paginateDescribeInstanceTypes({ client: this.ec2Client }, { Filters: [{ Name: "instance-type", Values: internalInstanceTypes }] })
+            for await (const page of paginator) {
+                foundInstanceTypes.push(...(page.InstanceTypes || []))
+            }
+
+            this.logger.debug(`Instance type details: ${JSON.stringify(foundInstanceTypes.map(type => type.InstanceType))})`)
+            
+            if (foundInstanceTypes.length > 0) {
+                return foundInstanceTypes
             } else {
                 throw new Error(`No instance type details found for ${JSON.stringify(instanceTypes)} in region ${this.region}`)
             }
@@ -274,9 +283,13 @@ export class AwsClient {
      * @returns instance types available in client's region
      */
     async filterAvailableInstanceTypes(instanceTypes: string[]): Promise<string[]> {
+
+        this.logger.debug(`Filtering available instance types for ${JSON.stringify(instanceTypes)} in region ${this.region}`)
         try {
             const internalInstanceTypes = stringsToInstanceTypes(instanceTypes)
-            const command = new DescribeInstanceTypeOfferingsCommand({
+            
+            let offerings: InstanceTypeOffering[] = [];    
+            const paginator = paginateDescribeInstanceTypeOfferings({ client: this.ec2Client }, {
                 LocationType: "region",
                 Filters: [
                     {
@@ -284,12 +297,14 @@ export class AwsClient {
                         Values: internalInstanceTypes,
                     },
                 ],
-            })
+            });
 
-            const response = await this.ec2Client.send(command)
+            for await (const page of paginator) {
+                offerings = offerings.concat(page.InstanceTypeOfferings || []);
+            }
 
-            const offerings = response.InstanceTypeOfferings || []
-
+            this.logger.debug(`Instance type offerings response: ${JSON.stringify(offerings.map(offering => offering.InstanceType))})`)
+            
             return offerings
                 .filter(offering => offering.Location === this.region && offering.InstanceType)
                 .map(offering => String(offering.InstanceType))

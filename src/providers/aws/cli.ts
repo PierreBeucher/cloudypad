@@ -30,6 +30,7 @@ export type AwsUpdateCliArgs = UpdateCliArgs & Omit<AwsCreateCliArgs, "region" |
 
 /**
  * Supported instance types for AWS. Other instance types may work but are not tested.
+ * Bigger instances (eg. 16x large or metal) should work but are overkill for most users, not listing them by default.
  */
 export const SUPPORTED_INSTANCE_TYPES = [
     "g4dn.xlarge", "g4dn.2xlarge", "g4dn.4xlarge",
@@ -92,7 +93,7 @@ export class AwsInputPrompter extends AbstractInputPrompter<AwsCreateCliArgs, Aw
         // fetch AWS instance type details
         const awsClient = new AwsClient("instance-type-prompt", region)
         const availableInstanceTypes = await awsClient.filterAvailableInstanceTypes(SUPPORTED_INSTANCE_TYPES)
-        const instanceTypeDetails = await awsClient.getInstanceTypeDetails(SUPPORTED_INSTANCE_TYPES)
+        const instanceTypeDetails = await awsClient.getInstanceTypeDetails(availableInstanceTypes)
 
         const choices = instanceTypeDetails
             .filter(typeInfo => typeInfo.InstanceType)

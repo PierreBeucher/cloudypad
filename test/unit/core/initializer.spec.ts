@@ -19,7 +19,7 @@ describe('Instance initializer', () => {
             publicIpType: PUBLIC_IP_TYPE_STATIC,
             region: "europe-west4",
             zone: "europe-west4-b",
-            acceleratorType: "nvidia-tesla-p4",
+            acceleratorType: "nvidia-tesla-t4",
             projectId: "crafteo-sandbox",
             useSpot: true,
             costAlert: null
