@@ -3,6 +3,11 @@ sunshine_name = $SUNSHINE_SERVER_NAME
 origin_web_ui_allowed = lan
 min_log_level = info
 
+# Enforce encryption for both network modes
+# As running in a container may have Sunshine consider it's a local server and use LAN mode
+lan_encryption_mode = 2
+wan_encryption_mode = 2
+
 # Keep state files in Cloudy Pad data dir to persist on container recreation
 # They are by default saved in XDG_CONFIG_HOME but this folder is not persisted voluntarily
 credentials_file = /cloudy/data/sunshine/sunshine_credentials.json
