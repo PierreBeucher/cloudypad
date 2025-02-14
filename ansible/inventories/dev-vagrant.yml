@@ -5,8 +5,9 @@ all:
       ansible_user: vagrant
       ansible_ssh_private_key_file: .vagrant/machines/default/virtualbox/private_key
       ansible_ssh_common_args: '-o StrictHostKeyChecking=no'
-      cloudypad_web_fqdn: "192.168.56.42"
+      
+      sunshine_server_name: dev-vagrant
       sunshine_nvidia_enable: false
       sunshine_compose_pull_images: never
       sunshine_image_tag: local
-      sunshine_server_name: dev-vagrant
+      

@@ -7,8 +7,8 @@ set -e
 #
 
 if [ "$NVIDIA_ENABLE" == "true" ]; then
-    echo "NVIDIA driver is enabled (NVIDIA_ENABLE=$NVIDIA_ENABLE). Copying nvidia X config to Xorg config path /etc/X11/xorg.conf..."
-    cp $CLOUDYPAD_CONF_DIR/x11/xorg-nvidia-dummy-display.conf /etc/X11/xorg.conf
+    echo "NVIDIA driver is enabled (NVIDIA_ENABLE=$NVIDIA_ENABLE). Templating NVIDIA X config $CLOUDYPAD_CONF_DIR/x11/templates/xorg-nvidia-dummy-display.conf to Xorg config path /etc/X11/xorg.conf..."
+    envsubst < $CLOUDYPAD_CONF_DIR/x11/templates/xorg-nvidia-dummy-display.conf > /etc/X11/xorg.conf
 else
     echo "No GPU config specified. Copying dummy X config to Xorg config path /etc/X11/xorg.conf..."
     cp $CLOUDYPAD_CONF_DIR/x11/xorg-dummy-display.conf /etc/X11/xorg.conf
