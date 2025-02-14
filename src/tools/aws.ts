@@ -1,4 +1,4 @@
-import { EC2Client, DescribeInstancesCommand, Instance, StartInstancesCommand, StopInstancesCommand, RebootInstancesCommand, waitUntilInstanceRunning, waitUntilInstanceStopped, DescribeInstanceTypesCommand, _InstanceType, InstanceTypeInfo, InstanceTypeOffering, DescribeInstanceTypeOfferingsCommand, DescribeInstanceStatusCommand, InstanceStateName, paginateDescribeInstanceTypes, paginateDescribeInstanceTypeOfferings } from '@aws-sdk/client-ec2'
+import { EC2Client, DescribeInstancesCommand, Instance, StartInstancesCommand, StopInstancesCommand, RebootInstancesCommand, waitUntilInstanceRunning, waitUntilInstanceStopped, DescribeInstanceTypesCommand, _InstanceType, InstanceTypeInfo, InstanceTypeOffering, DescribeInstanceTypeOfferingsCommand, DescribeInstanceStatusCommand, InstanceStateName, paginateDescribeInstances, paginateDescribeInstanceTypes, paginateDescribeInstanceTypeOfferings } from '@aws-sdk/client-ec2'
 import { STSClient, GetCallerIdentityCommand } from '@aws-sdk/client-sts'
 import { getLogger, Logger } from '../log/utils'
 import { loadConfig } from "@smithy/node-config-provider"
@@ -97,15 +97,18 @@ export class AwsClient {
     }
 
     async listInstances(): Promise<Instance[]>{
-        const describeInstancesCommand = new DescribeInstancesCommand({})
 
-        this.logger.debug(`Listing AWS instances: ${JSON.stringify(describeInstancesCommand)}`)
+        this.logger.debug(`Listing AWS instances`)
 
-        const instancesData = await this.ec2Client.send(describeInstancesCommand)
+        const paginator = paginateDescribeInstances({ client: this.ec2Client }, {})
         
-        this.logger.trace(`Describe instances response: ${JSON.stringify(instancesData)}`)
+        let instances: Instance[] = []
+        for await (const page of paginator) {
+            instances = instances.concat(page.Reservations?.flatMap(reservation => reservation.Instances).filter(instance => instance !== undefined) || [])
+        }
+
+        this.logger.trace(`Described instances, found: ${JSON.stringify(instances)}`)
         
-        const instances = instancesData.Reservations?.flatMap(reservation => reservation.Instances).filter(instance => instance !== undefined) || []
         return instances
     }
 
