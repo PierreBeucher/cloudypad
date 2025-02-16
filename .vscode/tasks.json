@@ -1,0 +1,59 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "test-integ-full-lifecycle-aws",
+            "type": "shell",
+            "command": "nix develop -c 'task test-integ-full-lifecycle-aws'",
+            "group": "none",
+            "presentation": {
+                "reveal": "always",
+                "panel": "dedicated"
+            }
+        },
+        {
+            "label": "test-integ-full-lifecycle-azure",
+            "type": "shell",
+            "command": "nix develop -c 'task test-integ-full-lifecycle-azure'",
+            "group": "none",
+            "presentation": {
+                "reveal": "always",
+                "panel": "dedicated"
+            }
+        },
+        {
+            "label": "test-integ-full-lifecycle-gcp",
+            "type": "shell",
+            "command": "nix develop -c 'task test-integ-full-lifecycle-gcp'",
+            "group": "none",
+            "presentation": {
+                "reveal": "always",
+                "panel": "dedicated"
+            }
+        },
+        {
+            "label": "test-integ-full-lifecycle-paperspace",
+            "type": "shell",
+            "command": "nix develop -c 'task test-integ-full-lifecycle-paperspace'",
+            "group": "none",
+            "presentation": {
+                "reveal": "always",
+                "panel": "dedicated"
+            }
+        },
+        {
+            "label": "test-integ-full-lifecycle-all",
+            "dependsOn": [
+                "test-integ-full-lifecycle-aws",
+                "test-integ-full-lifecycle-azure",
+                "test-integ-full-lifecycle-gcp",
+                "test-integ-full-lifecycle-paperspace"
+            ],
+            "group": "none",
+            "presentation": {
+                "reveal": "always",
+                "panel": "dedicated"
+            }
+        }
+    ]
+}
