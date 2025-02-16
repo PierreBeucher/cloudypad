@@ -85,7 +85,7 @@ export class AzureInputPrompter extends AbstractInputPrompter<AzureCreateCliArgs
     protected async promptSpecificInput(commonInput: CommonInstanceInput, partialInput: PartialDeep<AzureInstanceInput>, createOptions: PromptOptions): Promise<AzureInstanceInput> {
         
         if(!createOptions.autoApprove && !createOptions.skipQuotaWarning){
-            await this.informCloudProviderQuotaWarning(CLOUDYPAD_PROVIDER_AZURE, "https://cloudypad.gg/cloud-provider-setup/azure.html")
+            await this.informCloudProviderQuotaWarning(CLOUDYPAD_PROVIDER_AZURE, "https://docs.cloudypad.gg/cloud-provider-setup/azure.html")
         }
 
         const subscriptionId = await this.subscriptionId(partialInput.provision?.subscriptionId)
@@ -173,7 +173,7 @@ export class AzureInputPrompter extends AbstractInputPrompter<AzureCreateCliArgs
                     message: `Uh oh. It seems quotas for machine type ${selectedInstanceType} in region ${location} may be too low. \n`+
                     `You can still try to provision the instance, but it may fail. \n` +
                     `Current limit: ${currentQuota}\n\n` +
-                    `Checkout https://cloudypad.gg/cloud-provider-setup/azure.html for details about quotas.\n\n` +
+                    `Checkout https://docs.cloudypad.gg/cloud-provider-setup/azure.html for details about quotas.\n\n` +
                     `Do you still want to continue?`,
                     default: false,
                 })
@@ -186,7 +186,7 @@ export class AzureInputPrompter extends AbstractInputPrompter<AzureCreateCliArgs
             }
         } else {
             this.logger.warn(`Couldn't check quota for instance type ${instanceType}. You may have to set quota manually.` + 
-                `See https://cloudypad.gg/cloud-provider-setup/aws.html for details.`)
+                `See https://docs.cloudypad.gg/cloud-provider-setup/aws.html for details.`)
         }
 
         return selectedInstanceType        

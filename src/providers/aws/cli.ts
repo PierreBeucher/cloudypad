@@ -56,7 +56,7 @@ export class AwsInputPrompter extends AbstractInputPrompter<AwsCreateCliArgs, Aw
     protected async promptSpecificInput(commonInput: CommonInstanceInput, partialInput: PartialDeep<AwsInstanceInput>, createOptions: PromptOptions): Promise<AwsInstanceInput> {
 
         if(!createOptions.autoApprove && !createOptions.skipQuotaWarning){
-            await this.informCloudProviderQuotaWarning(CLOUDYPAD_PROVIDER_AWS, "https://cloudypad.gg/cloud-provider-setup/aws.html")
+            await this.informCloudProviderQuotaWarning(CLOUDYPAD_PROVIDER_AWS, "https://docs.cloudypad.gg/cloud-provider-setup/aws.html")
         }
 
         const region = await this.region(partialInput.provision?.region)
@@ -137,7 +137,7 @@ export class AwsInputPrompter extends AbstractInputPrompter<AwsCreateCliArgs, Aw
         if(currentQuota === undefined || selectInstanceTypeDetails === undefined || selectInstanceTypeDetails.VCpuInfo?.DefaultVCpus === undefined){
             this.logger.warn(`No quota found for machine type ${JSON.stringify(selectInstanceTypeDetails)} in region ${region}`)
             this.logger.warn(`Unable to check for quota before creating instance ${selectedInstanceType} in ${region}. Instance creation may fail.` + 
-                `See https://cloudypad.gg/cloud-provider-setup/aws.html for details about quotas`)
+                `See https://docs.cloudypad.gg/cloud-provider-setup/aws.html for details about quotas`)
 
         } else if (currentQuota < selectInstanceTypeDetails.VCpuInfo?.DefaultVCpus) {
             this.logger.debug(`Quota found for machine type ${JSON.stringify(selectInstanceTypeDetails)} in region ${region}: ${currentQuota}`)
@@ -147,7 +147,7 @@ export class AwsInputPrompter extends AbstractInputPrompter<AwsCreateCliArgs, Aw
                 `You can still try to provision the instance, but it may fail.\n\n` +
                 `Current quota: ${currentQuota} vCPUS\n` +
                 `Required quota: ${selectInstanceTypeDetails.VCpuInfo?.DefaultVCpus} vCPUs\n\n` +
-                `Checkout https://cloudypad.gg/cloud-provider-setup/aws.html for details about quotas.\n\n` +
+                `Checkout https://docs.cloudypad.gg/cloud-provider-setup/aws.html for details about quotas.\n\n` +
                 `Do you still want to continue?`,
                 default: false,
             })
