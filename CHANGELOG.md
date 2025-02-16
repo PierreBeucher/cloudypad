@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.17.0](https://github.com/PierreBeucher/cloudypad/compare/v0.16.0...v0.17.0) (2025-02-16)
+
+
+### Features
+
+* **Steam:** enable Proton 9 compatibility by default ([68c2724](https://github.com/PierreBeucher/cloudypad/commit/68c27249290e0fa87e1a2d1c730815d2bf83422d))
+* **Steam:** enable Proton 9 compatibility by default ([3606c9b](https://github.com/PierreBeucher/cloudypad/commit/3606c9bec73623931eb1d894768430104d915ac5))
+
 ## [0.16.0](https://github.com/PierreBeucher/cloudypad/compare/v0.15.0...v0.16.0) (2025-02-14)
 
 
