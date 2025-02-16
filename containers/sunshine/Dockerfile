@@ -186,6 +186,9 @@ ENV DBUS_SYSTEM_BUS_ADDRESS="unix:path=$XDG_RUNTIME_DIR/dbus"
 # See overlay/cloudy/conf/x11/templates/00-keyboard.conf
 ENV KEYBOARD_LAYOUT="fr"
 
+# Start Steam with Steam Deck mode by default (to enable Proton globally) and library mode (to show library on start)
+ENV CLOUDYPAD_STEAM_ARGS=""
+
 # Run as non-root user
 # TODO use host UID/GID for better portability and usage from host ?
 RUN useradd -m -d /home/cloudy -s /bin/bash -u 1001 $CLOUDYPAD_USER
