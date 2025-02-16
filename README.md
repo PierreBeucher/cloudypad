@@ -16,11 +16,11 @@ Cloudy Pad is a Free, Open Source alternative to GeForce Now, Blacknut and simil
 
 **Not familiar with Cloud Gaming ?** See [What's Cloud Gaming and how is Cloudy Pad useful ?](./docs/src/what-is-cloud-gaming.md)
 
-[![](./docs/src/assets/demo.gif)](https://cloudypad.gg)
+[![](./docs/src/assets/demo.gif)](https://docs.cloudypad.gg)
 
-**[📜 Full documentation](https://cloudypad.gg)**
+**[📜 Full documentation](https://docs.cloudypad.gg)**
 
-[**🫰 Cost estimation per Cloud provider**](https://cloudypad.gg/cost/index.html)
+[**🫰 Cost estimation per Cloud provider**](https://docs.cloudypad.gg/cost/index.html)
 
 [![Discord](https://img.shields.io/discord/856434175455133727?style=for-the-badge&logo=discord&logoColor=ffffff&label=Chat%20with%20us&labelColor=6A7EC2&color=7389D8)](https://discord.gg/dCxDVfVnSD)
 
@@ -39,24 +39,24 @@ This project is still at an experimental phase. While working and allowing you t
 
 ## Getting started 🚀
 
-[➡️ **Deploy your instance and start playing** 🎮](https://cloudypad.gg/getting-started) 
+[➡️ **Deploy your instance and start playing** 🎮](https://docs.cloudypad.gg/getting-started) 
 
-Not familiar with terms like _"Cloud gaming"_, _"Moonlight"_, _"Cloud Provider"_ _"terminal"_ or _"CLI"_ ? Visit [What's Cloud Gaming and how is Cloudy Pad useful ?](https://cloudypad.gg/what-is-cloud-gaming) first 😉
+Not familiar with terms like _"Cloud gaming"_, _"Moonlight"_, _"Cloud Provider"_ _"terminal"_ or _"CLI"_ ? Visit [What's Cloud Gaming and how is Cloudy Pad useful ?](https://docs.cloudypad.gg/what-is-cloud-gaming) first 😉
 
 ### Problem ?
 
 😱 Something went wrong? A question ? 
 
-- See [FAQ and known issues](https://cloudypad.gg/usage/faq.md) or [create an issue](https://github.com/PierreBeucher/cloudypad/issues)
+- See [FAQ and known issues](https://docs.cloudypad.gg/usage/faq.md) or [create an issue](https://github.com/PierreBeucher/cloudypad/issues)
 - Come and chat with us on [Discord](https://discord.gg/dCxDVfVnSD) !
 
 ## Documentation
 
-[📜 See full documentation](https://cloudypad.gg)
+[📜 See full documentation](https://docs.cloudypad.gg)
 
 ## Contributing
 
-See [development guide](https://cloudypad.gg/development-guide)
+See [development guide](https://docs.cloudypad.gg/development-guide)
 
 ## License
 

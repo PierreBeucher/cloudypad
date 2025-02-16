@@ -51,7 +51,7 @@ export class GcpInputPrompter extends AbstractInputPrompter<GcpCreateCliArgs, Gc
     protected async promptSpecificInput(commonInput: CommonInstanceInput, partialInput: PartialDeep<GcpInstanceInput>, createOptions: PromptOptions): Promise<GcpInstanceInput> {
 
         if(!createOptions.autoApprove && !createOptions.skipQuotaWarning){
-            await this.informCloudProviderQuotaWarning(CLOUDYPAD_PROVIDER_GCP, "https://cloudypad.gg/cloud-provider-setup/gcp.html")
+            await this.informCloudProviderQuotaWarning(CLOUDYPAD_PROVIDER_GCP, "https://docs.cloudypad.gg/cloud-provider-setup/gcp.html")
         }
         
         const projectId = await this.project(partialInput.provision?.projectId)

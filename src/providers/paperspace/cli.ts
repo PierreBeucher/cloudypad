@@ -40,7 +40,7 @@ export class PaperspaceInputPrompter extends AbstractInputPrompter<PaperspaceCre
     protected async promptSpecificInput(commonInput: CommonInstanceInput, partialInput: PartialDeep<PaperspaceInstanceInput>, createOptions: PromptOptions): Promise<PaperspaceInstanceInput> {
 
         if(!createOptions.autoApprove && !createOptions.skipQuotaWarning){
-            await this.informCloudProviderQuotaWarning(CLOUDYPAD_PROVIDER_PAPERSPACE, "https://cloudypad.gg/cloud-provider-setup/paperspace.html")
+            await this.informCloudProviderQuotaWarning(CLOUDYPAD_PROVIDER_PAPERSPACE, "https://docs.cloudypad.gg/cloud-provider-setup/paperspace.html")
         }
         
         const apiKey = await this.apiKey(partialInput.provision?.apiKey)
