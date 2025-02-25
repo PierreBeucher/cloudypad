@@ -47,7 +47,11 @@ export class SunshineMoonlightPairer extends AbstractMoonlightPairer implements 
         console.info()
         console.info(`  moonlight pair ${this.args.host} --pin ${pin}`)
         console.info()
-        console.info('Sending PIN to Sunshine API...')
+        console.info(`For Mac / Apple devices, you may need to use this pseudo-IPv6 address:`)
+        console.info()
+        console.info(`  moonlight pair [::ffff:${this.args.host}] --pin ${pin}`)
+        console.info()
+        console.info(`Sending PIN to Sunshine API...`)
         
         const ssh = this.buildSshClient()
     

@@ -205,8 +205,12 @@ export class WolfMoonlightPairer extends AbstractMoonlightPairer implements Moon
         console.info()
         console.info(`  moonlight pair ${host} --pin ${pin}`)
         console.info()
+        console.info(`For Mac / Apple devices, you may need to use this pseudo-IPv6 address:`)
+        console.info()
+        console.info(`  moonlight pair ::ffff:${host} --pin ${pin}`)
+        console.info()
         console.info('Waiting for PIN URL to appear in Wolf logs...')
-        
+
         const publicPinUrl = await this.waitForPinURL(docker, host)
 
         console.info("Sending PIN to Wolf...")
