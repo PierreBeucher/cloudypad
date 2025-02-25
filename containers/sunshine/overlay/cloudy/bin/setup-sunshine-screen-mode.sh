@@ -10,7 +10,7 @@
 
 SCREEN_WIDTH=${SUNSHINE_CLIENT_WIDTH:-}
 SCREEN_HEIGHT=${SUNSHINE_CLIENT_HEIGHT:-}
-SCREEN_FPS=${SUNSHINE_CLIENT_FPS:-}
+SCREEN_FPS=${SUNSHINE_CLIENT_FPS:-}d
 SCREEN_NAME=$(xrandr --listmonitors | grep '*' | awk '{print $4}')
 
 echo "Setting up screen mode for screen '$SCREEN_NAME' with $SCREEN_WIDTH x $SCREEN_HEIGHT @ $SCREEN_FPS"
@@ -23,10 +23,10 @@ fi
 # Generate modeline using cvt
 # Output something like
 # Modeline "WIDTHxHEIGHT_60.00"  1234  xxx xxx -hsync +vsync
-# Extract "WIDTHxHEIGHT_60.00"  and "1234  xxx xxx -hsync +vsync" separately
+# Extract "WIDTHxHEIGHT"  and "1234  xxx xxx -hsync +vsync" separately
 MODELINE_RAW=$(cvt $SCREEN_WIDTH $SCREEN_HEIGHT $SCREEN_FPS | grep Modeline | sed 's/Modeline //')
-MODELINE=${MODELINE_RAW##*\"}
-MODE_NAME=$(echo $MODELINE_RAW | awk -F '"' '{print $2}')
+MODELINE=${MODELINE_RAW##*\"} # Only keep everything after last double quote
+MODE_NAME=$(echo $MODELINE_RAW | awk -F '"' '{print $2}' | sed 's/_.*//') # Only keep WIDTHxHEIGHT without _FPS
 
 echo "Generated modeline '$MODE_NAME' for $SCREEN_WIDTH x $SCREEN_HEIGHT @ $SCREEN_FPS:"
 echo "  $MODELINE"
