@@ -12,6 +12,8 @@
 - name: Sunshine container
   hosts: all
   roles:
+    - role: roles/prepare-install
+      tags: [ prepare-install ]
     - role: geerlingguy.docker
       tags: [ docker ]
       become: true
