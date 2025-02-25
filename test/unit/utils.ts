@@ -9,8 +9,8 @@ import { PaperspaceMachine } from "../../src/providers/paperspace/client/client"
 import { PUBLIC_IP_TYPE_STATIC } from "../../src/core/const";
 import { tmpdir } from "os";
 import { AnonymousStateParser } from "../../src/core/state/parser";
-import { STREAMING_SERVER_SUNSHINE } from '../../src/core/cli/prompter';
-import { CreateCliArgs } from "../../src/core/cli/command";
+import { STREAMING_SERVER_SUNSHINE } from '../../src/cli/prompter';
+import { CreateCliArgs } from "../../src/cli/command";
 
 export const DEFAULT_COMMON_INPUT: CommonInstanceInput = {
     instanceName: "dummy-instance",

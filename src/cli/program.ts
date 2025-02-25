@@ -1,13 +1,14 @@
 import { Command } from '@commander-js/extra-typings';
-import { getLogger, setLogVerbosity } from './log/utils';
-import { InstanceManagerBuilder } from './core/manager-builder';
-import { GcpCliCommandGenerator } from './providers/gcp/cli';
-import { AzureCliCommandGenerator } from './providers/azure/cli';
-import { AwsCliCommandGenerator } from './providers/aws/cli';
-import { PaperspaceCliCommandGenerator } from './providers/paperspace/cli';
-import { AnalyticsManager } from './tools/analytics/manager';
-import { RUN_COMMAND_CONFIGURE, RUN_COMMAND_DESTROY, RUN_COMMAND_GET, RUN_COMMAND_LIST, RUN_COMMAND_PAIR, RUN_COMMAND_PROVISION, RUN_COMMAND_RESTART, RUN_COMMAND_START, RUN_COMMAND_STOP } from './tools/analytics/events';
-import { CLOUDYPAD_VERSION } from './core/const';
+import { getLogger, setLogVerbosity } from '../log/utils';
+import { InstanceManagerBuilder } from '../core/manager-builder';
+import { GcpCliCommandGenerator } from '../providers/gcp/cli';
+import { AzureCliCommandGenerator } from '../providers/azure/cli';
+import { AwsCliCommandGenerator } from '../providers/aws/cli';
+import { PaperspaceCliCommandGenerator } from '../providers/paperspace/cli';
+import { AnalyticsManager } from '../tools/analytics/manager';
+import { RUN_COMMAND_CONFIGURE, RUN_COMMAND_DESTROY, RUN_COMMAND_GET, RUN_COMMAND_LIST, RUN_COMMAND_PAIR, RUN_COMMAND_PROVISION, RUN_COMMAND_RESTART, RUN_COMMAND_START, RUN_COMMAND_STOP } from '../tools/analytics/events';
+import { CLOUDYPAD_VERSION } from '../core/const';
+import { confirm } from '@inquirer/prompts';
 
 const logger = getLogger("program")
 
@@ -219,6 +220,18 @@ export function buildProgram(){
         .action(async (name, opts) => {
             try {
                 analyticsClient.sendEvent(RUN_COMMAND_DESTROY)
+
+                let approveDestroy: boolean | undefined = opts?.yes
+                if(approveDestroy === undefined){
+                    approveDestroy = await confirm({
+                        message: `You are about to destroy instance '${name}'. Please confirm:`,
+                        default: false,
+                    })
+                }
+        
+                if (!approveDestroy) {
+                    throw new Error('Destroy aborted.')
+                }
 
                 const m = await new InstanceManagerBuilder().buildInstanceManager(name)
                 await m.destroy({ autoApprove: opts.yes})

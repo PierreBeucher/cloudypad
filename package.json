@@ -10,7 +10,7 @@
   "main": "./dist/src/index.js",
   "types": "./dist/src/index.d.ts",
   "bin": {
-    "cloudypad": "./dist/src/cli.js"
+    "cloudypad": "./dist/src/cli/main.js"
   },
   "author": "Pierre Beucher <pierre@crafteo.io>",
   "license": "ISC",

@@ -2,9 +2,9 @@ import * as assert from 'assert';
 import { GcpInstanceInput } from '../../../src/providers/gcp/state';
 import { CLOUDYPAD_PROVIDER_GCP, PUBLIC_IP_TYPE_STATIC } from '../../../src/core/const';
 import { DEFAULT_COMMON_INPUT } from '../utils';
-import { InteractiveInstanceInitializer } from '../../../src/core/initializer';
+import { InteractiveInstanceInitializer } from '../../../src/cli/initializer';
 import { GcpCreateCliArgs, GcpInputPrompter } from '../../../src/providers/gcp/cli';
-import { STREAMING_SERVER_SUNSHINE } from '../../../src/core/cli/prompter';
+import { STREAMING_SERVER_SUNSHINE } from '../../../src/cli/prompter';
 
 describe('Instance initializer', () => {
 

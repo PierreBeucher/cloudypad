@@ -1,5 +1,4 @@
 import { SshKeyLoader } from '../../tools/ssh';
-import { confirm } from '@inquirer/prompts';
 import { AwsPulumiClient, PulumiStackConfigAws } from './pulumi';
 import { AbstractInstanceProvisioner, InstanceProvisionerArgs, InstanceProvisionOptions } from '../../core/provisioner';
 import { AwsClient } from '../../tools/aws';
@@ -18,23 +17,6 @@ export class AwsProvisioner extends AbstractInstanceProvisioner<AwsProvisionInpu
         this.logger.info(`Provisioning AWS instance ${this.args.instanceName}`)
 
         this.logger.debug(`Provisioning AWS instance with args ${JSON.stringify(this.args)} and options ${JSON.stringify(opts)}`)
-
-        let confirmCreation: boolean
-        if(opts?.autoApprove){
-            confirmCreation = opts.autoApprove
-        } else {
-            
-            confirmCreation = await confirm({
-                message: `You are about to provision AWS machine with the following details:\n` + 
-                `    ${this.inputToHumanReadableString(this.args)}` +
-                `\nDo you want to proceed?`,
-                default: true,
-            })
-        }
-
-        if (!confirmCreation) {
-            throw new Error('AWS provision aborted.');
-        }
 
         const pulumiClient = new AwsPulumiClient(this.args.instanceName)
         const pulumiConfig: PulumiStackConfigAws = {

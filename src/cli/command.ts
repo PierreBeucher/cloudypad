@@ -1,6 +1,6 @@
 import { Command, Option } from "@commander-js/extra-typings";
-import { PUBLIC_IP_TYPE, PUBLIC_IP_TYPE_DYNAMIC, PUBLIC_IP_TYPE_STATIC } from "../const";
-import { AnalyticsManager } from "../../tools/analytics/manager";
+import { PUBLIC_IP_TYPE, PUBLIC_IP_TYPE_DYNAMIC, PUBLIC_IP_TYPE_STATIC } from "../core/const";
+import { AnalyticsManager } from "../tools/analytics/manager";
 
 //
 // Common CLI Option each providers can re-use

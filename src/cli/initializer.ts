@@ -1,12 +1,13 @@
 import { getLogger } from "../log/utils"
-import { CLOUDYPAD_PROVIDER } from "./const"
-import { CreateCliArgs } from "./cli/command"
-import { InputPrompter, UserVoluntaryInterruptionError } from "./cli/prompter"
-import { InstanceManagerBuilder } from "./manager-builder"
-import { StateInitializer } from "./state/initializer"
+import { CLOUDYPAD_PROVIDER } from "../core/const"
+import { CreateCliArgs } from "./command"
+import { InputPrompter, inputToHumanReadableString, UserVoluntaryInterruptionError } from "./prompter"
+import { InstanceManagerBuilder } from "../core/manager-builder"
+import { StateInitializer } from "../core/state/initializer"
 import { confirm } from '@inquirer/prompts'
 import { AnalyticsManager } from "../tools/analytics/manager"
-import { CommonInstanceInput } from "./state/state"
+import { CommonInstanceInput } from "../core/state/state"
+import { InstanceManager } from "../core/manager"
 
 export interface InstancerInitializerArgs {
     provider: CLOUDYPAD_PROVIDER
@@ -90,17 +91,36 @@ export class InteractiveInstanceInitializer<A extends CreateCliArgs> {
         return state
     }
 
-    private async doProvisioning(manager: any, instanceName: string, autoApprove?: boolean) {
+    private async doProvisioning(manager: InstanceManager, instanceName: string, autoApprove?: boolean) {
         this.logger.info(`Initializing ${instanceName}: provisioning...`)
         this.analyticsEvent("create_instance_start_provision")
-        
+
+        let confirmCreation: boolean
+        if(autoApprove){
+            confirmCreation = autoApprove
+        } else {
+
+            const inputs = await manager.getInputs()
+            
+            confirmCreation = await confirm({
+                message: `You are about to provision instance ${instanceName} with the following details:\n` + 
+                `    ${inputToHumanReadableString(inputs)}` +
+                `\nDo you want to proceed?`,
+                default: true,
+            })
+        }
+
+        if (!confirmCreation) {
+            throw new Error(`Provision aborted for instance ${instanceName}.`);
+        }
+
         await manager.provision({ autoApprove: autoApprove})
         
         this.analyticsEvent("create_instance_finish_provision")
         this.logger.info(`Initializing ${instanceName}: provision done.}`)
     }
 
-    private async doConfiguration(manager: any, instanceName: string) {
+    private async doConfiguration(manager: InstanceManager, instanceName: string) {
         this.analyticsEvent("create_instance_start_configure")
         this.logger.info(`Initializing ${instanceName}: configuring...}`)
         
@@ -110,7 +130,7 @@ export class InteractiveInstanceInitializer<A extends CreateCliArgs> {
         this.logger.info(`Initializing ${instanceName}: configuration done.}`)
     }
 
-    private async doPairing(manager: any, instanceName: string, skipPairing: boolean, autoApprove: boolean) {
+    private async doPairing(manager: InstanceManager, instanceName: string, skipPairing: boolean, autoApprove: boolean) {
 
         const doPair = skipPairing ? false : autoApprove ? true : await confirm({
             message: `Your instance is almost ready ! Do you want to pair Moonlight now?`,

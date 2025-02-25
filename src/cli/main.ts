@@ -8,10 +8,10 @@
 // - Initialize analytics client if enabled
 //
 
-import { ConfigManager } from "./core/config/manager"
+import { ConfigManager } from "../core/config/manager"
 import { buildProgram, shutdownAnalytics, cleanupAndExit, handleErrorAnalytics, logFullError } from "./program"
-import { AnalyticsInitializer } from "./tools/analytics/initializer"
-import { AnalyticsManager } from "./tools/analytics/manager"
+import { AnalyticsInitializer } from "../tools/analytics/initializer"
+import { AnalyticsManager } from "../tools/analytics/manager"
 
 async function main(){
     try {

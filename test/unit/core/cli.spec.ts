@@ -1,5 +1,5 @@
 import * as assert from 'assert';
-import { costAlertCliArgsIntoConfig } from '../../../src/core/cli/prompter';
+import { costAlertCliArgsIntoConfig } from '../../../src/cli/prompter';
 
 describe('costAlertCliArgsIntoConfig', () => {
 
