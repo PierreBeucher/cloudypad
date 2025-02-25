@@ -48,7 +48,7 @@ export interface InstanceRunner {
      * Send pairing PIN to the instance
      * @returns true if the PIN was valid and pairing was successful, false otherwise
      */
-    pairSendPin(pin: string): Promise<boolean>
+    pairSendPin(pin: string, retries?: number, retryDelay?: number): Promise<boolean>
 }
 
 export interface InstanceRunnerArgs<C extends CommonProvisionInputV1, O extends CommonProvisionOutputV1>  {
@@ -133,9 +133,9 @@ export abstract class AbstractInstanceRunner<C extends CommonProvisionInputV1, O
         }
     }
 
-    async pairSendPin(pin: string): Promise<boolean> {
+    async pairSendPin(pin: string, retries?: number, retryDelay?: number): Promise<boolean> {
         const pairer = this.buildMoonlightPairer()
-        return pairer.pairSendPin(pin)
+        return pairer.pairSendPin(pin, retries, retryDelay)
     }
     
     async pairInteractive(){

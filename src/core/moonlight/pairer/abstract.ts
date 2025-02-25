@@ -7,9 +7,18 @@ import { AnalyticsClient } from "../../../tools/analytics/client"
  * Moonlight pairing interface. Automates pairing process between Moonlight and streaming server.
  */
 export interface MoonlightPairer {
+    /**
+     * Interaactively pair with the streaming server. Will prompt the user for a pin and send it to the streaming server.
+     */
     pairInteractive(): Promise<void>
     
-    pairSendPin(pin: string): Promise<boolean>
+    /**
+     * Send a pin to the streaming server as part of pairing process.
+     * @param pin - The pin to send to the streaming server.
+     * @param retries - The number of retries to send the pin.
+     * @param retryDelay - The delay between retries in milliseconds.
+     */
+    pairSendPin(pin: string, retries?: number, retryDelay?: number): Promise<boolean>
 }
 
 export interface AbstractMoonlightPairerArgs {
@@ -26,7 +35,7 @@ export abstract class AbstractMoonlightPairer implements MoonlightPairer {
         this.instanceName = args.instanceName
     }
     
-    abstract pairSendPin(pin: string): Promise<boolean>
+    abstract pairSendPin(pin: string, retries?: number, retryDelay?: number): Promise<boolean>
 
     async pairInteractive(){
         

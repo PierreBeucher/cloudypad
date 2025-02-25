@@ -57,7 +57,7 @@ tasks:
   dev-ansible-config:
     cmds:
     - task: dev-docker-sunshine-to-vm
-    - ansible-playbook -i ansible/inventories/dev-vagrant.yml ansible/sunshine.yml -t sunshine
+    - ansible-playbook -i ansible/inventories/dev-vagrant.yml ansible/sunshine.yml
     - vagrant ssh -c "docker restart cloudy"
 
   dev-docker-build-push-image:

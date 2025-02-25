@@ -84,79 +84,95 @@ export class WolfMoonlightPairer extends AbstractMoonlightPairer implements Moon
         const pinUrlLogMatch = 'Insert pin at';
         const timeout = 600000; // 10min
         const pollInterval = 1000; // 1s
-        
-        const container = docker.getContainer(containerName);
-
+    
         // Fetch Wolf container logs since this function run until we find a PIN URL log line or timeout
         const startTime = Date.now();
         while (Date.now() - startTime < timeout) {
+            try {
 
-            const newLogs = (await container.logs({
-                stdout: true,
-                stderr: true,
-                // Actually use seconds and note UNX timestamp as documented by Docker API
-                since: (startTime / 1000), 
-            }))
-            .toString('utf-8')
-            .trim()
-            .split('\n')
+                const container = docker.getContainer(containerName)
 
-            this.logger.trace(`Checking logs for PIN: ${JSON.stringify(newLogs)}`)
-    
-            const maybePinLogsIndex = newLogs.find(l => l.includes(pinUrlLogMatch))
+                const newLogs = (await container.logs({
+                    stdout: true,
+                    stderr: true,
+                    // Actually use seconds and note UNX timestamp as documented by Docker API
+                    since: (startTime / 1000), 
+                }))
+                .toString('utf-8')
+                .trim()
+                .split('\n')
 
-            if (maybePinLogsIndex) {
-                this.logger.debug(`Found PIN URL: ${maybePinLogsIndex}`)
-                const urlRegex = /(http:\/\/[0-9]{1,3}(\.[0-9]{1,3}){3}:[0-9]+\/pin\/#?[0-9A-F]+)/;
-                const match = maybePinLogsIndex.match(urlRegex);
-    
-                if (match && match[0]) {
-                    const url = match[0];
-                    const replacedUrl = url.replace(/[0-9]{1,3}(\.[0-9]{1,3}){3}/, host);
-                    return replacedUrl;
-                } else {
-                    this.logger.warn(`Found a line that looked like it contained a PIN URL but didn't: ${maybePinLogsIndex}. Please report a bug with this log.`)
+                this.logger.trace(`Checking logs for PIN: ${JSON.stringify(newLogs)}`)
+        
+                const maybePinLogsIndex = newLogs.find(l => l.includes(pinUrlLogMatch))
+
+                if (maybePinLogsIndex) {
+                    this.logger.debug(`Found PIN URL: ${maybePinLogsIndex}`)
+                    const urlRegex = /(http:\/\/[0-9]{1,3}(\.[0-9]{1,3}){3}:[0-9]+\/pin\/#?[0-9A-F]+)/;
+                    const match = maybePinLogsIndex.match(urlRegex);
+        
+                    if (match && match[0]) {
+                        const url = match[0];
+                        const replacedUrl = url.replace(/[0-9]{1,3}(\.[0-9]{1,3}){3}/, host);
+                        return replacedUrl;
+                    } else {
+                        this.logger.warn(`Found a line that looked like it contained a PIN URL but didn't: ${maybePinLogsIndex}. Please report a bug with this log.`)
+                    }
                 }
-            }
 
-            await new Promise(resolve => setTimeout(resolve, pollInterval))
+                await new Promise(resolve => setTimeout(resolve, pollInterval))
+            } catch (error) {
+                this.logger.warn(`Failed to fetch Wolf logs. Will retry in ${pollInterval}ms.`, { cause: error })
+                await new Promise(resolve => setTimeout(resolve, pollInterval))
+            }
         }
 
         throw new Error(`PIN validation URL not found in Wolf logs after ${Date.now() - startTime}ms`);
     }
     
-    private async sendPinData(publicPinUrl: string, pin: string): Promise<void> {
+    private async sendPinData(publicPinUrl: string, pin: string, retries=3, retryDelay=2000): Promise<void> {
 
-        this.logger.info(`Sending PIN to ${publicPinUrl}`)
-
-        this.logger.debug(`Sending PIN ${pin} to ${publicPinUrl}`)
-
-        const secretUrlRegex = /#([0-9A-F]+)/;
-        const matchSecret = publicPinUrl.match(secretUrlRegex)
-    
-        if (!matchSecret || !matchSecret[1]) {
-            throw new Error("Secret not found in PIN URL.")
-        }
-    
-        const secret = matchSecret[1];
-        const postData = {
-            pin: pin,
-            secret: secret
-        }
-
-        const parsedUrl = new URL(publicPinUrl)
-        const postPinUrl = `http://${parsedUrl.hostname}:${parsedUrl.port}/pin/`
-
-        this.logger.debug(`Posting ${JSON.stringify(postData)} to ${postPinUrl}`)
-         
         try {
-            await axios.post(postPinUrl, postData, {
-                headers: {
-                    'Content-Type': 'application/json'
-                }
-            })
-        } catch (e){
-            throw buildAxiosError(e)
+            this.logger.info(`Sending PIN to ${publicPinUrl}`)
+
+            this.logger.debug(`Sending PIN ${pin} to ${publicPinUrl}`)
+
+            const secretUrlRegex = /#([0-9A-F]+)/;
+            const matchSecret = publicPinUrl.match(secretUrlRegex)
+        
+            if (!matchSecret || !matchSecret[1]) {
+                throw new Error("Secret not found in PIN URL.")
+            }
+        
+            const secret = matchSecret[1];
+            const postData = {
+                pin: pin,
+                secret: secret
+            }
+
+            const parsedUrl = new URL(publicPinUrl)
+            const postPinUrl = `http://${parsedUrl.hostname}:${parsedUrl.port}/pin/`
+
+            this.logger.debug(`Posting ${JSON.stringify(postData)} to ${postPinUrl}`)
+            
+            try {
+                await axios.post(postPinUrl, postData, {
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                })
+            } catch (e){
+                throw buildAxiosError(e)
+            }
+        } catch (e) {
+            if(retries > 0){
+                this.logger.warn(`Failed to send pin to Wolf API. Retrying...`, { cause: e })
+                await new Promise(resolve => setTimeout(resolve, retryDelay))
+                return this.sendPinData(publicPinUrl, pin, retries - 1, retryDelay)
+            }
+
+            this.logger.error(`Failed to send pin to Wolf API. Giving up.`, { cause: e })
+            throw e
         }
     }
 
@@ -189,8 +205,12 @@ export class WolfMoonlightPairer extends AbstractMoonlightPairer implements Moon
         console.info()
         console.info(`  moonlight pair ${host} --pin ${pin}`)
         console.info()
+        console.info(`For Mac / Apple devices, you may need to use this pseudo-IPv6 address:`)
+        console.info()
+        console.info(`  moonlight pair ::ffff:${host} --pin ${pin}`)
+        console.info()
         console.info('Waiting for PIN URL to appear in Wolf logs...')
-        
+
         const publicPinUrl = await this.waitForPinURL(docker, host)
 
         console.info("Sending PIN to Wolf...")

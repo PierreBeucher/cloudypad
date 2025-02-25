@@ -118,7 +118,7 @@ export interface InstanceManager {
     stop(opts?: StartStopOptions): Promise<void>
     restart(opts?: StartStopOptions): Promise<void>
     pairInteractive(): Promise<void>
-    pairSendPin(pin: string): Promise<boolean>
+    pairSendPin(pin: string, retries?: number, retryDelay?: number): Promise<boolean>
     getInstanceDetails(): Promise<CloudyPadInstanceDetails>
     getStateJSON(): string
     
@@ -196,9 +196,9 @@ export class GenericInstanceManager<ST extends InstanceStateV1> implements Insta
         await runner.pairInteractive()
     }
 
-    async pairSendPin(pin: string): Promise<boolean> {
+    async pairSendPin(pin: string, retries?: number, retryDelay?: number): Promise<boolean> {
         const runner = await this.buildRunner()
-        return runner.pairSendPin(pin)
+        return runner.pairSendPin(pin, retries, retryDelay)
     }
     
     private async buildRunner(){
