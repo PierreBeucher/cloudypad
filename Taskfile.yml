@@ -116,6 +116,9 @@ tasks:
   test-analytics-key-match:
     - cmd: test/shell/test-matching-analytics-key.sh
 
+  test-install-script:
+    - cmd: test/shell/test-install.sh
+
   #
   # Utils
   #

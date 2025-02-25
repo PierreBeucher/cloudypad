@@ -61,7 +61,7 @@ jobs:
         run: nix develop -c task build-smoke-test
 
   test-install:
-    name: Test install/run
+    name: Test install/run Ubuntu
     if: "!startsWith(github.head_ref, 'release/')" # Install test will fail on release branch as version won't mach
     runs-on: "${{ matrix.os }}"
     strategy:
@@ -70,28 +70,50 @@ jobs:
         - ubuntu-24.04
         - ubuntu-22.04
         - ubuntu-20.04
-        # - macos-14 # Docker install suported yet
-        # - macos-13
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-      
-      # - name: (MacOS) Setup Docker
-      #   if: startsWith(matrix.os, 'macos')
-      #   # uses: docker-practice/actions-setup-docker@master
-      #   # timeout-minutes: 12
-      #   # uses: douglascamata/setup-docker-macos-action@main
-      #   uses: crazy-max/ghaction-setup-docker@v3
         
       # Test the install script and cloudypad.sh for current commit
       - name: Run install script
+        shell: bash
         run: |
           curl -fsSL https://raw.githubusercontent.com/PierreBeucher/cloudypad/${{ github.sha }}/install.sh | bash
-          echo " ==== .bachrc content ==="
+          echo " ==== .bashrc content ==="
           cat ~/.bashrc
-          echo " ==== .bachrc content ==="
+          echo " ==== .bashrc content ==="
           bash -i -c 'echo $PATH && which cloudypad'
+
+  test-install-macos:
+    name: Test install/run MacOS
+    if: "!startsWith(github.head_ref, 'release/')" # Install test will fail on release branch as version won't mach
+    runs-on: "${{ matrix.os }}"
+    strategy:
+      matrix:
+        os:
+        - macos-14
+        - macos-13
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # Test the install script and cloudypad.sh for current commit
+      - name: Run install script
+        shell: sh
+        env:
+          # Docker is not available on MacOS runner
+          CLOUDYPAD_INSTALL_SKIP_DOCKER_CHECK: true
+
+          # Force step into thinking it runs with default zsh shell
+          # to emulate real MacOS experience
+          SHELL: /bin/zsh
+        run: |
+          curl -fsSL https://raw.githubusercontent.com/PierreBeucher/cloudypad/${{ github.sha }}/install.sh | zsh
+          echo " ==== .zshrc content ==="
+          cat ~/.zshrc
+          echo " ==== .zshrc content ==="
+          zsh -i -c 'echo $PATH && which cloudypad'        
 
   test-install-container:
     name: Test install/run in containers
