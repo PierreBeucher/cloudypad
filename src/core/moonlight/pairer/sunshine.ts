@@ -1,10 +1,6 @@
-import { AnalyticsClient } from "../../../tools/analytics/client"
-import * as fs from 'fs'
-import { getLogger } from '../../../log/utils';
-import { AnalyticsManager } from "../../../tools/analytics/manager";
 import { AbstractMoonlightPairer, makePin, MoonlightPairer } from "./abstract";
 import { SSHClient } from "../../../tools/ssh";
-import { confirm } from '@inquirer/prompts';
+import { SSHExecCommandResponse } from "node-ssh";
 
 export interface SunshineMoonlightPairerArgs {
     instanceName: string
@@ -54,44 +50,34 @@ export class SunshineMoonlightPairer extends AbstractMoonlightPairer implements 
         console.info('Sending PIN to Sunshine API...')
         
         const ssh = this.buildSshClient()
-
-        try {
-            await ssh.connect()
-
-            // try to pair for 2 min by punshing through Sunshine API with our pin
-            // Using plain curl + SSH command as Sunshine Web UI is not reachable directly
-            // A simple but effective enough method
-            // Maybe wen use a more resilient with proper HTTP client and SSH tunneling such as https://github.com/agebrock/tunnel-ssh
-            const maxRetries = 120;
-            let result: boolean;
-            let attempts = 0;
     
-            do {
-                result = await this.tryPin(ssh, pin);
-                attempts++;
-    
-                await new Promise(resolve => setTimeout(resolve, 1000))
-            } while (!result && attempts < maxRetries);
-    
-            if (!result) {
-                throw new Error(`Failed to pair after ${maxRetries} attempts. You can try to pair manually.`)
-            }   
-        } finally {
-            ssh.dispose()
-        }
-        
+        // try to pair for 2 min by punshing through Sunshine API with our pin
+        // Using plain curl + SSH command as Sunshine Web UI is not reachable directly
+        // A simple but effective enough method
+        // Maybe wen use a more resilient with proper HTTP client and SSH tunneling such as https://github.com/agebrock/tunnel-ssh
+        await this.pairSendPin(pin, 60, 2000) // up to 60 attempts with 2 sec delay =~ 2 min
     }
 
-    async pairSendPin(pin: string): Promise<boolean> {
+    async pairSendPin(pin: string, retries=3, retryDelayMs=2000): Promise<boolean> {
         const sshClient = this.buildSshClient()
         let pinResult = false
-        try {
-            await sshClient.connect()
-            pinResult = await this.tryPin(sshClient, pin)
-        } catch (error) {
-            throw new Error(`Failed to send pin to Sunshine API.`, { cause: error })
-        } finally {
-            sshClient.dispose()
+        for (let attempt = 0; attempt < retries; attempt++) {
+            try {
+                await sshClient.connect()
+                pinResult = await this.tryPin(sshClient, pin)
+                if (pinResult) break;
+            } catch (error) {
+                this.logger.warn(`Attempt ${attempt + 1} failed to send pin to Sunshine API. Retrying...`, { cause: error })
+            } finally {
+                sshClient.dispose()
+            }
+
+            await new Promise(resolve => setTimeout(resolve, retryDelayMs))
+
+        }
+
+        if (!pinResult) {
+            throw new Error(`Failed to send pin to Sunshine API after ${retries} attempts.`)
         }
 
         return pinResult
@@ -101,18 +87,24 @@ export class SunshineMoonlightPairer extends AbstractMoonlightPairer implements 
 
         this.logger.debug(`Trying to send pin to Sunshine API... (enable trace logs to see raw outputs)`)
 
-        const result = await ssh.command([
-            'curl',
-            '-v',
-            '-u',
-            `${this.args.sunshine.username}:${this.args.sunshine.password}`,
-            '-X',
-            'POST',
-            '-k',
-            'https://localhost:47990/api/pin',
-            '-d',
-            JSON.stringify({ pin: pin, name: this.args.instanceName })
-        ])
+        let result: SSHExecCommandResponse
+        try {
+            result = await ssh.command([
+                'curl',
+                '-v',
+                '-u',
+                `${this.args.sunshine.username}:${this.args.sunshine.password}`,
+                '-X',
+                'POST',
+                '-k',
+                'https://localhost:47990/api/pin',
+                '-d',
+                JSON.stringify({ pin: pin, name: this.args.instanceName })
+            ])
+        } catch (error) {
+            this.logger.warn(`Failed to send pin to Sunshine API.`, { cause: error })
+            return false
+        }
 
         this.logger.trace(`Sunshine pair POST via SSH result: ${JSON.stringify(result)}`)
 
