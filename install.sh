@@ -1,14 +1,11 @@
-#!/usr/bin/env bash
-
-set -e
-
 # Installation arguments
 # Override by setting related environment variable
 DEFAULT_CLOUDYPAD_SCRIPT_REF=v0.17.0
 CLOUDYPAD_HOME=${CLOUDYPAD_HOME:-"$HOME/.cloudypad"}
 CLOUDYPAD_SCRIPT_REF=${CLOUDYPAD_SCRIPT_REF:-$DEFAULT_CLOUDYPAD_SCRIPT_REF}
 
-INSTALL_POSTHOG_DISTINCT_ID="cli-install-$(date +%Y-%m-%d-%H-%M-%S)-$RANDOM"
+# Use a unique ID for installer script as we can't identify user at this point
+INSTALL_POSTHOG_ID="cli-install"
 INSTALL_POSTHOG_API_KEY="phc_caJIOD8vW5727svQf90FNgdALIyYYouwEDEVh3BI1IH"
 
 # Sends anonymous technical analytics event during installation
@@ -21,7 +18,7 @@ send_analytics_event() {
     curl -s -o /dev/null -L --header "Content-Type: application/json" -d "{
       \"api_key\": \"$INSTALL_POSTHOG_API_KEY\",
       \"event\": \"$event\",
-      \"distinct_id\": \"$INSTALL_POSTHOG_DISTINCT_ID\",
+      \"distinct_id\": \"$INSTALL_POSTHOG_ID\",
       \"properties\": {
         \"\$process_person_profile\": false,
         \"event_details\": \"$eventDetails\",
@@ -32,16 +29,11 @@ send_analytics_event() {
   fi
 }
 
-# Identify shell to adapt behavior accordingly
-SHELL_NAME=$(basename "${SHELL}")
-
-if [[  $SHELL_NAME == "bash" ]]; then
-  trap 'send_analytics_event "cli_install_error" "LINENO: $LINENO, FUNCNAME: $FUNCNAME, BASH_SOURCE: $BASH_SOURCE, BASH_VERSION: $BASH_VERSION"' ERR
-else
-  echo "WARNING: install script is not running in a bash shell. This may lead to unexpected behavior."
-  echo "         Maybe bash is not available on your system?"
-  echo "         If you think this is a bug, please create an issue: https://github.com/PierreBeucher/cloudypad/issues"
-fi
+exit_with_error() {
+  error_message=$1
+  send_analytics_event "cli_install_error" "$error_message"
+  exit 1
+}
 
 send_analytics_event "cli_install_start"
 
@@ -56,11 +48,12 @@ SCRIPT_NAME="cloudypad"
 SCRIPT_PATH="$INSTALL_DIR/cloudypad"
 
 # Check if cloudypad is already in PATH
-if [ -n "$(which cloudypad)" ]; then
-  CURRENT_CLOUDYPAD_PATH=$(which cloudypad)
+if command -v cloudypad >/dev/null 2>&1; then
+  CURRENT_CLOUDYPAD_PATH=$(command -v cloudypad)
 
   # Read from /dev/tty to ensure read will work even if script is piped to shell such as install.sh | sh
-  read -p "cloudypad is already installed at ${CURRENT_CLOUDYPAD_PATH}. Do you want to overwrite it? (y/N): " CONFIRM < /dev/tty
+  echo "cloudypad is already installed at ${CURRENT_CLOUDYPAD_PATH}. Do you want to overwrite it? (y/N): "
+  read CONFIRM < /dev/tty
 
   if [[ "$CONFIRM" != "y" ]]; then
     echo "Installation aborted."
@@ -73,14 +66,14 @@ if [ "$CLOUDYPAD_INSTALL_SKIP_DOCKER_CHECK" != "true" ]; then
   # Check if Docker is installed and usable
   if ! docker --version > /dev/null; then
     echo "Docker is not installed or running 'docker --version' failed. Please make sure you have a working Docker installation. See https://docs.docker.com/engine/install/"
-    exit 1
+    exit_with_error "docker --version failed"
   fi
 
   # Check if Docker daemon is accessible
   if ! docker info > /dev/null; then
     echo "Docker is installed but not usable. Have you added yourself to docker group? See https://docs.docker.com/engine/install/linux-postinstall/"
     echo "You might need to run 'sudo usermod -aG docker \$USER' and restart your logout / log back before being able to use Docker"
-    exit 1
+    exit_with_error "docker info failed"
   fi
 fi
 
@@ -98,14 +91,23 @@ elif command -v wget >/dev/null 2>&1; then
   wget -O "$SCRIPT_PATH" "$CLOUDYPAD_SCRIPT_URL"
 else
   echo "Error: Neither curl nor wget is available to download Cloudy Pad. Please install wget or curl and try again."
-  exit 1
+  exit_with_error "missing curl/wget"
 fi
 
 chmod +x "$SCRIPT_PATH"
 
 echo "Downloading Cloudy Pad container images..."
 
-$SCRIPT_PATH download-container-images
+# Skip download of container images if Docker install check is skipped
+# Will be done on first run anyway
+if [ "$CLOUDYPAD_INSTALL_SKIP_DOCKER_CHECK" != "true" ]; then
+  $SCRIPT_PATH download-container-images
+fi
+
+# Identify shell to adapt behavior accordingly
+SHELL_NAME=$(basename "${SHELL}")
+
+echo "Detected shell: '$SHELL_NAME'"
 
 STARTUP_FILE=""
 case "${SHELL_NAME}" in
