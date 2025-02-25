@@ -5,7 +5,7 @@ import { DEFAULT_COMMON_INPUT, DEFAULT_COMMON_CLI_ARGS } from "../utils";
 import { AwsCreateCliArgs, AwsInputPrompter } from '../../../src/providers/aws/cli';
 import lodash from 'lodash'
 import { PartialDeep } from 'type-fest';
-import { STREAMING_SERVER_SUNSHINE } from '../../../src/core/cli/prompter';
+import { STREAMING_SERVER_SUNSHINE } from '../../../src/cli/prompter';
 
 describe('AWS input prompter', () => {
 

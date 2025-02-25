@@ -1,4 +1,3 @@
-import { confirm } from '@inquirer/prompts';
 import { AbstractInstanceProvisioner, InstanceProvisionerArgs, InstanceProvisionOptions } from '../../core/provisioner';
 import { PaperspaceClient } from './client/client';
 import { MachinesCreateRequest } from './client/generated-api';
@@ -34,28 +33,6 @@ export class PaperspaceProvisioner extends AbstractInstanceProvisioner<Paperspac
                 host: existingMachine.publicIp,
                 machineId: existingMachine.id
             }
-        }
-
-        let confirmCreation: boolean
-        if(opts?.autoApprove !== undefined){
-            confirmCreation = opts.autoApprove
-        } else {
-            confirmCreation = await confirm({
-                message: `
-You are about to provision Paperspace instance with the following details:
-    Instance name: ${pspaceMachineName}
-    SSH key: ${this.args.provisionInput.ssh.privateKeyPath}
-    Region: ${this.args.provisionInput.region}
-    Machine Type: ${this.args.provisionInput.machineType}
-    Disk Size: ${this.args.provisionInput.diskSize} GB
-    Public IP Type: ${this.args.provisionInput.publicIpType}
-Do you want to proceed?`,
-                default: true,
-            })
-        }
-
-        if (!confirmCreation) {
-            throw new Error('Machine creation aborted.');
         }
 
         const createArgs: MachinesCreateRequest = {

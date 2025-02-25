@@ -1,14 +1,14 @@
 import * as assert from 'assert';
 import { DEFAULT_COMMON_INPUT, DUMMY_AWS_PULUMI_OUTPUT, DUMMY_SSH_KEY_PATH, loadDumyAnonymousStateV1 } from '../utils';
 import { StateLoader } from '../../../src/core/state/loader';
-import { InstanceUpdater } from '../../../src/core/updater';
+import { InstanceUpdater } from '../../../src/cli/updater';
 import { InstanceStateV1 } from '../../../src/core/state/state';
 import { StateWriter } from '../../../src/core/state/writer';
 import lodash from 'lodash'
 import { AwsUpdateCliArgs } from '../../../src/providers/aws/cli';
 import { AwsInputPrompter } from '../../../src/providers/aws/cli';
 import { AwsInstanceStateV1, AwsStateParser } from '../../../src/providers/aws/state';
-import { STREAMING_SERVER_WOLF } from '../../../src/core/cli/prompter';
+import { STREAMING_SERVER_WOLF } from '../../../src/cli/prompter';
 
 describe('InstanceUpdater', () => {
 

@@ -5,7 +5,7 @@ import { DEFAULT_COMMON_CLI_ARGS, DEFAULT_COMMON_INPUT } from '../utils';
 import { AzureCreateCliArgs, AzureInputPrompter } from '../../../src/providers/azure/cli';
 import { PartialDeep } from 'type-fest';
 import lodash from 'lodash'
-import { STREAMING_SERVER_SUNSHINE } from '../../../src/core/cli/prompter';
+import { STREAMING_SERVER_SUNSHINE } from '../../../src/cli/prompter';
 
 describe('Azure input prompter', () => {
 

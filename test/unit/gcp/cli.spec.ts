@@ -6,7 +6,7 @@ import { GcpCreateCliArgs, GcpInputPrompter } from '../../../src/providers/gcp/c
 import lodash from 'lodash'
 import { PartialDeep } from 'type-fest';
 import { StateWriter } from '../../../src/core/state/writer';
-import { STREAMING_SERVER_SUNSHINE } from '../../../src/core/cli/prompter';
+import { STREAMING_SERVER_SUNSHINE } from '../../../src/cli/prompter';
 
 describe('GCP input prompter', () => {
 

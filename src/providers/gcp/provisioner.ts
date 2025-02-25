@@ -1,5 +1,4 @@
 import { SshKeyLoader } from '../../tools/ssh';
-import { confirm } from '@inquirer/prompts';
 import { AbstractInstanceProvisioner, InstanceProvisionerArgs, InstanceProvisionOptions } from '../../core/provisioner';
 import { GcpPulumiClient, PulumiStackConfigGcp } from './pulumi';
 import { GcpClient } from '../../tools/gcp';
@@ -23,22 +22,6 @@ export class GcpProvisioner extends AbstractInstanceProvisioner<GcpProvisionInpu
 
         if(this.args.configurationInput.sunshine?.enable && this.args.provisionInput.acceleratorType == "nvidia-tesla-p4"){
             throw new Error("Sunshine streaming server does not support GCP nvidia-tesla-p4 accelerator type. Please use a different machine type or streaming server.")
-        }
-        
-        let confirmCreation: boolean
-        if(opts?.autoApprove){
-            confirmCreation = opts.autoApprove
-        } else {
-            confirmCreation = await confirm({
-                message: `You are about to provision Google Cloud machine with the following details:\n` + 
-                `    ${this.inputToHumanReadableString(this.args)}` +
-                `\nDo you want to proceed?`,
-                default: true,
-            })
-        }
-
-        if (!confirmCreation) {
-            throw new Error('Google Cloud provision aborted.');
         }
 
         const pulumiClient = new GcpPulumiClient(this.args.instanceName)

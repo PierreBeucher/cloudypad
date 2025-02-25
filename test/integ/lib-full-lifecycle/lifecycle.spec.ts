@@ -9,9 +9,9 @@
 import { CLOUDYPAD_PROVIDER_AWS, PUBLIC_IP_TYPE_STATIC } from "../../../src/core/const"
 import * as assert from 'assert'
 import * as child_process from 'node:child_process'
-import { InteractiveInstanceInitializer } from "../../../src/core/initializer"
+import { InteractiveInstanceInitializer } from "../../../src/cli/initializer"
 import { AwsCreateCliArgs, AwsInputPrompter } from "../../../src/providers/aws/cli"
-import { STREAMING_SERVER_SUNSHINE } from "../../../src/core/cli/prompter"
+import { STREAMING_SERVER_SUNSHINE } from "../../../src/cli/prompter"
 import { InstanceManagerBuilder } from "../../../src/core/manager-builder"
 import { InstanceRunningStatus } from "../../../src/core/runner"
 import { makePin } from "../../../src/core/moonlight/pairer/abstract"

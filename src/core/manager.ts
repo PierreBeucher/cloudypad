@@ -1,4 +1,4 @@
-import { InstanceStateV1 } from './state/state';
+import { CommonInstanceInput, InstanceStateV1 } from './state/state';
 import { DestroyOptions, InstanceProvisioner, InstanceProvisionOptions } from './provisioner';
 import { InstanceConfigurator } from './configurator';
 import { getLogger } from '../log/utils';
@@ -121,7 +121,7 @@ export interface InstanceManager {
     pairSendPin(pin: string, retries?: number, retryDelay?: number): Promise<boolean>
     getInstanceDetails(): Promise<CloudyPadInstanceDetails>
     getStateJSON(): string
-    
+    getInputs(): Promise<CommonInstanceInput>
 }
 
 export interface InstanceManagerArgs<ST extends InstanceStateV1> {
@@ -232,5 +232,14 @@ export class GenericInstanceManager<ST extends InstanceStateV1> implements Insta
 
     public getStateJSON(){
         return JSON.stringify(this.stateWriter.cloneState(), null, 2)
+    }
+
+    async getInputs(): Promise<CommonInstanceInput> {
+        const state = this.stateWriter.cloneState()
+        return {
+            instanceName: state.name,
+            provision: state.provision.input,
+            configuration: state.configuration.input
+        }
     }
 }
