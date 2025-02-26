@@ -1,8 +1,7 @@
 import { CLOUDYPAD_PROVIDER_DUMMY } from '../../core/const';
 import { AbstractInstanceRunner, InstanceRunnerArgs, InstanceRunningStatus, StartStopOptions } from '../../core/runner';
-import { StateWriter } from '../../core/state/writer';
 import { DummyInstanceProviderClient } from './internal-memory';
-import { DummyInstanceStateV1, DummyProvisionInputV1, DummyProvisionOutputV1 } from './state';
+import { DummyProvisionInputV1, DummyProvisionOutputV1 } from './state';
 
 export type DummyInstanceRunnerArgs = InstanceRunnerArgs<DummyProvisionInputV1, DummyProvisionOutputV1>
 
@@ -15,48 +14,44 @@ export class DummyInstanceRunner extends AbstractInstanceRunner<DummyProvisionIn
         super(CLOUDYPAD_PROVIDER_DUMMY, args)
     }
 
-    private getInstanceId() {
-        return this.args.provisionOutput.instanceId
-    }
-
     private setInstanceStatus(status: InstanceRunningStatus) {
-        DummyInstanceProviderClient.get().setInstanceDetails(this.getInstanceId(), {
-            instanceId: this.getInstanceId(),
+        DummyInstanceProviderClient.get().setInstanceDetails(this.args.instanceName, {
+            instanceName: this.args.instanceName,
             status: status
         })
     }
 
     async doStart(opts?: StartStopOptions) {
-        this.logger.info(`Dummy start operation for instance ID: ${this.getInstanceId()}`)
+        this.logger.info(`Dummy start operation for instance: ${this.args.instanceName}`)
         
         if(opts?.wait) {
             this.setInstanceStatus(InstanceRunningStatus.Starting)
-            await new Promise(resolve => setTimeout(resolve, 5000))
+            await new Promise(resolve => setTimeout(resolve, 2000))
         }
 
         this.setInstanceStatus(InstanceRunningStatus.Running)
     }
 
     async doStop(opts?: StartStopOptions) {
-        this.logger.info(`Dummy stop operation for instance ID: ${this.getInstanceId()}`)
+        this.logger.info(`Dummy stop operation for instance: ${this.args.instanceName}`)
 
         if(opts?.wait) {
             this.setInstanceStatus(InstanceRunningStatus.Stopping)
-            await new Promise(resolve => setTimeout(resolve, 5000));
+            await new Promise(resolve => setTimeout(resolve, 2000));
         }
 
         this.setInstanceStatus(InstanceRunningStatus.Stopped)
     }
 
     async doRestart(opts?: StartStopOptions) {
-        this.logger.info(`Dummy restart operation for instance ID: ${this.getInstanceId()}`)
+        this.logger.info(`Dummy restart operation for instance: ${this.args.instanceName}`)
         await this.doStop(opts)
         await this.doStart(opts)
     }
 
     async doGetInstanceStatus(): Promise<InstanceRunningStatus> {
-        const status = DummyInstanceProviderClient.get().getInstanceDetails(this.getInstanceId())
-        this.logger.info(`Dummy get status operation for instance ID: ${this.getInstanceId()} returning ${status?.status}`)
-        return status?.status ?? InstanceRunningStatus.Unknown
+        const details = DummyInstanceProviderClient.get().getInstanceDetails(this.args.instanceName)
+        this.logger.info(`Dummy get status operation for instance: ${this.args.instanceName} returning ${JSON.stringify(details)}`)
+        return details?.status ?? InstanceRunningStatus.Unknown
     }
 }

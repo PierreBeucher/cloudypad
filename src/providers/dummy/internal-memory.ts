@@ -1,4 +1,5 @@
 import { InstanceRunningStatus } from "../../core/runner"
+import { getLogger, Logger } from "../../log/utils"
 
 /**
  * A Dummy instance "provider client" used for operations on Dummy instances such as start, stop, restart, etc.
@@ -18,21 +19,28 @@ export class DummyInstanceProviderClient {
     }
 
     private instanceStatuses: Map<string, DummyInstanceCloudDetails>
+    private logger: Logger = getLogger('DummyInstanceProviderClient')
 
     private constructor() {
         this.instanceStatuses = new Map<string, DummyInstanceCloudDetails>()
     }
 
-    public getInstanceDetails(instanceId: string): DummyInstanceCloudDetails | undefined {
-        return this.instanceStatuses.get(instanceId)
+    public getAllInstanceDetails(): Map<string, DummyInstanceCloudDetails> {
+        return this.instanceStatuses
     }
 
-    public setInstanceDetails(instanceId: string, details: DummyInstanceCloudDetails) {
-        this.instanceStatuses.set(instanceId, details)
+    public getInstanceDetails(instanceName: string): DummyInstanceCloudDetails | undefined {
+        this.logger.debug(`Get dummy instance details for ${instanceName}`)
+        return this.instanceStatuses.get(instanceName)
+    }
+
+    public setInstanceDetails(instanceName: string, details: DummyInstanceCloudDetails) {
+        this.logger.debug(`Set dummy instance details for ${instanceName}: ${JSON.stringify(details)}`)
+        this.instanceStatuses.set(instanceName, details)
     }
 }
 
 export interface DummyInstanceCloudDetails {
-    instanceId: string
+    instanceName: string
     status: InstanceRunningStatus
 }

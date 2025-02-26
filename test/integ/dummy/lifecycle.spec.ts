@@ -5,7 +5,7 @@ import { CLOUDYPAD_PROVIDER_DUMMY } from '../../../src/core/const';
 import { DummyCreateCliArgs, DummyInputPrompter } from '../../../src/providers/dummy/cli';
 import { DEFAULT_COMMON_CLI_ARGS } from '../../unit/utils';
 import { StateLoader } from '../../../src/core/state/loader';
-import { InstanceManagerBuilder } from '../../../src';
+import { DummyInstanceProviderClient, InstanceManagerBuilder } from '../../../src';
 import { DummyProvisionInputV1 } from '../../../src/providers/dummy/state';
 import { CommonConfigurationInputV1 } from '../../../src/core/state/state';
 
@@ -54,8 +54,7 @@ describe('Dummy instance lifecycle', () => {
         await manager.restart({ wait: true })
         const detailsAfterRestart = await manager.getInstanceDetails()
         assert.equal(detailsAfterRestart.status, 'running', 'Instance should be running after restart')
-    })
-
+    }).timeout(20000)
 
     it('should destroy the Dummy instance', async () => {
         const manager = await new InstanceManagerBuilder().buildInstanceManager(DUMMY_INSTANCE_NAME)
