@@ -109,6 +109,9 @@ export abstract class AbstractSubManagerFactory<ST extends InstanceStateV1> {
     }
 }
 
+/**
+ * Main operation interface for an instance to start/stop/restart and run various operations.
+ */
 export interface InstanceManager {
     name(): string
     configure(): Promise<void>

@@ -1,4 +1,4 @@
-import { CLOUDYPAD_PROVIDER_AWS, CLOUDYPAD_PROVIDER_AZURE, CLOUDYPAD_PROVIDER_GCP, CLOUDYPAD_PROVIDER_PAPERSPACE } from './const';
+import { CLOUDYPAD_PROVIDER_AWS, CLOUDYPAD_PROVIDER_AZURE, CLOUDYPAD_PROVIDER_DUMMY, CLOUDYPAD_PROVIDER_GCP, CLOUDYPAD_PROVIDER_PAPERSPACE } from './const';
 import { getLogger } from '../log/utils';
 import { AwsSubManagerFactory } from '../providers/aws/factory';
 import { GcpSubManagerFactory } from '../providers/gcp/factory';
@@ -12,6 +12,8 @@ import { AwsInstanceStateV1, AwsStateParser } from '../providers/aws/state';
 import { AzureInstanceStateV1, AzureStateParser } from '../providers/azure/state';
 import { GcpInstanceStateV1, GcpStateParser } from '../providers/gcp/state';
 import { PaperspaceInstanceStateV1, PaperspaceStateParser } from '../providers/paperspace/state';
+import { DummyInstanceStateV1, DummyStateParser } from '../providers/dummy/state';
+import { DummySubManagerFactory } from '../providers/dummy/factory';
 
 export class InstanceManagerBuilder {
 
@@ -41,6 +43,10 @@ export class InstanceManagerBuilder {
     private parsePaperspaceState(rawState: InstanceStateV1): PaperspaceInstanceStateV1 {
         return new PaperspaceStateParser().parse(rawState)
     }
+
+    private parseDummyState(rawState: InstanceStateV1): DummyInstanceStateV1 {
+        return new DummyStateParser().parse(rawState)
+    }
     
     async buildInstanceManager(name: string): Promise<InstanceManager>{
         const state = await this.loadAnonymousState(name)
@@ -64,6 +70,11 @@ export class InstanceManagerBuilder {
             return new GenericInstanceManager({
                 stateWriter: new StateWriter({ state: this.parsePaperspaceState(state)}),
                 factory: new PaperspaceSubManagerFactory()
+            })
+        } else if (state.provision.provider === CLOUDYPAD_PROVIDER_DUMMY) {
+            return new GenericInstanceManager({
+                stateWriter: new StateWriter({ state: this.parseDummyState(state)}),
+                factory: new DummySubManagerFactory()
             })
         } else {
             throw new Error(`Unknown provider '${state.provision.provider}' in state: ${JSON.stringify(state)}`)
