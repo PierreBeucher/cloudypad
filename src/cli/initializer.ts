@@ -1,7 +1,7 @@
 import { getLogger } from "../log/utils"
 import { CLOUDYPAD_PROVIDER } from "../core/const"
 import { CreateCliArgs } from "./command"
-import { InputPrompter, inputToHumanReadableString, UserVoluntaryInterruptionError } from "./prompter"
+import { ConfirmationPrompter, InputPrompter, UserVoluntaryInterruptionError } from "./prompter"
 import { InstanceManagerBuilder } from "../core/manager-builder"
 import { StateInitializer } from "../core/state/initializer"
 import { confirm } from '@inquirer/prompts'
@@ -95,23 +95,10 @@ export class InteractiveInstanceInitializer<A extends CreateCliArgs> {
         this.logger.info(`Initializing ${instanceName}: provisioning...`)
         this.analyticsEvent("create_instance_start_provision")
 
-        let confirmCreation: boolean
-        if(autoApprove){
-            confirmCreation = autoApprove
-        } else {
-
-            const inputs = await manager.getInputs()
-            
-            confirmCreation = await confirm({
-                message: `You are about to provision instance ${instanceName} with the following details:\n` + 
-                `    ${inputToHumanReadableString(inputs)}` +
-                `\nDo you want to proceed?`,
-                default: true,
-            })
-        }
-
-        if (!confirmCreation) {
-            throw new Error(`Provision aborted for instance ${instanceName}.`);
+        const prompter = new ConfirmationPrompter()
+        const confirmation = await prompter.confirmCreation(instanceName, await manager.getInputs(), autoApprove)
+        if(!confirmation){
+            throw new Error('Provision aborted.')
         }
 
         await manager.provision({ autoApprove: autoApprove})

@@ -6,7 +6,7 @@ import { InstanceManagerBuilder } from "../core/manager-builder"
 import { StateLoader } from "../core/state/loader"
 import { UpdateCliArgs } from "./command"
 import { GenericStateParser } from "../core/state/parser"
-import { AbstractInputPrompter, inputToHumanReadableString } from "./prompter"
+import { AbstractInputPrompter, ConfirmationPrompter, inputToHumanReadableString } from "./prompter"
 import { confirm } from "@inquirer/prompts"
 import * as lodash from "lodash"
 
@@ -83,24 +83,12 @@ export class InstanceUpdater<ST extends InstanceStateV1, A extends UpdateCliArgs
 
         const manager = await new InstanceManagerBuilder().buildInstanceManager(instanceName)
 
-        const autoApprove = cliArgs.yes
-        let confirmCreation: boolean
-        if(autoApprove){
-            confirmCreation = autoApprove
-        } else {
-            
-            const inputs = await manager.getInputs()
-            confirmCreation = await confirm({
-                message: `You are about to provision instance ${instanceName} with the following details:\n` + 
-                `    ${inputToHumanReadableString(inputs)}` +
-                `\nDo you want to proceed?`,
-                default: true,
-            })
+        const prompter = new ConfirmationPrompter()
+        const confirmation = await prompter.confirmCreation(instanceName, await manager.getInputs(), cliArgs.yes)
+        if(!confirmation){
+            throw new Error('Provision aborted.')
         }
 
-        if (!confirmCreation) {
-            throw new Error(`Provision aborted for instance ${instanceName}.`);
-        }
 
         await manager.provision({ autoApprove: cliArgs.yes })
         await manager.configure()

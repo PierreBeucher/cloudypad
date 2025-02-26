@@ -452,6 +452,26 @@ export abstract class AbstractInputPrompter<A extends CreateCliArgs, I extends C
     }
 }
 
+export class ConfirmationPrompter {
+
+    private readonly logger = getLogger(ConfirmationPrompter.name)
+
+    async confirmCreation(instanceName: string, inputs: CommonInstanceInput, autoApprove?: boolean): Promise<boolean> {
+        if(autoApprove){
+            return true
+        }
+
+        const confirmation = await confirm({
+            message: `You are about to provision instance ${instanceName} with the following details:\n` + 
+            `    ${inputToHumanReadableString(inputs)}` +
+            `\nDo you want to proceed?`,
+            default: true,
+        })
+
+        return confirmation
+    }
+}
+
 /**
  * Transform CLI arguments into cost alert options.
  * If costAlert is false, return null to explicitly disable cost alert.
