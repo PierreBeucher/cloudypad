@@ -7,10 +7,10 @@
     "build": "rm -rf dist/ && tsc -p tsconfig.build.json && npm run copy-ansible",
     "copy-ansible": "cp -r ansible dist/ansible"
   },
-  "main": "./dist/src/index.js",
-  "types": "./dist/src/index.d.ts",
+  "main": "./src/index.js",
+  "types": "./src/index.d.ts",
   "bin": {
-    "cloudypad": "./dist/src/cli/main.js"
+    "cloudypad": "./src/cli/main.js"
   },
   "author": "Pierre Beucher <pierre@crafteo.io>",
   "license": "ISC",
