@@ -6,12 +6,14 @@ import { InstanceManagerBuilder } from "../core/manager-builder"
 import { StateInitializer } from "../core/state/initializer"
 import { confirm } from '@inquirer/prompts'
 import { AnalyticsManager } from "../tools/analytics/manager"
-import { CommonInstanceInput } from "../core/state/state"
+import { CommonConfigurationInputV1, CommonInstanceInput, CommonProvisionInputV1, InstanceInputs } from "../core/state/state"
 import { InstanceManager } from "../core/manager"
+import { InstanceInitializer } from "../core/initializer"
 
-export interface InstancerInitializerArgs {
+export interface InteractiveInstancerInitializerArgs<A extends CreateCliArgs, PI extends CommonProvisionInputV1, CI extends CommonConfigurationInputV1> {
     provider: CLOUDYPAD_PROVIDER
-    inputPrompter: InputPrompter
+    inputPrompter: InputPrompter<A, PI, CI>
+    initArgs: A
 }
 
 export interface InstancerInitializationOptions {
@@ -23,41 +25,37 @@ export interface InstancerInitializationOptions {
 }
 
 /**
- * Initialize a new instance from CLI args. Create a new State and persist to disk before and build an InstanceManager.
+ * Interactively initialize a new instance from CLI args using the base InstanceInitializer class.
+ * 
+ * After instance initialization, prompt user for pairing
  */
-export class InteractiveInstanceInitializer<A extends CreateCliArgs> {
+export class InteractiveInstanceInitializer<
+    A extends CreateCliArgs, 
+    PI extends CommonProvisionInputV1, 
+    CI extends CommonConfigurationInputV1
+> extends InstanceInitializer<PI, CI> {
 
-    private readonly provider: CLOUDYPAD_PROVIDER
-    private readonly inputPrompter: InputPrompter
-    private readonly logger = getLogger(InteractiveInstanceInitializer.name)
     protected readonly analytics = AnalyticsManager.get()
+    private readonly args: InteractiveInstancerInitializerArgs<A, PI, CI>
 
-    constructor(args: InstancerInitializerArgs){
-        this.provider = args.provider
-        this.inputPrompter = args.inputPrompter
+    constructor(args: InteractiveInstancerInitializerArgs<A, PI, CI>){
+        super({ provider: args.provider })
+        this.args = args
     }
 
-    /**
-     * Interactively initialize a new instance from CLI args:
-     * - Parse CLI args into known Input interface
-     * - Interactively prompt for missing args
-     * - Run instance initialization
-     */
-    async initializeInstance(cliArgs: A, options?: InstancerInitializationOptions): Promise<void> {
+    async initializeInteractive(options?: InstancerInitializationOptions): Promise<void> {
         try {
             this.analyticsEvent("create_instance_start")
 
             
-            this.logger.debug(`Initializing instance from CLI args ${JSON.stringify(cliArgs)} and options ${JSON.stringify(options)}`)
+            this.logger.debug(`Initializing instance from CLI args ${JSON.stringify(this.args.initArgs)} and options ${JSON.stringify(options)}`)
             
-            const input = await this.cliArgsToInput(cliArgs)
-            const state = await this.doInitializeState(input)
-            const manager = await new InstanceManagerBuilder().buildInstanceManager(state.name)
-            
-            await this.doProvisioning(manager, state.name, cliArgs.yes)
-            await this.doConfiguration(manager, state.name)
-            await this.doPairing(manager, state.name, cliArgs.skipPairing ?? false, cliArgs.yes ?? false)
-            
+            const input = await this.cliArgsToInput(this.args.initArgs)
+
+            await this.initializeInstance(input.instanceName, input.provision, input.configuration)
+
+            await this.doPairing(input.instanceName, this.args.initArgs.skipPairing ?? false, this.args.initArgs.yes ?? false)
+
             this.showPostInitInfo(options)
             this.analyticsEvent("create_instance_finish")
         } catch (error) {
@@ -74,50 +72,47 @@ export class InteractiveInstanceInitializer<A extends CreateCliArgs> {
         }
     }
 
-    private async cliArgsToInput(cliArgs: A): Promise<CommonInstanceInput> {
+    private async cliArgsToInput(cliArgs: A): Promise<InstanceInputs<PI, CI>> {
         this.analyticsEvent("create_instance_start_input_prompt")
-        const input = await this.inputPrompter.completeCliInput(cliArgs)
+        const input = await this.args.inputPrompter.completeCliInput(cliArgs)
         this.analyticsEvent("create_instance_finish_input_prompt")
         return input
     }
 
-    private async doInitializeState(input: CommonInstanceInput) {
+    protected async beforeInitializeState(instanceName: string, provisionInput: CommonProvisionInputV1, configurationInput: CommonConfigurationInputV1) {
         this.analyticsEvent("create_instance_start_state_init")
-        const state = await new StateInitializer({
-            input: input,
-            provider: this.provider,
-        }).initializeState()
-        this.analyticsEvent("create_instance_finish_state_init")
-        return state
     }
 
-    private async doProvisioning(manager: InstanceManager, instanceName: string, autoApprove?: boolean) {
-        this.logger.info(`Initializing ${instanceName}: provisioning...`)
-        this.analyticsEvent("create_instance_start_provision")
+    protected async afterInitializeState(instanceName: string, provisionInput: CommonProvisionInputV1, configurationInput: CommonConfigurationInputV1) {
+        this.analyticsEvent("create_instance_finish_state_init")
+    }
+
+    protected async beforeProvisioning(manager: InstanceManager, instanceName: string) {
 
         const prompter = new ConfirmationPrompter()
-        const confirmation = await prompter.confirmCreation(instanceName, await manager.getInputs(), autoApprove)
+        const confirmation = await prompter.confirmCreation(instanceName, await manager.getInputs(), this.args.initArgs.yes)
         if(!confirmation){
             throw new Error('Provision aborted.')
         }
 
-        await manager.provision({ autoApprove: autoApprove})
-        
+        this.analyticsEvent("create_instance_start_provision")
+    }
+
+    protected async afterProvisioning(manager: InstanceManager, instanceName: string) {
         this.analyticsEvent("create_instance_finish_provision")
-        this.logger.info(`Initializing ${instanceName}: provision done.}`)
     }
 
-    private async doConfiguration(manager: InstanceManager, instanceName: string) {
-        this.analyticsEvent("create_instance_start_configure")
-        this.logger.info(`Initializing ${instanceName}: configuring...}`)
-        
-        await manager.configure()
-        
-        this.analyticsEvent("create_instance_finish_configure")
-        this.logger.info(`Initializing ${instanceName}: configuration done.}`)
+    protected async beforeConfiguration(manager: InstanceManager, instanceName: string) {
+        this.analyticsEvent("create_instance_start_configuration")
     }
 
-    private async doPairing(manager: InstanceManager, instanceName: string, skipPairing: boolean, autoApprove: boolean) {
+    protected async afterConfiguration(manager: InstanceManager, instanceName: string) {
+        this.analyticsEvent("create_instance_finish_configuration")
+    }
+
+    private async doPairing(instanceName: string, skipPairing: boolean, autoApprove: boolean) {
+
+        const manager = await new InstanceManagerBuilder().buildInstanceManager(instanceName)
 
         const doPair = skipPairing ? false : autoApprove ? true : await confirm({
             message: `Your instance is almost ready ! Do you want to pair Moonlight now?`,

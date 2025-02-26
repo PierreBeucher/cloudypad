@@ -1,5 +1,5 @@
 import { z } from "zod"
-import { CommonProvisionOutputV1Schema, CommonProvisionInputV1Schema, InstanceStateV1Schema, AbstractInstanceInputs } from "../../core/state/state"
+import { CommonProvisionOutputV1Schema, CommonProvisionInputV1Schema, InstanceStateV1Schema, InstanceInputs } from "../../core/state/state"
 import { CLOUDYPAD_PROVIDER_PAPERSPACE, PUBLIC_IP_TYPE, PUBLIC_IP_TYPE_DYNAMIC, PUBLIC_IP_TYPE_STATIC } from "../../core/const"
 import { GenericStateParser } from "../../core/state/parser"
 
@@ -27,7 +27,7 @@ type PaperspaceInstanceStateV1 = z.infer<typeof PaperspaceInstanceStateV1Schema>
 type PaperspaceProvisionOutputV1 = z.infer<typeof PaperspaceProvisionOutputV1Schema>
 type PaperspaceProvisionInputV1 = z.infer<typeof PaperspaceProvisionInputV1Schema>
 
-type PaperspaceInstanceInput = AbstractInstanceInputs<PaperspaceProvisionInputV1>
+type PaperspaceInstanceInput = InstanceInputs<PaperspaceProvisionInputV1>
 
 export {
     PaperspaceProvisionOutputV1Schema,

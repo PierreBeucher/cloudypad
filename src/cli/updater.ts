@@ -1,22 +1,17 @@
 import { PartialDeep } from "type-fest"
-import { InstanceStateV1 } from "../core/state/state"
+import { InstanceInputs, InstanceStateV1 } from "../core/state/state"
 import { StateWriter } from "../core/state/writer"
 import { getLogger, Logger } from "../log/utils"
 import { InstanceManagerBuilder } from "../core/manager-builder"
 import { StateLoader } from "../core/state/loader"
 import { UpdateCliArgs } from "./command"
 import { GenericStateParser } from "../core/state/parser"
-import { AbstractInputPrompter, ConfirmationPrompter, inputToHumanReadableString } from "./prompter"
-import { confirm } from "@inquirer/prompts"
+import { AbstractInputPrompter, ConfirmationPrompter } from "./prompter"
 import * as lodash from "lodash"
 
 export interface InstanceUpdaterArgs<ST extends InstanceStateV1, A extends UpdateCliArgs> {
     stateParser: GenericStateParser<ST>
-    inputPrompter: AbstractInputPrompter<A, { 
-        instanceName: string, 
-        provision: ST["provision"]["input"], 
-        configuration: ST["configuration"]["input"] 
-    }>  
+    inputPrompter: AbstractInputPrompter<A, ST["provision"]["input"], ST["configuration"]["input"]>  
 }
 
 export interface InstanceUpdateArgs<ST extends InstanceStateV1> {
@@ -28,11 +23,7 @@ export class InstanceUpdater<ST extends InstanceStateV1, A extends UpdateCliArgs
 
     private logger: Logger
     private stateParser: GenericStateParser<ST>
-    private inputPrompter: AbstractInputPrompter<A, { 
-        instanceName: string, 
-        provision: ST["provision"]["input"], 
-        configuration: ST["configuration"]["input"] 
-    }>  
+    private inputPrompter: AbstractInputPrompter<A, ST["provision"]["input"], ST["configuration"]["input"]>  
 
     constructor(args: InstanceUpdaterArgs<ST, A>) {
         this.logger = getLogger(InstanceUpdater.name)

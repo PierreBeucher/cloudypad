@@ -94,7 +94,7 @@ export interface CommonInstanceInput {
     configuration: CommonConfigurationInputV1
 }
 
-export interface AbstractInstanceInputs<
+export interface InstanceInputs<
     P extends CommonProvisionInputV1, 
     C extends CommonConfigurationInputV1 = CommonConfigurationInputV1
 > extends CommonInstanceInput {

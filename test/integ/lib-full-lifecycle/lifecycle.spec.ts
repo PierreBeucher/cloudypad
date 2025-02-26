@@ -15,6 +15,8 @@ import { STREAMING_SERVER_SUNSHINE } from "../../../src/cli/prompter"
 import { InstanceManagerBuilder } from "../../../src/core/manager-builder"
 import { InstanceRunningStatus } from "../../../src/core/runner"
 import { makePin } from "../../../src/core/moonlight/pairer/abstract"
+import { CommonConfigurationInputV1 } from "../../../src/core/state/state"
+import { AwsProvisionInputV1 } from "../../../src/providers/aws/state"
 
 
 describe('Lib full lifecycle', () => {
@@ -28,25 +30,26 @@ describe('Lib full lifecycle', () => {
     it('should initialize an instance', async () => {
 
         // Should be a non-interactive initializer
-        await new InteractiveInstanceInitializer<AwsCreateCliArgs>({ 
+        await new InteractiveInstanceInitializer<AwsCreateCliArgs, AwsProvisionInputV1, CommonConfigurationInputV1>({ 
             inputPrompter: new AwsInputPrompter(),
             provider: CLOUDYPAD_PROVIDER_AWS,
-        }).initializeInstance({
-            name: instanceName,
-            region: "eu-central-1",
-            instanceType: "g4dn.xlarge",
-            costAlert: false,
-            diskSize: 30,
-            privateSshKey: "/home/pbeucher/.ssh/id_ed25519",
-            publicIpType: PUBLIC_IP_TYPE_STATIC,
-            spot: false,
-            overwriteExisting: true,
-            streamingServer: STREAMING_SERVER_SUNSHINE,
-            sunshineUser: "sunshine",
-            sunshinePassword: "S3nshine!",
-            skipPairing: true,
-            yes: true
-        })
+            initArgs: {
+                name: instanceName,
+                region: "eu-central-1",
+                instanceType: "g4dn.xlarge",
+                costAlert: false,
+                diskSize: 30,
+                privateSshKey: "/home/pbeucher/.ssh/id_ed25519",
+                publicIpType: PUBLIC_IP_TYPE_STATIC,
+                spot: false,
+                overwriteExisting: true,
+                streamingServer: STREAMING_SERVER_SUNSHINE,
+                sunshineUser: "sunshine",
+                sunshinePassword: "S3nshine!",
+                skipPairing: true,
+                yes: true
+            }
+        }).initializeInteractive()
     }).timeout(360000)
 
     it('should get instance details', async () => {

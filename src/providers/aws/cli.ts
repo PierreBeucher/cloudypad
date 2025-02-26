@@ -1,5 +1,5 @@
-import { AwsInstanceInput, AwsInstanceStateV1, AwsStateParser } from "./state"
-import { CommonInstanceInput } from "../../core/state/state"
+import { AwsInstanceInput, AwsInstanceStateV1, AwsProvisionInputV1, AwsStateParser } from "./state"
+import { CommonConfigurationInputV1, CommonInstanceInput } from "../../core/state/state"
 import { input, select, confirm } from '@inquirer/prompts';
 import { AwsClient, EC2_QUOTA_CODE_ALL_G_AND_VT_SPOT_INSTANCES, EC2_QUOTA_CODE_RUNNING_ON_DEMAND_G_AND_VT_INSTANCES } from "../../tools/aws";
 import { AbstractInputPrompter, costAlertCliArgsIntoConfig, PromptOptions } from "../../cli/prompter";
@@ -37,7 +37,7 @@ export const SUPPORTED_INSTANCE_TYPES = [
     "g5.xlarge", "g5.2xlarge", "g5.4xlarge", "g5.8xlarge"
 ]
 
-export class AwsInputPrompter extends AbstractInputPrompter<AwsCreateCliArgs, AwsInstanceInput> {
+export class AwsInputPrompter extends AbstractInputPrompter<AwsCreateCliArgs, AwsProvisionInputV1, CommonConfigurationInputV1> {
     
     buildProvisionerInputFromCliArgs(cliArgs: AwsCreateCliArgs): PartialDeep<AwsInstanceInput> {
 
@@ -215,10 +215,11 @@ export class AwsCliCommandGenerator extends CliCommandGenerator {
                 this.analytics.sendEvent(RUN_COMMAND_CREATE, { provider: CLOUDYPAD_PROVIDER_AWS })
                 
                 try {
-                    await new InteractiveInstanceInitializer<AwsCreateCliArgs>({ 
+                    await new InteractiveInstanceInitializer<AwsCreateCliArgs, AwsProvisionInputV1, CommonConfigurationInputV1>({ 
                         inputPrompter: new AwsInputPrompter(),
                         provider: CLOUDYPAD_PROVIDER_AWS,
-                    }).initializeInstance(cliArgs)
+                        initArgs: cliArgs
+                    }).initializeInteractive()
                     
                 } catch (error) {
                     logFullError(error)

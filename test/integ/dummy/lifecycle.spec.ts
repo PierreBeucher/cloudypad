@@ -6,6 +6,8 @@ import { DummyCreateCliArgs, DummyInputPrompter } from '../../../src/providers/d
 import { DEFAULT_COMMON_CLI_ARGS } from '../../unit/utils';
 import { StateLoader } from '../../../src/core/state/loader';
 import { InstanceManagerBuilder } from '../../../src';
+import { DummyProvisionInputV1 } from '../../../src/providers/dummy/state';
+import { CommonConfigurationInputV1 } from '../../../src/core/state/state';
 
 describe('Dummy instance lifecycle', () => {
 
@@ -21,10 +23,11 @@ describe('Dummy instance lifecycle', () => {
 
     it('should initialize a new Dummy instance', async () => {
 
-        await new InteractiveInstanceInitializer({ 
+        await new InteractiveInstanceInitializer<DummyCreateCliArgs, DummyProvisionInputV1, CommonConfigurationInputV1>({ 
             provider: CLOUDYPAD_PROVIDER_DUMMY,
+            initArgs: DUMMY_CLI_ARGS,
             inputPrompter: new DummyInputPrompter()
-        }).initializeInstance(DUMMY_CLI_ARGS, { skipPostInitInfo: true })
+        }).initializeInteractive({ skipPostInitInfo: true })
 
         const state = await new StateLoader().loadAndMigrateInstanceState(DUMMY_INSTANCE_NAME)
         

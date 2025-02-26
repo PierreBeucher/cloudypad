@@ -1,11 +1,12 @@
 import * as assert from 'assert';
-import { GcpInstanceInput, GcpInstanceStateV1 } from '../../../src/providers/gcp/state';
+import { GcpInstanceInput, GcpInstanceStateV1, GcpProvisionInputV1 } from '../../../src/providers/gcp/state';
 import { CLOUDYPAD_CONFIGURATOR_ANSIBLE, CLOUDYPAD_PROVIDER_GCP, PUBLIC_IP_TYPE_STATIC } from '../../../src/core/const';
 import { DEFAULT_COMMON_INPUT } from '../utils';
 import { InteractiveInstanceInitializer } from '../../../src/cli/initializer';
 import { GcpCreateCliArgs, GcpInputPrompter } from '../../../src/providers/gcp/cli';
 import { STREAMING_SERVER_SUNSHINE } from '../../../src/cli/prompter';
 import { StateLoader } from '../../../src/core/state/loader';
+import { InstanceInitializer } from '../../../src/core/initializer';
 
 describe('Instance initializer', () => {
 
@@ -62,12 +63,55 @@ describe('Instance initializer', () => {
 
     // Check instanceInitializer creates instance state as expected
     // Testing here using GCP state, but Initializer is generic and should work with any statet
-    it('should initialize instance state with provided arguments', async () => {
+    it('base initializer should initialize instance state with provided arguments', async () => {
+
+        const baseInitializerTestInstanceName = "base-initializer-test-instance"
+
+        await new InstanceInitializer({ 
+            provider: CLOUDYPAD_PROVIDER_GCP,
+        }).initializeInstance(baseInitializerTestInstanceName, TEST_INPUT.provision, TEST_INPUT.configuration)
+
+        // Check state has been written
+        const state = await new StateLoader().loadAndMigrateInstanceState(baseInitializerTestInstanceName)
+
+        const expectState: GcpInstanceStateV1 = {
+            version: "1",
+            name: baseInitializerTestInstanceName,
+            provision: {
+                provider: CLOUDYPAD_PROVIDER_GCP,
+                input: TEST_INPUT.provision,
+                output: {
+                    host: "127.0.0.1",
+                    instanceName: "dummy-gcp"
+                }
+            },
+            configuration: {
+                configurator: CLOUDYPAD_CONFIGURATOR_ANSIBLE,
+                input: {
+                    sunshine: {
+                        enable: DEFAULT_COMMON_INPUT.configuration.sunshine?.enable ?? false,
+                        username: DEFAULT_COMMON_INPUT.configuration.sunshine?.username ?? "",
+                        passwordBase64: DEFAULT_COMMON_INPUT.configuration.sunshine?.passwordBase64 ?? "",
+                        imageTag: DEFAULT_COMMON_INPUT.configuration.sunshine?.imageTag ?? "",
+                        imageRegistry: DEFAULT_COMMON_INPUT.configuration.sunshine?.imageRegistry
+                    }
+                },
+                output: {}
+            }
+        }
+        
+        assert.deepEqual(state, expectState)
+    })
+
+    // Check instanceInitializer creates instance state as expected
+    // Testing here using GCP state, but Initializer is generic and should work with any statet
+    it('interactive initializer should initialize instance state with provided arguments without prompting for input', async () => {
 
         await new InteractiveInstanceInitializer({ 
             provider: CLOUDYPAD_PROVIDER_GCP,
-            inputPrompter: new GcpInputPrompter()
-        }).initializeInstance(TEST_CLI_ARGS, { skipPostInitInfo: true })
+            inputPrompter: new GcpInputPrompter(),
+            initArgs: TEST_CLI_ARGS
+        }).initializeInteractive({ skipPostInitInfo: true })
 
         // Check state has been written
         const state = await new StateLoader().loadAndMigrateInstanceState(instanceName)
@@ -107,15 +151,17 @@ describe('Instance initializer', () => {
         // Initialize dummy instance 
         await new InteractiveInstanceInitializer({ 
             provider: CLOUDYPAD_PROVIDER_GCP,
-            inputPrompter: new GcpInputPrompter()
-        }).initializeInstance(TEST_CLI_ARGS_ALREADY_EXISTING, { skipPostInitInfo: true })
+            inputPrompter: new GcpInputPrompter(),
+            initArgs: TEST_CLI_ARGS_ALREADY_EXISTING
+        }).initializeInteractive({ skipPostInitInfo: true })
 
         await assert.rejects(async () => {
             // Initialize again, should throw exception as overwriteExisting is false
             return new InteractiveInstanceInitializer({ 
                 provider: CLOUDYPAD_PROVIDER_GCP,
-                inputPrompter: new GcpInputPrompter()
-            }).initializeInstance(TEST_CLI_ARGS_ALREADY_EXISTING, { skipPostInitInfo: true })
+                inputPrompter: new GcpInputPrompter(),
+                initArgs: TEST_CLI_ARGS_ALREADY_EXISTING
+            }).initializeInteractive({ skipPostInitInfo: true })
         }, (thrown: unknown) => {
             return thrown instanceof Error && thrown.cause instanceof Error && thrown.cause.message.includes("Failed to prompt input")
         })

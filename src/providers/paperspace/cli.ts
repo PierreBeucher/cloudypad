@@ -1,5 +1,5 @@
-import { PaperspaceInstanceInput, PaperspaceInstanceStateV1, PaperspaceStateParser } from "./state"
-import { CommonInstanceInput } from "../../core/state/state"
+import { PaperspaceInstanceInput, PaperspaceInstanceStateV1, PaperspaceProvisionInputV1, PaperspaceStateParser } from "./state"
+import { CommonConfigurationInputV1, CommonInstanceInput } from "../../core/state/state"
 import { AbstractInputPrompter, PromptOptions } from "../../cli/prompter";
 import { select, input, password } from '@inquirer/prompts';
 import { fetchApiKeyFromEnvironment } from './client/client';
@@ -22,7 +22,7 @@ export interface PaperspaceCreateCliArgs extends CreateCliArgs {
 
 export type PaperspaceUpdateCliArgs = UpdateCliArgs & Omit<PaperspaceCreateCliArgs, "region">
 
-export class PaperspaceInputPrompter extends AbstractInputPrompter<PaperspaceCreateCliArgs, PaperspaceInstanceInput> {
+export class PaperspaceInputPrompter extends AbstractInputPrompter<PaperspaceCreateCliArgs, PaperspaceProvisionInputV1, CommonConfigurationInputV1> {
     
     buildProvisionerInputFromCliArgs(cliArgs: PaperspaceCreateCliArgs): PartialDeep<PaperspaceInstanceInput> {
         return {
@@ -169,10 +169,11 @@ export class PaperspaceCliCommandGenerator extends CliCommandGenerator {
             .action(async (cliArgs) => {
                 this.analytics.sendEvent(RUN_COMMAND_CREATE, { provider: CLOUDYPAD_PROVIDER_PAPERSPACE })
                 try {
-                    await new InteractiveInstanceInitializer({ 
+                    await new InteractiveInstanceInitializer<PaperspaceCreateCliArgs, PaperspaceProvisionInputV1, CommonConfigurationInputV1>({ 
                         inputPrompter: new PaperspaceInputPrompter(),
                         provider: CLOUDYPAD_PROVIDER_PAPERSPACE,
-                    }).initializeInstance(cliArgs)
+                        initArgs: cliArgs
+                    }).initializeInteractive()
                     
                 } catch (error) {
                     throw new Error('Paperspace instance initilization failed', { cause: error })

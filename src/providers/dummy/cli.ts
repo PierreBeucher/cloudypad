@@ -1,5 +1,5 @@
-import { DummyInstanceInput, DummyInstanceStateV1, DummyStateParser } from "./state"
-import { CommonInstanceInput } from "../../core/state/state"
+import { DummyInstanceInput, DummyInstanceStateV1, DummyProvisionInputV1, DummyStateParser } from "./state"
+import { CommonConfigurationInputV1, CommonInstanceInput } from "../../core/state/state"
 import { select } from '@inquirer/prompts';
 import { AbstractInputPrompter, PromptOptions } from "../../cli/prompter";
 import lodash from 'lodash'
@@ -17,7 +17,7 @@ export interface DummyCreateCliArgs extends CreateCliArgs {
 export type DummyUpdateCliArgs = UpdateCliArgs
 
 
-export class DummyInputPrompter extends AbstractInputPrompter<DummyCreateCliArgs, DummyInstanceInput> {
+export class DummyInputPrompter extends AbstractInputPrompter<DummyCreateCliArgs, DummyProvisionInputV1, CommonConfigurationInputV1> {
     
     buildProvisionerInputFromCliArgs(cliArgs: DummyCreateCliArgs): PartialDeep<DummyInstanceInput> {
         return {
@@ -84,10 +84,11 @@ export class DummyCliCommandGenerator extends CliCommandGenerator {
             .action(async (cliArgs) => {
                 
                 try {
-                    await new InteractiveInstanceInitializer<DummyCreateCliArgs>({ 
+                    await new InteractiveInstanceInitializer<DummyCreateCliArgs, DummyProvisionInputV1, CommonConfigurationInputV1>({ 
                         inputPrompter: new DummyInputPrompter(),
                         provider: CLOUDYPAD_PROVIDER_DUMMY,
-                    }).initializeInstance(cliArgs)
+                        initArgs: cliArgs
+                    }).initializeInteractive()
                     
                 } catch (error) {
                     logFullError(error)

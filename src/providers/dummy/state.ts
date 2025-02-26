@@ -1,5 +1,5 @@
 import { z } from "zod"
-import { CommonProvisionOutputV1Schema, CommonProvisionInputV1Schema, InstanceStateV1Schema, AbstractInstanceInputs } from "../../core/state/state"
+import { CommonProvisionOutputV1Schema, CommonProvisionInputV1Schema, InstanceStateV1Schema, InstanceInputs } from "../../core/state/state"
 import { GenericStateParser } from "../../core/state/parser"
 import { CLOUDYPAD_PROVIDER_DUMMY } from "../../core/const"
 
@@ -23,7 +23,7 @@ type DummyInstanceStateV1 = z.infer<typeof DummyInstanceStateV1Schema>
 type DummyProvisionOutputV1 = z.infer<typeof DummyProvisionOutputV1Schema>
 type DummyProvisionInputV1 = z.infer<typeof DummyProvisionInputV1Schema>
 
-type DummyInstanceInput = AbstractInstanceInputs<DummyProvisionInputV1>
+type DummyInstanceInput = InstanceInputs<DummyProvisionInputV1>
 
 export {
     DummyProvisionOutputV1Schema,

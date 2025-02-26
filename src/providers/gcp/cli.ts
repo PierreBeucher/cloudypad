@@ -1,5 +1,5 @@
-import { GcpInstanceInput, GcpInstanceStateV1, GcpStateParser } from "./state"
-import { CommonInstanceInput } from "../../core/state/state"
+import { GcpInstanceInput, GcpInstanceStateV1, GcpProvisionInputV1, GcpStateParser } from "./state"
+import { CommonConfigurationInputV1, CommonInstanceInput } from "../../core/state/state"
 import { input, select } from '@inquirer/prompts';
 import { AbstractInputPrompter, costAlertCliArgsIntoConfig, PromptOptions } from "../../cli/prompter";
 import { GcpClient } from "../../tools/gcp";
@@ -30,7 +30,7 @@ export interface GcpCreateCliArgs extends CreateCliArgs {
  */
 export type GcpUpdateCliArgs = UpdateCliArgs & Omit<GcpCreateCliArgs, "projectId" | "region" | "zone">
 
-export class GcpInputPrompter extends AbstractInputPrompter<GcpCreateCliArgs, GcpInstanceInput> {
+export class GcpInputPrompter extends AbstractInputPrompter<GcpCreateCliArgs, GcpProvisionInputV1, CommonConfigurationInputV1> {
     
     protected buildProvisionerInputFromCliArgs(cliArgs: GcpCreateCliArgs): PartialDeep<GcpInstanceInput> {
         return {
@@ -243,10 +243,11 @@ export class GcpCliCommandGenerator extends CliCommandGenerator {
             .action(async (cliArgs) => {
                 this.analytics.sendEvent(RUN_COMMAND_CREATE, { provider: CLOUDYPAD_PROVIDER_GCP })
                 try {
-                    await new InteractiveInstanceInitializer<GcpCreateCliArgs>({ 
+                    await new InteractiveInstanceInitializer<GcpCreateCliArgs, GcpProvisionInputV1, CommonConfigurationInputV1>({ 
                         inputPrompter: new GcpInputPrompter(),
                         provider: CLOUDYPAD_PROVIDER_GCP,
-                    }).initializeInstance(cliArgs)
+                        initArgs: cliArgs
+                    }).initializeInteractive()
                     
                 } catch (error) {
                     throw new Error('GCP instance initilization failed', { cause: error })
