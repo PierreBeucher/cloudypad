@@ -71,6 +71,9 @@ tasks:
   # Detect potential circular deps with Madge
   test-circular-deps:
     cmd: npx -y madge --ts-config ./tsconfig.json -c .
+
+  test-autostop:
+    cmd: python3 ansible/roles/autostop/files/autostop/test/autostop-test.py
   
   test-integ-ts-specs:
     prompt: Will run integration tests for AWS, Paperspace and Pulumi, creating and destroying real resources.
