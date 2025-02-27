@@ -176,7 +176,6 @@ See existing providers for example in `src/providers`.
 
 Integrate Provider in core, should be relatively straightforward:
 
-- Add provider state parser function in `src/core/state/parser.ts`
 - Add provider name and classes in `src/core/const.ts`
-- Add provider Instance Manager builder function in `src/core/manager-builder.ts`
+- Add provider registration  in `src/core/manager-builder.ts`
 - Add a `create` sub-command for provider in `src/index.ts` with options matching provider state interface. 

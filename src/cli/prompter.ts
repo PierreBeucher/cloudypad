@@ -5,7 +5,7 @@ import { PartialDeep } from "type-fest"
 import { input, select, confirm, password } from '@inquirer/prompts';
 import { ExitPromptError } from '@inquirer/core';
 import lodash from 'lodash'
-import { CommonInstanceInput, CommonProvisionInputV1, CommonProvisionOutputV1 } from "../core/state/state";
+import { InstanceInputs, CommonConfigurationInputV1, CommonInstanceInput, CommonProvisionInputV1, CommonProvisionOutputV1 } from "../core/state/state";
 import { getLogger } from "../log/utils";
 import { PUBLIC_IP_TYPE, PUBLIC_IP_TYPE_DYNAMIC, PUBLIC_IP_TYPE_STATIC } from '../core/const';
 import { CreateCliArgs } from './command';
@@ -13,13 +13,18 @@ import { StateLoader } from '../core/state/loader';
 import { CostAlertOptions, InstanceProvisionerArgs } from '../core/provisioner';
 const { kebabCase } = lodash
 
-export interface InputPrompter {
+/**
+ * InputPrompter is an interactive class prompting user for inputs to generate known Provision and Configuration Input interfaces.
+ * 
+ * It can be passed optional CLI arguments to generate a partial Input interface so as to only prompt for missing inputs.
+ */
+export interface InputPrompter<A extends CreateCliArgs, PI extends CommonProvisionInputV1, CI extends CommonConfigurationInputV1> {
 
     /**
      * Given some CLI arguments, ensure a full instance Input is returned.
      * Eg. prompt user for missing inputs.
      */
-    completeCliInput(cliArgs: CreateCliArgs): Promise<CommonInstanceInput>
+    completeCliInput(cliArgs: A): Promise<InstanceInputs<PI, CI>>
 }
 
 export const STREAMING_SERVER_SUNSHINE = "sunshine"
@@ -40,7 +45,11 @@ export interface PromptOptions {
  */
 export class UserVoluntaryInterruptionError extends Error { }
 
-export abstract class AbstractInputPrompter<A extends CreateCliArgs, I extends CommonInstanceInput> implements InputPrompter {
+export abstract class AbstractInputPrompter<
+    A extends CreateCliArgs, 
+    PI extends CommonProvisionInputV1, 
+    CI extends CommonConfigurationInputV1
+> implements InputPrompter<A, PI, CI> {
 
     protected readonly logger = getLogger(AbstractInputPrompter.name)
 
@@ -48,7 +57,7 @@ export abstract class AbstractInputPrompter<A extends CreateCliArgs, I extends C
      * Prompt user for additional provider-specific inputs based on common provider inputs.
      * Returns a fully valid state for instance initialization. 
      */
-    async promptInput(partialInput: PartialDeep<I>, createOptions: PromptOptions): Promise<I> {
+    async promptInput(partialInput: PartialDeep<InstanceInputs<PI, CI>>, createOptions: PromptOptions): Promise<InstanceInputs<PI, CI>> {
         try {
             const commonInput = await this.promptCommonInput(partialInput, createOptions)
 
@@ -123,7 +132,7 @@ export abstract class AbstractInputPrompter<A extends CreateCliArgs, I extends C
     /**
      * Prompt provider-specific input using known common Input and passed default input
      */
-    protected abstract promptSpecificInput(commonInput: CommonInstanceInput, partialInput: PartialDeep<I>, createOptions: PromptOptions): Promise<I>
+    protected abstract promptSpecificInput(commonInput: CommonInstanceInput, partialInput: PartialDeep<InstanceInputs<PI, CI>>, createOptions: PromptOptions): Promise<InstanceInputs<PI, CI>>
 
     /**
      * Transform CLI arguments into known Input interface:
@@ -131,7 +140,7 @@ export abstract class AbstractInputPrompter<A extends CreateCliArgs, I extends C
      * - Use a provider-specific function to provider-specific inputs into a Partial Input object
      * - Merge both and return the still potentially partial Input (which can be completed by prompting user)
      */
-    cliArgsIntoPartialInput(cliArgs: A): PartialDeep<I> {
+    cliArgsIntoPartialInput(cliArgs: A): PartialDeep<InstanceInputs<PI, CI>> {
         this.logger.debug(`Parsing CLI args ${JSON.stringify(cliArgs)} into Input interface...`)
 
         const provisionerInput = this.buildProvisionerInputFromCliArgs(cliArgs)
@@ -175,7 +184,7 @@ export abstract class AbstractInputPrompter<A extends CreateCliArgs, I extends C
      * This method should return an Input object with provider-specific inputs
      * taken from CLI args.
      */
-    protected abstract buildProvisionerInputFromCliArgs(cliArgs: A): PartialDeep<I>
+    protected abstract buildProvisionerInputFromCliArgs(cliArgs: A): PartialDeep<InstanceInputs<PI, CI>>
 
     /**
      * Convert partial CLI arguments into full, concret Input interface to be used by managers:
@@ -185,7 +194,7 @@ export abstract class AbstractInputPrompter<A extends CreateCliArgs, I extends C
      * @param cliArgs 
      * @returns 
      */
-    async completeCliInput(cliArgs: A): Promise<I> {
+    async completeCliInput(cliArgs: A): Promise<InstanceInputs<PI, CI>> {
         const partialInput = this.cliArgsIntoPartialInput(cliArgs)
         const input = await this.promptInput(partialInput, { overwriteExisting: cliArgs.overwriteExisting, autoApprove: cliArgs.yes })
         return input
@@ -449,6 +458,26 @@ export abstract class AbstractInputPrompter<A extends CreateCliArgs, I extends C
             
             return Buffer.from(sunshinePassword).toString('base64')
         }
+    }
+}
+
+export class ConfirmationPrompter {
+
+    private readonly logger = getLogger(ConfirmationPrompter.name)
+
+    async confirmCreation(instanceName: string, inputs: CommonInstanceInput, autoApprove?: boolean): Promise<boolean> {
+        if(autoApprove){
+            return true
+        }
+
+        const confirmation = await confirm({
+            message: `You are about to provision instance ${instanceName} with the following details:\n` + 
+            `    ${inputToHumanReadableString(inputs)}` +
+            `\nDo you want to proceed?`,
+            default: true,
+        })
+
+        return confirmation
     }
 }
 

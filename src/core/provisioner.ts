@@ -3,11 +3,11 @@ import { CLOUDYPAD_SUNSHINE_PORTS, CLOUDYPAD_WOLF_PORTS, SimplePortDefinition } 
 import { CommonProvisionInputV1, CommonProvisionOutputV1, CommonConfigurationInputV1 } from "./state/state"
 
 export interface InstanceProvisionOptions  {
-    autoApprove?: boolean
+
 }
 
 export interface DestroyOptions {
-    autoApprove?: boolean
+
 }
 
 /**

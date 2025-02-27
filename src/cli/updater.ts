@@ -1,22 +1,17 @@
 import { PartialDeep } from "type-fest"
-import { InstanceStateV1 } from "../core/state/state"
+import { InstanceInputs, InstanceStateV1 } from "../core/state/state"
 import { StateWriter } from "../core/state/writer"
 import { getLogger, Logger } from "../log/utils"
 import { InstanceManagerBuilder } from "../core/manager-builder"
 import { StateLoader } from "../core/state/loader"
 import { UpdateCliArgs } from "./command"
 import { GenericStateParser } from "../core/state/parser"
-import { AbstractInputPrompter, inputToHumanReadableString } from "./prompter"
-import { confirm } from "@inquirer/prompts"
+import { AbstractInputPrompter, ConfirmationPrompter } from "./prompter"
 import * as lodash from "lodash"
 
 export interface InstanceUpdaterArgs<ST extends InstanceStateV1, A extends UpdateCliArgs> {
     stateParser: GenericStateParser<ST>
-    inputPrompter: AbstractInputPrompter<A, { 
-        instanceName: string, 
-        provision: ST["provision"]["input"], 
-        configuration: ST["configuration"]["input"] 
-    }>  
+    inputPrompter: AbstractInputPrompter<A, ST["provision"]["input"], ST["configuration"]["input"]>  
 }
 
 export interface InstanceUpdateArgs<ST extends InstanceStateV1> {
@@ -28,11 +23,7 @@ export class InstanceUpdater<ST extends InstanceStateV1, A extends UpdateCliArgs
 
     private logger: Logger
     private stateParser: GenericStateParser<ST>
-    private inputPrompter: AbstractInputPrompter<A, { 
-        instanceName: string, 
-        provision: ST["provision"]["input"], 
-        configuration: ST["configuration"]["input"] 
-    }>  
+    private inputPrompter: AbstractInputPrompter<A, ST["provision"]["input"], ST["configuration"]["input"]>  
 
     constructor(args: InstanceUpdaterArgs<ST, A>) {
         this.logger = getLogger(InstanceUpdater.name)
@@ -81,26 +72,14 @@ export class InstanceUpdater<ST extends InstanceStateV1, A extends UpdateCliArgs
         
         this.logger.debug(`State after update ${JSON.stringify(stateWriter.cloneState())}`)
 
-        const manager = await new InstanceManagerBuilder().buildInstanceManager(instanceName)
+        const manager = await InstanceManagerBuilder.get().buildInstanceManager(instanceName)
 
-        const autoApprove = cliArgs.yes
-        let confirmCreation: boolean
-        if(autoApprove){
-            confirmCreation = autoApprove
-        } else {
-            
-            const inputs = await manager.getInputs()
-            confirmCreation = await confirm({
-                message: `You are about to provision instance ${instanceName} with the following details:\n` + 
-                `    ${inputToHumanReadableString(inputs)}` +
-                `\nDo you want to proceed?`,
-                default: true,
-            })
+        const prompter = new ConfirmationPrompter()
+        const confirmation = await prompter.confirmCreation(instanceName, await manager.getInputs(), cliArgs.yes)
+        if(!confirmation){
+            throw new Error('Provision aborted.')
         }
 
-        if (!confirmCreation) {
-            throw new Error(`Provision aborted for instance ${instanceName}.`);
-        }
 
         await manager.provision({ autoApprove: cliArgs.yes })
         await manager.configure()

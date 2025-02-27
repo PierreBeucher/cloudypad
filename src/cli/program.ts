@@ -9,6 +9,7 @@ import { AnalyticsManager } from '../tools/analytics/manager';
 import { RUN_COMMAND_CONFIGURE, RUN_COMMAND_DESTROY, RUN_COMMAND_GET, RUN_COMMAND_LIST, RUN_COMMAND_PAIR, RUN_COMMAND_PROVISION, RUN_COMMAND_RESTART, RUN_COMMAND_START, RUN_COMMAND_STOP } from '../tools/analytics/events';
 import { CLOUDYPAD_VERSION } from '../core/const';
 import { confirm } from '@inquirer/prompts';
+import { ConfirmationPrompter } from './prompter';
 
 const logger = getLogger("program")
 
@@ -78,7 +79,7 @@ export function buildProgram(){
             try {
                 analyticsClient.sendEvent(RUN_COMMAND_LIST)
 
-                const instanceNames = new InstanceManagerBuilder().getAllInstances();
+                const instanceNames = InstanceManagerBuilder.get().getAllInstances();
                 if (instanceNames.length === 0) {
                     console.info('No instances found.');
                     return;
@@ -107,7 +108,7 @@ export function buildProgram(){
                 analyticsClient.sendEvent(RUN_COMMAND_START)
 
                 console.info(`Starting instance ${name}...`)
-                const m = await new InstanceManagerBuilder().buildInstanceManager(name)
+                const m = await InstanceManagerBuilder.get().buildInstanceManager(name)
                 await m.start({ wait: opts.wait, waitTimeoutSeconds: opts.timeout})
     
                 if(opts.wait){
@@ -131,7 +132,7 @@ export function buildProgram(){
                 analyticsClient.sendEvent(RUN_COMMAND_STOP)
 
                 console.info(`Stopping instance ${name}...`)
-                const m = await new InstanceManagerBuilder().buildInstanceManager(name)
+                const m = await InstanceManagerBuilder.get().buildInstanceManager(name)
                 await m.stop({ wait: opts.wait, waitTimeoutSeconds: opts.timeout})
                 
                 if(opts.wait){
@@ -155,7 +156,7 @@ export function buildProgram(){
                 analyticsClient.sendEvent(RUN_COMMAND_RESTART)
 
                 console.info(`Restarting instance ${name}...`)
-                const m = await new InstanceManagerBuilder().buildInstanceManager(name)
+                const m = await InstanceManagerBuilder.get().buildInstanceManager(name)
                 await m.restart({ wait: opts.wait, waitTimeoutSeconds: opts.timeout})
                 
             } catch (error) {
@@ -170,7 +171,7 @@ export function buildProgram(){
             try {
                 analyticsClient.sendEvent(RUN_COMMAND_GET)
 
-                const m = await new InstanceManagerBuilder().buildInstanceManager(name)
+                const m = await InstanceManagerBuilder.get().buildInstanceManager(name)
                 const details = m.getStateJSON()
     
                 console.info(details)
@@ -183,12 +184,20 @@ export function buildProgram(){
         .command('provision <name>')
         .description('Provision an instance (deploy or update Cloud resources)')
         .option('--yes', 'Do not prompt for approval, automatically approve and continue')
-        .action(async (name) => {
+        .action(async (name, opts) => {
             try {
                 analyticsClient.sendEvent(RUN_COMMAND_PROVISION)
 
-                const m = await new InstanceManagerBuilder().buildInstanceManager(name)
-                await m.provision()
+                const manager = await InstanceManagerBuilder.get().buildInstanceManager(name)
+                const inputs = await manager.getInputs()
+                const prompter = new ConfirmationPrompter()
+
+                const confirmation = await prompter.confirmCreation(name, inputs, opts.yes)
+                if(!confirmation){
+                    throw new Error('Provision aborted.')
+                }
+
+                await manager.provision()
     
                 console.info(`Provisioned instance ${name}`)
             } catch (error) {
@@ -203,7 +212,7 @@ export function buildProgram(){
             try {
                 analyticsClient.sendEvent(RUN_COMMAND_CONFIGURE)
 
-                const m = await new InstanceManagerBuilder().buildInstanceManager(name)
+                const m = await InstanceManagerBuilder.get().buildInstanceManager(name)
                 await m.configure()
     
                 console.info("")
@@ -233,7 +242,7 @@ export function buildProgram(){
                     throw new Error('Destroy aborted.')
                 }
 
-                const m = await new InstanceManagerBuilder().buildInstanceManager(name)
+                const m = await InstanceManagerBuilder.get().buildInstanceManager(name)
                 await m.destroy({ autoApprove: opts.yes})
     
                 console.info("")
@@ -249,7 +258,7 @@ export function buildProgram(){
         .action(async (name: string) => {
             try {
                 analyticsClient.sendEvent(RUN_COMMAND_PAIR)
-                const m = await new InstanceManagerBuilder().buildInstanceManager(name)
+                const m = await InstanceManagerBuilder.get().buildInstanceManager(name)
                 await m.pairInteractive()
             } catch (error) {
                 throw new Error('Failed to pair instance', { cause: error })

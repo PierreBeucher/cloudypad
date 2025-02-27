@@ -1,5 +1,5 @@
-import { AzureInstanceInput, AzureStateParser, AzureInstanceStateV1, AZURE_SUPPORTED_DISK_TYPES } from "./state"
-import { CommonInstanceInput } from "../../core/state/state"
+import { AzureInstanceInput, AzureStateParser, AzureInstanceStateV1, AZURE_SUPPORTED_DISK_TYPES, AzureProvisionInputV1 } from "./state"
+import { CommonConfigurationInputV1, CommonInstanceInput } from "../../core/state/state"
 import { input, select, confirm } from '@inquirer/prompts';
 import { AbstractInputPrompter, costAlertCliArgsIntoConfig, PromptOptions } from "../../cli/prompter";
 import { AzureClient } from "../../tools/azure";
@@ -64,7 +64,7 @@ export const AZURE_SUPPORTED_GPU = [
     { machineType: "Standard_NV72ads_A10_v5", gpuType: "NVIDIA", gpuName: "A10", quotaName: "StandardNVADSA10v5Family"},
 ]
 
-export class AzureInputPrompter extends AbstractInputPrompter<AzureCreateCliArgs, AzureInstanceInput> {
+export class AzureInputPrompter extends AbstractInputPrompter<AzureCreateCliArgs, AzureProvisionInputV1, CommonConfigurationInputV1> {
     
     protected buildProvisionerInputFromCliArgs(cliArgs: AzureCreateCliArgs): PartialDeep<AzureInstanceInput> {
 
@@ -300,12 +300,13 @@ export class AzureCliCommandGenerator extends CliCommandGenerator {
                 this.analytics.sendEvent(RUN_COMMAND_CREATE, { provider: CLOUDYPAD_PROVIDER_AZURE })
 
                 try {
-                    await new InteractiveInstanceInitializer<AzureCreateCliArgs>({ 
+                    await new InteractiveInstanceInitializer<AzureCreateCliArgs, AzureProvisionInputV1, CommonConfigurationInputV1>({ 
                         inputPrompter: new AzureInputPrompter(),
                         provider: CLOUDYPAD_PROVIDER_AZURE,
-                    }).initializeInstance(cliArgs)
+                        initArgs: cliArgs
+                    }).initializeInteractive()
                     
-                } catch (error) {
+                } catch (error) {   
                     throw new Error('Azure instance initilization failed', { cause: error })
                 }
             })

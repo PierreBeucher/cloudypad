@@ -12,7 +12,7 @@ import { WolfMoonlightPairer } from './moonlight/pairer/wolf';
  * Options that may be passed to InstanceRunner functions
  */
 export interface InstanceRunnerOptions  {
-    autoApprove?: boolean
+
 }
 
 export enum InstanceRunningStatus {

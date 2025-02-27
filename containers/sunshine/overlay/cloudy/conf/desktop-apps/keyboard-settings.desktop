@@ -1,0 +1,13 @@
+# Desktop entry taken from /usr/share/applications/xfce-keyboard-settings.desktop
+[Desktop Entry]
+Version=1.0
+Name=Keyboard
+Exec=xfce4-keyboard-settings
+Icon=org.xfce.settings.keyboard
+Terminal=false
+Type=Application
+Categories=XFCE;GTK;Settings;DesktopSettings;X-XFCE-SettingsDialog;X-XFCE-HardwareSettings;
+StartupNotify=true
+OnlyShowIn=XFCE;
+X-XfcePluggable=true
+X-XfceHelpPage=keyboard

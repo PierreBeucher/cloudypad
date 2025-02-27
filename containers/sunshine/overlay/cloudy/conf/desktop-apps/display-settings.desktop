@@ -1,0 +1,14 @@
+# Desktop entry taken from /usr/share/applications/xfce-display-settings.desktop
+[Desktop Entry]
+Version=1.0
+Name=Display
+Exec=xfce4-display-settings
+Icon=video-display
+Terminal=false
+Type=Application
+Categories=XFCE;GTK;Settings;DesktopSettings;X-XFCE-SettingsDialog;X-XFCE-HardwareSettings;
+StartupNotify=true
+OnlyShowIn=XFCE;
+X-XfcePluggable=true
+X-XfceHelpPage=display
+X-Xfce-Position=0;0

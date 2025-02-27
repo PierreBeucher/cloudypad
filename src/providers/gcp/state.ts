@@ -1,5 +1,5 @@
 import { z } from "zod"
-import { CommonProvisionOutputV1Schema, CommonProvisionInputV1Schema, InstanceStateV1Schema, AbstractInstanceInputs, CostAlertSchema } from "../../core/state/state"
+import { CommonProvisionOutputV1Schema, CommonProvisionInputV1Schema, InstanceStateV1Schema, InstanceInputs, CostAlertSchema } from "../../core/state/state"
 import { CLOUDYPAD_PROVIDER_GCP, PUBLIC_IP_TYPE_DYNAMIC, PUBLIC_IP_TYPE_STATIC } from "../../core/const"
 import { GenericStateParser } from "../../core/state/parser"
 
@@ -31,7 +31,7 @@ type GcpInstanceStateV1 = z.infer<typeof GcpInstanceStateV1Schema>
 type GcpProvisionOutputV1 = z.infer<typeof GcpProvisionOutputV1Schema>
 type GcpProvisionInputV1 = z.infer<typeof GcpProvisionInputV1Schema>
 
-type GcpInstanceInput = AbstractInstanceInputs<GcpProvisionInputV1>
+type GcpInstanceInput = InstanceInputs<GcpProvisionInputV1>
 
 export {
     GcpProvisionOutputV1Schema,
