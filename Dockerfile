@@ -91,6 +91,6 @@ RUN npm ci --omit dev
 COPY --from=tsc /build/dist dist/
 COPY LICENSE.txt .
 
-RUN npm install --global
+RUN npm install --global dist/
 
 ENTRYPOINT  ["cloudypad"]
