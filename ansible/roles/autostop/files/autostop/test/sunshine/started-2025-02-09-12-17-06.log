@@ -1,0 +1,331 @@
+Waiting for X server availability...
+Attempt 1/20: X server not available. Retrying in 2 seconds...
+X server is available and working.
+[cert] -- [/cloudy/data/sunshine/cert.pem]
+[file_state] -- [/cloudy/data/sunshine/sunshine_state.json]
+[pkey] -- [/cloudy/data/sunshine/pkey.pem]
+[credentials_file] -- [/cloudy/data/sunshine/sunshine_credentials.json]
+[min_log_level] -- [info]
+[origin_web_ui_allowed] -- [lan]
+[sunshine_name] -- [test-cpu-only]
+[2025-02-09 11:18:54.276]: Info: Sunshine version: v2025.122.141614
+[2025-02-09 11:18:54.276]: Info: Package Publisher: LizardByte
+[2025-02-09 11:18:54.276]: Info: Publisher Website: https://app.lizardbyte.dev
+[2025-02-09 11:18:54.276]: Info: Get support: https://app.lizardbyte.dev/support
+[2025-02-09 11:18:54.282]: Info: New credentials have been created
+[cert] -- [/cloudy/data/sunshine/cert.pem]
+[file_state] -- [/cloudy/data/sunshine/sunshine_state.json]
+[pkey] -- [/cloudy/data/sunshine/pkey.pem]
+[credentials_file] -- [/cloudy/data/sunshine/sunshine_credentials.json]
+[min_log_level] -- [info]
+[origin_web_ui_allowed] -- [lan]
+[sunshine_name] -- [test-cpu-only]
+[2025-02-09 11:18:54.340]: Info: Sunshine version: v2025.122.141614
+[2025-02-09 11:18:54.340]: Info: Package Publisher: LizardByte
+[2025-02-09 11:18:54.340]: Info: Publisher Website: https://app.lizardbyte.dev
+[2025-02-09 11:18:54.340]: Info: Get support: https://app.lizardbyte.dev/support
+[2025-02-09 11:18:54.376]: Error: Couldn't load cuda: -1
+[2025-02-09 11:18:54.377]: Error: Couldn't open: /dev/dri/card0: Permission denied
+[2025-02-09 11:18:54.377]: Error: Environment variable WAYLAND_DISPLAY has not been defined
+[2025-02-09 11:18:54.377]: Info: Detecting displays
+[2025-02-09 11:18:54.378]: Info: Detected display: DUMMY0 (id: 0)DUMMY0 connected: true
+[2025-02-09 11:18:54.378]: Info: Detected display: DUMMY1 (id: 1)DUMMY1 connected: false
+[2025-02-09 11:18:54.378]: Info: Detected display: DUMMY2 (id: 2)DUMMY2 connected: false
+[2025-02-09 11:18:54.378]: Info: Detected display: DUMMY3 (id: 3)DUMMY3 connected: false
+[2025-02-09 11:18:54.378]: Info: Detected display: DUMMY4 (id: 4)DUMMY4 connected: false
+[2025-02-09 11:18:54.379]: Info: Detected display: DUMMY5 (id: 5)DUMMY5 connected: false
+[2025-02-09 11:18:54.379]: Info: Detected display: DUMMY6 (id: 6)DUMMY6 connected: false
+[2025-02-09 11:18:54.379]: Info: Detected display: DUMMY7 (id: 7)DUMMY7 connected: false
+[2025-02-09 11:18:54.379]: Info: Detected display: DUMMY8 (id: 8)DUMMY8 connected: false
+[2025-02-09 11:18:54.379]: Info: Detected display: DUMMY9 (id: 9)DUMMY9 connected: false
+[2025-02-09 11:18:54.379]: Info: Detected display: DUMMY10 (id: 10)DUMMY10 connected: false
+[2025-02-09 11:18:54.379]: Info: Detected display: DUMMY11 (id: 11)DUMMY11 connected: false
+[2025-02-09 11:18:54.379]: Info: Detected display: DUMMY12 (id: 12)DUMMY12 connected: false
+[2025-02-09 11:18:54.379]: Info: Detected display: DUMMY13 (id: 13)DUMMY13 connected: false
+[2025-02-09 11:18:54.379]: Info: Detected display: DUMMY14 (id: 14)DUMMY14 connected: false
+[2025-02-09 11:18:54.379]: Info: Detected display: DUMMY15 (id: 15)DUMMY15 connected: false
+[2025-02-09 11:18:54.394]: Warning: Gamepad ds5 is disabled due to No such file or directory
+[2025-02-09 11:18:54.394]: Info: // Testing for available encoders, this may generate errors. You can safely ignore those errors. //
+[2025-02-09 11:18:54.394]: Info: Trying encoder [nvenc]
+[2025-02-09 11:18:54.394]: Info: Screencasting with X11
+[2025-02-09 11:18:54.416]: Info: Creating encoder [h264_nvenc]
+[2025-02-09 11:18:54.416]: Info: Color coding: SDR (Rec. 601)
+[2025-02-09 11:18:54.416]: Info: Color depth: 8-bit
+[2025-02-09 11:18:54.417]: Info: Color range: JPEG
+[2025-02-09 11:18:54.426]: Error: Couldn't load cuda: -1
+[2025-02-09 11:18:54.426]: Info: Creating encoder [h264_nvenc]
+[2025-02-09 11:18:54.426]: Info: Color coding: SDR (Rec. 601)
+[2025-02-09 11:18:54.426]: Info: Color depth: 8-bit
+[2025-02-09 11:18:54.426]: Info: Color range: JPEG
+[2025-02-09 11:18:54.427]: Error: Couldn't load cuda: -1
+[2025-02-09 11:18:54.428]: Info: Encoder [nvenc] failed
+[2025-02-09 11:18:54.496]: Info: Trying encoder [vaapi]
+[2025-02-09 11:18:54.496]: Info: Screencasting with X11
+[2025-02-09 11:18:54.528]: Info: Creating encoder [h264_vaapi]
+[2025-02-09 11:18:54.528]: Info: Color coding: SDR (Rec. 601)
+[2025-02-09 11:18:54.528]: Info: Color depth: 8-bit
+[2025-02-09 11:18:54.528]: Info: Color range: JPEG
+[2025-02-09 11:18:54.529]: Error: Couldn't open /dev/dri/renderD128: No such file or directory
+[2025-02-09 11:18:54.529]: Info: Creating encoder [h264_vaapi]
+[2025-02-09 11:18:54.529]: Info: Color coding: SDR (Rec. 601)
+[2025-02-09 11:18:54.529]: Info: Color depth: 8-bit
+[2025-02-09 11:18:54.529]: Info: Color range: JPEG
+[2025-02-09 11:18:54.529]: Error: Couldn't open /dev/dri/renderD128: No such file or directory
+[2025-02-09 11:18:54.529]: Info: Encoder [vaapi] failed
+[2025-02-09 11:18:54.530]: Info: Trying encoder [software]
+[2025-02-09 11:18:54.530]: Info: Screencasting with X11
+[2025-02-09 11:18:54.530]: Info: Creating encoder [libx264]
+[2025-02-09 11:18:54.530]: Info: Color coding: SDR (Rec. 601)
+[2025-02-09 11:18:54.530]: Info: Color depth: 8-bit
+[2025-02-09 11:18:54.530]: Info: Color range: JPEG
+[2025-02-09 11:18:54.548]: Info: [libx264 @ 0x5d6016c58680] using cpu capabilities: MMX2 SSE2Fast SSSE3 SSE4.2 AVX FMA3 BMI2 AVX2 AVX512
+[2025-02-09 11:18:54.551]: Info: [libx264 @ 0x5d6016c58680] profile High, level 4.2, 4:2:0, 8-bit
+[2025-02-09 11:18:54.609]: Info: [libx264 @ 0x5d6016c58680] frame I:1     Avg QP:31.00  size:  1203
+[2025-02-09 11:18:54.609]: Info: [libx264 @ 0x5d6016c58680] mb I  I16..4: 99.9%  0.0%  0.0%
+[2025-02-09 11:18:54.609]: Info: [libx264 @ 0x5d6016c58680] 8x8 transform intra:0.0%
+[2025-02-09 11:18:54.609]: Info: [libx264 @ 0x5d6016c58680] coded y,uvDC,uvAC intra: 0.0% 0.0% 0.0%
+[2025-02-09 11:18:54.609]: Info: [libx264 @ 0x5d6016c58680] i16 v,h,dc,p: 97%  0%  3%  0%
+[2025-02-09 11:18:54.609]: Info: [libx264 @ 0x5d6016c58680] i8 v,h,dc,ddl,ddr,vr,hd,vl,hu:  0%  0% 75% 12%  0%  0%  0%  0% 12%
+[2025-02-09 11:18:54.609]: Info: [libx264 @ 0x5d6016c58680] i4 v,h,dc,ddl,ddr,vr,hd,vl,hu:  0%  0% 100%  0%  0%  0%  0%  0%  0%
+[2025-02-09 11:18:54.609]: Info: [libx264 @ 0x5d6016c58680] i8c dc,h,v,p: 100%  0%  0%  0%
+[2025-02-09 11:18:54.609]: Info: [libx264 @ 0x5d6016c58680] kb/s:577.44
+[2025-02-09 11:18:54.609]: Info: Creating encoder [libx264]
+[2025-02-09 11:18:54.609]: Info: Color coding: SDR (Rec. 601)
+[2025-02-09 11:18:54.609]: Info: Color depth: 8-bit
+[2025-02-09 11:18:54.609]: Info: Color range: JPEG
+[2025-02-09 11:18:54.610]: Info: [libx264 @ 0x5d6016c58680] using cpu capabilities: MMX2 SSE2Fast SSSE3 SSE4.2 AVX FMA3 BMI2 AVX2 AVX512
+[2025-02-09 11:18:54.611]: Info: [libx264 @ 0x5d6016c58680] profile High 4:4:4 Predictive, level 4.2, 4:4:4, 8-bit
+[2025-02-09 11:18:54.685]: Info: [libx264 @ 0x5d6016c58680] frame I:1     Avg QP:31.00  size:  1303
+[2025-02-09 11:18:54.685]: Info: [libx264 @ 0x5d6016c58680] mb I  I16..4: 100.0%  0.0%  0.0%
+[2025-02-09 11:18:54.685]: Info: [libx264 @ 0x5d6016c58680] 8x8 transform intra:0.0%
+[2025-02-09 11:18:54.686]: Info: [libx264 @ 0x5d6016c58680] coded y,u,v intra: 0.0% 0.0% 0.0%
+[2025-02-09 11:18:54.686]: Info: [libx264 @ 0x5d6016c58680] i16 v,h,dc,p: 97%  0%  3%  0%
+[2025-02-09 11:18:54.686]: Info: [libx264 @ 0x5d6016c58680] i8 v,h,dc,ddl,ddr,vr,hd,vl,hu:  0%  0% 75% 12%  0%  0%  0%  0% 12%
+[2025-02-09 11:18:54.686]: Info: [libx264 @ 0x5d6016c58680] i4 v,h,dc,ddl,ddr,vr,hd,vl,hu:  0%  0% 100%  0%  0%  0%  0%  0%  0%
+[2025-02-09 11:18:54.686]: Info: [libx264 @ 0x5d6016c58680] kb/s:625.44
+[2025-02-09 11:18:54.686]: Info: Screencasting with X11
+[2025-02-09 11:18:54.687]: Info: 
+[2025-02-09 11:18:54.687]: Info: // Ignore any errors mentioned above, they are not relevant. //
+[2025-02-09 11:18:54.687]: Info: 
+[2025-02-09 11:18:54.687]: Info: Found H.264 encoder: libx264 [software]
+[2025-02-09 11:18:54.696]: Error: Failed to create client: Daemon not running
+[2025-02-09 11:18:54.700]: Info: Configuration UI available at [https://localhost:47990]
+[2025-02-09 11:18:54.749]: Info: System tray created
+[2025-02-09 11:28:35.724]: Info: Web UI: [172.18.0.1] -- not authorized
+[2025-02-09 11:28:35.755]: Info: Web UI: [172.18.0.1] -- not authorized
+[2025-02-09 11:29:07.200]: Info: Web UI: [172.18.0.1] -- not authorized
+[2025-02-09 11:30:18.282]: Info: // Testing for available encoders, this may generate errors. You can safely ignore those errors. //
+[2025-02-09 11:30:18.282]: Info: Trying encoder [nvenc]
+[2025-02-09 11:30:18.282]: Info: Screencasting with X11
+[2025-02-09 11:30:18.283]: Info: Creating encoder [h264_nvenc]
+[2025-02-09 11:30:18.283]: Info: Color coding: SDR (Rec. 601)
+[2025-02-09 11:30:18.283]: Info: Color depth: 8-bit
+[2025-02-09 11:30:18.283]: Info: Color range: JPEG
+[2025-02-09 11:30:18.283]: Error: Couldn't load cuda: -1
+[2025-02-09 11:30:18.283]: Info: Encoder [nvenc] failed
+[2025-02-09 11:30:18.283]: Info: Trying encoder [vaapi]
+[2025-02-09 11:30:18.283]: Info: Screencasting with X11
+[2025-02-09 11:30:18.284]: Info: Creating encoder [h264_vaapi]
+[2025-02-09 11:30:18.284]: Info: Color coding: SDR (Rec. 601)
+[2025-02-09 11:30:18.284]: Info: Color depth: 8-bit
+[2025-02-09 11:30:18.284]: Info: Color range: JPEG
+[2025-02-09 11:30:18.284]: Error: Couldn't open /dev/dri/renderD128: No such file or directory
+[2025-02-09 11:30:18.284]: Info: Encoder [vaapi] failed
+[2025-02-09 11:30:18.284]: Info: Trying encoder [software]
+[2025-02-09 11:30:18.284]: Info: Screencasting with X11
+[2025-02-09 11:30:18.285]: Info: Creating encoder [libx264]
+[2025-02-09 11:30:18.285]: Info: Color coding: SDR (Rec. 601)
+[2025-02-09 11:30:18.285]: Info: Color depth: 8-bit
+[2025-02-09 11:30:18.285]: Info: Color range: JPEG
+[2025-02-09 11:30:18.286]: Info: [libx264 @ 0x70e39c027ec0] using cpu capabilities: MMX2 SSE2Fast SSSE3 SSE4.2 AVX FMA3 BMI2 AVX2 AVX512
+[2025-02-09 11:30:18.287]: Info: [libx264 @ 0x70e39c027ec0] profile High, level 4.2, 4:2:0, 8-bit
+[2025-02-09 11:30:18.324]: Info: [libx264 @ 0x70e39c027ec0] frame I:1     Avg QP:31.00  size:  1203
+[2025-02-09 11:30:18.324]: Info: [libx264 @ 0x70e39c027ec0] mb I  I16..4: 100.0%  0.0%  0.0%
+[2025-02-09 11:30:18.324]: Info: [libx264 @ 0x70e39c027ec0] 8x8 transform intra:0.0%
+[2025-02-09 11:30:18.324]: Info: [libx264 @ 0x70e39c027ec0] coded y,uvDC,uvAC intra: 0.0% 0.0% 0.0%
+[2025-02-09 11:30:18.324]: Info: [libx264 @ 0x70e39c027ec0] i16 v,h,dc,p: 97%  0%  3%  0%
+[2025-02-09 11:30:18.324]: Info: [libx264 @ 0x70e39c027ec0] i8 v,h,dc,ddl,ddr,vr,hd,vl,hu:  0%  0% 75% 12%  0%  0%  0%  0% 12%
+[2025-02-09 11:30:18.324]: Info: [libx264 @ 0x70e39c027ec0] i4 v,h,dc,ddl,ddr,vr,hd,vl,hu:  0%  0% 100%  0%  0%  0%  0%  0%  0%
+[2025-02-09 11:30:18.324]: Info: [libx264 @ 0x70e39c027ec0] i8c dc,h,v,p: 100%  0%  0%  0%
+[2025-02-09 11:30:18.324]: Info: [libx264 @ 0x70e39c027ec0] kb/s:577.44
+[2025-02-09 11:30:18.324]: Info: Creating encoder [libx264]
+[2025-02-09 11:30:18.324]: Info: Color coding: SDR (Rec. 601)
+[2025-02-09 11:30:18.324]: Info: Color depth: 8-bit
+[2025-02-09 11:30:18.324]: Info: Color range: JPEG
+[2025-02-09 11:30:18.325]: Info: [libx264 @ 0x70e39c027ec0] using cpu capabilities: MMX2 SSE2Fast SSSE3 SSE4.2 AVX FMA3 BMI2 AVX2 AVX512
+[2025-02-09 11:30:18.326]: Info: [libx264 @ 0x70e39c027ec0] profile High 4:4:4 Predictive, level 4.2, 4:4:4, 8-bit
+[2025-02-09 11:30:18.369]: Info: [libx264 @ 0x70e39c027ec0] frame I:1     Avg QP:34.38  size:  1683
+[2025-02-09 11:30:18.369]: Info: [libx264 @ 0x70e39c027ec0] mb I  I16..4: 99.0%  0.9%  0.0%
+[2025-02-09 11:30:18.369]: Info: [libx264 @ 0x70e39c027ec0] 8x8 transform intra:0.9%
+[2025-02-09 11:30:18.369]: Info: [libx264 @ 0x70e39c027ec0] coded y,u,v intra: 0.5% 0.0% 0.0%
+[2025-02-09 11:30:18.369]: Info: [libx264 @ 0x70e39c027ec0] i16 v,h,dc,p: 87% 10%  3%  0%
+[2025-02-09 11:30:18.369]: Info: [libx264 @ 0x70e39c027ec0] i8 v,h,dc,ddl,ddr,vr,hd,vl,hu:  0%  4% 49%  3%  0%  0%  0%  0% 44%
+[2025-02-09 11:30:18.369]: Info: [libx264 @ 0x70e39c027ec0] i4 v,h,dc,ddl,ddr,vr,hd,vl,hu:  0% 38% 61%  0%  0%  0%  0%  0%  2%
+[2025-02-09 11:30:18.370]: Info: [libx264 @ 0x70e39c027ec0] kb/s:807.84
+[2025-02-09 11:30:18.370]: Info: Screencasting with X11
+[2025-02-09 11:30:18.371]: Info: 
+[2025-02-09 11:30:18.371]: Info: // Ignore any errors mentioned above, they are not relevant. //
+[2025-02-09 11:30:18.371]: Info: 
+[2025-02-09 11:30:18.371]: Info: Found H.264 encoder: libx264 [software]
+[2025-02-09 11:30:18.371]: Info: Executing [Desktop]
+[2025-02-09 11:30:18.652]: Info: Video encryption enabled
+[2025-02-09 11:30:18.652]: Info: New streaming session started [active sessions: 1]
+[2025-02-09 11:30:18.767]: Info: CLIENT CONNECTED
+[2025-02-09 11:30:18.769]: Info: Detecting displays
+[2025-02-09 11:30:18.989]: Info: Detected display: DUMMY0 (id: 0)DUMMY0 connected: true
+[2025-02-09 11:30:18.989]: Info: Detected display: DUMMY1 (id: 1)DUMMY1 connected: false
+[2025-02-09 11:30:18.989]: Info: Detected display: DUMMY2 (id: 2)DUMMY2 connected: false
+[2025-02-09 11:30:18.990]: Info: Detected display: DUMMY3 (id: 3)DUMMY3 connected: false
+[2025-02-09 11:30:18.990]: Info: Detected display: DUMMY4 (id: 4)DUMMY4 connected: false
+[2025-02-09 11:30:18.990]: Info: Detected display: DUMMY5 (id: 5)DUMMY5 connected: false
+[2025-02-09 11:30:18.990]: Info: Detected display: DUMMY6 (id: 6)DUMMY6 connected: false
+[2025-02-09 11:30:18.990]: Info: Detected display: DUMMY7 (id: 7)DUMMY7 connected: false
+[2025-02-09 11:30:18.991]: Info: Detected display: DUMMY8 (id: 8)DUMMY8 connected: false
+[2025-02-09 11:30:18.991]: Info: Detected display: DUMMY9 (id: 9)DUMMY9 connected: false
+[2025-02-09 11:30:18.991]: Info: Detected display: DUMMY10 (id: 10)DUMMY10 connected: false
+[2025-02-09 11:30:18.992]: Info: Detected display: DUMMY11 (id: 11)DUMMY11 connected: false
+[2025-02-09 11:30:18.992]: Info: Detected display: DUMMY12 (id: 12)DUMMY12 connected: false
+[2025-02-09 11:30:18.992]: Info: Detected display: DUMMY13 (id: 13)DUMMY13 connected: false
+[2025-02-09 11:30:18.992]: Info: Detected display: DUMMY14 (id: 14)DUMMY14 connected: false
+[2025-02-09 11:30:18.992]: Info: Detected display: DUMMY15 (id: 15)DUMMY15 connected: false
+[2025-02-09 11:30:18.992]: Info: Screencasting with X11
+[2025-02-09 11:30:18.994]: Info: Configuring selected display (0) to stream
+[2025-02-09 11:30:18.995]: Info: Streaming display: DUMMY0 with res 1920x1080 offset by 0x0
+[2025-02-09 11:30:18.999]: Info: Creating encoder [libx264]
+[2025-02-09 11:30:18.999]: Info: Color coding: SDR (Rec. 601)
+[2025-02-09 11:30:18.999]: Info: Color depth: 8-bit
+[2025-02-09 11:30:18.999]: Info: Color range: MPEG
+[2025-02-09 11:30:18.999]: Info: [libx264 @ 0x5d6017b58e40] using cpu capabilities: MMX2 SSE2Fast SSSE3 SSE4.2 AVX FMA3 BMI2 AVX2 AVX512
+[2025-02-09 11:30:19.000]: Info: [libx264 @ 0x5d6017b58e40] profile High, level 4.2, 4:2:0, 8-bit
+[2025-02-09 11:30:19.140]: Info: Setting default sink to: [sink-sunshine-stereo]
+[2025-02-09 11:30:19.140]: Info: Found default monitor by name: sink-sunshine-stereo.monitor
+[2025-02-09 11:30:19.148]: Info: Opus initialized: 48 kHz, 2 channels, 512 kbps (total), LOWDELAY
+[2025-02-09 11:30:59.103]: Info: CLIENT DISCONNECTED
+[2025-02-09 11:30:59.104]: Info: Setting default sink to: [auto_null]
+[2025-02-09 11:30:59.105]: Error: Couldn't set default-sink [auto_null]: No such entity
+[2025-02-09 11:30:59.117]: Info: [libx264 @ 0x5d6017b58e40] frame I:1     Avg QP: 8.00  size:  1246
+[2025-02-09 11:30:59.117]: Info: [libx264 @ 0x5d6017b58e40] frame P:1584  Avg QP: 2.77  size:  9133
+[2025-02-09 11:30:59.117]: Info: [libx264 @ 0x5d6017b58e40] mb I  I16..4: 100.0%  0.0%  0.0%
+[2025-02-09 11:30:59.117]: Info: [libx264 @ 0x5d6017b58e40] mb P  I16..4:  0.2%  0.0%  0.0%  P16..4: 19.8%  0.0%  0.0%  0.0%  0.0%    skip:80.0%
+[2025-02-09 11:30:59.117]: Info: [libx264 @ 0x5d6017b58e40] 8x8 transform intra:6.6% inter:6.6%
+[2025-02-09 11:30:59.117]: Info: [libx264 @ 0x5d6017b58e40] coded y,uvDC,uvAC intra: 21.7% 34.0% 24.9% inter: 6.5% 3.0% 2.7%
+[2025-02-09 11:30:59.117]: Info: [libx264 @ 0x5d6017b58e40] i16 v,h,dc,p: 79% 12%  9%  0%
+[2025-02-09 11:30:59.117]: Info: [libx264 @ 0x5d6017b58e40] i8 v,h,dc,ddl,ddr,vr,hd,vl,hu: 15% 13% 39% 12%  5%  4%  4%  3%  6%
+[2025-02-09 11:30:59.117]: Info: [libx264 @ 0x5d6017b58e40] i4 v,h,dc,ddl,ddr,vr,hd,vl,hu: 38% 18% 15%  8%  5%  5%  4%  4%  3%
+[2025-02-09 11:30:59.117]: Info: [libx264 @ 0x5d6017b58e40] i8c dc,h,v,p: 62% 17% 20%  1%
+[2025-02-09 11:30:59.117]: Info: [libx264 @ 0x5d6017b58e40] Weighted P-Frames: Y:0.1% UV:0.0%
+[2025-02-09 11:30:59.117]: Info: [libx264 @ 0x5d6017b58e40] kb/s:4381.43
+Waiting for X server availability...
+Attempt 1/20: X server not available. Retrying in 2 seconds...
+Attempt 2/20: X server not available. Retrying in 2 seconds...
+X server is available and working.
+[cert] -- [/cloudy/data/sunshine/cert.pem]
+[file_state] -- [/cloudy/data/sunshine/sunshine_state.json]
+[pkey] -- [/cloudy/data/sunshine/pkey.pem]
+[credentials_file] -- [/cloudy/data/sunshine/sunshine_credentials.json]
+[min_log_level] -- [info]
+[origin_web_ui_allowed] -- [lan]
+[sunshine_name] -- [test-cpu-only]
+[2025-02-09 12:17:06.262]: Info: Sunshine version: v2025.122.141614
+[2025-02-09 12:17:06.262]: Info: Package Publisher: LizardByte
+[2025-02-09 12:17:06.262]: Info: Publisher Website: https://app.lizardbyte.dev
+[2025-02-09 12:17:06.262]: Info: Get support: https://app.lizardbyte.dev/support
+[2025-02-09 12:17:06.268]: Info: New credentials have been created
+[cert] -- [/cloudy/data/sunshine/cert.pem]
+[file_state] -- [/cloudy/data/sunshine/sunshine_state.json]
+[pkey] -- [/cloudy/data/sunshine/pkey.pem]
+[credentials_file] -- [/cloudy/data/sunshine/sunshine_credentials.json]
+[min_log_level] -- [info]
+[origin_web_ui_allowed] -- [lan]
+[sunshine_name] -- [test-cpu-only]
+[2025-02-09 12:17:06.316]: Info: Sunshine version: v2025.122.141614
+[2025-02-09 12:17:06.316]: Info: Package Publisher: LizardByte
+[2025-02-09 12:17:06.316]: Info: Publisher Website: https://app.lizardbyte.dev
+[2025-02-09 12:17:06.316]: Info: Get support: https://app.lizardbyte.dev/support
+[2025-02-09 12:17:06.347]: Error: Couldn't load cuda: -1
+[2025-02-09 12:17:06.349]: Error: Couldn't open: /dev/dri/card0: Permission denied
+[2025-02-09 12:17:06.349]: Error: Environment variable WAYLAND_DISPLAY has not been defined
+[2025-02-09 12:17:06.349]: Info: Detecting displays
+[2025-02-09 12:17:06.349]: Info: Detected display: DUMMY0 (id: 0)DUMMY0 connected: true
+[2025-02-09 12:17:06.350]: Info: Detected display: DUMMY1 (id: 1)DUMMY1 connected: false
+[2025-02-09 12:17:06.350]: Info: Detected display: DUMMY2 (id: 2)DUMMY2 connected: false
+[2025-02-09 12:17:06.350]: Info: Detected display: DUMMY3 (id: 3)DUMMY3 connected: false
+[2025-02-09 12:17:06.350]: Info: Detected display: DUMMY4 (id: 4)DUMMY4 connected: false
+[2025-02-09 12:17:06.350]: Info: Detected display: DUMMY5 (id: 5)DUMMY5 connected: false
+[2025-02-09 12:17:06.350]: Info: Detected display: DUMMY6 (id: 6)DUMMY6 connected: false
+[2025-02-09 12:17:06.350]: Info: Detected display: DUMMY7 (id: 7)DUMMY7 connected: false
+[2025-02-09 12:17:06.350]: Info: Detected display: DUMMY8 (id: 8)DUMMY8 connected: false
+[2025-02-09 12:17:06.351]: Info: Detected display: DUMMY9 (id: 9)DUMMY9 connected: false
+[2025-02-09 12:17:06.351]: Info: Detected display: DUMMY10 (id: 10)DUMMY10 connected: false
+[2025-02-09 12:17:06.351]: Info: Detected display: DUMMY11 (id: 11)DUMMY11 connected: false
+[2025-02-09 12:17:06.351]: Info: Detected display: DUMMY12 (id: 12)DUMMY12 connected: false
+[2025-02-09 12:17:06.351]: Info: Detected display: DUMMY13 (id: 13)DUMMY13 connected: false
+[2025-02-09 12:17:06.351]: Info: Detected display: DUMMY14 (id: 14)DUMMY14 connected: false
+[2025-02-09 12:17:06.351]: Info: Detected display: DUMMY15 (id: 15)DUMMY15 connected: false
+[2025-02-09 12:17:06.379]: Warning: Gamepad ds5 is disabled due to No such file or directory
+[2025-02-09 12:17:06.381]: Info: // Testing for available encoders, this may generate errors. You can safely ignore those errors. //
+[2025-02-09 12:17:06.381]: Info: Trying encoder [nvenc]
+[2025-02-09 12:17:06.381]: Info: Screencasting with X11
+[2025-02-09 12:17:06.381]: Info: Creating encoder [h264_nvenc]
+[2025-02-09 12:17:06.381]: Info: Color coding: SDR (Rec. 601)
+[2025-02-09 12:17:06.381]: Info: Color depth: 8-bit
+[2025-02-09 12:17:06.381]: Info: Color range: JPEG
+[2025-02-09 12:17:06.390]: Error: Couldn't load cuda: -1
+[2025-02-09 12:17:06.390]: Info: Creating encoder [h264_nvenc]
+[2025-02-09 12:17:06.390]: Info: Color coding: SDR (Rec. 601)
+[2025-02-09 12:17:06.390]: Info: Color depth: 8-bit
+[2025-02-09 12:17:06.390]: Info: Color range: JPEG
+[2025-02-09 12:17:06.390]: Error: Couldn't load cuda: -1
+[2025-02-09 12:17:06.390]: Info: Encoder [nvenc] failed
+[2025-02-09 12:17:06.485]: Info: Trying encoder [vaapi]
+[2025-02-09 12:17:06.485]: Info: Screencasting with X11
+[2025-02-09 12:17:06.488]: Info: Creating encoder [h264_vaapi]
+[2025-02-09 12:17:06.488]: Info: Color coding: SDR (Rec. 601)
+[2025-02-09 12:17:06.488]: Info: Color depth: 8-bit
+[2025-02-09 12:17:06.488]: Info: Color range: JPEG
+[2025-02-09 12:17:06.488]: Error: Couldn't open /dev/dri/renderD128: No such file or directory
+[2025-02-09 12:17:06.488]: Info: Creating encoder [h264_vaapi]
+[2025-02-09 12:17:06.488]: Info: Color coding: SDR (Rec. 601)
+[2025-02-09 12:17:06.488]: Info: Color depth: 8-bit
+[2025-02-09 12:17:06.488]: Info: Color range: JPEG
+[2025-02-09 12:17:06.488]: Error: Couldn't open /dev/dri/renderD128: No such file or directory
+[2025-02-09 12:17:06.488]: Info: Encoder [vaapi] failed
+[2025-02-09 12:17:06.489]: Info: Trying encoder [software]
+[2025-02-09 12:17:06.489]: Info: Screencasting with X11
+[2025-02-09 12:17:06.490]: Info: Creating encoder [libx264]
+[2025-02-09 12:17:06.491]: Info: Color coding: SDR (Rec. 601)
+[2025-02-09 12:17:06.491]: Info: Color depth: 8-bit
+[2025-02-09 12:17:06.491]: Info: Color range: JPEG
+[2025-02-09 12:17:06.507]: Info: [libx264 @ 0x60339a4c7340] using cpu capabilities: MMX2 SSE2Fast SSSE3 SSE4.2 AVX FMA3 BMI2 AVX2 AVX512
+[2025-02-09 12:17:06.510]: Info: [libx264 @ 0x60339a4c7340] profile High, level 4.2, 4:2:0, 8-bit
+[2025-02-09 12:17:06.570]: Info: [libx264 @ 0x60339a4c7340] frame I:1     Avg QP:31.00  size:  1203
+[2025-02-09 12:17:06.570]: Info: [libx264 @ 0x60339a4c7340] mb I  I16..4: 99.9%  0.0%  0.0%
+[2025-02-09 12:17:06.570]: Info: [libx264 @ 0x60339a4c7340] 8x8 transform intra:0.0%
+[2025-02-09 12:17:06.570]: Info: [libx264 @ 0x60339a4c7340] coded y,uvDC,uvAC intra: 0.0% 0.0% 0.0%
+[2025-02-09 12:17:06.570]: Info: [libx264 @ 0x60339a4c7340] i16 v,h,dc,p: 97%  0%  3%  0%
+[2025-02-09 12:17:06.570]: Info: [libx264 @ 0x60339a4c7340] i8 v,h,dc,ddl,ddr,vr,hd,vl,hu:  0%  0% 75% 12%  0%  0%  0%  0% 12%
+[2025-02-09 12:17:06.570]: Info: [libx264 @ 0x60339a4c7340] i4 v,h,dc,ddl,ddr,vr,hd,vl,hu:  0%  0% 100%  0%  0%  0%  0%  0%  0%
+[2025-02-09 12:17:06.570]: Info: [libx264 @ 0x60339a4c7340] i8c dc,h,v,p: 100%  0%  0%  0%
+[2025-02-09 12:17:06.570]: Info: [libx264 @ 0x60339a4c7340] kb/s:577.44
+[2025-02-09 12:17:06.571]: Info: Creating encoder [libx264]
+[2025-02-09 12:17:06.571]: Info: Color coding: SDR (Rec. 601)
+[2025-02-09 12:17:06.571]: Info: Color depth: 8-bit
+[2025-02-09 12:17:06.571]: Info: Color range: JPEG
+[2025-02-09 12:17:06.572]: Info: [libx264 @ 0x60339a4c7340] using cpu capabilities: MMX2 SSE2Fast SSSE3 SSE4.2 AVX FMA3 BMI2 AVX2 AVX512
+[2025-02-09 12:17:06.573]: Info: [libx264 @ 0x60339a4c7340] profile High 4:4:4 Predictive, level 4.2, 4:4:4, 8-bit
+[2025-02-09 12:17:06.652]: Info: [libx264 @ 0x60339a4c7340] frame I:1     Avg QP:31.00  size:  1303
+[2025-02-09 12:17:06.652]: Info: [libx264 @ 0x60339a4c7340] mb I  I16..4: 100.0%  0.0%  0.0%
+[2025-02-09 12:17:06.652]: Info: [libx264 @ 0x60339a4c7340] 8x8 transform intra:0.0%
+[2025-02-09 12:17:06.652]: Info: [libx264 @ 0x60339a4c7340] coded y,u,v intra: 0.0% 0.0% 0.0%
+[2025-02-09 12:17:06.652]: Info: [libx264 @ 0x60339a4c7340] i16 v,h,dc,p: 97%  0%  3%  0%
+[2025-02-09 12:17:06.652]: Info: [libx264 @ 0x60339a4c7340] i8 v,h,dc,ddl,ddr,vr,hd,vl,hu:  0%  0% 75% 12%  0%  0%  0%  0% 12%
+[2025-02-09 12:17:06.652]: Info: [libx264 @ 0x60339a4c7340] i4 v,h,dc,ddl,ddr,vr,hd,vl,hu:  0%  0% 100%  0%  0%  0%  0%  0%  0%
+[2025-02-09 12:17:06.652]: Info: [libx264 @ 0x60339a4c7340] kb/s:625.44
+[2025-02-09 12:17:06.655]: Info: Screencasting with X11
+[2025-02-09 12:17:06.658]: Info: 
+[2025-02-09 12:17:06.658]: Info: // Ignore any errors mentioned above, they are not relevant. //
+[2025-02-09 12:17:06.658]: Info: 
+[2025-02-09 12:17:06.658]: Info: Found H.264 encoder: libx264 [software]
+[2025-02-09 12:17:06.669]: Error: Failed to create client: Daemon not running
+[2025-02-09 12:17:06.675]: Info: Configuration UI available at [https://localhost:47990]
+[2025-02-09 12:17:06.691]: Info: System tray created

@@ -27,5 +27,8 @@
         nvidia_driver_module_params: |
           # nvidia-drm module is required by Wolf
           options nvidia-drm modeset=1
+    - role: roles/autostop
+      become: true
+      tags: [ autostop ]
     - role: roles/sunshine
       tags: [ sunshine ]

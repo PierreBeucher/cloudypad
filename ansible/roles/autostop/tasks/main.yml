@@ -1,0 +1,33 @@
+- name: Copy auto stopper script
+  copy:
+    src: autostop/src/autostop.py
+    dest: /usr/local/bin/autostop.py
+    mode: '0755'
+
+- name: Create systemd service file for cloudypad-autostop
+  copy:
+    dest: /etc/systemd/system/cloudypad-autostop.service
+    content: |
+      [Unit]
+      Description=Cloudypad Autostop Service
+      After=network.target
+
+      [Service]
+      Environment=PYTHONUNBUFFERED=1
+      ExecStart=/usr/bin/python3 /usr/local/bin/autostop.py
+      Restart=always
+      User=root
+      StandardOutput=journal
+      StandardError=journal
+
+      [Install]
+      WantedBy=multi-user.target
+
+- name: Reload systemd daemon
+  command: systemctl daemon-reload
+
+- name: Enable cloudypad-autostop service
+  systemd:
+    name: cloudypad-autostop
+    enabled: yes
+    state: started
