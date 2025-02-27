@@ -110,6 +110,8 @@ export abstract class AbstractInputPrompter<
             enable: streamingServer.wolfEnabled,
         } : null
 
+        const autoStop = await this.promptAutoStop(partialInput.configuration?.autostop?.enable, partialInput.configuration?.autostop?.timeoutSeconds)
+
         const commonInput: CommonInstanceInput = {
             instanceName: instanceName,
             provision: {
@@ -120,7 +122,11 @@ export abstract class AbstractInputPrompter<
             },
             configuration: {
                 sunshine: sunshineConfig,
-                wolf: wolfConfig
+                wolf: wolfConfig,
+                autostop: {
+                    enable: autoStop.autoStopEnable,
+                    timeoutSeconds: autoStop.autoStopTimeout,
+                },
             }
         }
 
@@ -457,6 +463,61 @@ export abstract class AbstractInputPrompter<
             }
             
             return Buffer.from(sunshinePassword).toString('base64')
+        }
+    }
+
+    private async promptAutoStop(_autoStopEnable?: boolean, _autostopTimeout?: number): Promise<{ autoStopEnable: boolean, autoStopTimeout?: number }> {
+        
+        let autoStopEnable: boolean
+        if(_autoStopEnable !== undefined){
+            autoStopEnable = _autoStopEnable
+        } else {
+            autoStopEnable = await confirm({
+                message: "Do you want to enable Auto Stop to shutdown the instance automatically when inactivity is detected?",
+                default: true,
+            })
+        }
+
+        if(!autoStopEnable){
+            return {
+                autoStopEnable: false,
+            }
+        }
+
+        let autoStopTimeout: number
+        if(_autostopTimeout !== undefined){
+            autoStopTimeout = _autostopTimeout
+        } else {
+            let autoStopTimeoutStr = await select({
+                message: "Select Auto Stop timeout:",
+                choices: [
+                    { name: '10 minutes', value: '600' },
+                    { name: '15 minutes', value: '900' },
+                    { name: '30 minutes', value: '1800' },
+                    { name: 'Enter custom timeout', value: '_' },
+                ],
+                default: '15 minutes',
+            })
+
+            while (autoStopTimeoutStr === '_' || isNaN(Number.parseInt(autoStopTimeoutStr))) {
+                if (autoStopTimeoutStr === '_') {
+                    autoStopTimeoutStr = await input({
+                        message: "Enter Auto Stop timeout in seconds:",
+                    })
+                }
+
+                if (isNaN(Number.parseInt(autoStopTimeoutStr))) {
+                    console.warn("Please enter a valid number for Auto Stop timeout")
+                    autoStopTimeoutStr = '_'
+                }
+            }
+
+            autoStopTimeout = Number.parseInt(autoStopTimeoutStr)
+        }
+
+        return {
+            autoStopEnable: autoStopEnable,
+            autoStopTimeout: autoStopTimeout,
         }
     }
 }

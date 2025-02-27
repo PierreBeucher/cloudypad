@@ -33,7 +33,7 @@ jobs:
       
       - run: nix develop -c npm i
 
-      - name: Run unit tests
+      - name: Run standard unit tests
         run: nix develop -c task test-unit
 
   build:

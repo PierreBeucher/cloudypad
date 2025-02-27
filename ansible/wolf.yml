@@ -26,3 +26,8 @@
       become: true
     - role: roles/wolf
       tags: [ wolf ]
+    
+    # Install autostop last to avoid shutdown during installation process
+    - role: roles/autostop
+      become: true
+      tags: [ autostop ]
