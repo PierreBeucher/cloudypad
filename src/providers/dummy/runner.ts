@@ -1,5 +1,5 @@
-import { CLOUDYPAD_PROVIDER_DUMMY } from '../../core/const';
-import { AbstractInstanceRunner, InstanceRunnerArgs, InstanceRunningStatus, StartStopOptions } from '../../core/runner';
+import { InstanceRunner, InstanceRunnerArgs, InstanceRunningStatus, StartStopOptions } from '../../core/runner';
+import { getLogger, Logger } from '../../log/utils';
 import { DummyInstanceInternalMemory } from './internal-memory';
 import { DummyProvisionInputV1, DummyProvisionOutputV1 } from './state';
 
@@ -7,21 +7,21 @@ export type DummyInstanceRunnerArgs = InstanceRunnerArgs<DummyProvisionInputV1, 
 
 /**
  * A Dummy instance runner that simulates the behavior of an instance.
+ * 
+ * Voluntarily does not extend AbstractInstanceRunner for simplicity
+ * and to avoid having stubs removing desired behavior during tests
  */
-export class DummyInstanceRunner extends AbstractInstanceRunner<DummyProvisionInputV1, DummyProvisionOutputV1>  {
+export class DummyInstanceRunner implements InstanceRunner {
+
+    private readonly logger: Logger
+    private readonly args: DummyInstanceRunnerArgs
 
     constructor(args: DummyInstanceRunnerArgs) {
-        super(CLOUDYPAD_PROVIDER_DUMMY, args)
+        this.logger = getLogger(args.instanceName)
+        this.args = args
     }
 
-    private setInstanceStatus(status: InstanceRunningStatus) {
-        DummyInstanceInternalMemory.get().setInstanceDetails(this.args.instanceName, {
-            instanceName: this.args.instanceName,
-            status: status
-        })
-    }
-
-    async doStart(opts?: StartStopOptions) {
+    async start(opts?: StartStopOptions): Promise<void> {
         this.logger.info(`Dummy start operation for instance: ${this.args.instanceName}`)
         
         if(opts?.wait) {
@@ -32,7 +32,7 @@ export class DummyInstanceRunner extends AbstractInstanceRunner<DummyProvisionIn
         this.setInstanceStatus(InstanceRunningStatus.Running)
     }
 
-    async doStop(opts?: StartStopOptions) {
+    async stop(opts?: StartStopOptions): Promise<void> {
         this.logger.info(`Dummy stop operation for instance: ${this.args.instanceName}`)
 
         if(opts?.wait) {
@@ -43,15 +43,31 @@ export class DummyInstanceRunner extends AbstractInstanceRunner<DummyProvisionIn
         this.setInstanceStatus(InstanceRunningStatus.Stopped)
     }
 
-    async doRestart(opts?: StartStopOptions) {
+    async restart(opts?: StartStopOptions): Promise<void> {
         this.logger.info(`Dummy restart operation for instance: ${this.args.instanceName}`)
-        await this.doStop(opts)
-        await this.doStart(opts)
+        await this.stop(opts)
+        await this.start(opts)
     }
 
-    async doGetInstanceStatus(): Promise<InstanceRunningStatus> {
+    async instanceStatus(): Promise<InstanceRunningStatus> {
         const details = DummyInstanceInternalMemory.get().getInstanceDetails(this.args.instanceName)
         this.logger.info(`Dummy get status operation for instance: ${this.args.instanceName} returning ${JSON.stringify(details)}`)
         return details?.status ?? InstanceRunningStatus.Unknown
+    }
+
+    async pairInteractive(): Promise<void> {
+        this.logger.info(`Dummy pair interactive operation for instance: ${this.args.instanceName}`)
+    }
+
+    async pairSendPin(pin: string, retries?: number, retryDelay?: number): Promise<boolean> {
+        this.logger.info(`Dummy pair send pin operation for instance: ${this.args.instanceName} with pin: ${pin}`)
+        return true
+    }
+
+    private setInstanceStatus(status: InstanceRunningStatus) {
+        DummyInstanceInternalMemory.get().setInstanceDetails(this.args.instanceName, {
+            instanceName: this.args.instanceName,
+            status: status
+        })
     }
 }

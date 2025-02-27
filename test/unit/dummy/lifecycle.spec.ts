@@ -30,8 +30,6 @@ describe('Dummy instance lifecycle', () => {
         }).initializeInteractive({ skipPostInitInfo: true })
 
         const state = await new StateLoader().loadAndMigrateInstanceState(DUMMY_INSTANCE_NAME)
-        
-        console.info(JSON.stringify(state, null, 2))
     })
 
     it('should provision and configure Dummy instance', async () => {
@@ -43,15 +41,15 @@ describe('Dummy instance lifecycle', () => {
     it('should start, stop, and restart the Dummy instance', async () => {
         const manager = await InstanceManagerBuilder.get().buildInstanceManager(DUMMY_INSTANCE_NAME)
 
-        await manager.start({ wait: true })
+        await manager.start({ wait: false })
         const detailsAfterStart = await manager.getInstanceDetails()    
         assert.equal(detailsAfterStart.status, 'running', 'Instance should be running after start')
         
-        await manager.stop({ wait: true })
+        await manager.stop({ wait: false })
         const detailsAfterStop = await manager.getInstanceDetails()
         assert.equal(detailsAfterStop.status, 'stopped', 'Instance should be stopped after stop')
         
-        await manager.restart({ wait: true })
+        await manager.restart({ wait: false })
         const detailsAfterRestart = await manager.getInstanceDetails()
         assert.equal(detailsAfterRestart.status, 'running', 'Instance should be running after restart')
     }).timeout(20000)
