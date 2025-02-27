@@ -54,7 +54,7 @@ const InstanceStateV1Schema = z.object({
     version: z.literal("1").describe("State schema version, always 1"),
     name: z.string().describe("Unique instance name"),
     provision: z.object({
-        provider: z.enum(CLOUDYPAD_PROVIDER_LIST).describe("Supported providers"),
+        provider: z.string().describe("Provider name"), // Any provider name is supported in schema
         output: CommonProvisionOutputV1Schema.optional(),
         input: CommonProvisionInputV1Schema,
     }),

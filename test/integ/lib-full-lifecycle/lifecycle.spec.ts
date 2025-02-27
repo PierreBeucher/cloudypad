@@ -24,7 +24,7 @@ describe('Lib full lifecycle', () => {
     const instanceName = "cloudypad-test-instance"
 
     function getInstanceManager(instanceName: string){
-        return new InstanceManagerBuilder().buildInstanceManager(instanceName)
+        return InstanceManagerBuilder.get().buildInstanceManager(instanceName)
     }
 
     it('should initialize an instance', async () => {

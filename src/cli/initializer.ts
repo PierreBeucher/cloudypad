@@ -112,7 +112,7 @@ export class InteractiveInstanceInitializer<
 
     private async doPairing(instanceName: string, skipPairing: boolean, autoApprove: boolean) {
 
-        const manager = await new InstanceManagerBuilder().buildInstanceManager(instanceName)
+        const manager = await InstanceManagerBuilder.get().buildInstanceManager(instanceName)
 
         const doPair = skipPairing ? false : autoApprove ? true : await confirm({
             message: `Your instance is almost ready ! Do you want to pair Moonlight now?`,

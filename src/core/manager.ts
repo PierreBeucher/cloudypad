@@ -48,7 +48,7 @@ export interface SubManagerFactory<ST extends InstanceStateV1> {
     buildConfigurator(state: ST): Promise<InstanceConfigurator>
 }
 
-export abstract class AbstractSubManagerFactory<ST extends InstanceStateV1> {
+export abstract class AbstractSubManagerFactory<ST extends InstanceStateV1> implements SubManagerFactory<ST> {
 
     async buildProvisioner(state: ST): Promise<InstanceProvisioner> {
         return this.doBuildProvisioner(state.name, state.provision.input, state.provision.output, state.configuration.input)

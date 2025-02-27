@@ -35,7 +35,7 @@ export class InstanceInitializer<PI extends CommonProvisionInputV1, CI extends C
         const state = await this.doInitializeState(instanceName, provisionInput, configurationInput)
         await this.afterInitializeState(instanceName, provisionInput, configurationInput)
 
-        const manager = await new InstanceManagerBuilder().buildInstanceManager(state.name)
+        const manager = await InstanceManagerBuilder.get().buildInstanceManager(state.name)
         
         await this.beforeProvisioning(manager, state.name)
         await this.doProvisioning(manager, state.name)

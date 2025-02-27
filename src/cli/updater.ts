@@ -72,7 +72,7 @@ export class InstanceUpdater<ST extends InstanceStateV1, A extends UpdateCliArgs
         
         this.logger.debug(`State after update ${JSON.stringify(stateWriter.cloneState())}`)
 
-        const manager = await new InstanceManagerBuilder().buildInstanceManager(instanceName)
+        const manager = await InstanceManagerBuilder.get().buildInstanceManager(instanceName)
 
         const prompter = new ConfirmationPrompter()
         const confirmation = await prompter.confirmCreation(instanceName, await manager.getInputs(), cliArgs.yes)

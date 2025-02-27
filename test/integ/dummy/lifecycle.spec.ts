@@ -35,13 +35,13 @@ describe('Dummy instance lifecycle', () => {
     })
 
     it('should provision and configure Dummy instance', async () => {
-        const manager = await new InstanceManagerBuilder().buildInstanceManager(DUMMY_INSTANCE_NAME)
+        const manager = await InstanceManagerBuilder.get().buildInstanceManager(DUMMY_INSTANCE_NAME)
         await manager.provision()
         await manager.configure()
     })
 
     it('should start, stop, and restart the Dummy instance', async () => {
-        const manager = await new InstanceManagerBuilder().buildInstanceManager(DUMMY_INSTANCE_NAME)
+        const manager = await InstanceManagerBuilder.get().buildInstanceManager(DUMMY_INSTANCE_NAME)
 
         await manager.start({ wait: true })
         const detailsAfterStart = await manager.getInstanceDetails()    
@@ -57,7 +57,7 @@ describe('Dummy instance lifecycle', () => {
     }).timeout(20000)
 
     it('should destroy the Dummy instance', async () => {
-        const manager = await new InstanceManagerBuilder().buildInstanceManager(DUMMY_INSTANCE_NAME)
+        const manager = await InstanceManagerBuilder.get().buildInstanceManager(DUMMY_INSTANCE_NAME)
         await manager.destroy()
     })
 
