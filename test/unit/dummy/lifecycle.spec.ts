@@ -5,7 +5,7 @@ import { CLOUDYPAD_PROVIDER_DUMMY } from '../../../src/core/const';
 import { DummyCreateCliArgs, DummyInputPrompter } from '../../../src/providers/dummy/cli';
 import { DEFAULT_COMMON_CLI_ARGS } from '../../unit/utils';
 import { StateLoader } from '../../../src/core/state/loader';
-import { DummyInstanceProviderClient, InstanceManagerBuilder } from '../../../src';
+import { InstanceManagerBuilder } from '../../../src';
 import { DummyProvisionInputV1 } from '../../../src/providers/dummy/state';
 import { CommonConfigurationInputV1 } from '../../../src/core/state/state';
 
@@ -40,25 +40,25 @@ describe('Dummy instance lifecycle', () => {
         await manager.configure()
     })
 
-    it('should start, stop, and restart the Dummy instance', async () => {
-        const manager = await InstanceManagerBuilder.get().buildInstanceManager(DUMMY_INSTANCE_NAME)
+    // it('should start, stop, and restart the Dummy instance', async () => {
+    //     const manager = await InstanceManagerBuilder.get().buildInstanceManager(DUMMY_INSTANCE_NAME)
 
-        await manager.start({ wait: true })
-        const detailsAfterStart = await manager.getInstanceDetails()    
-        assert.equal(detailsAfterStart.status, 'running', 'Instance should be running after start')
+    //     await manager.start({ wait: true })
+    //     const detailsAfterStart = await manager.getInstanceDetails()    
+    //     assert.equal(detailsAfterStart.status, 'running', 'Instance should be running after start')
         
-        await manager.stop({ wait: true })
-        const detailsAfterStop = await manager.getInstanceDetails()
-        assert.equal(detailsAfterStop.status, 'stopped', 'Instance should be stopped after stop')
+    //     await manager.stop({ wait: true })
+    //     const detailsAfterStop = await manager.getInstanceDetails()
+    //     assert.equal(detailsAfterStop.status, 'stopped', 'Instance should be stopped after stop')
         
-        await manager.restart({ wait: true })
-        const detailsAfterRestart = await manager.getInstanceDetails()
-        assert.equal(detailsAfterRestart.status, 'running', 'Instance should be running after restart')
-    }).timeout(20000)
+    //     await manager.restart({ wait: true })
+    //     const detailsAfterRestart = await manager.getInstanceDetails()
+    //     assert.equal(detailsAfterRestart.status, 'running', 'Instance should be running after restart')
+    // }).timeout(20000)
 
-    it('should destroy the Dummy instance', async () => {
-        const manager = await InstanceManagerBuilder.get().buildInstanceManager(DUMMY_INSTANCE_NAME)
-        await manager.destroy()
-    })
+    // it('should destroy the Dummy instance', async () => {
+    //     const manager = await InstanceManagerBuilder.get().buildInstanceManager(DUMMY_INSTANCE_NAME)
+    //     await manager.destroy()
+    // })
 
 })

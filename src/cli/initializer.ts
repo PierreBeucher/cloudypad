@@ -1,9 +1,7 @@
-import { getLogger } from "../log/utils"
 import { CLOUDYPAD_PROVIDER } from "../core/const"
 import { CreateCliArgs } from "./command"
 import { ConfirmationPrompter, InputPrompter, UserVoluntaryInterruptionError } from "./prompter"
 import { InstanceManagerBuilder } from "../core/manager-builder"
-import { StateInitializer } from "../core/state/initializer"
 import { confirm } from '@inquirer/prompts'
 import { AnalyticsManager } from "../tools/analytics/manager"
 import { CommonConfigurationInputV1, CommonInstanceInput, CommonProvisionInputV1, InstanceInputs } from "../core/state/state"

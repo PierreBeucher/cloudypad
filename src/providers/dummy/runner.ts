@@ -1,6 +1,6 @@
 import { CLOUDYPAD_PROVIDER_DUMMY } from '../../core/const';
 import { AbstractInstanceRunner, InstanceRunnerArgs, InstanceRunningStatus, StartStopOptions } from '../../core/runner';
-import { DummyInstanceProviderClient } from './internal-memory';
+import { DummyInstanceInternalMemory } from './internal-memory';
 import { DummyProvisionInputV1, DummyProvisionOutputV1 } from './state';
 
 export type DummyInstanceRunnerArgs = InstanceRunnerArgs<DummyProvisionInputV1, DummyProvisionOutputV1>
@@ -15,7 +15,7 @@ export class DummyInstanceRunner extends AbstractInstanceRunner<DummyProvisionIn
     }
 
     private setInstanceStatus(status: InstanceRunningStatus) {
-        DummyInstanceProviderClient.get().setInstanceDetails(this.args.instanceName, {
+        DummyInstanceInternalMemory.get().setInstanceDetails(this.args.instanceName, {
             instanceName: this.args.instanceName,
             status: status
         })
@@ -50,7 +50,7 @@ export class DummyInstanceRunner extends AbstractInstanceRunner<DummyProvisionIn
     }
 
     async doGetInstanceStatus(): Promise<InstanceRunningStatus> {
-        const details = DummyInstanceProviderClient.get().getInstanceDetails(this.args.instanceName)
+        const details = DummyInstanceInternalMemory.get().getInstanceDetails(this.args.instanceName)
         this.logger.info(`Dummy get status operation for instance: ${this.args.instanceName} returning ${JSON.stringify(details)}`)
         return details?.status ?? InstanceRunningStatus.Unknown
     }

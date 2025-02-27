@@ -33,7 +33,7 @@ export interface StateWriterArgs<ST extends InstanceStateV1> {
  */
 export class StateWriter<ST extends InstanceStateV1> extends BaseStateManager {
 
-    private logger = getLogger(StateWriter.name)
+    protected logger = getLogger(StateWriter.name)
 
     private state: ST
     
@@ -42,22 +42,44 @@ export class StateWriter<ST extends InstanceStateV1> extends BaseStateManager {
         this.state = args.state
     }
     
-    private async updateState(unsafeState: ST){
+    private async persistState(unsafeState: ST){
 
+        const safeState = this.checkStateBeforePersist(unsafeState)
+
+        await this.doPersistState(safeState)
+
+        this.state = safeState
+    }
+
+    /**
+     * Do update state by persisting or writing state after an ultimate Zod parsing.
+     * 
+     * @param unsafeState state to persist
+     */
+    protected async doPersistState(state: ST){
+        const statePath = this.getInstanceStatePath(state.name)
+
+        this.logger.debug(`Persisting state for ${state.name} at ${statePath}`)
+
+        await this.ensureInstanceDirExists()
+        fs.writeFileSync(statePath, yaml.dump(state), 'utf-8')
+    }
+
+    private checkStateBeforePersist(unsafeState: ST): ST{
         // Parse to make sure a buggy state isn't persisted to disk
         // Throws error if marlformed state
         const parser = new AnonymousStateParser()
         parser.parse(unsafeState)
         const safeState = unsafeState
 
-        this.state = safeState
+        return safeState
+    }
 
-        const statePath = this.getInstanceStatePath(safeState.name)
-
-        this.logger.debug(`Persisting state for ${safeState.name} at ${statePath}`)
-        
-        await this.ensureInstanceDirExists()
-        fs.writeFileSync(statePath, yaml.dump(safeState), 'utf-8')
+    /**
+     * Effectively destroy instance state and it's directory
+     */
+    async destroyInstanceStateDirectory(){
+        await this.removeInstanceDir()
     }
 
     /**
@@ -78,50 +100,43 @@ export class StateWriter<ST extends InstanceStateV1> extends BaseStateManager {
      * Persist managed State on disk.
      */
     async persistStateNow(){
-        await this.updateState(this.state)
+        await this.persistState(this.state)
     }
 
     async setProvisionInput(input: ST["provision"]["input"]){
         const newState = lodash.cloneDeep(this.state)
         newState.provision.input = input
-        await this.updateState(newState)
+        await this.persistState(newState)
     }
 
     async setProvisionOutput(output?: ST["provision"]["output"]){
         const newState = lodash.cloneDeep(this.state)
         newState.provision.output = output
-        await this.updateState(newState)
+        await this.persistState(newState)
     }
 
     async setConfigurationInput(input: ST["configuration"]["input"]){
         const newState = lodash.cloneDeep(this.state)
         newState.configuration.input = input
-        await this.updateState(newState)
+        await this.persistState(newState)
     }
 
     async setConfigurationOutput(output?: ST["configuration"]["output"]){
         const newState = lodash.cloneDeep(this.state)
         newState.configuration.output = output
-        await this.updateState(newState)
+        await this.persistState(newState)
     }
 
     async updateProvisionInput(input: PartialDeep<ST["provision"]["input"]>){
         const newState = lodash.cloneDeep(this.state)
         lodash.merge(newState.provision.input, input)
-        await this.updateState(newState)
+        await this.persistState(newState)
     }
     
     async updateConfigurationInput(input: PartialDeep<ST["configuration"]["input"]>){
         const newState = lodash.cloneDeep(this.state)
         lodash.merge(newState.configuration.input, input)
-        await this.updateState(newState)
-    }
-
-    /**
-     * Effectively destroy instance state and it's directory
-     */
-    async destroyInstanceStateDirectory(){
-        await this.removeInstanceDir()
+        await this.persistState(newState)
     }
 
     private async ensureInstanceDirExists(): Promise<void> {
