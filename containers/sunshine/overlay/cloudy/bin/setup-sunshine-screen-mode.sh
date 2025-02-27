@@ -10,7 +10,7 @@
 
 SCREEN_WIDTH=${SUNSHINE_CLIENT_WIDTH:-}
 SCREEN_HEIGHT=${SUNSHINE_CLIENT_HEIGHT:-}
-SCREEN_FPS=${SUNSHINE_CLIENT_FPS:-}d
+SCREEN_FPS=${SUNSHINE_CLIENT_FPS:-}
 SCREEN_NAME=$(xrandr --listmonitors | grep '*' | awk '{print $4}')
 
 echo "Setting up screen mode for screen '$SCREEN_NAME' with $SCREEN_WIDTH x $SCREEN_HEIGHT @ $SCREEN_FPS"
