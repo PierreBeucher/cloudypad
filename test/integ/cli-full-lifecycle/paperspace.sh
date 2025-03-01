@@ -10,6 +10,8 @@ function create_destroy_paperspace() {
         --public-ip-type static \
         --region "East Coast (NY2)" \
         --streaming-server wolf \
+        --autostop true \
+        --autostop-timeout 300 \
         --yes --overwrite-existing --skip-pairing
 
     $cloudypad_cmd get $instance_name
