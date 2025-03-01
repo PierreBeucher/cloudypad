@@ -19,6 +19,8 @@ function create_destroy_gcp() {
         --sunshine-user sunshine \
         --sunshine-password 'S3un$h1ne!"' \
         --sunshine-image-tag dev \
+        --autostop true \
+        --autostop-timeout 300 \
         --yes --overwrite-existing --skip-pairing
 
     $cloudypad_cmd update gcp \

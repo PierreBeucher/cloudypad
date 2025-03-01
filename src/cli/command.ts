@@ -21,7 +21,7 @@ export interface CreateCliArgs {
     sunshineImageTag?: string
     sunshineImageRegistry?: string
     autostop?: boolean
-    autostopTimeoutSeconds?: number
+    autostopTimeout?: number
 }
 
 /**

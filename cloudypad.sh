@@ -115,6 +115,9 @@ run_cloudypad_docker() {
 
     # Local environment variables to pass-through in container
     local env_vars=(
+        # CloudyPad
+        "CLOUDYPAD_LOG_LEVEL"
+
         # AWS
         "AWS_PROFILE" "AWS_ACCESS_KEY_ID" "AWS_SECRET_ACCESS_KEY" "AWS_SESSION_TOKEN" 
         "AWS_DEFAULT_REGION" "AWS_REGION" "AWS_ENDPOINT_URL" "AWS_PROFILE" 

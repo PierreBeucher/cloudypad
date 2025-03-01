@@ -15,6 +15,8 @@ function create_destroy_azure() {
         --cost-limit 2 \
         --cost-notification-email "test@test.com" \
         --streaming-server wolf \
+        --autostop true \
+        --autostop-timeout 300 \
         --yes --overwrite-existing --skip-pairing
 
     $cloudypad_cmd update azure \

@@ -8,11 +8,13 @@ Cloudy Pad is a Free, Open Source alternative to GeForce Now, Blacknut and simil
 - Run your games through **[Steam](https://store.steampowered.com/)**, **[Pegasus](https://pegasus-frontend.org/)** or **[Lutris](https://lutris.net/)**
 - Deploy on **AWS**, **Google Cloud**, **Azure** or **Paperspace**
 - **No screen or virtual screen needed.** Cloudy Pad manages it all for you !
-- Setup automated **Cost alerts** to avoid overspending 💸
-- Use **Spot instances** for up to **90% cheaper** instances
 - Play **30 hours per month** for **~15$ / month or less**
 - **Pay by the hour, no subscription** required
 - Streaming server: choose between [Sunshine](https://github.com/LizardByte/Sunshine) and [Wolf](https://games-on-whales.github.io/wolf/stable/)
+- **Cost reduction** and management 💸 
+  - Setup automated **Cost alerts** to avoid overspending 
+  - Use **Spot instances** for up to **90% cheaper** instances
+  - Automatically shutdown inactive instances
 
 **Not familiar with Cloud Gaming ?** See [What's Cloud Gaming and how is Cloudy Pad useful ?](./docs/src/what-is-cloud-gaming.md)
 
