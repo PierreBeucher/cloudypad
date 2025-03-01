@@ -1,5 +1,25 @@
 # Changelog
 
+## [0.18.0](https://github.com/PierreBeucher/cloudypad/compare/v0.17.0...v0.18.0) (2025-03-01)
+
+
+### Features
+
+* **autostop:** added inactivity detection with automatic machine shutdown ([12931a4](https://github.com/PierreBeucher/cloudypad/commit/12931a450e5ad26322a317df9dd03b3312cb6341))
+* **core:** generic Provider registration mechanism ([9741af4](https://github.com/PierreBeucher/cloudypad/commit/9741af4ce87bbf08f370e93b03c847e94d970016))
+* dummy provider implementation ([7cc0aef](https://github.com/PierreBeucher/cloudypad/commit/7cc0aef1fdbd630efdeb103abe7252ee26df5090))
+* provide pseudo-IPv6 for Mac/Apple devices pairing ([bcfc488](https://github.com/PierreBeucher/cloudypad/commit/bcfc488e27fbd562003b1bcbdbea280743e0c74b))
+* **sunshine:** add desktop shortcut for mouse, keyboard and display settings ([fe56524](https://github.com/PierreBeucher/cloudypad/commit/fe565244f6e1218cde98f9e6018db4d672fa50dc))
+
+
+### Bug Fixes
+
+* ensure install.sh compatibility for sh, bash and zsh ([a5f9125](https://github.com/PierreBeucher/cloudypad/commit/a5f91258a37440f91cc63b9bd10b99d3b4739d7a))
+* ensure install.sh compatibility for sh, bash and zsh ([7f60f3f](https://github.com/PierreBeucher/cloudypad/commit/7f60f3fb9023009deb76435746b70519993cb730))
+* pass CLOUDYPAD_LOG_LEVEL to container program ([9ace2ce](https://github.com/PierreBeucher/cloudypad/commit/9ace2ce0a94de72aaa3c1ea28645888dacf052f5))
+* Sunshine playbook not cleaning Paperspace apt sources file ([e21ecac](https://github.com/PierreBeucher/cloudypad/commit/e21ecac497548f28d41be397e2dc1729b15e36d3))
+* **sunshine:** remove _&lt;FPS&gt; suffix in mode name to avoid duplicated mode config ([2fa1286](https://github.com/PierreBeucher/cloudypad/commit/2fa12863c5b56774c9b2c6e4797ece2f0ee707e9))
+
 ## [0.17.0](https://github.com/PierreBeucher/cloudypad/compare/v0.16.0...v0.17.0) (2025-02-16)
 
 
