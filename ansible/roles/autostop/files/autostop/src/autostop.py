@@ -1,0 +1,83 @@
+import os
+import subprocess
+from datetime import datetime
+import time
+
+from scapy.all import sniff
+from scapy.config import conf
+
+#
+# Auto Stop watches for Moonlight activity on given port (47999 / Control by default)
+# When detecting inactivity longer than timeout, automatically shutdown instance
+# Main goal is to avoid overcost by letting unused instance run
+#
+
+
+class MoonlightNetworkActivityChecker:
+
+    def __init__(self, port=47999, timeout=5, packet_count=1):
+        self.port = port
+        self.timeout = timeout
+        self.packet_count = packet_count
+
+    def detect_moonlight_network_activity(self):
+        """
+        Check for network activity on Moonlight port (47999 / Control by default).
+        Listen for both incoming and outgoing UDP traffic for given timeout and packet count.
+        If traffic is detected, return True, otherwise return False.
+        """
+        
+        # Sniff on all interfaces
+        interfaces = list(conf.ifaces.keys())
+        
+        packets = sniff(iface=interfaces, filter=f"port {self.port}", timeout=self.timeout, count=self.packet_count)
+        return bool(packets)
+
+def main():
+    # Inactivity timeout (in seconds, default: 15 min)
+    inactivity_timeout = int(os.getenv('CLOUDYPAD_AUTOSTOP_TIMEOUT', 15*60)) 
+
+    # Period between each check (in seconds, default: 30s)
+    check_period_seconds = int(os.getenv('CLOUDYPAD_AUTOSTOP_CHECK_PERIOD_SECONDS', 30))
+
+    # Moonlight port on which to check for activity (default: 47999)
+    moonlight_activity_port = int(os.getenv('CLOUDYPAD_AUTOSTOP_MOONLIGHT_ACTIVITY_PORT', 47999))
+
+    # Dry run mode
+    dry_run = os.getenv('CLOUDYPAD_AUTOSTOP_DRY_RUN', 'false').lower() in ('true', '1')
+
+    current_date = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+    print(f"{current_date} - Starting Cloudy Pad Autostop")
+    print(f"{current_date} - Inactivity timeout: {inactivity_timeout} seconds")
+    print(f"{current_date} - Check period: {check_period_seconds} seconds")
+    print(f"{current_date} - Dry run: {dry_run}")
+
+    checker = MoonlightNetworkActivityChecker(port=moonlight_activity_port)    
+    last_activity_time = time.time()
+    
+    # Main loop to continuously check for traffic
+    while True:
+        try:
+            current_date = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+
+            if checker.detect_moonlight_network_activity():
+                print(f"{current_date} - Moonlight traffic detected on port {moonlight_activity_port}")
+                last_activity_time = time.time()
+            else:
+                current_inactivity = int(time.time() - last_activity_time)
+                print(f"{current_date} - No Moonlight traffic detected on port {moonlight_activity_port}. Current inactivity: {current_inactivity} seconds ({inactivity_timeout - current_inactivity} seconds remaining before timeout)")
+                if current_inactivity >= inactivity_timeout:
+                    print(f"{current_date} - Inactivity timeout reached: {inactivity_timeout} seconds. Shutting down the instance.")
+                    if dry_run:
+                        print(f"{current_date} - Would shutdown the instance. Continuing as running in dry run mode...")
+                    else:
+                        print(f"{current_date} - Inactivity timeout detected. Shutting down the machine...")
+                        subprocess.run(['sudo', 'shutdown', '-h', 'now'], check=True)
+                        break
+        except Exception as e:
+            print(f"{current_date} - Error checking Moonlight network activity: {e}")
+
+        time.sleep(check_period_seconds)  # Sleep before next check
+
+if __name__ == "__main__":
+    main()

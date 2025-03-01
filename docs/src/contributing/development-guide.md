@@ -13,6 +13,7 @@
 - [Adding a new provider](#adding-a-new-provider)
   - [Provider components](#provider-components)
   - [Integrate provider in Core](#integrate-provider-in-core)
+- [Adding new CLI args](#adding-new-cli-args)
 
 ## Release
 
@@ -179,3 +180,11 @@ Integrate Provider in core, should be relatively straightforward:
 - Add provider name and classes in `src/core/const.ts`
 - Add provider registration  in `src/core/manager-builder.ts`
 - Add a `create` sub-command for provider in `src/index.ts` with options matching provider state interface. 
+
+## Adding new CLI args
+
+- [ ] Add new `CLI_` option variable in `src/cli/command.ts`
+- [ ] Ensure CLI option variable is used by all relevant providers in `src/providers`
+- [ ] Ensure CLI option is handled by `cliArgsIntoPartialInput` 
+- [ ] Update state Inputs if needed
+- [ ] Update tests default values if needed

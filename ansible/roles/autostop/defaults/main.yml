@@ -1,0 +1,5 @@
+# Enable or disable auto stop service
+autostop_enable: true
+
+# Timeout in seconds before auto stopping the instance
+autostop_timeout_seconds: 900 # 15 min

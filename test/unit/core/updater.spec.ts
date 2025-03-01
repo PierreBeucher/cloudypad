@@ -39,7 +39,9 @@ describe('InstanceUpdater', () => {
             costNotificationEmail: "test@test.com",
             instanceType: "t2.micro",
             yes: true,
-            streamingServer: STREAMING_SERVER_WOLF
+            streamingServer: STREAMING_SERVER_WOLF,
+            autostop: true,
+            autostopTimeoutSeconds: 600
         })
 
         // Update should have triggered state update with provisioning + configuration
@@ -69,6 +71,10 @@ describe('InstanceUpdater', () => {
                     sunshine: null,
                     wolf: {
                         enable: true
+                    },
+                    autostop: {
+                        enable: true,
+                        timeoutSeconds: 600
                     }
                 },
                 output: {}

@@ -6,9 +6,8 @@ import { fetchApiKeyFromEnvironment } from './client/client';
 import lodash from 'lodash'
 import { PartialDeep } from "type-fest";
 import { CLOUDYPAD_PROVIDER_PAPERSPACE, PUBLIC_IP_TYPE } from "../../core/const";
-import { CLI_OPTION_DISK_SIZE, CLI_OPTION_PUBLIC_IP_TYPE, CLI_OPTION_SPOT, CLI_OPTION_STREAMING_SERVER, CLI_OPTION_SUNSHINE_IMAGE_REGISTRY, CLI_OPTION_SUNSHINE_IMAGE_TAG, CLI_OPTION_SUNSHINE_PASSWORD, CLI_OPTION_SUNSHINE_USERNAME, CliCommandGenerator, CreateCliArgs, UpdateCliArgs } from "../../cli/command";
+import { CLI_OPTION_AUTO_STOP_TIMEOUT, CLI_OPTION_AUTO_STOP_ENABLE, CLI_OPTION_DISK_SIZE, CLI_OPTION_PUBLIC_IP_TYPE, CLI_OPTION_SPOT, CLI_OPTION_STREAMING_SERVER, CLI_OPTION_SUNSHINE_IMAGE_REGISTRY, CLI_OPTION_SUNSHINE_IMAGE_TAG, CLI_OPTION_SUNSHINE_PASSWORD, CLI_OPTION_SUNSHINE_USERNAME, CliCommandGenerator, CreateCliArgs, UpdateCliArgs } from "../../cli/command";
 import { InteractiveInstanceInitializer } from "../../cli/initializer";
-import { InstanceManagerBuilder } from "../../core/manager-builder";
 import { RUN_COMMAND_CREATE, RUN_COMMAND_UPDATE } from "../../tools/analytics/events";
 import { InstanceUpdater } from "../../cli/updater";
 
@@ -163,6 +162,8 @@ export class PaperspaceCliCommandGenerator extends CliCommandGenerator {
             .addOption(CLI_OPTION_SUNSHINE_PASSWORD)
             .addOption(CLI_OPTION_SUNSHINE_IMAGE_TAG)
             .addOption(CLI_OPTION_SUNSHINE_IMAGE_REGISTRY)
+            .addOption(CLI_OPTION_AUTO_STOP_ENABLE)
+            .addOption(CLI_OPTION_AUTO_STOP_TIMEOUT)
             .option('--api-key-file <apikeyfile>', 'Path to Paperspace API key file')
             .option('--machine-type <type>', 'Machine type')
             .option('--region <region>', 'Region in which to deploy instance')
@@ -189,6 +190,8 @@ export class PaperspaceCliCommandGenerator extends CliCommandGenerator {
             .addOption(CLI_OPTION_SUNSHINE_PASSWORD)
             .addOption(CLI_OPTION_SUNSHINE_IMAGE_TAG)
             .addOption(CLI_OPTION_SUNSHINE_IMAGE_REGISTRY)
+            .addOption(CLI_OPTION_AUTO_STOP_ENABLE)
+            .addOption(CLI_OPTION_AUTO_STOP_TIMEOUT)
             .option('--api-key-file <apikeyfile>', 'Path to Paperspace API key file')
             .option('--machine-type <type>', 'Machine type')
             .action(async (cliArgs) => {

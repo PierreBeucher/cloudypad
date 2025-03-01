@@ -76,7 +76,7 @@ tasks:
     prompt: Will run integration tests for AWS, Paperspace and Pulumi, creating and destroying real resources.
     cmds:
     - task: test-integ-ts-specs-aws
-    - task:  test-integ-ts-specs-paperspace
+    - task: test-integ-ts-specs-paperspace
     - task: test-integ-ts-specs-pulumi
   
   test-integ-ts-specs-aws:

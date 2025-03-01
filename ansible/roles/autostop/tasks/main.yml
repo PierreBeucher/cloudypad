@@ -1,0 +1,58 @@
+- name: Install Python3 and venv
+  apt:
+    name: 
+      - python3
+      - python3-venv
+    state: present
+
+- name: create Auto Stop directory
+  file:
+    path: /root/cloudypad-autostop
+    state: directory
+
+- name: Create Autostop Python virtual environment for autostop
+  command: python3 -m venv /root/cloudypad-autostop/.venv
+  args:
+    creates: /root/cloudypad-autostop/.venv
+
+- name: Copy Autostop requirements.txt
+  copy:
+    src: autostop/requirements.txt
+    dest: /root/cloudypad-autostop/requirements.txt
+
+- name: Copy Autostop script
+  copy:
+    src: autostop/src/autostop.py
+    dest: /root/cloudypad-autostop/autostop.py
+    mode: '0755'
+
+- name: Install Autostop Python dependencies in virtual environment
+  command: /root/cloudypad-autostop/.venv/bin/pip install -r /root/cloudypad-autostop/requirements.txt
+
+- name: Create Autostop systemd service file for
+  copy:
+    dest: /etc/systemd/system/cloudypad-autostop.service
+    content: |
+      [Unit]
+      Description=Cloudypad Autostop Service
+      After=network.target
+
+      [Service]
+      Environment=PYTHONUNBUFFERED=1
+      ExecStart=/root/cloudypad-autostop/.venv/bin/python /root/cloudypad-autostop/autostop.py
+      Restart=always
+      User=root
+      StandardOutput=journal
+      StandardError=journal
+
+      [Install]
+      WantedBy=multi-user.target
+
+- name: Reload systemd daemon
+  command: systemctl daemon-reload
+
+- name: Manage cloudypad-autostop service
+  systemd:
+    name: cloudypad-autostop
+    enabled: "{{ autostop_enable | bool }}"
+    state: "{{ 'started' if autostop_enable | bool else 'stopped' }}"

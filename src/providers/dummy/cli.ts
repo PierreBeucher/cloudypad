@@ -3,7 +3,7 @@ import { CommonConfigurationInputV1, CommonInstanceInput } from "../../core/stat
 import { select } from '@inquirer/prompts';
 import { AbstractInputPrompter, PromptOptions } from "../../cli/prompter";
 import lodash from 'lodash'
-import { CliCommandGenerator, CreateCliArgs, UpdateCliArgs, CLI_OPTION_STREAMING_SERVER, CLI_OPTION_SUNSHINE_PASSWORD, CLI_OPTION_SUNSHINE_USERNAME, CLI_OPTION_SUNSHINE_IMAGE_REGISTRY, CLI_OPTION_SUNSHINE_IMAGE_TAG } from "../../cli/command";
+import { CliCommandGenerator, CreateCliArgs, UpdateCliArgs, CLI_OPTION_STREAMING_SERVER, CLI_OPTION_SUNSHINE_PASSWORD, CLI_OPTION_SUNSHINE_USERNAME, CLI_OPTION_SUNSHINE_IMAGE_REGISTRY, CLI_OPTION_SUNSHINE_IMAGE_TAG, CLI_OPTION_AUTO_STOP_TIMEOUT, CLI_OPTION_AUTO_STOP_ENABLE } from "../../cli/command";
 import { CLOUDYPAD_PROVIDER_DUMMY } from "../../core/const";
 import { InteractiveInstanceInitializer } from "../../cli/initializer";
 import { PartialDeep } from "type-fest";
@@ -80,6 +80,8 @@ export class DummyCliCommandGenerator extends CliCommandGenerator {
             .addOption(CLI_OPTION_SUNSHINE_PASSWORD)
             .addOption(CLI_OPTION_SUNSHINE_IMAGE_TAG)
             .addOption(CLI_OPTION_SUNSHINE_IMAGE_REGISTRY)
+            .addOption(CLI_OPTION_AUTO_STOP_ENABLE)
+            .addOption(CLI_OPTION_AUTO_STOP_TIMEOUT)
             .option('--instance-type <type>', 'EC2 instance type')
             .action(async (cliArgs) => {
                 
@@ -113,6 +115,8 @@ export class DummyCliCommandGenerator extends CliCommandGenerator {
             .addOption(CLI_OPTION_SUNSHINE_PASSWORD)
             .addOption(CLI_OPTION_SUNSHINE_IMAGE_TAG)
             .addOption(CLI_OPTION_SUNSHINE_IMAGE_REGISTRY)
+            .addOption(CLI_OPTION_AUTO_STOP_ENABLE)
+            .addOption(CLI_OPTION_AUTO_STOP_TIMEOUT)
             .option('--instance-type <type>', 'EC2 instance type')
             .action(async (cliArgs) => {
                 

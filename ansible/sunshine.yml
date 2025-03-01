@@ -29,3 +29,8 @@
           options nvidia-drm modeset=1
     - role: roles/sunshine
       tags: [ sunshine ]
+    
+    # Install autostop last to avoid shutdown during installation process
+    - role: roles/autostop
+      become: true
+      tags: [ autostop ]

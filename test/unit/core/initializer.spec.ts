@@ -53,6 +53,8 @@ describe('Instance initializer', () => {
         sunshinePassword: TEST_INPUT.configuration.sunshine?.passwordBase64 ? Buffer.from(TEST_INPUT.configuration.sunshine.passwordBase64, 'base64').toString('utf-8') : undefined,
         sunshineImageRegistry: TEST_INPUT.configuration.sunshine?.imageRegistry,
         sunshineImageTag: TEST_INPUT.configuration.sunshine?.imageTag,
+        autostop: TEST_INPUT.configuration.autostop?.enable,
+        autostopTimeoutSeconds: TEST_INPUT.configuration.autostop?.timeoutSeconds
     }
 
     const TEST_CLI_ARGS_ALREADY_EXISTING: GcpCreateCliArgs = {
@@ -94,6 +96,10 @@ describe('Instance initializer', () => {
                         passwordBase64: DEFAULT_COMMON_INPUT.configuration.sunshine?.passwordBase64 ?? "",
                         imageTag: DEFAULT_COMMON_INPUT.configuration.sunshine?.imageTag ?? "",
                         imageRegistry: DEFAULT_COMMON_INPUT.configuration.sunshine?.imageRegistry
+                    },
+                    autostop: {
+                        enable: DEFAULT_COMMON_INPUT.configuration.autostop?.enable ?? false,
+                        timeoutSeconds: DEFAULT_COMMON_INPUT.configuration.autostop?.timeoutSeconds ?? 999
                     }
                 },
                 output: {}
@@ -136,6 +142,10 @@ describe('Instance initializer', () => {
                         passwordBase64: DEFAULT_COMMON_INPUT.configuration.sunshine?.passwordBase64 ?? "",
                         imageTag: DEFAULT_COMMON_INPUT.configuration.sunshine?.imageTag ?? "",
                         imageRegistry: DEFAULT_COMMON_INPUT.configuration.sunshine?.imageRegistry
+                    },
+                    autostop: {
+                        enable: TEST_INPUT.configuration.autostop?.enable ?? false,
+                        timeoutSeconds: TEST_INPUT.configuration.autostop?.timeoutSeconds ?? 999
                     },
                     wolf: null
                 },
