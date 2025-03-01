@@ -54,7 +54,7 @@ describe('Instance initializer', () => {
         sunshineImageRegistry: TEST_INPUT.configuration.sunshine?.imageRegistry,
         sunshineImageTag: TEST_INPUT.configuration.sunshine?.imageTag,
         autostop: TEST_INPUT.configuration.autostop?.enable,
-        autostopTimeoutSeconds: TEST_INPUT.configuration.autostop?.timeoutSeconds
+        autostopTimeout: TEST_INPUT.configuration.autostop?.timeoutSeconds
     }
 
     const TEST_CLI_ARGS_ALREADY_EXISTING: GcpCreateCliArgs = {

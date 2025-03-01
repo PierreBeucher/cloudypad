@@ -41,7 +41,7 @@ describe('InstanceUpdater', () => {
             yes: true,
             streamingServer: STREAMING_SERVER_WOLF,
             autostop: true,
-            autostopTimeoutSeconds: 600
+            autostopTimeout: 600
         })
 
         // Update should have triggered state update with provisioning + configuration

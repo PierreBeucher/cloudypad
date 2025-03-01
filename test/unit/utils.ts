@@ -48,7 +48,7 @@ export const DEFAULT_COMMON_CLI_ARGS: CreateCliArgs = {
     sunshineImageTag: DEFAULT_COMMON_INPUT.configuration.sunshine?.imageTag,
     sunshineImageRegistry: DEFAULT_COMMON_INPUT.configuration.sunshine?.imageRegistry,
     autostop: DEFAULT_COMMON_INPUT.configuration.autostop?.enable,
-    autostopTimeoutSeconds: DEFAULT_COMMON_INPUT.configuration.autostop?.timeoutSeconds,
+    autostopTimeout: DEFAULT_COMMON_INPUT.configuration.autostop?.timeoutSeconds,
 }
 
 export const DUMMY_SSH_KEY_PATH = path.resolve(__dirname, '..', 'resources', 'ssh-key')
