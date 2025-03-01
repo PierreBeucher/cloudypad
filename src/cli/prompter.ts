@@ -169,6 +169,10 @@ export abstract class AbstractInputPrompter<
                 }
             },
             configuration: {
+                autostop: cliArgs.autostop !== undefined ? {
+                    enable: cliArgs.autostop,
+                    timeoutSeconds: cliArgs.autostopTimeoutSeconds,
+                } : undefined,
                 // if streaming server is provided, set specific boolean to enable/disable it
                 // if unset, leave undefined to prompt or use existing value from state
                 sunshine: {

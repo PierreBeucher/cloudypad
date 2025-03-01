@@ -20,7 +20,7 @@ export interface CreateCliArgs {
     sunshinePassword?: string
     sunshineImageTag?: string
     sunshineImageRegistry?: string
-    autostopEnable?: boolean
+    autostop?: boolean
     autostopTimeoutSeconds?: number
 }
 
@@ -63,7 +63,7 @@ export const CLI_OPTION_SUNSHINE_PASSWORD = new Option('--sunshine-password <pas
 export const CLI_OPTION_SUNSHINE_IMAGE_TAG = new Option('--sunshine-image-tag <tag>', 'Sunshine container image tag (ignored if streaming server is not sunshine)')
 export const CLI_OPTION_SUNSHINE_IMAGE_REGISTRY = new Option('--sunshine-image-registry <registry>', 'Sunshine container image registry (ignored if streaming server is not sunshine)')
 
-export const CLI_OPTION_AUTO_STOP_ENABLE = new Option('--autostop-enable', 'Enable Auto Stop to shutdown the instance automatically when inactivity is detected')
+export const CLI_OPTION_AUTO_STOP_ENABLE = new Option('--autostop [disable|no|false|0]', 'Enable Auto Stop to shutdown the instance automatically when inactivity is detected')
     .argParser(parseFalseOrDisable)
 export const CLI_OPTION_AUTO_STOP_TIMEOUT = new Option('--autostop-timeout <seconds>', 'Auto Stop timeout in seconds')
     .argParser(parseInt)
