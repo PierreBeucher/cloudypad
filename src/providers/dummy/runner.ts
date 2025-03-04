@@ -22,25 +22,39 @@ export class DummyInstanceRunner implements InstanceRunner {
     }
 
     async start(opts?: StartStopOptions): Promise<void> {
-        this.logger.info(`Dummy start operation for instance: ${this.args.instanceName}`)
+        this.logger.info(`Dummy start operation for instance: ${this.args.instanceName} (starting time: ${this.args.provisionInput.startingTimeSeconds} seconds)`)
         
-        if(opts?.wait) {
+        if(this.args.provisionInput.startingTimeSeconds > 0) {
             this.setInstanceStatus(InstanceRunningStatus.Starting)
-            await new Promise(resolve => setTimeout(resolve, 2000))
+            const startingPromise = new Promise<void>(resolve => setTimeout(() => {
+                this.setInstanceStatus(InstanceRunningStatus.Running)
+                resolve()
+            }, this.args.provisionInput.startingTimeSeconds * 1000))
+            
+            if(opts?.wait) {
+                await startingPromise
+            }
+        } else {
+            this.setInstanceStatus(InstanceRunningStatus.Running)
         }
-
-        this.setInstanceStatus(InstanceRunningStatus.Running)
     }
 
     async stop(opts?: StartStopOptions): Promise<void> {
-        this.logger.info(`Dummy stop operation for instance: ${this.args.instanceName}`)
+        this.logger.info(`Dummy stop operation for instance: ${this.args.instanceName} (stopping time: ${this.args.provisionInput.stoppingTimeSeconds} seconds)`)
 
-        if(opts?.wait) {
+        if(this.args.provisionInput.stoppingTimeSeconds > 0) {
             this.setInstanceStatus(InstanceRunningStatus.Stopping)
-            await new Promise(resolve => setTimeout(resolve, 2000));
+            const stoppingPromise = new Promise<void>(resolve => setTimeout(() => {
+                this.setInstanceStatus(InstanceRunningStatus.Stopped)
+                resolve()
+            }, this.args.provisionInput.stoppingTimeSeconds * 1000))
+            
+            if(opts?.wait) {
+                await stoppingPromise
+            }
+        } else {
+            this.setInstanceStatus(InstanceRunningStatus.Stopped)
         }
-
-        this.setInstanceStatus(InstanceRunningStatus.Stopped)
     }
 
     async restart(opts?: StartStopOptions): Promise<void> {

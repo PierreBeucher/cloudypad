@@ -18,7 +18,9 @@ describe('Dummy instance lifecycle', () => {
         ...DEFAULT_COMMON_CLI_ARGS,
         name: DUMMY_INSTANCE_NAME,
         instanceType: DUMMY_INSTANCE_TYPE,
-        overwriteExisting: true
+        overwriteExisting: true,
+        startingTimeSeconds: 0,
+        stoppingTimeSeconds: 0
     }
 
     it('should initialize a new Dummy instance', async () => {
@@ -41,15 +43,15 @@ describe('Dummy instance lifecycle', () => {
     it('should start, stop, and restart the Dummy instance', async () => {
         const manager = await InstanceManagerBuilder.get().buildInstanceManager(DUMMY_INSTANCE_NAME)
 
-        await manager.start({ wait: false })
+        await manager.start({ wait: true })
         const detailsAfterStart = await manager.getInstanceDetails()    
         assert.equal(detailsAfterStart.status, 'running', 'Instance should be running after start')
         
-        await manager.stop({ wait: false })
+        await manager.stop({ wait: true })
         const detailsAfterStop = await manager.getInstanceDetails()
         assert.equal(detailsAfterStop.status, 'stopped', 'Instance should be stopped after stop')
         
-        await manager.restart({ wait: false })
+        await manager.restart({ wait: true })
         const detailsAfterRestart = await manager.getInstanceDetails()
         assert.equal(detailsAfterRestart.status, 'running', 'Instance should be running after restart')
     }).timeout(20000)
