@@ -19,9 +19,13 @@ tasks:
   test-unit:
     cmd: npx mocha --config test/unit/.mocharc.json ./test/unit --recursive
 
-  build-npm-tar:
+  build-npm:
     cmds:
     - npm run build
+
+  build-npm-tar:
+    cmds:
+    - task: build-npm
     - (cd dist && npm pack)
 
   build-local:
