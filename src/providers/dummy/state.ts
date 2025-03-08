@@ -9,6 +9,8 @@ const DummyProvisionOutputV1Schema = CommonProvisionOutputV1Schema.extend({
 
 const DummyProvisionInputV1Schema = CommonProvisionInputV1Schema.extend({
     instanceType: z.string().describe("Type of Dummy instance"),
+    startingTimeSeconds: z.number().describe("Time (seconds) during which the instance will remain in 'starting' state before becoming 'running' on start/restart operation.").default(10),
+    stoppingTimeSeconds: z.number().describe("Time (seconds) during which the instance will remain in 'stopping' state before becoming 'stopped' on stop/restart operation.").default(10),
 })
 
 const DummyInstanceStateV1Schema = InstanceStateV1Schema.extend({
