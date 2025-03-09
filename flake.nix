@@ -57,6 +57,7 @@
               imagemagick_light
               ffmpeg
               vagrant
+              scaleway-cli
 
               google-cloud-sdk
             ];

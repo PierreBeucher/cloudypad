@@ -10,6 +10,7 @@ import { RUN_COMMAND_CONFIGURE, RUN_COMMAND_DESTROY, RUN_COMMAND_GET, RUN_COMMAN
 import { CLOUDYPAD_VERSION } from '../core/const';
 import { confirm } from '@inquirer/prompts';
 import { ConfirmationPrompter } from './prompter';
+import { ScalewayCliCommandGenerator } from '../providers/scaleway/cli';
 
 const logger = getLogger("program")
 
@@ -61,6 +62,7 @@ export function buildProgram(){
     createCmd.addCommand(new AzureCliCommandGenerator().buildCreateCommand())
     createCmd.addCommand(new GcpCliCommandGenerator().buildCreateCommand())
     createCmd.addCommand(new PaperspaceCliCommandGenerator().buildCreateCommand())
+    createCmd.addCommand(new ScalewayCliCommandGenerator().buildCreateCommand())
     
     const updateCmd = program
         .command('update')
@@ -70,6 +72,7 @@ export function buildProgram(){
     updateCmd.addCommand(new AzureCliCommandGenerator().buildUpdateCommand())
     updateCmd.addCommand(new GcpCliCommandGenerator().buildUpdateCommand())
     updateCmd.addCommand(new PaperspaceCliCommandGenerator().buildUpdateCommand())
+    updateCmd.addCommand(new ScalewayCliCommandGenerator().buildUpdateCommand())
     
     program
         .command('list')

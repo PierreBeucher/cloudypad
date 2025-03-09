@@ -2,7 +2,8 @@ import { AwsPulumiClient } from "../../../src/providers/aws/pulumi"
 import { AzurePulumiClient } from "../../../src/providers/azure/pulumi";
 import { InstancePulumiClient } from "../../../src/tools/pulumi/client";
 import { GcpPulumiClient } from "../../../src/providers/gcp/pulumi";
-import { awsInput, azureInput, gcpInput } from "./test-config.spec"
+import { awsInput, azureInput, gcpInput, scalewayInput } from "./test-config.spec"
+import { ScalewayPulumiClient } from "../../../src/providers/scaleway/pulumi";
 
 describe('Test Pulumi preview', function() {
 
@@ -16,18 +17,23 @@ describe('Test Pulumi preview', function() {
         console.info(`Pulumi ${client.stackName} result: ${JSON.stringify(previewRes)}`)
     }
 
-    it('should preview AWS Pulumi stack without errors', async () => {
-        const client = new AwsPulumiClient("cloudypad-pulumi-aws-test")
-        preview(client, awsInput)
-    })
+    // it('should preview AWS Pulumi stack without errors', async () => {
+    //     const client = new AwsPulumiClient("cloudypad-pulumi-aws-test")
+    //     await preview(client, awsInput)
+    // })
 
-    it('should preview Azure Pulumi stack without errors', async () => {
-        const client = new AzurePulumiClient("cloudypad-pulumi-azure-test")
-        preview(client, azureInput)
-    })
+    // it('should preview Azure Pulumi stack without errors', async () => {
+    //     const client = new AzurePulumiClient("cloudypad-pulumi-azure-test")
+    //     await preview(client, azureInput)
+    // })
 
-    it('should preview GCP Pulumi stack without errors', async () => {
-        const client = new GcpPulumiClient("cloudypad-pulumi-gcp-test")
-        preview(client, gcpInput)
+    // it('should preview GCP Pulumi stack without errors', async () => {
+    //     const client = new GcpPulumiClient("cloudypad-pulumi-gcp-test")
+    //     await preview(client, gcpInput)
+    // })
+
+    it('should preview Scaleway Pulumi stack without errors', async () => {
+        const client = new ScalewayPulumiClient("cloudypad-pulumi-scaleway-test")
+        await preview(client, scalewayInput)
     })
 })

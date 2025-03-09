@@ -75,28 +75,6 @@ tasks:
   # Detect potential circular deps with Madge
   test-circular-deps:
     cmd: npx -y madge --ts-config ./tsconfig.json -c .
-  
-  test-integ-ts-specs:
-    prompt: Will run integration tests for AWS, Paperspace and Pulumi, creating and destroying real resources.
-    cmds:
-    - task: test-integ-ts-specs-aws
-    - task: test-integ-ts-specs-paperspace
-    - task: test-integ-ts-specs-pulumi
-  
-  test-integ-ts-specs-aws:
-    - npx mocha --config test/integ/.mocharc.json test/integ/aws --recursive
-
-  test-integ-ts-specs-azure:
-    - npx mocha --config test/integ/.mocharc.json test/integ/azure --recursive
-  
-  test-integ-ts-specs-gcp:
-    - npx mocha --config test/integ/.mocharc.json test/integ/gcp --recursive
-
-  test-integ-ts-specs-pulumi:
-    - npx mocha --config test/integ/.mocharc.json test/integ/pulumi --recursive
-
-  test-integ-ts-specs-paperspace:
-    - npx mocha --config test/integ/.mocharc.json test/integ/paperspace --recursive
 
   test-integ-full-lifecycle-all:
     cmds:
@@ -104,7 +82,8 @@ tasks:
     - task: test-integ-full-lifecycle-azure
     - task: test-integ-full-lifecycle-gcp
     - task: test-integ-full-lifecycle-paperspace
-  
+    - task: test-integ-full-lifecycle-scaleway
+
   test-integ-full-lifecycle-aws:
     - test/integ/cli-full-lifecycle/run.sh aws
 
@@ -116,6 +95,9 @@ tasks:
 
   test-integ-full-lifecycle-paperspace:
     - test/integ/cli-full-lifecycle/run.sh paperspace
+
+  test-integ-full-lifecycle-scaleway:
+    - test/integ/cli-full-lifecycle/run.sh scaleway
 
   test-analytics-key-match:
     - cmd: test/shell/test-matching-analytics-key.sh

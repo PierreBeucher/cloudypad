@@ -6,7 +6,7 @@ Cloudy Pad is a Free, Open Source alternative to GeForce Now, Blacknut and simil
 
 - Stream with **[Moonlight](https://moonlight-stream.org/)** client
 - Run your games through **[Steam](https://store.steampowered.com/)**, **[Pegasus](https://pegasus-frontend.org/)** or **[Lutris](https://lutris.net/)**
-- Deploy on **AWS**, **Google Cloud**, **Azure** or **Paperspace**
+- Deploy on **AWS**, **Google Cloud**, **Azure**, **Scaleway** or **Paperspace**
 - **No screen or virtual screen needed.** Cloudy Pad manages it all for you !
 - Play **30 hours per month** for **~15$ / month or less**
 - **Pay by the hour, no subscription** required
