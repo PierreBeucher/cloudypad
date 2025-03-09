@@ -16,3 +16,4 @@ See detailed setup per Cloud provider:
 - [Azure](azure.md)
 - [Google Cloud](gcp.md)
 - [Paperspace](paperspace.md)
+- [Scaleway](scaleway.md)

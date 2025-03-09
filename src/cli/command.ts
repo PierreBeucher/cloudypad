@@ -39,8 +39,10 @@ export const CLI_OPTION_OVERWRITE_EXISTING = new Option('--overwrite-existing', 
 export const CLI_OPTION_SPOT = new Option('--spot [disable|no|false|0]', 'Enable Spot instance. Spot instances are cheaper' + 
         '(usually 20% to 70% off) but may be restarted any time.')
     .argParser(parseFalseOrDisable)
+
 export const CLI_OPTION_DISK_SIZE = new Option('--disk-size <size>', 'Disk size in GB')
     .argParser(parseInt)
+
 export const CLI_OPTION_PUBLIC_IP_TYPE = new Option('--public-ip-type <type>', `Public IP type. Either ${PUBLIC_IP_TYPE_STATIC} or ${PUBLIC_IP_TYPE_DYNAMIC}`)
     .argParser(parsePublicIpType)
 export const CLI_OPTION_SKIP_PAIRING = new Option('--skip-pairing', 'Skip Moonlight pairing after initial provisioning and configuration')

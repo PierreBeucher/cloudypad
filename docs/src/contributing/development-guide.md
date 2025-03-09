@@ -13,6 +13,7 @@
 - [Adding a new provider](#adding-a-new-provider)
   - [Provider components](#provider-components)
   - [Integrate provider in Core](#integrate-provider-in-core)
+  - [Tests](#tests-1)
 - [Adding new CLI args](#adding-new-cli-args)
 
 ## Release
@@ -175,13 +176,21 @@ See existing providers for example in `src/providers`.
 
 ### Integrate provider in Core
 
-Integrate Provider in core, should be relatively straightforward:
+Integrate Provider in core:
 
-- Add provider name and classes in `src/core/const.ts`
-- Add provider registration  in `src/core/manager-builder.ts`
-- Add a `create` sub-command for provider in `src/index.ts` with options matching provider state interface. 
+- [ ] Add provider name and classes in `src/core/const.ts`
+- [ ] Add provider registration in `src/core/manager-builder.ts`
+- [ ] Add a `create` sub-command for provider in `src/cli/program.ts` with options matching provider state interface. 
 
+### Tests
+
+- [ ] Add unit test in `test/unit/<provider>`
+- [ ] Add CLI full lifecycle tests in `test/integ/cli-full-lifecycle`
+- [ ] Add Pulumi tests in `test/integ/pulumi`
+- [ ] Add provider tests in `test/integ/<provider>`
 ## Adding new CLI args
+
+To add a new global or commong CLI argument used by all or multiple providers:
 
 - [ ] Add new `CLI_` option variable in `src/cli/command.ts`
 - [ ] Ensure CLI option variable is used by all relevant providers in `src/providers`

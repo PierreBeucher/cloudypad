@@ -7,7 +7,7 @@ Cloudy Pad lets you deploy a Cloud gaming server anywhere in the world and play 
 
 - Stream with **[Moonlight](https://moonlight-stream.org/)** client
 - Run your games through **[Steam](https://store.steampowered.com/)**, **[Pegasus](https://pegasus-frontend.org/)** or **[Lutris](https://lutris.net/)**
-- Deploy on **AWS**, **Google Cloud**, **Azure** or **Paperspace**
+- Deploy on **AWS**, **Google Cloud**, **Azure**, **Scaleway** or **Paperspace**
 - Setup automated **Cost alerts** to avoid overspending 💸
 - Use **Spot instances** for up to **90% cheaper** instances
 - Play **30 hours per month** for **~15$ / month or less**
@@ -43,6 +43,7 @@ Available Cloud providers:
 - [Google Cloud](https://cloud.google.com)
 - [Azure](https://azure.microsoft.com)
 - [AWS](https://aws.amazon.com/)
+- [Scaleway](https://www.scaleway.com/)
 
 Potential future Cloud providers - upvote them on their GitHub issues!
 - [Oblivus](https://oblivus.com/pricing/) - [👍 on GitHub issue](https://github.com/PierreBeucher/cloudypad/issues/4) if you want it implemented

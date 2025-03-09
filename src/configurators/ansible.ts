@@ -11,6 +11,7 @@ import { CLOUDYPAD_SUNSHINE_IMAGE_REGISTRY, CLOUDYPAD_VERSION } from '../core/co
 
 export interface AnsibleConfiguratorArgs {
     instanceName: string
+    provider: string
     provisionInput: CommonProvisionInputV1
     provisionOutput: CommonProvisionOutputV1
     configurationInput: CommonConfigurationInputV1
@@ -57,13 +58,18 @@ export class AnsibleConfigurator<ST extends InstanceStateV1> extends AbstractIns
                         ansible_host: this.args.provisionOutput.host,
                         ansible_user: ssh.user,
                         ansible_ssh_private_key_file: ssh.privateKeyPath,
+
+                        cloudypad_provider: this.args.provider,
+
                         wolf_instance_name: this.args.instanceName,
+                        
                         sunshine_server_name: this.args.instanceName,
                         sunshine_web_username: this.args.configurationInput.sunshine?.username,
                         sunshine_web_password_base64: this.args.configurationInput.sunshine?.passwordBase64,
                         sunshine_nvidia_enable: true,
                         sunshine_image_tag: this.args.configurationInput.sunshine?.imageTag ?? CLOUDYPAD_VERSION,
                         sunshine_image_registry: this.args.configurationInput.sunshine?.imageRegistry ?? CLOUDYPAD_SUNSHINE_IMAGE_REGISTRY,
+                        
                         autostop_enable: this.args.configurationInput.autostop?.enable,
                         autostop_timeout_seconds: this.args.configurationInput.autostop?.timeoutSeconds,
                     },

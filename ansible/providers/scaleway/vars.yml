@@ -1,0 +1,5 @@
+# Additional variables for Scaleway provider
+
+# Using Geerlingguy.docker role disable the Docker repository addition
+# as Scaleway already has apt config for Docker and adding repo would fail
+docker_add_repo: false

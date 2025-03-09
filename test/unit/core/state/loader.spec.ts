@@ -26,7 +26,8 @@ describe('StateLoader', function () {
                 'gcp-dummy', 
                 'paperspace-dummy', 
                 'missing-state-file', 
-                'wrong-state-version'
+                'wrong-state-version',
+                'scaleway-dummy'
             ]
             assert.deepStrictEqual(instances.sort(), expectedInstances.sort())
         })

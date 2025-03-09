@@ -15,6 +15,7 @@
   - Azure
   - Google Cloud
   - Paperspace
+  - Scaleway
 - [Moonlight](https://moonlight-stream.org/) streaming client
 - [Docker](https://docs.docker.com/engine/install/) 
   - Rootless Docker is not supported yet

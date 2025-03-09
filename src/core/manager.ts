@@ -84,6 +84,7 @@ export abstract class AbstractSubManagerFactory<ST extends InstanceStateV1> impl
 
         return this.doBuildConfigurator(
             state.name, 
+            state.provision.provider,
             state.provision.input, 
             state.provision.output,
             state.configuration.input
@@ -92,6 +93,7 @@ export abstract class AbstractSubManagerFactory<ST extends InstanceStateV1> impl
 
     protected async doBuildConfigurator(
         name: string,
+        provider: string,
         provisionInput: ST["provision"]["input"],
         provisionOutput: NonNullable<ST["provision"]["output"]>,
         configurationInput: ST["configuration"]["input"]
@@ -99,6 +101,7 @@ export abstract class AbstractSubManagerFactory<ST extends InstanceStateV1> impl
 
         const configurator = new AnsibleConfigurator<ST>({
             instanceName: name,
+            provider: provider,
             provisionInput: provisionInput,
             provisionOutput: provisionOutput,
             configurationInput: configurationInput,

@@ -15,6 +15,7 @@ script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 . "$script_dir/paperspace.sh"
 . "$script_dir/azure.sh"
 . "$script_dir/gcp.sh"
+. "$script_dir/scaleway.sh"
 
 case "$1" in
     aws)
@@ -29,7 +30,10 @@ case "$1" in
     gcp)
         create_destroy_gcp
         ;;
+    scaleway)
+        create_destroy_scaleway
+        ;;
     *)
-        echo "Usage: $0 {aws|paperspace|azure|gcp}"
+        echo "Usage: $0 {aws|paperspace|azure|gcp|scaleway}"
         ;;
 esac
