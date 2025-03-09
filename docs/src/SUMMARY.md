@@ -21,6 +21,7 @@
 - [Azure](./cost/azure.md)
 - [Google Cloud](./cost/gcp.md)
 - [Paperspace](./cost/paperspace.md)
+- [Scaleway](./cost/scaleway.md)
 
 # Setup your Cloud provider account
 
@@ -29,6 +30,7 @@
 - [Azure](./cloud-provider-setup/azure.md)
 - [Google Cloud](./cloud-provider-setup/gcp.md)
 - [Paperspace](./cloud-provider-setup/paperspace.md)
+- [Scaleway](./cloud-provider-setup/scaleway.md)
 
 # Contributing
 
