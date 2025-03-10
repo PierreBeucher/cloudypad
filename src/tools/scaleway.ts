@@ -1,5 +1,5 @@
 import { getLogger, Logger } from '../log/utils'
-import { createClient, Instance, Vpc, Account, Marketplace } from '@scaleway/sdk'
+import { createClient, Instance, Vpc, Account, Marketplace, Profile } from '@scaleway/sdk'
 import { loadProfileFromConfigurationFile } from '@scaleway/configuration-loader'
 
 interface StartStopActionOpts {
@@ -97,13 +97,22 @@ export class ScalewayClient {
         return Instance.v1.API.LOCALITIES
     }
 
+    /**
+     * Load Scaleway profile from configuration file.
+     * Mocked for unit tests
+     * @returns Scaleway profile
+     */
+    static loadProfileFromConfigurationFile(): Profile {
+        return loadProfileFromConfigurationFile()
+    }
+
     private readonly logger: Logger
     private readonly instanceClient: Instance.v1.API
     private readonly accountProjectClient: Account.v3.ProjectAPI
     private readonly marketplaceClient: Marketplace.v2.API
 
     constructor(name: string, args: ScalewayClientArgs) {
-        const profile = loadProfileFromConfigurationFile()
+        const profile = ScalewayClient.loadProfileFromConfigurationFile()
         const client = createClient({
             ...profile,
             defaultProjectId: args.projectId,

@@ -9,12 +9,14 @@ import { AbstractInstanceRunner } from '../../src/core/runner';
 import { AbstractInstanceProvisioner } from '../../src/core/provisioner';
 import { AzurePulumiClient } from '../../src/providers/azure/pulumi';
 import { GcpPulumiClient } from '../../src/providers/gcp/pulumi';
+import { ScalewayPulumiClient } from '../../src/providers/scaleway/pulumi';
 import { PaperspaceClient, PaperspaceMachine } from '../../src/providers/paperspace/client/client';
-import { DUMMY_AWS_PULUMI_OUTPUT, DUMMY_AZURE_PULUMI_OUTPUT, DUMMY_GCP_PULUMI_OUTPUT, DUMMY_PAPERSPACE_MACHINE } from './utils';
+import { DUMMY_AWS_PULUMI_OUTPUT, DUMMY_AZURE_PULUMI_OUTPUT, DUMMY_GCP_PULUMI_OUTPUT, DUMMY_PAPERSPACE_MACHINE, DUMMY_SCALEWAY_PULUMI_OUTPUT } from './utils';
 import { DataRootDirManager } from '../../src/core/data-dir';
 import { AnalyticsManager } from '../../src/tools/analytics/manager';
 import { NoOpAnalyticsClient } from '../../src/tools/analytics/client';
 import { SshKeyLoader } from '../../src/tools/ssh';
+import { ScalewayClient } from '../../src/tools/scaleway';
 
 
 export const mochaHooks = {
@@ -63,6 +65,19 @@ export const mochaHooks = {
 
         // GCP
         sinon.stub(GcpPulumiClient.prototype, 'up').resolves(DUMMY_GCP_PULUMI_OUTPUT)
+
+        // Scaleway
+        sinon.stub(ScalewayPulumiClient.prototype, 'up').resolves(DUMMY_SCALEWAY_PULUMI_OUTPUT)
+        sinon.stub(ScalewayClient, 'loadProfileFromConfigurationFile').callsFake(() => {
+            return {
+                defaultRegion: "fr-par",
+                defaultZone: "fr-par-1",
+                defaultProjectId: "f47ac10b-58cc-4372-a567-0e02b2c3d479",
+                accessKey: "SCWXXXXXXXXXXXXXXXXX",
+                secretKey: "550e8400-e29b-41d4-a716-446655440000",
+                projectId: "f47ac10b-58cc-4372-a567-0e02b2c3d479"
+            }
+        })
 
         // Paperspace
         const dummyMachine: PaperspaceMachine = DUMMY_PAPERSPACE_MACHINE

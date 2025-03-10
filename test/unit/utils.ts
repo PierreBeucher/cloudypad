@@ -11,6 +11,7 @@ import { tmpdir } from "os";
 import { AnonymousStateParser } from "../../src/core/state/parser";
 import { STREAMING_SERVER_SUNSHINE } from '../../src/cli/prompter';
 import { CreateCliArgs } from "../../src/cli/command";
+import { ScalewayPulumiOutput } from "../../src/providers/scaleway/pulumi";
 
 export const DEFAULT_COMMON_INPUT: CommonInstanceInput = {
     instanceName: "dummy-instance",
@@ -67,6 +68,11 @@ export const DUMMY_AZURE_PULUMI_OUTPUT: AzurePulumiOutput = { vmName: "dummy-az"
  * Dummy output returned by Pulumi during unit test for GCP
  */
 export const DUMMY_GCP_PULUMI_OUTPUT: GcpPulumiOutput = { instanceName: "dummy-gcp", publicIp: "127.0.0.1"}
+
+/**
+ * Dummy output returned by Pulumi during unit test for Scaleway
+ */
+export const DUMMY_SCALEWAY_PULUMI_OUTPUT: ScalewayPulumiOutput = { instanceName: "dummy-scw", publicIp: "127.0.0.1", instanceServerId: "server-123456789"}
 
 export const DUMMY_V1_ROOT_DATA_DIR = path.resolve(__dirname, "core", "state", "v1-root-data-dir")
 export const DUMMY_V0_ROOT_DATA_DIR = path.resolve(__dirname, "core", "state", "v0-root-data-dir")
