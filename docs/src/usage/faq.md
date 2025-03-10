@@ -6,6 +6,7 @@
     - [Paperspace](#paperspace)
     - [Azure](#azure)
     - [Google Cloud](#google-cloud)
+    - [Scaleway](#scaleway)
   - [How can I log-in to Steam?](#how-can-i-log-in-to-steam)
   - [How to play game on Steam / Why does my Steam game doesn't launch ?](#how-to-play-game-on-steam--why-does-my-steam-game-doesnt-launch-)
   - [Using Steam, why does my game take forever to "cache Vulkan shader" ?](#using-steam-why-does-my-game-take-forever-to-cache-vulkan-shader-)
@@ -50,6 +51,12 @@ Azure gaming instances NG are not yet supported (they use AMD GPU while only NVI
 #### Google Cloud
 
 Use N1 Standard instances with 4 to 16 CPUs with T4 or P4 GPUs. They are the cheapest while providing a good experience, eg. a P4 with 15GB RAM and 8 CPU can run Baldur's Gate 3 in Ultra with 60 FPS.
+
+#### Scaleway
+
+Scaleway  `GPU-3070-S` (NVIDIA RTX 3070, 8 CPUs, 16 GB RAM) and `L4-1-24G` (NVIDIA L4 GPU, 8 CPUs, 48 GB RAM) are great for gaming. 
+
+Scaleway also provide instances with multiple GPU or powerful and expensive GPUs like H100 but they may not be the best choice for gaming (expensive and not designed for gaming).
 
 ### How can I log-in to Steam?
 

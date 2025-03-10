@@ -1,0 +1,11 @@
+# On Paperspace with Ubuntu 22.04, the apt source for Paperspace is buggy (invalid GPG key)
+# causing subsequent failure on apt cache update
+# removing it here to avoid issues
+- name: Paperspace - remove unwanted apt sources (if any)
+  become: true
+  file:
+    state: absent
+    path: "{{ item }}"
+  loop:
+    # Paperspace, out of date, cause apt update failure
+    - /etc/apt/sources.list.d/paperspace.list
