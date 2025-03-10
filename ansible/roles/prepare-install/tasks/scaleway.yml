@@ -12,6 +12,7 @@
 # But we want to use our fixed, reproducible package install method with nvidia role
 - name: Scaleway - remove unwanted apt NVIDIA packages
   become: true
+  register: scaleway_apt_remove_nvidia_packages
   ansible.builtin.apt:
     name:
       - libnvidia-cfg1-550
@@ -25,12 +26,14 @@
     state: absent
     purge: yes
 
-- name: Scaleway - autoremove unnecessary packages
+- name: Scaleway - apt autoremove 
   become: true
+  when: scaleway_apt_remove_nvidia_packages.changed
   ansible.builtin.apt:
     autoremove: yes
 
 - name: Scaleway - clean apt cache
   become: true
+  when: scaleway_apt_remove_nvidia_packages.changed
   ansible.builtin.apt:
     clean: yes
