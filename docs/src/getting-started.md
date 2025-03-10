@@ -24,6 +24,7 @@ Cloudy Pad deploys a Cloud gaming gear using a Cloud provider of your choice:
   - Azure
   - Google Cloud
   - Paperspace
+  - Scaleway
 - [Docker](https://docs.docker.com/engine/install/) 
   - Rootless Docker is not supported yet
   - For MacOS, [OrbStack](https://orbstack.dev/) is recommended over Docker Desktop

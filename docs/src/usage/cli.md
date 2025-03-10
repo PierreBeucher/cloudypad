@@ -51,6 +51,7 @@ cloudy pad create azure
 cloudy pad create aws
 cloudy pad create gcp # Google
 cloudy pad create paperspace
+cloudy pad create scaleway
 ```
 
 You can also specify all arguments as flags for non-interactive creation, for example:

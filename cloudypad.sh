@@ -93,6 +93,7 @@ run_cloudypad_docker() {
         "$HOME/.paperspace"
         "$HOME/.azure"
         "$HOME/.config/gcloud"
+        "$HOME/.config/scw"
     )
 
     # Build run command with proper directories
@@ -136,6 +137,17 @@ run_cloudypad_docker() {
         "GOOGLE_REGION" "GCLOUD_REGION" "CLOUDSDK_COMPUTE_REGION"
         "GOOGLE_ZONE" "GCLOUD_ZONE" "CLOUDSDK_COMPUTE_ZONE"
         "GOOGLE_IMPERSONATE_SERVICE_ACCOUNT"
+
+        # Scaleway
+        "SCW_ACCESS_KEY" "SCALEWAY_ACCESS_KEY"
+        "SCW_SECRET_KEY" "SCW_TOKEN" "SCALEWAY_TOKEN"
+        "SCW_DEFAULT_REGION" "SCW_REGION" "SCALEWAY_REGION"
+        "SCW_DEFAULT_ZONE" "SCW_ZONE" "SCALEWAY_ZONE"
+        "SCW_API_URL"
+        "SCW_INSECURE" "SCW_TLSVERIFY"
+        "SCW_PROFILE"
+        "SCW_PROJECT_ID" "SCW_DEFAULT_PROJECT_ID"
+        "SCW_ORGANIZATION_ID" "SCW_DEFAULT_ORGANIZATION_ID" "SCW_ORGANIZATION"
     )
 
     for env_var in "${env_vars[@]}"; do

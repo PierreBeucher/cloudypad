@@ -2,7 +2,7 @@ import { getLogger } from '../log/utils';
 import { InstanceManager } from './manager';
 import { StateLoader } from './state/loader';
 import { InstanceStateV1 } from './state/state';
-import { CLOUDYPAD_PROVIDER_AWS, CLOUDYPAD_PROVIDER_AZURE, CLOUDYPAD_PROVIDER_DUMMY, CLOUDYPAD_PROVIDER_GCP, CLOUDYPAD_PROVIDER_PAPERSPACE } from './const';
+import { CLOUDYPAD_PROVIDER_AWS, CLOUDYPAD_PROVIDER_AZURE, CLOUDYPAD_PROVIDER_DUMMY, CLOUDYPAD_PROVIDER_GCP, CLOUDYPAD_PROVIDER_PAPERSPACE, CLOUDYPAD_PROVIDER_SCALEWAY } from './const';
 import { AwsSubManagerFactory } from '../providers/aws/factory';
 import { GcpSubManagerFactory } from '../providers/gcp/factory';
 import { AzureSubManagerFactory } from '../providers/azure/factory';
@@ -15,6 +15,8 @@ import { GcpStateParser } from '../providers/gcp/state';
 import { PaperspaceStateParser } from '../providers/paperspace/state';
 import { DummyStateParser } from '../providers/dummy/state';
 import { DummySubManagerFactory } from '../providers/dummy/factory';
+import { ScalewaySubManagerFactory } from '../providers/scaleway/factory';
+import { ScalewayStateParser } from '../providers/scaleway/state';
 
 
 /**
@@ -63,6 +65,14 @@ function initializeInstanceManagerBuilder() {
         return new GenericInstanceManager({
             stateWriter: new StateWriter({ state: paperspaceState }),
             factory: new PaperspaceSubManagerFactory()
+        })
+    })
+
+    registerProvider(CLOUDYPAD_PROVIDER_SCALEWAY, async (state: InstanceStateV1) => {
+        const scalewayState = new ScalewayStateParser().parse(state)
+        return new GenericInstanceManager({
+            stateWriter: new StateWriter({ state: scalewayState }),
+            factory: new ScalewaySubManagerFactory()
         })
     })
     

@@ -28,7 +28,7 @@ export class DummySubManagerFactory extends AbstractSubManagerFactory<DummyInsta
         })
     }
 
-    async doBuildConfigurator(name: string, provisionInput: DummyProvisionInputV1, provisionOutput: DummyProvisionOutputV1, configurationInput: CommonConfigurationInputV1): Promise<InstanceConfigurator> {
+    async doBuildConfigurator(name: string, provider: string, provisionInput: DummyProvisionInputV1, provisionOutput: DummyProvisionOutputV1, configurationInput: CommonConfigurationInputV1): Promise<InstanceConfigurator> {
         return new DummyConfigurator({ instanceName: name })
     }
 }

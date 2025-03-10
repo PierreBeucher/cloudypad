@@ -28,6 +28,7 @@ See per cloud providers estimations:
 - [Azure](azure.md)
 - [Google Cloud](gcp.md)
 - [Paperspace](paperspace.md)
+- [Scaleway](scaleway.md)
 
 ## Cost optimizations
 
