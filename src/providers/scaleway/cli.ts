@@ -117,8 +117,8 @@ export class ScalewayInputPrompter extends AbstractInputPrompter<ScalewayCreateC
 
         while (parsedDiskSize === undefined || isNaN(parsedDiskSize)) {
             selectedDiskSize = await input({
-                message: 'OS disk size (in GB, no game data will be stored on this disk, only used for OS):',
-                default: "20"
+                message: 'Disk size (GB):',
+                default: "100"
             })
             parsedDiskSize = Number.parseInt(selectedDiskSize)
         }
