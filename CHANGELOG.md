@@ -1,5 +1,21 @@
 # Changelog
 
+## [0.19.0](https://github.com/PierreBeucher/cloudypad/compare/v0.18.0...v0.19.0) (2025-03-11)
+
+
+### Features
+
+* check Scaleway local config ([7b11994](https://github.com/PierreBeucher/cloudypad/commit/7b119946e02a24a8cfed7262cab9e698470fc95f))
+* **dummy:** dummy instance are considered stopped by default ([6397608](https://github.com/PierreBeucher/cloudypad/commit/639760816e557889858adc5b28e03c5bea745ea4))
+* **dummy:** dummy instance are considered stopped by default ([90f6dd0](https://github.com/PierreBeucher/cloudypad/commit/90f6dd071897c45586448ff51d8bde1f5c4c2d30))
+* **dummy:** emulate start/stop time for dummy provider ([f51a663](https://github.com/PierreBeucher/cloudypad/commit/f51a663b60de2b0358a87b5e2dc648f825afc4ce))
+* Scaleway provider support ([64e1dd8](https://github.com/PierreBeucher/cloudypad/commit/64e1dd8e3ffbb2aeaf73b9e381d11787d4c373d2))
+
+
+### Bug Fixes
+
+* screen name not properly detected on Sunshine session startup screen resolution setting ([a7b86f9](https://github.com/PierreBeucher/cloudypad/commit/a7b86f947857bcab6626867b19c49e330bdd54b2))
+
 ## [0.18.0](https://github.com/PierreBeucher/cloudypad/compare/v0.17.0...v0.18.0) (2025-03-01)
 
 
