@@ -41,6 +41,8 @@ export class ScalewayInputPrompter extends AbstractInputPrompter<ScalewayCreateC
             await this.informCloudProviderQuotaWarning(CLOUDYPAD_PROVIDER_SCALEWAY, "https://docs.cloudypad.gg/cloud-provider-setup/scaleway.html")
         }
 
+        ScalewayClient.checkLocalConfig()
+
         const defaulScwClient = new ScalewayClient(ScalewayInputPrompter.name, {})
 
         const projectId = await this.projectId(defaulScwClient, partialInput.provision?.projectId)

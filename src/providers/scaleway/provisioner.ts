@@ -2,6 +2,7 @@ import { SshKeyLoader } from '../../tools/ssh'
 import { ScalewayPulumiClient, PulumiStackConfigScaleway } from './pulumi'
 import { AbstractInstanceProvisioner, InstanceProvisionerArgs, InstanceProvisionOptions } from '../../core/provisioner'
 import { ScalewayProvisionInputV1, ScalewayProvisionOutputV1 } from './state'
+import { ScalewayClient } from '../../tools/scaleway'
 
 export type ScalewayProvisionerArgs = InstanceProvisionerArgs<ScalewayProvisionInputV1, ScalewayProvisionOutputV1>
 
@@ -54,7 +55,6 @@ export class ScalewayProvisioner extends AbstractInstanceProvisioner<ScalewayPro
     }
 
     protected async doVerifyConfig(): Promise<void> {
-        // Assuming ScalewayClient.checkAuth() is a method to verify Scaleway authentication
-        // await ScalewayClient.checkAuth()
+        ScalewayClient.checkLocalConfig()
     }
 }
