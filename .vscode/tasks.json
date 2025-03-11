@@ -57,7 +57,8 @@
                 "test-integ-full-lifecycle-aws",
                 "test-integ-full-lifecycle-azure",
                 "test-integ-full-lifecycle-gcp",
-                "test-integ-full-lifecycle-paperspace"
+                "test-integ-full-lifecycle-paperspace",
+                "test-integ-full-lifecycle-scaleway"
             ],
             "group": "none",
             "presentation": {
