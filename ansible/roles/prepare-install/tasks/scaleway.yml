@@ -1,0 +1,39 @@
+- name: Scaleway - remove unwanted apt sources (if any)
+  become: true
+  file:
+    state: absent
+    path: "{{ item }}"
+  loop:
+    # out of date, cause apt update failure
+    - /etc/apt/sources.list.d/nvidia-docker.list
+    - /etc/apt/sources.list.d/cuda.list
+
+# Scaleway comes with pre-installed NVIDIA packages
+# But we want to use our fixed, reproducible package install method with nvidia role
+- name: Scaleway - remove unwanted apt NVIDIA packages
+  become: true
+  register: scaleway_apt_remove_nvidia_packages
+  ansible.builtin.apt:
+    name:
+      - libnvidia-cfg1-550
+      - libnvidia-compute-550
+      - nvidia-compute-utils-550
+      - nvidia-firmware-550-550.107.02
+      - nvidia-headless-no-dkms-550
+      - nvidia-kernel-common-550
+      - nvidia-kernel-source-550
+      - nvidia-utils-550
+    state: absent
+    purge: yes
+
+- name: Scaleway - apt autoremove 
+  become: true
+  when: scaleway_apt_remove_nvidia_packages.changed
+  ansible.builtin.apt:
+    autoremove: yes
+
+- name: Scaleway - clean apt cache
+  become: true
+  when: scaleway_apt_remove_nvidia_packages.changed
+  ansible.builtin.apt:
+    clean: yes

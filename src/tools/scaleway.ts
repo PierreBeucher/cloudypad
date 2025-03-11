@@ -98,6 +98,20 @@ export class ScalewayClient {
     }
 
     /**
+     * Verify local Scaleway configuration is valid. Throws an error with reason if not.
+     */
+    static checkLocalConfig(): void {
+        try {
+            ScalewayClient.loadProfileFromConfigurationFile()
+        } catch (error) {
+            throw new Error("Scaleway configuration is not valid. Did you configure your Scaleway credentials? "
+                +  "See https://docs.cloudypad.gg/cloud-provider-setup/scaleway.html.",
+                { cause: error }
+            )
+        }
+    }
+
+    /**
      * Load Scaleway profile from configuration file.
      * Mocked for unit tests
      * @returns Scaleway profile

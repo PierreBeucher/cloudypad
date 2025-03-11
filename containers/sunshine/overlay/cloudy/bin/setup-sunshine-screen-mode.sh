@@ -11,7 +11,17 @@
 SCREEN_WIDTH=${SUNSHINE_CLIENT_WIDTH:-}
 SCREEN_HEIGHT=${SUNSHINE_CLIENT_HEIGHT:-}
 SCREEN_FPS=${SUNSHINE_CLIENT_FPS:-}
-SCREEN_NAME=$(xrandr --listmonitors | grep '*' | awk '{print $4}')
+
+# Try to identify screen to use
+# First try to use primary connected screen
+# If not found, use the first connected screen
+SCREEN_NAME=$(xrandr -q | grep " connected primary" | head -n1 | awk '{print $1}')
+
+# If no primary screen is found, try to use first connected screen
+if [[ -z "$SCREEN_NAME" ]]; then
+  echo "No primary connected screen found. Using first connected screen."
+  SCREEN_NAME=$(xrandr -q | grep " connected" | head -n1 | awk '{print $1}')
+fi
 
 echo "Setting up screen mode for screen '$SCREEN_NAME' with $SCREEN_WIDTH x $SCREEN_HEIGHT @ $SCREEN_FPS"
 

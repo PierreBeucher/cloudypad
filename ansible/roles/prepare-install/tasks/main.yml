@@ -1,16 +1,7 @@
----
-# On Paperspace with Ubuntu 22.04, the apt source for Paperspace is buggy (invalid GPG key)
-# causing subsequent failure on apt cache update
-# removing it here to avoid issues
-- name: Remove unwanted apt sources (if any)
-  become: true
-  file:
-    state: absent
-    path: "{{ item }}"
-  loop:
-    # Paperspace, out of date, cause apt update failure
-    - /etc/apt/sources.list.d/paperspace.list
+- name: import Paperspace tasks
+  import_tasks: paperspace.yml
+  when: cloudypad_provider is defined and cloudypad_provider == "paperspace"
 
-    # Scaleway, out of date, cause apt update failure
-    - /etc/apt/sources.list.d/nvidia-docker.list
-    - /etc/apt/sources.list.d/cuda.list
+- name: import Scaleway tasks
+  import_tasks: scaleway.yml
+  when: cloudypad_provider is defined and cloudypad_provider == "scaleway"
