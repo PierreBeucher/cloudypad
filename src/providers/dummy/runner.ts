@@ -66,7 +66,7 @@ export class DummyInstanceRunner implements InstanceRunner {
     async instanceStatus(): Promise<InstanceRunningStatus> {
         const details = DummyInstanceInternalMemory.get().getInstanceDetails(this.args.instanceName)
         this.logger.info(`Dummy get status operation for instance: ${this.args.instanceName} returning ${JSON.stringify(details)}`)
-        return details?.status ?? InstanceRunningStatus.Unknown
+        return details?.status ?? InstanceRunningStatus.Stopped
     }
 
     async pairInteractive(): Promise<void> {
