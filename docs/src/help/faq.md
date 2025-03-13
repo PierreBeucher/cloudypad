@@ -7,8 +7,6 @@
     - [Azure](#azure)
     - [Google Cloud](#google-cloud)
     - [Scaleway](#scaleway)
-  - [How can I log-in to Steam?](#how-can-i-log-in-to-steam)
-  - [How to play game on Steam / Why does my Steam game doesn't launch ?](#how-to-play-game-on-steam--why-does-my-steam-game-doesnt-launch-)
   - [Using Steam, why does my game take forever to "cache Vulkan shader" ?](#using-steam-why-does-my-game-take-forever-to-cache-vulkan-shader-)
   - [I have a black screen when I connect to my instance](#i-have-a-black-screen-when-i-connect-to-my-instance)
   - [I Found an bug or I have a suggestion](#i-found-an-bug-or-i-have-a-suggestion)
@@ -17,7 +15,6 @@
   - [How are my data collected? How does analytics works?](#how-are-my-data-collected-how-does-analytics-works)
 - [Known issues](#known-issues)
   - [Docker for MacOS and VirtioFS](#docker-for-macos-and-virtiofs)
-
 
 ### What are the recommended GPU and specs for my instance ?
 
@@ -58,22 +55,6 @@ Scaleway  `GPU-3070-S` (NVIDIA RTX 3070, 8 CPUs, 16 GB RAM) and `L4-1-24G` (NVID
 
 Scaleway also provide instances with multiple GPU or powerful and expensive GPUs like H100 but they may not be the best choice for gaming (expensive and not designed for gaming).
 
-### How can I log-in to Steam?
-
-When you run Steam, you'll be prompted to login either via QR code or login/password. You can either:
-
-- Enter your login / password manually
-- Use the Steam app to login via QR code: download and login with the Steam app on your smartphone, then click on the Steam Guard icon (shield icon at the bottom) and scan the QR code shown. 
-
-### How to play game on Steam / Why does my Steam game doesn't launch ?
-
-In order to play games on Steam you may need to enable Proton:
-
-- Go to game properties (_Gear button on the right > Properties_)
-- Enable Proton in the Compatibility menu
-
-It's recommended to check your game Proton compatibility on [ProtonDB](https://www.protondb.com/). You may need to add a few Launch options (_Game properties > General > Launch options_).
-
 ### Using Steam, why does my game take forever to "cache Vulkan shader" ?
 
 If this is the first time you run your game this is (unfortunately) expected. Steam may cache Vulkan shaders to optimize in-game performance. It should be faster on subsequent runs, if not instantaneous. 
@@ -98,9 +79,9 @@ If you found a bug or have a suggestion, [please report an issue](https://github
 
 ### Will Cloudy Pad become a paid product ?
 
-Probably not in its current form. Considering I'm really _not_ happy about the [enshittification of the internet](https://en.wikipedia.org/wiki/Enshittification), Cloudy Pad will remain FOSS - at least for personal use.
+Considering I'm really _not_ happy about the [enshittification of the internet](https://en.wikipedia.org/wiki/Enshittification), Cloudy Pad will remain a Free and Open Source project. 
 
-Cloudy Pad may have a Premium or Pro offer in the future, but for a personal simple use it will remain FOSS.
+With [app.cloudypad.gg](https://app.cloudypad.gg) Cloudy Pad provides a paid service to manage your instances and Cloud resources easily without requiring technical skills. 
 
 ### How are my data collected? How does analytics works?
 
