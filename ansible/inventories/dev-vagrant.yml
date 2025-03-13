@@ -10,4 +10,6 @@ all:
       sunshine_nvidia_enable: false
       sunshine_compose_pull_images: never
       sunshine_image_tag: local
+
+      cloudypad_provider: "vagrant"
       
