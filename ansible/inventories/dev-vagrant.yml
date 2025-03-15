@@ -11,5 +11,14 @@ all:
       sunshine_compose_pull_images: never
       sunshine_image_tag: local
 
+      autostop_timeout_seconds: 3600 # 1h
+
+      sunshine_keyboard_layout: fr
+      sunshine_keyboard_variant: azerty
+      sunshine_keyboard_model: pc104
+      sunshine_keyboard_options: terminate:ctrl_alt_bksp
+      
+      sunshine_locale: en_US.utf8
+
       cloudypad_provider: "vagrant"
       

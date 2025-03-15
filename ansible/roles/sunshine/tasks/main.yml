@@ -19,6 +19,7 @@
 
 # List of Compose files to use depending on GPU used
 - name: Set Docker Compose files
+  tags: [ sunshine-docker ]
   set_fact:
     sunshine_compose_files: "{{ 
       ['docker-compose.yml'] 
@@ -26,6 +27,7 @@
     }}"
 
 - name: Copy Docker Compose files
+  tags: [ sunshine-docker ]
   ansible.builtin.template:
     src: "{{ item }}"
     dest: "{{ sunshine_project_dir }}/{{ item }}"
@@ -33,6 +35,7 @@
   loop: "{{ sunshine_compose_files }}"
 
 - name: Deploy Sunshine container
+  tags: [ sunshine-docker ]
   community.docker.docker_compose_v2:
     project_src: "{{ sunshine_project_dir }}"
     build: always

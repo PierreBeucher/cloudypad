@@ -11,6 +11,7 @@ import { CommonConfigurationInputV1, InstanceStateV0 } from './state'
 import { AnyInstanceStateV1 } from './parser'
 import { BaseStateManager } from './base-manager'
 import { StateWriter } from './writer'
+import { UserConfigDetector } from '../../tools/user-config-detector'
 
 export class StateMigrator extends BaseStateManager {
 
@@ -79,11 +80,14 @@ export class StateMigrator extends BaseStateManager {
 
         let providerName: CLOUDYPAD_PROVIDER
 
+        const configDetector = new UserConfigDetector() 
         const defaultConfigurationInput: CommonConfigurationInputV1 = {
             sunshine: null,
             wolf: {
                 enable: true
-            }
+            },
+            locale: null,
+            keyboard: null
         }
 
         try {

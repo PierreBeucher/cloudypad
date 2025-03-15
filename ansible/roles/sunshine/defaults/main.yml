@@ -23,3 +23,13 @@ sunshine_image_repo: "ghcr.io/pierrebeucher/cloudypad/sunshine"
 
 # Whether to force pull images when deploying Docker Compose Sunshine containers
 sunshine_compose_pull_images: always
+
+# Keyboard settings
+# see docker-compose.yml for more details
+sunshine_keyboard_layout: 
+sunshine_keyboard_model: 
+sunshine_keyboard_variant: 
+sunshine_keyboard_options: 
+
+# Desired locale
+sunshine_locale:

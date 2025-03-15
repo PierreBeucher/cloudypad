@@ -75,7 +75,9 @@ describe('InstanceUpdater', () => {
                     autostop: {
                         enable: true,
                         timeoutSeconds: 600
-                    }
+                    },
+                    locale: null,
+                    keyboard: null
                 },
                 output: {}
             }

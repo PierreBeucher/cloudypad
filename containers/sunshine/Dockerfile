@@ -138,14 +138,12 @@ RUN --mount=type=cache,target=/var/cache --mount=type=tmpfs,target=/var/log \
     apt install -y sudo && \
     apt clean
 
-# # TODO Local (for debug)
-# # Keep here ?
+# Install default locale
 RUN --mount=type=cache,target=/var/cache --mount=type=tmpfs,target=/var/log \
     apt update && \
     apt install -y locales && \
-    locale-gen fr_FR.UTF-8 && \
     locale-gen en_US.UTF-8 && \
-    update-locale LANG=fr_FR.UTF-8
+    update-locale LANG=en_US.UTF-8
 
 # Use this display by default, should not conflict with other displays
 ENV DISPLAY=":42"
@@ -181,10 +179,6 @@ ENV XDG_CACHE_HOME=/home/$CLOUDYPAD_USER/.cache
 ENV XDG_DATA_HOME=$CLOUDYPAD_DATA_DIR
 
 ENV DBUS_SYSTEM_BUS_ADDRESS="unix:path=$XDG_RUNTIME_DIR/dbus"
-
-# Default keyboard layout used by x11 keyboard.conf 
-# See overlay/cloudy/conf/x11/templates/00-keyboard.conf
-ENV KEYBOARD_LAYOUT="fr"
 
 # Start Steam with Steam Deck mode by default (to enable Proton globally) and library mode (to show library on start)
 ENV CLOUDYPAD_STEAM_ARGS=""

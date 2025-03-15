@@ -33,8 +33,15 @@ export const DEFAULT_COMMON_INPUT: CommonInstanceInput = {
         autostop: {
             enable: true,
             timeoutSeconds: 42
+        },
+        locale: "fr_FR.UTF-8",
+        keyboard: {
+            layout: "fr",
+            variant: "azerty",
+            model: "pc105",
+            options: "ctrl:swap_lalt_lctl"
         }
-    }
+    },
 }
 
 export const DEFAULT_COMMON_CLI_ARGS: CreateCliArgs = {
@@ -50,6 +57,11 @@ export const DEFAULT_COMMON_CLI_ARGS: CreateCliArgs = {
     sunshineImageRegistry: DEFAULT_COMMON_INPUT.configuration.sunshine?.imageRegistry,
     autostop: DEFAULT_COMMON_INPUT.configuration.autostop?.enable,
     autostopTimeout: DEFAULT_COMMON_INPUT.configuration.autostop?.timeoutSeconds,
+    useLocale: DEFAULT_COMMON_INPUT.configuration.locale,
+    keyboardLayout: DEFAULT_COMMON_INPUT.configuration.keyboard?.layout,
+    keyboardVariant: DEFAULT_COMMON_INPUT.configuration.keyboard?.variant,
+    keyboardModel: DEFAULT_COMMON_INPUT.configuration.keyboard?.model,
+    keyboardOptions: DEFAULT_COMMON_INPUT.configuration.keyboard?.options,
 }
 
 export const DUMMY_SSH_KEY_PATH = path.resolve(__dirname, '..', 'resources', 'ssh-key')

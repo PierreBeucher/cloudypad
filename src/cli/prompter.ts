@@ -10,7 +10,8 @@ import { getLogger } from "../log/utils";
 import { PUBLIC_IP_TYPE, PUBLIC_IP_TYPE_DYNAMIC, PUBLIC_IP_TYPE_STATIC } from '../core/const';
 import { CreateCliArgs } from './command';
 import { StateLoader } from '../core/state/loader';
-import { CostAlertOptions, InstanceProvisionerArgs } from '../core/provisioner';
+import { CostAlertOptions } from '../core/provisioner';
+import { LinuxKeyboardConfiguration, UserConfigDetector } from '../tools/user-config-detector';
 const { kebabCase } = lodash
 
 /**
@@ -110,6 +111,25 @@ export abstract class AbstractInputPrompter<
             enable: streamingServer.wolfEnabled,
         } : null
 
+        // Keyboard configuration is detected from host unless fully provided by user
+        // null may be set by default for older state that did not support locale and keyboard options
+        // - If null is set, set to null
+        // - Otherwise, use user provided value if any
+        // - Fall back to detected configuration from host
+        const userConfigDetector = new UserConfigDetector()
+
+        const userLocale = partialInput.configuration?.locale === null ? null : 
+            partialInput.configuration?.locale ?? userConfigDetector.detectPosixLocale()
+
+        const autoDetectedKeyboardConfig = userConfigDetector.detectKeyboardConfiguration()
+        const keyboardConfig = partialInput.configuration?.keyboard === null ? null : 
+            partialInput.configuration?.keyboard ?? {
+                layout: autoDetectedKeyboardConfig.layout,
+                model: autoDetectedKeyboardConfig.model,
+                variant: autoDetectedKeyboardConfig.variant,
+                options: autoDetectedKeyboardConfig.options,
+            }
+
         const autoStop = await this.promptAutoStop(partialInput.configuration?.autostop?.enable, partialInput.configuration?.autostop?.timeoutSeconds)
 
         const commonInput: CommonInstanceInput = {
@@ -127,6 +147,8 @@ export abstract class AbstractInputPrompter<
                     enable: autoStop.autoStopEnable,
                     timeoutSeconds: autoStop.autoStopTimeout,
                 },
+                keyboard: keyboardConfig,
+                locale: userLocale,
             }
         }
 
@@ -184,7 +206,14 @@ export abstract class AbstractInputPrompter<
                 },
                 wolf: {
                     enable: cliArgs.streamingServer == STREAMING_SERVER_WOLF ? true : undefined,
-                }
+                },
+                locale: cliArgs.useLocale,
+                keyboard: cliArgs.keyboardLayout ? {
+                    layout: cliArgs.keyboardLayout,
+                    model: cliArgs.keyboardModel,
+                    variant: cliArgs.keyboardVariant,
+                    options: cliArgs.keyboardOptions,
+                } : undefined
             }
         }
     }
