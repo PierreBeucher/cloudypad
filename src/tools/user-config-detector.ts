@@ -340,7 +340,7 @@ export class UserConfigDetector {
         try {
             if (this.platform === 'linux') {
 
-                if(process.env.XDG_SESSION_TYPE == 'wayland') {
+                if(process.env.XDG_SESSION_TYPE == 'wayland' && process.env.CLOUDYPAD_KEYBOARD_LAYOUT_AUTODETECT_SKIP_WAYLAND_WARNING != 'true') {
                     this.logger.warn(`Wayland session detected. Keyboard layout detection may not work properly. ` + 
                         `You may want to use --keyboard-layout, --keyboard-model, --keyboard-variant and --keyboard-options flags ` +
                         `to set keyboard options for your instance, or you can change layout directly on instance in keyboard settings.`)
