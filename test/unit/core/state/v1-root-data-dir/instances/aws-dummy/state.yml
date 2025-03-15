@@ -20,3 +20,5 @@ configuration:
     sunshine: null
     wolf:
       enable: true
+    locale: null
+    keyboard: null

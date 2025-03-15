@@ -6,7 +6,7 @@ import { AzureClient } from "../../tools/azure";
 import lodash from 'lodash'
 import { CLOUDYPAD_PROVIDER_AZURE, PUBLIC_IP_TYPE } from "../../core/const";
 import { PartialDeep } from "type-fest";
-import { CLI_OPTION_AUTO_STOP_TIMEOUT, CLI_OPTION_AUTO_STOP_ENABLE, CLI_OPTION_COST_ALERT, CLI_OPTION_COST_LIMIT, CLI_OPTION_COST_NOTIFICATION_EMAIL, CLI_OPTION_DISK_SIZE, CLI_OPTION_PUBLIC_IP_TYPE, CLI_OPTION_SPOT, CLI_OPTION_STREAMING_SERVER, CLI_OPTION_SUNSHINE_IMAGE_REGISTRY, CLI_OPTION_SUNSHINE_IMAGE_TAG, CLI_OPTION_SUNSHINE_PASSWORD, CLI_OPTION_SUNSHINE_USERNAME, CliCommandGenerator, CreateCliArgs, UpdateCliArgs } from "../../cli/command";
+import { CLI_OPTION_AUTO_STOP_TIMEOUT, CLI_OPTION_AUTO_STOP_ENABLE, CLI_OPTION_COST_ALERT, CLI_OPTION_COST_LIMIT, CLI_OPTION_COST_NOTIFICATION_EMAIL, CLI_OPTION_DISK_SIZE, CLI_OPTION_PUBLIC_IP_TYPE, CLI_OPTION_SPOT, CLI_OPTION_STREAMING_SERVER, CLI_OPTION_SUNSHINE_IMAGE_REGISTRY, CLI_OPTION_SUNSHINE_IMAGE_TAG, CLI_OPTION_SUNSHINE_PASSWORD, CLI_OPTION_SUNSHINE_USERNAME, CliCommandGenerator, CreateCliArgs, UpdateCliArgs, CLI_OPTION_KEYBOARD_OPTIONS, CLI_OPTION_KEYBOARD_VARIANT, CLI_OPTION_KEYBOARD_MODEL, CLI_OPTION_KEYBOARD_LAYOUT, CLI_OPTION_USE_LOCALE } from "../../cli/command";
 import { InteractiveInstanceInitializer } from "../../cli/initializer";
 import { RUN_COMMAND_CREATE, RUN_COMMAND_UPDATE } from "../../tools/analytics/events";
 import { InstanceUpdater } from "../../cli/updater";
@@ -294,6 +294,11 @@ export class AzureCliCommandGenerator extends CliCommandGenerator {
             .addOption(CLI_OPTION_SUNSHINE_IMAGE_REGISTRY)
             .addOption(CLI_OPTION_AUTO_STOP_ENABLE)
             .addOption(CLI_OPTION_AUTO_STOP_TIMEOUT)
+            .addOption(CLI_OPTION_USE_LOCALE)
+            .addOption(CLI_OPTION_KEYBOARD_LAYOUT)
+            .addOption(CLI_OPTION_KEYBOARD_MODEL)
+            .addOption(CLI_OPTION_KEYBOARD_VARIANT)
+            .addOption(CLI_OPTION_KEYBOARD_OPTIONS)
             .option('--vm-size <vmsize>', 'Virtual machine size')
             .option('--location <location>', 'Location in which to deploy instance')
             .option('--subscription-id <subscriptionid>', 'Subscription ID in which to deploy resources')

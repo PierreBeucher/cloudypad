@@ -35,10 +35,16 @@ services:
     environment:
       # Desired keyboard layout
       # See available layouts: https://man.archlinux.org/man/xkeyboard-config.7#LAYOUTS
-      # TOTO support models, variants and options
-      #
       # Passed to Xorg config as per https://wiki.archlinux.org/title/Xorg/Keyboard_configuration#Using_X_configuration_files
-      KEYBOARD_LAYOUT: fr
+      #
+      # Variables are passed to template overlay/cloudy/conf/x11/templates/00-keyboard.conf
+      CLOUDYPAD_KEYBOARD_LAYOUT: {{ sunshine_keyboard_layout }}
+      CLOUDYPAD_KEYBOARD_MODEL: {{ sunshine_keyboard_model }}
+      CLOUDYPAD_KEYBOARD_VARIANT: {{ sunshine_keyboard_variant }}
+      CLOUDYPAD_KEYBOARD_OPTIONS: {{ sunshine_keyboard_options }}
+
+      # Desired locale
+      CLOUDYPAD_LOCALE: {{ sunshine_locale }}
 
       # Sunshine Web UI password
       # If unset or empty, can be set via Web UI directly

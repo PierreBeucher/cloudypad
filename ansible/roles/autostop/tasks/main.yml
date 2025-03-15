@@ -39,6 +39,7 @@
 
       [Service]
       Environment=PYTHONUNBUFFERED=1
+      Environment=CLOUDYPAD_AUTOSTOP_TIMEOUT={{ autostop_timeout_seconds }}
       ExecStart=/root/cloudypad-autostop/.venv/bin/python /root/cloudypad-autostop/autostop.py
       Restart=always
       User=root

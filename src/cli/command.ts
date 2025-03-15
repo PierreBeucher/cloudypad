@@ -22,6 +22,11 @@ export interface CreateCliArgs {
     sunshineImageRegistry?: string
     autostop?: boolean
     autostopTimeout?: number
+    useLocale?: string | null
+    keyboardLayout?: string
+    keyboardModel?: string
+    keyboardVariant?: string
+    keyboardOptions?: string
 }
 
 /**
@@ -36,6 +41,13 @@ export const CLI_OPTION_INSTANCE_NAME = new Option('--name <name>', 'Instance na
 export const CLI_OPTION_PRIVATE_SSH_KEY = new Option('--private-ssh-key <path>', 'Path to private SSH key to use to connect to instance')
 export const CLI_OPTION_AUTO_APPROVE = new Option('--yes', 'Do not prompt for approval, automatically approve and continue')
 export const CLI_OPTION_OVERWRITE_EXISTING = new Option('--overwrite-existing', 'If an instance with the same name already exists, override without warning prompt')
+
+export const CLI_OPTION_USE_LOCALE = new Option('--use-locale <locale>', 'Locale that will be set on instance (eg. "en_US.UTF-8" or "fr_FR.UTF-8"). Default: use same locale as system.')
+export const CLI_OPTION_KEYBOARD_LAYOUT = new Option('--keyboard-layout <layout>', 'Keyboard layout that will be set on instance (eg. "us" or "fr"). Default: detected from system.')
+export const CLI_OPTION_KEYBOARD_VARIANT = new Option('--keyboard-variant <variant>', 'Keyboard variant that will be set on instance (eg. "azerty", "qwerty" or "mac"). Default: detected from system.')
+export const CLI_OPTION_KEYBOARD_MODEL = new Option('--keyboard-model <model>', 'Keyboard model that will be set on instance (eg. "apple" or "pc105"). Default: detected from system.')
+export const CLI_OPTION_KEYBOARD_OPTIONS = new Option('--keyboard-options <options>', 'Keyboard options that will be set on instance (eg. "ctrl:swap_lalt_lctl" or "compose:menu"). Default: detected from system.')
+
 export const CLI_OPTION_SPOT = new Option('--spot [disable|no|false|0]', 'Enable Spot instance. Spot instances are cheaper' + 
         '(usually 20% to 70% off) but may be restarted any time.')
     .argParser(parseFalseOrDisable)

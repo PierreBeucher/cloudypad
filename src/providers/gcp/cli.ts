@@ -7,7 +7,7 @@ import lodash from 'lodash'
 import { CLOUDYPAD_PROVIDER_GCP, PUBLIC_IP_TYPE } from "../../core/const";
 import { PartialDeep } from "type-fest";
 import { InteractiveInstanceInitializer } from "../../cli/initializer";
-import { CLI_OPTION_AUTO_STOP_TIMEOUT, CLI_OPTION_AUTO_STOP_ENABLE, CLI_OPTION_COST_ALERT, CLI_OPTION_COST_LIMIT, CLI_OPTION_COST_NOTIFICATION_EMAIL, CLI_OPTION_DISK_SIZE, CLI_OPTION_PUBLIC_IP_TYPE, CLI_OPTION_SPOT, CLI_OPTION_STREAMING_SERVER, CLI_OPTION_SUNSHINE_IMAGE_REGISTRY, CLI_OPTION_SUNSHINE_IMAGE_TAG, CLI_OPTION_SUNSHINE_PASSWORD, CLI_OPTION_SUNSHINE_USERNAME, CliCommandGenerator, CreateCliArgs, UpdateCliArgs } from "../../cli/command";
+import { CLI_OPTION_AUTO_STOP_TIMEOUT, CLI_OPTION_AUTO_STOP_ENABLE, CLI_OPTION_COST_ALERT, CLI_OPTION_COST_LIMIT, CLI_OPTION_COST_NOTIFICATION_EMAIL, CLI_OPTION_DISK_SIZE, CLI_OPTION_PUBLIC_IP_TYPE, CLI_OPTION_SPOT, CLI_OPTION_STREAMING_SERVER, CLI_OPTION_SUNSHINE_IMAGE_REGISTRY, CLI_OPTION_SUNSHINE_IMAGE_TAG, CLI_OPTION_SUNSHINE_PASSWORD, CLI_OPTION_SUNSHINE_USERNAME, CliCommandGenerator, CreateCliArgs, UpdateCliArgs, CLI_OPTION_KEYBOARD_OPTIONS, CLI_OPTION_KEYBOARD_MODEL, CLI_OPTION_KEYBOARD_LAYOUT, CLI_OPTION_USE_LOCALE, CLI_OPTION_KEYBOARD_VARIANT } from "../../cli/command";
 import { RUN_COMMAND_CREATE, RUN_COMMAND_UPDATE } from "../../tools/analytics/events";
 import { InstanceUpdater } from "../../cli/updater";
 
@@ -237,6 +237,11 @@ export class GcpCliCommandGenerator extends CliCommandGenerator {
             .addOption(CLI_OPTION_SUNSHINE_IMAGE_REGISTRY)
             .addOption(CLI_OPTION_AUTO_STOP_ENABLE)
             .addOption(CLI_OPTION_AUTO_STOP_TIMEOUT)
+            .addOption(CLI_OPTION_USE_LOCALE)
+            .addOption(CLI_OPTION_KEYBOARD_LAYOUT)
+            .addOption(CLI_OPTION_KEYBOARD_MODEL)
+            .addOption(CLI_OPTION_KEYBOARD_VARIANT)
+            .addOption(CLI_OPTION_KEYBOARD_OPTIONS)
             .option('--machine-type <machinetype>', 'Machine type to use for the instance')
             .option('--region <region>', 'Region in which to deploy instance')
             .option('--zone <zone>', 'Zone within the region to deploy the instance')

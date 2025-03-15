@@ -54,7 +54,12 @@ describe('Instance initializer', () => {
         sunshineImageRegistry: TEST_INPUT.configuration.sunshine?.imageRegistry,
         sunshineImageTag: TEST_INPUT.configuration.sunshine?.imageTag,
         autostop: TEST_INPUT.configuration.autostop?.enable,
-        autostopTimeout: TEST_INPUT.configuration.autostop?.timeoutSeconds
+        autostopTimeout: TEST_INPUT.configuration.autostop?.timeoutSeconds,
+        useLocale: TEST_INPUT.configuration.locale,
+        keyboardLayout: TEST_INPUT.configuration.keyboard?.layout,
+        keyboardModel: TEST_INPUT.configuration.keyboard?.model,
+        keyboardVariant: TEST_INPUT.configuration.keyboard?.variant,
+        keyboardOptions: TEST_INPUT.configuration.keyboard?.options,
     }
 
     const TEST_CLI_ARGS_ALREADY_EXISTING: GcpCreateCliArgs = {
@@ -100,6 +105,13 @@ describe('Instance initializer', () => {
                     autostop: {
                         enable: DEFAULT_COMMON_INPUT.configuration.autostop?.enable ?? false,
                         timeoutSeconds: DEFAULT_COMMON_INPUT.configuration.autostop?.timeoutSeconds ?? 999
+                    },
+                    locale: DEFAULT_COMMON_INPUT.configuration.locale,
+                    keyboard: {
+                        layout: DEFAULT_COMMON_INPUT.configuration.keyboard?.layout,
+                        model: DEFAULT_COMMON_INPUT.configuration.keyboard?.model,
+                        variant: DEFAULT_COMMON_INPUT.configuration.keyboard?.variant,
+                        options: DEFAULT_COMMON_INPUT.configuration.keyboard?.options
                     }
                 },
                 output: {}
@@ -147,7 +159,14 @@ describe('Instance initializer', () => {
                         enable: TEST_INPUT.configuration.autostop?.enable ?? false,
                         timeoutSeconds: TEST_INPUT.configuration.autostop?.timeoutSeconds ?? 999
                     },
-                    wolf: null
+                    wolf: null,
+                    locale: DEFAULT_COMMON_INPUT.configuration.locale,
+                    keyboard: {
+                        layout: DEFAULT_COMMON_INPUT.configuration.keyboard?.layout,
+                        model: DEFAULT_COMMON_INPUT.configuration.keyboard?.model,
+                        variant: DEFAULT_COMMON_INPUT.configuration.keyboard?.variant,
+                        options: DEFAULT_COMMON_INPUT.configuration.keyboard?.options
+                    }
                 },
                 output: {}
             }

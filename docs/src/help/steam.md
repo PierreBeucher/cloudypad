@@ -1,4 +1,4 @@
-# Sign-in toSteam
+# Sign in to Steam
 
 - [(Recommended) Mobile app with Steam Guard](#recommended-mobile-app-with-steam-guard)
 - [Password authentication](#password-authentication)

@@ -69,6 +69,13 @@ export class AnsibleConfigurator<ST extends InstanceStateV1> extends AbstractIns
                         sunshine_nvidia_enable: true,
                         sunshine_image_tag: this.args.configurationInput.sunshine?.imageTag ?? CLOUDYPAD_VERSION,
                         sunshine_image_registry: this.args.configurationInput.sunshine?.imageRegistry ?? CLOUDYPAD_SUNSHINE_IMAGE_REGISTRY,
+
+                        sunshine_keyboard_layout: this.args.configurationInput.keyboard?.layout,
+                        sunshine_keyboard_variant: this.args.configurationInput.keyboard?.variant,
+                        sunshine_keyboard_model: this.args.configurationInput.keyboard?.model,
+                        sunshine_keyboard_options: this.args.configurationInput.keyboard?.options,
+
+                        sunshine_locale: this.args.configurationInput.locale,
                         
                         autostop_enable: this.args.configurationInput.autostop?.enable,
                         autostop_timeout_seconds: this.args.configurationInput.autostop?.timeoutSeconds,

@@ -33,6 +33,13 @@ const CommonConfigurationInputV1Schema = z.object({
         imageRegistry: z.string().optional().describe("Sunshine container image registry. Default to Cloudy Pad registry"),
     })
     .nullish(),
+    keyboard: z.object({
+        layout: z.string().describe("Keyboard layout").optional(),
+        model: z.string().describe("Keyboard model").optional(),
+        variant: z.string().describe("Keyboard variant").optional(),
+        options: z.string().describe("Keyboard options").optional(),
+    }).nullish(),
+    locale: z.string().describe("Desired locale, eg. fr_FR.UTF-8").nullish(),
     wolf: z.object({
         enable: z.boolean().describe("Whether Wolf is enabled"),
     })
