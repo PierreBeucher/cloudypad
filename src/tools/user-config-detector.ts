@@ -50,12 +50,15 @@ export const FALLBACK_LOCALE = 'en_US.utf8'
 export class UserConfigDetector {
 
     private readonly platform: string
+    private readonly envVars: Record<string, string | undefined>
 
     /**
      * @param platform override platform detection. Defaults to this.platform. Override is for testing purposes.
+     * @param envVarsOverride override environment variables. Defaults to process.env. Override is for testing purposes.
      */
-    constructor(platform?: string) {
+    constructor(platform?: string, envVarsOverride?: Record<string, string>) {
         this.platform = platform ?? process.platform
+        this.envVars = envVarsOverride ?? process.env
     }
 
     private readonly logger = getLogger(UserConfigDetector.name)
@@ -123,16 +126,15 @@ export class UserConfigDetector {
      * @param envVarsOverride optional override of the environment variables (for testing purposes)
      * @returns the first locale found in the environment variables, or undefined if none is found
      */
-    public posixLocaleFromEnv(envVarsOverride?: Record<string, string>): { envVar: string, locale: string } | undefined {
-        const envVars = envVarsOverride ?? process.env
-        if(envVars.LC_ALL) {
-            return { envVar: 'LC_ALL', locale: envVars.LC_ALL }
-        } else if(envVars.LANG) {
-            return { envVar: 'LANG', locale: envVars.LANG }
-        } else if(envVars.LANGUAGE) {
-            return { envVar: 'LANGUAGE', locale: envVars.LANGUAGE }
-        } else if(envVars.LC_MESSAGES) {
-            return { envVar: 'LC_MESSAGES', locale: envVars.LC_MESSAGES }
+    public posixLocaleFromEnv(): { envVar: string, locale: string } | undefined {
+        if(this.envVars.LC_ALL) {
+            return { envVar: 'LC_ALL', locale: this.envVars.LC_ALL }
+        } else if(this.envVars.LANG) {
+            return { envVar: 'LANG', locale: this.envVars.LANG }
+        } else if(this.envVars.LANGUAGE) {
+            return { envVar: 'LANGUAGE', locale: this.envVars.LANGUAGE }
+        } else if(this.envVars.LC_MESSAGES) {
+            return { envVar: 'LC_MESSAGES', locale: this.envVars.LC_MESSAGES }
         }
     }
 

@@ -68,11 +68,17 @@ XKBVARIANT="qwerty"
 XKBOPTIONS=""
 
 BACKSPACE="guess"`)
+    
+    const defaultTestEnvVars = { LC_ALL: 'fr_FR.utf8', LANG: 'en_US.utf8', LANGUAGE: 'en_CA.utf8', LC_MESSAGES: 'en_GB.utf8' }
+
+    function createTestDetector(platform?: string, envVarsOverride: Record<string, string> = defaultTestEnvVars) {
+        return new UserConfigDetector(platform, envVarsOverride)
+    }
 
     // main methods
 
     it('should detect keyboard configuration (force Linux platform)', async () => {
-        const detector = new UserConfigDetector('linux')
+        const detector = createTestDetector('linux')
 
         const keyboard = detector.detectKeyboardConfiguration()
 
@@ -85,30 +91,30 @@ BACKSPACE="guess"`)
     })
 
     it('should detect keyboard configuration (force Darwin platform)', async () => {
-        const detector = new UserConfigDetector('darwin')
+        const detector = createTestDetector('darwin')
 
         const keyboard = detector.detectKeyboardConfiguration()
 
         assert.deepEqual(keyboard, {
-            layout: 'en',
+            layout: 'fr',
             model: 'apple',
             variant: 'mac',
             options: undefined
         })
     })
 
-    it('should detect system locale', async () => {
-        const detector = new UserConfigDetector()
+    it('should detect system posix locale', async () => {
+        const detector = createTestDetector()
 
         const locale = detector.detectPosixLocale()
 
-        assert.strictEqual(locale, 'en_US.utf8')
+        assert.strictEqual(locale, 'fr_FR.utf8')
     })
 
     // Utils methods 
 
     it('should detect system locale from command (Linux platform)', async () => {
-        const detector = new UserConfigDetector('linux')
+        const detector = createTestDetector('linux')
 
         const locale = detector.posixLocaleFromCommand()
 
@@ -116,7 +122,7 @@ BACKSPACE="guess"`)
     })
 
     it('should detect system locale from command (Darwin platform)', async () => {
-        const detector = new UserConfigDetector('darwin')
+        const detector = createTestDetector('darwin')
 
         const locale = detector.posixLocaleFromCommand()
 
@@ -124,26 +130,29 @@ BACKSPACE="guess"`)
     })
 
     it('should detect system locale from environment variables', async () => {
-        const detector = new UserConfigDetector()
-
-        const locale1 = detector.posixLocaleFromEnv({ LC_ALL: 'en_US.utf8', LANG: 'fr_FR.utf8', LANGUAGE: 'fr_FR.utf8', LC_MESSAGES: 'fr_FR.utf8' })
+        const detector1 = createTestDetector('linux', { LC_ALL: 'en_US.utf8', LANG: 'en_US.utf8', LANGUAGE: 'en_US.utf8', LC_MESSAGES: 'en_US.utf8' })
+        const locale1 = detector1.posixLocaleFromEnv()
         assert.deepEqual(locale1, { envVar: 'LC_ALL', locale: 'en_US.utf8' })
 
-        const locale2 = detector.posixLocaleFromEnv({ LANG: 'en_US.utf8', LANGUAGE: 'fr_FR.utf8', LC_MESSAGES: 'fr_FR.utf8' })
+        const detector2 = createTestDetector('linux', { LANG: 'en_US.utf8', LANGUAGE: 'fr_FR.utf8', LC_MESSAGES: 'fr_FR.utf8' })
+        const locale2 = detector2.posixLocaleFromEnv()
         assert.deepEqual(locale2, { envVar: 'LANG', locale: 'en_US.utf8' })
 
-        const locale3 = detector.posixLocaleFromEnv({ LANGUAGE: 'en_US.utf8', LC_MESSAGES: 'fr_FR.utf8' })
+        const detector3 = createTestDetector('linux', { LANGUAGE: 'en_US.utf8', LC_MESSAGES: 'fr_FR.utf8' })
+        const locale3 = detector3.posixLocaleFromEnv()
         assert.deepEqual(locale3, { envVar: 'LANGUAGE', locale: 'en_US.utf8' })
 
-        const locale4 = detector.posixLocaleFromEnv({ LC_MESSAGES: 'en_US.utf8' })
+        const detector4 = createTestDetector('linux', { LC_MESSAGES: 'en_US.utf8' })
+        const locale4 = detector4.posixLocaleFromEnv()
         assert.deepEqual(locale4, { envVar: 'LC_MESSAGES', locale: 'en_US.utf8' })
 
-        const locale5 = detector.posixLocaleFromEnv({})
+        const detector5 = createTestDetector('linux', {})
+        const locale5 = detector5.posixLocaleFromEnv()
         assert.strictEqual(locale5, undefined)
     })
 
     it('should detect keyboard configuration from setxkbmap', async () => {
-        const detector = new UserConfigDetector()
+        const detector = createTestDetector()
 
         const keyboard = detector.getKeyboardConfigurationFromSetxkbmap()
 
@@ -156,7 +165,7 @@ BACKSPACE="guess"`)
     })
 
     it('should detect keyboard configuration from localectl', async () => {
-        const detector = new UserConfigDetector()
+        const detector = createTestDetector()
 
         const keyboard = detector.getKeyboardConfigurationFromLocalectl()
 
@@ -169,7 +178,7 @@ BACKSPACE="guess"`)
     })
 
     it('should detect keyboard configuration from etc/default/keyboard', async () => {
-        const detector = new UserConfigDetector()
+        const detector = createTestDetector()
 
         const keyboard = detector.getKeyboardConfigurationFromEtcDefaultKeyboard()
 
@@ -182,12 +191,12 @@ BACKSPACE="guess"`)
     })
 
     it('should detect keyboard configuration from Darwin environment', async () => {
-        const detector = new UserConfigDetector()
+        const detector = createTestDetector()
 
         const keyboard = detector.getKeyboardConfigurationFromDarwinEnvironment()
 
         assert.deepEqual(keyboard, {
-            layout: 'en',
+            layout: 'fr',
             model: 'apple',
             variant: 'mac',
             options: undefined
