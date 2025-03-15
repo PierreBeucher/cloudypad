@@ -11,6 +11,7 @@ import { CLOUDYPAD_VERSION } from '../core/const';
 import { confirm } from '@inquirer/prompts';
 import { ConfirmationPrompter } from './prompter';
 import { ScalewayCliCommandGenerator } from '../providers/scaleway/cli';
+import { DummyCliCommandGenerator } from '../providers/dummy/cli';
 
 const logger = getLogger("program")
 
@@ -63,6 +64,7 @@ export function buildProgram(){
     createCmd.addCommand(new GcpCliCommandGenerator().buildCreateCommand())
     createCmd.addCommand(new PaperspaceCliCommandGenerator().buildCreateCommand())
     createCmd.addCommand(new ScalewayCliCommandGenerator().buildCreateCommand())
+    createCmd.addCommand(new DummyCliCommandGenerator().buildCreateCommand(), { hidden: true })
     
     const updateCmd = program
         .command('update')
@@ -73,7 +75,8 @@ export function buildProgram(){
     updateCmd.addCommand(new GcpCliCommandGenerator().buildUpdateCommand())
     updateCmd.addCommand(new PaperspaceCliCommandGenerator().buildUpdateCommand())
     updateCmd.addCommand(new ScalewayCliCommandGenerator().buildUpdateCommand())
-    
+    updateCmd.addCommand(new DummyCliCommandGenerator().buildUpdateCommand(), { hidden: true })
+
     program
         .command('list')
         .description('List all instances')
