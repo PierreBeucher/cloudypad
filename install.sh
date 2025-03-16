@@ -120,12 +120,18 @@ case "${SHELL_NAME}" in
                 STARTUP_FILE="${HOME}/.bashrc"
             elif [ -e "${HOME}/.bash_profile" ]; then
                 STARTUP_FILE="${HOME}/.bash_profile"
+            else
+                # Default to .bashrc if both are absent
+                STARTUP_FILE="${HOME}/.bashrc"
             fi
         else
             if [ -e "${HOME}/.bash_profile" ]; then
                 STARTUP_FILE="${HOME}/.bash_profile"
             elif [ -e "${HOME}/.bashrc" ]; then
                 STARTUP_FILE="${HOME}/.bashrc"
+            else 
+                # Default to .bash_profile if both are absent
+                STARTUP_FILE="${HOME}/.bash_profile"
             fi
         fi
         ;;
