@@ -58,7 +58,7 @@ Moonlight let you choose your desired resolution.
 
 Known limitations:
 
-- NVIDIA Tesla GPUs maximum resolution is 2560x1600. If you have a higher resolution screen, you may experience black borders. See [this issue](https://github.com/PierreBeucher/cloudypad/issues/144) for more information.
+- NVIDIA Datacenter GPUs maximum resolution is 2560x1600. Resolution will automatically be adjusted to fit your screen but may be smaller as it will be capped at 2560x1600. See [#144](https://github.com/PierreBeucher/cloudypad/issues/144).
 
 ## Moonlight keyboard shortcuts
 
