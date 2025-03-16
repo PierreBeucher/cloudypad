@@ -36,9 +36,8 @@ RUN --mount=type=cache,target=/var/cache --mount=type=tmpfs,target=/var/log \
     wmctrl \
     supervisor \
     pulseaudio \
-    gettext-base
-    # gettext-base \
-    # bc
+    gettext-base \
+    bc
 
 #
 # Sunshine
