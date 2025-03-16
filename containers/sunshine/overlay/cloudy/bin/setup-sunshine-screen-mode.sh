@@ -30,6 +30,7 @@ if [[ -z "$SCREEN_NAME" ]]; then
   SCREEN_NAME=$(xrandr -q | grep " connected" | head -n1 | awk '{print $1}')
 fi
 
+# Adjust resolution to fit maximum screen resolution if set
 if [[ -n "$MAX_SCREEN_WIDTH" && -n "$MAX_SCREEN_HEIGHT" ]]; then
 
   echo "Maximum screen resolution is $MAX_SCREEN_WIDTH x $MAX_SCREEN_HEIGHT"
