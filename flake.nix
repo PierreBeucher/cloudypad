@@ -58,6 +58,7 @@
               ffmpeg
               vagrant
               scaleway-cli
+              bc
 
               google-cloud-sdk
             ];
