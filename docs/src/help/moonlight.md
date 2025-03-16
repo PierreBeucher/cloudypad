@@ -2,6 +2,15 @@
 
 You need to install Moonlight to connect to your instance. Moonlight is the client used to connect to your Cloudy Pad instance.
 
+- [Download and install Moonlight](#download-and-install-moonlight)
+- [Connect to your instance](#connect-to-your-instance)
+  - [Cloudy Pad SaaS](#cloudy-pad-saas)
+  - [Cloudy Pad CLI](#cloudy-pad-cli)
+- [Display resolution](#display-resolution)
+- [Moonlight keyboard shortcuts](#moonlight-keyboard-shortcuts)
+- [Connection latency, FPS and bitrate](#connection-latency-fps-and-bitrate)
+- [See also](#see-also)
+
 ## Download and install Moonlight
 
 Moonlight is available for:
@@ -12,7 +21,7 @@ Moonlight is available for:
 
 See [Official Moonlight website](https://moonlight-stream.org/#) for more information.
 
-## Connecting to your instance
+## Connect to your instance
 
 You must pair your instance with Moonlight before you can connect to it.
 
@@ -34,11 +43,41 @@ cloudypad pair my-instance
 #   moonlight pair 35.181.136.176 --pin 1234
 ```
 
+## Display resolution
+
+Moonlight let you choose your desired resolution. 
+
+**By default Moonlight may be configured to use a lower resolution than your actual screen**, to update:
+
+- Open Moonlight client.
+- Open settings ⚙️ (top-right gear button).
+- Under "Resolution and FPS" choose your desired resolution. Use the following values:
+  - Native to match your current screen resolution
+  - 1080p for 1920x1080 screen resolution
+  - 4k for 3840x2160 screen resolution
+
+Known limitations:
+
+- NVIDIA Datacenter GPUs maximum resolution is 2560x1600. Resolution will automatically be adjusted to fit your screen but may be smaller as it will be capped at 2560x1600. See [#144](https://github.com/PierreBeucher/cloudypad/issues/144).
+
 ## Moonlight keyboard shortcuts
 
 - Exit session: `CTRL+ALT+SHIFT+Q`
 - Show statistics (FPS, latency, etc.): `CTRL+ALT+SHIFT+S`
 - Windowed mode: `CTRL+ALT+SHIFT+X`
+
+## Connection latency, FPS and bitrate
+
+Moonlight has a "FPS" and "Bitrate" limit. Setting these values may improve your connection quality / latency:
+
+If you experience lag, stutter or warnings while streaming, try in that order:
+
+- Decrease bitrate by ~10% to 30%.
+  - Slightly lower quality but better latency for slower internet connections.
+- Decrease FPS (eg. 60 FPS => 40 FPS)
+  - FPS is "Frame per second". Lower FPS means less data to sent but slightly lower quality.
+- Decrease resolution (eg. 1080p => 720p)
+  - Lower resolution means less data to sent but slightly lower quality.
 
 ## See also
 

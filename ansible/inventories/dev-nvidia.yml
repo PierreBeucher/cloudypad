@@ -1,9 +1,14 @@
 all:
   hosts:
-    "40.89.187.124":
+    "IP":
       ansible_user: ubuntu
 
       sunshine_server_name: dev-nvidia
       sunshine_nvidia_enable: true
       sunshine_compose_pull_images: always
       sunshine_image_tag: dev
+
+      sunshine_keyboard_layout: fr
+      sunshine_keyboard_variant: azerty
+      sunshine_keyboard_model: pc104
+      sunshine_keyboard_options: terminate:ctrl_alt_bksp

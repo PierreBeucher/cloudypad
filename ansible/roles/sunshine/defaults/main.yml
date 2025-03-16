@@ -26,10 +26,10 @@ sunshine_compose_pull_images: always
 
 # Keyboard settings
 # see docker-compose.yml for more details
-sunshine_keyboard_layout: 
-sunshine_keyboard_model: 
-sunshine_keyboard_variant: 
-sunshine_keyboard_options: 
+sunshine_keyboard_layout: en
+sunshine_keyboard_model: ""
+sunshine_keyboard_variant: "qwerty"
+sunshine_keyboard_options: ""
 
 # Desired locale
-sunshine_locale:
+sunshine_locale: en_US.UTF-8
