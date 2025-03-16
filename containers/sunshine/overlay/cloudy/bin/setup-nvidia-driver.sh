@@ -44,30 +44,31 @@ fi
 # Check if the installation marker file exists
 if [ -f "$NVIDIA_INSTALL_MARKER" ]; then
     echo "NVIDIA driver version ${NVIDIA_DRIVER_VERSION} is already installed. Skipping installation."
-    exit 0
+else 
+
+
+    # Should take a few seconds since we skip most steps
+    # Mostly needed for X nvidia modules
+    # TODO maybe we can --skip --no more steps
+    "$NVIDIA_INSTALLER" \
+        --no-questions \
+        --ui=none \
+        --accept-license \
+        --skip-depmod \
+        --skip-module-unload \
+        --no-kernel-modules \
+        --no-kernel-module-source \
+        --install-compat32-libs \
+        --no-nouveau-check \
+        --no-nvidia-modprobe \
+        --no-systemd \
+        --no-distro-scripts \
+        --no-rpms \
+        --no-backup \
+        --no-check-for-alternate-installs \
+        --no-libglx-indirect \
+        --no-install-libglvnd
+
+    touch "$NVIDIA_INSTALL_MARKER"
+    echo "NVIDIA driver ${NVIDIA_DRIVER_VERSION} installed successfully."
 fi
-
-# Should take a few seconds since we skip most steps
-# Mostly needed for X nvidia modules
-# TODO maybe we can --skip --no more steps
-"$NVIDIA_INSTALLER" \
-    --no-questions \
-    --ui=none \
-    --accept-license \
-    --skip-depmod \
-    --skip-module-unload \
-    --no-kernel-modules \
-    --no-kernel-module-source \
-    --install-compat32-libs \
-    --no-nouveau-check \
-    --no-nvidia-modprobe \
-    --no-systemd \
-    --no-distro-scripts \
-    --no-rpms \
-    --no-backup \
-    --no-check-for-alternate-installs \
-    --no-libglx-indirect \
-    --no-install-libglvnd
-
-touch "$NVIDIA_INSTALL_MARKER"
-echo "NVIDIA driver ${NVIDIA_DRIVER_VERSION} installed successfully."
