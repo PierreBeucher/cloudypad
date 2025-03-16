@@ -21,11 +21,11 @@
 - name: Fetch NVIDIA GPU device
   command: >-
     nvidia-smi --query-gpu=gpu_bus_id --format=csv,noheader
-  register: nvidia_smi_output
+  register: nvidia_smi_gpu_bus_id_output
   changed_when: false
 
 - set_fact:
-    nvidia_pci_bus_id_raw: "{{ nvidia_smi_output.stdout_lines[0] }}"
+    nvidia_pci_bus_id_raw: "{{ nvidia_smi_gpu_bus_id_output.stdout_lines[0] }}"
 
 - debug:
     msg: "Raw NVIDIA PCI BUS ID: {{ nvidia_pci_bus_id_raw }}"
@@ -46,3 +46,14 @@
 - debug:
     msg: "Found NVIDIA PCI BUS ID: {{ nvidia_pci_bus_id }}"
 
+- name: Fetch NVIDIA GPU model
+  command: >-
+    nvidia-smi --query-gpu=gpu_name --format=csv,noheader
+  register: nvidia_smi_gpu_name_output
+  changed_when: false
+
+- set_fact:
+    nvidia_gpu_model: "{{ nvidia_smi_gpu_name_output.stdout_lines[0] }}"
+
+- debug:
+    msg: "NVIDIA GPU model: '{{ nvidia_gpu_model }}'"

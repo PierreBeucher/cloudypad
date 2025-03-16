@@ -4,7 +4,6 @@ FROM ubuntu:noble-20250127@sha256:72297848456d5d37d1262630108ab308d3e9ec7ed1c328
 ENV DEBIAN_FRONTEND=noninteractive
 
 # Main packages: X server and deps, dbus, pulseaudio, supervisor
-# TODO add cleanup
 RUN --mount=type=cache,target=/var/cache --mount=type=tmpfs,target=/var/log \
     apt update && apt install -y \
     xserver-xorg \
@@ -37,7 +36,9 @@ RUN --mount=type=cache,target=/var/cache --mount=type=tmpfs,target=/var/log \
     wmctrl \
     supervisor \
     pulseaudio \
-    gettext-base 
+    gettext-base
+    # gettext-base \
+    # bc
 
 #
 # Sunshine

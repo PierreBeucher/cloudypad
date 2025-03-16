@@ -1,0 +1,52 @@
+# Known NVIDIA datacenter GPU models
+# Name matches return value for nvidia-smi --query-gpu=gpu_name
+#
+# Generated using a mix of real nvidia-smi outputs from various providers, ChatGPT and 
+# https://en.wikipedia.org/wiki/List_of_Nvidia_graphics_processing_units#Tesla
+# so may not be completely accurate. Feel free to provide PR to fix / improve it!
+#
+nvidia_datacenter_gpu_models:
+  - Tesla C870
+  - Tesla D870
+  - Tesla S870
+  - Tesla C1060
+  - Tesla S1070
+  - Tesla S1075
+  - Quadro Plex 2200 D2
+  - Quadro Plex 2200 S4
+  - Tesla C2050
+  - Tesla M2050
+  - Tesla C2070
+  - Tesla C2075
+  - Tesla M2070
+  - Tesla M2070Q
+  - Tesla M2090
+  - Tesla S2050
+  - Tesla S2070
+  - Tesla K10
+  - Tesla K20
+  - Tesla K20X
+  - Tesla K40
+  - Tesla K80
+  - Tesla M4
+  - Tesla M6
+  - Tesla M10
+  - Tesla M40
+  - Tesla M60
+  - Tesla P4
+  - Tesla P6
+  - Tesla P40
+  - Tesla P100
+  - Tesla V100
+  - Tesla T4
+  - NVIDIA A2
+  - NVIDIA A10
+  - NVIDIA A16
+  - NVIDIA A30
+  - NVIDIA A40
+  - NVIDIA A100
+  - NVIDIA H100
+  - NVIDIA H200
+  - NVIDIA H800
+  - NVIDIA L40
+  - NVIDIA L4

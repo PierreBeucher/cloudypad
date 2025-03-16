@@ -8,9 +8,16 @@
 #
 # Ensuring virtual screen always respects requested client resolution
 
-SCREEN_WIDTH=${SUNSHINE_CLIENT_WIDTH:-}
-SCREEN_HEIGHT=${SUNSHINE_CLIENT_HEIGHT:-}
-SCREEN_FPS=${SUNSHINE_CLIENT_FPS:-}
+# Desired screen resolution
+DESIRED_SCREEN_WIDTH=${SUNSHINE_CLIENT_WIDTH:-1920}
+DESIRED_SCREEN_HEIGHT=${SUNSHINE_CLIENT_HEIGHT:-1080}
+DESIRED_SCREEN_FPS=${SUNSHINE_CLIENT_FPS:-60}
+
+# Maximum screen resolution
+# If set, will be used to adjust desired resolution while keeping aspect ratio
+# Ignored if not set
+MAX_SCREEN_WIDTH=${CLOUDYPAD_SCREEN_MAX_WIDTH}
+MAX_SCREEN_HEIGHT=${CLOUDYPAD_SCREEN_MAX_HEIGHT}
 
 # Try to identify screen to use
 # First try to use primary connected screen
@@ -23,10 +30,40 @@ if [[ -z "$SCREEN_NAME" ]]; then
   SCREEN_NAME=$(xrandr -q | grep " connected" | head -n1 | awk '{print $1}')
 fi
 
-echo "Setting up screen mode for screen '$SCREEN_NAME' with $SCREEN_WIDTH x $SCREEN_HEIGHT @ $SCREEN_FPS"
+if [[ -n "$MAX_SCREEN_WIDTH" && -n "$MAX_SCREEN_HEIGHT" ]]; then
 
-if [[ -z "$SCREEN_WIDTH" || -z "$SCREEN_HEIGHT" || -z "$SCREEN_FPS" ]]; then
-  echo "Error: SCREEN_WIDTH, SCREEN_HEIGHT, and SCREEN_FPS must be set."
+  echo "Maximum screen resolution is $MAX_SCREEN_WIDTH x $MAX_SCREEN_HEIGHT"
+  
+  # Adjust resolution while maintaining aspect ratio
+  if (( DESIRED_SCREEN_WIDTH > MAX_SCREEN_WIDTH || DESIRED_SCREEN_HEIGHT > MAX_SCREEN_HEIGHT )); then
+      
+      echo "Desired resolution $DESIRED_SCREEN_WIDTH x $DESIRED_SCREEN_HEIGHT is greater than maximum allowed resolution $MAX_SCREEN_WIDTH x $MAX_SCREEN_HEIGHT. Adjusting..."
+
+      ASPECT_RATIO=$(echo "scale=10; $DESIRED_SCREEN_WIDTH / $DESIRED_SCREEN_HEIGHT" | bc -l)
+      echo "Desired resolution aspect ratio: $ASPECT_RATIO"
+
+      if (( DESIRED_SCREEN_WIDTH * MAX_SCREEN_HEIGHT > DESIRED_SCREEN_HEIGHT * MAX_SCREEN_WIDTH )); then
+          FINAL_SCREEN_WIDTH=$MAX_SCREEN_WIDTH
+          FINAL_SCREEN_HEIGHT=$(echo "$MAX_SCREEN_WIDTH / $ASPECT_RATIO" | bc)
+      else
+          FINAL_SCREEN_HEIGHT=$MAX_SCREEN_HEIGHT
+          FINAL_SCREEN_WIDTH=$(echo "$MAX_SCREEN_HEIGHT * $ASPECT_RATIO" | bc)
+      fi
+  else
+      echo "Desired resolution $DESIRED_SCREEN_WIDTH x $DESIRED_SCREEN_HEIGHT is within maximum allowed resolution $MAX_SCREEN_WIDTH x $MAX_SCREEN_HEIGHT. Using desired resolution."
+      FINAL_SCREEN_WIDTH=$DESIRED_SCREEN_WIDTH
+      FINAL_SCREEN_HEIGHT=$DESIRED_SCREEN_HEIGHT
+  fi
+else
+  echo "No maximum screen resolution set. Using desired resolution $DESIRED_SCREEN_WIDTH x $DESIRED_SCREEN_HEIGHT as-is."
+  FINAL_SCREEN_WIDTH=$DESIRED_SCREEN_WIDTH
+  FINAL_SCREEN_HEIGHT=$DESIRED_SCREEN_HEIGHT
+fi
+
+echo "Setting up screen mode for screen '$SCREEN_NAME' with $FINAL_SCREEN_WIDTH x $FINAL_SCREEN_HEIGHT @ $DESIRED_SCREEN_FPS"
+
+if [[ -z "$FINAL_SCREEN_WIDTH" || -z "$FINAL_SCREEN_HEIGHT" || -z "$DESIRED_SCREEN_FPS" ]]; then
+  echo "Error: FINAL_SCREEN_WIDTH, FINAL_SCREEN_HEIGHT, and DESIRED_SCREEN_FPS must be set."
   exit 1
 fi
 
@@ -34,11 +71,11 @@ fi
 # Output something like
 # Modeline "WIDTHxHEIGHT_60.00"  1234  xxx xxx -hsync +vsync
 # Extract "WIDTHxHEIGHT"  and "1234  xxx xxx -hsync +vsync" separately
-MODELINE_RAW=$(cvt $SCREEN_WIDTH $SCREEN_HEIGHT $SCREEN_FPS | grep Modeline | sed 's/Modeline //')
+MODELINE_RAW=$(cvt $FINAL_SCREEN_WIDTH $FINAL_SCREEN_HEIGHT $DESIRED_SCREEN_FPS | grep Modeline | sed 's/Modeline //')
 MODELINE=${MODELINE_RAW##*\"} # Only keep everything after last double quote
 MODE_NAME=$(echo $MODELINE_RAW | awk -F '"' '{print $2}' | sed 's/_.*//') # Only keep WIDTHxHEIGHT without _FPS
 
-echo "Generated modeline '$MODE_NAME' for $SCREEN_WIDTH x $SCREEN_HEIGHT @ $SCREEN_FPS:"
+echo "Generated modeline '$MODE_NAME' for $FINAL_SCREEN_WIDTH x $FINAL_SCREEN_HEIGHT @ $DESIRED_SCREEN_FPS:"
 echo "  $MODELINE"
 
 # Create mode if needed
@@ -110,7 +147,7 @@ fi
 echo "Setting mode '$MODE_NAME' to $SCREEN_NAME"
 
 # Apply the new mode to the screen
-xrandr --output $SCREEN_NAME --mode ${MODE_NAME} --refresh ${SCREEN_FPS}
+xrandr --output $SCREEN_NAME --mode ${MODE_NAME} --refresh ${DESIRED_SCREEN_FPS}
 
 if [ $? -eq 0 ]; then
   echo "Successfully applied mode '$MODE_NAME' to $SCREEN_NAME."
