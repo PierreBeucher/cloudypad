@@ -6,7 +6,7 @@ You need to install Moonlight to connect to your instance. Moonlight is the clie
 - [Connect to your instance](#connect-to-your-instance)
   - [Cloudy Pad SaaS](#cloudy-pad-saas)
   - [Cloudy Pad CLI](#cloudy-pad-cli)
-- [Display / screen resolution - Why is Cloudy Pad screen resolution lower / different than my screen?](#display--screen-resolution---why-is-cloudy-pad-screen-resolution-lower--different-than-my-screen)
+- [Display resolution](#display-resolution)
 - [Moonlight keyboard shortcuts](#moonlight-keyboard-shortcuts)
 - [Connection latency, FPS and bitrate](#connection-latency-fps-and-bitrate)
 - [See also](#see-also)
@@ -43,7 +43,7 @@ cloudypad pair my-instance
 #   moonlight pair 35.181.136.176 --pin 1234
 ```
 
-## Display / screen resolution - Why is Cloudy Pad screen resolution lower / different than my screen?
+## Display resolution
 
 Moonlight let you choose your desired resolution. 
 
@@ -68,7 +68,16 @@ Known limitations:
 
 ## Connection latency, FPS and bitrate
 
-Moonlight client set the FPS and bitrate automatically.
+Moonlight has a "FPS" and "Bitrate" limit. Setting these values may improve your connection quality / latency:
+
+If you experience lag, stutter or warnings while streaming, try in that order:
+
+- Decrease bitrate by ~10% to 30%.
+  - Slightly lower quality but better latency for slower internet connections.
+- Decrease FPS (eg. 60 FPS => 40 FPS)
+  - FPS is "Frame per second". Lower FPS means less data to sent but slightly lower quality.
+- Decrease resolution (eg. 1080p => 720p)
+  - Lower resolution means less data to sent but slightly lower quality.
 
 ## See also
 
