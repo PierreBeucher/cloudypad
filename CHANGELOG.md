@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.20.0](https://github.com/PierreBeucher/cloudypad/compare/v0.19.0...v0.20.0) (2025-03-19)
+
+
+### Features
+
+* adapt resolution while keeping aspect ratio on NVIDIA Tesla GPU maxed at 2560x1600 ([86fd37a](https://github.com/PierreBeucher/cloudypad/commit/86fd37a62a3f282fdce1033cdfb91a28810c256e))
+* auto-detect locale and keyboard layout ([7717ea5](https://github.com/PierreBeucher/cloudypad/commit/7717ea5f5b42b92f6f894ac1ec98bee9658215e4))
+
+### Bug Fixes
+
+* Scaleway prompt wrongly stating disk is OS-only ([ca0d6c3](https://github.com/PierreBeucher/cloudypad/commit/ca0d6c3f652bac8d170b12188d7ce5ac38a42f2d))
+* **auto-stop:** timeout parameter was ignored and default (15 min) always used ([08bd5c8](https://github.com/PierreBeucher/cloudypad/commit/08bd5c880c5ac4476a36b1e62f2b51b23df102fb))
+
 ## [0.19.0](https://github.com/PierreBeucher/cloudypad/compare/v0.18.0...v0.19.0) (2025-03-11)
 
 
