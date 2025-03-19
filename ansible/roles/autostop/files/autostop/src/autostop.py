@@ -6,13 +6,38 @@ import time
 from scapy.all import sniff
 from scapy.config import conf
 
-#
-# Auto Stop watches for Moonlight activity on given port (47999 / Control by default)
-# When detecting inactivity longer than timeout, automatically shutdown instance
-# Main goal is to avoid overcost by letting unused instance run
-#
+import psutil
+
+"""
+Watches for network download activity over given duration and threshold
+"""
+class NetworkDownloadActivityChecker:
+
+    def __init__(self, threshold_mbps=10, check_duration=5):
+        self.threshold_mbps = threshold_mbps
+        self.check_duration = check_duration
+
+    def detect_network_download_activity(self):
+        """
+        Check if network download speed exceeds the threshold in Mbps over the check duration.
+        Returns True if activity is detected, False otherwise.
+        """
+        initial_bytes = psutil.net_io_counters().bytes_recv
+        time.sleep(self.check_duration)
+        final_bytes = psutil.net_io_counters().bytes_recv
+
+        print(f"Initial bytes: {initial_bytes}, Final bytes: {final_bytes}")
+
+        download_speed_mbps = (final_bytes - initial_bytes) * 8 / (self.check_duration * 1_000_000)
+
+        print(f"Download speed: {download_speed_mbps} Mbps")
+        
+        return download_speed_mbps > self.threshold_mbps
 
 
+"""
+Watches for Moonlight activity on given port (47999 / Control by default)
+"""
 class MoonlightNetworkActivityChecker:
 
     def __init__(self, port=47999, timeout=5, packet_count=1):
@@ -33,6 +58,14 @@ class MoonlightNetworkActivityChecker:
         packets = sniff(iface=interfaces, filter=f"port {self.port}", timeout=self.timeout, count=self.packet_count)
         return bool(packets)
 
+"""
+Watches for Moonlight activity (eg. a used is connected to instance) and download activity (eg. a game is being downloaded).
+- If inactivity is detected, instance is shutdown. 
+- If user is actively using the instance (either connected to Moonlight or downloading a game), instance won't be shutdown.
+
+Goal is to avoid overcost by letting unused instance run.
+
+"""
 def main():
     # Inactivity timeout (in seconds, default: 15 min)
     inactivity_timeout = int(os.getenv('CLOUDYPAD_AUTOSTOP_TIMEOUT', 15*60)) 
@@ -52,20 +85,27 @@ def main():
     print(f"{current_date} - Check period: {check_period_seconds} seconds")
     print(f"{current_date} - Dry run: {dry_run}")
 
-    checker = MoonlightNetworkActivityChecker(port=moonlight_activity_port)    
-    last_activity_time = time.time()
+    moonlight_checker = MoonlightNetworkActivityChecker(port=moonlight_activity_port)    
+    network_download_checker = NetworkDownloadActivityChecker()
     
+    last_activity_time = time.time()
+
     # Main loop to continuously check for traffic
     while True:
         try:
             current_date = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
 
-            if checker.detect_moonlight_network_activity():
-                print(f"{current_date} - Moonlight traffic detected on port {moonlight_activity_port}")
+            moonlight_activity = moonlight_checker.detect_moonlight_network_activity()
+            network_download_activity = network_download_checker.detect_network_download_activity()
+
+            if moonlight_activity or network_download_activity:
+                print(f"{current_date} - Moonlight traffic detected on port {moonlight_activity_port}: {moonlight_activity}")
+                print(f"{current_date} - Network download activity detected: {network_download_activity}")
                 last_activity_time = time.time()
             else:
                 current_inactivity = int(time.time() - last_activity_time)
-                print(f"{current_date} - No Moonlight traffic detected on port {moonlight_activity_port}. Current inactivity: {current_inactivity} seconds ({inactivity_timeout - current_inactivity} seconds remaining before timeout)")
+                print(f"{current_date} - Neither Moonlight traffic (on port {moonlight_activity_port}) nor network download activity detected.")
+                print(f"Current inactivity: {current_inactivity} seconds ({inactivity_timeout - current_inactivity} seconds remaining before timeout)")
                 if current_inactivity >= inactivity_timeout:
                     print(f"{current_date} - Inactivity timeout reached: {inactivity_timeout} seconds. Shutting down the instance.")
                     if dry_run:
