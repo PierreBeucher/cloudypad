@@ -26,11 +26,9 @@ class NetworkDownloadActivityChecker:
         time.sleep(self.check_duration)
         final_bytes = psutil.net_io_counters().bytes_recv
 
-        print(f"Initial bytes: {initial_bytes}, Final bytes: {final_bytes}")
-
         download_speed_mbps = (final_bytes - initial_bytes) * 8 / (self.check_duration * 1_000_000)
 
-        print(f"Download speed: {download_speed_mbps} Mbps")
+        print(f"Current download speed (over {self.check_duration} seconds): {download_speed_mbps} Mbps")
         
         return download_speed_mbps > self.threshold_mbps
 
