@@ -14,3 +14,6 @@ credentials_file = /cloudy/data/sunshine/sunshine_credentials.json
 file_state = /cloudy/data/sunshine/sunshine_state.json
 pkey = /cloudy/data/sunshine/pkey.pem
 cert = /cloudy/data/sunshine/cert.pem
+
+# Additional configs
+$CLOUDYPAD_SUNSHINE_ADDITIONAL_CONFIG

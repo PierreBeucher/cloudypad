@@ -33,3 +33,8 @@ sunshine_keyboard_options: ""
 
 # Desired locale
 sunshine_locale: en_US.UTF-8
+
+# Optional additional Sunshine config
+# Use "\n" for multiple lines
+# eg. "capture = x11\nfoo = bar"
+sunshine_additional_config: ""
