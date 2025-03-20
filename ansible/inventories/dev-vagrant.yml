@@ -17,8 +17,13 @@ all:
       sunshine_keyboard_variant: azerty
       sunshine_keyboard_model: pc104
       sunshine_keyboard_options: terminate:ctrl_alt_bksp
-      
-      sunshine_locale: en_US.utf8
+    
+      # sunshine_keyboard_layout: fr
+      # sunshine_keyboard_variant: mac,azerty
+      # sunshine_keyboard_model: macbook78
+      # sunshine_keyboard_options: ""
+
+      sunshine_locale: fr_FR.UTF-8
 
       # Dev environment specifics
       # Vagrant doesn't have a GPU access and Sunshine default to KMS capture
