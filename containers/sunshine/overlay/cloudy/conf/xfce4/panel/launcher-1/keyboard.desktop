@@ -1,0 +1,13 @@
+[Desktop Entry]
+Name=Input Method
+Comment=Set Keyboard Input Method
+Type=Application
+Keywords=keyboard;input
+Exec=xfce4-keyboard-settings
+Terminal=false
+Icon=input-keyboard
+Categories=Settings
+X-AppStream-Ignore=true
+OnlyShowIn=KDE;LXQt;
+X-Ubuntu-Gettext-Domain=im-config
+X-XFCE-Source=file:///usr/share/applications/im-config.desktop

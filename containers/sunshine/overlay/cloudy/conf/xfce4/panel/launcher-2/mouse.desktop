@@ -1,0 +1,13 @@
+[Desktop Entry]
+Name=Mouse & Touchpad
+Comment=Set your mouse and touchpad preferences
+Exec=xfce4-mouse-settings
+Icon=input-mouse
+Terminal=false
+Type=Application
+StartupNotify=true
+Categories=GNOME;GTK;Settings;HardwareSettings;X-Unity-Settings-Panel;
+OnlyShowIn=Unity7;
+X-Unity-Settings-Panel=mouse
+Keywords=Trackpad;Pointer;Click;Tap;Double;Button;Trackball;
+X-XFCE-Source=file:///usr/share/applications/unity-mouse-panel.desktop
