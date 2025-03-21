@@ -32,11 +32,11 @@ jobs:
       - name: Cache Nix
         uses: nix-community/cache-nix-action@v5
         with:
-          primary-key: nix-${{ runner.os }}-${{ hashFiles('**/*.nix') }}
+          primary-key: nix-${{ runner.os }}-${{ runner.arch }}
           restore-prefixes-first-match: nix-${{ runner.os }}-
 
       - name: Build Core container image
-        run: CLOUDYPAD_BUILD_CORE_IMAGE_TAG=${GITHUB_REF_NAME} nix develop -c task build-core-container
+        run: CLOUDYPAD_BUILD_CORE_IMAGE_TAG=${GITHUB_REF_NAME#v} nix develop -c task build-core-container
 
   docker-build-sunshine:
     name: Docker Build Sunshine
@@ -61,8 +61,8 @@ jobs:
       - name: Cache Nix
         uses: nix-community/cache-nix-action@v5
         with:
-          primary-key: nix-${{ runner.os }}-${{ hashFiles('**/*.nix') }}
+          primary-key: nix-${{ runner.os }}-${{ runner.arch }}
           restore-prefixes-first-match: nix-${{ runner.os }}-
 
       - name: Build Sunshine container image
-        run: CLOUDYPAD_BUILD_SUNSHINE_IMAGE_TAG=${GITHUB_REF_NAME} nix develop -c task build-sunshine-container
+        run: CLOUDYPAD_BUILD_SUNSHINE_IMAGE_TAG=${GITHUB_REF_NAME#v} nix develop -c task build-sunshine-container
