@@ -111,25 +111,6 @@ export abstract class AbstractInputPrompter<
             enable: streamingServer.wolfEnabled,
         } : null
 
-        // Keyboard configuration is detected from host unless fully provided by user
-        // null may be set by default for older state that did not support locale and keyboard options
-        // - If null is set, set to null
-        // - Otherwise, use user provided value if any
-        // - Fall back to detected configuration from host
-        const userConfigDetector = new UserConfigDetector()
-
-        const userLocale = partialInput.configuration?.locale === null ? null : 
-            partialInput.configuration?.locale ?? userConfigDetector.detectPosixLocale()
-
-        const autoDetectedKeyboardConfig = userConfigDetector.detectKeyboardConfiguration()
-        const keyboardConfig = partialInput.configuration?.keyboard === null ? null : 
-            partialInput.configuration?.keyboard ?? {
-                layout: autoDetectedKeyboardConfig.layout,
-                model: autoDetectedKeyboardConfig.model,
-                variant: autoDetectedKeyboardConfig.variant,
-                options: autoDetectedKeyboardConfig.options,
-            }
-
         const autoStop = await this.promptAutoStop(partialInput.configuration?.autostop?.enable, partialInput.configuration?.autostop?.timeoutSeconds)
 
         const commonInput: CommonInstanceInput = {
@@ -147,8 +128,8 @@ export abstract class AbstractInputPrompter<
                     enable: autoStop.autoStopEnable,
                     timeoutSeconds: autoStop.autoStopTimeout,
                 },
-                keyboard: keyboardConfig,
-                locale: userLocale,
+                keyboard: partialInput.configuration?.keyboard,
+                locale: partialInput.configuration?.locale,
             }
         }
 
