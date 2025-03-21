@@ -57,7 +57,7 @@ class MoonlightNetworkActivityChecker:
         return bool(packets)
 
 """
-Watches for Moonlight activity (eg. a used is connected to instance) and download activity (eg. a game is being downloaded).
+Watches for Moonlight activity (eg. a user is connected to instance) and download activity (eg. a game is being downloaded).
 - If inactivity is detected, instance is shutdown. 
 - If user is actively using the instance (either connected to Moonlight or downloading a game), instance won't be shutdown.
 

@@ -68,7 +68,7 @@
     name: cloudypad-autostop
     enabled: "{{ autostop_enable | bool }}"
     state: "{{ 
-      'restarted' if autostop_enable and should_reload_and_restart_autostop_service else 
+      'restarted' if autostop_enable | bool and should_reload_and_restart_autostop_service else 
       'started' if autostop_enable | bool else 
       'stopped' 
     }}"

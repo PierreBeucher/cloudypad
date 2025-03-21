@@ -19,9 +19,7 @@ done
 
 # Make sure runtime user is added to groups of device nodes
 # Groups are created dynamically if they don't exist
-# Inspired from https://github.com/Steam-Headless/docker-steam-headless/blob/14c770bce61db99c56592760c73c2ba454dab648/overlay/etc/cont-init.d/10-setup_user.sh
-device_nodes=( /dev/uinput /dev/input/event* /dev/dri/* )
-added_groups=""
+device_nodes=( /dev/input/event* /dev/input/js* /dev/uinput /dev/dri/* )
 for device in "${device_nodes[@]}"; do
 
     # Only consider character devices    
@@ -43,10 +41,10 @@ for device in "${device_nodes[@]}"; do
         groupadd -g $device_gid "${device_group}"
     fi
 
-    # Add user to group if not already added
-    if [[ "${added_groups}" != *"${device_group}"* ]]; then
+    if id -nG "${CLOUDYPAD_USER}" | grep -qw "${device_group}"; then
+        echo "User '${CLOUDYPAD_USER}' is already in group: '${device_group}'"
+    else 
         echo "Adding user '${CLOUDYPAD_USER}' to group: '${device_group}' for device: ${device}"
         usermod -aG ${device_group} ${CLOUDYPAD_USER}
-        added_groups=" ${added_groups} ${device_group} "
     fi
 done
