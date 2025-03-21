@@ -1,9 +1,10 @@
-# Desktop entry taken from /usr/share/applications/xfce-display-settings.desktop
 [Desktop Entry]
 Version=1.0
 Name=Display
+Comment=Configure screen settings and layout
+Keywords=display;settings;screen;resolution;refresh;rate;rotation;external;projectors;monitors;LCD;CRT;HiDPI;
 Exec=xfce4-display-settings
-Icon=video-display
+Icon=org.xfce.settings.display
 Terminal=false
 Type=Application
 Categories=XFCE;GTK;Settings;DesktopSettings;X-XFCE-SettingsDialog;X-XFCE-HardwareSettings;
@@ -11,4 +12,4 @@ StartupNotify=true
 OnlyShowIn=XFCE;
 X-XfcePluggable=true
 X-XfceHelpPage=display
-X-Xfce-Position=0;0
+X-XFCE-Source=file:///usr/share/applications/xfce-display-settings.desktop

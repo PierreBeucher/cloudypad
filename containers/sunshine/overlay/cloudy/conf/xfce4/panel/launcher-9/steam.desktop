@@ -1,0 +1,51 @@
+[Desktop Entry]
+Name=Steam
+Comment=Application for managing and playing games on Steam
+Exec=/usr/bin/steam %U
+Icon=steam
+Terminal=false
+Type=Application
+Categories=Network;FileTransfer;Game;
+MimeType=x-scheme-handler/steam;x-scheme-handler/steamlink;
+Actions=Store;Community;Library;Servers;Screenshots;News;Settings;BigPicture;Friends;
+PrefersNonDefaultGPU=true
+X-KDE-RunOnDiscreteGpu=true
+X-XFCE-Source=file:///usr/share/applications/steam.desktop
+Path=
+StartupNotify=false
+
+[Desktop Action Store]
+Name=Store
+Exec=steam steam://store
+
+[Desktop Action Community]
+Name=Community
+Exec=steam steam://url/SteamIDControlPage
+
+[Desktop Action Library]
+Name=Library
+Exec=steam steam://open/games
+
+[Desktop Action Servers]
+Name=Servers
+Exec=steam steam://open/servers
+
+[Desktop Action Screenshots]
+Name=Screenshots
+Exec=steam steam://open/screenshots
+
+[Desktop Action News]
+Name=News
+Exec=steam steam://open/news
+
+[Desktop Action Settings]
+Name=Settings
+Exec=steam steam://open/settings
+
+[Desktop Action BigPicture]
+Name=Big Picture
+Exec=steam steam://open/bigpicture
+
+[Desktop Action Friends]
+Name=Friends
+Exec=steam steam://open/friends

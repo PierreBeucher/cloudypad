@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<channel name="xfce4-panel" version="1.0">
+  <property name="configver" type="int" value="2"/>
+  <property name="panels" type="array">
+    <value type="int" value="1"/>
+    <value type="int" value="2"/>
+    <property name="dark-mode" type="bool" value="true"/>
+    <property name="panel-1" type="empty">
+      <property name="position" type="string" value="p=6;x=0;y=0"/>
+      <property name="length" type="uint" value="100"/>
+      <property name="position-locked" type="bool" value="true"/>
+      <property name="icon-size" type="uint" value="16"/>
+      <property name="size" type="uint" value="26"/>
+      <property name="plugin-ids" type="array">
+
+        <value type="int" value="10"/>
+      
+      </property>
+    </property>
+    <property name="panel-2" type="empty">
+      <property name="autohide-behavior" type="uint" value="1"/>
+      <property name="position" type="string" value="p=10;x=0;y=0"/>
+      <property name="length" type="uint" value="1"/>
+      <property name="position-locked" type="bool" value="true"/>
+      <property name="size" type="uint" value="48"/>
+      <property name="plugin-ids" type="array">
+
+        <!-- Steam -->
+        <value type="int" value="9"/>
+
+        <!-- Separator -->
+        <value type="int" value="98"/>
+
+        <!-- Keyboard, mouse and display -->
+        <value type="int" value="1"/>
+        <value type="int" value="2"/>
+        <value type="int" value="3"/>
+
+        <value type="int" value="99"/>
+
+        <!-- Exit session -->
+        <value type="int" value="5"/>
+
+      </property>
+    </property>
+  </property>
+  <property name="plugins" type="empty">
+
+    <property name="plugin-10" type="string" value="tasklist">
+      <property name="grouping" type="uint" value="1"/>
+    </property>
+
+    <property name="plugin-1" type="string" value="launcher">
+      <property name="items" type="array">
+        <value type="string" value="keyboard.desktop"/>
+      </property>
+    </property>
+
+    <property name="plugin-2" type="string" value="launcher">
+      <property name="items" type="array">
+        <value type="string" value="mouse.desktop"/>
+      </property>
+    </property>
+
+    <property name="plugin-3" type="string" value="launcher">
+      <property name="items" type="array">
+        <value type="string" value="display.desktop"/>
+      </property>
+    </property>
+
+    <!-- uses panel/launcher-9 -->
+    <property name="plugin-9" type="string" value="launcher">
+      <property name="items" type="array">
+        <value type="string" value="steam.desktop"/>
+      </property>
+    </property>
+
+    <property name="plugin-98" type="string" value="separator"/>
+    <property name="plugin-99" type="string" value="separator"/>
+
+    <property name="plugin-5" type="string" value="launcher">
+      <property name="items" type="array">
+        <value type="string" value="exit.desktop"/>
+      </property>
+    </property>
+    
+  </property>
+</channel>

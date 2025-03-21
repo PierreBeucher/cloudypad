@@ -145,6 +145,11 @@ RUN --mount=type=cache,target=/var/cache --mount=type=tmpfs,target=/var/log \
     locale-gen en_US.UTF-8 && \
     update-locale LANG=en_US.UTF-8
 
+# TODO add above
+RUN --mount=type=cache,target=/var/cache --mount=type=tmpfs,target=/var/log \
+    apt install -y xfce4-panel && \
+    apt clean
+
 # Use this display by default, should not conflict with other displays
 ENV DISPLAY=":42"
 
