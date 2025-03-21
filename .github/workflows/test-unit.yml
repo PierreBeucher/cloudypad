@@ -8,6 +8,10 @@ on:
     branches:
       - master
 
+env:
+  CLOUDYPAD_BUILD_CORE_IMAGE_TAG: ${{ github.head_ref }}
+  CLOUDYPAD_BUILD_SUNSHINE_IMAGE_TAG: ${{ github.head_ref }}
+
 jobs:
   unit-test:
     name: Unit tests
@@ -17,7 +21,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
       
-      - uses: nixbuild/nix-quick-install-action@v27
+      - uses: nixbuild/nix-quick-install-action@v30
 
       - uses: nix-community/cache-nix-action@v5
         with:
@@ -37,14 +41,25 @@ jobs:
         run: nix develop -c task test-unit
 
   build:
-    name: Build
+    name: Build Core container image
     runs-on: ubuntu-24.04
     
     steps:
+
       - name: Checkout repository
         uses: actions/checkout@v4
-      
-      - uses: nixbuild/nix-quick-install-action@v27
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: nixbuild/nix-quick-install-action@v30
 
       - uses: nix-community/cache-nix-action@v5
         with:
@@ -55,10 +70,39 @@ jobs:
         run: nix develop -c task test-analytics-key-match
 
       - name: Build container image
-        run: nix develop -c task build-local
+        run: nix develop -c task build-core-container
       
       - name: Smoke test container image
-        run: nix develop -c task build-smoke-test
+        run: nix develop -c task test-container-smoke-test
+
+  build-sunshine:
+    name: Build Sunshine container image
+    runs-on: ubuntu-24.04
+    steps:
+
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: nixbuild/nix-quick-install-action@v30
+
+      - uses: nix-community/cache-nix-action@v5
+        with:
+          primary-key: nix-${{ runner.os }}-${{ hashFiles('**/*.nix') }}
+          restore-prefixes-first-match: nix-${{ runner.os }}-
+
+      - name: Build container image
+        run: nix develop -c task build-sunshine-container
 
   test-install:
     name: Test install/run Ubuntu
@@ -144,7 +188,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
       
-      - uses: nixbuild/nix-quick-install-action@v27
+      - uses: nixbuild/nix-quick-install-action@v30
       
       - run: nix build .#
 
