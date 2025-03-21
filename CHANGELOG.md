@@ -1,5 +1,22 @@
 # Changelog
 
+## [0.21.0](https://github.com/PierreBeucher/cloudypad/compare/v0.20.0...v0.21.0) (2025-03-21)
+
+
+### Features
+
+* **auto-stop:** detect download activity and keep instance alive ([71beae1](https://github.com/PierreBeucher/cloudypad/commit/71beae1a9cbe916bc8a1dbf22a6af0b6864d4251))
+* ensure controllers, gamepad and other input devices are properly detected ([e181117](https://github.com/PierreBeucher/cloudypad/commit/e181117deb70ae8ba1ee82d7150517680dd2994e))
+* show a desktop task bar with Steam and other utils instead of plain desktop icons ([320c4b9](https://github.com/PierreBeucher/cloudypad/commit/320c4b926295ca08bb9c5945084fbf7fdb86967b))
+
+
+### Bug Fixes
+
+* **cli:** do not run UserConfigDetector in Container as it doesn't match host config ([21fe89c](https://github.com/PierreBeucher/cloudypad/commit/21fe89c65231b7a033d70daa8a5bb2a003b37543))
+* generate locale before updating system locale ([bb7dcc1](https://github.com/PierreBeucher/cloudypad/commit/bb7dcc15dc015dbb9d137b9a26b4660e1238bf48))
+* prevent X server not starting because of old lock file ([2c6d90c](https://github.com/PierreBeucher/cloudypad/commit/2c6d90c8c0626f56026c0c661491270fd3a88bdb))
+* show a single workspace to avoid losing access to windows ([76e8624](https://github.com/PierreBeucher/cloudypad/commit/76e862449ebb4a7ecb6f77c26b0fcdc79ee9d813))
+
 ## [0.20.0](https://github.com/PierreBeucher/cloudypad/compare/v0.19.0...v0.20.0) (2025-03-19)
 
 
