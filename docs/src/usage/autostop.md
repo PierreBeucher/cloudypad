@@ -2,6 +2,10 @@
 
 Inactivity detection (Auto Stop) automatically shuts down your instance when no activity is detected to avoid overcost.
 
+Instance is considered inactive when all these conditions are met:
+- You're not connected via Moonlight
+- You're not downloading a game (no significant incoming network activity is detected)
+
 ## Configuration
 
 Enabling/disabling Auto Stop is done on instance creation via `cloudypad create <provider> --autostop-enable=[true|false] --autostop-timeout <seconds>` or interactive prompt.
@@ -14,7 +18,11 @@ cloudypad update <provider> --name <my-insytance> --autostop-enable true --autos
 
 ## How it works
 
-Auto Stop regularly check for Moonlight activity on port 47999 (Control Port). If no activity is detected within the configured timeout, Auto Stop will shut down the instance.
+Auto Stop regularly check for:
+- Moonlight activity on port 47999 (Control Port). 
+- Network download activity
+
+If no activity is detected within the configured timeout, Auto Stop will shut down the instance.
 
 Auto Stop is installed as systemd service `cloudypad-autostop`. You can stop/start and get logs with:
 

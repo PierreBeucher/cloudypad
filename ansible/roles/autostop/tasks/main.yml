@@ -16,11 +16,13 @@
     creates: /root/cloudypad-autostop/.venv
 
 - name: Copy Autostop requirements.txt
+  register: autostop_requirements_copy
   copy:
     src: autostop/requirements.txt
     dest: /root/cloudypad-autostop/requirements.txt
 
 - name: Copy Autostop script
+  register: autostop_script_copy
   copy:
     src: autostop/src/autostop.py
     dest: /root/cloudypad-autostop/autostop.py
@@ -30,6 +32,7 @@
   command: /root/cloudypad-autostop/.venv/bin/pip install -r /root/cloudypad-autostop/requirements.txt
 
 - name: Create Autostop systemd service file for
+  register: autostop_service_unit_copy
   copy:
     dest: /etc/systemd/system/cloudypad-autostop.service
     content: |
@@ -49,11 +52,23 @@
       [Install]
       WantedBy=multi-user.target
 
+- set_fact:
+    should_reload_and_restart_autostop_service: "{{
+      autostop_requirements_copy.changed or 
+      autostop_script_copy.changed or 
+      autostop_service_unit_copy.changed 
+    }}"
+
 - name: Reload systemd daemon
   command: systemctl daemon-reload
+  when: should_reload_and_restart_autostop_service
 
 - name: Manage cloudypad-autostop service
-  systemd:
+  systemd_service:
     name: cloudypad-autostop
     enabled: "{{ autostop_enable | bool }}"
-    state: "{{ 'started' if autostop_enable | bool else 'stopped' }}"
+    state: "{{ 
+      'restarted' if autostop_enable | bool and should_reload_and_restart_autostop_service else 
+      'started' if autostop_enable | bool else 
+      'stopped' 
+    }}"

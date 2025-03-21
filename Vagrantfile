@@ -11,8 +11,8 @@ Vagrant.configure("2") do |config|
     config.vm.network "forwarded_port", guest: 47990, host: 47990
 
     config.vm.provider "virtualbox" do |vb|
-      vb.memory = "4096"
-      vb.cpus = 4
+      vb.memory = "8192"
+      vb.cpus = 8
     end
   
     config.vm.provision "shell", inline: <<-SHELL

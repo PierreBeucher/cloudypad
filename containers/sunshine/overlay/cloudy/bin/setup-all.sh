@@ -13,6 +13,8 @@ source setup-locale.sh
 
 source setup-dirs.sh
 
+source setup-user.sh
+
 if [ "$NVIDIA_ENABLE" = true ]; then
     source setup-nvidia-driver.sh
 fi

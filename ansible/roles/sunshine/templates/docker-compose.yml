@@ -52,3 +52,8 @@ services:
       SUNSHINE_WEB_PASSWORD: {{ sunshine_web_password_base64 | b64decode | replace('$', '$$') | quote }}
       SUNSHINE_WEB_USERNAME: {{ sunshine_web_username | quote }}
       SUNSHINE_SERVER_NAME: {{ sunshine_server_name | quote }}
+
+      # Optional additional Sunshine config
+      # Use "\n" for multiple lines
+      # eg. "capture = x11\nfoo = bar"
+      CLOUDYPAD_SUNSHINE_ADDITIONAL_CONFIG: "{{ sunshine_additional_config }}"
