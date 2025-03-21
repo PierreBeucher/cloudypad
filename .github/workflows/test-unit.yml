@@ -25,7 +25,7 @@ jobs:
 
       - uses: nix-community/cache-nix-action@v5
         with:
-          primary-key: nix-${{ runner.os }}-${{ hashFiles('**/*.nix') }}
+          primary-key: nix-${{ runner.os }}-${{ runner.arch }}
           restore-prefixes-first-match: nix-${{ runner.os }}-
       
       - uses: actions/cache@v3
@@ -63,7 +63,7 @@ jobs:
 
       - uses: nix-community/cache-nix-action@v5
         with:
-          primary-key: nix-${{ runner.os }}-${{ hashFiles('**/*.nix') }}
+          primary-key: nix-${{ runner.os }}-${{ runner.arch }}
           restore-prefixes-first-match: nix-${{ runner.os }}-
 
       - name: test analytics key match
@@ -98,7 +98,7 @@ jobs:
 
       - uses: nix-community/cache-nix-action@v5
         with:
-          primary-key: nix-${{ runner.os }}-${{ hashFiles('**/*.nix') }}
+          primary-key: nix-${{ runner.os }}-${{ runner.arch }}
           restore-prefixes-first-match: nix-${{ runner.os }}-
 
       - name: Build container image

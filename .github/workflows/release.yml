@@ -32,7 +32,7 @@ jobs:
       - name: Cache Nix
         uses: nix-community/cache-nix-action@v5
         with:
-          primary-key: nix-${{ runner.os }}-${{ hashFiles('**/*.nix') }}
+          primary-key: nix-${{ runner.os }}-${{ runner.arch }}
           restore-prefixes-first-match: nix-${{ runner.os }}-
 
       - name: Build Core container image
@@ -61,7 +61,7 @@ jobs:
       - name: Cache Nix
         uses: nix-community/cache-nix-action@v5
         with:
-          primary-key: nix-${{ runner.os }}-${{ hashFiles('**/*.nix') }}
+          primary-key: nix-${{ runner.os }}-${{ runner.arch }}
           restore-prefixes-first-match: nix-${{ runner.os }}-
 
       - name: Build Sunshine container image
