@@ -39,50 +39,6 @@ update_versions_in_package_files() {
   sed -i "s/hash = \"sha256:.*\";/hash = \"sha256:${NIX_SHA256}\";/" flake.nix
 }
 
-build_docker() {
-  docker_build_context=$1
-  docker_repo=$2
-  docker_tag=$3
-  docker_platforms=$4
-
-  echo "Building + pushing Docker image $docker_repo:$docker_tag and $docker_repo:latest..."
-
-  if [ "$CLOUDYPAD_RELEASE_DRY_RUN" = true ]; then
-    echo "Dry run enabled: Building Docker image $docker_repo:$docker_tag and $docker_repo:latest, but not pushing."
-    docker buildx build \
-      -t $docker_repo:$docker_tag -t $docker_repo:latest \
-      --platform=$docker_platforms \
-      $docker_build_context
-  else
-    echo "Building + pushing Docker image $docker_repo:$docker_tag and $docker_repo:latest..."
-    docker buildx build \
-      -t $docker_repo:$docker_tag -t $docker_repo:latest \
-      --platform=$docker_platforms \
-      --push \
-      $docker_build_context
-  fi
-}
-
-build_cloudypad_cli_image() {
-  release_version=$1
-
-  cloudypad_cli_docker_repo="ghcr.io/pierrebeucher/cloudypad"
-
-  echo "Building + pushing Cloudy Pad CLI image $cloudypad_cli_docker_repo:$release_version and $cloudypad_cli_docker_repo:latest..."
-
-  build_docker ./ $cloudypad_cli_docker_repo $release_version "linux/amd64,linux/arm64"
-
-}
-
-build_cloudypad_sunshine_image() {
-  release_version=$1
-
-  sunshine_image_docker_repo="ghcr.io/pierrebeucher/cloudypad/sunshine"
-
-  echo "Building + pushing Sunshine image $sunshine_image_docker_repo:$release_version and $sunshine_image_docker_repo:latest..."
-
-  build_docker ./containers/sunshine $sunshine_image_docker_repo $release_version "linux/amd64"
-}
 
 create_push_release_branch() {
   release_version=$1
@@ -131,6 +87,8 @@ create_release_pr_and_merge_in_release_branch() {
 
   git pull
 
+  read -p "Press enter to continue and create GitHub release..."
+
   # Release has been merged in release branch and tag created
   # Create GitHub release from Git tag
   npx release-please github-release \
@@ -178,9 +136,6 @@ fi
 
 update_versions_in_package_files $release_version
 create_push_release_branch $release_version
-
-build_cloudypad_cli_image $release_version
-build_cloudypad_sunshine_image $release_version
 
 create_release_pr_and_merge_in_release_branch $release_version
 merge_release_branch_in_master $release_version
