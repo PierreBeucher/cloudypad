@@ -1,8 +1,0 @@
-# Development compose file to build and debug Sunshine container
-# Not suiable to run container
-# See ansible/roles/sunshine/templates/docker-compose*.yml for example usage with Compose
-services:
-  cloudy:
-    build: .
-    image: ghcr.io/pierrebeucher/cloudypad/sunshine:dev
-    entrypoint: ["/bin/bash"]
