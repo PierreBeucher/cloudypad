@@ -9,8 +9,8 @@ on:
       - master
 
 env:
-  CLOUDYPAD_BUILD_CORE_IMAGE_TAG: ${{ github.head_ref }}
-  CLOUDYPAD_BUILD_SUNSHINE_IMAGE_TAG: ${{ github.head_ref }}
+  CLOUDYPAD_BUILD_CORE_IMAGE_TAG: ${{ github.head_ref || 'master' }}
+  CLOUDYPAD_BUILD_SUNSHINE_IMAGE_TAG: ${{ github.head_ref || 'master' }}
 
 jobs:
   unit-test:
