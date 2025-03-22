@@ -45,5 +45,5 @@
 # Contributing
 
 - [Development guide](./contributing/development-guide.md)
-- [Extend Cloudyad Docker images](./contributing/container-image.md)
+- [Extend Docker images](./contributing/container-image.md)
 - [License](./contributing/license.md)
