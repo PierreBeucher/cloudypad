@@ -36,7 +36,14 @@ tasks:
   # Note: might as well use a bind mount from host to dev VM instead of scp
   dev-docker-sunshine-to-vm:
     cmds: 
-    - docker buildx build containers/sunshine/ -o type=docker,dest=./tmp/cloudypad.docker.tar -t ghcr.io/pierrebeucher/cloudypad/sunshine:local
+    - >
+      docker buildx build containers/sunshine/ 
+      --cache-from type=registry,ref=$CLOUDYPAD_BUILD_SUNSHINE_IMAGE_REGISTRY:master
+      --cache-from type=local,src=$PWD/tmp/cloudypad-sunshine-cache.docker.tar
+      --cache-to type=local,dest=$PWD/tmp/cloudypad-sunshine-cache.docker.tar
+      -o type=docker,dest=./tmp/cloudypad.docker.tar 
+      -t $CLOUDYPAD_BUILD_SUNSHINE_IMAGE_REGISTRY:$CLOUDYPAD_BUILD_SUNSHINE_IMAGE_TAG
+
     - scp -i .vagrant/machines/default/virtualbox/private_key tmp/cloudypad.docker.tar vagrant@192.168.56.43:/tmp
     - ssh -i .vagrant/machines/default/virtualbox/private_key vagrant@192.168.56.43 docker load -i /tmp/cloudypad.docker.tar
     - ansible-playbook -i ansible/inventories/dev-vagrant.yml ansible/sunshine.yml -t sunshine-docker
