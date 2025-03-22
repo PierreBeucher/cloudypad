@@ -89,12 +89,14 @@ create_release_pr_and_merge_in_release_branch() {
 
   read -p "Press enter to continue and create GitHub release..."
 
-  # Release has been merged in release branch and tag created
-  # Create GitHub release from Git tag
+  # Release has been merged in release branch
+  # Create Git tag and GitHub release
+  # Git tag will result in new Docker images being pushed
   npx release-please github-release \
     --repo-url https://github.com/PierreBeucher/cloudypad \
     --token=${GITHUB_TOKEN} \
     --target-branch $release_branch
+    --draft
 }
 
 merge_release_branch_in_master() {
