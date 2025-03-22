@@ -70,8 +70,6 @@ export class WolfMoonlightPairer extends AbstractMoonlightPairer implements Moon
                 throw new Error(`Unrecognized pair method '${pairMethod}'. This is probably an internal bug.`)
             }
 
-            console.info(`Instance ${this.args.instanceName} paired successfully 🤝 👍`)
-            console.info(`You can now run Moonlight to connect and play with your instance 🎮`)
         } catch (error) {
             const eventProps = error instanceof Error ? { errorMessage: error.message, stackTrace: error.stack } : { errorMessage: String(error), stackTrace: "unknown" }
             this.analytics.sendEvent("pairing_error", eventProps)

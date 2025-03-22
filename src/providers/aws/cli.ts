@@ -4,7 +4,7 @@ import { input, select, confirm } from '@inquirer/prompts';
 import { AwsClient, EC2_QUOTA_CODE_ALL_G_AND_VT_SPOT_INSTANCES, EC2_QUOTA_CODE_RUNNING_ON_DEMAND_G_AND_VT_INSTANCES } from "../../tools/aws";
 import { AbstractInputPrompter, costAlertCliArgsIntoConfig, PromptOptions } from "../../cli/prompter";
 import lodash from 'lodash'
-import { CLI_OPTION_COST_NOTIFICATION_EMAIL, CLI_OPTION_COST_ALERT, CLI_OPTION_COST_LIMIT, CLI_OPTION_DISK_SIZE, CLI_OPTION_PUBLIC_IP_TYPE, CLI_OPTION_SPOT, CliCommandGenerator, CreateCliArgs, UpdateCliArgs, CLI_OPTION_STREAMING_SERVER, CLI_OPTION_SUNSHINE_PASSWORD, CLI_OPTION_SUNSHINE_USERNAME, CLI_OPTION_SUNSHINE_IMAGE_REGISTRY, CLI_OPTION_SUNSHINE_IMAGE_TAG, CLI_OPTION_AUTO_STOP_TIMEOUT, CLI_OPTION_AUTO_STOP_ENABLE } from "../../cli/command";
+import { CLI_OPTION_COST_NOTIFICATION_EMAIL, CLI_OPTION_COST_ALERT, CLI_OPTION_COST_LIMIT, CLI_OPTION_DISK_SIZE, CLI_OPTION_PUBLIC_IP_TYPE, CLI_OPTION_SPOT, CliCommandGenerator, CreateCliArgs, UpdateCliArgs, CLI_OPTION_STREAMING_SERVER, CLI_OPTION_SUNSHINE_PASSWORD, CLI_OPTION_SUNSHINE_USERNAME, CLI_OPTION_SUNSHINE_IMAGE_REGISTRY, CLI_OPTION_SUNSHINE_IMAGE_TAG, CLI_OPTION_AUTO_STOP_TIMEOUT, CLI_OPTION_AUTO_STOP_ENABLE, CLI_OPTION_KEYBOARD_OPTIONS, CLI_OPTION_KEYBOARD_VARIANT, CLI_OPTION_KEYBOARD_MODEL, CLI_OPTION_KEYBOARD_LAYOUT, CLI_OPTION_USE_LOCALE } from "../../cli/command";
 import { CLOUDYPAD_PROVIDER_AWS, PUBLIC_IP_TYPE } from "../../core/const";
 import { InteractiveInstanceInitializer } from "../../cli/initializer";
 import { PartialDeep } from "type-fest";
@@ -211,6 +211,11 @@ export class AwsCliCommandGenerator extends CliCommandGenerator {
             .addOption(CLI_OPTION_SUNSHINE_IMAGE_REGISTRY)
             .addOption(CLI_OPTION_AUTO_STOP_ENABLE)
             .addOption(CLI_OPTION_AUTO_STOP_TIMEOUT)
+            .addOption(CLI_OPTION_USE_LOCALE)
+            .addOption(CLI_OPTION_KEYBOARD_LAYOUT)
+            .addOption(CLI_OPTION_KEYBOARD_MODEL)
+            .addOption(CLI_OPTION_KEYBOARD_VARIANT)
+            .addOption(CLI_OPTION_KEYBOARD_OPTIONS)
             .option('--instance-type <type>', 'EC2 instance type')
             .option('--region <region>', 'Region in which to deploy instance')
             .action(async (cliArgs) => {
@@ -254,6 +259,11 @@ export class AwsCliCommandGenerator extends CliCommandGenerator {
             .addOption(CLI_OPTION_SUNSHINE_IMAGE_REGISTRY)
             .addOption(CLI_OPTION_AUTO_STOP_ENABLE)
             .addOption(CLI_OPTION_AUTO_STOP_TIMEOUT)
+            .addOption(CLI_OPTION_USE_LOCALE)
+            .addOption(CLI_OPTION_KEYBOARD_LAYOUT)
+            .addOption(CLI_OPTION_KEYBOARD_MODEL)
+            .addOption(CLI_OPTION_KEYBOARD_VARIANT)
+            .addOption(CLI_OPTION_KEYBOARD_OPTIONS)
             .option('--instance-type <type>', 'EC2 instance type')
             .action(async (cliArgs) => {
                 this.analytics.sendEvent(RUN_COMMAND_UPDATE, { provider: CLOUDYPAD_PROVIDER_AWS })

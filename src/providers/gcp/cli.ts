@@ -275,6 +275,11 @@ export class GcpCliCommandGenerator extends CliCommandGenerator {
             .addOption(CLI_OPTION_SUNSHINE_IMAGE_REGISTRY)
             .addOption(CLI_OPTION_AUTO_STOP_ENABLE)
             .addOption(CLI_OPTION_AUTO_STOP_TIMEOUT)
+            .addOption(CLI_OPTION_USE_LOCALE)
+            .addOption(CLI_OPTION_KEYBOARD_LAYOUT)
+            .addOption(CLI_OPTION_KEYBOARD_MODEL)
+            .addOption(CLI_OPTION_KEYBOARD_VARIANT)
+            .addOption(CLI_OPTION_KEYBOARD_OPTIONS)
             .option('--machine-type <machinetype>', 'Machine type to use for the instance')
             .option('--gpu-type <gputype>', 'Type of accelerator (e.g., GPU) to attach to the instance')
             .action(async (cliArgs) => {

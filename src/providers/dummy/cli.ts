@@ -128,6 +128,11 @@ export class DummyCliCommandGenerator extends CliCommandGenerator {
             .addOption(CLI_OPTION_SUNSHINE_IMAGE_REGISTRY)
             .addOption(CLI_OPTION_AUTO_STOP_ENABLE)
             .addOption(CLI_OPTION_AUTO_STOP_TIMEOUT)
+            .addOption(CLI_OPTION_USE_LOCALE)
+            .addOption(CLI_OPTION_KEYBOARD_LAYOUT)
+            .addOption(CLI_OPTION_KEYBOARD_MODEL)
+            .addOption(CLI_OPTION_KEYBOARD_VARIANT)
+            .addOption(CLI_OPTION_KEYBOARD_OPTIONS)
             .option('--instance-type <type>', 'EC2 instance type')
             .action(async (cliArgs) => {
                 
