@@ -34,5 +34,3 @@ function create_destroy_scaleway() {
 
     $cloudypad_cmd destroy $instance_name --yes
 }
-
-# TODO set project

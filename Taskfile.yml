@@ -216,6 +216,7 @@ tasks:
       -t $CLOUDYPAD_BUILD_SUNSHINE_IMAGE_REGISTRY:$CLOUDYPAD_BUILD_SUNSHINE_IMAGE_TAG
       --push
 
+  #
   # Release
   #
 
