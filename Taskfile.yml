@@ -36,14 +36,7 @@ tasks:
   # Note: might as well use a bind mount from host to dev VM instead of scp
   dev-docker-sunshine-to-vm:
     cmds: 
-    - >
-      docker buildx build containers/sunshine/ 
-      --cache-from type=registry,ref=$CLOUDYPAD_BUILD_SUNSHINE_IMAGE_REGISTRY:master
-      --cache-from type=local,src=$PWD/tmp/cloudypad-sunshine-cache.docker.tar
-      --cache-to type=local,dest=$PWD/tmp/cloudypad-sunshine-cache.docker.tar
-      -o type=docker,dest=./tmp/cloudypad.docker.tar 
-      -t $CLOUDYPAD_BUILD_SUNSHINE_IMAGE_REGISTRY:$CLOUDYPAD_BUILD_SUNSHINE_IMAGE_TAG
-
+    - task: build-sunshine-container-local
     - scp -i .vagrant/machines/default/virtualbox/private_key tmp/cloudypad.docker.tar vagrant@192.168.56.43:/tmp
     - ssh -i .vagrant/machines/default/virtualbox/private_key vagrant@192.168.56.43 docker load -i /tmp/cloudypad.docker.tar
     - ansible-playbook -i ansible/inventories/dev-vagrant.yml ansible/sunshine.yml -t sunshine-docker
@@ -152,6 +145,77 @@ tasks:
       -o {{ .PAPERSPACE_GENERATED_DIR }}
 
   #
+  # Build
+  #
+  #
+  # Build Core and Sunshine containers
+  # - local: inline cache, no push
+  # - ci: use and push cache, but don't push image itself
+  # - release: use cache, push final image
+
+  # Core
+
+  build-core-container-local:
+    cmds:
+    - >
+      docker buildx build . 
+      --cache-from type=registry,ref=$CLOUDYPAD_BUILD_CORE_IMAGE_REGISTRY:master-cache
+      --cache-to type=inline
+      -t $CLOUDYPAD_BUILD_CORE_IMAGE_REGISTRY:$CLOUDYPAD_BUILD_CORE_IMAGE_TAG
+      --load
+
+  build-core-container-ci:
+    cmds:
+    - >
+      docker buildx build . 
+      --cache-from type=registry,ref=$CLOUDYPAD_BUILD_CORE_IMAGE_REGISTRY:$CLOUDYPAD_BUILD_CORE_IMAGE_TAG-cache
+      --cache-from type=registry,ref=$CLOUDYPAD_BUILD_CORE_IMAGE_REGISTRY:master-cache
+      --cache-to type=registry,ref=$CLOUDYPAD_BUILD_CORE_IMAGE_REGISTRY:$CLOUDYPAD_BUILD_CORE_IMAGE_TAG-cache
+      -t $CLOUDYPAD_BUILD_CORE_IMAGE_REGISTRY:$CLOUDYPAD_BUILD_CORE_IMAGE_TAG
+      --load
+
+  # Both amd64 and arm64
+  build-core-container-release:
+    cmds:
+    - >
+      docker buildx build . 
+      --cache-from type=registry,ref=$CLOUDYPAD_BUILD_CORE_IMAGE_REGISTRY:$CLOUDYPAD_BUILD_CORE_IMAGE_TAG-cache
+      --cache-from type=registry,ref=$CLOUDYPAD_BUILD_CORE_IMAGE_REGISTRY:master-cache
+      -t $CLOUDYPAD_BUILD_CORE_IMAGE_REGISTRY:$CLOUDYPAD_BUILD_CORE_IMAGE_TAG
+      --platform "linux/amd64,linux/arm64"
+      --push
+
+  # Sunshine
+
+  build-sunshine-container-local:
+    cmds:
+    - >
+      docker buildx build containers/sunshine/ 
+      --cache-from type=registry,ref=$CLOUDYPAD_BUILD_SUNSHINE_IMAGE_REGISTRY:master-cache
+      --cache-to type=inline
+      -o type=docker,dest=./tmp/cloudypad.docker.tar 
+      -t $CLOUDYPAD_BUILD_SUNSHINE_IMAGE_REGISTRY:$CLOUDYPAD_BUILD_SUNSHINE_IMAGE_TAG
+      --load
+
+  build-sunshine-container-ci:
+    cmds:
+    - >
+      docker buildx build containers/sunshine/ 
+      --cache-from type=registry,ref=$CLOUDYPAD_BUILD_SUNSHINE_IMAGE_REGISTRY:$CLOUDYPAD_BUILD_SUNSHINE_IMAGE_TAG-cache
+      --cache-from type=registry,ref=$CLOUDYPAD_BUILD_SUNSHINE_IMAGE_REGISTRY:master-cache
+      --cache-to type=registry,ref=$CLOUDYPAD_BUILD_SUNSHINE_IMAGE_REGISTRY:$CLOUDYPAD_BUILD_SUNSHINE_IMAGE_TAG-cache
+      -t $CLOUDYPAD_BUILD_SUNSHINE_IMAGE_REGISTRY:$CLOUDYPAD_BUILD_SUNSHINE_IMAGE_TAG
+      --load
+
+  build-sunshine-container-release:
+    cmds:
+    - >
+      docker buildx build containers/sunshine/ 
+      --cache-from type=registry,ref=$CLOUDYPAD_BUILD_SUNSHINE_IMAGE_REGISTRY:$CLOUDYPAD_BUILD_SUNSHINE_IMAGE_TAG-cache
+      --cache-from type=registry,ref=$CLOUDYPAD_BUILD_SUNSHINE_IMAGE_REGISTRY:master-cache
+      -t $CLOUDYPAD_BUILD_SUNSHINE_IMAGE_REGISTRY:$CLOUDYPAD_BUILD_SUNSHINE_IMAGE_TAG
+      --push
+
   # Release
   #
 
@@ -160,37 +224,6 @@ tasks:
     - >
       [[ -z "{{ .CLOUDYPAD_RELEASE_VERSION }}" ]] && echo "CLOUDYPAD_RELEASE_VERSION not set" && exit 1 || true
 
-  build-core-container-local:
-    cmds:
-    - >
-      docker buildx build . 
-      --cache-from type=registry,ref=$CLOUDYPAD_BUILD_CORE_IMAGE_REGISTRY:master
-      --cache-from type=registry,ref=$CLOUDYPAD_BUILD_CORE_IMAGE_REGISTRY:$CLOUDYPAD_BUILD_CORE_IMAGE_TAG
-      -t $CLOUDYPAD_BUILD_CORE_IMAGE_REGISTRY:$CLOUDYPAD_BUILD_CORE_IMAGE_TAG
-      --load
-
-  build-core-container:
-    cmds:
-    - >
-      docker buildx build . 
-      --cache-from type=registry,ref=$CLOUDYPAD_BUILD_CORE_IMAGE_REGISTRY:$CLOUDYPAD_BUILD_CORE_IMAGE_TAG-cache
-      --cache-from type=registry,ref=$CLOUDYPAD_BUILD_CORE_IMAGE_REGISTRY:master
-      --cache-to type=registry,ref=$CLOUDYPAD_BUILD_CORE_IMAGE_REGISTRY:$CLOUDYPAD_BUILD_CORE_IMAGE_TAG-cache
-      -t $CLOUDYPAD_BUILD_CORE_IMAGE_REGISTRY:$CLOUDYPAD_BUILD_CORE_IMAGE_TAG
-      --load
-      --push
-
-  # Build and push Sunshine image using registry cache
-  # Try to get cache from both current and master branch if possible
-  build-sunshine-container:
-    cmds:
-    - >
-      docker buildx build containers/sunshine/ 
-      --cache-from type=registry,ref=$CLOUDYPAD_BUILD_SUNSHINE_IMAGE_REGISTRY:$CLOUDYPAD_BUILD_SUNSHINE_IMAGE_TAG-cache
-      --cache-from type=registry,ref=$CLOUDYPAD_BUILD_SUNSHINE_IMAGE_REGISTRY:master
-      --cache-to type=registry,ref=$CLOUDYPAD_BUILD_SUNSHINE_IMAGE_REGISTRY:$CLOUDYPAD_BUILD_SUNSHINE_IMAGE_TAG-cache
-      -t $CLOUDYPAD_BUILD_SUNSHINE_IMAGE_REGISTRY:$CLOUDYPAD_BUILD_SUNSHINE_IMAGE_TAG
-      --push
-
+  
   release-create:
     cmd: ./hack/release-create.sh
