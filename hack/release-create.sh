@@ -79,6 +79,7 @@ create_release_pr_and_merge_in_release_branch() {
       --target-branch $release_branch
 
   echo "Release is ready to be merged in release branch. You can review PR before merge."
+
   read -p "Press enter to continue and merge PR automatically..."
 
   gh pr merge "release-please--branches--$release_branch--components--cloudypad" --merge
@@ -87,15 +88,13 @@ create_release_pr_and_merge_in_release_branch() {
 
   git pull
 
-  read -p "Press enter to continue and create GitHub release..."
-
   # Release has been merged in release branch
   # Create Git tag and GitHub release
   # Git tag will result in new Docker images being pushed
   npx release-please github-release \
     --repo-url https://github.com/PierreBeucher/cloudypad \
     --token=${GITHUB_TOKEN} \
-    --target-branch $release_branch
+    --target-branch $release_branch \
     --draft
 }
 
@@ -136,10 +135,10 @@ else
     release_version=$1
 fi
 
-update_versions_in_package_files $release_version
-create_push_release_branch $release_version
+# update_versions_in_package_files $release_version
+# create_push_release_branch $release_version
 
-create_release_pr_and_merge_in_release_branch $release_version
+# create_release_pr_and_merge_in_release_branch $release_version
 merge_release_branch_in_master $release_version
 
 echo "Release done ! ✨"
