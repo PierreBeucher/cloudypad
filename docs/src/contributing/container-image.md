@@ -33,7 +33,7 @@ docker push your-registry/cloudypad-custom:some-tag
 Update the Cloudy Pad Sunshine image used by your instance:
 
 ```sh
-npx tsx src/cli/main.ts update aws my-instance \
+cloudypad update aws my-instance \
     --sunshine-image-registry your-registry/cloudypad-custom \
     --sunshine-image-tag some-tag
 ```
