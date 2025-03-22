@@ -5,6 +5,7 @@ function create_destroy_scaleway() {
     $cloudypad_cmd create scaleway \
         --name $instance_name \
         --private-ssh-key ~/.ssh/id_ed25519 \
+        --project-id "02d02f86-9414-4161-b807-efb2bd22d266" \
         --region fr-par \
         --zone fr-par-2 \
         --instance-type GPU-3070-S \
@@ -33,3 +34,5 @@ function create_destroy_scaleway() {
 
     $cloudypad_cmd destroy $instance_name --yes
 }
+
+# TODO set project
