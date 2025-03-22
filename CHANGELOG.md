@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.21.1](https://github.com/PierreBeucher/cloudypad/compare/v0.21.0...v0.21.1) (2025-03-22)
+
+
+### Bug Fixes
+
+* **cli:** missing keyboard and locale flags on some create/update commands ([68d9556](https://github.com/PierreBeucher/cloudypad/commit/68d9556f4c1a56b6652678fa71b417877903a1bf))
+* prevent pulseaudio from quitting before over components starts ([2aa5c62](https://github.com/PierreBeucher/cloudypad/commit/2aa5c62604151f9dbdbeed26852294e073dce70e))
+* wolf output 2 times  paired successfully" on pair ([46e82e1](https://github.com/PierreBeucher/cloudypad/commit/46e82e18c2491f84256030911ccf229cd599a480))
+
 ## [0.21.0](https://github.com/PierreBeucher/cloudypad/compare/v0.20.0...v0.21.0) (2025-03-21)
 
 
