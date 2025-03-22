@@ -1,5 +1,5 @@
 # Cloudy Pad
-[![Discord](https://img.shields.io/discord/856434175455133727?style=for-the-badge&logo=discord&logoColor=ffffff&label=Chat%20with%20us%20on%20Discord&labelColor=6A7EC2&color=7389D8)](https://discord.gg/dCxDVfVnSD)
+[![Discord](https://img.shields.io/discord/856434175455133727?style=for-the-badge&logo=discord&logoColor=ffffff&label=Chat%20with%20us%20on%20Discord&labelColor=6A7EC2&color=7389D8)](https://discord.gg/QATA3b9TTa)
 [![GitHub License](https://img.shields.io/github/license/PierreBeucher/cloudypad?style=for-the-badge&color=00d4c4)](./LICENSE.txt)
 
 Cloudy Pad is a Free, Open Source alternative to GeForce Now, Blacknut and similar Cloud Gaming platforms. It lets you deploy a Cloud gaming server like [Sunshine](https://github.com/LizardByte/Sunshine) anywhere in the world and play your own games - without requiring a powerful gaming machine or a costly subscription:
@@ -24,7 +24,7 @@ Cloudy Pad is a Free, Open Source alternative to GeForce Now, Blacknut and simil
 
 [**🫰 Cost estimation per Cloud provider**](https://docs.cloudypad.gg/cost/index.html)
 
-[![Discord](https://img.shields.io/discord/856434175455133727?style=for-the-badge&logo=discord&logoColor=ffffff&label=Chat%20with%20us&labelColor=6A7EC2&color=7389D8)](https://discord.gg/dCxDVfVnSD)
+[![Discord](https://img.shields.io/discord/856434175455133727?style=for-the-badge&logo=discord&logoColor=ffffff&label=Chat%20with%20us&labelColor=6A7EC2&color=7389D8)](https://discord.gg/QATA3b9TTa)
 
 ---
 
@@ -50,7 +50,7 @@ Not familiar with terms like _"Cloud gaming"_, _"Moonlight"_, _"Cloud Provider"_
 😱 Something went wrong? A question ? 
 
 - See [FAQ and known issues](https://docs.cloudypad.gg/usage/faq.md) or [create an issue](https://github.com/PierreBeucher/cloudypad/issues)
-- Come and chat with us on [Discord](https://discord.gg/dCxDVfVnSD) !
+- Come and chat with us on [Discord](https://discord.gg/QATA3b9TTa) !
 
 ## Documentation
 

@@ -27,7 +27,7 @@ Cloudy Pad lets you deploy a Cloud gaming server anywhere in the world and play 
 
 Need help ? A question ?
 
-[![Discord](https://img.shields.io/discord/856434175455133727?style=for-the-badge&logo=discord&logoColor=ffffff&label=Chat%20with%20us&labelColor=6A7EC2&color=7389D8)](https://discord.gg/dCxDVfVnSD)
+[![Discord](https://img.shields.io/discord/856434175455133727?style=for-the-badge&logo=discord&logoColor=ffffff&label=Chat%20with%20us&labelColor=6A7EC2&color=7389D8)](https://discord.gg/QATA3b9TTa)
 
 [🐛 File an issue on GitHub](https://github.com/PierreBeucher/cloudypad)
 
