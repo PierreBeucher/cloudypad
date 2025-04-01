@@ -20,3 +20,5 @@ if [ "$NVIDIA_ENABLE" = true ]; then
 fi
 
 source setup-x-config.sh
+
+setup-pulseaudio.sh
