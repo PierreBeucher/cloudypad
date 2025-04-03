@@ -27,7 +27,7 @@
       <property name="position" type="string" value="p=10;x=0;y=0"/>
       <property name="length" type="uint" value="1"/>
       <property name="position-locked" type="bool" value="true"/>
-      <property name="size" type="uint" value="48"/>
+      <property name="size" type="uint" value="48"/> <!-- This property auto updates on start depending on screen size-->
       <property name="plugin-ids" type="array">
 
         <!-- Steam -->
