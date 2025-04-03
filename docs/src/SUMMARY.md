@@ -15,10 +15,8 @@
 
 # Help and troubleshooting
 
-- [Connect to my instance](./help/moonlight.md)
-- [Download and install Moonlight](./help/moonlight.md)
-- [Display size does not match my display](./help/moonlight.md)
-- [I have black borders on my screen](./help/moonlight.md)
+- [Moonlight: install and connect/pair](./help/moonlight-install-connect.md)
+- [Moonlight usage: screen size, latency, keyboard shortcuts, etc.](./help/moonlight-usage.md)
 - [Steam: sign in and password](./help/steam.md)
 - [Copy & paste my login / password](./help/steam.md)
 - [Talk to a human about my issue](./help/community.md)
