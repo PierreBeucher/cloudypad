@@ -144,6 +144,29 @@ RUN --mount=type=cache,target=/var/cache --mount=type=tmpfs,target=/var/log \
     locale-gen en_US.UTF-8 && \
     update-locale LANG=en_US.UTF-8
 
+# Install Firefox as apt package (not snap)
+# Need to explicitely avoid snap by using Firefox PPA and prioritising non-snap version
+# See https://askubuntu.com/a/1404401
+# TODO as single RUN
+RUN --mount=type=cache,target=/var/cache --mount=type=tmpfs,target=/var/log \
+    apt update && \
+    apt install -y software-properties-common && \
+    apt clean && \
+    add-apt-repository ppa:mozillateam/ppa
+
+RUN echo "\
+Package: * \n\
+Pin: release o=LP-PPA-mozillateam \n\
+Pin-Priority: 1001 \n\
+\n\
+Package: firefox \n\
+Pin: version 1:1snap* \n\
+Pin-Priority: -1" | tee /etc/apt/preferences.d/mozilla-firefox
+
+RUN apt update && \
+    apt install -y firefox && \
+    apt clean
+
 # Use this display by default, should not conflict with other displays
 ENV DISPLAY=":42"
 
