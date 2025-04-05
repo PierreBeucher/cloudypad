@@ -37,8 +37,10 @@ tasks:
   dev-docker-sunshine-to-vm:
     cmds: 
     - task: build-sunshine-container-local
-    - scp -i .vagrant/machines/default/virtualbox/private_key tmp/cloudypad.docker.tar vagrant@192.168.56.43:/tmp
-    - ssh -i .vagrant/machines/default/virtualbox/private_key vagrant@192.168.56.43 docker load -i /tmp/cloudypad.docker.tar
+    - >
+      docker image save $CLOUDYPAD_BUILD_SUNSHINE_IMAGE_REGISTRY:$CLOUDYPAD_BUILD_SUNSHINE_IMAGE_TAG -o tmp/sunshine-container-image.tar
+    - scp -i .vagrant/machines/default/virtualbox/private_key tmp/sunshine-container-image.tar vagrant@192.168.56.43:/tmp
+    - ssh -i .vagrant/machines/default/virtualbox/private_key vagrant@192.168.56.43 docker load -i /tmp/sunshine-container-image.tar
     - ansible-playbook -i ansible/inventories/dev-vagrant.yml ansible/sunshine.yml -t sunshine-docker
     - ssh -i .vagrant/machines/default/virtualbox/private_key vagrant@192.168.56.43 
       docker compose -f sunshine/docker-compose.yml -p sunshine up -d
@@ -192,8 +194,9 @@ tasks:
     - >
       docker buildx build containers/sunshine/ 
       --cache-from type=registry,ref=$CLOUDYPAD_BUILD_SUNSHINE_IMAGE_REGISTRY:master-cache
+      --cache-from type=local,src=./tmp/sunshine-container.cache.tgz
       --cache-to type=inline
-      -o type=docker,dest=./tmp/cloudypad.docker.tar 
+      --cache-to type=local,dest=./tmp/sunshine-container.cache.tgz
       -t $CLOUDYPAD_BUILD_SUNSHINE_IMAGE_REGISTRY:$CLOUDYPAD_BUILD_SUNSHINE_IMAGE_TAG
       --load
 
