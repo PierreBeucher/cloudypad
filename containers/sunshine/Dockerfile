@@ -202,8 +202,8 @@ ENV XDG_DATA_HOME=$CLOUDYPAD_DATA_DIR
 
 ENV DBUS_SYSTEM_BUS_ADDRESS="unix:path=$XDG_RUNTIME_DIR/dbus"
 
-# Start Steam with Steam Deck mode by default (to enable Proton globally) and library mode (to show library on start)
-ENV CLOUDYPAD_STEAM_ARGS=""
+# Start Steam on library page by default
+ENV CLOUDYPAD_STEAM_ARGS="steam://open/games"
 
 # Run as non-root user
 # TODO use host UID/GID for better portability and usage from host ?
