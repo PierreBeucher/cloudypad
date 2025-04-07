@@ -24,7 +24,6 @@
   loop:
     - build-essential
     - gcc-multilib
-    - dkms
 
 - name: Reboot after previous install method package removal
   when: previous_install_method_package_remove.changed
@@ -37,6 +36,7 @@
     state: present
   loop:
     - make
+    - dkms
 
 - name: Fetch kernel configuration file
   slurp:
@@ -122,9 +122,10 @@
   register: sha256_check
   failed_when: sha256_check.rc != 0
 
+# Use dkms to ensure kernel modules are updated when kernel is updated
 - name: Install NVIDIA driver
   when: nvidia_driver_version != nvidia_driver_dotrun_install_version
-  command: /tmp/NVIDIA-Linux-x86_64-{{ nvidia_driver_dotrun_install_version }}.run --no-questions --ui=none
+  command: /tmp/NVIDIA-Linux-x86_64-{{ nvidia_driver_dotrun_install_version }}.run --no-questions --ui=none --dkms
 
 - name: Reboot after dotrun driver install
   when: nvidia_driver_version != nvidia_driver_dotrun_install_version
