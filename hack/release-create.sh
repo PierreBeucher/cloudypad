@@ -80,8 +80,6 @@ create_release_pr_and_merge_in_release_branch() {
 
   echo "Release is ready to be merged in release branch. You can review PR before merge."
 
-  read -p "Press enter to continue and merge PR automatically..."
-
   gh pr merge "release-please--branches--$release_branch--components--cloudypad" --merge
 
   echo "Pulling Release Please changes in $release_branch..."
@@ -107,7 +105,7 @@ merge_release_branch_in_master() {
     return
   fi
 
-  read -p "About to merge release branch $release_branch in master. Continue ?"
+  read -p "About to merge release branch $release_branch in master. MAKE SURE TO WAIT for release tag CI jobs (Docker image build) to finish. Continue ?"
 
   gh pr create \
     --title "Finalize release $release_version" \
