@@ -5,6 +5,7 @@ Inactivity detection (Auto Stop) automatically shuts down your instance when no 
 Instance is considered inactive when all these conditions are met:
 - You're not connected via Moonlight
 - You're not downloading a game (no significant incoming network activity is detected)
+- You're not updating the instance using `cloudypad` commands like `cloudypad configure` (to avoid interrupting instance during configuration or updates)
 
 ## Configuration
 
@@ -21,6 +22,7 @@ cloudypad update <provider> --name <my-insytance> --autostop-enable true --autos
 Auto Stop regularly check for:
 - Moonlight activity on port 47999 (Control Port). 
 - Network download activity
+- Ansible process activity used by `cloudypad` commands like `cloudypad configure` (to avoid shutting down instance during configuration or updates)
 
 If no activity is detected within the configured timeout, Auto Stop will shut down the instance.
 
