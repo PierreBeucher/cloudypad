@@ -56,10 +56,11 @@ tasks:
     - task: dev-ansible-config
     - vagrant ssh -c "docker restart cloudy"
 
-  dev-docker-build-push-image:
+  dev-docker-sunshine-build-push-image:
     cmds:
-    - docker compose -f containers/sunshine/docker-compose.yml build
-    - docker compose -f containers/sunshine/docker-compose.yml push
+    - task: build-sunshine-container-local
+    - docker tag $CLOUDYPAD_BUILD_SUNSHINE_IMAGE_REGISTRY:$CLOUDYPAD_BUILD_SUNSHINE_IMAGE_TAG $CLOUDYPAD_BUILD_SUNSHINE_IMAGE_REGISTRY:dev
+    - docker push $CLOUDYPAD_BUILD_SUNSHINE_IMAGE_REGISTRY:dev
 
   #
   # Tests
