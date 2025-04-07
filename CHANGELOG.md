@@ -1,5 +1,22 @@
 # Changelog
 
+## [0.22.0](https://github.com/PierreBeucher/cloudypad/compare/v0.21.1...v0.22.0) (2025-04-07)
+
+
+### Features
+
+* auto resize desktop icon to match current screen size ([268fcc0](https://github.com/PierreBeucher/cloudypad/commit/268fcc0371be7e5eddb84221fe16aeb150cf4c63))
+* **autostop:** detect Ansible running on host to avoid interruption while Ansible is running ([0f1d78a](https://github.com/PierreBeucher/cloudypad/commit/0f1d78ae42f9e13d429107a15f5522e9cb86f188))
+* exit button shows how to exit rather than killing container ([50df2a2](https://github.com/PierreBeucher/cloudypad/commit/50df2a2e40e2e24ae2310db690c000b8b883aad5))
+* **sunshine:** add Help button directing to docs.cloudypad.gg ([b728883](https://github.com/PierreBeucher/cloudypad/commit/b7288830c000615be0b594767ddf337f9dacd790))
+* **sunshine:** start Steam on Library view by default ([42e35ff](https://github.com/PierreBeucher/cloudypad/commit/42e35ff111ff52746d67ad3e9141879b2b771c2e))
+
+
+### Bug Fixes
+
+* disable pulseaudio autostart ([f38ff9b](https://github.com/PierreBeucher/cloudypad/commit/f38ff9b1a384bcfa2babb9ead0150afa653a4488))
+* **nvidia-drivers:** avoid breaking NVIDIA drivers on Linux kernel change (eg. with unattended upgrades) ([b4759c8](https://github.com/PierreBeucher/cloudypad/commit/b4759c86cb67d469f394754b9804e8189f7042dd))
+
 ## [0.21.1](https://github.com/PierreBeucher/cloudypad/compare/v0.21.0...v0.21.1) (2025-03-22)
 
 
