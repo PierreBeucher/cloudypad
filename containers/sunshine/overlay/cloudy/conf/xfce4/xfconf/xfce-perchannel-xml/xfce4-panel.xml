@@ -6,6 +6,8 @@
     <value type="int" value="1"/>
     <value type="int" value="2"/>
     <property name="dark-mode" type="bool" value="true"/>
+
+    <!-- Horizontal upper bar showing minimized apps -->
     <property name="panel-1" type="empty">
       <property name="position" type="string" value="p=6;x=0;y=0"/>
       <property name="length" type="uint" value="100"/>
@@ -18,12 +20,14 @@
       
       </property>
     </property>
+
+    <!-- Bottom dock with Steam, config and exit shortcuts -->
     <property name="panel-2" type="empty">
       <property name="autohide-behavior" type="uint" value="1"/>
       <property name="position" type="string" value="p=10;x=0;y=0"/>
       <property name="length" type="uint" value="1"/>
       <property name="position-locked" type="bool" value="true"/>
-      <property name="size" type="uint" value="48"/>
+      <property name="size" type="uint" value="48"/> <!-- This property auto updates on start depending on screen size-->
       <property name="plugin-ids" type="array">
 
         <!-- Steam -->
@@ -32,14 +36,14 @@
         <!-- Separator -->
         <value type="int" value="98"/>
 
-        <!-- Keyboard, mouse and display -->
+        <!-- Keyboard and mouse config -->
         <value type="int" value="1"/>
         <value type="int" value="2"/>
-        <value type="int" value="3"/>
 
         <value type="int" value="99"/>
 
-        <!-- Exit session -->
+        <!-- Help and Exit session -->
+        <value type="int" value="6"/>
         <value type="int" value="5"/>
 
       </property>
@@ -63,12 +67,6 @@
       </property>
     </property>
 
-    <property name="plugin-3" type="string" value="launcher">
-      <property name="items" type="array">
-        <value type="string" value="display.desktop"/>
-      </property>
-    </property>
-
     <!-- uses panel/launcher-9 -->
     <property name="plugin-9" type="string" value="launcher">
       <property name="items" type="array">
@@ -85,5 +83,11 @@
       </property>
     </property>
     
+    <property name="plugin-6" type="string" value="launcher">
+      <property name="items" type="array">
+        <value type="string" value="help.desktop"/>
+      </property>
+    </property>
+
   </property>
 </channel>

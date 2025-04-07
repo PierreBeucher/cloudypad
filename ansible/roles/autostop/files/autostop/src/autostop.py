@@ -56,8 +56,32 @@ class MoonlightNetworkActivityChecker:
         packets = sniff(iface=interfaces, filter=f"port {self.port}", timeout=self.timeout, count=self.packet_count)
         return bool(packets)
 
+
 """
-Watches for Moonlight activity (eg. a user is connected to instance) and download activity (eg. a game is being downloaded).
+Watches for ansible process activity on the host.
+If ansible is running, instance is considered active. 
+"""
+class AnsibleProcessActivityChecker:
+
+    def detect_ansible_process_activity(self):
+
+        for proc in psutil.process_iter(['name', 'cmdline']):
+            
+            # Ansible is run as python script
+            # Look for python proess with ansible in the command line
+            if 'python' in proc.info['name'] and any('ansible' in cmd for cmd in proc.info['cmdline']):
+                    print(f"Ansible process detected: {proc.info['name']} {proc.info['cmdline']}")
+                    return True
+
+        return False
+
+"""
+Watches for Moonlight activity:
+- a user is connected to instance (Moonlight activity)
+- download activity (eg. a game is being downloaded)
+- ansible process activity (eg. `cloudypad` commands like `cloudypad configure` are running)
+
+Then:
 - If inactivity is detected, instance is shutdown. 
 - If user is actively using the instance (either connected to Moonlight or downloading a game), instance won't be shutdown.
 
@@ -85,7 +109,8 @@ def main():
 
     moonlight_checker = MoonlightNetworkActivityChecker(port=moonlight_activity_port)    
     network_download_checker = NetworkDownloadActivityChecker()
-    
+    ansible_checker = AnsibleProcessActivityChecker()
+
     last_activity_time = time.time()
 
     # Main loop to continuously check for traffic
@@ -95,10 +120,13 @@ def main():
 
             moonlight_activity = moonlight_checker.detect_moonlight_network_activity()
             network_download_activity = network_download_checker.detect_network_download_activity()
+            ansible_activity = ansible_checker.detect_ansible_process_activity()
 
-            if moonlight_activity or network_download_activity:
+            if moonlight_activity or network_download_activity or ansible_activity:
                 print(f"{current_date} - Moonlight traffic detected on port {moonlight_activity_port}: {moonlight_activity}")
                 print(f"{current_date} - Network download activity detected: {network_download_activity}")
+                print(f"{current_date} - Ansible process detected: {ansible_activity}")
+
                 last_activity_time = time.time()
             else:
                 current_inactivity = int(time.time() - last_activity_time)

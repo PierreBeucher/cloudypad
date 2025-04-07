@@ -8,7 +8,7 @@
           "image-path": "steam.png",
           "prep-cmd": [
               {
-                  "do": "sh -c \"setup-sunshine-screen-mode.sh > \/tmp\/sunshine-session-start.log 2>&1\"",
+                  "do": "sh -c \"sunshine-app-startup.sh > \/tmp\/sunshine-session-start.log 2>&1\"",
                   "undo": ""
               }
           ],
