@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.23.0](https://github.com/PierreBeucher/cloudypad/compare/v0.22.0...v0.23.0) (2025-04-13)
+
+
+### Features
+
+* **scaleway:** use custom server image ([e6b65ce](https://github.com/PierreBeucher/cloudypad/commit/e6b65ce9debb51e4bfffd6932e5d51e12ddbac0d))
+
+
+### Bug Fixes
+
+* **sunshine:** corrected screen selection which is not always primary ([8fd4a86](https://github.com/PierreBeucher/cloudypad/commit/8fd4a86a1986603da0b78f4bd39afc98a2b30aba))
+
 ## [0.22.0](https://github.com/PierreBeucher/cloudypad/compare/v0.21.1...v0.22.0) (2025-04-07)
 
 
