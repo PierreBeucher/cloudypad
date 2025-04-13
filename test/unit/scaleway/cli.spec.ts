@@ -18,6 +18,7 @@ describe('Scaleway input prompter', () => {
             zone: "fr-par-1",
             instanceType: "L4-1-24G",
             diskSizeGb: 100,
+            imageId: "123e4567-e89b-12d3-a456-426614174000",
         }, 
         configuration: {
             ...DEFAULT_COMMON_INPUT.configuration
@@ -32,6 +33,7 @@ describe('Scaleway input prompter', () => {
         region: TEST_INPUT.provision.region,
         zone: TEST_INPUT.provision.zone,
         projectId: TEST_INPUT.provision.projectId,
+        imageId: TEST_INPUT.provision.imageId,
     }
 
     it('should return provided inputs without prompting when full input provider', async () => {

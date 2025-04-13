@@ -14,6 +14,7 @@ const ScalewayProvisionInputV1Schema = CommonProvisionInputV1Schema.extend({
     zone: z.string().describe("Scaleway zone"),
     instanceType: z.string().describe("Scaleway instance type"),
     diskSizeGb: z.number().describe("Disk size in GB"),
+    imageId: z.string().optional().describe("Existing image ID for instance server"),
 })
 
 const ScalewayInstanceStateV1Schema = InstanceStateV1Schema.extend({

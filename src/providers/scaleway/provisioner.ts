@@ -31,6 +31,7 @@ export class ScalewayProvisioner extends AbstractInstanceProvisioner<ScalewayPro
             // Scaleway was initially implemented with data disk support in mind
             // Was finally undone as it would require a lot of changes to the codebase to support legacy mode and data disk mode
             additionalVolumes: [],
+            imageId: this.args.provisionInput.imageId,
             securityGroupPorts: this.getStreamingServerPorts(),
             publicKeyContent: new SshKeyLoader().parseSshPrivateKeyFileToPublic(this.args.provisionInput.ssh.privateKeyPath),
         }
