@@ -72,16 +72,26 @@
 #
 # Wolf config
 #
-- name: ensure Wolf workind directory exists
+- name: ensure Wolf project directory exists
   ansible.builtin.file:
-    path: "{{ ansible_user_dir }}/wolf"
+    path: "{{ wolf_project_dir }}"
     state: directory
     mode: '0755'
+
+- name: ensure Wolf data directory exists
+  ansible.builtin.file:
+    path: "{{ wolf_data_dir }}"
+    state: directory
+    mode: '0755'
+
+- name: import legacy data move tasks
+  import_tasks: legacy-data.yml
+  tags: [ legacy-data ]
 
 - name: Copy NVIDIA driver volume script
   copy:
     src: docker-nvidia-volume.sh
-    dest: "{{ ansible_user_dir }}/wolf/docker-nvidia-volume.sh"
+    dest: "{{ wolf_project_dir }}/docker-nvidia-volume.sh"
     mode: '0755'
 
 - name: Get NVIDIA driver version
@@ -102,29 +112,29 @@
 # Maybe will have to rewrite it as plain Ansible...
 - name: Ensure NVIDIA driver volume exists
   command: 
-    cmd: "{{ ansible_user_dir }}/wolf/docker-nvidia-volume.sh"
+    cmd: "{{ wolf_project_dir }}/docker-nvidia-volume.sh"
 
 - name: Copy Wolf config.toml
   template:
     src: wolf-config.toml
-    dest: "{{ ansible_user_dir }}/wolf/config.toml"
+    dest: "{{ wolf_project_dir }}/config.toml"
 
 - name: Copy docker-compose file
   template:
     src: docker-compose.nvidia.yml
-    dest: "{{ ansible_user_dir }}/wolf/docker-compose.nvidia.yml"
+    dest: "{{ wolf_project_dir }}/docker-compose.nvidia.yml"
 
 - name: Run docker compose stack
   community.docker.docker_compose_v2:
-    project_src: "{{ ansible_user_dir }}/wolf"
+    project_src: "{{ wolf_project_dir }}"
     files: docker-compose.nvidia.yml
 
 - name: Copy Docker Compose preheat pull file
   ansible.builtin.template:
     src: docker-compose.app-preheat.yml
-    dest: "{{ ansible_user_dir }}/wolf/docker-compose.app-preheat.yml"
+    dest: "{{ wolf_project_dir }}/docker-compose.app-preheat.yml"
 
 - name: Pull images using preheat Compose file
   community.docker.docker_compose_v2_pull:
     project_src: /tmp
-    files: "{{ ansible_user_dir }}/wolf/docker-compose.app-preheat.yml"
+    files: "{{ wolf_project_dir }}/docker-compose.app-preheat.yml"

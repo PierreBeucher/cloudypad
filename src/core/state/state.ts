@@ -2,11 +2,12 @@ import { PaperspaceProviderStateV0 } from '../../providers/paperspace/state'
 import { AwsProviderStateV0 } from '../../providers/aws/state'
 import { AzureProviderStateV0 } from '../../providers/azure/state'
 import { GcpProviderStateV0 } from '../../providers/gcp/state'
-import { boolean, z } from "zod"
-import { CLOUDYPAD_CONFIGURATOR_LIST, CLOUDYPAD_PROVIDER_LIST } from "../const"
+import { z } from "zod"
+import { CLOUDYPAD_CONFIGURATOR_LIST } from "../const"
 
 const CommonProvisionOutputV1Schema = z.object({
     host: z.string().describe("Instance hostname or IP address"),
+    dataDiskId: z.string().describe("Unique ID of data disk (if any) which can be found on instance /dev/disk/by-id/<data-disk-id>").optional(),
 }).passthrough()
 
 const CommonProvisionInputV1Schema = z.object({
@@ -59,7 +60,9 @@ const CommonConfigurationInputV1Schema = z.object({
     return data
 })
 
-const CommonConfigurationOutputV1Schema = z.object({}).passthrough()
+const CommonConfigurationOutputV1Schema = z.object({
+    dataDiskConfigured: z.boolean().default(false).describe("Whether data disk has been configured."),
+}).passthrough()
 
 const InstanceStateV1Schema = z.object({
     version: z.literal("1").describe("State schema version, always 1"),

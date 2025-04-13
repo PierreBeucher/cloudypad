@@ -5,7 +5,7 @@ import { AbstractInputPrompter, PromptOptions } from "../../cli/prompter";
 import { ScalewayClient } from "../../tools/scaleway";
 import { CLOUDYPAD_PROVIDER_SCALEWAY } from "../../core/const";
 import { PartialDeep } from "type-fest";
-import { CLI_OPTION_AUTO_STOP_TIMEOUT, CLI_OPTION_AUTO_STOP_ENABLE, CLI_OPTION_STREAMING_SERVER, CLI_OPTION_SUNSHINE_IMAGE_REGISTRY, CLI_OPTION_SUNSHINE_IMAGE_TAG, CLI_OPTION_SUNSHINE_PASSWORD, CLI_OPTION_SUNSHINE_USERNAME, CliCommandGenerator, CreateCliArgs, UpdateCliArgs, CLI_OPTION_DISK_SIZE, CLI_OPTION_USE_LOCALE, CLI_OPTION_KEYBOARD_LAYOUT, CLI_OPTION_KEYBOARD_MODEL, CLI_OPTION_KEYBOARD_VARIANT, CLI_OPTION_KEYBOARD_OPTIONS } from "../../cli/command";
+import { CLI_OPTION_AUTO_STOP_TIMEOUT, CLI_OPTION_AUTO_STOP_ENABLE, CLI_OPTION_STREAMING_SERVER, CLI_OPTION_SUNSHINE_IMAGE_REGISTRY, CLI_OPTION_SUNSHINE_IMAGE_TAG, CLI_OPTION_SUNSHINE_PASSWORD, CLI_OPTION_SUNSHINE_USERNAME, CliCommandGenerator, CreateCliArgs, UpdateCliArgs, CLI_OPTION_DISK_SIZE, CLI_OPTION_USE_LOCALE, CLI_OPTION_KEYBOARD_LAYOUT, CLI_OPTION_KEYBOARD_MODEL, CLI_OPTION_KEYBOARD_VARIANT, CLI_OPTION_KEYBOARD_OPTIONS, CLI_OPTION_DATA_DISK_SIZE, CLI_OPTION_ROOT_DISK_SIZE } from "../../cli/command";
 import { InteractiveInstanceInitializer } from "../../cli/initializer";
 import { RUN_COMMAND_CREATE, RUN_COMMAND_UPDATE } from "../../tools/analytics/events";
 import { InstanceUpdater } from "../../cli/updater";
@@ -15,8 +15,9 @@ export interface ScalewayCreateCliArgs extends CreateCliArgs {
     region?: string
     zone?: string
     instanceType?: string
-    diskSize?: number
+    rootDiskSize?: number
     imageId?: string
+    dataDiskSize?: number
 }
 
 export type ScalewayUpdateCliArgs = UpdateCliArgs & Omit<ScalewayCreateCliArgs, "projectId" | "zone" | "region" | "volumeType" >
@@ -31,8 +32,9 @@ export class ScalewayInputPrompter extends AbstractInputPrompter<ScalewayCreateC
                 zone: cliArgs.zone,
                 projectId: cliArgs.projectId,
                 instanceType: cliArgs.instanceType,
-                diskSizeGb: cliArgs.diskSize,
+                diskSizeGb: cliArgs.rootDiskSize,
                 imageId: cliArgs.imageId,
+                dataDiskSizeGb: cliArgs.dataDiskSize,
             }
         }
     }
@@ -59,6 +61,7 @@ export class ScalewayInputPrompter extends AbstractInputPrompter<ScalewayCreateC
 
         const instanceType = await this.instanceType(zonalScwClient, partialInput.provision?.instanceType)
         const rootDiskSizeGb = await this.rootDiskSize(partialInput.provision?.diskSizeGb)
+        const dataDiskSizeGb = await this.dataDiskSize(partialInput.provision?.dataDiskSizeGb)
 
         const scwInput: ScalewayInstanceInput = {
             configuration: commonInput.configuration,
@@ -70,6 +73,7 @@ export class ScalewayInputPrompter extends AbstractInputPrompter<ScalewayCreateC
                 zone: zone,
                 instanceType: instanceType,
                 diskSizeGb: rootDiskSizeGb,
+                dataDiskSizeGb: dataDiskSizeGb,
                 imageId: partialInput.provision?.imageId
             }
         }
@@ -115,12 +119,23 @@ export class ScalewayInputPrompter extends AbstractInputPrompter<ScalewayCreateC
             return diskSize
         }
 
+        // If not overridden, use a static default value$
+        // As OS disk size is managed by Cloudy Pad and should not impact user 
+        // except for specific customizations
+        return 20
+    }
+
+    private async dataDiskSize(diskSize?: number): Promise<number> {
+        if (diskSize !== undefined) { // allow 0 meaning explicit no data disk
+            return diskSize
+        }
+
         let selectedDiskSize: string
         let parsedDiskSize: number | undefined = undefined
 
         while (parsedDiskSize === undefined || isNaN(parsedDiskSize)) {
             selectedDiskSize = await input({
-                message: 'Disk size (GB):',
+                message: 'Data disk size in GB (OS will use another independent disk)',
                 default: "100"
             })
             parsedDiskSize = Number.parseInt(selectedDiskSize)
@@ -191,7 +206,8 @@ export class ScalewayCliCommandGenerator extends CliCommandGenerator {
     
     buildCreateCommand() {
         return this.getBaseCreateCommand(CLOUDYPAD_PROVIDER_SCALEWAY)
-            .addOption(CLI_OPTION_DISK_SIZE)
+            .addOption(CLI_OPTION_ROOT_DISK_SIZE)
+            .addOption(CLI_OPTION_DATA_DISK_SIZE)
             .addOption(CLI_OPTION_STREAMING_SERVER)
             .addOption(CLI_OPTION_SUNSHINE_USERNAME)
             .addOption(CLI_OPTION_SUNSHINE_PASSWORD)
@@ -227,7 +243,8 @@ export class ScalewayCliCommandGenerator extends CliCommandGenerator {
 
     buildUpdateCommand() {
         return this.getBaseUpdateCommand(CLOUDYPAD_PROVIDER_SCALEWAY)
-            .addOption(CLI_OPTION_DISK_SIZE)
+            .addOption(CLI_OPTION_ROOT_DISK_SIZE)
+            .addOption(CLI_OPTION_DATA_DISK_SIZE)
             .addOption(CLI_OPTION_SUNSHINE_USERNAME)
             .addOption(CLI_OPTION_SUNSHINE_PASSWORD)
             .addOption(CLI_OPTION_SUNSHINE_IMAGE_TAG)

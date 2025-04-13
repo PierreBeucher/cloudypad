@@ -6,12 +6,12 @@ services:
     environment:
       XDG_RUNTIME_DIR: /tmp/sockets
       NVIDIA_DRIVER_VOLUME_NAME: "{{ wolf_nvidia_driver_volume_name }}"
-      HOST_APPS_STATE_FOLDER: /etc/wolf
+      HOST_APPS_STATE_FOLDER: "{{ wolf_data_dir }}"
     volumes:
       # Used by other containers created by wolf. Do not change
-      - /etc/wolf/:/etc/wolf:rw
-      - /etc/wolf/cfg:/etc/wolf/cfg:rw
-      - "{{ ansible_user_dir }}/wolf/config.toml:/etc/wolf/cfg/config.toml"
+      - "{{ wolf_data_dir }}:{{ wolf_data_dir }}:rw"
+      - "{{ wolf_data_dir }}/cfg:{{ {{ wolf_data_dir }} }}/cfg:rw"
+      - "{{ wolf_project_dir }}/config.toml:{{ wolf_data_dir }}/cfg/config.toml"
       - /tmp/sockets:/tmp/sockets:rw
       - /var/run/docker.sock:/var/run/docker.sock:rw
       - /dev/:/dev/:rw

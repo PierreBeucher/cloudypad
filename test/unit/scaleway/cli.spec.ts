@@ -17,7 +17,8 @@ describe('Scaleway input prompter', () => {
             region: "fr-par",
             zone: "fr-par-1",
             instanceType: "L4-1-24G",
-            diskSizeGb: 100,
+            diskSizeGb: 20,
+            dataDiskSizeGb: 100,
             imageId: "123e4567-e89b-12d3-a456-426614174000",
         }, 
         configuration: {
@@ -28,7 +29,8 @@ describe('Scaleway input prompter', () => {
     const TEST_CLI_ARGS: ScalewayCreateCliArgs = {
         ...DEFAULT_COMMON_CLI_ARGS,
         name: instanceName,
-        diskSize: TEST_INPUT.provision.diskSizeGb,
+        rootDiskSize: TEST_INPUT.provision.diskSizeGb,
+        dataDiskSize: TEST_INPUT.provision.dataDiskSizeGb,
         instanceType: TEST_INPUT.provision.instanceType,
         region: TEST_INPUT.provision.region,
         zone: TEST_INPUT.provision.zone,

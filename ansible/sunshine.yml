@@ -24,11 +24,18 @@
   roles:
     - role: roles/prepare-install
       tags: [ prepare-install ]
+
+    - role: roles/data-disk
+      become: true
+      tags: [ data-disk ]
+      when: cloudypad_data_disk_id is defined
+
     - role: geerlingguy.docker
       tags: [ docker ]
       become: true
       docker_users:
       - "{{ ansible_user_id }}"
+    
     - role: roles/nvidia-driver
       tags: [ nvidia ]
       become: true
@@ -37,6 +44,7 @@
         nvidia_driver_module_params: |
           # nvidia-drm module is required by Wolf
           options nvidia-drm modeset=1
+    
     - role: roles/sunshine
       tags: [ sunshine ]
     

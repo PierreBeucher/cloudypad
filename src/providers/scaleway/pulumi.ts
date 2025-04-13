@@ -13,16 +13,18 @@ interface ScalewayInstanceArgs {
     rootVolume: {
         sizeGb: pulumi.Input<number>
     },
-    additionalVolumes: {
+    dataDisk?: {
         sizeGb: pulumi.Input<number>
-        name: pulumi.Input<string>
-    }[]
+    }
 }
 
 class CloudyPadScalewayInstance extends pulumi.ComponentResource {
+    
     public readonly publicIp: pulumi.Output<string | undefined>
     public readonly instanceName: pulumi.Output<string>
     public readonly instanceServerId: pulumi.Output<string>
+    public readonly dataDiskId: pulumi.Output<string | undefined>
+
     constructor(name: string, args: ScalewayInstanceArgs, opts?: pulumi.ComponentResourceOptions) {
         super("crafteo:cloudypad:scaleway:vm", name, args, opts)
 
@@ -55,13 +57,15 @@ class CloudyPadScalewayInstance extends pulumi.ComponentResource {
             tags: globalTags
         }, commonPulumiOpts)
 
-        const volumes = args.additionalVolumes?.map((v) => new scw.block.Volume(`${name}-${v.name}`, {
-                name: v.name,
-                sizeInGb: v.sizeGb,
+        let dataDisk: scw.block.Volume | undefined
+        if(args.dataDisk){
+            dataDisk = new scw.block.Volume(`${name}-data`, {
+                name: `${name}-data`,
+                sizeInGb: args.dataDisk.sizeGb,
                 iops: 5000,
                 tags: globalTags
             }, commonPulumiOpts)
-        ) ?? []
+        }
 
         const server = new scw.instance.Server(`${name}-server`, {
             name: name,
@@ -70,7 +74,7 @@ class CloudyPadScalewayInstance extends pulumi.ComponentResource {
                 sizeInGb: args.rootVolume.sizeGb,
                 volumeType: "sbs_volume",
             },
-            additionalVolumeIds: volumes.map((v) => v.id),
+            additionalVolumeIds: dataDisk ? [dataDisk.id] : [],
             tags: globalTags,
             securityGroupId: securityGroup.id,
             image: args.imageId ?? "ubuntu_jammy_gpu_os_12",
@@ -82,10 +86,17 @@ class CloudyPadScalewayInstance extends pulumi.ComponentResource {
 
         this.instanceName = server.name
         // server id looks like this: "fr-par-2/4becedc8-51e9-4320-a45c-20f0f57033fa"
-        // we want to extract only the I
+        // we want to extract only the ID
         this.instanceServerId = server.id.apply(id => id.split("/").pop() as string)
         this.publicIp = publicIp.address
 
+        dataDisk?.id.apply(id => {
+            pulumi.log.info(`Data disk: ${id}`)
+        })
+
+        // disk id looks like this: "fr-par-2/4becedc8-51e9-4320-a45c-20f0f57033fa"
+        // we want to extract only the ID
+        this.dataDiskId = dataDisk ? dataDisk.id.apply(id => id.split("/").pop() as string) : pulumi.output(undefined)
     }
 }
 
@@ -96,7 +107,7 @@ async function scalewayPulumiProgram(): Promise<Record<string, any> | void> {
     const publicKeyContent = config.require("publicKeyContent")
     const rootDiskSizeGB = config.requireNumber("rootDiskSizeGB")
     const securityGroupPorts = config.requireObject<SimplePortDefinition[]>("securityGroupPorts")
-    const additionalVolumes = config.requireObject<ScalewayInstanceArgs["additionalVolumes"]>("additionalVolumes")
+    const dataDisk = config.getObject<ScalewayInstanceArgs["dataDisk"]>("dataDisk")
     const imageId = config.get("imageId")
 
     const instanceName = pulumi.getStack()
@@ -113,7 +124,7 @@ async function scalewayPulumiProgram(): Promise<Record<string, any> | void> {
         rootVolume: {
             sizeGb: rootDiskSizeGB,
         },
-        additionalVolumes: additionalVolumes,
+        dataDisk: dataDisk,
         imageId: imageId
     })
 
@@ -121,6 +132,7 @@ async function scalewayPulumiProgram(): Promise<Record<string, any> | void> {
         instanceName: instance.instanceName,
         publicIp: instance.publicIp,
         instanceServerId: instance.instanceServerId,
+        dataDiskId: instance.dataDiskId
     }
 }
 
@@ -135,10 +147,9 @@ export interface PulumiStackConfigScaleway {
     }
     publicKeyContent: string
     securityGroupPorts: SimplePortDefinition[]
-    additionalVolumes: {
+    dataDisk?: {
         sizeGb: number
-        name: string
-    }[],
+    }
 }
 
 
@@ -146,6 +157,7 @@ export interface ScalewayPulumiOutput {
     instanceName: string
     instanceServerId: string
     publicIp: string
+    dataDiskId?: string
 }
 
 export class ScalewayPulumiClient extends InstancePulumiClient<PulumiStackConfigScaleway, ScalewayPulumiOutput> {
@@ -164,7 +176,7 @@ export class ScalewayPulumiClient extends InstancePulumiClient<PulumiStackConfig
         
         await stack.setConfig("instanceType", { value: config.instanceType})
         if(config.imageId) await stack.setConfig("imageId", { value: config.imageId})
-        await stack.setConfig("additionalVolumes", { value: JSON.stringify(config.additionalVolumes ?? [])})
+        if(config.dataDisk) await stack.setConfig("dataDisk", { value: JSON.stringify(config.dataDisk)})
 
         await stack.setConfig("rootDiskSizeGB", { value: config.rootDisk.sizeGb.toString()})
         await stack.setConfig("publicKeyContent", { value: config.publicKeyContent})
@@ -182,7 +194,8 @@ export class ScalewayPulumiClient extends InstancePulumiClient<PulumiStackConfig
         return {
             instanceName: outputs["instanceName"].value as string,
             publicIp: outputs["publicIp"].value as string,
-            instanceServerId: outputs["instanceServerId"].value as string
+            instanceServerId: outputs["instanceServerId"].value as string,
+            dataDiskId: outputs["dataDiskId"]?.value as string | undefined
         }   
     }
 

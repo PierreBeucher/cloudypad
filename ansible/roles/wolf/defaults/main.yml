@@ -9,3 +9,11 @@ wolf_app_pegasus_image: ghcr.io/games-on-whales/pegasus:edge@sha256:ad2842875a69
 wolf_app_retroarch_image: ghcr.io/games-on-whales/retroarch:edge@sha256:80e2f1b6c80ff16627a73657b03ac14d740ea44a352d7249e13a3fab885c0657
 wolf_app_prismlauncher_image: ghcr.io/games-on-whales/prismlauncher:edge@sha256:be44dce1313157826731e0b79c19ee60098848c346a490fc84b7a375f874914f
 wolf_app_firefox_image: ghcr.io/games-on-whales/firefox:edge@sha256:6ff2d01d8765295c5cb3be4e058566387ac268f0c063548164a064c48ff2f901
+
+# Directory where Wolf project config is stored (eg. Docker Compose files)
+wolf_project_dir: "{{ ansible_user_dir }}/wolf"
+
+# Where Wolf container data are stored
+wolf_data_dir: "/var/lib/cloudypad/wolf/data"
+
+wolf_legacy_data_dir: "/etc/wolf/data"

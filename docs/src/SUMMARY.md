@@ -19,8 +19,9 @@
 - [Moonlight usage: screen size, latency, keyboard shortcuts, etc.](./help/moonlight-usage.md)
 - [Steam: sign in and password](./help/steam.md)
 - [Copy & paste my login / password](./help/steam.md)
-- [Talk to a human about my issue](./help/community.md)
+- [Talk to a human](./help/community.md)
 - [General FAQ](./help/faq.md)
+- [Known issues](./help/known-issues.md)
 
 # Cloud provider account setup
 
