@@ -16,6 +16,7 @@ export interface ScalewayCreateCliArgs extends CreateCliArgs {
     zone?: string
     instanceType?: string
     diskSize?: number
+    imageId?: string
 }
 
 export type ScalewayUpdateCliArgs = UpdateCliArgs & Omit<ScalewayCreateCliArgs, "projectId" | "zone" | "region" | "volumeType" >
@@ -31,6 +32,7 @@ export class ScalewayInputPrompter extends AbstractInputPrompter<ScalewayCreateC
                 projectId: cliArgs.projectId,
                 instanceType: cliArgs.instanceType,
                 diskSizeGb: cliArgs.diskSize,
+                imageId: cliArgs.imageId,
             }
         }
     }
@@ -68,6 +70,7 @@ export class ScalewayInputPrompter extends AbstractInputPrompter<ScalewayCreateC
                 zone: zone,
                 instanceType: instanceType,
                 diskSizeGb: rootDiskSizeGb,
+                imageId: partialInput.provision?.imageId
             }
         }
         
@@ -205,6 +208,7 @@ export class ScalewayCliCommandGenerator extends CliCommandGenerator {
             .option('--zone <zone>', 'Zone in which to deploy instance')
             .option('--project-id <projectid>', 'Project ID in which to deploy resources')
             .option('--instance-type <instance-type>', 'Instance type')
+            .option('--image-id <image-id>', 'Existing image ID for instance server. Disk size must be equal or greater than image size.')
             .action(async (cliArgs) => {
                 this.analytics.sendEvent(RUN_COMMAND_CREATE, { provider: CLOUDYPAD_PROVIDER_SCALEWAY })
 

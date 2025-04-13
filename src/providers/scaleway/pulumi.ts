@@ -9,6 +9,7 @@ interface ScalewayInstanceArgs {
     publicKeyContent: pulumi.Input<string>
     tags?: pulumi.Input<string[]>
     instanceType: pulumi.Input<string>
+    imageId?: pulumi.Input<string>
     rootVolume: {
         sizeGb: pulumi.Input<number>
         type: pulumi.Input<string>
@@ -74,7 +75,7 @@ class CloudyPadScalewayInstance extends pulumi.ComponentResource {
             additionalVolumeIds: volumes.map((v) => v.id),
             tags: globalTags,
             securityGroupId: securityGroup.id,
-            image: "ubuntu_jammy_gpu_os_12",
+            image: args.imageId ?? "ubuntu_jammy_gpu_os_12",
             ipIds: [publicIp.id],
         }, commonPulumiOpts)
 
@@ -96,6 +97,7 @@ async function scalewayPulumiProgram(): Promise<Record<string, any> | void> {
     const rootDiskType = config.require("rootDiskType")
     const securityGroupPorts = config.requireObject<SimplePortDefinition[]>("securityGroupPorts")
     const additionalVolumes = config.requireObject<ScalewayInstanceArgs["additionalVolumes"]>("additionalVolumes")
+    const imageId = config.get("imageId")
 
     const instanceName = pulumi.getStack()
 
@@ -112,7 +114,8 @@ async function scalewayPulumiProgram(): Promise<Record<string, any> | void> {
             sizeGb: rootDiskSizeGB,
             type: rootDiskType
         },
-        additionalVolumes: additionalVolumes
+        additionalVolumes: additionalVolumes,
+        imageId: imageId
     })
 
     return {
@@ -127,6 +130,7 @@ export interface PulumiStackConfigScaleway {
     region: string
     zone: string
     instanceType: string
+    imageId?: string
     rootDisk: {
         sizeGb: number
         type: string
@@ -162,6 +166,7 @@ export class ScalewayPulumiClient extends InstancePulumiClient<PulumiStackConfig
         await stack.setConfig("scaleway:zone", { value: config.zone})
         
         await stack.setConfig("instanceType", { value: config.instanceType})
+        if(config.imageId) await stack.setConfig("imageId", { value: config.imageId})
         await stack.setConfig("additionalVolumes", { value: JSON.stringify(config.additionalVolumes ?? [])})
 
         await stack.setConfig("rootDiskSizeGB", { value: config.rootDisk.sizeGb.toString()})
