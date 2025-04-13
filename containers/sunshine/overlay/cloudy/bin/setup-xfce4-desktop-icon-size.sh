@@ -5,8 +5,8 @@
 #
 
 # Get current screen resolution in format WIDTHxHEIGHT
-# xrandr would output something like "DUMMY0 connected primary 1920x1080+0+0 0mm x 0mm", only extract resolution with regex
-current_screen_resolution=$(xrandr -q | grep -w "connected primary" | grep -oP '\d+x\d+' | head -n1)
+# xrandr would output something like "DUMMY0 connected primary 1920x1080+0+0 0mm x 0mm", only extract first connect screen resolution with regex
+current_screen_resolution=$(xrandr -q | grep -w "connected" | grep -oP '\d+x\d+' | head -n1)
 
 # extract WIDTH and HEIGHT from WIDTHxHEIGHT (eg. 1920x1080)
 current_screen_width=$(echo $current_screen_resolution | cut -dx -f1)
