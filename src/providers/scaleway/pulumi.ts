@@ -12,11 +12,9 @@ interface ScalewayInstanceArgs {
     imageId?: pulumi.Input<string>
     rootVolume: {
         sizeGb: pulumi.Input<number>
-        type: pulumi.Input<string>
     },
     additionalVolumes: {
         sizeGb: pulumi.Input<number>
-        type: pulumi.Input<string>
         name: pulumi.Input<string>
     }[]
 }
@@ -36,48 +34,51 @@ class CloudyPadScalewayInstance extends pulumi.ComponentResource {
             parent: this
         }
 
-        const sshKey = new scw.IamSshKey(`${name}-ssh-key`, {
+        const sshKey = new scw.iam.SshKey(`${name}-ssh-key`, {
             name: `${name}-ssh-key`,
             publicKey: args.publicKeyContent,
         }, commonPulumiOpts)
 
-        const vpc = new scw.Vpc(`${name}-vpc`, {
+        const vpc = new scw.network.Vpc(`${name}-vpc`, {
             name: `cloudypad-${name}-vpc`,
             tags: globalTags
         }, commonPulumiOpts)
 
-        const securityGroup = new scw.InstanceSecurityGroup(`${name}-security-group`, {
+        const securityGroup = new scw.instance.SecurityGroup(`${name}-security-group`, {
             name: `${name}-sg`,
             inboundRules: args.networkSecurityGroupRules,
             outboundDefaultPolicy: "accept",
             tags: globalTags,
         }, commonPulumiOpts)
 
-        const publicIp = new scw.InstanceIp(`${name}-public-ip`, {
+        const publicIp = new scw.instance.Ip(`${name}-public-ip`, {
             tags: globalTags
         }, commonPulumiOpts)
 
-        const volumes = args.additionalVolumes?.map((v) => new scw.InstanceVolume(`${name}-${v.name}`, {
+        const volumes = args.additionalVolumes?.map((v) => new scw.block.Volume(`${name}-${v.name}`, {
                 name: v.name,
                 sizeInGb: v.sizeGb,
-                type: v.type,
+                iops: 5000,
                 tags: globalTags
             }, commonPulumiOpts)
         ) ?? []
 
-        const server = new scw.InstanceServer(`${name}-server`, {
+        const server = new scw.instance.Server(`${name}-server`, {
             name: name,
             type: args.instanceType,
             rootVolume: {
                 sizeInGb: args.rootVolume.sizeGb,
-                volumeType: args.rootVolume.type
+                volumeType: "sbs_volume",
             },
             additionalVolumeIds: volumes.map((v) => v.id),
             tags: globalTags,
             securityGroupId: securityGroup.id,
             image: args.imageId ?? "ubuntu_jammy_gpu_os_12",
             ipIds: [publicIp.id],
-        }, commonPulumiOpts)
+        }, {
+            ...commonPulumiOpts,
+            ignoreChanges: ["rootVolume.volumeType"] // avoid recreation of existing instances using legacy block volume type
+        })
 
         this.instanceName = server.name
         // server id looks like this: "fr-par-2/4becedc8-51e9-4320-a45c-20f0f57033fa"
@@ -94,7 +95,6 @@ async function scalewayPulumiProgram(): Promise<Record<string, any> | void> {
     const instanceType = config.require("instanceType")
     const publicKeyContent = config.require("publicKeyContent")
     const rootDiskSizeGB = config.requireNumber("rootDiskSizeGB")
-    const rootDiskType = config.require("rootDiskType")
     const securityGroupPorts = config.requireObject<SimplePortDefinition[]>("securityGroupPorts")
     const additionalVolumes = config.requireObject<ScalewayInstanceArgs["additionalVolumes"]>("additionalVolumes")
     const imageId = config.get("imageId")
@@ -112,7 +112,6 @@ async function scalewayPulumiProgram(): Promise<Record<string, any> | void> {
         })),
         rootVolume: {
             sizeGb: rootDiskSizeGB,
-            type: rootDiskType
         },
         additionalVolumes: additionalVolumes,
         imageId: imageId
@@ -133,13 +132,11 @@ export interface PulumiStackConfigScaleway {
     imageId?: string
     rootDisk: {
         sizeGb: number
-        type: string
     }
     publicKeyContent: string
     securityGroupPorts: SimplePortDefinition[]
     additionalVolumes: {
         sizeGb: number
-        type: string
         name: string
     }[],
 }
@@ -170,7 +167,6 @@ export class ScalewayPulumiClient extends InstancePulumiClient<PulumiStackConfig
         await stack.setConfig("additionalVolumes", { value: JSON.stringify(config.additionalVolumes ?? [])})
 
         await stack.setConfig("rootDiskSizeGB", { value: config.rootDisk.sizeGb.toString()})
-        await stack.setConfig("rootDiskType", { value: config.rootDisk.type})
         await stack.setConfig("publicKeyContent", { value: config.publicKeyContent})
         await stack.setConfig("securityGroupPorts", { value: JSON.stringify(config.securityGroupPorts.map(p => ({
             protocol: p.protocol.toUpperCase(), // Scaleway SDK requires "TCP" or "UDP" in upper!case
