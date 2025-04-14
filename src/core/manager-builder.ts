@@ -17,6 +17,7 @@ import { DummyStateParser } from '../providers/dummy/state';
 import { DummySubManagerFactory } from '../providers/dummy/factory';
 import { ScalewaySubManagerFactory } from '../providers/scaleway/factory';
 import { ScalewayStateParser } from '../providers/scaleway/state';
+import { StateManagerBuilder } from './state/builders';
 
 
 /**
@@ -36,10 +37,13 @@ export async function registerProvider(providerName: string, buildManagerFunctio
  * Initialize InstanceManagerBuildeer by registering all Core providers
  */
 function initializeInstanceManagerBuilder() {
+
+    const smb = StateManagerBuilder.getInstance()
+
     registerProvider(CLOUDYPAD_PROVIDER_AWS, async (state: InstanceStateV1) => {
         const awsState = new AwsStateParser().parse(state)
         return new GenericInstanceManager({
-            stateWriter: new StateWriter({ state: awsState }),
+            stateWriter: smb.buildStateWriter(awsState),
             factory: new AwsSubManagerFactory()
         })
     })
@@ -47,7 +51,7 @@ function initializeInstanceManagerBuilder() {
     registerProvider(CLOUDYPAD_PROVIDER_AZURE, async (state: InstanceStateV1) => {
         const azureState = new AzureStateParser().parse(state)
         return new GenericInstanceManager({
-            stateWriter: new StateWriter({ state: azureState }),
+            stateWriter: smb.buildStateWriter(azureState),
             factory: new AzureSubManagerFactory()
         })
     })
@@ -55,7 +59,7 @@ function initializeInstanceManagerBuilder() {
     registerProvider(CLOUDYPAD_PROVIDER_GCP, async (state: InstanceStateV1) => {
         const gcpState = new GcpStateParser().parse(state)
         return new GenericInstanceManager({
-            stateWriter: new StateWriter({ state: gcpState }),
+            stateWriter: smb.buildStateWriter(gcpState),
             factory: new GcpSubManagerFactory()
         })
     })
@@ -63,7 +67,7 @@ function initializeInstanceManagerBuilder() {
     registerProvider(CLOUDYPAD_PROVIDER_PAPERSPACE, async (state: InstanceStateV1) => {
         const paperspaceState = new PaperspaceStateParser().parse(state)
         return new GenericInstanceManager({
-            stateWriter: new StateWriter({ state: paperspaceState }),
+            stateWriter: smb.buildStateWriter(paperspaceState),
             factory: new PaperspaceSubManagerFactory()
         })
     })
@@ -71,7 +75,7 @@ function initializeInstanceManagerBuilder() {
     registerProvider(CLOUDYPAD_PROVIDER_SCALEWAY, async (state: InstanceStateV1) => {
         const scalewayState = new ScalewayStateParser().parse(state)
         return new GenericInstanceManager({
-            stateWriter: new StateWriter({ state: scalewayState }),
+            stateWriter: smb.buildStateWriter(scalewayState),
             factory: new ScalewaySubManagerFactory()
         })
     })
@@ -79,7 +83,7 @@ function initializeInstanceManagerBuilder() {
     registerProvider(CLOUDYPAD_PROVIDER_DUMMY, async (state: InstanceStateV1) => {
         const dummyState = new DummyStateParser().parse(state)
         return new GenericInstanceManager({
-            stateWriter: new StateWriter({ state: dummyState }),
+            stateWriter: smb.buildStateWriter(dummyState),
             factory: new DummySubManagerFactory()
         })
     })
@@ -112,7 +116,8 @@ export class InstanceManagerBuilder {
     }
 
     getAllInstances(): string[] {
-        return new StateLoader().listInstances()
+        const loader = StateManagerBuilder.getInstance().buildStateLoader()
+        return loader.listInstances()
     }
 
     /**
@@ -123,7 +128,8 @@ export class InstanceManagerBuilder {
     }
 
     private async loadAnonymousState(instanceName: string): Promise<InstanceStateV1>{
-        const state = await new StateLoader().loadAndMigrateInstanceState(instanceName)
+        const loader = StateManagerBuilder.getInstance().buildStateLoader()
+        const state = await loader.loadInstanceState(instanceName)
         return state
     }
 

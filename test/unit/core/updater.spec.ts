@@ -1,30 +1,23 @@
 import * as assert from 'assert';
-import { DEFAULT_COMMON_INPUT, DUMMY_AWS_PULUMI_OUTPUT, DUMMY_SSH_KEY_PATH, loadDumyAnonymousStateV1 } from '../utils';
-import { StateLoader } from '../../../src/core/state/loader';
+import {DUMMY_AWS_PULUMI_OUTPUT, loadDumyAnonymousStateV1 } from '../utils';
 import { InstanceUpdater } from '../../../src/cli/updater';
-import { InstanceStateV1 } from '../../../src/core/state/state';
-import { StateWriter } from '../../../src/core/state/writer';
-import lodash from 'lodash'
 import { AwsUpdateCliArgs } from '../../../src/providers/aws/cli';
 import { AwsInputPrompter } from '../../../src/providers/aws/cli';
 import { AwsInstanceStateV1, AwsStateParser } from '../../../src/providers/aws/state';
 import { STREAMING_SERVER_WOLF } from '../../../src/cli/prompter';
+import { StateManagerBuilder } from '../../../src/core/state/builders';
 
 describe('InstanceUpdater', () => {
 
-    
-    
     it('should update instance state with provided arguments', async () => {
         
         // Load known state into dummy writer after changing its name to avoid collision
         const awsState = new AwsStateParser().parse(loadDumyAnonymousStateV1("aws-dummy"))
         const instanceName = "aws-dummy-test-update"
         awsState.name = instanceName
-        await new StateWriter({ state: awsState }).persistStateNow()
-        
-        const stateWriter = new StateWriter({
-            state: awsState
-        })
+
+        const stateWriter = StateManagerBuilder.getInstance().buildStateWriter(awsState)
+        await stateWriter.persistStateNow()
 
         const updater = new InstanceUpdater<AwsInstanceStateV1, AwsUpdateCliArgs>({
             stateParser: new AwsStateParser(),
@@ -86,8 +79,8 @@ describe('InstanceUpdater', () => {
         }
 
         // Check dummy state after update
-        const loader = new StateLoader()
-        const updatedState = await loader.loadAndMigrateInstanceState(instanceName)
+        const loader = StateManagerBuilder.getInstance().buildStateLoader()
+        const updatedState = await loader.loadInstanceState(instanceName)
         
         assert.deepEqual(updatedState, expectedState)
     })

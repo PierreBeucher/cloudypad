@@ -12,11 +12,11 @@ import { GcpPulumiClient } from '../../src/providers/gcp/pulumi';
 import { ScalewayPulumiClient } from '../../src/providers/scaleway/pulumi';
 import { PaperspaceClient, PaperspaceMachine } from '../../src/providers/paperspace/client/client';
 import { DUMMY_AWS_PULUMI_OUTPUT, DUMMY_AZURE_PULUMI_OUTPUT, DUMMY_GCP_PULUMI_OUTPUT, DUMMY_PAPERSPACE_MACHINE, DUMMY_SCALEWAY_PULUMI_OUTPUT } from './utils';
-import { DataRootDirManager } from '../../src/core/data-dir';
 import { AnalyticsManager } from '../../src/tools/analytics/manager';
 import { NoOpAnalyticsClient } from '../../src/tools/analytics/client';
 import { SshKeyLoader } from '../../src/tools/ssh';
 import { ScalewayClient } from '../../src/tools/scaleway';
+import { ConfigManager } from '../../src/core/config/manager';
 
 
 export const mochaHooks = {
@@ -42,9 +42,13 @@ export const mochaHooks = {
 
         // Force environment data root dir to a temp directory for unit tests
         const dummyCloudyPadHome = mkdtempSync(path.join(tmpdir(), ".cloudypad-unit-tests"))
-        sinon.stub(DataRootDirManager, 'getEnvironmentDataRootDir').callsFake(() => {
+        sinon.stub(ConfigManager, 'getEnvironmentDataRootDir').callsFake(() => {
             return dummyCloudyPadHome
         })
+
+        // Initialize dummy config
+        const configManager = ConfigManager.getInstance()
+        configManager.init()
 
         // Force dummy analytics client
         // We don't want tests to send dummy data

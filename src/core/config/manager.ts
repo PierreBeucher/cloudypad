@@ -2,7 +2,6 @@ import fs from 'fs'
 import path from 'path'
 import yaml from 'js-yaml'
 import { z } from 'zod'
-import { DataRootDirManager } from '../data-dir'
 import { getLogger } from '../../log/utils'
 import { v4 as uuidv4 } from 'uuid'
 import * as lodash from 'lodash'
@@ -24,16 +23,17 @@ const AnalyticsConfigSchema = z.object({
     posthog: PostHogConfigSchema
 })
 
-export const GlobalCliConfigSchemaV1 = z.object({
+export const CloudyPadGlobalConfigSchemaV1 = z.object({
     version: z.literal("1"),
-    analytics: AnalyticsConfigSchema
+    analytics: AnalyticsConfigSchema,
+    stateBackend: z.string().default("local").describe("The backend to use for state management. Only 'local' is natively supported for now.")
 }).describe("PostHog analytics config. https://posthog.com")
 
 export type PostHogConfig = z.infer<typeof PostHogConfigSchema>
-export type GlobalCliConfigV1 = z.infer<typeof GlobalCliConfigSchemaV1>
+export type CloudyPadGlobalConfigV1 = z.infer<typeof CloudyPadGlobalConfigSchemaV1>
 export type AnalyticsConfig = z.infer<typeof AnalyticsConfigSchema>
 
-export const BASE_DEFAULT_CONFIG: GlobalCliConfigV1 = {
+export const BASE_DEFAULT_CONFIG: CloudyPadGlobalConfigV1 = {
     version: "1",
     analytics: {
         promptedPersonalDataCollectionApproval: false,
@@ -41,26 +41,36 @@ export const BASE_DEFAULT_CONFIG: GlobalCliConfigV1 = {
             distinctId: "dummy",
             collectionMethod: AnalyticsCollectionMethod.Technical
         },
-    }
+    },
+    stateBackend: "local"
 }
 
 /**
- * Manages CLI config globally. Use Singleton pattern to ensure any app component can get access
- * to global config.
+ * Manages Cloudy Pad config globally. Use Singleton pattern to ensure any app component can get access
+ * to global environment config.
+ * 
+ * Configuration is stored locally in ${dataRootDir}/config.yml
  */
 export class ConfigManager {
+
     private static instance: ConfigManager
-    private configPath: string
-    private dataRootDir: string
-    private logger = getLogger(ConfigManager.name)
 
     /**
-     * Do not call constructor directly. Use getInstance() instead.
-     * @param dataRootDir Do not use default dataRootDir. 
+     * Return current environment's Cloudy Pad data root dir (aka Cloudy Pad Home), by order of priority:
+     * - $CLOUDYPAD_HOME environment variable
+     * - $HOME/.cloudypad
+     * - Fails is neither CLOUDYPAD_HOME nor HOME is set
      */
-    constructor(dataRootDir?: string) {
-        this.dataRootDir = dataRootDir ?? DataRootDirManager.getEnvironmentDataRootDir()
-        this.configPath = path.join(this.dataRootDir, 'config.yml')
+    static getEnvironmentDataRootDir(): string {
+        if (process.env.CLOUDYPAD_HOME) {
+            return process.env.CLOUDYPAD_HOME
+        } else {
+            if (!process.env.HOME){
+                throw new Error("Neither CLOUDYPAD_HOME nor HOME environment variable is set. Could not define Cloudy Pad data root directory.")
+            }
+
+            return path.resolve(`${ process.env.HOME}/.cloudypad`)
+        }
     }
 
     static getInstance(): ConfigManager {
@@ -69,6 +79,20 @@ export class ConfigManager {
         }
         return ConfigManager.instance
     }
+
+    private configPath: string
+    private dataRootDir: string
+    private logger = getLogger(ConfigManager.name)
+
+    /**
+     * Do not call constructor directly. Use getInstance() instead. (Can be used for testing purpose)
+     * @param dataRootDir Do not use default dataRootDir. 
+     */
+    constructor(dataRootDir?: string) {
+        this.dataRootDir = dataRootDir ?? ConfigManager.getEnvironmentDataRootDir()
+        this.configPath = path.join(this.dataRootDir, 'config.yml')
+    }
+
 
     /**
      * Initialize configuration if needed:
@@ -100,9 +124,9 @@ export class ConfigManager {
         this.logger.debug(`Init: found existing config at ${this.configPath}. Not overwriting it.`)
     }
 
-    load(): GlobalCliConfigV1 {
+    load(): CloudyPadGlobalConfigV1 {
         const rawConfig = this.readConfigRaw()
-        const config = this.zodParseSafe(rawConfig, GlobalCliConfigSchemaV1)
+        const config = this.zodParseSafe(rawConfig, CloudyPadGlobalConfigSchemaV1)
         this.writeConfigSafe(config) // Rewrite config with correct schema version as current schema may have changed since last load
         return config
     }
@@ -150,7 +174,7 @@ export class ConfigManager {
         }
     }
 
-    private writeConfigSafe(unsafeConfig: GlobalCliConfigV1): void {
+    private writeConfigSafe(unsafeConfig: CloudyPadGlobalConfigV1): void {
         try {
             this.logger.debug(`Writing config ${JSON.stringify(unsafeConfig)} at ${this.configPath}...`)
 
@@ -160,7 +184,7 @@ export class ConfigManager {
                 fs.mkdirSync(this.dataRootDir, { recursive: true })
             }
 
-            const parsedConfig = this.zodParseSafe(unsafeConfig, GlobalCliConfigSchemaV1)
+            const parsedConfig = this.zodParseSafe(unsafeConfig, CloudyPadGlobalConfigSchemaV1)
             const yamlContent = yaml.dump(parsedConfig)
             fs.writeFileSync(this.configPath, yamlContent, 'utf-8')
 

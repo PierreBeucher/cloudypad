@@ -8,6 +8,7 @@ import { StateWriter } from '../../../../src/core/state/writer'
 import { StateLoader } from '../../../../src/core/state/loader'
 import { AwsInstanceStateV1, AwsStateParser } from '../../../../src/providers/aws/state'
 import lodash from 'lodash'
+import { LocalStateSideEffect } from '../../../../src/core/state/local/side-effect'
 
 describe('StateWriter', function () {
 
@@ -17,13 +18,15 @@ describe('StateWriter', function () {
     async function getTestWriter(): Promise<{ dataDir: string, writer: StateWriter<AwsInstanceStateV1> }> {
         const dataDir = mkdtempSync(path.join(tmpdir(), 'statewriter-test-'))
 
-        const loader = new StateLoader({ dataRootDir: path.resolve(__dirname, "v1-root-data-dir")})
-        const state = await loader.loadAndMigrateInstanceState(instanceName)
+        const loader = new StateLoader({ 
+            sideEffect: new LocalStateSideEffect({ dataRootDir: path.resolve(__dirname, "v1-root-data-dir")})
+        })
+        const state = await loader.loadInstanceState(instanceName)
         const awState = new AwsStateParser().parse(state)
 
         const writer = new StateWriter<AwsInstanceStateV1>({
             state: awState,
-            dataRootDir: dataDir
+            sideEffect: new LocalStateSideEffect({ dataRootDir: dataDir })
         })
 
         return { dataDir: dataDir, writer: writer }
@@ -138,7 +141,7 @@ describe('StateWriter', function () {
         const { dataDir, writer } = await getTestWriter()
 
         const output = {
-            dummyOutput: "bla"
+            dataDiskConfigured: true
         }
 
         await writer.setConfigurationOutput(output)

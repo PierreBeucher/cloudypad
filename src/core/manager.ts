@@ -179,7 +179,7 @@ export class GenericInstanceManager<ST extends InstanceStateV1> implements Insta
         const provisioner = await this.buildProvisioner()
         await provisioner.destroy(opts)
         await this.stateWriter.setProvisionOutput(undefined)
-        await this.stateWriter.destroyInstanceStateDirectory()
+        await this.stateWriter.destroyState()
     }
 
     async start(opts?: StartStopOptions): Promise<void> {

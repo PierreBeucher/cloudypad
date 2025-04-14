@@ -8,6 +8,7 @@ import { UpdateCliArgs } from "./command"
 import { GenericStateParser } from "../core/state/parser"
 import { AbstractInputPrompter, ConfirmationPrompter } from "./prompter"
 import * as lodash from "lodash"
+import { StateManagerBuilder } from "../core/state/builders"
 
 export interface InstanceUpdaterArgs<ST extends InstanceStateV1, A extends UpdateCliArgs> {
     stateParser: GenericStateParser<ST>
@@ -35,7 +36,8 @@ export class InstanceUpdater<ST extends InstanceStateV1, A extends UpdateCliArgs
         
         // Load existing state
         const instanceName = cliArgs.name
-        const rawState = await new StateLoader().loadAndMigrateInstanceState(instanceName)
+        const loader = StateManagerBuilder.getInstance().buildStateLoader()
+        const rawState = await loader.loadInstanceState(instanceName)
         const state = this.stateParser.parse(rawState)
 
         // Merge existing input with provided CLI args
@@ -66,7 +68,7 @@ export class InstanceUpdater<ST extends InstanceStateV1, A extends UpdateCliArgs
         // Do update
         this.logger.debug(`Updating instance ${instanceName} with ${JSON.stringify(fullInput)}`)
 
-        const stateWriter = new StateWriter<ST>({ state: state })
+        const stateWriter = StateManagerBuilder.getInstance().buildStateWriter(state)
         await stateWriter.setProvisionInput(fullInput.provision)
         await stateWriter.setConfigurationInput(fullInput.configuration)
         
