@@ -1,7 +1,7 @@
-# Installation
+# Installation and Upgrade
 
 - [Requirements for all OS](#requirements-for-all-os)
-- [Installation](#installation-1)
+- [Installation](#installation)
   - [Linux](#linux)
   - [MacOS](#macos)
   - [Windows](#windows)
@@ -70,3 +70,7 @@ Then, upgrade your instance(s) to get latest changes with:
 cloudypad provision my-instance
 cloudypad configure my-instance
 ```
+
+Cloudy Pad will do its best to provide retrocompatibility, but some feature may remain disabled if you're upgrading from an older version. 
+
+See [Upgrade guide](../help/upgrade-guide.md) to enable new features on existing instances after upgrade. 

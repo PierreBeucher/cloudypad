@@ -22,6 +22,7 @@
 - [Talk to a human](./help/community.md)
 - [General FAQ](./help/faq.md)
 - [Known issues](./help/known-issues.md)
+- [Upgrade guide](./help/upgrade-guide.md)
 
 # Cloud provider account setup
 
