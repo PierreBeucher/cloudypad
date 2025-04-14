@@ -1,0 +1,50 @@
+- name: Fail if data disk ID is missing
+  fail:
+    msg: "cloudypad_data_disk_id must be set"
+  when: cloudypad_data_disk_id is not defined
+
+# depending on providers attached disk can be found under /dev/disk/by-id with various naming conventions
+# filter through available disks and find the one matching the data disk ID
+- name: Find disk matching data disk ID
+  set_fact:
+    cloudypad_data_disk_name: >-
+      {{
+        hostvars[inventory_hostname].ansible_devices
+        | dict2items
+        | selectattr('value.links.ids', 'defined') 
+        | selectattr('value.links.ids', 'match', '.*' + cloudypad_data_disk_id)
+        | map(attribute='key')
+        | list
+        | first
+      }}
+
+- debug:
+    msg: "Found disk for '{{ cloudypad_data_disk_id }}': '{{ cloudypad_data_disk_name }}'"
+
+- set_fact:
+    cloudypad_data_disk_path: "/dev/{{ cloudypad_data_disk_name }}"
+
+- name: fail if no disk was found
+  fail:
+    msg: "No disk found matching data disk ID '{{ cloudypad_data_disk_id }}'"
+  when: cloudypad_data_disk_name is not defined
+
+- name: Create Cloudy Pad data directory
+  file:
+    path: "{{ cloudypad_data_root }}"
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+
+- name: Format Cloudy Pad data disk (ext4)
+  filesystem:
+    fstype: "ext4"
+    dev: "{{ cloudypad_data_disk_path }}"
+
+- name: Mount and configure fstab for Cloudy Pad data disk
+  mount:
+    path: "{{ cloudypad_data_root }}"
+    src: "{{ cloudypad_data_disk_path }}"
+    fstype: "ext4"
+    state: mounted

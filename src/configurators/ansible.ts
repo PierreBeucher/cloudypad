@@ -79,6 +79,9 @@ export class AnsibleConfigurator<ST extends InstanceStateV1> extends AbstractIns
                         
                         autostop_enable: this.args.configurationInput.autostop?.enable,
                         autostop_timeout_seconds: this.args.configurationInput.autostop?.timeoutSeconds,
+
+                        cloudypad_data_disk_enabled: this.args.provisionOutput.dataDiskId !== undefined,
+                        cloudypad_data_disk_id: this.args.provisionOutput.dataDiskId,
                     },
                 },
             },
@@ -96,6 +99,9 @@ export class AnsibleConfigurator<ST extends InstanceStateV1> extends AbstractIns
         const ansible = new AnsibleClient()
         await ansible.runAnsible(inventoryPath, playbookPath, this.args.additionalAnsibleArgs ?? [])
 
-        return {}
+        return {
+            // Running Ansible with data disk will ensure it's configured
+            dataDiskConfigured: this.args.provisionOutput.dataDiskId !== undefined,
+        }
     }
 }

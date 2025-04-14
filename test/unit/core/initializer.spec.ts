@@ -114,7 +114,9 @@ describe('Instance initializer', () => {
                         options: DEFAULT_COMMON_INPUT.configuration.keyboard?.options
                     }
                 },
-                output: {}
+                output: {
+                    dataDiskConfigured: false
+                }
             }
         }
         
@@ -168,7 +170,9 @@ describe('Instance initializer', () => {
                         options: DEFAULT_COMMON_INPUT.configuration.keyboard?.options
                     }
                 },
-                output: {}
+                output: {
+                    dataDiskConfigured: false
+                }
             }
         }
         

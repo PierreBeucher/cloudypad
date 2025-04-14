@@ -10,7 +10,11 @@ sunshine_project_dir: "{{ ansible_user_dir }}/sunshine"
 # Directory where Sunshine and other data (eg. Steam game files) are persisted
 # Bind mounted in Sunshine container for persistence
 # Changing this value will cause to lose track of existing data unless they are moved as well
-sunshine_data_dir: "{{ sunshine_project_dir }}/data"
+sunshine_data_dir: "/var/lib/cloudypad/sunshine/data"
+
+# Legacy Sunshine data directory
+# If data is found in this directory it will be moved to sunshine_data_dir
+sunshine_legacy_data_dir: "{{ sunshine_project_dir }}/data"
 
 # Sunshine Web UI username and password (base64 encoded)
 # If unset password will have to be set via Sunshine web UI

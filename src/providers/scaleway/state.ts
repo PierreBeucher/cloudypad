@@ -13,8 +13,9 @@ const ScalewayProvisionInputV1Schema = CommonProvisionInputV1Schema.extend({
     region: z.string().describe("Scaleway region"),
     zone: z.string().describe("Scaleway zone"),
     instanceType: z.string().describe("Scaleway instance type"),
-    diskSizeGb: z.number().describe("Disk size in GB"),
-    imageId: z.string().optional().describe("Existing image ID for instance server"),
+    diskSizeGb: z.number().describe("Root (OS) disk size in GB."),
+    imageId: z.string().optional().describe("Existing image ID for instance server. If set, disk size must be equal or greater than image size."),
+    dataDiskSizeGb: z.number().default(0).describe("Data disk size in GB. If non-0, a disk dedicated for instance data (such as games data) will be created."),
 })
 
 const ScalewayInstanceStateV1Schema = InstanceStateV1Schema.extend({

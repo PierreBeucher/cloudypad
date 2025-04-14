@@ -56,7 +56,7 @@
     "@pulumi/azure-native": "^2.52.0",
     "@pulumi/gcp": "^8.0.0",
     "@pulumi/pulumi": "^3.125.0",
-    "@pulumiverse/scaleway": "^1.23.0",
+    "@pulumiverse/scaleway": "^1.26.0",
     "@scaleway/configuration-loader": "^1.0.5",
     "@scaleway/sdk": "^2.68.0",
     "axios": "^1.7.2",

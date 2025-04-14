@@ -1,0 +1,4 @@
+cloudypad_data_root: /var/lib/cloudypad
+
+# Must be setd depending on provider
+# cloudypad_data_disk_id: 

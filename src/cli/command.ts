@@ -55,6 +55,12 @@ export const CLI_OPTION_SPOT = new Option('--spot [disable|no|false|0]', 'Enable
 export const CLI_OPTION_DISK_SIZE = new Option('--disk-size <size>', 'Disk size in GB')
     .argParser(parseInt)
 
+// root / data disk size will eventually replace simple "disk size" while separation between OS and data is being worked on
+export const CLI_OPTION_ROOT_DISK_SIZE = new Option('--root-disk-size <size>', 'Root disk size in GB (for OS and system)')
+    .argParser(parseInt)
+export const CLI_OPTION_DATA_DISK_SIZE = new Option('--data-disk-size <size>', 'Data disk size in GB (for game data)')
+    .argParser(parseInt)
+
 export const CLI_OPTION_PUBLIC_IP_TYPE = new Option('--public-ip-type <type>', `Public IP type. Either ${PUBLIC_IP_TYPE_STATIC} or ${PUBLIC_IP_TYPE_DYNAMIC}`)
     .argParser(parsePublicIpType)
 export const CLI_OPTION_SKIP_PAIRING = new Option('--skip-pairing', 'Skip Moonlight pairing after initial provisioning and configuration')

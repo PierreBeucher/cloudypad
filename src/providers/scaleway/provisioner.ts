@@ -26,11 +26,10 @@ export class ScalewayProvisioner extends AbstractInstanceProvisioner<ScalewayPro
             instanceType: this.args.provisionInput.instanceType,
             rootDisk: {
                 sizeGb: this.args.provisionInput.diskSizeGb,
-                type: "b_ssd"
             },
-            // Scaleway was initially implemented with data disk support in mind
-            // Was finally undone as it would require a lot of changes to the codebase to support legacy mode and data disk mode
-            additionalVolumes: [],
+            dataDisk: this.args.provisionInput.dataDiskSizeGb ? {
+                sizeGb: this.args.provisionInput.dataDiskSizeGb,
+            } : undefined,
             imageId: this.args.provisionInput.imageId,
             securityGroupPorts: this.getStreamingServerPorts(),
             publicKeyContent: new SshKeyLoader().parseSshPrivateKeyFileToPublic(this.args.provisionInput.ssh.privateKeyPath),
@@ -43,6 +42,7 @@ export class ScalewayProvisioner extends AbstractInstanceProvisioner<ScalewayPro
             host: pulumiOutputs.publicIp,
             instanceName: pulumiOutputs.instanceName,
             instanceServerId: pulumiOutputs.instanceServerId,
+            dataDiskId: pulumiOutputs.dataDiskId,
         }
 
     }
