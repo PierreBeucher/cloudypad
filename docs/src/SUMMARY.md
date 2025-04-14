@@ -3,6 +3,7 @@
 [Introduction](README.md)
 [What is Cloud Gaming ?](what-is-cloud-gaming.md)
 [Getting started 🚀](getting-started.md)
+[Roadmap](roadmap.md)
 
 # CLI Usage
 

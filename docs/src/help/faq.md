@@ -78,9 +78,11 @@ If you found a bug or have a suggestion, [please report an issue](https://github
 
 ### Will Cloudy Pad become a paid product ?
 
-Considering I'm really _not_ happy about the [enshittification of the internet](https://en.wikipedia.org/wiki/Enshittification), Cloudy Pad will remain a Free and Open Source project. 
+Cloudy Pad is a Free and Open Source project. However it deploys Cloud resources on providers like AWS, Azure, Google Cloud, Scaleway etc. which are usually not free.
 
-With [app.cloudypad.gg](https://app.cloudypad.gg) Cloudy Pad provides a paid service to manage your instances and Cloud resources easily without requiring technical skills. 
+[Cloudy Pad Platform](https://app.cloudypad.gg) provides an experience similar to other Cloud Gaming services, based on Cloudy Pad Open Source. Like a Cloud Provider, payment is done by the hour based on resource consumption.
+
+_Note from the creator: Considering I'm really not happy about the [enshittification of the internet](https://en.wikipedia.org/wiki/Enshittification), Cloudy Pad will remain a Free and Open Source project along Cloudy Pad platform._
 
 ### How are my data collected? How does analytics works?
 
