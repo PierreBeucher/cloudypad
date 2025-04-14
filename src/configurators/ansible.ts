@@ -99,6 +99,9 @@ export class AnsibleConfigurator<ST extends InstanceStateV1> extends AbstractIns
         const ansible = new AnsibleClient()
         await ansible.runAnsible(inventoryPath, playbookPath, this.args.additionalAnsibleArgs ?? [])
 
-        return {}
+        return {
+            // Running Ansible with data disk will ensure it's configured
+            dataDiskConfigured: this.args.provisionOutput.dataDiskId !== undefined,
+        }
     }
 }

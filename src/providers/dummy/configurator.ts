@@ -20,6 +20,8 @@ export class DummyConfigurator<ST extends InstanceStateV1> extends AbstractInsta
 
     async doConfigure() {
         this.logger.debug(`Running dummy configuration for instance ${this.args.instanceName}`)
-        return {}
+        return {
+            dataDiskConfigured: false,
+        }
     }
 }
