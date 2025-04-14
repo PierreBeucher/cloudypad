@@ -10,7 +10,7 @@ services:
     volumes:
       # Used by other containers created by wolf. Do not change
       - "{{ wolf_data_dir }}:{{ wolf_data_dir }}:rw"
-      - "{{ wolf_data_dir }}/cfg:{{ {{ wolf_data_dir }} }}/cfg:rw"
+      - "{{ wolf_data_dir }}/cfg:{{ wolf_data_dir }}/cfg:rw"
       - "{{ wolf_project_dir }}/config.toml:{{ wolf_data_dir }}/cfg/config.toml"
       - /tmp/sockets:/tmp/sockets:rw
       - /var/run/docker.sock:/var/run/docker.sock:rw

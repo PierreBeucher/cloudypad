@@ -1,23 +1,24 @@
 - name: Check if legacy data directory exists
   stat:
-    path: "{{ sunshine_legacy_data_dir }}"
+    path: "{{ wolf_legacy_data_dir }}"
   register: legacy_data_dir_stat
 
 - set_fact:
     cloudypad_move_legacy_data: "{{ legacy_data_dir_stat.stat.exists and legacy_data_dir_stat.stat.isdir }}"
 
 - debug:
-    msg: "Legacy data directory exists: {{ cloudypad_move_legacy_data }}. Moving to new directory: {{ sunshine_data_dir }}"
+    msg: "Legacy data directory exists: {{ cloudypad_move_legacy_data }}. Moving to new directory: {{ wolf_data_dir }}"
   when: cloudypad_move_legacy_data
 
-- name: Stop Sunshine container before moving data to new directory
+- name: Stop Wolf container before moving data to new directory
   ignore_errors: true
   community.docker.docker_compose_v2:
-    project_src: "{{ sunshine_project_dir }}"
+    project_src: "{{ wolf_project_dir }}"
+    files: docker-compose.nvidia.yml
     state: absent
   when: cloudypad_move_legacy_data
 
 - name: Move legacy data to new directory
   become: true
-  command: mv '{{ sunshine_legacy_data_dir }}' '{{ sunshine_data_dir | dirname }}'
+  command: mv '{{ wolf_legacy_data_dir }}' '{{ wolf_data_dir | dirname }}'
   when: cloudypad_move_legacy_data

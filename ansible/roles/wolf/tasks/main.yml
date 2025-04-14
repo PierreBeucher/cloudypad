@@ -79,6 +79,7 @@
     mode: '0755'
 
 - name: ensure Wolf data directory exists
+  become: true
   ansible.builtin.file:
     path: "{{ wolf_data_dir }}"
     state: directory

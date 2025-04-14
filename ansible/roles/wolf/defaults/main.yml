@@ -14,6 +14,6 @@ wolf_app_firefox_image: ghcr.io/games-on-whales/firefox:edge@sha256:6ff2d01d8765
 wolf_project_dir: "{{ ansible_user_dir }}/wolf"
 
 # Where Wolf container data are stored
-wolf_data_dir: "/var/lib/cloudypad/wolf/data"
+wolf_data_dir: "/var/lib/cloudypad/wolf"
 
-wolf_legacy_data_dir: "/etc/wolf/data"
+wolf_legacy_data_dir: "/etc/wolf"
