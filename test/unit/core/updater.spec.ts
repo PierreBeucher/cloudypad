@@ -79,7 +79,9 @@ describe('InstanceUpdater', () => {
                     locale: null,
                     keyboard: null
                 },
-                output: {}
+                output: {
+                    dataDiskConfigured: false
+                }
             }
         }
 

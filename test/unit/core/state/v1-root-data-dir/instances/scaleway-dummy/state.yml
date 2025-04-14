@@ -11,7 +11,8 @@ provision:
     region: fr-par
     zone: fr-par-1
     instanceType: L4-1-24G
-    diskSizeGb: 100
+    diskSizeGb: 20
+    dataDiskSizeGb: 100
     ssh:
       user: ubuntu
       privateKeyPath: /dummy/ssh/key/id_rsa
@@ -23,3 +24,5 @@ configuration:
       username: sunshine
       passwordBase64: c3Vuc2hpbmU=
     wolf: null
+  output:
+    dataDiskConfigured: true
