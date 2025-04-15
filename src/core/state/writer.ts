@@ -21,13 +21,13 @@ export class StateWriter<ST extends InstanceStateV1> {
 
     protected logger = getLogger(StateWriter.name)
 
-    private readonly args: StateWriterArgs<ST>
-
     private state: ST
+
+    public readonly sideEffect: StateSideEffect
     
     constructor(args: StateWriterArgs<ST>) {
-        this.args = args
         this.state = args.state
+        this.sideEffect = args.sideEffect
     }
 
     /**
@@ -48,52 +48,52 @@ export class StateWriter<ST extends InstanceStateV1> {
      * Persist managed State on disk.
      */
     async persistStateNow(){
-        await this.args.sideEffect.persistState(this.state)
+        await this.sideEffect.persistState(this.state)
     }
 
     async setProvisionInput(input: ST["provision"]["input"]){
         const newState = lodash.cloneDeep(this.state)
         newState.provision.input = input
-        await this.args.sideEffect.persistState(newState)
+        await this.sideEffect.persistState(newState)
         this.state = newState
     }
 
     async setProvisionOutput(output?: ST["provision"]["output"]){
         const newState = lodash.cloneDeep(this.state)
         newState.provision.output = output
-        await this.args.sideEffect.persistState(newState)
+        await this.sideEffect.persistState(newState)
         this.state = newState
     }
 
     async setConfigurationInput(input: ST["configuration"]["input"]){
         const newState = lodash.cloneDeep(this.state)
         newState.configuration.input = input
-        await this.args.sideEffect.persistState(newState)
+        await this.sideEffect.persistState(newState)
         this.state = newState
     }
 
     async setConfigurationOutput(output?: ST["configuration"]["output"]){
         const newState = lodash.cloneDeep(this.state)
         newState.configuration.output = output
-        await this.args.sideEffect.persistState(newState)
+        await this.sideEffect.persistState(newState)
         this.state = newState
     }
 
     async updateProvisionInput(input: PartialDeep<ST["provision"]["input"]>){
         const newState = lodash.cloneDeep(this.state)
         lodash.merge(newState.provision.input, input)
-        await this.args.sideEffect.persistState(newState)
+        await this.sideEffect.persistState(newState)
         this.state = newState
     }
     
     async updateConfigurationInput(input: PartialDeep<ST["configuration"]["input"]>){
         const newState = lodash.cloneDeep(this.state)
         lodash.merge(newState.configuration.input, input)
-        await this.args.sideEffect.persistState(newState)
+        await this.sideEffect.persistState(newState)
         this.state = newState
     }
 
     async destroyState(){
-        this.args.sideEffect.destroyState(this.instanceName())
+        this.sideEffect.destroyState(this.instanceName())
     }
 }

@@ -10,14 +10,15 @@ export interface StateLoaderArgs {
 export class StateLoader {
 
     private logger = getLogger(StateLoader.name)
-    private readonly args: StateLoaderArgs
+
+    public readonly sideEffect: StateSideEffect
 
     constructor(args: StateLoaderArgs) {
-        this.args = args
+        this.sideEffect = args.sideEffect
     }
 
     listInstances(): string[] {
-        return this.args.sideEffect.listInstances()
+        return this.sideEffect.listInstances()
     }
 
     /**
@@ -25,7 +26,7 @@ export class StateLoader {
      * ${dataRootDir}/instances/<instance_name> exists and contains a state. 
      */
     async instanceExists(instanceName: string): Promise<boolean> {
-        return this.args.sideEffect.instanceExists(instanceName)
+        return this.sideEffect.instanceExists(instanceName)
     }
 
     /**
@@ -36,7 +37,7 @@ export class StateLoader {
 
         // read state as-is, any is acceptable at this point
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const rawState = await this.args.sideEffect.loadRawInstanceState(instanceName) as any
+        const rawState = await this.sideEffect.loadRawInstanceState(instanceName) as any
 
         if(rawState.version != "1") {
             throw new Error(`Unknown state version '${rawState.version}'`)

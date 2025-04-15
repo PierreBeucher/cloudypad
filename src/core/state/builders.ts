@@ -24,28 +24,21 @@ export class StateManagerBuilder {
     /**
      * Return a SideEffect for the current environment's configuration.
      */
-    private getSideEffect(): StateSideEffect {
-        
+    private buildSideEffect(): StateSideEffect {
         const cloudyPadConfig = ConfigManager.getInstance().load()
-        const sideEffectBuilder = sideEffectBuilders[cloudyPadConfig.stateBackend]
-
-        if(!sideEffectBuilder) {
-            throw new Error(`Unsupported backend: ${cloudyPadConfig.stateBackend}`)
-        }
-
-        return sideEffectBuilder.buildSideEffect()
+        return buildSideEffect(cloudyPadConfig.stateBackend)
     }
 
     public buildStateWriter<ST extends InstanceStateV1>(state: ST): StateWriter<ST> {
         return new StateWriter({
             state: state,
-            sideEffect: this.getSideEffect()
+            sideEffect: this.buildSideEffect()
         })
     }
 
     public buildStateLoader(): StateLoader {
         return new StateLoader({
-            sideEffect: this.getSideEffect()
+            sideEffect: this.buildSideEffect()
         })
     }
 }
@@ -59,12 +52,12 @@ export class StateManagerBuilder {
 
 export abstract class SideEffectBuilder {
 
-    public abstract buildSideEffect(): StateSideEffect
+    public abstract build(): StateSideEffect
 }
 
 export class LocalSideEffectBuilder extends SideEffectBuilder {
 
-    public buildSideEffect(): StateSideEffect {
+    public build(): StateSideEffect {
         return new LocalStateSideEffect({
             dataRootDir: ConfigManager.getEnvironmentDataRootDir()
         })
@@ -77,4 +70,12 @@ const sideEffectBuilders: { [key: string]: SideEffectBuilder } = {
 
 export function registerSideEffectBuilder(backend: string, builder: SideEffectBuilder): void {
     sideEffectBuilders[backend] = builder
+}
+
+export function buildSideEffect(backend: string): StateSideEffect {
+    const builder = sideEffectBuilders[backend]
+    if(!builder) {
+        throw new Error(`Unknown Side Effect backend: ${backend}`)
+    }
+    return builder.build()
 }

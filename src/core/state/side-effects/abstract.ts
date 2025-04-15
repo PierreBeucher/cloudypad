@@ -1,5 +1,5 @@
 import { InstanceStateV1 } from "../state"
-import { getLogger } from "../../../log/utils"
+import { getLogger, Logger } from "../../../log/utils"
 import { AnonymousStateParser } from "../parser"
 
 /**
@@ -7,7 +7,13 @@ import { AnonymousStateParser } from "../parser"
  */
 export abstract class StateSideEffect {
 
-    protected logger = getLogger(StateSideEffect.name)
+    protected logger: Logger
+    public readonly name: string
+
+    constructor(name: string) {
+        this.name = name
+        this.logger = getLogger(`StateSideEffect-${name}`)
+    }
         
     public async persistState<ST extends InstanceStateV1>(state: ST): Promise<void> {
         const safeState = this.checkStateBeforePersist(state)

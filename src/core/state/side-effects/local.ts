@@ -12,6 +12,7 @@ export interface LocalStateSideEffectArgs {
     dataRootDir: string
 }
 
+export const LOCAL_STATE_SIDE_EFFECT_NAME = "local"
 /**
  * Manages instance states on local disk.
  * 
@@ -23,7 +24,7 @@ export class LocalStateSideEffect extends StateSideEffect {
     private readonly args: LocalStateSideEffectArgs 
 
     constructor(args: LocalStateSideEffectArgs) {
-        super()
+        super(LOCAL_STATE_SIDE_EFFECT_NAME)
         this.args = args
     }
 
