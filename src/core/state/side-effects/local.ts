@@ -1,7 +1,7 @@
 import path from "path";
 import * as fs from 'fs'
 import * as yaml from 'js-yaml'
-import { StateSideEffect } from "../side-effect";
+import { StateSideEffect } from "./abstract";
 import { InstanceStateV1 } from "../state";
 
 export interface LocalStateSideEffectArgs {

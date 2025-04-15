@@ -8,7 +8,7 @@ import { StateWriter } from '../../../../src/core/state/writer'
 import { StateLoader } from '../../../../src/core/state/loader'
 import { AwsInstanceStateV1, AwsStateParser } from '../../../../src/providers/aws/state'
 import lodash from 'lodash'
-import { LocalStateSideEffect } from '../../../../src/core/state/local/side-effect'
+import { LocalStateSideEffect } from '../../../../src/core/state/side-effects/local'
 
 describe('StateWriter', function () {
 
@@ -18,16 +18,19 @@ describe('StateWriter', function () {
     async function getTestWriter(): Promise<{ dataDir: string, writer: StateWriter<AwsInstanceStateV1> }> {
         const dataDir = mkdtempSync(path.join(tmpdir(), 'statewriter-test-'))
 
+        // load a dummy state and copy it into our test writer
         const loader = new StateLoader({ 
             sideEffect: new LocalStateSideEffect({ dataRootDir: path.resolve(__dirname, "v1-root-data-dir")})
         })
         const state = await loader.loadInstanceState(instanceName)
         const awState = new AwsStateParser().parse(state)
 
+        // create a test writer and persist the state
         const writer = new StateWriter<AwsInstanceStateV1>({
             state: awState,
             sideEffect: new LocalStateSideEffect({ dataRootDir: dataDir })
         })
+        await writer.persistStateNow()
 
         return { dataDir: dataDir, writer: writer }
     }
@@ -181,5 +184,26 @@ describe('StateWriter', function () {
         const result = loadResultPersistedState(dataDir)
         assert.deepStrictEqual(expected, result)
     })
+
+    it('should destroy state', async function () {
+        const { dataDir, writer } = await getTestWriter()
+
+        // check if state file exists
+        const stateDirPath = path.resolve(path.join(dataDir, "instances", instanceName))
+        const stateFilePath = path.resolve(path.join(stateDirPath, "state.yml"))
+        assert.ok(fs.existsSync(stateFilePath))
+        assert.ok(fs.existsSync(stateDirPath))
+
+        // Call the destroyState method
+        await writer.destroyState()
+
+        // Check state file and parent dir no longer exists
+        const fileExists = fs.existsSync(stateFilePath)
+        assert.strictEqual(fileExists, false)
+
+        const parentDirExists = fs.existsSync(stateDirPath)
+        assert.strictEqual(parentDirExists, false)
+    })
     
 })
+

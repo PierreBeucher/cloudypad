@@ -1,9 +1,9 @@
 import { InstanceStateV1 } from "./state";
 import { StateWriter } from "./writer";
 import { StateLoader } from "./loader";
-import { StateSideEffect } from "./side-effect";
+import { StateSideEffect } from "./side-effects/abstract";
 import { ConfigManager } from "../config/manager";
-import { LocalStateSideEffect } from "./local/side-effect";
+import { LocalStateSideEffect } from "./side-effects/local";
 
 /**
  * The StateManagerBuilder is a singleton builder for State managers: StateWriter, StateLoader and StateInitializer instances.

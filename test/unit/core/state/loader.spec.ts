@@ -5,7 +5,7 @@ import * as yaml from 'js-yaml'
 import * as fs from 'fs'
 import { AwsInstanceStateV1 } from '../../../../src/providers/aws/state'
 import { createTempTestDir, DUMMY_V0_ROOT_DATA_DIR, loadDumyAnonymousStateV1, loadRawDummyStateV0, loadRawDummyStateV1 } from '../../utils'
-import { LocalStateSideEffect } from '../../../../src/core/state/local/side-effect'
+import { LocalStateSideEffect } from '../../../../src/core/state/side-effects/local'
 
 describe('StateLoader', function () {
 
@@ -27,6 +27,7 @@ describe('StateLoader', function () {
                 'aws-dummy', 
                 'azure-dummy', 
                 'gcp-dummy', 
+                'invalid-state',
                 'paperspace-dummy', 
                 'missing-state-file', 
                 'wrong-state-version',
@@ -64,7 +65,7 @@ describe('StateLoader', function () {
         })
     })
 
-    describe('loadInstanceStateSafe()', function () {
+    describe('loadInstanceState()', function () {
         
         it('should load and parse state for a valid instance', async function () {
             const loader = createLoader()
@@ -84,6 +85,14 @@ describe('StateLoader', function () {
             await assert.rejects(async () => {
                 await loader.loadInstanceState('wrong-state-version')
             }, /Unknown state version/)
+        })
+
+        it('should throw an error if state file is invalid', async function () {
+            const loader = createLoader(path.resolve(__dirname, 'v1-root-data-dir'))
+
+            await assert.rejects(async () => {
+                await loader.loadInstanceState('invalid-state')
+            }, /Coulnd't parse provided State with Zod/)
         })
     })
 })

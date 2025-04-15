@@ -2,7 +2,7 @@ import { getLogger } from '../../log/utils'
 import { InstanceStateV1 } from './state'
 import lodash from 'lodash'
 import { PartialDeep } from 'type-fest'
-import { StateSideEffect } from './side-effect'
+import { StateSideEffect } from './side-effects/abstract'
 
 export interface StateWriterArgs<ST extends InstanceStateV1> {
 

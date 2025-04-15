@@ -1,6 +1,6 @@
-import { InstanceStateV1 } from "./state"
-import { getLogger } from "../../log/utils"
-import { AnonymousStateParser } from "./parser"
+import { InstanceStateV1 } from "../state"
+import { getLogger } from "../../../log/utils"
+import { AnonymousStateParser } from "../parser"
 
 /**
  * Manages side effects for States (reading, writing, listing, etc.)

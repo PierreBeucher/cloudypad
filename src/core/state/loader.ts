@@ -1,7 +1,7 @@
 import { getLogger } from '../../log/utils'
 import { AnonymousStateParser } from './parser'
 import { InstanceStateV1 } from './state'
-import { StateSideEffect } from './side-effect'
+import { StateSideEffect } from './side-effects/abstract'
 
 export interface StateLoaderArgs {
     sideEffect: StateSideEffect
@@ -29,14 +29,6 @@ export class StateLoader {
     }
 
     /**
-     * Load raw instance state from disk. Loaded state is NOT type-checked.
-     * First try to load state V1, then State V0 before failing
-     */
-    async loadRawInstanceState(instanceName: string): Promise<unknown> {
-        return this.args.sideEffect.loadRawInstanceState(instanceName)
-    }
-
-    /**
      * Load an instance state to the latest version safely (by validating schema and throwing on error)
      * This method should be called before trying to parse the state for a provider
      */
@@ -44,7 +36,7 @@ export class StateLoader {
 
         // read state as-is, any is acceptable at this point
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const rawState = await this.loadRawInstanceState(instanceName) as any
+        const rawState = await this.args.sideEffect.loadRawInstanceState(instanceName) as any
 
         if(rawState.version != "1") {
             throw new Error(`Unknown state version '${rawState.version}'`)
