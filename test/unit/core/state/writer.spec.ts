@@ -9,6 +9,7 @@ import { StateLoader } from '../../../../src/core/state/loader'
 import { AwsInstanceStateV1, AwsStateParser } from '../../../../src/providers/aws/state'
 import lodash from 'lodash'
 import { LocalStateSideEffect } from '../../../../src/core/state/side-effects/local'
+import { DUMMY_V1_ROOT_DATA_DIR } from '../../utils'
 
 describe('StateWriter', function () {
 
@@ -20,7 +21,7 @@ describe('StateWriter', function () {
 
         // load a dummy state and copy it into our test writer
         const loader = new StateLoader({ 
-            sideEffect: new LocalStateSideEffect({ dataRootDir: path.resolve(__dirname, "v1-root-data-dir")})
+            sideEffect: new LocalStateSideEffect({ dataRootDir: DUMMY_V1_ROOT_DATA_DIR})
         })
         const state = await loader.loadInstanceState(instanceName)
         const awState = new AwsStateParser().parse(state)
