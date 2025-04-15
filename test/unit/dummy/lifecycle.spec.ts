@@ -9,6 +9,7 @@ import { InstanceManagerBuilder } from '../../../src';
 import { DummyProvisionInputV1 } from '../../../src/providers/dummy/state';
 import { CommonConfigurationInputV1 } from '../../../src/core/state/state';
 import { InstanceRunningStatus } from '../../../src/core/runner';
+import { StateManagerBuilder } from '../../../src/core/state/builders';
 
 describe('Dummy instance lifecycle', () => {
 
@@ -32,7 +33,8 @@ describe('Dummy instance lifecycle', () => {
             inputPrompter: new DummyInputPrompter()
         }).initializeInteractive({ skipPostInitInfo: true })
 
-        const state = await new StateLoader().loadAndMigrateInstanceState(DUMMY_INSTANCE_NAME)
+        const loader = StateManagerBuilder.getInstance().buildStateLoader()
+        const state = await loader.loadInstanceState(DUMMY_INSTANCE_NAME)
     })
 
     it('should provision and configure Dummy instance', async () => {

@@ -7,6 +7,7 @@ import { GcpCreateCliArgs, GcpInputPrompter } from '../../../src/providers/gcp/c
 import { STREAMING_SERVER_SUNSHINE } from '../../../src/cli/prompter';
 import { StateLoader } from '../../../src/core/state/loader';
 import { InstanceInitializer } from '../../../src/core/initializer';
+import { StateManagerBuilder } from '../../../src/core/state/builders';
 
 describe('Instance initializer', () => {
 
@@ -79,7 +80,8 @@ describe('Instance initializer', () => {
         }).initializeInstance(baseInitializerTestInstanceName, TEST_INPUT.provision, TEST_INPUT.configuration)
 
         // Check state has been written
-        const state = await new StateLoader().loadAndMigrateInstanceState(baseInitializerTestInstanceName)
+        const loader = StateManagerBuilder.getInstance().buildStateLoader()
+        const state = await loader.loadInstanceState(baseInitializerTestInstanceName)
 
         const expectState: GcpInstanceStateV1 = {
             version: "1",
@@ -134,7 +136,8 @@ describe('Instance initializer', () => {
         }).initializeInteractive({ skipPostInitInfo: true })
 
         // Check state has been written
-        const state = await new StateLoader().loadAndMigrateInstanceState(instanceName)
+        const loader = StateManagerBuilder.getInstance().buildStateLoader()
+        const state = await loader.loadInstanceState(instanceName)
 
         const expectState: GcpInstanceStateV1 = {
             version: "1",

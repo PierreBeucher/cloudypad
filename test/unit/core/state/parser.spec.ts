@@ -38,5 +38,12 @@ describe('AnonymousStateParser', function () {
                 parser.parse(rawState)
             }, /Coulnd't parse provided State with Zod/)
         })
+
+        it('should throw an error for a schema mismatch', function () {
+            const rawState = { invalidKey: "invalidValue" }
+            assert.throws(() => {
+                parser.parse(rawState)
+            }, /Coulnd't parse provided State with Zod/)
+        })
     })
 })

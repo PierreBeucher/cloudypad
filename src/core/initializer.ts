@@ -2,7 +2,7 @@ import { getLogger } from "../log/utils"
 import { CLOUDYPAD_PROVIDER } from "../core/const"
 import { InstanceManagerBuilder } from "../core/manager-builder"
 import { StateInitializer } from "../core/state/initializer"
-import { CommonConfigurationInputV1, CommonProvisionInputV1 } from "../core/state/state"
+import { CommonConfigurationInputV1, CommonProvisionInputV1 } from "./state/state"
 import { InstanceManager } from "../core/manager"
 
 export interface InstancerInitializerArgs {

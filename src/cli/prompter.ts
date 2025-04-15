@@ -9,9 +9,8 @@ import { InstanceInputs, CommonConfigurationInputV1, CommonInstanceInput, Common
 import { getLogger } from "../log/utils";
 import { PUBLIC_IP_TYPE, PUBLIC_IP_TYPE_DYNAMIC, PUBLIC_IP_TYPE_STATIC } from '../core/const';
 import { CreateCliArgs } from './command';
-import { StateLoader } from '../core/state/loader';
 import { CostAlertOptions } from '../core/provisioner';
-import { LinuxKeyboardConfiguration, UserConfigDetector } from '../tools/user-config-detector';
+import { StateManagerBuilder } from '../core/state/builders';
 const { kebabCase } = lodash
 
 /**
@@ -81,7 +80,8 @@ export abstract class AbstractInputPrompter<
         
         const instanceName = await this.instanceName(partialInput.instanceName)
         
-        const alreadyExists = await new StateLoader().instanceExists(instanceName)
+        const loader = StateManagerBuilder.getInstance().buildStateLoader()
+        const alreadyExists = await loader.instanceExists(instanceName)
         if(alreadyExists){
             const overwriteExisting = await this.promptOverwriteExisting(instanceName, createOptions?.overwriteExisting)
             if(!overwriteExisting) {

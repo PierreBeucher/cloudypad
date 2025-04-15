@@ -1,7 +1,7 @@
 import * as fs from 'fs'
 import * as assert from 'assert'
 import * as yaml from 'js-yaml'
-import { ConfigManager, BASE_DEFAULT_CONFIG, GlobalCliConfigV1, GlobalCliConfigSchemaV1, AnalyticsCollectionMethod } from '../../../../src/core/config/manager'
+import { ConfigManager, BASE_DEFAULT_CONFIG, CloudyPadGlobalConfigV1, CloudyPadGlobalConfigSchemaV1, AnalyticsCollectionMethod } from '../../../../src/core/config/manager'
 import { createTempTestDir } from '../../utils'
 import path from 'path'
 import lodash from 'lodash'
@@ -20,7 +20,7 @@ describe('ConfigManager', () => {
             assert.ok(fs.existsSync(expectConfigPath), 'Default config file should be created')
 
             const writtenConfigRaw = yaml.load(fs.readFileSync(expectConfigPath, 'utf-8'))
-            const writtenConfigParsed = GlobalCliConfigSchemaV1.safeParse(writtenConfigRaw)
+            const writtenConfigParsed = CloudyPadGlobalConfigSchemaV1.safeParse(writtenConfigRaw)
             assert.equal(writtenConfigParsed.success, true, 'Config should be parseable with Zod')
 
             const writtenConfig = writtenConfigParsed.data!
@@ -140,7 +140,7 @@ describe('ConfigManager', () => {
 
     describe('Configuration Loading', () => {
         it('should load and parse configuration correctly', () => {
-            const dummyConfigDiff: PartialDeep<GlobalCliConfigV1> = {
+            const dummyConfigDiff: PartialDeep<CloudyPadGlobalConfigV1> = {
                 analytics: {
                     posthog: {
                         distinctId: "foo",

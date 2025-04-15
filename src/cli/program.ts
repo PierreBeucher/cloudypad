@@ -85,7 +85,7 @@ export function buildProgram(){
             try {
                 analyticsClient.sendEvent(RUN_COMMAND_LIST)
 
-                const instanceNames = InstanceManagerBuilder.get().getAllInstances();
+                const instanceNames = await InstanceManagerBuilder.get().getAllInstances();
                 if (instanceNames.length === 0) {
                     console.info('No instances found.');
                     return;
