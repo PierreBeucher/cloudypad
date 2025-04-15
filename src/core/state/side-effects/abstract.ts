@@ -40,7 +40,7 @@ export abstract class StateSideEffect {
     /**
      * List existing instances
      */
-    abstract listInstances(): string[]
+    abstract listInstances(): Promise<string[]>
 
     /**
      * Check if an instance exists

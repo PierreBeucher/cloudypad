@@ -80,7 +80,7 @@ export class LocalStateSideEffect extends StateSideEffect {
         fs.rmSync(confDir, { recursive: true, force: true })
     }
 
-    listInstances(): string[] {
+    async listInstances(): Promise<string[]> {
         try {
             this.ensureInstanceParentDirExists()
 

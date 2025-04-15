@@ -19,9 +19,9 @@ describe('StateLoader', function () {
 
     describe('listInstances()', function () {
         
-        it('should list all instance directories with valid state files', function () {
+        it('should list all instance directories with valid state files', async function () {
             const loader = createLoader()
-            const instances = loader.listInstances()
+            const instances = await loader.listInstances()
 
             const expectedInstances = [
                 'aws-dummy', 
@@ -36,9 +36,9 @@ describe('StateLoader', function () {
             assert.deepStrictEqual(instances.sort(), expectedInstances.sort())
         })
 
-        it('should list no instances without error with empty data root dir', function () {
+        it('should list no instances without error with empty data root dir', async function () {
             const loader = createLoader(createTempTestDir("state-loader-list-empty"))
-            const emptyInstances = loader.listInstances()
+            const emptyInstances = await loader.listInstances()
 
             assert.equal(emptyInstances.length, 0)
         })

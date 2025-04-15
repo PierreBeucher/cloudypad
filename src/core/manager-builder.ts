@@ -115,7 +115,7 @@ export class InstanceManagerBuilder {
         this.registeredProviders = new Map<string, (state: InstanceStateV1) => Promise<InstanceManager>>()
     }
 
-    getAllInstances(): string[] {
+    async getAllInstances(): Promise<string[]> {
         const loader = StateManagerBuilder.getInstance().buildStateLoader()
         return loader.listInstances()
     }

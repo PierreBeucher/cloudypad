@@ -17,7 +17,7 @@ export class StateLoader {
         this.sideEffect = args.sideEffect
     }
 
-    listInstances(): string[] {
+    async listInstances(): Promise<string[]> {
         return this.sideEffect.listInstances()
     }
 

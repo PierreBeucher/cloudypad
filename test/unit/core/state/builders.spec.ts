@@ -35,7 +35,7 @@ describe('StateManagerBuilder', () => {
             constructor() {
                 super("dummy-test")
             }
-            listInstances(): string[] { return [] }
+            async listInstances(): Promise<string[]> { return [] }
             async instanceExists(_: string): Promise<boolean> { return false }
             protected doPersistState<ST extends InstanceStateV1>(_: ST): Promise<void> { throw new Error('Method not implemented.')}
             loadRawInstanceState(_: string): Promise<unknown> { throw new Error('Method not implemented.') }

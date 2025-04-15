@@ -16,8 +16,8 @@ describe('LocalStateSideEffect', function () {
 
     const sideEffect = new LocalStateSideEffect({ dataRootDir })
 
-    it('should list instances (empty)', function () {
-        const instances = sideEffect.listInstances()
+    it('should list instances (empty)', async function () {
+        const instances = await sideEffect.listInstances()
         assert.deepStrictEqual(instances, [])
     })
 
@@ -44,14 +44,14 @@ describe('LocalStateSideEffect', function () {
         const stateAws = loadDumyAnonymousStateV1('aws-dummy')
         await sideEffect.persistState(stateAws)
 
-        const instanceListSingle = sideEffect.listInstances()
+        const instanceListSingle = await sideEffect.listInstances()
         assert.deepStrictEqual(instanceListSingle, ['aws-dummy'])
 
         // add another instance
         const stateAzure = loadDumyAnonymousStateV1('azure-dummy')
         await sideEffect.persistState(stateAzure)
 
-        const instanceList2 = sideEffect.listInstances()
+        const instanceList2 = await sideEffect.listInstances()
         assert.deepStrictEqual(instanceList2, ['aws-dummy', 'azure-dummy'])
     })
 
