@@ -9,7 +9,8 @@ function create_destroy_scaleway() {
         --region fr-par \
         --zone fr-par-2 \
         --instance-type GPU-3070-S \
-        --disk-size 100 \
+        --root-disk-size 20 \
+        --data-disk-size 100 \
         --streaming-server sunshine \
         --sunshine-user sunshine \
         --sunshine-password "sunshine!" \
