@@ -15,14 +15,14 @@
   register: scaleway_apt_remove_nvidia_packages
   ansible.builtin.apt:
     name:
-      - libnvidia-cfg1-550
-      - libnvidia-compute-550
-      - nvidia-compute-utils-550
-      - nvidia-firmware-550-550.107.02
-      - nvidia-headless-no-dkms-550
-      - nvidia-kernel-common-550
-      - nvidia-kernel-source-550
-      - nvidia-utils-550
+      - libnvidia-cfg1-*
+      - libnvidia-compute-*
+      - nvidia-compute-utils-*
+      - nvidia-firmware-*
+      - nvidia-headless-no-dkms-*
+      - nvidia-kernel-common-*
+      - nvidia-kernel-source-*
+      - nvidia-utils-*
     state: absent
     purge: yes
 
