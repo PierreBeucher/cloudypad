@@ -148,6 +148,9 @@ run_cloudypad_docker() {
         "SCW_PROFILE"
         "SCW_PROJECT_ID" "SCW_DEFAULT_PROJECT_ID"
         "SCW_ORGANIZATION_ID" "SCW_DEFAULT_ORGANIZATION_ID" "SCW_ORGANIZATION"
+
+        # Pulumi
+        "PULUMI_BACKEND_URL" "PULUMI_CONFIG_PASSPHRASE"
     )
 
     for env_var in "${env_vars[@]}"; do
