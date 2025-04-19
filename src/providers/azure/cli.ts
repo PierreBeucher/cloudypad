@@ -39,10 +39,10 @@ export const AZURE_SUPPORTED_GPU = [
     { machineType: "Standard_NC24rs_v3", gpuType: "NVIDIA", gpuName: "Tesla V100", quotaName: "standardNCSv3Family" },
     { machineType: "Standard_NC24s_v3", gpuType: "NVIDIA", gpuName: "Tesla V100", quotaName: "standardNCSv3Family" },
     
-
-    { machineType: "Standard_NC24ads_A100_v4", gpuType: "NVIDIA", gpuName: "A100", quotaName: "standardNCADSA100v4Family" },
-    { machineType: "Standard_NC48ads_A100_v4", gpuType: "NVIDIA", gpuName: "A100", quotaName: "standardNCADSA100v4Family" },
-    { machineType: "Standard_NC96ads_A100_v4", gpuType: "NVIDIA", gpuName: "A100", quotaName: "standardNCADSA100v4Family" },
+    // Not supported yet, requires datacenter GPU
+    // { machineType: "Standard_NC24ads_A100_v4", gpuType: "NVIDIA", gpuName: "A100", quotaName: "standardNCADSA100v4Family" },
+    // { machineType: "Standard_NC48ads_A100_v4", gpuType: "NVIDIA", gpuName: "A100", quotaName: "standardNCADSA100v4Family" },
+    // { machineType: "Standard_NC96ads_A100_v4", gpuType: "NVIDIA", gpuName: "A100", quotaName: "standardNCADSA100v4Family" },
 
     // { machineType: "Standard_NV4as_v4", gpuType: "AMD", gpuName: "Radeon MI25" },
     // { machineType: "Standard_NV8as_v4", gpuType: "AMD", gpuName: "Radeon MI25" },
@@ -56,12 +56,13 @@ export const AZURE_SUPPORTED_GPU = [
     { machineType: "Standard_NV24s_v3", gpuType: "NVIDIA", gpuName: "Tesla V100", quotaName: "standardNVSv3Family" },
     { machineType: "Standard_NV48s_v3", gpuType: "NVIDIA", gpuName: "Tesla V100", quotaName: "standardNVSv3Family" },
     
-    { machineType: "Standard_NV6ads_A10_v5", gpuType: "NVIDIA", gpuName: "A10", quotaName: "StandardNVADSA10v5Family" },
-    { machineType: "Standard_NV12ads_A10_v5", gpuType: "NVIDIA", gpuName: "A10", quotaName: "StandardNVADSA10v5Family"},
-    { machineType: "Standard_NV18ads_A10_v5", gpuType: "NVIDIA", gpuName: "A10", quotaName: "StandardNVADSA10v5Family"},
-    { machineType: "Standard_NV36adms_A10_v5", gpuType: "NVIDIA", gpuName: "A10", quotaName: "StandardNVADSA10v5Family"},
-    { machineType: "Standard_NV36ads_A10_v5", gpuType: "NVIDIA", gpuName: "A10", quotaName: "StandardNVADSA10v5Family"},
-    { machineType: "Standard_NV72ads_A10_v5", gpuType: "NVIDIA", gpuName: "A10", quotaName: "StandardNVADSA10v5Family"},
+    // Not supported yet, requires datacenter GPU
+    // { machineType: "Standard_NV6ads_A10_v5", gpuType: "NVIDIA", gpuName: "A10", quotaName: "StandardNVADSA10v5Family" },
+    // { machineType: "Standard_NV12ads_A10_v5", gpuType: "NVIDIA", gpuName: "A10", quotaName: "StandardNVADSA10v5Family"},
+    // { machineType: "Standard_NV18ads_A10_v5", gpuType: "NVIDIA", gpuName: "A10", quotaName: "StandardNVADSA10v5Family"},
+    // { machineType: "Standard_NV36adms_A10_v5", gpuType: "NVIDIA", gpuName: "A10", quotaName: "StandardNVADSA10v5Family"},
+    // { machineType: "Standard_NV36ads_A10_v5", gpuType: "NVIDIA", gpuName: "A10", quotaName: "StandardNVADSA10v5Family"},
+    // { machineType: "Standard_NV72ads_A10_v5", gpuType: "NVIDIA", gpuName: "A10", quotaName: "StandardNVADSA10v5Family"},
 ]
 
 export class AzureInputPrompter extends AbstractInputPrompter<AzureCreateCliArgs, AzureProvisionInputV1, CommonConfigurationInputV1> {
