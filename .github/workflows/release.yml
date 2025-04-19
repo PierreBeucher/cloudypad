@@ -29,7 +29,7 @@ jobs:
         uses: nixbuild/nix-quick-install-action@v30
 
       - name: Cache Nix
-        uses: nix-community/cache-nix-action@v5
+        uses: nix-community/cache-nix-action@v6
         with:
           primary-key: nix-${{ runner.os }}
           restore-prefixes-first-match: nix-${{ runner.os }}
@@ -58,7 +58,7 @@ jobs:
         uses: nixbuild/nix-quick-install-action@v30
 
       - name: Cache Nix
-        uses: nix-community/cache-nix-action@v5
+        uses: nix-community/cache-nix-action@v6
         with:
           primary-key: nix-${{ runner.os }}
           restore-prefixes-first-match: nix-${{ runner.os }}

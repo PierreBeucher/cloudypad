@@ -35,6 +35,9 @@
       become: true
       docker_users:
       - "{{ ansible_user_id }}"
+      vars:
+        # Do not add Docker repository on Scaleway as it's already set and keyrings would conflict otherwise
+        docker_add_repo: "{{ cloudypad_provider != 'scaleway' }}"
     
     - role: roles/nvidia-driver
       tags: [ nvidia ]
