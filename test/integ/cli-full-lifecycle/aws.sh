@@ -32,6 +32,11 @@ function create_destroy_aws() {
 
     $cloudypad_cmd stop $instance_name --wait
 
+    # Instance can't be started immediately after stop
+    # Error such as "You can't start the Spot Instance 'i-xxx' because the associated Spot Instance request is not in an appropriate state to support start."
+    # Waiting a few seconds before starting
+    sleep 120
+
     $cloudypad_cmd start $instance_name --wait
     
     $cloudypad_cmd restart $instance_name --wait
