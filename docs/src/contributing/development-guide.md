@@ -148,6 +148,11 @@ To update Wolf:
 - Update Wolf version in `ansible/roles/wolf/templates/docker-compose.nvidia.yml` (stable with SHA)
 - Update images versions in `ansible/roles/wolf/defaults/main.yml` to use latest stable (master with SHA)
 - Update Wolf config template in `ansible/roles/wolf/templates/wolf-config.toml` using default config
+  - Generate default config by running a Wolf container (will generate default config on start) and copy it:
+  ```
+  docker run --name wolf-config ghcr.io/games-on-whales/wolf:stable # exit with CTRL+C
+  docker cp wolf-config:/etc/wolf/cfg/config.toml .
+  ```
   - Ensure proper Ansible templates variables are used
 
 ## Adding a new provider
