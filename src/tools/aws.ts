@@ -19,7 +19,7 @@ export interface StartStopOptions {
 const DEFAULT_START_STOP_OPTION_WAIT=false
 
 // Generous default timeout as G instances are sometime long to stop
-const DEFAULT_START_STOP_OPTION_WAIT_TIMEOUT=60*8
+const DEFAULT_START_STOP_OPTION_WAIT_TIMEOUT=60*15
 
 // Quote code used by AWS API
 // All G and VT Spot Instance Requests
