@@ -1,5 +1,23 @@
 # Changelog
 
+## [0.24.0](https://github.com/PierreBeucher/cloudypad/compare/v0.23.0...v0.24.0) (2025-04-19)
+
+
+### Features
+
+* dedicated data disk and automated data migration (Scaleway only, other providers support coming soon) ([2b0c469](https://github.com/PierreBeucher/cloudypad/commit/2b0c4691344942db02a398cb4c4355514ae4a1ab))
+* update Wolf streaming server version ([d6d17d2](https://github.com/PierreBeucher/cloudypad/commit/d6d17d2c0bf8d4d40f4bcf3ae7557965cafb6a5e))
+* use local PULUMI_BACKEND_URL and PULUMI_CONFIG_PASSPHRASE env v… ([f692fe5](https://github.com/PierreBeucher/cloudypad/commit/f692fe527b0f9d395c81960965022e825980b607))
+* use local PULUMI_BACKEND_URL and PULUMI_CONFIG_PASSPHRASE env vars if any ([13c7976](https://github.com/PierreBeucher/cloudypad/commit/13c79765b2428b1b1273f7ba11a128109e8ba9a9))
+
+
+### Bug Fixes
+
+* do not list incompatible Azure instance types ([900d764](https://github.com/PierreBeucher/cloudypad/commit/900d764d481558acceee8f3abcbdfd998673c6a3))
+* longer timeout for AWS instance stop wait ([70eb238](https://github.com/PierreBeucher/cloudypad/commit/70eb238e1fe54594fdfb8e1953f1b15da3bbfb66))
+* **scaleway:** avoid NVIDIA drivers .run install because of unwanted system driver packages (use wildcard to detect unwanted packages) ([2b05a69](https://github.com/PierreBeucher/cloudypad/commit/2b05a6928d5486fc433cc55c833239efb84749e9))
+* **scaleway:** don't add Docker repository causing conflicting keys ([8383cee](https://github.com/PierreBeucher/cloudypad/commit/8383ceee1ff3ab7d726c7252c0adc770ea8e5053))
+
 ## [0.23.0](https://github.com/PierreBeucher/cloudypad/compare/v0.22.0...v0.23.0) (2025-04-13)
 
 
