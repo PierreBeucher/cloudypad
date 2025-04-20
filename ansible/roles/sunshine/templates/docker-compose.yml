@@ -48,10 +48,9 @@ services:
 
       # Sunshine Web UI password
       # If unset or empty, can be set via Web UI directly
-      # Replace $ by $$ to avoid unwanted variable interpolation by Compose (See https://docs.docker.com/reference/compose-file/interpolation/)
-      SUNSHINE_WEB_PASSWORD: {{ sunshine_web_password_base64 | b64decode | replace('$', '$$') | quote }}
-      SUNSHINE_WEB_USERNAME: {{ sunshine_web_username | quote }}
-      SUNSHINE_SERVER_NAME: {{ sunshine_server_name | quote }}
+      SUNSHINE_WEB_PASSWORD_BASE64: "{{ sunshine_web_password_base64 }}"
+      SUNSHINE_WEB_USERNAME: "{{ sunshine_web_username }}"
+      SUNSHINE_SERVER_NAME: "{{ sunshine_server_name }}"
 
       # Optional additional Sunshine config
       # Use "\n" for multiple lines

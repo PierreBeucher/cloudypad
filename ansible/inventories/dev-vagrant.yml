@@ -17,6 +17,13 @@ all:
       sunshine_keyboard_variant: azerty
       sunshine_keyboard_model: pc104
       sunshine_keyboard_options: terminate:ctrl_alt_bksp
+
+      sunshine_web_username: sunshine
+      
+      # Password with special characters
+      # echo -n '@!/:,?!*#'"'"'€`_\µ$="foo' | base64 | base64 -d
+      # => @!/:,?!*#'€`_\µ$="foo
+      sunshine_web_password_base64: QCEvOiw/ISojJ+KCrGBfXMK1JD0iZm9v
     
       # sunshine_keyboard_layout: fr
       # sunshine_keyboard_variant: mac,azerty
