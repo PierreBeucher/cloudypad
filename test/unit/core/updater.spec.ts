@@ -1,5 +1,5 @@
 import * as assert from 'assert';
-import {DUMMY_AWS_PULUMI_OUTPUT, loadDumyAnonymousStateV1 } from '../utils';
+import {DUMMY_AWS_PULUMI_OUTPUT, DUMMY_SSH_KEY_PATH, loadDumyAnonymousStateV1 } from '../utils';
 import { InstanceUpdater } from '../../../src/cli/updater';
 import { AwsUpdateCliArgs } from '../../../src/providers/aws/cli';
 import { AwsInputPrompter } from '../../../src/providers/aws/cli';
@@ -13,6 +13,10 @@ describe('InstanceUpdater', () => {
         
         // Load known state into dummy writer after changing its name to avoid collision
         const awsState = new AwsStateParser().parse(loadDumyAnonymousStateV1("aws-dummy"))
+
+        // replace key with test key
+        awsState.provision.input.ssh.privateKeyPath = DUMMY_SSH_KEY_PATH
+        
         const instanceName = "aws-dummy-test-update"
         awsState.name = instanceName
 

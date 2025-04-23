@@ -24,6 +24,8 @@ export class GcpProvisioner extends AbstractInstanceProvisioner<GcpProvisionInpu
             throw new Error("Sunshine streaming server does not support GCP nvidia-tesla-p4 accelerator type. Please use a different machine type or streaming server.")
         }
 
+        const sshPublicKeyContent = new SshKeyLoader().loadSshPublicKeyContent(this.args.provisionInput.ssh)
+
         const pulumiClient = new GcpPulumiClient(this.args.instanceName)
         const pulumiConfig: PulumiStackConfigGcp = {
             machineType: this.args.provisionInput.machineType,
@@ -33,7 +35,7 @@ export class GcpProvisioner extends AbstractInstanceProvisioner<GcpProvisionInpu
             region: this.args.provisionInput.region,
             zone: this.args.provisionInput.zone,
             rootDiskSize: this.args.provisionInput.diskSize,
-            publicSshKeyContent: new SshKeyLoader().parseSshPrivateKeyFileToPublic(this.args.provisionInput.ssh.privateKeyPath),
+            publicSshKeyContent: sshPublicKeyContent,
             useSpot: this.args.provisionInput.useSpot,
             costAlert: this.args.provisionInput.costAlert ?? undefined,
             firewallAllowPorts: this.getStreamingServerPorts()

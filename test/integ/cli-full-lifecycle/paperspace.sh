@@ -4,7 +4,6 @@ function create_destroy_paperspace() {
 
     $cloudypad_cmd create paperspace \
         --name $instance_name \
-        --private-ssh-key ~/.ssh/id_ed25519 \
         --machine-type P4000 \
         --disk-size 100 \
         --public-ip-type static \

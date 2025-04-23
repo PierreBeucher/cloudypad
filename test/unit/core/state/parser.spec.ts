@@ -45,5 +45,19 @@ describe('AnonymousStateParser', function () {
                 parser.parse(rawState)
             }, /Coulnd't parse provided State with Zod/)
         })
+
+        it('should throw an error when both SSH keys are provided', function () {
+            const rawState = loadRawDummyStateV1('wrong-state-both-ssh-key')
+            assert.throws(() => {
+                parser.parse(rawState)
+            }, /Exactly one of privateKeyPath or privateKeyContentBase64 must be set/)
+        })
+
+        it('should throw an error when no SSH keys is provided', function () {
+            const rawState = loadRawDummyStateV1('wrong-state-no-ssh-key')
+            assert.throws(() => {
+                parser.parse(rawState)
+            }, /Exactly one of privateKeyPath or privateKeyContentBase64 must be set/)
+        })  
     })
 })

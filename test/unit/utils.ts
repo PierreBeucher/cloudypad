@@ -13,6 +13,11 @@ import { STREAMING_SERVER_SUNSHINE } from '../../src/cli/prompter';
 import { CreateCliArgs } from "../../src/cli/command";
 import { ScalewayPulumiOutput } from "../../src/providers/scaleway/pulumi";
 
+/**
+ * CommonInstanceInput with as most fields filled as possible while keeping it valid:
+ * - privateKeyPath is set but not privateKeyContent
+ * - Use Sunshine streaming server, wolf is unset
+ */
 export const DEFAULT_COMMON_INPUT: CommonInstanceInput = {
     instanceName: "dummy-instance",
     provision: {
@@ -27,7 +32,7 @@ export const DEFAULT_COMMON_INPUT: CommonInstanceInput = {
             username: "sunshine",
             passwordBase64: "c3Vuc2hpbmVQYXNzd29yZA==", // 'sunshinePassword' in base64,
             imageTag: "local",
-            imageRegistry: "dummy.registry.example.co"
+            imageRegistry: "dummy.registry.example.co",
         },
         wolf: undefined,
         autostop: {
@@ -65,6 +70,8 @@ export const DEFAULT_COMMON_CLI_ARGS: CreateCliArgs = {
 }
 
 export const DUMMY_SSH_KEY_PATH = path.resolve(__dirname, '..', 'resources', 'ssh-key')
+
+export const DUMMY_SSH_PUBLIC_KEY_PATH = path.resolve(__dirname, '..', 'resources', 'ssh-key.pub')
 
 /**
  * Dummy output returned by Pulumi during unit test for AWS

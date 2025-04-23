@@ -4,7 +4,6 @@ function create_destroy_gcp() {
 
     $cloudypad_cmd create gcp \
         --name $instance_name \
-        --private-ssh-key ~/.ssh/id_ed25519 \
         --machine-type n1-standard-8 \
         --disk-size 100 \
         --public-ip-type static \
