@@ -6,7 +6,7 @@ import { AzureCliCommandGenerator } from '../providers/azure/cli';
 import { AwsCliCommandGenerator } from '../providers/aws/cli';
 import { PaperspaceCliCommandGenerator } from '../providers/paperspace/cli';
 import { AnalyticsManager } from '../tools/analytics/manager';
-import { RUN_COMMAND_CONFIGURE, RUN_COMMAND_DESTROY, RUN_COMMAND_GET, RUN_COMMAND_LIST, RUN_COMMAND_PAIR, RUN_COMMAND_PROVISION, RUN_COMMAND_RESTART, RUN_COMMAND_START, RUN_COMMAND_STOP } from '../tools/analytics/events';
+import { RUN_COMMAND_CONFIGURE, RUN_COMMAND_DEPLOY, RUN_COMMAND_DESTROY, RUN_COMMAND_GET, RUN_COMMAND_LIST, RUN_COMMAND_PAIR, RUN_COMMAND_PROVISION, RUN_COMMAND_RESTART, RUN_COMMAND_START, RUN_COMMAND_STOP } from '../tools/analytics/events';
 import { CLOUDYPAD_VERSION } from '../core/const';
 import { confirm } from '@inquirer/prompts';
 import { ConfirmationPrompter } from './prompter';
@@ -198,7 +198,7 @@ export function buildProgram(){
                 const inputs = await manager.getInputs()
                 const prompter = new ConfirmationPrompter()
 
-                const confirmation = await prompter.confirmCreation(name, inputs, opts.yes)
+                const confirmation = await prompter.confirmDeploy(name, inputs, opts.yes)
                 if(!confirmation){
                     throw new Error('Provision aborted.')
                 }
@@ -228,6 +228,26 @@ export function buildProgram(){
             }
         })
     
+    program
+        .command('deploy <name>')
+        .option('--yes', 'Do not prompt for approval, automatically approve and continue')
+        .description('Deploy an instance: provision and configure it. Equivalent to running provision and configure commands sequentially.')
+        .action(async (name, opts) => {
+
+            const manager = await InstanceManagerBuilder.get().buildInstanceManager(name)
+            const inputs = await manager.getInputs()
+            const prompter = new ConfirmationPrompter()
+
+            const confirmation = await prompter.confirmDeploy(name, inputs, opts.yes)
+            if(!confirmation){
+                throw new Error('Deploy aborted.')
+            }
+
+            analyticsClient.sendEvent(RUN_COMMAND_DEPLOY)
+
+            await manager.deploy()
+        })
+
     program
         .command('destroy <name>')
         .description('Destroy an instance')
