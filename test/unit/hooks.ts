@@ -56,9 +56,6 @@ export const mochaHooks = {
             return new NoOpAnalyticsClient()
         })
 
-        // Force dummy ssh key loader
-        sinon.stub(SshKeyLoader.prototype, 'parseSshPrivateKeyFileToPublic').resolves()
-
         sinon.stub(AnsibleClient.prototype, 'runAnsible').resolves()
 
         // AWS

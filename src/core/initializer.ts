@@ -4,6 +4,8 @@ import { InstanceManagerBuilder } from "../core/manager-builder"
 import { StateInitializer } from "../core/state/initializer"
 import { CommonConfigurationInputV1, CommonProvisionInputV1 } from "./state/state"
 import { InstanceManager } from "../core/manager"
+import { generatePrivateSshKey } from "../tools/ssh"
+import { toBase64 } from "../tools/base64"
 
 export interface InstancerInitializerArgs {
     provider: CLOUDYPAD_PROVIDER
@@ -23,6 +25,9 @@ export class InstanceInitializer<PI extends CommonProvisionInputV1, CI extends C
 
     /**
      * Initialize an instance using the provided inputs.
+     * 
+     * If neither SSH key path nor SSH key content is provided, the key will be generated and stored in the instance state.
+     * 
      * @param instanceName 
      * @param provisionInput 
      * @param configurationInput 
@@ -31,6 +36,13 @@ export class InstanceInitializer<PI extends CommonProvisionInputV1, CI extends C
         
         this.logger.debug(`Initializing instance with provisionInput ${JSON.stringify(provisionInput)} and configurationInput ${JSON.stringify(configurationInput)}`)
         
+        // Generate private SSH key if one is not already provided
+        if(!provisionInput.ssh.privateKeyPath && !provisionInput.ssh.privateKeyContentBase64){
+            const privateKeyContent = generatePrivateSshKey()
+            const privateKeyContentBase64 = toBase64(privateKeyContent)
+            provisionInput.ssh.privateKeyContentBase64 = privateKeyContentBase64
+        }
+
         await this.beforeInitializeState(instanceName, provisionInput, configurationInput)
         const state = await this.doInitializeState(instanceName, provisionInput, configurationInput)
         await this.afterInitializeState(instanceName, provisionInput, configurationInput)

@@ -18,6 +18,8 @@ export class ScalewayProvisioner extends AbstractInstanceProvisioner<ScalewayPro
 
         this.logger.debug(`Provisioning Scaleway instance with args ${JSON.stringify(this.args)} and options ${JSON.stringify(opts)}`)
 
+        const sshPublicKeyContent = new SshKeyLoader().loadSshPublicKeyContent(this.args.provisionInput.ssh)
+
         const pulumiClient = new ScalewayPulumiClient(this.args.instanceName)
         const pulumiConfig: PulumiStackConfigScaleway = {
             projectId: this.args.provisionInput.projectId,
@@ -32,7 +34,7 @@ export class ScalewayProvisioner extends AbstractInstanceProvisioner<ScalewayPro
             } : undefined,
             imageId: this.args.provisionInput.imageId,
             securityGroupPorts: this.getStreamingServerPorts(),
-            publicKeyContent: new SshKeyLoader().parseSshPrivateKeyFileToPublic(this.args.provisionInput.ssh.privateKeyPath),
+            publicKeyContent: sshPublicKeyContent,
         }
 
         await pulumiClient.setConfig(pulumiConfig)

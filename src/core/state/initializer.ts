@@ -19,15 +19,6 @@ export class StateInitializer {
         this.args = args
     }
 
-    /**
-     * Initialize instance:
-     * - Prompt for common and provisioner-specific configs
-     * - Initialize state
-     * - Run provision
-     * - Run configuration
-     * - Optionally pair instance
-     * @param opts 
-     */
     public async initializeState(): Promise<InstanceStateV1> {
 
         const instanceName = this.args.input.instanceName

@@ -13,8 +13,19 @@ const CommonProvisionOutputV1Schema = z.object({
 const CommonProvisionInputV1Schema = z.object({
     ssh: z.object({
         user: z.string().describe("SSH user"),
-        privateKeyPath: z.string().describe("Local path to private key"),
-    }).describe("SSH access configuration"),
+        privateKeyPath: z.string().optional().describe("Local path to private key. Either privateKeyPath or privateKeyContentBase64 must be set, not both."),
+        privateKeyContentBase64: z.string().optional().describe("Private key content (base64 encoded). Either privateKeyPath or privateKeyContentBase64 must be set, not both."),
+    }).describe("SSH access configuration")
+    .refine((data) => {
+        if(data.privateKeyPath && data.privateKeyContentBase64 ||
+            !data.privateKeyPath && !data.privateKeyContentBase64
+        ){
+            return false
+        }
+        return true
+    }, {
+        message: "Exactly one of privateKeyPath or privateKeyContentBase64 must be set"
+    })
 }).passthrough()
 
 const CommonConfigurationInputV1Schema = z.object({

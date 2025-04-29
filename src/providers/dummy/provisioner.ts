@@ -16,13 +16,15 @@ export class DummyProvisioner extends AbstractInstanceProvisioner<DummyProvision
 
         this.logger.debug(`Provisioning Dummy instance with args ${JSON.stringify(this.args)} and options ${JSON.stringify(opts)}`)
 
+        const sshPublicKeyContent = new SshKeyLoader().loadSshPublicKeyContent(this.args.provisionInput.ssh)
+
         // Simulate some configuration setup
         const dummyConfig = {
             instanceType: this.args.provisionInput.instanceType,
             publicIpType: this.args.provisionInput.publicIpType,
             region: this.args.provisionInput.region,
             rootVolumeSizeGB: this.args.provisionInput.diskSize,
-            publicSshKeyContent: new SshKeyLoader().parseSshPrivateKeyFileToPublic(this.args.provisionInput.ssh.privateKeyPath),
+            publicSshKeyContent: sshPublicKeyContent,
             useSpot: this.args.provisionInput.useSpot,
             billingAlert: this.args.provisionInput.costAlert ?? undefined,
             ingressPorts: this.getStreamingServerPorts()

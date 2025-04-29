@@ -18,6 +18,7 @@ export class AzureProvisioner extends AbstractInstanceProvisioner<AzureProvision
 
         this.logger.debug(`Provisioning Azure instance with args ${JSON.stringify(this.args)} and options ${JSON.stringify(opts)}`)
 
+        const sshPublicKeyContent = new SshKeyLoader().loadSshPublicKeyContent(this.args.provisionInput.ssh)
         const pulumiClient = new AzurePulumiClient(this.args.instanceName)
         const pulumiConfig: PulumiStackConfigAzure = {
             subscriptionId: this.args.provisionInput.subscriptionId,
@@ -26,7 +27,7 @@ export class AzureProvisioner extends AbstractInstanceProvisioner<AzureProvision
             publicIpType: this.args.provisionInput.publicIpType,
             rootDiskSizeGB: this.args.provisionInput.diskSize,
             rootDiskType: this.args.provisionInput.diskType,
-            publicSshKeyContent: new SshKeyLoader().parseSshPrivateKeyFileToPublic(this.args.provisionInput.ssh.privateKeyPath),
+            publicSshKeyContent: sshPublicKeyContent,
             useSpot: this.args.provisionInput.useSpot,
             costAlert: this.args.provisionInput.costAlert ?? undefined,
             securityGroupPorts: this.getStreamingServerPorts()

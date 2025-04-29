@@ -1,13 +1,16 @@
 import * as assert from 'assert';
+import * as sshpk from 'sshpk';
 import { GcpInstanceInput, GcpInstanceStateV1, GcpProvisionInputV1 } from '../../../src/providers/gcp/state';
 import { CLOUDYPAD_CONFIGURATOR_ANSIBLE, CLOUDYPAD_PROVIDER_GCP, PUBLIC_IP_TYPE_STATIC } from '../../../src/core/const';
 import { DEFAULT_COMMON_INPUT } from '../utils';
 import { InteractiveInstanceInitializer } from '../../../src/cli/initializer';
 import { GcpCreateCliArgs, GcpInputPrompter } from '../../../src/providers/gcp/cli';
 import { STREAMING_SERVER_SUNSHINE } from '../../../src/cli/prompter';
-import { StateLoader } from '../../../src/core/state/loader';
 import { InstanceInitializer } from '../../../src/core/initializer';
 import { StateManagerBuilder } from '../../../src/core/state/builders';
+import * as lodash from 'lodash';
+import { CommonConfigurationInputV1 } from '../../../src/core/state/state';
+import { fromBase64 } from '../../../src/tools/base64';
 
 describe('Instance initializer', () => {
 
@@ -202,6 +205,30 @@ describe('Instance initializer', () => {
             return thrown instanceof Error && thrown.cause instanceof Error && thrown.cause.message.includes("Failed to prompt input")
         })
     })
-})
-    
 
+    it('should initialize instance with auto generated SSH key when no SSH key path or content is provided', async () => {
+
+        // use default input but remove SSH key path and content for testing
+        const testInput = lodash.cloneDeep(TEST_INPUT)
+        testInput.provision.ssh.privateKeyPath = undefined
+        testInput.provision.ssh.privateKeyContentBase64 = undefined
+
+        await new InstanceInitializer<GcpProvisionInputV1, CommonConfigurationInputV1>({ 
+            provider: CLOUDYPAD_PROVIDER_GCP,
+        }).initializeInstance("test-auto-generate-ssh-key", testInput.provision, testInput.configuration)
+
+        // Check state has been written
+        const loader = StateManagerBuilder.getInstance().buildStateLoader()
+        const state = await loader.loadInstanceState("test-auto-generate-ssh-key")
+
+        assert.equal(state.provision.input.ssh.privateKeyPath, undefined)
+        assert.ok(state.provision.input.ssh.privateKeyContentBase64)
+
+        const privateKeyContent = fromBase64(state.provision.input.ssh.privateKeyContentBase64)
+
+        // try to load key content (should have been generated randomly)
+        const parsedKey = sshpk.parseKey(privateKeyContent, "ssh-private").toString("ssh-private")
+        assert.ok(parsedKey.startsWith("-----BEGIN OPENSSH PUBLIC KEY-----"))
+    })
+})
+        

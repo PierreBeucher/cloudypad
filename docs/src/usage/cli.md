@@ -59,7 +59,6 @@ You can also specify all arguments as flags for non-interactive creation, for ex
 ```sh
 cloudypad create aws \
   --name $instance_name \
-  --private-ssh-key ~/.ssh/id_ed25519 \
   --instance-type g4dn.xlarge \
   --disk-size 100 \
   --public-ip-type static \

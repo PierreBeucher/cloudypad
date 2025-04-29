@@ -4,7 +4,6 @@ function create_destroy_azure() {
 
     $cloudypad_cmd create azure \
         --name $instance_name \
-        --private-ssh-key ~/.ssh/id_ed25519 \
         --vm-size Standard_NC8as_T4_v3 \
         --disk-size 100 \
         --disk-type Standard_LRS \

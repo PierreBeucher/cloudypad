@@ -31,6 +31,8 @@ describe('StateLoader', function () {
                 'paperspace-dummy', 
                 'missing-state-file', 
                 'wrong-state-version',
+                'wrong-state-both-ssh-key',
+                'wrong-state-no-ssh-key',
                 'scaleway-dummy'
             ]
             assert.deepStrictEqual(instances.sort(), expectedInstances.sort())

@@ -89,7 +89,6 @@ export abstract class AbstractInputPrompter<
             }
         }
 
-        const sshKey = await this.privateSshKey(partialInput.provision?.ssh?.privateKeyPath)
         const sshUser = "ubuntu" // Harcoded default for now since we only support Ubuntu
 
         const streamingServer = await this.promptStreamingServer(partialInput.configuration?.sunshine?.enable, partialInput.configuration?.wolf?.enable)
@@ -117,7 +116,7 @@ export abstract class AbstractInputPrompter<
             instanceName: instanceName,
             provision: {
                 ssh: {
-                    privateKeyPath: sshKey,
+                    privateKeyPath: partialInput.provision?.ssh?.privateKeyPath, // use provided private key path if set
                     user: sshUser
                 }
             },
@@ -261,50 +260,6 @@ export abstract class AbstractInputPrompter<
             message: `Instance ${instanceName} already exists. Do you want to overwrite existing instance config?`,
             default: false,
         })
-    }
-
-    protected async privateSshKey(privateSshKey?: string): Promise<string> {
-        if (privateSshKey) {
-            return privateSshKey;
-        }
-
-        const sshDir = path.join(os.homedir(), '.ssh')
-
-        this.logger.debug(`Looking for SSH keys in ${sshDir}`)
-
-        let sshFiles: string[] = []
-        if(fs.existsSync(sshDir) && fs.statSync(sshDir).isDirectory()) {
-            sshFiles = fs.readdirSync(sshDir)
-            this.logger.debug(`Found SSH key files ${JSON.stringify(sshFiles)}`)
-        } else {
-            this.logger.debug(`Couldn't find SSH private key, not a directory: ${sshDir}`)
-        }
-
-        const privateKeys = sshFiles
-            .filter(file => file.startsWith('id_') && !file.endsWith('.pub')) // TODO A bit naive method. Maybe we can read all files and check if they are private keys
-            .map(file => path.join(sshDir, file))
-    
-        let privateKeyPath: string
-        if (!privateKeys.length){
-            console.info(`No SSH private key found in ${sshDir}. You can generate one with 'ssh-keygen -t ed25519 -a 100'.`)
-            privateKeyPath = await input({
-                message: 'Please enter path to a valid SSH private key to create your instance:'
-            })
-        } else {
-        const sshKeyChoices = privateKeys.map(k => ({
-            instanceName: k,
-            value: k
-        }))
-    
-            privateKeyPath = await select({
-            message: 'Choose an SSH private key to connect to instance:',
-            choices: sshKeyChoices
-        })
-        }
-
-        console.info(`Using SSH private key ${privateKeyPath}`)
-    
-        return privateKeyPath;
     }
 
     protected async useSpotInstance(useSpot?: boolean): Promise<boolean>{

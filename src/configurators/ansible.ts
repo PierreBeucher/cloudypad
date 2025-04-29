@@ -8,6 +8,7 @@ import { AbstractInstanceConfigurator } from '../core/configurator';
 import { getLogger, Logger } from '../log/utils';
 import { AnsibleClient } from '../tools/ansible';
 import { CLOUDYPAD_SUNSHINE_IMAGE_REGISTRY, CLOUDYPAD_VERSION } from '../core/const';
+import { SshKeyLoader } from '../tools/ssh';
 
 export interface AnsibleConfiguratorArgs {
     instanceName: string
@@ -33,8 +34,6 @@ export class AnsibleConfigurator<ST extends InstanceStateV1> extends AbstractIns
 
         this.logger.debug(`Running Ansible configuration with input: ${JSON.stringify(this.args.configurationInput)}`)
 
-        const ssh = this.args.provisionInput.ssh
-
         // check input validity: only Sunshine or Wolf can be enabled
         if (this.args.configurationInput.sunshine?.enable && this.args.configurationInput.wolf?.enable) {
             throw new Error("Only one of Sunshine or Wolf can be enabled. Got input: " + JSON.stringify(this.args.configurationInput))
@@ -51,13 +50,52 @@ export class AnsibleConfigurator<ST extends InstanceStateV1> extends AbstractIns
 
         this.logger.debug(`Using playbook ${playbookPath}`)
 
-        const inventoryContent = {
+        const inventoryJSON = await this.generateInventoryJsonObject()
+
+        this.logger.trace(`Inventory content: ${JSON.stringify(inventoryJSON)}`)
+
+        const inventoryPath = await this.writeTempInventory(inventoryJSON)
+
+        const ansible = new AnsibleClient()
+        await ansible.runAnsible(inventoryPath, playbookPath, this.args.additionalAnsibleArgs ?? [])
+
+        return {
+            // Running Ansible with data disk will ensure it's configured
+            dataDiskConfigured: this.args.provisionOutput.dataDiskId !== undefined,
+        }
+    }
+
+    /**
+     * Write JSON Object inventory to a temporary file
+     * @param jsonObjectInventory Inventory content as a JSON object
+     * @returns Path to the inventory file
+     */
+    public async writeTempInventory(jsonObjectInventory: any): Promise<string> {
+        
+        const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'cloudypad-'));
+        const inventoryPath = path.join(tmpDir, 'inventory.yml');
+
+        this.logger.debug(`Writing inventory file at ${inventoryPath}`)
+
+        fs.writeFileSync(inventoryPath, yaml.dump(jsonObjectInventory), 'utf8')
+
+        return inventoryPath
+    }
+
+    /**
+     * Generate inventory content for Ansible as a JSON object
+     * @returns Inventory content as a JSON object
+     */
+    public async generateInventoryJsonObject(): Promise<any>   {
+        const sshPrivateKeyPath = new SshKeyLoader().getSshPrivateKeyPath(this.args.provisionInput.ssh)
+
+        return {
             all: {
                 hosts: {
                     [this.args.instanceName]: {
                         ansible_host: this.args.provisionOutput.host,
-                        ansible_user: ssh.user,
-                        ansible_ssh_private_key_file: ssh.privateKeyPath,
+                        ansible_user: this.args.provisionInput.ssh.user,
+                        ansible_ssh_private_key_file: sshPrivateKeyPath,
 
                         cloudypad_provider: this.args.provider,
 
@@ -85,23 +123,6 @@ export class AnsibleConfigurator<ST extends InstanceStateV1> extends AbstractIns
                     },
                 },
             },
-        }
-
-        this.logger.debug(`Inventory: ${JSON.stringify(inventoryContent)}`)
-
-        const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'cloudypad-'));
-        const inventoryPath = path.join(tmpDir, 'inventory.yml');
-
-        this.logger.debug(`Writing inventory at: ${inventoryPath}`)
-
-        fs.writeFileSync(inventoryPath, yaml.dump(inventoryContent), 'utf8');
-
-        const ansible = new AnsibleClient()
-        await ansible.runAnsible(inventoryPath, playbookPath, this.args.additionalAnsibleArgs ?? [])
-
-        return {
-            // Running Ansible with data disk will ensure it's configured
-            dataDiskConfigured: this.args.provisionOutput.dataDiskId !== undefined,
         }
     }
 }

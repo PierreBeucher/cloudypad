@@ -7,6 +7,7 @@ import { CLOUDYPAD_PROVIDER } from './const';
 import { SunshineMoonlightPairer } from './moonlight/pairer/sunshine';
 import { MoonlightPairer } from './moonlight/pairer/abstract';
 import { WolfMoonlightPairer } from './moonlight/pairer/wolf';
+import { SshKeyLoader } from '../tools/ssh';
 
 /**
  * Options that may be passed to InstanceRunner functions
@@ -106,13 +107,15 @@ export abstract class AbstractInstanceRunner<C extends CommonProvisionInputV1, O
     protected abstract doGetInstanceStatus(): Promise<InstanceRunningStatus>
 
     private buildMoonlightPairer(): MoonlightPairer {
+        const sshKeyPath = new SshKeyLoader().getSshPrivateKeyPath(this.args.provisionInput.ssh)
+
         if(this.args.configurationInput.sunshine?.enable){
             return new SunshineMoonlightPairer({
                 instanceName: this.args.instanceName,
                 host: this.args.provisionOutput.host,
                 ssh: {
                     user: this.args.provisionInput.ssh.user,
-                    privateKeyPath: this.args.provisionInput.ssh.privateKeyPath
+                    privateKeyPath: sshKeyPath
                 },
                 sunshine: {
                     username: this.args.configurationInput.sunshine.username,
@@ -125,7 +128,7 @@ export abstract class AbstractInstanceRunner<C extends CommonProvisionInputV1, O
                 host: this.args.provisionOutput.host,
                 ssh: {
                     user: this.args.provisionInput.ssh.user,
-                    privateKeyPath: this.args.provisionInput.ssh.privateKeyPath
+                    privateKeyPath: sshKeyPath
                 }
             })
         } else {

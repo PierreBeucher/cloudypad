@@ -1,8 +1,10 @@
 import { NodeSSH, SSHExecCommandResponse } from "node-ssh";
-import sshpk from 'sshpk';
-export const { parseKey, parsePrivateKey } = sshpk;
+import * as sshpk from 'sshpk';
 import * as fs from 'fs'
 import { getLogger, Logger } from "../log/utils";
+import { CommonProvisionInputV1 } from "../core/state/state";
+import * as tmp from "tmp"
+import { fromBase64 } from "./base64";
 
 export interface SSHClientArgs {
     clientName: string
@@ -171,15 +173,60 @@ export class SSHClient {
     
 }
 
+/**
+ * Load SSH keys from instance inputs
+ */
 export class SshKeyLoader {
 
-    parseSshPrivateKeyFileToPublic(keyPath: string){
-        const kData = fs.readFileSync(keyPath, { encoding: 'utf8' });
-        return this.parseSshPrivateKeyToPublic(kData)
+    /**
+     * Get SSH private key path from instance inputs. Return key path from privateKeyPath or 
+     * generate a temporary secure key file from privateKeyContentBase64.
+     * @param ssh - SSH access configuration
+     * @returns SSH private key path
+     */
+    getSshPrivateKeyPath(ssh: CommonProvisionInputV1["ssh"]){
+        if(ssh.privateKeyPath){
+            return ssh.privateKeyPath
+        } else if (ssh.privateKeyContentBase64){
+            const tempKeyFile = tmp.fileSync({ mode: 0o600})
+            fs.writeFileSync(tempKeyFile.name, fromBase64(ssh.privateKeyContentBase64))
+            return tempKeyFile.name
+        } else {
+            throw new Error("No SSH private key provided, neither privateKeyPath nor privateKeyContentBase64 is set.")
+        }
     }
-    
-    parseSshPrivateKeyToPublic(keyData: string){
-        const privKey = parseKey(keyData, "ssh-private")
-        return privKey.toString("ssh")
+
+    /**
+     * Load SSH private key content from instance inputs
+     * @param ssh - SSH access configuration
+     * @returns SSH private key content
+     */
+    loadSshPrivateKeyContent(ssh: CommonProvisionInputV1["ssh"]){
+        if(ssh.privateKeyPath){
+            return fs.readFileSync(ssh.privateKeyPath, { encoding: 'utf8' })
+        } else if (ssh.privateKeyContentBase64){
+            return fromBase64(ssh.privateKeyContentBase64)
+        } else {
+            throw new Error("No SSH private key provided, neither privateKeyPath nor privateKeyContentBase64 is set.")
+        }
     }
+
+    /**
+     * Load SSH public key content from instance inputs
+     * @param ssh - SSH access configuration
+     * @returns SSH public key content
+     */
+    loadSshPublicKeyContent(ssh: CommonProvisionInputV1["ssh"]) {
+        const privateKeyContent = this.loadSshPrivateKeyContent(ssh)
+        return sshpk.parseKey(privateKeyContent, "ssh-private").toString("ssh")
+    }
+}
+
+/**
+ * Generate a new SSH private key using ed25519 algorithm
+ * @returns SSH private key content as string
+ */
+export function generatePrivateSshKey(): string {
+    const newKey = sshpk.generatePrivateKey("ed25519")
+    return newKey.toString("ssh-private")
 }
