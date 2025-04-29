@@ -1,11 +1,10 @@
 import { getLogger } from "../log/utils"
 import { CLOUDYPAD_PROVIDER } from "../core/const"
-import { InstanceManagerBuilder } from "../core/manager-builder"
 import { StateInitializer } from "../core/state/initializer"
 import { CommonConfigurationInputV1, CommonProvisionInputV1 } from "./state/state"
-import { InstanceManager } from "../core/manager"
 import { generatePrivateSshKey } from "../tools/ssh"
 import { toBase64 } from "../tools/base64"
+import { InstanceManagerBuilder } from "./manager-builder"
 
 export interface InstancerInitializerArgs {
     provider: CLOUDYPAD_PROVIDER
@@ -23,6 +22,13 @@ export class InstanceInitializer<PI extends CommonProvisionInputV1, CI extends C
         this.provider = args.provider
     }
 
+    async initializeAndDeploy(instanceName: string, provisionInput: PI, configurationInput: CI): Promise<void> {
+        await this.initializeStateOnly(instanceName, provisionInput, configurationInput)
+        
+        const manager = await InstanceManagerBuilder.get().buildInstanceManager(instanceName)
+        await manager.deploy()
+    }
+
     /**
      * Initialize an instance using the provided inputs.
      * 
@@ -32,7 +38,7 @@ export class InstanceInitializer<PI extends CommonProvisionInputV1, CI extends C
      * @param provisionInput 
      * @param configurationInput 
      */
-    async initializeInstance(instanceName: string, provisionInput: PI, configurationInput: CI): Promise<void> {
+    async initializeStateOnly(instanceName: string, provisionInput: PI, configurationInput: CI): Promise<void> {
         
         this.logger.debug(`Initializing instance with provisionInput ${JSON.stringify(provisionInput)} and configurationInput ${JSON.stringify(configurationInput)}`)
         
@@ -43,27 +49,6 @@ export class InstanceInitializer<PI extends CommonProvisionInputV1, CI extends C
             provisionInput.ssh.privateKeyContentBase64 = privateKeyContentBase64
         }
 
-        await this.beforeInitializeState(instanceName, provisionInput, configurationInput)
-        const state = await this.doInitializeState(instanceName, provisionInput, configurationInput)
-        await this.afterInitializeState(instanceName, provisionInput, configurationInput)
-
-        const manager = await InstanceManagerBuilder.get().buildInstanceManager(state.name)
-        
-        await this.beforeProvisioning(manager, state.name)
-        await this.doProvisioning(manager, state.name)
-        await this.afterProvisioning(manager, state.name)
-
-        await this.beforeConfiguration(manager, state.name)
-        await this.doConfiguration(manager, state.name)
-        await this.afterConfiguration(manager, state.name)
-
-    }
-
-    protected async beforeInitializeState(instanceName: string, provisionInput: PI, configurationInput: CI){
-        // Do nothing by default
-    }
-
-    private async doInitializeState(instanceName: string, provisionInput: PI, configurationInput: CI) {
         const state = await new StateInitializer({
             input: {
                 instanceName: instanceName,
@@ -72,43 +57,5 @@ export class InstanceInitializer<PI extends CommonProvisionInputV1, CI extends C
             },
             provider: this.provider,
         }).initializeState()
-        
-        return state
-    }
-
-    protected async afterInitializeState(instanceName: string, provisionInput: PI, configurationInput: CI){
-        // Do nothing by default
-    }
-
-    protected async beforeProvisioning(manager: InstanceManager, instanceName: string, autoApprove?: boolean) {
-        // Do nothing by default
-    }
-
-    private async doProvisioning(manager: InstanceManager, instanceName: string, autoApprove?: boolean) {
-        this.logger.info(`Initializing ${instanceName}: provisioning...`)
-
-        await manager.provision({ autoApprove: autoApprove})
-        
-        this.logger.info(`Initializing ${instanceName}: provision done.`)
-    }
-
-    protected async afterProvisioning(manager: InstanceManager, instanceName: string, autoApprove?: boolean) {
-        // Do nothing by default
-    }
-
-    protected async beforeConfiguration(manager: InstanceManager, instanceName: string) {
-        // Do nothing by default
-    }
-
-    private async doConfiguration(manager: InstanceManager, instanceName: string) {
-        this.logger.info(`Initializing ${instanceName}: configuring...`)
-
-        await manager.configure()
-        
-        this.logger.info(`Initializing ${instanceName}: configuration done.`)
-    }
-
-    protected async afterConfiguration(manager: InstanceManager, instanceName: string) {
-        // Do nothing by default
     }
 }

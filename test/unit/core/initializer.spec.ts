@@ -76,19 +76,66 @@ describe('Instance initializer', () => {
     // Testing here using GCP state, but Initializer is generic and should work with any statet
     it('base initializer should initialize instance state with provided arguments', async () => {
 
-        const baseInitializerTestInstanceName = "base-initializer-test-instance"
+        const testInstanceName = "base-initializer-test-instance-state-init"
 
         await new InstanceInitializer({ 
             provider: CLOUDYPAD_PROVIDER_GCP,
-        }).initializeInstance(baseInitializerTestInstanceName, TEST_INPUT.provision, TEST_INPUT.configuration)
+        }).initializeStateOnly(testInstanceName, TEST_INPUT.provision, TEST_INPUT.configuration)
 
         // Check state has been written
         const loader = StateManagerBuilder.getInstance().buildStateLoader()
-        const state = await loader.loadInstanceState(baseInitializerTestInstanceName)
+        const state = await loader.loadInstanceState(testInstanceName)
 
         const expectState: GcpInstanceStateV1 = {
             version: "1",
-            name: baseInitializerTestInstanceName,
+            name: testInstanceName,
+            provision: {
+                provider: CLOUDYPAD_PROVIDER_GCP,
+                input: TEST_INPUT.provision,
+            },
+            configuration: {
+                configurator: CLOUDYPAD_CONFIGURATOR_ANSIBLE,
+                input: {
+                    sunshine: {
+                        enable: DEFAULT_COMMON_INPUT.configuration.sunshine?.enable ?? false,
+                        username: DEFAULT_COMMON_INPUT.configuration.sunshine?.username ?? "",
+                        passwordBase64: DEFAULT_COMMON_INPUT.configuration.sunshine?.passwordBase64 ?? "",
+                        imageTag: DEFAULT_COMMON_INPUT.configuration.sunshine?.imageTag ?? "",
+                        imageRegistry: DEFAULT_COMMON_INPUT.configuration.sunshine?.imageRegistry
+                    },
+                    autostop: {
+                        enable: DEFAULT_COMMON_INPUT.configuration.autostop?.enable ?? false,
+                        timeoutSeconds: DEFAULT_COMMON_INPUT.configuration.autostop?.timeoutSeconds ?? 999
+                    },
+                    locale: DEFAULT_COMMON_INPUT.configuration.locale,
+                    keyboard: {
+                        layout: DEFAULT_COMMON_INPUT.configuration.keyboard?.layout,
+                        model: DEFAULT_COMMON_INPUT.configuration.keyboard?.model,
+                        variant: DEFAULT_COMMON_INPUT.configuration.keyboard?.variant,
+                        options: DEFAULT_COMMON_INPUT.configuration.keyboard?.options
+                    }
+                }
+            }
+        }
+        
+        assert.deepEqual(state, expectState)
+    })
+
+    it('base initializer should initialize instance and deploy with provided arguments', async () => {
+
+        const testInstanceName = "base-initializer-test-instance-deploy"
+
+        await new InstanceInitializer({ 
+            provider: CLOUDYPAD_PROVIDER_GCP,
+        }).initializeAndDeploy(testInstanceName, TEST_INPUT.provision, TEST_INPUT.configuration)
+
+        // Check state has been written
+        const loader = StateManagerBuilder.getInstance().buildStateLoader()
+        const state = await loader.loadInstanceState(testInstanceName)
+
+        const expectState: GcpInstanceStateV1 = {
+            version: "1",
+            name: testInstanceName,
             provision: {
                 provider: CLOUDYPAD_PROVIDER_GCP,
                 input: TEST_INPUT.provision,
@@ -215,7 +262,7 @@ describe('Instance initializer', () => {
 
         await new InstanceInitializer<GcpProvisionInputV1, CommonConfigurationInputV1>({ 
             provider: CLOUDYPAD_PROVIDER_GCP,
-        }).initializeInstance("test-auto-generate-ssh-key", testInput.provision, testInput.configuration)
+        }).initializeStateOnly("test-auto-generate-ssh-key", testInput.provision, testInput.configuration)
 
         // Check state has been written
         const loader = StateManagerBuilder.getInstance().buildStateLoader()

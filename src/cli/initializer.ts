@@ -1,12 +1,12 @@
 import { CLOUDYPAD_PROVIDER } from "../core/const"
 import { CreateCliArgs } from "./command"
-import { ConfirmationPrompter, InputPrompter, UserVoluntaryInterruptionError } from "./prompter"
+import { InputPrompter, UserVoluntaryInterruptionError } from "./prompter"
 import { InstanceManagerBuilder } from "../core/manager-builder"
 import { confirm } from '@inquirer/prompts'
 import { AnalyticsManager } from "../tools/analytics/manager"
 import { CommonConfigurationInputV1, CommonInstanceInput, CommonProvisionInputV1, InstanceInputs } from "../core/state/state"
-import { InstanceManager } from "../core/manager"
 import { InstanceInitializer } from "../core/initializer"
+import { getLogger } from "../log/utils"
 
 export interface InteractiveInstancerInitializerArgs<A extends CreateCliArgs, PI extends CommonProvisionInputV1, CI extends CommonConfigurationInputV1> {
     provider: CLOUDYPAD_PROVIDER
@@ -31,13 +31,15 @@ export class InteractiveInstanceInitializer<
     A extends CreateCliArgs, 
     PI extends CommonProvisionInputV1, 
     CI extends CommonConfigurationInputV1
-> extends InstanceInitializer<PI, CI> {
+> {
 
     protected readonly analytics = AnalyticsManager.get()
     private readonly args: InteractiveInstancerInitializerArgs<A, PI, CI>
+    private readonly instanceInitializer: InstanceInitializer<PI, CI>
+    private readonly logger = getLogger(InteractiveInstanceInitializer.name)
 
     constructor(args: InteractiveInstancerInitializerArgs<A, PI, CI>){
-        super({ provider: args.provider })
+        this.instanceInitializer = new InstanceInitializer<PI, CI>({ provider: args.provider })
         this.args = args
     }
 
@@ -45,14 +47,15 @@ export class InteractiveInstanceInitializer<
         try {
             this.analyticsEvent("create_instance_start")
 
-            
             this.logger.debug(`Initializing instance from CLI args ${JSON.stringify(this.args.initArgs)} and options ${JSON.stringify(options)}`)
             
             const input = await this.cliArgsToInput(this.args.initArgs)
 
-            await this.initializeInstance(input.instanceName, input.provision, input.configuration)
+            await this.doInitializeState(input.instanceName, input.provision, input.configuration)
 
-            await this.doPairing(input.instanceName, this.args.initArgs.skipPairing ?? false, this.args.initArgs.yes ?? false)
+            await this.doDeploy(input.instanceName)
+
+            await this.doPair(input.instanceName, this.args.initArgs.skipPairing ?? false, this.args.initArgs.yes ?? false)
 
             this.showPostInitInfo(options)
             this.analyticsEvent("create_instance_finish")
@@ -77,38 +80,20 @@ export class InteractiveInstanceInitializer<
         return input
     }
 
-    protected async beforeInitializeState(instanceName: string, provisionInput: CommonProvisionInputV1, configurationInput: CommonConfigurationInputV1) {
+    private async doInitializeState(instanceName: string, provisionInput: PI, configurationInput: CI) {
         this.analyticsEvent("create_instance_start_state_init")
-    }
-
-    protected async afterInitializeState(instanceName: string, provisionInput: CommonProvisionInputV1, configurationInput: CommonConfigurationInputV1) {
+        await this.instanceInitializer.initializeStateOnly(instanceName, provisionInput, configurationInput)
         this.analyticsEvent("create_instance_finish_state_init")
     }
 
-    protected async beforeProvisioning(manager: InstanceManager, instanceName: string) {
-
-        const prompter = new ConfirmationPrompter()
-        const confirmation = await prompter.confirmCreation(instanceName, await manager.getInputs(), this.args.initArgs.yes)
-        if(!confirmation){
-            throw new Error('Provision aborted.')
-        }
-
-        this.analyticsEvent("create_instance_start_provision")
+    private async doDeploy(instanceName: string) {
+        this.analyticsEvent("create_instance_start_deploy")
+        const manager = await InstanceManagerBuilder.get().buildInstanceManager(instanceName)
+        await manager.deploy()
+        this.analyticsEvent("create_instance_finish_deploy")
     }
 
-    protected async afterProvisioning(manager: InstanceManager, instanceName: string) {
-        this.analyticsEvent("create_instance_finish_provision")
-    }
-
-    protected async beforeConfiguration(manager: InstanceManager, instanceName: string) {
-        this.analyticsEvent("create_instance_start_configuration")
-    }
-
-    protected async afterConfiguration(manager: InstanceManager, instanceName: string) {
-        this.analyticsEvent("create_instance_finish_configuration")
-    }
-
-    private async doPairing(instanceName: string, skipPairing: boolean, autoApprove: boolean) {
+    private async doPair(instanceName: string, skipPairing: boolean, autoApprove: boolean) {
 
         const manager = await InstanceManagerBuilder.get().buildInstanceManager(instanceName)
 
@@ -144,7 +129,7 @@ export class InteractiveInstanceInitializer<
 
     private analyticsEvent(event: string, additionalProperties?: Record<string, any>) {
         this.analytics.sendEvent(event, { 
-            provider: this.provider, 
+            provider: this.args.provider, 
             ...additionalProperties 
         })
     }

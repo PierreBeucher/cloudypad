@@ -56,9 +56,7 @@ describe('Scaleway input prompter', () => {
             },
             configuration: {
                 ...TEST_INPUT.configuration,
-                wolf: {
-                    enable: undefined
-                }
+                wolf: null
             }
         }
         

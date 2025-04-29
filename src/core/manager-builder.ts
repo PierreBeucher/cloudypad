@@ -19,7 +19,6 @@ import { ScalewaySubManagerFactory } from '../providers/scaleway/factory';
 import { ScalewayStateParser } from '../providers/scaleway/state';
 import { StateManagerBuilder } from './state/builders';
 
-
 /**
  * Register a provider with the given name and InstanceManager builder function
  * On InstanceManager instantiation from state, only registered managers will be able to handle state. 

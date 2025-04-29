@@ -7,7 +7,7 @@ import { CliCommandGenerator, CreateCliArgs, UpdateCliArgs, CLI_OPTION_STREAMING
 import { CLOUDYPAD_PROVIDER_DUMMY } from "../../core/const";
 import { InteractiveInstanceInitializer } from "../../cli/initializer";
 import { PartialDeep } from "type-fest";
-import { InstanceUpdater } from "../../cli/updater";
+import { InteractiveInstanceUpdater } from "../../cli/updater";
 import { cleanupAndExit, logFullError } from "../../cli/program";
 
 export interface DummyCreateCliArgs extends CreateCliArgs {
@@ -137,10 +137,10 @@ export class DummyCliCommandGenerator extends CliCommandGenerator {
             .action(async (cliArgs: DummyUpdateCliArgs) => {
                 
                 try {
-                    await new InstanceUpdater<DummyInstanceStateV1, DummyUpdateCliArgs>({
+                    await new InteractiveInstanceUpdater<DummyInstanceStateV1, DummyUpdateCliArgs>({
                         stateParser: new DummyStateParser(),
                         inputPrompter: new DummyInputPrompter()
-                    }).update(cliArgs)
+                    }).updateInteractive(cliArgs)
                     
                     console.info(`Updated instance ${cliArgs.name}`)
                     

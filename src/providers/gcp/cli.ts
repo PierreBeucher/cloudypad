@@ -9,7 +9,7 @@ import { PartialDeep } from "type-fest";
 import { InteractiveInstanceInitializer } from "../../cli/initializer";
 import { CLI_OPTION_AUTO_STOP_TIMEOUT, CLI_OPTION_AUTO_STOP_ENABLE, CLI_OPTION_COST_ALERT, CLI_OPTION_COST_LIMIT, CLI_OPTION_COST_NOTIFICATION_EMAIL, CLI_OPTION_DISK_SIZE, CLI_OPTION_PUBLIC_IP_TYPE, CLI_OPTION_SPOT, CLI_OPTION_STREAMING_SERVER, CLI_OPTION_SUNSHINE_IMAGE_REGISTRY, CLI_OPTION_SUNSHINE_IMAGE_TAG, CLI_OPTION_SUNSHINE_PASSWORD, CLI_OPTION_SUNSHINE_USERNAME, CliCommandGenerator, CreateCliArgs, UpdateCliArgs, CLI_OPTION_KEYBOARD_OPTIONS, CLI_OPTION_KEYBOARD_MODEL, CLI_OPTION_KEYBOARD_LAYOUT, CLI_OPTION_USE_LOCALE, CLI_OPTION_KEYBOARD_VARIANT } from "../../cli/command";
 import { RUN_COMMAND_CREATE, RUN_COMMAND_UPDATE } from "../../tools/analytics/events";
-import { InstanceUpdater } from "../../cli/updater";
+import { InteractiveInstanceUpdater } from "../../cli/updater";
 
 export interface GcpCreateCliArgs extends CreateCliArgs {
     projectId?: string
@@ -285,10 +285,10 @@ export class GcpCliCommandGenerator extends CliCommandGenerator {
             .action(async (cliArgs: GcpUpdateCliArgs) => {
                 this.analytics.sendEvent(RUN_COMMAND_UPDATE, { provider: CLOUDYPAD_PROVIDER_GCP })
                 try {
-                    await new InstanceUpdater<GcpInstanceStateV1, GcpUpdateCliArgs>({
+                    await new InteractiveInstanceUpdater<GcpInstanceStateV1, GcpUpdateCliArgs>({
                         stateParser: new GcpStateParser(),
                         inputPrompter: new GcpInputPrompter()
-                    }).update(cliArgs)
+                    }).updateInteractive(cliArgs)
 
                     console.info(`Updated instance ${cliArgs.name}`)
 
