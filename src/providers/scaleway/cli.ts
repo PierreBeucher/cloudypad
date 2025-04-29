@@ -225,7 +225,7 @@ export class ScalewayCliCommandGenerator extends CliCommandGenerator {
             .option('--project-id <projectid>', 'Project ID in which to deploy resources')
             .option('--instance-type <instance-type>', 'Instance type')
             .option('--image-id <image-id>', 'Existing image ID for instance server. Disk size must be equal or greater than image size.')
-            .action(async (cliArgs) => {
+            .action(async (cliArgs: ScalewayCreateCliArgs) => {
                 this.analytics.sendEvent(RUN_COMMAND_CREATE, { provider: CLOUDYPAD_PROVIDER_SCALEWAY })
 
                 try {
@@ -257,7 +257,7 @@ export class ScalewayCliCommandGenerator extends CliCommandGenerator {
             .addOption(CLI_OPTION_KEYBOARD_VARIANT)
             .addOption(CLI_OPTION_KEYBOARD_OPTIONS)
             .option('--instance-type <instance-type>', 'Instance type')
-            .action(async (cliArgs) => {
+            .action(async (cliArgs: ScalewayUpdateCliArgs) => {
                 this.analytics.sendEvent(RUN_COMMAND_UPDATE, { provider: CLOUDYPAD_PROVIDER_SCALEWAY })
 
                 try {

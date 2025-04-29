@@ -172,7 +172,7 @@ export class PaperspaceCliCommandGenerator extends CliCommandGenerator {
             .option('--api-key-file <apikeyfile>', 'Path to Paperspace API key file')
             .option('--machine-type <type>', 'Machine type')
             .option('--region <region>', 'Region in which to deploy instance')
-            .action(async (cliArgs) => {
+            .action(async (cliArgs: PaperspaceCreateCliArgs) => {
                 this.analytics.sendEvent(RUN_COMMAND_CREATE, { provider: CLOUDYPAD_PROVIDER_PAPERSPACE })
                 try {
                     await new InteractiveInstanceInitializer<PaperspaceCreateCliArgs, PaperspaceProvisionInputV1, CommonConfigurationInputV1>({ 
@@ -199,7 +199,7 @@ export class PaperspaceCliCommandGenerator extends CliCommandGenerator {
             .addOption(CLI_OPTION_AUTO_STOP_TIMEOUT)
             .option('--api-key-file <apikeyfile>', 'Path to Paperspace API key file')
             .option('--machine-type <type>', 'Machine type')
-            .action(async (cliArgs) => {
+            .action(async (cliArgs: PaperspaceUpdateCliArgs) => {
                 this.analytics.sendEvent(RUN_COMMAND_UPDATE, { provider: CLOUDYPAD_PROVIDER_PAPERSPACE })
                 try {
                     await new InstanceUpdater<PaperspaceInstanceStateV1, PaperspaceUpdateCliArgs>({

@@ -94,7 +94,7 @@ export class DummyCliCommandGenerator extends CliCommandGenerator {
             .addOption(CLI_OPTION_KEYBOARD_VARIANT)
             .addOption(CLI_OPTION_KEYBOARD_OPTIONS)
             .option('--instance-type <type>', 'EC2 instance type')
-            .action(async (cliArgs) => {
+            .action(async (cliArgs: DummyCreateCliArgs) => {
                 
                 try {
                     await new InteractiveInstanceInitializer<DummyCreateCliArgs, DummyProvisionInputV1, CommonConfigurationInputV1>({ 
@@ -134,7 +134,7 @@ export class DummyCliCommandGenerator extends CliCommandGenerator {
             .addOption(CLI_OPTION_KEYBOARD_VARIANT)
             .addOption(CLI_OPTION_KEYBOARD_OPTIONS)
             .option('--instance-type <type>', 'EC2 instance type')
-            .action(async (cliArgs) => {
+            .action(async (cliArgs: DummyUpdateCliArgs) => {
                 
                 try {
                     await new InstanceUpdater<DummyInstanceStateV1, DummyUpdateCliArgs>({

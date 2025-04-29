@@ -304,7 +304,7 @@ export class AzureCliCommandGenerator extends CliCommandGenerator {
             .option('--location <location>', 'Location in which to deploy instance')
             .option('--subscription-id <subscriptionid>', 'Subscription ID in which to deploy resources')
             .option('--disk-type <disktype>', `Disk type. One of ${Object.values(AZURE_SUPPORTED_DISK_TYPES).join(', ')}`)
-            .action(async (cliArgs) => {
+            .action(async (cliArgs: AzureCreateCliArgs) => {
                 this.analytics.sendEvent(RUN_COMMAND_CREATE, { provider: CLOUDYPAD_PROVIDER_AZURE })
 
                 try {
@@ -339,7 +339,7 @@ export class AzureCliCommandGenerator extends CliCommandGenerator {
             .addOption(CLI_OPTION_KEYBOARD_VARIANT)
             .addOption(CLI_OPTION_KEYBOARD_OPTIONS)
             .option('--vm-size <vmsize>', 'Virtual machine size')
-            .action(async (cliArgs) => {
+            .action(async (cliArgs: AzureUpdateCliArgs) => {
                 this.analytics.sendEvent(RUN_COMMAND_UPDATE, { provider: CLOUDYPAD_PROVIDER_AZURE })
 
                 try {

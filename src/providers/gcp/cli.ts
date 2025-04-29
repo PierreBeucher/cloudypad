@@ -247,7 +247,7 @@ export class GcpCliCommandGenerator extends CliCommandGenerator {
             .option('--zone <zone>', 'Zone within the region to deploy the instance')
             .option('--project-id <projectid>', 'GCP Project ID in which to deploy resources')
             .option('--gpu-type <gputype>', 'Type of accelerator (e.g., GPU) to attach to the instance')
-            .action(async (cliArgs) => {
+            .action(async (cliArgs: GcpCreateCliArgs) => {
                 this.analytics.sendEvent(RUN_COMMAND_CREATE, { provider: CLOUDYPAD_PROVIDER_GCP })
                 try {
                     await new InteractiveInstanceInitializer<GcpCreateCliArgs, GcpProvisionInputV1, CommonConfigurationInputV1>({ 
@@ -282,7 +282,7 @@ export class GcpCliCommandGenerator extends CliCommandGenerator {
             .addOption(CLI_OPTION_KEYBOARD_OPTIONS)
             .option('--machine-type <machinetype>', 'Machine type to use for the instance')
             .option('--gpu-type <gputype>', 'Type of accelerator (e.g., GPU) to attach to the instance')
-            .action(async (cliArgs) => {
+            .action(async (cliArgs: GcpUpdateCliArgs) => {
                 this.analytics.sendEvent(RUN_COMMAND_UPDATE, { provider: CLOUDYPAD_PROVIDER_GCP })
                 try {
                     await new InstanceUpdater<GcpInstanceStateV1, GcpUpdateCliArgs>({
