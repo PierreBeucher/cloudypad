@@ -2,9 +2,10 @@ import os
 import subprocess
 from datetime import datetime
 import time
-
+import traceback
 from scapy.all import sniff
 from scapy.config import conf
+from scapy.interfaces import get_working_ifaces
 
 import psutil
 
@@ -50,10 +51,15 @@ class MoonlightNetworkActivityChecker:
         If traffic is detected, return True, otherwise return False.
         """
         
-        # Sniff on all interfaces
-        interfaces = list(conf.ifaces.keys())
-        
-        packets = sniff(iface=interfaces, filter=f"port {self.port}", timeout=self.timeout, count=self.packet_count)
+        # Reload interfaces as they may change over time and sniffing on non-working interfaces would fail
+        # eg. when recreating a container its interface is removed but still returned by get_working_ifaces()
+        # causing error on sniff 
+        conf.ifaces.reload()
+
+        interfaces = get_working_ifaces()
+        interface_names = [interface.name for interface in interfaces]
+
+        packets = sniff(iface=interface_names, filter=f"port {self.port}", timeout=self.timeout, count=self.packet_count)
         return bool(packets)
 
 
@@ -142,6 +148,7 @@ def main():
                         break
         except Exception as e:
             print(f"{current_date} - Error checking Moonlight network activity: {e}")
+            traceback.print_exception(e)
 
         time.sleep(check_period_seconds)  # Sleep before next check
 
