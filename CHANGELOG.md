@@ -1,5 +1,20 @@
 # Changelog
 
+## [0.25.0](https://github.com/PierreBeucher/cloudypad/compare/v0.24.0...v0.25.0) (2025-04-30)
+
+
+### Features
+
+* deploy sub-command ([7494ab9](https://github.com/PierreBeucher/cloudypad/commit/7494ab9b6edaf03a04fa1a1214a55393e16e73e3))
+* generate private SSH key by default ([ac288e9](https://github.com/PierreBeucher/cloudypad/commit/ac288e993ae99dc6285daeae63c2f1faeb230fed))
+* generate private SSH key by default ([0ba9c7a](https://github.com/PierreBeucher/cloudypad/commit/0ba9c7a018e30b6d9bc0b89e8facfcd255c1336b))
+
+
+### Bug Fixes
+
+* **autostop:** reload network interfaces in case of container recreation ([93765de](https://github.com/PierreBeucher/cloudypad/commit/93765def4337974ab2af49815cac6bf8b8532442))
+* Sunshine password special characters handling ([77d56e3](https://github.com/PierreBeucher/cloudypad/commit/77d56e3be458f5a6fb08d6a97d5b9f656ae2cc36))
+
 ## [0.24.0](https://github.com/PierreBeucher/cloudypad/compare/v0.23.0...v0.24.0) (2025-04-19)
 
 
