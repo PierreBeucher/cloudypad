@@ -242,10 +242,6 @@ export class GenericInstanceManager<ST extends InstanceStateV1> implements Insta
         return details
     }
 
-    public async cloneState(): Promise<ST>{
-        return this.stateWriter.cloneState()
-    }
-
     public getStateJSON(){
         return JSON.stringify(this.stateWriter.cloneState(), null, 2)
     }
