@@ -9,7 +9,7 @@ import { CLOUDYPAD_PROVIDER_AWS, PUBLIC_IP_TYPE } from "../../core/const";
 import { InteractiveInstanceInitializer } from "../../cli/initializer";
 import { PartialDeep } from "type-fest";
 import { RUN_COMMAND_CREATE, RUN_COMMAND_UPDATE } from "../../tools/analytics/events";
-import { InstanceUpdater } from "../../cli/updater";
+import { InteractiveInstanceUpdater } from "../../cli/updater";
 import { cleanupAndExit, handleErrorAnalytics, logFullError } from "../../cli/program";
 
 export interface AwsCreateCliArgs extends CreateCliArgs {
@@ -218,7 +218,7 @@ export class AwsCliCommandGenerator extends CliCommandGenerator {
             .addOption(CLI_OPTION_KEYBOARD_OPTIONS)
             .option('--instance-type <type>', 'EC2 instance type')
             .option('--region <region>', 'Region in which to deploy instance')
-            .action(async (cliArgs) => {
+            .action(async (cliArgs: AwsCreateCliArgs) => {
                 this.analytics.sendEvent(RUN_COMMAND_CREATE, { provider: CLOUDYPAD_PROVIDER_AWS })
                 
                 try {
@@ -265,14 +265,14 @@ export class AwsCliCommandGenerator extends CliCommandGenerator {
             .addOption(CLI_OPTION_KEYBOARD_VARIANT)
             .addOption(CLI_OPTION_KEYBOARD_OPTIONS)
             .option('--instance-type <type>', 'EC2 instance type')
-            .action(async (cliArgs) => {
+            .action(async (cliArgs: AwsUpdateCliArgs) => {
                 this.analytics.sendEvent(RUN_COMMAND_UPDATE, { provider: CLOUDYPAD_PROVIDER_AWS })
                 
                 try {
-                    await new InstanceUpdater<AwsInstanceStateV1, AwsUpdateCliArgs>({
+                    await new InteractiveInstanceUpdater<AwsInstanceStateV1, AwsUpdateCliArgs>({
                         stateParser: new AwsStateParser(),
                         inputPrompter: new AwsInputPrompter()
-                    }).update(cliArgs)
+                    }).updateInteractive(cliArgs)
                     
                     console.info(`Updated instance ${cliArgs.name}`)
                     

@@ -9,7 +9,7 @@ import { PartialDeep } from "type-fest";
 import { CLI_OPTION_AUTO_STOP_TIMEOUT, CLI_OPTION_AUTO_STOP_ENABLE, CLI_OPTION_COST_ALERT, CLI_OPTION_COST_LIMIT, CLI_OPTION_COST_NOTIFICATION_EMAIL, CLI_OPTION_DISK_SIZE, CLI_OPTION_PUBLIC_IP_TYPE, CLI_OPTION_SPOT, CLI_OPTION_STREAMING_SERVER, CLI_OPTION_SUNSHINE_IMAGE_REGISTRY, CLI_OPTION_SUNSHINE_IMAGE_TAG, CLI_OPTION_SUNSHINE_PASSWORD, CLI_OPTION_SUNSHINE_USERNAME, CliCommandGenerator, CreateCliArgs, UpdateCliArgs, CLI_OPTION_KEYBOARD_OPTIONS, CLI_OPTION_KEYBOARD_VARIANT, CLI_OPTION_KEYBOARD_MODEL, CLI_OPTION_KEYBOARD_LAYOUT, CLI_OPTION_USE_LOCALE } from "../../cli/command";
 import { InteractiveInstanceInitializer } from "../../cli/initializer";
 import { RUN_COMMAND_CREATE, RUN_COMMAND_UPDATE } from "../../tools/analytics/events";
-import { InstanceUpdater } from "../../cli/updater";
+import { InteractiveInstanceUpdater } from "../../cli/updater";
 
 export interface AzureCreateCliArgs extends CreateCliArgs {
     subscriptionId?: string
@@ -304,7 +304,7 @@ export class AzureCliCommandGenerator extends CliCommandGenerator {
             .option('--location <location>', 'Location in which to deploy instance')
             .option('--subscription-id <subscriptionid>', 'Subscription ID in which to deploy resources')
             .option('--disk-type <disktype>', `Disk type. One of ${Object.values(AZURE_SUPPORTED_DISK_TYPES).join(', ')}`)
-            .action(async (cliArgs) => {
+            .action(async (cliArgs: AzureCreateCliArgs) => {
                 this.analytics.sendEvent(RUN_COMMAND_CREATE, { provider: CLOUDYPAD_PROVIDER_AZURE })
 
                 try {
@@ -339,14 +339,14 @@ export class AzureCliCommandGenerator extends CliCommandGenerator {
             .addOption(CLI_OPTION_KEYBOARD_VARIANT)
             .addOption(CLI_OPTION_KEYBOARD_OPTIONS)
             .option('--vm-size <vmsize>', 'Virtual machine size')
-            .action(async (cliArgs) => {
+            .action(async (cliArgs: AzureUpdateCliArgs) => {
                 this.analytics.sendEvent(RUN_COMMAND_UPDATE, { provider: CLOUDYPAD_PROVIDER_AZURE })
 
                 try {
-                    await new InstanceUpdater<AzureInstanceStateV1, AzureUpdateCliArgs>({
+                    await new InteractiveInstanceUpdater<AzureInstanceStateV1, AzureUpdateCliArgs>({
                         stateParser: new AzureStateParser(),
                         inputPrompter: new AzureInputPrompter()
-                    }).update(cliArgs)
+                    }).updateInteractive(cliArgs)
                     
                     console.info(`Updated instance ${cliArgs.name}`)
                     

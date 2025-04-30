@@ -119,6 +119,7 @@ export interface InstanceManager {
     name(): string
     configure(): Promise<void>
     provision(opts?: InstanceProvisionOptions): Promise<void>
+    deploy(opts?: InstanceProvisionOptions): Promise<void>
     destroy(opts?: DestroyOptions): Promise<void>
     start(opts?: StartStopOptions): Promise<void>
     stop(opts?: StartStopOptions): Promise<void>
@@ -173,6 +174,11 @@ export class GenericInstanceManager<ST extends InstanceStateV1> implements Insta
         const provisioner = await this.buildProvisioner()
         const output = await provisioner.provision(opts)
         await this.stateWriter.setProvisionOutput(output)
+    }
+
+    async deploy(opts?: InstanceProvisionOptions) {
+        await this.provision(opts)
+        await this.configure()
     }
 
     async destroy(opts?: InstanceProvisionOptions) {

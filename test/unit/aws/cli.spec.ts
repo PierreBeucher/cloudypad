@@ -66,9 +66,7 @@ describe('AWS input prompter', () => {
             configuration: {
                 ...TEST_INPUT.configuration,
                 // cliArgsIntoPartialInput will leave this value specifically undefined
-                wolf: {
-                    enable: undefined
-                }
+                wolf: null
             }
         }
         

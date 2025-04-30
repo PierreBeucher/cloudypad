@@ -22,6 +22,8 @@ function create_destroy_scaleway() {
         --instance-type L4-1-24G \
         --yes
 
+    $cloudypad_cmd deploy $instance_name
+
     $cloudypad_cmd get $instance_name
 
     $cloudypad_cmd list | grep $instance_name

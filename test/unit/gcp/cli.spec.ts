@@ -65,9 +65,7 @@ describe('GCP input prompter', () => {
             },
             configuration: {
                 ...TEST_INPUT.configuration,
-                wolf: {
-                    enable: undefined
-                }
+                wolf: null
             }
         }
         
@@ -93,9 +91,7 @@ describe('GCP input prompter', () => {
             },
             configuration: {
                 ...TEST_INPUT.configuration,
-                wolf: {
-                    enable: undefined
-                }
+                wolf: null
             }
         }
         

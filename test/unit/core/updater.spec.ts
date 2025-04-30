@@ -1,6 +1,6 @@
 import * as assert from 'assert';
 import {DUMMY_AWS_PULUMI_OUTPUT, DUMMY_SSH_KEY_PATH, loadDumyAnonymousStateV1 } from '../utils';
-import { InstanceUpdater } from '../../../src/cli/updater';
+import { InteractiveInstanceUpdater } from '../../../src/cli/updater';
 import { AwsUpdateCliArgs } from '../../../src/providers/aws/cli';
 import { AwsInputPrompter } from '../../../src/providers/aws/cli';
 import { AwsInstanceStateV1, AwsStateParser } from '../../../src/providers/aws/state';
@@ -23,12 +23,12 @@ describe('InstanceUpdater', () => {
         const stateWriter = StateManagerBuilder.getInstance().buildStateWriter(awsState)
         await stateWriter.persistStateNow()
 
-        const updater = new InstanceUpdater<AwsInstanceStateV1, AwsUpdateCliArgs>({
+        const updater = new InteractiveInstanceUpdater<AwsInstanceStateV1, AwsUpdateCliArgs>({
             stateParser: new AwsStateParser(),
             inputPrompter: new AwsInputPrompter()
         })
         
-        await updater.update({
+        await updater.updateInteractive({
             name: instanceName,
             diskSize: awsState.provision.input.diskSize + 100,
             costAlert: true,
