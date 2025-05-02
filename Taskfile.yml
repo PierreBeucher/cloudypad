@@ -92,6 +92,11 @@ tasks:
   test-integ-full-lifecycle-scaleway:
     - test/integ/cli-full-lifecycle/run.sh scaleway
 
+  test-integ-side-effects-s3:
+    cmds:
+    - docker compose -f test/integ/side-effects/docker-compose.yml up -d
+    - npx mocha --config test/integ/.mocharc.json ./test/integ/side-effects/s3.spec.ts
+
   test-analytics-key-match:
     - cmd: test/shell/test-matching-analytics-key.sh
 

@@ -4,6 +4,7 @@ import { StateLoader } from "./loader";
 import { StateSideEffect } from "./side-effects/abstract";
 import { ConfigManager } from "../config/manager";
 import { LocalStateSideEffect } from "./side-effects/local";
+import { S3SideEffectBuilder } from "./side-effects/s3";
 
 /**
  * The StateManagerBuilder is a singleton builder for State managers: StateWriter, StateLoader and StateInitializer instances.
@@ -65,7 +66,8 @@ export class LocalSideEffectBuilder extends SideEffectBuilder {
 }
 
 const sideEffectBuilders: { [key: string]: SideEffectBuilder } = {
-    local: new LocalSideEffectBuilder()
+    local: new LocalSideEffectBuilder(),
+    s3: new S3SideEffectBuilder()
 }
 
 export function registerSideEffectBuilder(backend: string, builder: SideEffectBuilder): void {
