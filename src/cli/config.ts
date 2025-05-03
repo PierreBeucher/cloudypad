@@ -2,9 +2,10 @@ import fs from 'fs'
 import path from 'path'
 import yaml from 'js-yaml'
 import { z } from 'zod'
-import { getLogger } from '../../log/utils'
+import { getLogger } from '../log/utils'
 import { v4 as uuidv4 } from 'uuid'
 import * as lodash from 'lodash'
+import { DefaultConfigValues } from '../core/config/default'
 
 export enum AnalyticsCollectionMethod {
     All = "all",
@@ -26,7 +27,6 @@ const AnalyticsConfigSchema = z.object({
 export const CloudyPadGlobalConfigSchemaV1 = z.object({
     version: z.literal("1"),
     analytics: AnalyticsConfigSchema,
-    stateBackend: z.string().default("local").describe("The backend to use for state management. Only 'local' is natively supported for now.")
 }).describe("PostHog analytics config. https://posthog.com")
 
 export type PostHogConfig = z.infer<typeof PostHogConfigSchema>
@@ -42,7 +42,6 @@ export const BASE_DEFAULT_CONFIG: CloudyPadGlobalConfigV1 = {
             collectionMethod: AnalyticsCollectionMethod.Technical
         },
     },
-    stateBackend: "local"
 }
 
 /**
@@ -54,24 +53,6 @@ export const BASE_DEFAULT_CONFIG: CloudyPadGlobalConfigV1 = {
 export class ConfigManager {
 
     private static instance: ConfigManager
-
-    /**
-     * Return current environment's Cloudy Pad data root dir (aka Cloudy Pad Home), by order of priority:
-     * - $CLOUDYPAD_HOME environment variable
-     * - $HOME/.cloudypad
-     * - Fails is neither CLOUDYPAD_HOME nor HOME is set
-     */
-    static getEnvironmentDataRootDir(): string {
-        if (process.env.CLOUDYPAD_HOME) {
-            return process.env.CLOUDYPAD_HOME
-        } else {
-            if (!process.env.HOME){
-                throw new Error("Neither CLOUDYPAD_HOME nor HOME environment variable is set. Could not define Cloudy Pad data root directory.")
-            }
-
-            return path.resolve(`${ process.env.HOME}/.cloudypad`)
-        }
-    }
 
     static getInstance(): ConfigManager {
         if (!ConfigManager.instance) {
@@ -89,7 +70,7 @@ export class ConfigManager {
      * @param dataRootDir Do not use default dataRootDir. 
      */
     constructor(dataRootDir?: string) {
-        this.dataRootDir = dataRootDir ?? ConfigManager.getEnvironmentDataRootDir()
+        this.dataRootDir = dataRootDir ?? DefaultConfigValues.defaultLocalDataRootDir()
         this.configPath = path.join(this.dataRootDir, 'config.yml')
     }
 

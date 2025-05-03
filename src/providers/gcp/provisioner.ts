@@ -1,5 +1,5 @@
 import { SshKeyLoader } from '../../tools/ssh';
-import { AbstractInstanceProvisioner, InstanceProvisionerArgs, InstanceProvisionOptions } from '../../core/provisioner';
+import { AbstractInstanceProvisioner, InstanceProvisionerArgs } from '../../core/provisioner';
 import { GcpPulumiClient, PulumiStackConfigGcp } from './pulumi';
 import { GcpClient } from '../../tools/gcp';
 import { GcpProvisionInputV1, GcpProvisionOutputV1} from './state';
@@ -12,13 +12,13 @@ export class GcpProvisioner extends AbstractInstanceProvisioner<GcpProvisionInpu
         super(args)
     }
 
-    async doProvision(opts?: InstanceProvisionOptions) {
+    async doProvision() {
 
         this.logger.info(`Provisioning Google Cloud instance ${this.args.instanceName}`)
 
         await this.verifyConfig()
 
-        this.logger.debug(`Provisioning Google Cloud instance with ${JSON.stringify(this.args)} and options ${JSON.stringify(opts)}`)
+        this.logger.debug(`Provisioning Google Cloud instance with ${JSON.stringify(this.args)}`)
 
         if(this.args.configurationInput.sunshine?.enable && this.args.provisionInput.acceleratorType == "nvidia-tesla-p4"){
             throw new Error("Sunshine streaming server does not support GCP nvidia-tesla-p4 accelerator type. Please use a different machine type or streaming server.")
@@ -26,7 +26,11 @@ export class GcpProvisioner extends AbstractInstanceProvisioner<GcpProvisionInpu
 
         const sshPublicKeyContent = new SshKeyLoader().loadSshPublicKeyContent(this.args.provisionInput.ssh)
 
-        const pulumiClient = new GcpPulumiClient(this.args.instanceName)
+        const pulumiClient = new GcpPulumiClient({
+            stackName: this.args.instanceName,
+            workspaceOptions: this.buildPulumiWorkspaceOptions()
+        })
+
         const pulumiConfig: PulumiStackConfigGcp = {
             machineType: this.args.provisionInput.machineType,
             acceleratorType: this.args.provisionInput.acceleratorType,
@@ -52,7 +56,10 @@ export class GcpProvisioner extends AbstractInstanceProvisioner<GcpProvisionInpu
     }
 
     async doDestroy(){
-        const pulumiClient = new GcpPulumiClient(this.args.instanceName)
+        const pulumiClient = new GcpPulumiClient({
+            stackName: this.args.instanceName,
+            workspaceOptions: this.buildPulumiWorkspaceOptions()
+        })
         await pulumiClient.destroy()
 
         this.args.provisionOutput = undefined

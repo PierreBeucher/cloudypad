@@ -10,7 +10,8 @@ import { getLogger } from "../log/utils";
 import { PUBLIC_IP_TYPE, PUBLIC_IP_TYPE_DYNAMIC, PUBLIC_IP_TYPE_STATIC } from '../core/const';
 import { CreateCliArgs } from './command';
 import { CostAlertOptions } from '../core/provisioner';
-import { StateManagerBuilder } from '../core/state/builders';
+import { getCliCoreClient } from './core-client';
+
 const { kebabCase } = lodash
 
 /**
@@ -80,7 +81,7 @@ export abstract class AbstractInputPrompter<
         
         const instanceName = await this.instanceName(partialInput.instanceName)
         
-        const loader = StateManagerBuilder.getInstance().buildStateLoader()
+        const loader = getCliCoreClient().buildStateLoader()
         const alreadyExists = await loader.instanceExists(instanceName)
         if(alreadyExists){
             const overwriteExisting = await this.promptOverwriteExisting(instanceName, createOptions?.overwriteExisting)

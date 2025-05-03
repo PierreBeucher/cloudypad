@@ -1,7 +1,7 @@
 import * as fs from 'fs'
 import * as assert from 'assert'
 import * as yaml from 'js-yaml'
-import { ConfigManager, BASE_DEFAULT_CONFIG, CloudyPadGlobalConfigV1, CloudyPadGlobalConfigSchemaV1, AnalyticsCollectionMethod } from '../../../../src/core/config/manager'
+import { ConfigManager, BASE_DEFAULT_CONFIG, CloudyPadGlobalConfigV1, CloudyPadGlobalConfigSchemaV1, AnalyticsCollectionMethod } from '../../../../src/cli/config'
 import { createTempTestDir } from '../../utils'
 import path from 'path'
 import lodash from 'lodash'

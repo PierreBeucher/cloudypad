@@ -56,7 +56,10 @@ describe('Test Pulumi up', function() {
     // })
 
     it('should create/destroy Scaleway stack without errors', async () => {
-        const client = new ScalewayPulumiClient("cloudypad-pulumi-scaleway-test")
+        const client = new ScalewayPulumiClient({
+            stackName: "cloudypad-pulumi-scaleway-test",
+            workspaceOptions: {} // use local config
+        })
         await upThenDestroy(client, scalewayInput)
     })
 })

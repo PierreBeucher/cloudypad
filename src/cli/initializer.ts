@@ -1,12 +1,13 @@
 import { CLOUDYPAD_PROVIDER } from "../core/const"
 import { CreateCliArgs } from "./command"
 import { InputPrompter, UserVoluntaryInterruptionError } from "./prompter"
-import { InstanceManagerBuilder } from "../core/manager-builder"
 import { confirm } from '@inquirer/prompts'
 import { AnalyticsManager } from "../tools/analytics/manager"
 import { CommonConfigurationInputV1, CommonInstanceInput, CommonProvisionInputV1, InstanceInputs } from "../core/state/state"
 import { InstanceInitializer } from "../core/initializer"
 import { getLogger } from "../log/utils"
+import { CloudypadClient } from "../core/client"
+import { getCliCoreClient } from "./core-client"
 
 export interface InteractiveInstancerInitializerArgs<A extends CreateCliArgs, PI extends CommonProvisionInputV1, CI extends CommonConfigurationInputV1> {
     provider: CLOUDYPAD_PROVIDER
@@ -35,11 +36,13 @@ export class InteractiveInstanceInitializer<
 
     protected readonly analytics = AnalyticsManager.get()
     private readonly args: InteractiveInstancerInitializerArgs<A, PI, CI>
-    private readonly instanceInitializer: InstanceInitializer<PI, CI>
     private readonly logger = getLogger(InteractiveInstanceInitializer.name)
+    private readonly instanceInitializer: InstanceInitializer<PI, CI>
+    private readonly coreClient: CloudypadClient
 
     constructor(args: InteractiveInstancerInitializerArgs<A, PI, CI>){
-        this.instanceInitializer = new InstanceInitializer<PI, CI>({ provider: args.provider })
+        this.coreClient = getCliCoreClient()
+        this.instanceInitializer = this.coreClient.buildInstanceInitializer(args.provider)
         this.args = args
     }
 
@@ -88,14 +91,14 @@ export class InteractiveInstanceInitializer<
 
     private async doDeploy(instanceName: string) {
         this.analyticsEvent("create_instance_start_deploy")
-        const manager = await InstanceManagerBuilder.get().buildInstanceManager(instanceName)
+        const manager = await this.coreClient.buildInstanceManager(instanceName)
         await manager.deploy()
         this.analyticsEvent("create_instance_finish_deploy")
     }
 
     private async doPair(instanceName: string, skipPairing: boolean, autoApprove: boolean) {
 
-        const manager = await InstanceManagerBuilder.get().buildInstanceManager(instanceName)
+        const manager = await this.coreClient.buildInstanceManager(instanceName)
 
         const doPair = skipPairing ? false : autoApprove ? true : await confirm({
             message: `Your instance is almost ready ! Do you want to pair Moonlight now?`,

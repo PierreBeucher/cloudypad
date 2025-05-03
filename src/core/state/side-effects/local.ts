@@ -5,10 +5,7 @@ import { StateSideEffect } from "./abstract";
 import { InstanceStateV1 } from "../state";
 
 export interface LocalStateSideEffectArgs {
-    /**
-     * Data root directory where Cloudy Pad state are saved.
-     * Default to value returned by getEnvironmentDataRootDir()
-     */
+
     dataRootDir: string
 }
 
@@ -118,12 +115,14 @@ export class LocalStateSideEffect extends StateSideEffect {
     async loadRawInstanceState(instanceName: string): Promise<unknown> {
         this.logger.debug(`Loading instance state ${instanceName}`)
 
-        if (!(await this.instanceExists(instanceName))) {
+        const instanceExists = await this.instanceExists(instanceName)
+        if (!instanceExists) {
             throw new Error(`Instance named '${instanceName}' does not exist.`)
         }
 
         const instanceStatePath = this.getInstanceStatePath(instanceName)
         if(fs.existsSync(instanceStatePath)) {
+
             
             this.logger.debug(`Loading instance V1 state for ${instanceName} at ${instanceStatePath}`)
             return yaml.load(fs.readFileSync(instanceStatePath, 'utf8'))

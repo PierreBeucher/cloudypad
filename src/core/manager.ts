@@ -1,10 +1,11 @@
 import { CommonInstanceInput, InstanceStateV1 } from './state/state';
-import { DestroyOptions, InstanceProvisioner, InstanceProvisionOptions } from './provisioner';
+import { InstanceProvisioner } from './provisioner';
 import { InstanceConfigurator } from './configurator';
 import { getLogger } from '../log/utils';
 import { InstanceRunner, InstanceRunningStatus, StartStopOptions } from './runner';
 import { StateWriter } from './state/writer';
 import { AnsibleConfigurator } from '../configurators/ansible';
+import { CoreSdkConfig } from './config/interface';
 
 /**
  * Instance details suitable for end users, hiding or simplyfing internal details
@@ -49,6 +50,12 @@ export interface SubManagerFactory<ST extends InstanceStateV1> {
 }
 
 export abstract class AbstractSubManagerFactory<ST extends InstanceStateV1> implements SubManagerFactory<ST> {
+
+    protected readonly coreSdkConfig: CoreSdkConfig
+
+    constructor(coreSdkConfig: CoreSdkConfig){
+        this.coreSdkConfig = coreSdkConfig
+    }
 
     async buildProvisioner(state: ST): Promise<InstanceProvisioner> {
         return this.doBuildProvisioner(state.name, state.provision.input, state.provision.output, state.configuration.input)
@@ -118,9 +125,9 @@ export abstract class AbstractSubManagerFactory<ST extends InstanceStateV1> impl
 export interface InstanceManager {
     name(): string
     configure(): Promise<void>
-    provision(opts?: InstanceProvisionOptions): Promise<void>
-    deploy(opts?: InstanceProvisionOptions): Promise<void>
-    destroy(opts?: DestroyOptions): Promise<void>
+    provision(): Promise<void>
+    deploy(): Promise<void>
+    destroy(): Promise<void>
     start(opts?: StartStopOptions): Promise<void>
     stop(opts?: StartStopOptions): Promise<void>
     restart(opts?: StartStopOptions): Promise<void>
@@ -170,20 +177,20 @@ export class GenericInstanceManager<ST extends InstanceStateV1> implements Insta
         await this.stateWriter.setConfigurationOutput(output)
     }
 
-    async provision(opts?: InstanceProvisionOptions) {
+    async provision() {
         const provisioner = await this.buildProvisioner()
-        const output = await provisioner.provision(opts)
+        const output = await provisioner.provision()
         await this.stateWriter.setProvisionOutput(output)
     }
 
-    async deploy(opts?: InstanceProvisionOptions) {
-        await this.provision(opts)
+    async deploy() {
+        await this.provision()
         await this.configure()
     }
 
-    async destroy(opts?: InstanceProvisionOptions) {
+    async destroy() {
         const provisioner = await this.buildProvisioner()
-        await provisioner.destroy(opts)
+        await provisioner.destroy()
         await this.stateWriter.setProvisionOutput(undefined)
         await this.stateWriter.destroyState()
     }

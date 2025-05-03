@@ -1,6 +1,6 @@
 import * as gcp from "@pulumi/gcp"
 import * as pulumi from "@pulumi/pulumi"
-import { OutputMap } from "@pulumi/pulumi/automation"
+import { LocalWorkspaceOptions, OutputMap } from "@pulumi/pulumi/automation"
 import { InstancePulumiClient } from "../../tools/pulumi/client"
 import { PUBLIC_IP_TYPE_DYNAMIC, PUBLIC_IP_TYPE_STATIC, SimplePortDefinition } from "../../core/const"
 import { CostAlertOptions } from "../../core/provisioner"
@@ -294,10 +294,20 @@ export interface GcpPulumiOutput {
     publicIp: string
 }
 
+export interface GcpPulumiClientArgs {
+    stackName: string
+    workspaceOptions: LocalWorkspaceOptions
+}
+
 export class GcpPulumiClient extends InstancePulumiClient<PulumiStackConfigGcp, GcpPulumiOutput> {
 
-    constructor(stackName: string){
-        super({ program: gcpPulumiProgram, projectName: "CloudyPad-GCP", stackName: stackName})
+    constructor(args: GcpPulumiClientArgs){
+        super({ 
+            program: gcpPulumiProgram, 
+            projectName: "CloudyPad-GCP", 
+            stackName: args.stackName, 
+            workspaceOptions: args.workspaceOptions
+        })
     }
 
     async doSetConfig(config: PulumiStackConfigGcp){

@@ -12,11 +12,11 @@ import * as child_process from 'node:child_process'
 import { InteractiveInstanceInitializer } from "../../../src/cli/initializer"
 import { AwsCreateCliArgs, AwsInputPrompter } from "../../../src/providers/aws/cli"
 import { STREAMING_SERVER_SUNSHINE } from "../../../src/cli/prompter"
-import { InstanceManagerBuilder } from "../../../src/core/manager-builder"
 import { InstanceRunningStatus } from "../../../src/core/runner"
 import { makePin } from "../../../src/core/moonlight/pairer/abstract"
 import { CommonConfigurationInputV1 } from "../../../src/core/state/state"
 import { AwsProvisionInputV1 } from "../../../src/providers/aws/state"
+import { getEphemeralCoreClient } from "../../unit/utils"
 
 
 describe('Lib full lifecycle', () => {
@@ -24,7 +24,7 @@ describe('Lib full lifecycle', () => {
     const instanceName = "cloudypad-test-instance"
 
     function getInstanceManager(instanceName: string){
-        return InstanceManagerBuilder.get().buildInstanceManager(instanceName)
+        return getEphemeralCoreClient().buildInstanceManager(instanceName)
     }
 
     it('should initialize an instance', async () => {
@@ -97,6 +97,6 @@ describe('Lib full lifecycle', () => {
 
     it('should destroy instance', async () => {
         const manager = await getInstanceManager(instanceName)
-        await manager.destroy({ autoApprove: true })
+        await manager.destroy()
     }).timeout(360000)
 })

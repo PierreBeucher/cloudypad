@@ -14,9 +14,9 @@ import { PaperspaceClient, PaperspaceMachine } from '../../src/providers/papersp
 import { DUMMY_AWS_PULUMI_OUTPUT, DUMMY_AZURE_PULUMI_OUTPUT, DUMMY_GCP_PULUMI_OUTPUT, DUMMY_PAPERSPACE_MACHINE, DUMMY_SCALEWAY_PULUMI_OUTPUT } from './utils';
 import { AnalyticsManager } from '../../src/tools/analytics/manager';
 import { NoOpAnalyticsClient } from '../../src/tools/analytics/client';
-import { SshKeyLoader } from '../../src/tools/ssh';
 import { ScalewayClient } from '../../src/tools/scaleway';
-import { ConfigManager } from '../../src/core/config/manager';
+import { ConfigManager } from '../../src/cli/config';
+import { DefaultConfigValues } from '../../src/core/config/default';
 
 
 export const mochaHooks = {
@@ -41,8 +41,8 @@ export const mochaHooks = {
         // don't sub provision() and destroy() as they have logic we want to test
 
         // Force environment data root dir to a temp directory for unit tests
-        const dummyCloudyPadHome = mkdtempSync(path.join(tmpdir(), ".cloudypad-unit-tests"))
-        sinon.stub(ConfigManager, 'getEnvironmentDataRootDir').callsFake(() => {
+        const dummyCloudyPadHome = mkdtempSync(path.join(tmpdir(), ".cloudypad-unit-tests-data-root-dir"))
+        sinon.stub(DefaultConfigValues, 'defaultLocalDataRootDir').callsFake(() => {
             return dummyCloudyPadHome
         })
 

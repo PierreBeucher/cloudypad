@@ -10,6 +10,7 @@ export class AzureSubManagerFactory extends AbstractSubManagerFactory<AzureInsta
 
     async doBuildProvisioner(name: string, provisionInput: AzureProvisionInputV1, provisionOutput: AzureProvisionOutputV1, configurationInput: CommonConfigurationInputV1): Promise<InstanceProvisioner> {
         return new AzureProvisioner({
+            coreConfig: this.coreSdkConfig,
             instanceName: name,
             provisionInput: provisionInput,
             provisionOutput: provisionOutput,

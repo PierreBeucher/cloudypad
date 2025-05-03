@@ -1,6 +1,6 @@
 import { SshKeyLoader } from '../../tools/ssh';
 import { AwsPulumiClient, PulumiStackConfigAws } from './pulumi';
-import { AbstractInstanceProvisioner, InstanceProvisionerArgs, InstanceProvisionOptions } from '../../core/provisioner';
+import { AbstractInstanceProvisioner, InstanceProvisionerArgs } from '../../core/provisioner';
 import { AwsClient } from '../../tools/aws';
 import { AwsProvisionInputV1, AwsProvisionOutputV1 } from './state';
 
@@ -12,15 +12,19 @@ export class AwsProvisioner extends AbstractInstanceProvisioner<AwsProvisionInpu
         super(args)
     }
 
-    async doProvision(opts?: InstanceProvisionOptions): Promise<AwsProvisionOutputV1> {
+    async doProvision() {
 
         this.logger.info(`Provisioning AWS instance ${this.args.instanceName}`)
 
-        this.logger.debug(`Provisioning AWS instance with args ${JSON.stringify(this.args)} and options ${JSON.stringify(opts)}`)
+        this.logger.debug(`Provisioning AWS instance with args ${JSON.stringify(this.args)}`)
 
         const sshPublicKeyContent = new SshKeyLoader().loadSshPublicKeyContent(this.args.provisionInput.ssh)
 
-        const pulumiClient = new AwsPulumiClient(this.args.instanceName)
+        const pulumiClient = new AwsPulumiClient({
+            stackName: this.args.instanceName,
+            workspaceOptions: this.buildPulumiWorkspaceOptions()
+        })
+
         const pulumiConfig: PulumiStackConfigAws = {
             instanceType: this.args.provisionInput.instanceType,
             publicIpType: this.args.provisionInput.publicIpType,
@@ -43,7 +47,11 @@ export class AwsProvisioner extends AbstractInstanceProvisioner<AwsProvisionInpu
     }
 
     async doDestroy(){
-        const pulumiClient = new AwsPulumiClient(this.args.instanceName)
+        const pulumiClient = new AwsPulumiClient({
+            stackName: this.args.instanceName,
+            workspaceOptions: this.buildPulumiWorkspaceOptions()
+        })
+        
         await pulumiClient.destroy()
 
         this.args.provisionOutput = undefined

@@ -4,7 +4,8 @@ import { UpdateCliArgs } from "./command"
 import { GenericStateParser } from "../core/state/parser"
 import { AbstractInputPrompter, ConfirmationPrompter } from "./prompter"
 import { InstanceUpdater } from "../core/updater"
-import { InstanceManagerBuilder } from "../core/manager-builder"
+import { CloudypadClient } from "../core/client"
+import { getCliCoreClient } from "./core-client"
 
 export interface InteractiveInstanceUpdaterArgs<ST extends InstanceStateV1, A extends UpdateCliArgs> {
     stateParser: GenericStateParser<ST>
@@ -20,11 +21,13 @@ export class InteractiveInstanceUpdater<ST extends InstanceStateV1, A extends Up
     private logger: Logger
     private inputPrompter: AbstractInputPrompter<A, ST["provision"]["input"], ST["configuration"]["input"]>  
     private instanceUpdater: InstanceUpdater<ST>
+    private coreClient: CloudypadClient
 
     constructor(args: InteractiveInstanceUpdaterArgs<ST, A>) {
         this.logger = getLogger(InteractiveInstanceUpdater.name)
         this.inputPrompter = args.inputPrompter
-        this.instanceUpdater = new InstanceUpdater<ST>({ stateParser: args.stateParser })
+        this.coreClient = getCliCoreClient()
+        this.instanceUpdater = this.coreClient.buildInstanceUpdater(args.stateParser)
     }
 
     async updateInteractive(cliArgs: A): Promise<void> {
@@ -45,9 +48,12 @@ export class InteractiveInstanceUpdater<ST extends InstanceStateV1, A extends Up
 
         if(!confirmation){
             throw new Error('Update aborted.')
-        }   
+        }
 
-        await this.instanceUpdater.updateAndDeploy(instanceName, cliInput.configuration, cliInput.provision)
+        await this.instanceUpdater.updateStateOnly(instanceName, cliInput.configuration, cliInput.provision)
+
+        const manager = await this.coreClient.buildInstanceManager(instanceName)
+        await manager.deploy()
     }
 
 }

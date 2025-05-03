@@ -1,13 +1,14 @@
 import { getLogger } from "../log/utils"
 import { CLOUDYPAD_PROVIDER } from "../core/const"
 import { StateInitializer } from "../core/state/initializer"
-import { CommonConfigurationInputV1, CommonProvisionInputV1 } from "./state/state"
+import { CommonConfigurationInputV1, CommonProvisionInputV1, InstanceStateV1 } from "./state/state"
 import { generatePrivateSshKey } from "../tools/ssh"
 import { toBase64 } from "../tools/base64"
-import { InstanceManagerBuilder } from "./manager-builder"
+import { StateWriter } from "./state/writer"
 
 export interface InstancerInitializerArgs {
     provider: CLOUDYPAD_PROVIDER
+    stateWriter: StateWriter<InstanceStateV1>
 }
 
 /**
@@ -15,18 +16,11 @@ export interface InstancerInitializerArgs {
  */
 export class InstanceInitializer<PI extends CommonProvisionInputV1, CI extends CommonConfigurationInputV1> {
 
-    protected readonly provider: CLOUDYPAD_PROVIDER
     protected readonly logger = getLogger(InstanceInitializer.name)
+    protected readonly args: InstancerInitializerArgs
 
     constructor(args: InstancerInitializerArgs){
-        this.provider = args.provider
-    }
-
-    async initializeAndDeploy(instanceName: string, provisionInput: PI, configurationInput: CI): Promise<void> {
-        await this.initializeStateOnly(instanceName, provisionInput, configurationInput)
-        
-        const manager = await InstanceManagerBuilder.get().buildInstanceManager(instanceName)
-        await manager.deploy()
+        this.args = args
     }
 
     /**
@@ -50,12 +44,13 @@ export class InstanceInitializer<PI extends CommonProvisionInputV1, CI extends C
         }
 
         const state = await new StateInitializer({
+            stateWriter: this.args.stateWriter,
             input: {
                 instanceName: instanceName,
                 provision: provisionInput,
                 configuration: configurationInput
             },
-            provider: this.provider,
+            provider: this.args.provider,
         }).initializeState()
     }
 }

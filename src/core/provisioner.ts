@@ -1,15 +1,10 @@
+import { LocalWorkspaceOptions } from "@pulumi/pulumi/automation"
 import { getLogger, Logger } from "../log/utils"
 import { CLOUDYPAD_SUNSHINE_PORTS, CLOUDYPAD_WOLF_PORTS, SimplePortDefinition } from "./const"
 import { CommonProvisionInputV1, CommonProvisionOutputV1, CommonConfigurationInputV1 } from "./state/state"
-
-export interface InstanceProvisionOptions  {
-
-}
-
-export interface DestroyOptions {
-
-}
-
+import { CoreSdkConfig } from "./config/interface"
+import path from "path"
+import fs from "fs"
 /**
  * Provision instances: manage Cloud resources and infrastructure
  */
@@ -26,16 +21,17 @@ export interface InstanceProvisioner  {
      * @param opts 
      * @returns Outputs after provision
      */
-    provision(opts?: InstanceProvisionOptions): Promise<CommonProvisionOutputV1>
+    provision(): Promise<CommonProvisionOutputV1>
 
     /**
      * Destroy the instance. Every infrastructure and Cloud resources managed for this instance are destroyed. 
      * @param opts 
      */
-    destroy(opts?: DestroyOptions): Promise<void>
+    destroy(): Promise<void>
 }
 
 export interface InstanceProvisionerArgs<PC extends CommonProvisionInputV1, PO extends CommonProvisionOutputV1> {
+    coreConfig: CoreSdkConfig
     instanceName: string
     provisionInput: PC
     provisionOutput?: PO
@@ -57,12 +53,12 @@ export abstract class AbstractInstanceProvisioner<PC extends CommonProvisionInpu
         await this.doVerifyConfig();
     }
 
-    async provision(opts?: InstanceProvisionOptions): Promise<PO> {
+    async provision(): Promise<PO> {
         this.logger.info(`Provisioning instance ${this.args.instanceName}`)
-        return await this.doProvision(opts)
+        return await this.doProvision()
     }
 
-    async destroy(opts?: DestroyOptions): Promise<void> {
+    async destroy(): Promise<void> {
         this.logger.info(`Destroying instance ${this.args.instanceName}...`)
         
         await this.doDestroy()
@@ -71,7 +67,7 @@ export abstract class AbstractInstanceProvisioner<PC extends CommonProvisionInpu
     }
 
     protected abstract doVerifyConfig(): Promise<void>;
-    protected abstract doProvision(opts?: InstanceProvisionOptions): Promise<PO>;
+    protected abstract doProvision(): Promise<PO>;
     protected abstract doDestroy(): Promise<void>;
 
     /**
@@ -84,6 +80,39 @@ export abstract class AbstractInstanceProvisioner<PC extends CommonProvisionInpu
             return CLOUDYPAD_WOLF_PORTS
         } else {
             throw new Error(`Can't define ports to expose for instance ${this.args.instanceName}: unknown streaming server. This is probably a bug.`)
+        }
+    }
+
+    /**
+     * Build Pulumi workspace options for this instance depending on Core configuration.
+     * @returns Pulumi workspace options
+     */
+    public buildPulumiWorkspaceOptions(): LocalWorkspaceOptions {
+
+        if(this.args.coreConfig.dataBackend.s3){
+            return {
+                envVars: {
+                    PULUMI_BACKEND_URL: this.args.coreConfig.dataBackend.s3?.pulumi?.backendBucketName ?? "",
+                    PULUMI_CONFIG_PASSPHRASE: this.args.coreConfig.dataBackend.s3?.pulumi?.stackPassphrase ?? ""
+                }
+            }
+        } else if (this.args.coreConfig.dataBackend.local) {
+
+            const pulumiBackendDir = path.join(this.args.coreConfig.dataBackend.local.dataRootDir, "pulumi-backend")
+            if (!fs.existsSync(pulumiBackendDir)){
+                
+                this.logger.debug(`Creating Pulumii backend local directory: '${pulumiBackendDir}'`)
+                
+                fs.mkdirSync(pulumiBackendDir, { recursive: true });
+            }
+
+            return {
+                envVars: {
+                    PULUMI_BACKEND_URL: pulumiBackendDir,
+                }
+            }
+        } else {
+            return {}
         }
     }
 

@@ -3,11 +3,13 @@ import { InstanceStateV1 } from "../core/state/state"
 import { getLogger, Logger } from "../log/utils"
 import { GenericStateParser } from "../core/state/parser"
 import * as lodash from "lodash"
-import { StateManagerBuilder } from "../core/state/builders"
-import { InstanceManagerBuilder } from "./manager-builder"
+import { StateWriter } from "./state/writer"
+import { StateLoader } from "./state/loader"
 
 export interface InstanceUpdaterArgs<ST extends InstanceStateV1> {
     stateParser: GenericStateParser<ST>
+    stateWriter: StateWriter<ST>
+    stateLoader: StateLoader
 }
 
 /**
@@ -16,28 +18,11 @@ export interface InstanceUpdaterArgs<ST extends InstanceStateV1> {
 export class InstanceUpdater<ST extends InstanceStateV1> {
 
     private logger: Logger
-    private stateParser: GenericStateParser<ST>
+    private args: InstanceUpdaterArgs<ST>
 
     constructor(args: InstanceUpdaterArgs<ST>) {
         this.logger = getLogger(InstanceUpdater.name)
-        this.stateParser = args.stateParser
-    }
-
-    /**
-     * Update the state of an instance with new inputs and run deployment.
-     * @param instanceName 
-     * @param configurationInputs 
-     * @param provisionInputs 
-     */
-    async updateAndDeploy(
-        instanceName: string,
-        configurationInputs?: PartialDeep<ST["configuration"]["input"]>, 
-        provisionInputs?: PartialDeep<ST["provision"]["input"]>
-    ): Promise<void> {
-        await this.updateStateOnly(instanceName, configurationInputs, provisionInputs)
-
-        const manager = await InstanceManagerBuilder.get().buildInstanceManager(instanceName)
-        await manager.deploy()
+        this.args = args
     }
 
     /**
@@ -51,26 +36,26 @@ export class InstanceUpdater<ST extends InstanceStateV1> {
         configurationInputs?: PartialDeep<ST["configuration"]["input"]>, 
         provisionInputs?: PartialDeep<ST["provision"]["input"]>
     ): Promise<void> {
-        
+
         this.logger.debug(`Updating state of instance ${instanceName} with configuration inputs: ` +
             `${JSON.stringify(configurationInputs)} and provision inputs: ` +
             `${JSON.stringify(provisionInputs)}`)
 
-        const state = await this.loadState(instanceName)
+        const currentState = await this.loadState(instanceName)
 
-        this.logger.debug(`State loaded for update: ${JSON.stringify(state)}`)
+        this.logger.debug(`State loaded for update: ${JSON.stringify(currentState)}`)
 
-        const newInputs = await this.mergeInputsWithStateInputs(state, configurationInputs, provisionInputs)
+        const newInputs = await this.mergeInputsWithStateInputs(currentState, configurationInputs, provisionInputs)
 
         this.logger.debug(`New inputs after merging with state inputs: ${JSON.stringify(newInputs)}`)
         
-        await this.updateStateWithInputs(state, newInputs.provisionInputs, newInputs.configurationInputs)
+        await this.updateStateWithInputs(currentState, newInputs.provisionInputs, newInputs.configurationInputs)
     }
 
     private async loadState(instanceName: string): Promise<ST>{
-        const loader = StateManagerBuilder.getInstance().buildStateLoader()
-        const rawState = await loader.loadInstanceState(instanceName)
-        return this.stateParser.parse(rawState)
+        
+        const rawState = await this.args.stateLoader.loadInstanceState(instanceName)
+        return this.args.stateParser.parse(rawState)
     }
 
     /**
@@ -97,7 +82,7 @@ export class InstanceUpdater<ST extends InstanceStateV1> {
         }
     }
 
-    private async updateStateWithInputs(state: ST, 
+    private async updateStateWithInputs(prevState: ST, 
         provisionInputs: ST["provision"]["input"],
         configurationInputs: ST["configuration"]["input"]
     ): Promise<void>{
@@ -105,10 +90,10 @@ export class InstanceUpdater<ST extends InstanceStateV1> {
         this.logger.debug(`Updating with new configuration inputs: ${JSON.stringify(configurationInputs)}`)
         this.logger.debug(`Updating with new provision inputs: ${JSON.stringify(provisionInputs)}`)
 
-        const stateWriter = StateManagerBuilder.getInstance().buildStateWriter(state)
-        await stateWriter.setProvisionInput(provisionInputs)
-        await stateWriter.setConfigurationInput(configurationInputs)
+        await this.args.stateWriter.setState(prevState)
+        await this.args.stateWriter.setProvisionInput(provisionInputs)
+        await this.args.stateWriter.setConfigurationInput(configurationInputs)
 
-        this.logger.debug(`State after update ${JSON.stringify(stateWriter.cloneState())}`)
+        this.logger.debug(`State after update ${JSON.stringify(this.args.stateWriter.cloneState())}`)
     }
 }

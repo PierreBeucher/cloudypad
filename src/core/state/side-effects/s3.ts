@@ -3,7 +3,6 @@ import { S3ClientConfig } from '@aws-sdk/client-s3'
 import { StateSideEffect } from './abstract'
 import { InstanceStateV1 } from '../state'
 import { S3ClientWrapper } from '../../../tools/s3'
-import { SideEffectBuilder } from '../builders'
 
 export interface S3StateSideEffectArgs {
     bucketName: string
@@ -90,16 +89,5 @@ export class S3StateSideEffect extends StateSideEffect {
         }
         await this.s3.deleteObject(params)
         this.logger.debug(`S3 State destroyed for ${instanceName}`)
-    }
-}
-
-export class S3SideEffectBuilder implements SideEffectBuilder {
-    public build(): StateSideEffect {
-        const bucketName = process.env.CLOUDYPAD_BACKEND_S3_BUCKET
-        if(!bucketName) {
-            throw new Error("S3 side effect for backend requires CLOUDYPAD_BACKEND_S3_BUCKET environment variable to be set. ")
-        }
-
-        return new S3StateSideEffect({ bucketName })
     }
 }

@@ -5,7 +5,7 @@ import { AwsUpdateCliArgs } from '../../../src/providers/aws/cli';
 import { AwsInputPrompter } from '../../../src/providers/aws/cli';
 import { AwsInstanceStateV1, AwsStateParser } from '../../../src/providers/aws/state';
 import { STREAMING_SERVER_WOLF } from '../../../src/cli/prompter';
-import { StateManagerBuilder } from '../../../src/core/state/builders';
+import { getCliCoreClient } from '../../../src/cli/core-client';
 
 describe('InstanceUpdater', () => {
 
@@ -20,7 +20,8 @@ describe('InstanceUpdater', () => {
         const instanceName = "aws-dummy-test-update"
         awsState.name = instanceName
 
-        const stateWriter = StateManagerBuilder.getInstance().buildStateWriter(awsState)
+        const coreClient = getCliCoreClient()
+        const stateWriter = coreClient.buildStateWriterFor(awsState)
         await stateWriter.persistStateNow()
 
         const updater = new InteractiveInstanceUpdater<AwsInstanceStateV1, AwsUpdateCliArgs>({
@@ -83,7 +84,7 @@ describe('InstanceUpdater', () => {
         }
 
         // Check dummy state after update
-        const loader = StateManagerBuilder.getInstance().buildStateLoader()
+        const loader = coreClient.buildStateLoader()
         const updatedState = await loader.loadInstanceState(instanceName)
         
         assert.deepEqual(updatedState, expectedState)

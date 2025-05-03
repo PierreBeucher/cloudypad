@@ -1,6 +1,6 @@
 import { SshKeyLoader } from '../../tools/ssh'
 import { ScalewayPulumiClient, PulumiStackConfigScaleway } from './pulumi'
-import { AbstractInstanceProvisioner, InstanceProvisionerArgs, InstanceProvisionOptions } from '../../core/provisioner'
+import { AbstractInstanceProvisioner, InstanceProvisionerArgs } from '../../core/provisioner'
 import { ScalewayProvisionInputV1, ScalewayProvisionOutputV1 } from './state'
 import { ScalewayClient } from '../../tools/scaleway'
 
@@ -12,15 +12,19 @@ export class ScalewayProvisioner extends AbstractInstanceProvisioner<ScalewayPro
         super(args)
     }
 
-    async doProvision(opts?: InstanceProvisionOptions) {
+    async doProvision() {
 
         this.logger.info(`Provisioning Scaleway instance ${this.args.instanceName}`)
 
-        this.logger.debug(`Provisioning Scaleway instance with args ${JSON.stringify(this.args)} and options ${JSON.stringify(opts)}`)
+        this.logger.debug(`Provisioning Scaleway instance with args ${JSON.stringify(this.args)}`)
 
         const sshPublicKeyContent = new SshKeyLoader().loadSshPublicKeyContent(this.args.provisionInput.ssh)
 
-        const pulumiClient = new ScalewayPulumiClient(this.args.instanceName)
+        const pulumiClient = new ScalewayPulumiClient({
+            stackName: this.args.instanceName,
+            workspaceOptions: this.buildPulumiWorkspaceOptions()
+        })
+
         const pulumiConfig: PulumiStackConfigScaleway = {
             projectId: this.args.provisionInput.projectId,
             region: this.args.provisionInput.region,
@@ -51,7 +55,10 @@ export class ScalewayProvisioner extends AbstractInstanceProvisioner<ScalewayPro
 
     async doDestroy() {
 
-        const pulumiClient = new ScalewayPulumiClient(this.args.instanceName)
+        const pulumiClient = new ScalewayPulumiClient({
+            stackName: this.args.instanceName,
+            workspaceOptions: this.buildPulumiWorkspaceOptions()
+        })
         await pulumiClient.destroy()
 
         this.args.provisionOutput = undefined

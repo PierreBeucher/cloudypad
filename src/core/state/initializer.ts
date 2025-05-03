@@ -2,9 +2,9 @@ import { CommonInstanceInput, InstanceStateV1 } from './state';
 import { getLogger } from '../../log/utils';
 import { CLOUDYPAD_CONFIGURATOR_ANSIBLE, CLOUDYPAD_PROVIDER } from '../const';
 import { StateWriter } from './writer';
-import { StateManagerBuilder } from './builders';
 
 export interface StateInitializerArgs {
+    stateWriter: StateWriter<InstanceStateV1>
     provider: CLOUDYPAD_PROVIDER,
     input: CommonInstanceInput,
 }
@@ -42,9 +42,8 @@ export class StateInitializer {
             }
         }
 
-        const writer = StateManagerBuilder.getInstance().buildStateWriter(initialState)
-
-        await writer.persistStateNow()
+        this.args.stateWriter.setState(initialState)
+        await this.args.stateWriter.persistStateNow()
 
         return initialState
     }
