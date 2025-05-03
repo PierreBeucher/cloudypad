@@ -1,0 +1,40 @@
+name: Integration Tests
+
+on:
+  push:
+    branches:
+      - "master"
+  pull_request:
+    branches:
+      - master
+
+env:
+  CLOUDYPAD_LOG_LEVEL: "3"
+
+jobs:
+  integ-test:
+    name: Integration tests
+    runs-on: ubuntu-24.04
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      - uses: nixbuild/nix-quick-install-action@v30
+
+      - uses: nix-community/cache-nix-action@v6
+        with:
+          primary-key: nix-${{ runner.os }}
+          restore-prefixes-first-match: nix-${{ runner.os }}
+      
+      - uses: actions/cache@v3
+        with:
+          path: ~/.npm
+          key: ${{ runner.os }}-npm-${{ hashFiles('**/package*.json') }}
+          restore-keys: |
+            ${{ runner.os }}-npm-
+      
+      - run: nix develop -c npm i
+
+      - name: Run integration tests
+        run: nix develop -c task test-integ-with-local-containers

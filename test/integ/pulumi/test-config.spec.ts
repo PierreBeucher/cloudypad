@@ -50,13 +50,10 @@ export const scalewayInput: PulumiStackConfigScaleway = {
     instanceType: "L4-1-24G",
     rootDisk: {
         sizeGb: 20,
-        type: "b_ssd",
     },
     publicKeyContent: pubKey,
     securityGroupPorts: [{ port: 22, protocol: "TCP" }],
-    additionalVolumes: [{
+    dataDisk: {
         sizeGb: 100,
-        type: "b_ssd",
-        name: "additional-volume",
-    }],
+    },
 }
