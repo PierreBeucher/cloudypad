@@ -36,7 +36,7 @@ describe('SshKeyLoader', () => {
             user: "test-user",
             privateKeyPath: DUMMY_SSH_KEY_PATH
         }
-        const publicKeyContent = sshKeyLoader.loadSshPublicKeyContent(ssh)
+        const publicKeyContent = sshKeyLoader._loadSshPublicKeyContent(ssh)
         assert.strictEqual(publicKeyContent.trim(), fs.readFileSync(DUMMY_SSH_PUBLIC_KEY_PATH, { encoding: 'utf8' }).trim())
     })
 
@@ -45,7 +45,7 @@ describe('SshKeyLoader', () => {
             user: "test-user",
             privateKeyContentBase64: toBase64(fs.readFileSync(DUMMY_SSH_KEY_PATH, { encoding: 'utf8' }))
         }
-        const publicKeyContent = sshKeyLoader.loadSshPublicKeyContent(ssh)
+        const publicKeyContent = sshKeyLoader._loadSshPublicKeyContent(ssh)
         assert.strictEqual(publicKeyContent.trim(), fs.readFileSync(DUMMY_SSH_PUBLIC_KEY_PATH, { encoding: 'utf8' }).trim())
     })
 

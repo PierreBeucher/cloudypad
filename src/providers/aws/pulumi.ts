@@ -1,6 +1,6 @@
 import * as aws from "@pulumi/aws";
 import * as pulumi from "@pulumi/pulumi";
-import { OutputMap } from "@pulumi/pulumi/automation";
+import { LocalWorkspaceOptions, OutputMap } from "@pulumi/pulumi/automation";
 import { InstancePulumiClient } from "../../tools/pulumi/client";
 import { PUBLIC_IP_TYPE, PUBLIC_IP_TYPE_DYNAMIC, PUBLIC_IP_TYPE_STATIC, SimplePortDefinition } from "../../core/const";
 
@@ -339,10 +339,20 @@ export interface AwsPulumiOutput {
     publicIp: string
 }
 
+export interface AwsPulumiClientArgs {
+    stackName: string
+    workspaceOptions?: LocalWorkspaceOptions
+}
+    
 export class AwsPulumiClient extends InstancePulumiClient<PulumiStackConfigAws, AwsPulumiOutput> {
 
-    constructor(stackName: string){
-        super({ program: awsPulumiProgram, projectName: "CloudyPad-AWS", stackName: stackName})
+    constructor(args: AwsPulumiClientArgs){
+        super({ 
+            program: awsPulumiProgram, 
+            projectName: "CloudyPad-AWS", 
+            stackName: args.stackName,
+            workspaceOptions: args.workspaceOptions
+        })
     }
 
     async doSetConfig(config: PulumiStackConfigAws){

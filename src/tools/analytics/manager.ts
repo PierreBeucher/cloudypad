@@ -1,4 +1,4 @@
-import { ConfigManager } from "../../core/config/manager"
+import { ConfigManager } from "../../cli/config"
 import { getLogger } from "../../log/utils"
 import { AnalyticsClient, NoOpAnalyticsClient, PostHogAnalyticsClient } from "./client"
 import os from "os"

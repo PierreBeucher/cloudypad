@@ -1,7 +1,4 @@
-import { AnalyticsManager } from "../../../tools/analytics/manager"
-
 import { getLogger } from "../../../log/utils"
-import { AnalyticsClient } from "../../../tools/analytics/client"
 
 /**
  * Moonlight pairing interface. Automates pairing process between Moonlight and streaming server.
@@ -28,7 +25,6 @@ export interface AbstractMoonlightPairerArgs {
 export abstract class AbstractMoonlightPairer implements MoonlightPairer {
     
     protected readonly logger = getLogger(AbstractMoonlightPairer.name)
-    protected readonly analytics: AnalyticsClient = AnalyticsManager.get()
     protected readonly instanceName: string
 
     constructor(args: AbstractMoonlightPairerArgs){
@@ -48,8 +44,6 @@ export abstract class AbstractMoonlightPairer implements MoonlightPairer {
             console.info(`Instance ${this.instanceName} paired successfully 🤝 👍`)
             console.info(`You can now run Moonlight to connect and play with your instance 🎮`)
         } catch (error) {
-            const eventProps = error instanceof Error ? { errorMessage: error.message, stackTrace: error.stack } : { errorMessage: String(error), stackTrace: "unknown" }
-            this.analytics.sendEvent("pairing_error", eventProps)
             throw new Error(`Instance pairing failed.`, { cause: error })
         }
     }

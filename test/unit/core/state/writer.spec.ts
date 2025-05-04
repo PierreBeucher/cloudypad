@@ -28,9 +28,9 @@ describe('StateWriter', function () {
 
         // create a test writer and persist the state
         const writer = new StateWriter<AwsInstanceStateV1>({
-            state: awState,
             sideEffect: new LocalStateSideEffect({ dataRootDir: dataDir })
         })
+        writer.setState(awState)
         await writer.persistStateNow()
 
         return { dataDir: dataDir, writer: writer }

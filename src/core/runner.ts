@@ -1,6 +1,5 @@
 import { CommonConfigurationInputV1, CommonProvisionInputV1, CommonProvisionOutputV1 } from './state/state';
 import { getLogger, Logger } from '../log/utils';
-import { AnalyticsClient } from '../tools/analytics/client';
 import { AnalyticsManager } from '../tools/analytics/manager';
 import { RUN_COMMAND_START } from '../tools/analytics/events';
 import { CLOUDYPAD_PROVIDER } from './const';
@@ -68,21 +67,16 @@ export abstract class AbstractInstanceRunner<C extends CommonProvisionInputV1, O
     
     protected readonly logger: Logger
     protected readonly args: InstanceRunnerArgs<C, O>
-    private analytics: AnalyticsClient
     private provider: CLOUDYPAD_PROVIDER
 
     constructor(provider: CLOUDYPAD_PROVIDER, args: InstanceRunnerArgs<C, O>) {
         this.args = args
         this.provider = provider
         this.logger = getLogger(args.instanceName) 
-        this.analytics = AnalyticsManager.get()
     }
  
     async start(opts?: StartStopOptions): Promise<void> {
         this.logger.info(`Starting instance ${this.args.instanceName}`)
-        this.analytics.sendEvent(RUN_COMMAND_START, { 
-            provider: this.provider,
-        })
         await this.doStart(opts)
     }
 

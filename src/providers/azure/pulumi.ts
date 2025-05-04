@@ -1,7 +1,7 @@
 import * as az from "@pulumi/azure-native"
 import * as pulumi from "@pulumi/pulumi"
 import { InstancePulumiClient } from "../../tools/pulumi/client"
-import { OutputMap } from "@pulumi/pulumi/automation"
+import { LocalWorkspaceOptions, OutputMap } from "@pulumi/pulumi/automation"
 import { PUBLIC_IP_TYPE, PUBLIC_IP_TYPE_STATIC, SimplePortDefinition } from "../../core/const"
 import { CostAlertOptions } from "../../core/provisioner"
 
@@ -277,11 +277,20 @@ export interface AzurePulumiOutput {
     resourceGroupName: string
 }
 
+export interface AzurePulumiClientArgs {
+    stackName: string
+    workspaceOptions?: LocalWorkspaceOptions
+}
 
 export class AzurePulumiClient extends InstancePulumiClient<PulumiStackConfigAzure, AzurePulumiOutput> {
 
-    constructor(stackName: string){
-        super({ program: azurePulumiProgram, projectName: "CloudyPad-Azure", stackName: stackName})
+    constructor(args: AzurePulumiClientArgs){
+        super({ 
+            program: azurePulumiProgram, 
+            projectName: "CloudyPad-Azure", 
+            stackName: args.stackName,
+            workspaceOptions: args.workspaceOptions
+        })
     }
 
     async doSetConfig(config: PulumiStackConfigAzure){

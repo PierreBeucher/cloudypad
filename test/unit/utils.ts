@@ -12,7 +12,7 @@ import { AnonymousStateParser } from "../../src/core/state/parser";
 import { STREAMING_SERVER_SUNSHINE } from '../../src/cli/prompter';
 import { CreateCliArgs } from "../../src/cli/command";
 import { ScalewayPulumiOutput } from "../../src/providers/scaleway/pulumi";
-
+import { CloudypadClient } from "../../src";
 /**
  * CommonInstanceInput with as most fields filled as possible while keeping it valid:
  * - privateKeyPath is set but not privateKeyContent
@@ -120,4 +120,22 @@ export function loadDumyAnonymousStateV1(instanceName: string): InstanceStateV1 
 
 export function createTempTestDir(prefix: string){
     return mkdtempSync(path.join(tmpdir(), `.cloudypad-unit-test-${prefix}`))
+}
+
+const TEST_DATA_ROOT_DIR = createTempTestDir("data-root")
+
+/**
+ * Create a Core client suitable for testing. The instance returned use the
+ * a local data backend with a temporary directory which remains the same for all tests
+ */
+export function getUnitTestCoreClient(): CloudypadClient{
+    return new CloudypadClient({
+        config: {
+            stateBackend: {
+                local: {
+                    dataRootDir: TEST_DATA_ROOT_DIR
+                }
+            }
+        }
+    })
 }

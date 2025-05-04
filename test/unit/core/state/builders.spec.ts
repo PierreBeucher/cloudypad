@@ -1,55 +1,90 @@
 import * as assert from 'assert'
-import { buildSideEffect, LocalSideEffectBuilder, registerSideEffectBuilder, SideEffectBuilder, StateManagerBuilder } from "../../../../src/core/state/builders"
+import { StateManagerBuilder } from "../../../../src/core/state/builders"
 import { LOCAL_STATE_SIDE_EFFECT_NAME, LocalStateSideEffect } from '../../../../src/core/state/side-effects/local'
-import { loadDumyAnonymousStateV1 } from '../../utils'
-import { StateSideEffect } from '../../../../src/core/state/side-effects/abstract'
-import { InstanceStateV1 } from '../../../../src/core/state/state'
+import { createTempTestDir, loadDumyAnonymousStateV1 } from '../../utils'
+import { S3_STATE_SIDE_EFFECT_NAME, S3StateSideEffect } from '../../../../src/core/state/side-effects/s3'
 
 describe('StateManagerBuilder', () => {
-    const stateManagerBuilder = StateManagerBuilder.getInstance()
+
+
     const dummyState = loadDumyAnonymousStateV1("aws-dummy")
 
-    it('should return a singleton instance', () => {
-        const instance1 = StateManagerBuilder.getInstance()
-        const instance2 = StateManagerBuilder.getInstance()
-        assert.strictEqual(instance1, instance2)
-    })
+    it('local StateManagerBuilder should build local side effects', () => {
+        const localSmb = new StateManagerBuilder({
+            stateBackend: {
+                local: {
+                    dataRootDir: createTempTestDir("cloudypad-unit-test-state-manager-builder")
+                }
+            }
+        })
 
-    it('should build a StateWriter with default local side effect', () => {
-        const writer = stateManagerBuilder.buildStateWriter(dummyState)
+        const writer = localSmb.buildStateWriter(dummyState)
+        const loader = localSmb.buildStateLoader()
+        const sideEffect = localSmb.buildSideEffect()
+
+        assert.ok(sideEffect instanceof LocalStateSideEffect)
+        assert.strictEqual(sideEffect.name, LOCAL_STATE_SIDE_EFFECT_NAME)
         assert.strictEqual(writer.sideEffect.name, LOCAL_STATE_SIDE_EFFECT_NAME)
-    })
-
-    it('should build a StateLoader with default local side effect', () => {
-        const loader = stateManagerBuilder.buildStateLoader()
         assert.strictEqual(loader.sideEffect.name, LOCAL_STATE_SIDE_EFFECT_NAME)
     })
 
-    it('should fail on non existing side effect', () => {
-        assert.throws(() => buildSideEffect("dummy-test"), /Unknown Side Effect backend: dummy-test/)
+    it('should build s3 side effects', () => {
+
+        const region = "dummy-region"
+        const accessKeyId = "dummy-access-key-id"
+        const secretAccessKey = "dummy-secret-access-key"
+        const endpoint = "https://dummy-endpoint"
+
+        const s3Smb = new StateManagerBuilder({
+            stateBackend: {
+                s3: {
+                    bucketName: "dummy-bucket",
+                    accessKeyId: accessKeyId,
+                    secretAccessKey: secretAccessKey,
+                    region: region,
+                    endpoint: endpoint
+                }
+            }
+        })
+
+        const writer = s3Smb.buildStateWriter(dummyState)
+        const loader = s3Smb.buildStateLoader()
+        const sideEffect = s3Smb.buildSideEffect()
+
+        assert.ok(sideEffect instanceof S3StateSideEffect)
+        assert.strictEqual(sideEffect.name, S3_STATE_SIDE_EFFECT_NAME)        
+        assert.strictEqual(writer.sideEffect.name, S3_STATE_SIDE_EFFECT_NAME)
+        assert.strictEqual(loader.sideEffect.name, S3_STATE_SIDE_EFFECT_NAME)
+
+        const s3SideEffect: S3StateSideEffect = sideEffect
+        assert.deepStrictEqual(s3SideEffect.getS3ClientConfig(), {
+            region: region,
+            credentials: {
+                accessKeyId: accessKeyId,
+                secretAccessKey: secretAccessKey
+            },
+            endpoint: endpoint
+        })
     })
 
-    it('should register a new SideEffectBuilder', () => {
+    it('should fail on non existing side effect depending on config', () => {
+        assert.throws(() => {
+            const unknownSmb = new StateManagerBuilder({
+                stateBackend: {}
+            })
+        }, /Exactly one of local or s3 must be provided/)
 
-        class DummyTestSideEffect extends StateSideEffect {
-            constructor() {
-                super("dummy-test")
-            }
-            async listInstances(): Promise<string[]> { return [] }
-            async instanceExists(_: string): Promise<boolean> { return false }
-            protected doPersistState<ST extends InstanceStateV1>(_: ST): Promise<void> { throw new Error('Method not implemented.')}
-            loadRawInstanceState(_: string): Promise<unknown> { throw new Error('Method not implemented.') }
-            destroyState(_: string): Promise<void> { throw new Error('Method not implemented.') }
-        }
-
-        class DummyTestSideEffectBuilder extends SideEffectBuilder {
-            build(): StateSideEffect {
-                return new DummyTestSideEffect()
-            }
-        }
-
-        registerSideEffectBuilder("dummy-test", new DummyTestSideEffectBuilder())
-        const sideEffect = buildSideEffect("dummy-test")
-        assert.strictEqual(sideEffect.name, "dummy-test")
+        assert.throws(() => {
+            const tooManySmb = new StateManagerBuilder({
+                stateBackend: {
+                    local: {
+                        dataRootDir: createTempTestDir("cloudypad-unit-test-state-manager-builder")
+                    },
+                    s3: {
+                        bucketName: "dummy-bucket"
+                    }
+                }
+            })
+        }, /Exactly one of local or s3 must be provided/)
     })
 })

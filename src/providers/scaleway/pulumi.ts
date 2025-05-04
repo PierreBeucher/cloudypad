@@ -1,7 +1,7 @@
 import * as scw from "@pulumiverse/scaleway"
 import * as pulumi from "@pulumi/pulumi"
 import { InstancePulumiClient } from "../../tools/pulumi/client"
-import { OutputMap } from "@pulumi/pulumi/automation"
+import { LocalWorkspaceOptions, OutputMap } from "@pulumi/pulumi/automation"
 import { SimplePortDefinition } from "../../core/const"
 
 interface ScalewayInstanceArgs {
@@ -152,7 +152,6 @@ export interface PulumiStackConfigScaleway {
     }
 }
 
-
 export interface ScalewayPulumiOutput {
     instanceName: string
     instanceServerId: string
@@ -160,10 +159,20 @@ export interface ScalewayPulumiOutput {
     dataDiskId?: string
 }
 
+export interface ScalewayPulumiClientArgs {
+    stackName: string
+    workspaceOptions?: LocalWorkspaceOptions
+}
+
 export class ScalewayPulumiClient extends InstancePulumiClient<PulumiStackConfigScaleway, ScalewayPulumiOutput> {
 
-    constructor(stackName: string){
-        super({ program: scalewayPulumiProgram, projectName: "CloudyPad-Scaleway", stackName: stackName})
+    constructor(args: ScalewayPulumiClientArgs){
+        super({ 
+            program: scalewayPulumiProgram, 
+            projectName: "CloudyPad-Scaleway", 
+            stackName: args.stackName,
+            workspaceOptions: args.workspaceOptions
+        })
     }
 
     async doSetConfig(config: PulumiStackConfigScaleway){

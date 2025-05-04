@@ -1,12 +1,10 @@
 import * as assert from 'assert';
-import { GcpInstanceInput, GcpInstanceStateV1 } from '../../../src/providers/gcp/state';
-import { PUBLIC_IP_TYPE_STATIC } from '../../../src/core/const';
-import { DEFAULT_COMMON_CLI_ARGS, DEFAULT_COMMON_INPUT } from '../utils';
-import { GcpCreateCliArgs, GcpInputPrompter } from '../../../src/providers/gcp/cli';
+import { GcpInstanceInput } from '../../../../src/providers/gcp/state';
+import { PUBLIC_IP_TYPE_STATIC } from '../../../../src/core/const';
+import { DEFAULT_COMMON_CLI_ARGS, DEFAULT_COMMON_INPUT, getUnitTestCoreClient } from '../../utils';
+import { GcpCreateCliArgs, GcpInputPrompter } from '../../../../src/providers/gcp/cli';
 import lodash from 'lodash'
 import { PartialDeep } from 'type-fest';
-import { StateWriter } from '../../../src/core/state/writer';
-import { STREAMING_SERVER_SUNSHINE } from '../../../src/cli/prompter';
 
 describe('GCP input prompter', () => {
 
@@ -53,8 +51,8 @@ describe('GCP input prompter', () => {
     }
 
     it('should convert CLI args into partial input', () => {
-        
-        const prompter = new GcpInputPrompter()
+        const coreClient = getUnitTestCoreClient()
+        const prompter = new GcpInputPrompter({ coreClient: coreClient })
         const result = prompter.cliArgsIntoPartialInput(TEST_CLI_ARGS)
 
         const expected: PartialDeep<GcpInstanceInput> = {
@@ -73,14 +71,15 @@ describe('GCP input prompter', () => {
     })
 
     it('should return provided inputs without prompting when full input provider', async () => {
-
-        const result = await new GcpInputPrompter().promptInput(TEST_INPUT, { overwriteExisting: true, autoApprove: true })
+        const coreClient = getUnitTestCoreClient()
+        const result = await new GcpInputPrompter({ coreClient: coreClient }).promptInput(TEST_INPUT, { overwriteExisting: true, autoApprove: true })
         assert.deepEqual(result, TEST_INPUT)
     })
 
     it('should convert CLI args into partial input', () => {
         
-        const prompter = new GcpInputPrompter()
+        const coreClient = getUnitTestCoreClient()
+        const prompter = new GcpInputPrompter({ coreClient: coreClient })
         const result = prompter.cliArgsIntoPartialInput(TEST_CLI_ARGS)
 
         const expected: PartialDeep<GcpInstanceInput> = {

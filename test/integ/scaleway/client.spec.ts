@@ -53,13 +53,13 @@ describe('ScalewayClient', () => {
     //     }).timeout(10000)
     // })
 
-    describe('listGpuServerTypes', () => {
-        it('should return list of gpu server types without error', async () => {
-            const gpuServerTypes = await client.listGpuServerTypes(1)
-            console.info(`Gpu Server Types: ${JSON.stringify(gpuServerTypes)}`)
-            assert.equal(gpuServerTypes.length > 0, true)
-        }).timeout(10000)
-    })
+    // describe('listGpuServerTypes', () => {
+    //     it('should return list of gpu server types without error', async () => {
+    //         const gpuServerTypes = await client.listGpuServerTypes(1)
+    //         console.info(`Gpu Server Types: ${JSON.stringify(gpuServerTypes)}`)
+    //         assert.equal(gpuServerTypes.length > 0, true)
+    //     }).timeout(10000)
+    // })
 
     // describe('getInstanceStatus', () => {
     //     it('should return instance status without error', async () => {

@@ -1,5 +1,5 @@
 import { SshKeyLoader } from '../../tools/ssh';
-import { AbstractInstanceProvisioner, InstanceProvisionerArgs, InstanceProvisionOptions } from '../../core/provisioner';
+import { AbstractInstanceProvisioner, InstanceProvisionerArgs } from '../../core/provisioner';
 import { DummyProvisionInputV1, DummyProvisionOutputV1 } from './state';
 
 export type DummyProvisionerArgs = InstanceProvisionerArgs<DummyProvisionInputV1, DummyProvisionOutputV1>
@@ -10,11 +10,11 @@ export class DummyProvisioner extends AbstractInstanceProvisioner<DummyProvision
         super(args)
     }
 
-    async doProvision(opts?: InstanceProvisionOptions): Promise<DummyProvisionOutputV1> {
+    async doProvision(): Promise<DummyProvisionOutputV1> {
 
         this.logger.info(`Provisioning dummy instance ${this.args.instanceName}`)
 
-        this.logger.debug(`Provisioning Dummy instance with args ${JSON.stringify(this.args)} and options ${JSON.stringify(opts)}`)
+        this.logger.debug(`Provisioning Dummy instance with args ${JSON.stringify(this.args)}`)
 
         const sshPublicKeyContent = new SshKeyLoader().loadSshPublicKeyContent(this.args.provisionInput.ssh)
 

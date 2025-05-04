@@ -1,4 +1,4 @@
-import { AbstractInstanceProvisioner, InstanceProvisionerArgs, InstanceProvisionOptions } from '../../core/provisioner';
+import { AbstractInstanceProvisioner, InstanceProvisionerArgs } from '../../core/provisioner';
 import { PaperspaceClient } from './client/client';
 import { MachinesCreateRequest } from './client/generated-api';
 import { PaperspaceProvisionInputV1, PaperspaceProvisionOutputV1 } from './state';
@@ -14,7 +14,7 @@ export class PaperspaceProvisioner extends AbstractInstanceProvisioner<Paperspac
         this.client = new PaperspaceClient({ name: this.args.instanceName, apiKey: this.args.provisionInput.apiKey })
     }
 
-    async doProvision(opts?: InstanceProvisionOptions) {
+    async doProvision() {
 
         const pspaceMachineName = this.args.instanceName
         

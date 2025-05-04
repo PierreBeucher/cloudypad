@@ -10,6 +10,7 @@ export class GcpSubManagerFactory extends AbstractSubManagerFactory<GcpInstanceS
 
     async doBuildProvisioner(name: string, provisionInput: GcpProvisionInputV1, provisionOutput: GcpProvisionOutputV1, configurationInput: CommonConfigurationInputV1): Promise<InstanceProvisioner> {
         return new GcpProvisioner({
+            coreConfig: this.coreConfig,
             instanceName: name,
             provisionInput: provisionInput,
             provisionOutput: provisionOutput,

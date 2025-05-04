@@ -1,7 +1,7 @@
-import { loadRawDummyStateV1 } from "../utils"
+import { loadRawDummyStateV1 } from "../../utils"
 
 import * as assert from 'assert'
-import { AzureStateParser } from '../../../src/providers/azure/state'
+import { AzureStateParser } from '../../../../src/providers/azure/state'
 
 
 describe('AzureStateParser', function () {

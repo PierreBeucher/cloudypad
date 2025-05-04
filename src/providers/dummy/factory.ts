@@ -12,6 +12,7 @@ export class DummySubManagerFactory extends AbstractSubManagerFactory<DummyInsta
 
     async doBuildProvisioner(name: string, provisionInput: DummyProvisionInputV1, provisionOutput: DummyProvisionOutputV1, configurationInput: CommonConfigurationInputV1): Promise<InstanceProvisioner> {
         return new DummyProvisioner({
+            coreConfig: this.coreConfig,
             instanceName: name,
             provisionInput: provisionInput,
             provisionOutput: provisionOutput,

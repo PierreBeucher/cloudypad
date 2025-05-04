@@ -1,6 +1,7 @@
 import { Command, Option } from "@commander-js/extra-typings";
 import { PUBLIC_IP_TYPE, PUBLIC_IP_TYPE_DYNAMIC, PUBLIC_IP_TYPE_STATIC } from "../core/const";
 import { AnalyticsManager } from "../tools/analytics/manager";
+import { CloudypadClient } from "../core/client";
 
 //
 // Common CLI Option each providers can re-use
@@ -92,6 +93,13 @@ function parseFalseOrDisable(value: string){
     return value === "disable" || value === "no" || value === "false" || value === "0" ? false : true
 }
 
+export interface BuildCreateCommandArgs {
+    coreClient: CloudypadClient
+}
+
+export interface BuildUpdateCommandArgs {
+    coreClient: CloudypadClient
+}
 
 /**
  * Helper to create a Commander CLI sub-commands for create and update commands.
@@ -126,12 +134,12 @@ export abstract class CliCommandGenerator {
     /**
      * Build a 'create' Command for Commander CLI using provided Command
      */
-    abstract buildCreateCommand(): Command<[]>
+    abstract buildCreateCommand(args: BuildCreateCommandArgs): Command<[]>
 
     /**
      * Build an 'update' Command for Commander CLI using provided Command
      */
-    abstract buildUpdateCommand(): Command<[]>
+    abstract buildUpdateCommand(args: BuildUpdateCommandArgs): Command<[]>
 
 }
 

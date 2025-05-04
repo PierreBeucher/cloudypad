@@ -2,39 +2,85 @@ import { InstanceStateV1 } from "./state";
 import { StateWriter } from "./writer";
 import { StateLoader } from "./loader";
 import { StateSideEffect } from "./side-effects/abstract";
-import { ConfigManager } from "../config/manager";
 import { LocalStateSideEffect } from "./side-effects/local";
-import { S3SideEffectBuilder } from "./side-effects/s3";
+import { S3StateSideEffect } from "./side-effects/s3";
+import { getLogger } from "../../log/utils";
+
+export interface StateManagerBuilderArgs {
+    stateBackend: {
+        local?: {
+            dataRootDir: string
+        }
+        s3?: {
+            bucketName: string
+            region?: string
+            accessKeyId?: string
+            secretAccessKey?: string
+            endpoint?: string
+        }
+    }
+}
 
 /**
  * The StateManagerBuilder is a singleton builder for State managers: StateWriter, StateLoader and StateInitializer instances.
  * Singleton pattern is used here as State manager behaviors depends on current environments's Cloudy Pad config.
  */
 export class StateManagerBuilder {
-    private static instance: StateManagerBuilder;
 
-    private constructor() {}
+    private logger = getLogger(StateManagerBuilder.name)
 
-    public static getInstance(): StateManagerBuilder {
-        if (!StateManagerBuilder.instance) {
-            StateManagerBuilder.instance = new StateManagerBuilder();
+    private readonly args: StateManagerBuilderArgs
+
+    constructor(args: StateManagerBuilderArgs) {
+        if(args.stateBackend.local && args.stateBackend.s3 || !args.stateBackend.local && !args.stateBackend.s3) {
+            throw new Error(`Exactly one of local or s3 must be provided, got: ${JSON.stringify(Object.keys(args.stateBackend))}`)
         }
-        return StateManagerBuilder.instance;
+        this.args = args
     }
 
     /**
-     * Return a SideEffect for the current environment's configuration.
+     * Return a SideEffect for this builder's configuration.
      */
-    private buildSideEffect(): StateSideEffect {
-        const cloudyPadConfig = ConfigManager.getInstance().load()
-        return buildSideEffect(cloudyPadConfig.stateBackend)
+    public buildSideEffect(): StateSideEffect {
+
+        this.logger.debug(`Building side effect for state backend: ${JSON.stringify(this.args.stateBackend)}`)
+
+        if(this.args.stateBackend.local) {
+            return new LocalStateSideEffect({
+                dataRootDir: this.args.stateBackend.local.dataRootDir
+            })
+        }
+        else if(this.args.stateBackend.s3) {
+            return new S3StateSideEffect({
+                bucketName: this.args.stateBackend.s3.bucketName,
+                s3ClientConfig: {
+                    region: this.args.stateBackend.s3.region,
+                    // only pass creds if both keys and secret are provided
+                    credentials:  this.args.stateBackend.s3.accessKeyId && this.args.stateBackend.s3.secretAccessKey ? {
+                        accessKeyId: this.args.stateBackend.s3.accessKeyId,
+                        secretAccessKey: this.args.stateBackend.s3.secretAccessKey
+                    } : undefined,
+                    endpoint: this.args.stateBackend.s3.endpoint
+                }
+            })
+        }
+        else {
+            // only show keys to avoid showing secrets
+            throw new Error(`Unknown state backend, one of local or s3 must be provided, got: ${JSON.stringify(Object.keys(this.args.stateBackend))}`)
+        }
+
     }
 
-    public buildStateWriter<ST extends InstanceStateV1>(state: ST): StateWriter<ST> {
-        return new StateWriter({
-            state: state,
+    public buildStateWriter<ST extends InstanceStateV1>(state?: ST): StateWriter<ST> {
+        const writer = new StateWriter<ST>({
             sideEffect: this.buildSideEffect()
         })
+
+        if(state) {
+            writer.setState(state)
+        }
+
+        return writer
     }
 
     public buildStateLoader(): StateLoader {
@@ -42,42 +88,4 @@ export class StateManagerBuilder {
             sideEffect: this.buildSideEffect()
         })
     }
-}
-
-/*
-* SideEffectBuilders are used to build Side effects for different state backends.
-* By default only the local backend is supported with LocalSideEffectBuilder.
-* 
-* It's possible to register more SideEffectBuilders for various backends identified by a string key.
-*/
-
-export abstract class SideEffectBuilder {
-
-    public abstract build(): StateSideEffect
-}
-
-export class LocalSideEffectBuilder extends SideEffectBuilder {
-
-    public build(): StateSideEffect {
-        return new LocalStateSideEffect({
-            dataRootDir: ConfigManager.getEnvironmentDataRootDir()
-        })
-    }
-}
-
-const sideEffectBuilders: { [key: string]: SideEffectBuilder } = {
-    local: new LocalSideEffectBuilder(),
-    s3: new S3SideEffectBuilder()
-}
-
-export function registerSideEffectBuilder(backend: string, builder: SideEffectBuilder): void {
-    sideEffectBuilders[backend] = builder
-}
-
-export function buildSideEffect(backend: string): StateSideEffect {
-    const builder = sideEffectBuilders[backend]
-    if(!builder) {
-        throw new Error(`Unknown Side Effect backend: ${backend}`)
-    }
-    return builder.build()
 }

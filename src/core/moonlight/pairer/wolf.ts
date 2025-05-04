@@ -72,7 +72,6 @@ export class WolfMoonlightPairer extends AbstractMoonlightPairer implements Moon
 
         } catch (error) {
             const eventProps = error instanceof Error ? { errorMessage: error.message, stackTrace: error.stack } : { errorMessage: String(error), stackTrace: "unknown" }
-            this.analytics.sendEvent("pairing_error", eventProps)
             throw new Error(`Instance pairing failed.`, { cause: error })
         }
     }

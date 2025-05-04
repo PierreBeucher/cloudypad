@@ -1,6 +1,6 @@
 
 import { confirm } from '@inquirer/prompts'
-import { AnalyticsCollectionMethod, ConfigManager } from '../../core/config/manager'
+import { AnalyticsCollectionMethod, ConfigManager } from '../../cli/config'
 
 export class AnalyticsInitializer {
 

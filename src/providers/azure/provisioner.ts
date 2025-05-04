@@ -1,6 +1,6 @@
 import { SshKeyLoader } from '../../tools/ssh'
 import { AzurePulumiClient, PulumiStackConfigAzure } from './pulumi'
-import { AbstractInstanceProvisioner, InstanceProvisionerArgs, InstanceProvisionOptions } from '../../core/provisioner'
+import { AbstractInstanceProvisioner, InstanceProvisionerArgs } from '../../core/provisioner'
 import { AzureClient } from '../../tools/azure'
 import { AzureProvisionInputV1, AzureProvisionOutputV1 } from './state'
 
@@ -12,14 +12,17 @@ export class AzureProvisioner extends AbstractInstanceProvisioner<AzureProvision
         super(args)
     }
 
-    async doProvision(opts?: InstanceProvisionOptions) {
+    async doProvision() {
 
         this.logger.info(`Provisioning Azure instance ${this.args.instanceName}`)
 
-        this.logger.debug(`Provisioning Azure instance with args ${JSON.stringify(this.args)} and options ${JSON.stringify(opts)}`)
+        this.logger.debug(`Provisioning Azure instance with args ${JSON.stringify(this.args)}`)
 
         const sshPublicKeyContent = new SshKeyLoader().loadSshPublicKeyContent(this.args.provisionInput.ssh)
-        const pulumiClient = new AzurePulumiClient(this.args.instanceName)
+        const pulumiClient = new AzurePulumiClient({
+            stackName: this.args.instanceName,
+            workspaceOptions: this.args.coreConfig.pulumi?.workspaceOptions
+        })
         const pulumiConfig: PulumiStackConfigAzure = {
             subscriptionId: this.args.provisionInput.subscriptionId,
             location: this.args.provisionInput.location,
@@ -46,7 +49,10 @@ export class AzureProvisioner extends AbstractInstanceProvisioner<AzureProvision
 
     async doDestroy() {
 
-        const pulumiClient = new AzurePulumiClient(this.args.instanceName)
+        const pulumiClient = new AzurePulumiClient({
+            stackName: this.args.instanceName,
+            workspaceOptions: this.args.coreConfig.pulumi?.workspaceOptions
+        })
         await pulumiClient.destroy()
 
         this.args.provisionOutput = undefined

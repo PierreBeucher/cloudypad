@@ -7,7 +7,7 @@ import lodash from 'lodash'
 import { CLOUDYPAD_PROVIDER_GCP, PUBLIC_IP_TYPE } from "../../core/const";
 import { PartialDeep } from "type-fest";
 import { InteractiveInstanceInitializer } from "../../cli/initializer";
-import { CLI_OPTION_AUTO_STOP_TIMEOUT, CLI_OPTION_AUTO_STOP_ENABLE, CLI_OPTION_COST_ALERT, CLI_OPTION_COST_LIMIT, CLI_OPTION_COST_NOTIFICATION_EMAIL, CLI_OPTION_DISK_SIZE, CLI_OPTION_PUBLIC_IP_TYPE, CLI_OPTION_SPOT, CLI_OPTION_STREAMING_SERVER, CLI_OPTION_SUNSHINE_IMAGE_REGISTRY, CLI_OPTION_SUNSHINE_IMAGE_TAG, CLI_OPTION_SUNSHINE_PASSWORD, CLI_OPTION_SUNSHINE_USERNAME, CliCommandGenerator, CreateCliArgs, UpdateCliArgs, CLI_OPTION_KEYBOARD_OPTIONS, CLI_OPTION_KEYBOARD_MODEL, CLI_OPTION_KEYBOARD_LAYOUT, CLI_OPTION_USE_LOCALE, CLI_OPTION_KEYBOARD_VARIANT } from "../../cli/command";
+import { CLI_OPTION_AUTO_STOP_TIMEOUT, CLI_OPTION_AUTO_STOP_ENABLE, CLI_OPTION_COST_ALERT, CLI_OPTION_COST_LIMIT, CLI_OPTION_COST_NOTIFICATION_EMAIL, CLI_OPTION_DISK_SIZE, CLI_OPTION_PUBLIC_IP_TYPE, CLI_OPTION_SPOT, CLI_OPTION_STREAMING_SERVER, CLI_OPTION_SUNSHINE_IMAGE_REGISTRY, CLI_OPTION_SUNSHINE_IMAGE_TAG, CLI_OPTION_SUNSHINE_PASSWORD, CLI_OPTION_SUNSHINE_USERNAME, CliCommandGenerator, CreateCliArgs, UpdateCliArgs, CLI_OPTION_KEYBOARD_OPTIONS, CLI_OPTION_KEYBOARD_MODEL, CLI_OPTION_KEYBOARD_LAYOUT, CLI_OPTION_USE_LOCALE, CLI_OPTION_KEYBOARD_VARIANT, BuildCreateCommandArgs, BuildUpdateCommandArgs } from "../../cli/command";
 import { RUN_COMMAND_CREATE, RUN_COMMAND_UPDATE } from "../../tools/analytics/events";
 import { InteractiveInstanceUpdater } from "../../cli/updater";
 
@@ -222,7 +222,7 @@ export class GcpInputPrompter extends AbstractInputPrompter<GcpCreateCliArgs, Gc
 
 export class GcpCliCommandGenerator extends CliCommandGenerator {
     
-    buildCreateCommand() {
+    buildCreateCommand(args: BuildCreateCommandArgs) {
         return this.getBaseCreateCommand(CLOUDYPAD_PROVIDER_GCP)
             .addOption(CLI_OPTION_SPOT)
             .addOption(CLI_OPTION_DISK_SIZE)
@@ -251,7 +251,8 @@ export class GcpCliCommandGenerator extends CliCommandGenerator {
                 this.analytics.sendEvent(RUN_COMMAND_CREATE, { provider: CLOUDYPAD_PROVIDER_GCP })
                 try {
                     await new InteractiveInstanceInitializer<GcpCreateCliArgs, GcpProvisionInputV1, CommonConfigurationInputV1>({ 
-                        inputPrompter: new GcpInputPrompter(),
+                        coreClient: args.coreClient,
+                        inputPrompter: new GcpInputPrompter({ coreClient: args.coreClient }),
                         provider: CLOUDYPAD_PROVIDER_GCP,
                         initArgs: cliArgs
                     }).initializeInteractive()
@@ -262,7 +263,7 @@ export class GcpCliCommandGenerator extends CliCommandGenerator {
             })
     }
 
-    buildUpdateCommand() {
+    buildUpdateCommand(args: BuildUpdateCommandArgs) {
         return this.getBaseUpdateCommand(CLOUDYPAD_PROVIDER_GCP)
             .addOption(CLI_OPTION_DISK_SIZE)
             .addOption(CLI_OPTION_PUBLIC_IP_TYPE)
@@ -286,8 +287,9 @@ export class GcpCliCommandGenerator extends CliCommandGenerator {
                 this.analytics.sendEvent(RUN_COMMAND_UPDATE, { provider: CLOUDYPAD_PROVIDER_GCP })
                 try {
                     await new InteractiveInstanceUpdater<GcpInstanceStateV1, GcpUpdateCliArgs>({
+                        coreClient: args.coreClient,
                         stateParser: new GcpStateParser(),
-                        inputPrompter: new GcpInputPrompter()
+                        inputPrompter: new GcpInputPrompter({ coreClient: args.coreClient }),
                     }).updateInteractive(cliArgs)
 
                     console.info(`Updated instance ${cliArgs.name}`)

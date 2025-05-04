@@ -13,7 +13,7 @@ provision:
     apiKey: xyz
     ssh:
       user: paperspace
-      privateKeyPath: /dummy/ssh/key/id_rsa
+      privateKeyContentBase64: ZHVtbXkta2V5
 configuration:
   configurator: ansible
   input:

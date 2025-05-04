@@ -10,6 +10,7 @@ export class PaperspaceSubManagerFactory extends AbstractSubManagerFactory<Paper
 
     async doBuildProvisioner(name: string, provisionInput: PaperspaceProvisionInputV1, provisionOutput: PaperspaceProvisionOutputV1, configurationInput: CommonConfigurationInputV1): Promise<InstanceProvisioner> {
         return new PaperspaceProvisioner({
+            coreConfig: this.coreConfig,
             instanceName: name,
             provisionInput: provisionInput,
             provisionOutput: provisionOutput,

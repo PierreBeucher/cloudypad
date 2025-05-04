@@ -3,7 +3,7 @@ import { CommonConfigurationInputV1, CommonInstanceInput } from "../../core/stat
 import { select } from '@inquirer/prompts';
 import { AbstractInputPrompter, PromptOptions } from "../../cli/prompter";
 import lodash from 'lodash'
-import { CliCommandGenerator, CreateCliArgs, UpdateCliArgs, CLI_OPTION_STREAMING_SERVER, CLI_OPTION_SUNSHINE_PASSWORD, CLI_OPTION_SUNSHINE_USERNAME, CLI_OPTION_SUNSHINE_IMAGE_REGISTRY, CLI_OPTION_SUNSHINE_IMAGE_TAG, CLI_OPTION_AUTO_STOP_TIMEOUT, CLI_OPTION_AUTO_STOP_ENABLE, CLI_OPTION_USE_LOCALE, CLI_OPTION_KEYBOARD_LAYOUT, CLI_OPTION_KEYBOARD_MODEL, CLI_OPTION_KEYBOARD_VARIANT, CLI_OPTION_KEYBOARD_OPTIONS } from "../../cli/command";
+import { CliCommandGenerator, CreateCliArgs, UpdateCliArgs, CLI_OPTION_STREAMING_SERVER, CLI_OPTION_SUNSHINE_PASSWORD, CLI_OPTION_SUNSHINE_USERNAME, CLI_OPTION_SUNSHINE_IMAGE_REGISTRY, CLI_OPTION_SUNSHINE_IMAGE_TAG, CLI_OPTION_AUTO_STOP_TIMEOUT, CLI_OPTION_AUTO_STOP_ENABLE, CLI_OPTION_USE_LOCALE, CLI_OPTION_KEYBOARD_LAYOUT, CLI_OPTION_KEYBOARD_MODEL, CLI_OPTION_KEYBOARD_VARIANT, CLI_OPTION_KEYBOARD_OPTIONS, BuildCreateCommandArgs, BuildUpdateCommandArgs } from "../../cli/command";
 import { CLOUDYPAD_PROVIDER_DUMMY } from "../../core/const";
 import { InteractiveInstanceInitializer } from "../../cli/initializer";
 import { PartialDeep } from "type-fest";
@@ -79,7 +79,7 @@ export class DummyInputPrompter extends AbstractInputPrompter<DummyCreateCliArgs
 
 export class DummyCliCommandGenerator extends CliCommandGenerator {
     
-    buildCreateCommand() {
+    buildCreateCommand(args: BuildCreateCommandArgs) {
         return this.getBaseCreateCommand(CLOUDYPAD_PROVIDER_DUMMY)
             .addOption(CLI_OPTION_STREAMING_SERVER)
             .addOption(CLI_OPTION_SUNSHINE_USERNAME)
@@ -98,7 +98,8 @@ export class DummyCliCommandGenerator extends CliCommandGenerator {
                 
                 try {
                     await new InteractiveInstanceInitializer<DummyCreateCliArgs, DummyProvisionInputV1, CommonConfigurationInputV1>({ 
-                        inputPrompter: new DummyInputPrompter(),
+                        coreClient: args.coreClient,
+                        inputPrompter: new DummyInputPrompter({ coreClient: args.coreClient }),
                         provider: CLOUDYPAD_PROVIDER_DUMMY,
                         initArgs: cliArgs
                     }).initializeInteractive()
@@ -120,7 +121,7 @@ export class DummyCliCommandGenerator extends CliCommandGenerator {
             })
     }
 
-    buildUpdateCommand() {
+    buildUpdateCommand(args: BuildUpdateCommandArgs) {
         return this.getBaseUpdateCommand(CLOUDYPAD_PROVIDER_DUMMY)
             .addOption(CLI_OPTION_SUNSHINE_USERNAME)
             .addOption(CLI_OPTION_SUNSHINE_PASSWORD)
@@ -138,8 +139,9 @@ export class DummyCliCommandGenerator extends CliCommandGenerator {
                 
                 try {
                     await new InteractiveInstanceUpdater<DummyInstanceStateV1, DummyUpdateCliArgs>({
+                        coreClient: args.coreClient,
                         stateParser: new DummyStateParser(),
-                        inputPrompter: new DummyInputPrompter()
+                        inputPrompter: new DummyInputPrompter({ coreClient: args.coreClient }),
                     }).updateInteractive(cliArgs)
                     
                     console.info(`Updated instance ${cliArgs.name}`)

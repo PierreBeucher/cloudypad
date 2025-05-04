@@ -1,11 +1,10 @@
 import * as assert from 'assert';
-import { AwsInstanceInput } from '../../../src/providers/aws/state';
-import { PUBLIC_IP_TYPE_STATIC } from '../../../src/core/const';
-import { DEFAULT_COMMON_INPUT, DEFAULT_COMMON_CLI_ARGS } from "../utils";
-import { AwsCreateCliArgs, AwsInputPrompter } from '../../../src/providers/aws/cli';
+import { AwsInstanceInput } from '../../../../src/providers/aws/state';
+import { PUBLIC_IP_TYPE_STATIC } from '../../../../src/core/const';
+import { DEFAULT_COMMON_INPUT, DEFAULT_COMMON_CLI_ARGS, getUnitTestCoreClient } from "../../utils";
+import { AwsCreateCliArgs, AwsInputPrompter } from '../../../../src/providers/aws/cli';
 import lodash from 'lodash'
 import { PartialDeep } from 'type-fest';
-import { STREAMING_SERVER_SUNSHINE } from '../../../src/cli/prompter';
 
 describe('AWS input prompter', () => {
 
@@ -43,14 +42,14 @@ describe('AWS input prompter', () => {
     }
 
     it('should return provided inputs without prompting when full input provider', async () => {
-
-        const result = await new AwsInputPrompter().promptInput(TEST_INPUT, { autoApprove: true })
+        const coreClient = getUnitTestCoreClient()
+        const result = await new AwsInputPrompter({ coreClient: coreClient }).promptInput(TEST_INPUT, { autoApprove: true })
         assert.deepEqual(result, TEST_INPUT)
     })
 
     it('should convert CLI args into partial input', () => {
-        
-        const prompter = new AwsInputPrompter()
+        const coreClient = getUnitTestCoreClient()
+        const prompter = new AwsInputPrompter({ coreClient: coreClient })
         const result = prompter.cliArgsIntoPartialInput(TEST_CLI_ARGS)
 
         const expected: PartialDeep<AwsInstanceInput> = {

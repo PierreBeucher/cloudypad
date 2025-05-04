@@ -217,6 +217,11 @@ export class SshKeyLoader {
      * @returns SSH public key content
      */
     loadSshPublicKeyContent(ssh: CommonProvisionInputV1["ssh"]) {
+        return this._loadSshPublicKeyContent(ssh)
+    }
+
+    // real function which won't be mocked
+    _loadSshPublicKeyContent(ssh: CommonProvisionInputV1["ssh"]) {
         const privateKeyContent = this.loadSshPrivateKeyContent(ssh)
         return sshpk.parseKey(privateKeyContent, "ssh-private").toString("ssh")
     }

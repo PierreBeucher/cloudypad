@@ -33,7 +33,10 @@ describe('Test Pulumi preview', function() {
     // })
 
     it('should preview Scaleway Pulumi stack without errors', async () => {
-        const client = new ScalewayPulumiClient("cloudypad-pulumi-scaleway-test")
+        const client = new ScalewayPulumiClient({
+            stackName: "cloudypad-pulumi-scaleway-test",
+            workspaceOptions: {} // use local config
+        })
         await preview(client, scalewayInput)
     })
 })

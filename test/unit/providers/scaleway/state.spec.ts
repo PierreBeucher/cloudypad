@@ -1,7 +1,7 @@
-import { loadRawDummyStateV1 } from "../utils"
+import { loadRawDummyStateV1 } from "../../utils"
 
 import * as assert from 'assert'
-import { ScalewayStateParser } from '../../../src/providers/scaleway/state'
+import { ScalewayStateParser } from '../../../../src/providers/scaleway/state'
 
 describe('ScalewayStateParser', function () {
     const parser = new ScalewayStateParser()

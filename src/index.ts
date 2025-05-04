@@ -1,3 +1,3 @@
 export { InstanceManager } from "./core/manager"
-export { InstanceManagerBuilder } from "./core/manager-builder"
+export { CloudypadClient } from "./core/client"
 export { InstanceInitializer } from "./core/initializer"

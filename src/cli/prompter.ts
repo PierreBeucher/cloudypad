@@ -1,5 +1,3 @@
-import * as fs from 'fs';
-import * as path from 'path';
 import * as os from 'os';
 import { PartialDeep } from "type-fest"
 import { input, select, confirm, password } from '@inquirer/prompts';
@@ -10,7 +8,8 @@ import { getLogger } from "../log/utils";
 import { PUBLIC_IP_TYPE, PUBLIC_IP_TYPE_DYNAMIC, PUBLIC_IP_TYPE_STATIC } from '../core/const';
 import { CreateCliArgs } from './command';
 import { CostAlertOptions } from '../core/provisioner';
-import { StateManagerBuilder } from '../core/state/builders';
+import { CloudypadClient } from '../core/client';
+
 const { kebabCase } = lodash
 
 /**
@@ -40,6 +39,10 @@ export interface PromptOptions {
     skipQuotaWarning?: boolean
 }
 
+export interface AbstractInputPrompterArgs {
+    coreClient: CloudypadClient
+}
+
 /**
  * Error thrown when user voluntarily interrupts or refuse a prompt.
  */
@@ -52,6 +55,11 @@ export abstract class AbstractInputPrompter<
 > implements InputPrompter<A, PI, CI> {
 
     protected readonly logger = getLogger(AbstractInputPrompter.name)
+    protected readonly args: AbstractInputPrompterArgs
+    
+    constructor(args: AbstractInputPrompterArgs){
+        this.args = args
+    }
 
     /**
      * Prompt user for additional provider-specific inputs based on common provider inputs.
@@ -80,7 +88,7 @@ export abstract class AbstractInputPrompter<
         
         const instanceName = await this.instanceName(partialInput.instanceName)
         
-        const loader = StateManagerBuilder.getInstance().buildStateLoader()
+        const loader = this.args.coreClient.buildStateLoader()
         const alreadyExists = await loader.instanceExists(instanceName)
         if(alreadyExists){
             const overwriteExisting = await this.promptOverwriteExisting(instanceName, createOptions?.overwriteExisting)

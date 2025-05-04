@@ -1,7 +1,7 @@
-import { loadRawDummyStateV1 } from "../utils"
+import { loadRawDummyStateV1 } from "../../utils"
 
 import * as assert from 'assert'
-import { PaperspaceStateParser } from '../../../src/providers/paperspace/state'
+import { PaperspaceStateParser } from '../../../../src/providers/paperspace/state'
 
 
 describe('PaperspaceStateParser', function () {
