@@ -2,7 +2,7 @@ import { LocalWorkspaceOptions } from "@pulumi/pulumi/automation"
 import { getLogger, Logger } from "../log/utils"
 import { CLOUDYPAD_SUNSHINE_PORTS, CLOUDYPAD_WOLF_PORTS, SimplePortDefinition } from "./const"
 import { CommonProvisionInputV1, CommonProvisionOutputV1, CommonConfigurationInputV1 } from "./state/state"
-import { CoreSdkConfig } from "./config/interface"
+import { CoreConfig } from "./config/interface"
 import path from "path"
 import fs from "fs"
 /**
@@ -31,7 +31,7 @@ export interface InstanceProvisioner  {
 }
 
 export interface InstanceProvisionerArgs<PC extends CommonProvisionInputV1, PO extends CommonProvisionOutputV1> {
-    coreConfig: CoreSdkConfig
+    coreConfig: CoreConfig
     instanceName: string
     provisionInput: PC
     provisionOutput?: PO

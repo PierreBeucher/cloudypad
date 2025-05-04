@@ -17,7 +17,7 @@ import { DummySubManagerFactory } from '../providers/dummy/factory';
 import { ScalewaySubManagerFactory } from '../providers/scaleway/factory';
 import { ScalewayStateParser } from '../providers/scaleway/state';
 import { StateManagerBuilder } from './state/builders';
-import { CoreSdkConfig } from './config/interface';
+import { CoreConfig } from './config/interface';
 import { StateWriter } from './state/writer';
 import { InstanceInitializer } from './initializer';
 import { InstanceUpdater } from './updater';
@@ -25,7 +25,7 @@ import { GenericStateParser } from './state/parser';
 
 // This is the global config !
 export interface CloudypadClientArgs {
-    config: CoreSdkConfig
+    config: CoreConfig
 }
 
 /**

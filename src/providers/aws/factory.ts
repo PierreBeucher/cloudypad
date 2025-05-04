@@ -10,7 +10,7 @@ export class AwsSubManagerFactory extends AbstractSubManagerFactory<AwsInstanceS
 
     async doBuildProvisioner(name: string, provisionInput: AwsProvisionInputV1, provisionOutput: AwsProvisionOutputV1, configurationInput: CommonConfigurationInputV1): Promise<InstanceProvisioner> {
         return new AwsProvisioner({
-            coreConfig: this.coreSdkConfig,   
+            coreConfig: this.coreConfig,   
             instanceName: name,
             provisionInput: provisionInput,
             provisionOutput: provisionOutput,

@@ -1,4 +1,4 @@
-import { CoreSdkConfig } from "../config/interface"
+import { CoreConfig } from "../config/interface"
 import path from "path"
 
 export class DefaultConfigValues {    
@@ -21,7 +21,7 @@ export class DefaultConfigValues {
         }
     }
 
-    static buildDefaultConfig(): CoreSdkConfig {
+    static buildDefaultConfig(): CoreConfig {
         return {
             stateBackend: DefaultConfigValues.buildDefaultStateBackendConfig(),
             pulumi: DefaultConfigValues.buildDefaultPulumiConfig()
@@ -31,7 +31,7 @@ export class DefaultConfigValues {
     /**
      * Build default state backend config using local file under Cloudy Pad data home directory.
      */
-    static buildDefaultStateBackendConfig(): CoreSdkConfig["stateBackend"] {
+    static buildDefaultStateBackendConfig(): CoreConfig["stateBackend"] {
         return {
             local: {
                 dataRootDir: DefaultConfigValues.defaultLocalDataRootDir()
@@ -42,7 +42,7 @@ export class DefaultConfigValues {
     /**
      * Build default Pulumi config using local backend under Cloudy Pad data home directory.
      */
-    static buildDefaultPulumiConfig(): CoreSdkConfig["pulumi"] {
+    static buildDefaultPulumiConfig(): CoreConfig["pulumi"] {
 
         return {
             workspaceOptions: {

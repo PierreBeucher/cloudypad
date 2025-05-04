@@ -10,7 +10,7 @@ export class ScalewaySubManagerFactory extends AbstractSubManagerFactory<Scalewa
 
     async doBuildProvisioner(name: string, provisionInput: ScalewayProvisionInputV1, provisionOutput: ScalewayProvisionOutputV1, configurationInput: CommonConfigurationInputV1): Promise<InstanceProvisioner> {
         return new ScalewayProvisioner({
-            coreConfig: this.coreSdkConfig,
+            coreConfig: this.coreConfig,
             instanceName: name,
             provisionInput: provisionInput,
             provisionOutput: provisionOutput,

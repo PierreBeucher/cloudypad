@@ -1,6 +1,6 @@
 import { z } from "zod"
 
-export const CoreSdkConfigSchema = z.object({
+export const CoreConfigSchema = z.object({
     stateBackend: z.object({
         local: z.object({
             dataRootDir: z.string().describe("The root directory to use for local state management.")
@@ -21,4 +21,4 @@ export const CoreSdkConfigSchema = z.object({
     }).optional().describe("Pulumi configuration for providers using Pulumi. By default Pulumi use local backend under Cloudy Pad data home directory.")
 })
 
-export type CoreSdkConfig = z.infer<typeof CoreSdkConfigSchema>
+export type CoreConfig = z.infer<typeof CoreConfigSchema>

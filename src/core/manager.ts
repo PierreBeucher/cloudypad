@@ -5,7 +5,7 @@ import { getLogger } from '../log/utils';
 import { InstanceRunner, InstanceRunningStatus, StartStopOptions } from './runner';
 import { StateWriter } from './state/writer';
 import { AnsibleConfigurator } from '../configurators/ansible';
-import { CoreSdkConfig } from './config/interface';
+import { CoreConfig } from './config/interface';
 
 /**
  * Instance details suitable for end users, hiding or simplyfing internal details
@@ -51,10 +51,10 @@ export interface SubManagerFactory<ST extends InstanceStateV1> {
 
 export abstract class AbstractSubManagerFactory<ST extends InstanceStateV1> implements SubManagerFactory<ST> {
 
-    protected readonly coreSdkConfig: CoreSdkConfig
+    protected readonly coreConfig: CoreConfig
 
-    constructor(coreSdkConfig: CoreSdkConfig){
-        this.coreSdkConfig = coreSdkConfig
+    constructor(coreConfig: CoreConfig){
+        this.coreConfig = coreConfig
     }
 
     async buildProvisioner(state: ST): Promise<InstanceProvisioner> {
