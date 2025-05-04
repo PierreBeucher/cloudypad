@@ -69,6 +69,21 @@ tasks:
   test-circular-deps:
     cmd: npx -y madge --ts-config ./tsconfig.json -c .
 
+  # Run integration tests with local containers
+  # Only some test can be run using only local containers as some tests depend on real infrastructure
+  test-integ-with-local-containers:
+    cmds:
+    - task: test-integ-containers-setup
+    - task: test-integ-s3-side-effects
+
+  test-integ-containers-setup:
+    cmds:
+    - docker compose -f test/integ/docker-compose.yml up -d
+
+  test-integ-s3-side-effects:
+    cmds:
+    - npx mocha --config test/integ/.mocharc.json ./test/integ/side-effects/s3.spec.ts
+
   test-integ-full-lifecycle-all:
     cmds:
     - task: test-integ-full-lifecycle-aws
@@ -91,6 +106,11 @@ tasks:
 
   test-integ-full-lifecycle-scaleway:
     - test/integ/cli-full-lifecycle/run.sh scaleway
+
+  test-integ-side-effects-s3:
+    cmds:
+    - docker compose -f test/integ/side-effects/docker-compose.yml up -d
+    - npx mocha --config test/integ/.mocharc.json ./test/integ/side-effects/s3.spec.ts
 
   test-analytics-key-match:
     - cmd: test/shell/test-matching-analytics-key.sh

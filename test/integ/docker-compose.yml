@@ -1,0 +1,37 @@
+services:
+ 
+  # MinIO for S3 backend and client tests
+  minio:
+    image: bitnami/minio:2025.4.8
+    container_name: cloudypad-test-minio
+    ports:
+      - "9010:9000"
+      - "9011:9001"
+    environment:
+      MINIO_ROOT_USER: cloudypad
+      MINIO_ROOT_PASSWORD: cloudypad
+
+      # cloudypad: default bucket for local development
+      MINIO_DEFAULT_BUCKETS: cloudypad
+
+      # Will instruct Minio to enable virtual host style which is not enable by default otherwise
+      # Alternatively we can use S3 client with forcePathStyle: true
+      MINIO_DOMAIN: localhost,minio
+    
+    # Add alises so that minio is reachable via minio and cloudypad.minio hostnames
+    # Since S3 client will use virual host style by default and try to reach minio via "<bucket-name>.<hostname>"
+    # in our case "cloudypad.minio"
+    networks:
+      default:
+        aliases:
+          - cloudypad.minio
+
+    # don't keep data
+    tmpfs:
+      - /bitnami/minio/data
+      - /certs
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
