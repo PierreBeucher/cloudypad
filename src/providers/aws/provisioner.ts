@@ -22,7 +22,7 @@ export class AwsProvisioner extends AbstractInstanceProvisioner<AwsProvisionInpu
 
         const pulumiClient = new AwsPulumiClient({
             stackName: this.args.instanceName,
-            workspaceOptions: this.buildPulumiWorkspaceOptions()
+            workspaceOptions: this.args.coreConfig.pulumi?.workspaceOptions
         })
 
         const pulumiConfig: PulumiStackConfigAws = {
@@ -49,7 +49,7 @@ export class AwsProvisioner extends AbstractInstanceProvisioner<AwsProvisionInpu
     async doDestroy(){
         const pulumiClient = new AwsPulumiClient({
             stackName: this.args.instanceName,
-            workspaceOptions: this.buildPulumiWorkspaceOptions()
+            workspaceOptions: this.args.coreConfig.pulumi?.workspaceOptions
         })
         
         await pulumiClient.destroy()

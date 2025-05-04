@@ -131,7 +131,7 @@ const TEST_DATA_ROOT_DIR = createTempTestDir("data-root")
 export function getUnitTestCoreClient(): CloudypadClient{
     return new CloudypadClient({
         config: {
-            dataBackend: {
+            stateBackend: {
                 local: {
                     dataRootDir: TEST_DATA_ROOT_DIR
                 }

@@ -22,7 +22,7 @@ export class ScalewayProvisioner extends AbstractInstanceProvisioner<ScalewayPro
 
         const pulumiClient = new ScalewayPulumiClient({
             stackName: this.args.instanceName,
-            workspaceOptions: this.buildPulumiWorkspaceOptions()
+            workspaceOptions: this.args.coreConfig.pulumi?.workspaceOptions
         })
 
         const pulumiConfig: PulumiStackConfigScaleway = {
@@ -57,7 +57,7 @@ export class ScalewayProvisioner extends AbstractInstanceProvisioner<ScalewayPro
 
         const pulumiClient = new ScalewayPulumiClient({
             stackName: this.args.instanceName,
-            workspaceOptions: this.buildPulumiWorkspaceOptions()
+            workspaceOptions: this.args.coreConfig.pulumi?.workspaceOptions
         })
         await pulumiClient.destroy()
 

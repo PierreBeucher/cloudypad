@@ -341,7 +341,7 @@ export interface AwsPulumiOutput {
 
 export interface AwsPulumiClientArgs {
     stackName: string
-    workspaceOptions: LocalWorkspaceOptions
+    workspaceOptions?: LocalWorkspaceOptions
 }
     
 export class AwsPulumiClient extends InstancePulumiClient<PulumiStackConfigAws, AwsPulumiOutput> {

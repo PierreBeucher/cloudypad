@@ -23,9 +23,32 @@ export class DefaultConfigValues {
 
     static buildDefaultConfig(): CoreSdkConfig {
         return {
-            dataBackend: {
-                local: {
-                    dataRootDir: DefaultConfigValues.defaultLocalDataRootDir()
+            stateBackend: DefaultConfigValues.buildDefaultStateBackendConfig(),
+            pulumi: DefaultConfigValues.buildDefaultPulumiConfig()
+        }
+    }
+
+    /**
+     * Build default state backend config using local file under Cloudy Pad data home directory.
+     */
+    static buildDefaultStateBackendConfig(): CoreSdkConfig["stateBackend"] {
+        return {
+            local: {
+                dataRootDir: DefaultConfigValues.defaultLocalDataRootDir()
+            }
+        }
+    }
+
+    /**
+     * Build default Pulumi config using local backend under Cloudy Pad data home directory.
+     */
+    static buildDefaultPulumiConfig(): CoreSdkConfig["pulumi"] {
+
+        return {
+            workspaceOptions: {
+                envVars: {
+                    PULUMI_BACKEND_URL: `file://${path.join(DefaultConfigValues.defaultLocalDataRootDir(), "pulumi-backend")}`,
+                    PULUMI_CONFIG_PASSPHRASE: ""
                 }
             }
         }

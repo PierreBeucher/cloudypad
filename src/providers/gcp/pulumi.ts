@@ -296,7 +296,7 @@ export interface GcpPulumiOutput {
 
 export interface GcpPulumiClientArgs {
     stackName: string
-    workspaceOptions: LocalWorkspaceOptions
+    workspaceOptions?: LocalWorkspaceOptions
 }
 
 export class GcpPulumiClient extends InstancePulumiClient<PulumiStackConfigGcp, GcpPulumiOutput> {

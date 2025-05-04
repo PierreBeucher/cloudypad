@@ -21,7 +21,7 @@ export class AzureProvisioner extends AbstractInstanceProvisioner<AzureProvision
         const sshPublicKeyContent = new SshKeyLoader().loadSshPublicKeyContent(this.args.provisionInput.ssh)
         const pulumiClient = new AzurePulumiClient({
             stackName: this.args.instanceName,
-            workspaceOptions: this.buildPulumiWorkspaceOptions()
+            workspaceOptions: this.args.coreConfig.pulumi?.workspaceOptions
         })
         const pulumiConfig: PulumiStackConfigAzure = {
             subscriptionId: this.args.provisionInput.subscriptionId,
@@ -51,7 +51,7 @@ export class AzureProvisioner extends AbstractInstanceProvisioner<AzureProvision
 
         const pulumiClient = new AzurePulumiClient({
             stackName: this.args.instanceName,
-            workspaceOptions: this.buildPulumiWorkspaceOptions()
+            workspaceOptions: this.args.coreConfig.pulumi?.workspaceOptions
         })
         await pulumiClient.destroy()
 

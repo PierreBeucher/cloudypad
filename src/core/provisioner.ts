@@ -83,39 +83,6 @@ export abstract class AbstractInstanceProvisioner<PC extends CommonProvisionInpu
         }
     }
 
-    /**
-     * Build Pulumi workspace options for this instance depending on Core configuration.
-     * @returns Pulumi workspace options
-     */
-    public buildPulumiWorkspaceOptions(): LocalWorkspaceOptions {
-
-        if(this.args.coreConfig.dataBackend.s3){
-            return {
-                envVars: {
-                    PULUMI_BACKEND_URL: this.args.coreConfig.dataBackend.s3?.pulumi?.backendBucketName ?? "",
-                    PULUMI_CONFIG_PASSPHRASE: this.args.coreConfig.dataBackend.s3?.pulumi?.stackPassphrase ?? ""
-                }
-            }
-        } else if (this.args.coreConfig.dataBackend.local) {
-
-            const pulumiBackendDir = path.join(this.args.coreConfig.dataBackend.local.dataRootDir, "pulumi-backend")
-            if (!fs.existsSync(pulumiBackendDir)){
-                
-                this.logger.debug(`Creating Pulumii backend local directory: '${pulumiBackendDir}'`)
-                
-                fs.mkdirSync(pulumiBackendDir, { recursive: true });
-            }
-
-            return {
-                envVars: {
-                    PULUMI_BACKEND_URL: pulumiBackendDir,
-                }
-            }
-        } else {
-            return {}
-        }
-    }
-
 }
 
 /**

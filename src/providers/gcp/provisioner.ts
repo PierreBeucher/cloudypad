@@ -28,7 +28,7 @@ export class GcpProvisioner extends AbstractInstanceProvisioner<GcpProvisionInpu
 
         const pulumiClient = new GcpPulumiClient({
             stackName: this.args.instanceName,
-            workspaceOptions: this.buildPulumiWorkspaceOptions()
+            workspaceOptions: this.args.coreConfig.pulumi?.workspaceOptions
         })
 
         const pulumiConfig: PulumiStackConfigGcp = {
@@ -58,7 +58,7 @@ export class GcpProvisioner extends AbstractInstanceProvisioner<GcpProvisionInpu
     async doDestroy(){
         const pulumiClient = new GcpPulumiClient({
             stackName: this.args.instanceName,
-            workspaceOptions: this.buildPulumiWorkspaceOptions()
+            workspaceOptions: this.args.coreConfig.pulumi?.workspaceOptions
         })
         await pulumiClient.destroy()
 

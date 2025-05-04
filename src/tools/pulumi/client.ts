@@ -7,7 +7,7 @@ export interface InstancePulumiClientArgs {
     program: PulumiFn
     projectName: string
     stackName: string
-    workspaceOptions: LocalWorkspaceOptions
+    workspaceOptions?: LocalWorkspaceOptions
 }
 
 const LOG_ON_OUTPUT_COLOR = "always"
@@ -22,7 +22,7 @@ export abstract class InstancePulumiClient<ConfigType, OutputType> {
     readonly stackName: string
     protected readonly logger: Logger
     private stack: Stack | undefined
-    private workspaceOptions: LocalWorkspaceOptions
+    private workspaceOptions?: LocalWorkspaceOptions
 
     constructor(args: InstancePulumiClientArgs){
         this.program = args.program
@@ -55,7 +55,7 @@ export abstract class InstancePulumiClient<ConfigType, OutputType> {
             throw new Error(`Stack ${this.stackName} for project ${this.projectName} has already been initialized. This is probably an internal bug.`)
         }
 
-        const opts: LocalWorkspaceOptions = this.workspaceOptions
+        const workpaceOpts: LocalWorkspaceOptions | undefined = this.workspaceOptions
 
         const pulumiArgs: InlineProgramArgs = {
             stackName: this.stackName,
@@ -63,7 +63,7 @@ export abstract class InstancePulumiClient<ConfigType, OutputType> {
             program: this.program,
         }
 
-        const stack = await LocalWorkspace.createOrSelectStack(pulumiArgs, opts)
+        const stack = await LocalWorkspace.createOrSelectStack(pulumiArgs, workpaceOpts)
         return stack
     }
 

@@ -44,8 +44,8 @@ export class CloudypadClient {
     private readonly stateManagerBuilder: StateManagerBuilder
 
     constructor(args: CloudypadClientArgs) {
-        if (args.config.dataBackend.s3 && args.config.dataBackend.local || !args.config.dataBackend.s3 && !args.config.dataBackend.local) {
-            throw new Error("Exactly one of s3 or local data backend must be provided, got: " + JSON.stringify(args.config.dataBackend))
+        if (args.config.stateBackend.s3 && args.config.stateBackend.local || !args.config.stateBackend.s3 && !args.config.stateBackend.local) {
+            throw new Error("Exactly one of s3 or local data backend must be provided, got: " + JSON.stringify(args.config.stateBackend))
         }
 
         this.args = args
@@ -70,11 +70,11 @@ export class CloudypadClient {
     private buildStateManagerBuilder(): StateManagerBuilder {
         return new StateManagerBuilder({
             stateBackend: {
-                local: this.args.config.dataBackend.local ? {
-                    dataRootDir: this.args.config.dataBackend.local.dataRootDir
+                local: this.args.config.stateBackend.local ? {
+                    dataRootDir: this.args.config.stateBackend.local.dataRootDir
                 } : undefined,
-                s3: this.args.config.dataBackend.s3 ? {
-                    bucketName: this.args.config.dataBackend.s3.stateData.bucketName,
+                s3: this.args.config.stateBackend.s3 ? {
+                    bucketName: this.args.config.stateBackend.s3.stateData.bucketName,
                 } : undefined
             }
         })

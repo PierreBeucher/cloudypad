@@ -161,7 +161,7 @@ export interface ScalewayPulumiOutput {
 
 export interface ScalewayPulumiClientArgs {
     stackName: string
-    workspaceOptions: LocalWorkspaceOptions
+    workspaceOptions?: LocalWorkspaceOptions
 }
 
 export class ScalewayPulumiClient extends InstancePulumiClient<PulumiStackConfigScaleway, ScalewayPulumiOutput> {

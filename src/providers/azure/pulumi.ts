@@ -279,7 +279,7 @@ export interface AzurePulumiOutput {
 
 export interface AzurePulumiClientArgs {
     stackName: string
-    workspaceOptions: LocalWorkspaceOptions
+    workspaceOptions?: LocalWorkspaceOptions
 }
 
 export class AzurePulumiClient extends InstancePulumiClient<PulumiStackConfigAzure, AzurePulumiOutput> {

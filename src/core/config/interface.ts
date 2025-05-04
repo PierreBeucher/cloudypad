@@ -1,26 +1,24 @@
 import { z } from "zod"
 
 export const CoreSdkConfigSchema = z.object({
-    dataBackend: z.object({
+    stateBackend: z.object({
         local: z.object({
             dataRootDir: z.string().describe("The root directory to use for local state management.")
         }).optional(),
         s3: z.object({
-            config: z.object({
-                region: z.string().describe("The region to use for S3 state management."),
-                accessKeyId: z.string().describe("The access key ID to use for S3 state management."),
-                secretAccessKey: z.string().describe("The secret access key to use for S3 state management."),
-                endpointUrl: z.string().describe("The endpoint URL to use for S3 state management."),
-            }).optional(),
-            stateData: z.object({
-                bucketName: z.string().describe("The name of the S3 bucket to use for state management.")
-            }),
-            pulumi: z.object({
-                backendBucketName: z.string().describe("The name of the S3 bucket to use for pulumi state management."),
-                stackPassphrase: z.string().describe("The passphrase to use for the Pulumi stack.").optional()
-            }).describe("Pulumi backend to manage Pulumi stacks")
-        }).optional()
-    })
+            bucketName: z.string().describe("S3 bucket to use for state management."),
+            region: z.string().optional(),
+            accessKeyId: z.string().optional(),
+            secretAccessKey: z.string().optional(),
+            endpointUrl: z.string().optional(),
+        }).optional().describe("S3 backend to manage state. Will use local AWS credentials by default with possible overrides.")
+    }),
+    pulumi: z.object({
+        // should match LocalWorkspaceOptions object
+        workspaceOptions: z.object({
+            envVars: z.record(z.string(), z.string()).optional(),
+        }).optional(),
+    }).optional().describe("Pulumi configuration for providers using Pulumi. By default Pulumi use local backend under Cloudy Pad data home directory.")
 })
 
 export type CoreSdkConfig = z.infer<typeof CoreSdkConfigSchema>
