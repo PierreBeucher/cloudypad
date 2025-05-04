@@ -70,12 +70,8 @@ export class CloudypadClient {
     private buildStateManagerBuilder(): StateManagerBuilder {
         return new StateManagerBuilder({
             stateBackend: {
-                local: this.args.config.stateBackend.local ? {
-                    dataRootDir: this.args.config.stateBackend.local.dataRootDir
-                } : undefined,
-                s3: this.args.config.stateBackend.s3 ? {
-                    bucketName: this.args.config.stateBackend.s3.stateData.bucketName,
-                } : undefined
+                local: this.args.config.stateBackend.local,
+                s3: this.args.config.stateBackend.s3
             }
         })
     }

@@ -28,7 +28,7 @@ describe('InstanceUpdater', () => {
 
         const newConfigurationInputs: AwsInstanceStateV1["configuration"]["input"] = {
             autostop: {
-                enable: !awsState.configuration.input.autostop?.enable ?? false,
+                enable: !awsState.configuration.input.autostop?.enable,
                 timeoutSeconds: (awsState.configuration.input.autostop?.timeoutSeconds ?? 0) + 1
             },
             keyboard: {

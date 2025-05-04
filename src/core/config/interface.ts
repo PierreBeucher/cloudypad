@@ -10,7 +10,7 @@ export const CoreSdkConfigSchema = z.object({
             region: z.string().optional(),
             accessKeyId: z.string().optional(),
             secretAccessKey: z.string().optional(),
-            endpointUrl: z.string().optional(),
+            endpoint: z.string().optional(),
         }).optional().describe("S3 backend to manage state. Will use local AWS credentials by default with possible overrides.")
     }),
     pulumi: z.object({

@@ -29,9 +29,12 @@ describe('Lib full lifecycle', () => {
 
     it('should initialize an instance', async () => {
 
+        const coreClient = getUnitTestCoreClient()
+
         // Should be a non-interactive initializer
         await new InteractiveInstanceInitializer<AwsCreateCliArgs, AwsProvisionInputV1, CommonConfigurationInputV1>({ 
-            inputPrompter: new AwsInputPrompter(),
+            coreClient: coreClient,
+            inputPrompter: new AwsInputPrompter({ coreClient: coreClient }),
             provider: CLOUDYPAD_PROVIDER_AWS,
             initArgs: {
                 name: instanceName,

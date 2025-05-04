@@ -13,6 +13,10 @@ export interface StateManagerBuilderArgs {
         }
         s3?: {
             bucketName: string
+            region?: string
+            accessKeyId?: string
+            secretAccessKey?: string
+            endpoint?: string
         }
     }
 }
@@ -48,7 +52,16 @@ export class StateManagerBuilder {
         }
         else if(this.args.stateBackend.s3) {
             return new S3StateSideEffect({
-                bucketName: this.args.stateBackend.s3.bucketName
+                bucketName: this.args.stateBackend.s3.bucketName,
+                s3ClientConfig: {
+                    region: this.args.stateBackend.s3.region,
+                    // only pass creds if both keys and secret are provided
+                    credentials:  this.args.stateBackend.s3.accessKeyId && this.args.stateBackend.s3.secretAccessKey ? {
+                        accessKeyId: this.args.stateBackend.s3.accessKeyId,
+                        secretAccessKey: this.args.stateBackend.s3.secretAccessKey
+                    } : undefined,
+                    endpoint: this.args.stateBackend.s3.endpoint
+                }
             })
         }
         else {
