@@ -1,13 +1,13 @@
 import * as assert from 'assert';
 
-import { InteractiveInstanceInitializer } from '../../../src/cli/initializer';
-import { CLOUDYPAD_PROVIDER_DUMMY } from '../../../src/core/const';
-import { DummyCreateCliArgs, DummyInputPrompter } from '../../../src/providers/dummy/cli';
-import { DEFAULT_COMMON_CLI_ARGS } from '../../unit/utils';
-import { DummyProvisionInputV1 } from '../../../src/providers/dummy/state';
-import { CommonConfigurationInputV1 } from '../../../src/core/state/state';
-import { InstanceRunningStatus } from '../../../src/core/runner';
-import { getCliCoreClient } from '../../../src/cli/core-client';
+import { InteractiveInstanceInitializer } from '../../../../src/cli/initializer';
+import { CLOUDYPAD_PROVIDER_DUMMY } from '../../../../src/core/const';
+import { DummyCreateCliArgs, DummyInputPrompter } from '../../../../src/providers/dummy/cli';
+import { DEFAULT_COMMON_CLI_ARGS } from '../../utils';
+import { DummyProvisionInputV1 } from '../../../../src/providers/dummy/state';
+import { CommonConfigurationInputV1 } from '../../../../src/core/state/state';
+import { InstanceRunningStatus } from '../../../../src/core/runner';
+import { getCliCoreClient } from '../../../../src/cli/core-client';
 
 describe('Dummy instance lifecycle', () => {
 

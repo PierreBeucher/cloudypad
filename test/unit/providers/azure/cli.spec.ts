@@ -1,11 +1,8 @@
 import * as assert from 'assert';
-import { AZURE_SUPPORTED_DISK_TYPES, AzureInstanceInput } from '../../../src/providers/azure/state';
-import { PUBLIC_IP_TYPE_STATIC } from '../../../src/core/const';
-import { DEFAULT_COMMON_CLI_ARGS, DEFAULT_COMMON_INPUT } from '../utils';
-import { AzureCreateCliArgs, AzureInputPrompter } from '../../../src/providers/azure/cli';
-import { PartialDeep } from 'type-fest';
-import lodash from 'lodash'
-import { STREAMING_SERVER_SUNSHINE } from '../../../src/cli/prompter';
+import { AZURE_SUPPORTED_DISK_TYPES, AzureInstanceInput } from '../../../../src/providers/azure/state';
+import { PUBLIC_IP_TYPE_STATIC } from '../../../../src/core/const';
+import { DEFAULT_COMMON_CLI_ARGS, DEFAULT_COMMON_INPUT } from '../../utils';
+import { AzureCreateCliArgs, AzureInputPrompter } from '../../../../src/providers/azure/cli';
 
 describe('Azure input prompter', () => {
 

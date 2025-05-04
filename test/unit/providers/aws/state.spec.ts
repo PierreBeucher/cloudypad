@@ -1,8 +1,7 @@
-import { loadRawDummyStateV1 } from "../utils"
+import { loadRawDummyStateV1 } from "../../utils"
 
 import * as assert from 'assert'
-import { AwsStateParser } from '../../../src/providers/aws/state'
-
+import { AwsStateParser } from '../../../../src/providers/aws/state'
 
 describe('AwsStateParser', function () {
     const parser = new AwsStateParser()

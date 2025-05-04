@@ -2,7 +2,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';
 import * as assert from 'assert';
-import { fetchApiKeyFromPaperspaceHome } from '../../../src/providers/paperspace/client/client';
+import { fetchApiKeyFromPaperspaceHome } from '../../../../src/providers/paperspace/client/client';
 
 describe('fetchApiKeyFromPaperspaceHome should find keys', () => {
 

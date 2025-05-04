@@ -1,7 +1,7 @@
-import { loadRawDummyStateV1 } from "../utils"
+import { loadRawDummyStateV1 } from "../../utils"
 
 import * as assert from 'assert'
-import { GcpStateParser } from '../../../src/providers/gcp/state'
+import { GcpStateParser } from '../../../../src/providers/gcp/state'
 
 
 describe('GcpStateParser', function () {

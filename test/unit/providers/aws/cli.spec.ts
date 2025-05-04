@@ -1,11 +1,10 @@
 import * as assert from 'assert';
-import { AwsInstanceInput } from '../../../src/providers/aws/state';
-import { PUBLIC_IP_TYPE_STATIC } from '../../../src/core/const';
-import { DEFAULT_COMMON_INPUT, DEFAULT_COMMON_CLI_ARGS } from "../utils";
-import { AwsCreateCliArgs, AwsInputPrompter } from '../../../src/providers/aws/cli';
+import { AwsInstanceInput } from '../../../../src/providers/aws/state';
+import { PUBLIC_IP_TYPE_STATIC } from '../../../../src/core/const';
+import { DEFAULT_COMMON_INPUT, DEFAULT_COMMON_CLI_ARGS } from "../../utils";
+import { AwsCreateCliArgs, AwsInputPrompter } from '../../../../src/providers/aws/cli';
 import lodash from 'lodash'
 import { PartialDeep } from 'type-fest';
-import { STREAMING_SERVER_SUNSHINE } from '../../../src/cli/prompter';
 
 describe('AWS input prompter', () => {
 

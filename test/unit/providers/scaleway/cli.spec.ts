@@ -1,9 +1,9 @@
 import * as assert from 'assert';
-import { ScalewayCreateCliArgs, ScalewayInputPrompter } from '../../../src/providers/scaleway/cli';
-import { DEFAULT_COMMON_CLI_ARGS, DEFAULT_COMMON_INPUT } from '../utils';
+import { ScalewayCreateCliArgs, ScalewayInputPrompter } from '../../../../src/providers/scaleway/cli';
+import { DEFAULT_COMMON_CLI_ARGS, DEFAULT_COMMON_INPUT } from '../../utils';
 import { PartialDeep } from 'type-fest';
 import lodash from 'lodash';
-import { ScalewayInstanceInput } from '../../../src/providers/scaleway/state';
+import { ScalewayInstanceInput } from '../../../../src/providers/scaleway/state';
 
 describe('Scaleway input prompter', () => {
 
