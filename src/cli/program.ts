@@ -11,7 +11,9 @@ import { confirm } from '@inquirer/prompts';
 import { ConfirmationPrompter } from './prompter';
 import { ScalewayCliCommandGenerator } from '../providers/scaleway/cli';
 import { DummyCliCommandGenerator } from '../providers/dummy/cli';
-import { getCliCoreClient } from './core-client';
+import { DefaultConfigValues } from '../core/config/default';
+import { CloudypadClient } from '../core/client';
+
 const logger = getLogger("program")
 
 export function handleErrorAnalytics(e: unknown){
@@ -39,10 +41,20 @@ export function logFullError(e: unknown, prefix?: string){
     }
 }
 
+function buildCoreClient(): CloudypadClient {
+    const defaultConfig = DefaultConfigValues.buildDefaultConfig()
+    logger.debug("Building core client with config: " + JSON.stringify(defaultConfig))
+
+    const client = new CloudypadClient({
+        config: defaultConfig
+    })
+    return client
+}
+
 export function buildProgram(){
 
     const analyticsClient = AnalyticsManager.get()
-    
+    const coreClient = buildCoreClient()
     const program = new Command()
 
     program
@@ -58,23 +70,23 @@ export function buildProgram(){
         .command('create')
         .description('Create a new instance. See subcommands for each provider options.')
     
-    createCmd.addCommand(new AwsCliCommandGenerator().buildCreateCommand())
-    createCmd.addCommand(new AzureCliCommandGenerator().buildCreateCommand())
-    createCmd.addCommand(new GcpCliCommandGenerator().buildCreateCommand())
-    createCmd.addCommand(new PaperspaceCliCommandGenerator().buildCreateCommand())
-    createCmd.addCommand(new ScalewayCliCommandGenerator().buildCreateCommand())
-    createCmd.addCommand(new DummyCliCommandGenerator().buildCreateCommand(), { hidden: true })
+    createCmd.addCommand(new AwsCliCommandGenerator().buildCreateCommand({ coreClient: coreClient }))
+    createCmd.addCommand(new AzureCliCommandGenerator().buildCreateCommand({ coreClient: coreClient }))
+    createCmd.addCommand(new GcpCliCommandGenerator().buildCreateCommand({ coreClient: coreClient }))
+    createCmd.addCommand(new PaperspaceCliCommandGenerator().buildCreateCommand({ coreClient: coreClient }))
+    createCmd.addCommand(new ScalewayCliCommandGenerator().buildCreateCommand({ coreClient: coreClient }))
+    createCmd.addCommand(new DummyCliCommandGenerator().buildCreateCommand({ coreClient: coreClient }), { hidden: true })
     
     const updateCmd = program
         .command('update')
         .description('Update an existing instance. See subcommands for each provider options.')
     
-    updateCmd.addCommand(new AwsCliCommandGenerator().buildUpdateCommand())
-    updateCmd.addCommand(new AzureCliCommandGenerator().buildUpdateCommand())
-    updateCmd.addCommand(new GcpCliCommandGenerator().buildUpdateCommand())
-    updateCmd.addCommand(new PaperspaceCliCommandGenerator().buildUpdateCommand())
-    updateCmd.addCommand(new ScalewayCliCommandGenerator().buildUpdateCommand())
-    updateCmd.addCommand(new DummyCliCommandGenerator().buildUpdateCommand(), { hidden: true })
+    updateCmd.addCommand(new AwsCliCommandGenerator().buildUpdateCommand({ coreClient: coreClient }))
+    updateCmd.addCommand(new AzureCliCommandGenerator().buildUpdateCommand({ coreClient: coreClient }))
+    updateCmd.addCommand(new GcpCliCommandGenerator().buildUpdateCommand({ coreClient: coreClient }))
+    updateCmd.addCommand(new PaperspaceCliCommandGenerator().buildUpdateCommand({ coreClient: coreClient }))
+    updateCmd.addCommand(new ScalewayCliCommandGenerator().buildUpdateCommand({ coreClient: coreClient }))
+    updateCmd.addCommand(new DummyCliCommandGenerator().buildUpdateCommand({ coreClient: coreClient }), { hidden: true })
 
     program
         .command('list')
@@ -84,7 +96,7 @@ export function buildProgram(){
             try {
                 analyticsClient.sendEvent(RUN_COMMAND_LIST)
 
-                const instanceNames = await getCliCoreClient().getAllInstances();
+                const instanceNames = await coreClient.getAllInstances();
                 if (instanceNames.length === 0) {
                     console.info('No instances found.');
                     return;
@@ -113,7 +125,7 @@ export function buildProgram(){
                 analyticsClient.sendEvent(RUN_COMMAND_START)
 
                 console.info(`Starting instance ${name}...`)
-                const m = await getCliCoreClient().buildInstanceManager(name)
+                const m = await coreClient.buildInstanceManager(name)
                 await m.start({ wait: opts.wait, waitTimeoutSeconds: opts.timeout})
     
                 if(opts.wait){
@@ -137,7 +149,7 @@ export function buildProgram(){
                 analyticsClient.sendEvent(RUN_COMMAND_STOP)
 
                 console.info(`Stopping instance ${name}...`)
-                const m = await getCliCoreClient().buildInstanceManager(name)
+                const m = await coreClient.buildInstanceManager(name)
                 await m.stop({ wait: opts.wait, waitTimeoutSeconds: opts.timeout})
                 
                 if(opts.wait){
@@ -161,7 +173,7 @@ export function buildProgram(){
                 analyticsClient.sendEvent(RUN_COMMAND_RESTART)
 
                 console.info(`Restarting instance ${name}...`)
-                const m = await getCliCoreClient().buildInstanceManager(name)
+                const m = await coreClient.buildInstanceManager(name)
                 await m.restart({ wait: opts.wait, waitTimeoutSeconds: opts.timeout})
                 
             } catch (error) {
@@ -176,7 +188,7 @@ export function buildProgram(){
             try {
                 analyticsClient.sendEvent(RUN_COMMAND_GET)
 
-                const m = await getCliCoreClient().buildInstanceManager(name)
+                const m = await coreClient.buildInstanceManager(name)
                 const details = m.getStateJSON()
     
                 console.info(details)
@@ -193,7 +205,7 @@ export function buildProgram(){
             try {
                 analyticsClient.sendEvent(RUN_COMMAND_PROVISION)
 
-                const manager = await getCliCoreClient().buildInstanceManager(name)
+                const manager = await coreClient.buildInstanceManager(name)
                 const inputs = await manager.getInputs()
                 const prompter = new ConfirmationPrompter()
 
@@ -217,7 +229,7 @@ export function buildProgram(){
             try {
                 analyticsClient.sendEvent(RUN_COMMAND_CONFIGURE)
 
-                const m = await getCliCoreClient().buildInstanceManager(name)
+                const m = await coreClient.buildInstanceManager(name)
                 await m.configure()
     
                 console.info("")
@@ -233,7 +245,7 @@ export function buildProgram(){
         .description('Deploy an instance: provision and configure it. Equivalent to running provision and configure commands sequentially.')
         .action(async (name, opts) => {
 
-            const manager = await getCliCoreClient().buildInstanceManager(name)
+            const manager = await coreClient.buildInstanceManager(name)
             const inputs = await manager.getInputs()
             const prompter = new ConfirmationPrompter()
 
@@ -267,7 +279,7 @@ export function buildProgram(){
                     throw new Error('Destroy aborted.')
                 }
 
-                const m = await getCliCoreClient().buildInstanceManager(name)
+                const m = await coreClient.buildInstanceManager(name)
                 await m.destroy()
     
                 console.info("")
@@ -283,7 +295,7 @@ export function buildProgram(){
         .action(async (name: string) => {
             try {
                 analyticsClient.sendEvent(RUN_COMMAND_PAIR)
-                const m = await getCliCoreClient().buildInstanceManager(name)
+                const m = await coreClient.buildInstanceManager(name)
                 await m.pairInteractive()
             } catch (error) {
                 throw new Error('Failed to pair instance', { cause: error })

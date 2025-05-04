@@ -7,9 +7,9 @@ import { CommonConfigurationInputV1, CommonInstanceInput, CommonProvisionInputV1
 import { InstanceInitializer } from "../core/initializer"
 import { getLogger } from "../log/utils"
 import { CloudypadClient } from "../core/client"
-import { getCliCoreClient } from "./core-client"
 
 export interface InteractiveInstancerInitializerArgs<A extends CreateCliArgs, PI extends CommonProvisionInputV1, CI extends CommonConfigurationInputV1> {
+    coreClient: CloudypadClient
     provider: CLOUDYPAD_PROVIDER
     inputPrompter: InputPrompter<A, PI, CI>
     initArgs: A
@@ -38,12 +38,10 @@ export class InteractiveInstanceInitializer<
     private readonly args: InteractiveInstancerInitializerArgs<A, PI, CI>
     private readonly logger = getLogger(InteractiveInstanceInitializer.name)
     private readonly instanceInitializer: InstanceInitializer<PI, CI>
-    private readonly coreClient: CloudypadClient
 
     constructor(args: InteractiveInstancerInitializerArgs<A, PI, CI>){
-        this.coreClient = getCliCoreClient()
-        this.instanceInitializer = this.coreClient.buildInstanceInitializer(args.provider)
         this.args = args
+        this.instanceInitializer = this.args.coreClient.buildInstanceInitializer(args.provider)
     }
 
     async initializeInteractive(options?: InstancerInitializationOptions): Promise<void> {
@@ -91,14 +89,14 @@ export class InteractiveInstanceInitializer<
 
     private async doDeploy(instanceName: string) {
         this.analyticsEvent("create_instance_start_deploy")
-        const manager = await this.coreClient.buildInstanceManager(instanceName)
+        const manager = await this.args.coreClient.buildInstanceManager(instanceName)
         await manager.deploy()
         this.analyticsEvent("create_instance_finish_deploy")
     }
 
     private async doPair(instanceName: string, skipPairing: boolean, autoApprove: boolean) {
 
-        const manager = await this.coreClient.buildInstanceManager(instanceName)
+        const manager = await this.args.coreClient.buildInstanceManager(instanceName)
 
         const doPair = skipPairing ? false : autoApprove ? true : await confirm({
             message: `Your instance is almost ready ! Do you want to pair Moonlight now?`,

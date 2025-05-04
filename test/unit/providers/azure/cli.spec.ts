@@ -1,9 +1,10 @@
 import * as assert from 'assert';
 import { AZURE_SUPPORTED_DISK_TYPES, AzureInstanceInput } from '../../../../src/providers/azure/state';
 import { PUBLIC_IP_TYPE_STATIC } from '../../../../src/core/const';
-import { DEFAULT_COMMON_CLI_ARGS, DEFAULT_COMMON_INPUT } from '../../utils';
+import { DEFAULT_COMMON_CLI_ARGS, DEFAULT_COMMON_INPUT, getUnitTestCoreClient } from '../../utils';
 import { AzureCreateCliArgs, AzureInputPrompter } from '../../../../src/providers/azure/cli';
-
+import { PartialDeep } from 'type-fest';
+import * as lodash from 'lodash';
 describe('Azure input prompter', () => {
 
     const instanceName = "azure-dummy"
@@ -49,31 +50,30 @@ describe('Azure input prompter', () => {
     }
 
     it('should return provided inputs without prompting when full input provider', async () => {
-        const result = await new AzureInputPrompter().promptInput(TEST_INPUT, { autoApprove: true })
+        const coreClient = getUnitTestCoreClient()
+        const result = await new AzureInputPrompter({ coreClient: coreClient }).promptInput(TEST_INPUT, { autoApprove: true })
         assert.deepEqual(result, TEST_INPUT)
     })
 
-    // it('should convert CLI args into partial input', () => {
-        
-    //     const prompter = new AzureInputPrompter()
-    //     const result = prompter.cliArgsIntoPartialInput(TEST_CLI_ARGS)
+    it('should convert CLI args into partial input', () => {
+        const coreClient = getUnitTestCoreClient()
+        const prompter = new AzureInputPrompter({ coreClient: coreClient })
+        const result = prompter.cliArgsIntoPartialInput(TEST_CLI_ARGS)
 
-    //     const expected: PartialDeep<AzureInstanceInput> = {
-    //         ...TEST_INPUT,
-    //         provision: {
-    //             ...TEST_INPUT.provision,
-    //             ssh: lodash.omit(TEST_INPUT.provision.ssh, "user"),
-    //         },
-    //         configuration: {
-    //             ...TEST_INPUT.configuration,
-    //             wolf: {
-    //                 enable: undefined
-    //             }
-    //         }
-    //     }
+        const expected: PartialDeep<AzureInstanceInput> = {
+            ...TEST_INPUT,
+            provision: {
+                ...TEST_INPUT.provision,
+                ssh: lodash.omit(TEST_INPUT.provision.ssh, "user"),
+            },
+            configuration: {
+                ...TEST_INPUT.configuration,
+                wolf: null
+            }
+        }
         
-    //     assert.deepEqual(result, expected)
-    // })
+        assert.deepEqual(result, expected)
+    })
 })
     
 

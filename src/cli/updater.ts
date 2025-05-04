@@ -4,10 +4,10 @@ import { UpdateCliArgs } from "./command"
 import { GenericStateParser } from "../core/state/parser"
 import { AbstractInputPrompter, ConfirmationPrompter } from "./prompter"
 import { InstanceUpdater } from "../core/updater"
-import { CloudypadClient } from "../core/client"
-import { getCliCoreClient } from "./core-client"
+import { CloudypadClient } from "../core/client";
 
 export interface InteractiveInstanceUpdaterArgs<ST extends InstanceStateV1, A extends UpdateCliArgs> {
+    coreClient: CloudypadClient
     stateParser: GenericStateParser<ST>
     inputPrompter: AbstractInputPrompter<A, ST["provision"]["input"], ST["configuration"]["input"]>  
 }
@@ -26,7 +26,7 @@ export class InteractiveInstanceUpdater<ST extends InstanceStateV1, A extends Up
     constructor(args: InteractiveInstanceUpdaterArgs<ST, A>) {
         this.logger = getLogger(InteractiveInstanceUpdater.name)
         this.inputPrompter = args.inputPrompter
-        this.coreClient = getCliCoreClient()
+        this.coreClient = args.coreClient
         this.instanceUpdater = this.coreClient.buildInstanceUpdater(args.stateParser)
     }
 

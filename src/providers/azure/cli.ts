@@ -6,7 +6,7 @@ import { AzureClient } from "../../tools/azure";
 import lodash from 'lodash'
 import { CLOUDYPAD_PROVIDER_AZURE, PUBLIC_IP_TYPE } from "../../core/const";
 import { PartialDeep } from "type-fest";
-import { CLI_OPTION_AUTO_STOP_TIMEOUT, CLI_OPTION_AUTO_STOP_ENABLE, CLI_OPTION_COST_ALERT, CLI_OPTION_COST_LIMIT, CLI_OPTION_COST_NOTIFICATION_EMAIL, CLI_OPTION_DISK_SIZE, CLI_OPTION_PUBLIC_IP_TYPE, CLI_OPTION_SPOT, CLI_OPTION_STREAMING_SERVER, CLI_OPTION_SUNSHINE_IMAGE_REGISTRY, CLI_OPTION_SUNSHINE_IMAGE_TAG, CLI_OPTION_SUNSHINE_PASSWORD, CLI_OPTION_SUNSHINE_USERNAME, CliCommandGenerator, CreateCliArgs, UpdateCliArgs, CLI_OPTION_KEYBOARD_OPTIONS, CLI_OPTION_KEYBOARD_VARIANT, CLI_OPTION_KEYBOARD_MODEL, CLI_OPTION_KEYBOARD_LAYOUT, CLI_OPTION_USE_LOCALE } from "../../cli/command";
+import { CLI_OPTION_AUTO_STOP_TIMEOUT, CLI_OPTION_AUTO_STOP_ENABLE, CLI_OPTION_COST_ALERT, CLI_OPTION_COST_LIMIT, CLI_OPTION_COST_NOTIFICATION_EMAIL, CLI_OPTION_DISK_SIZE, CLI_OPTION_PUBLIC_IP_TYPE, CLI_OPTION_SPOT, CLI_OPTION_STREAMING_SERVER, CLI_OPTION_SUNSHINE_IMAGE_REGISTRY, CLI_OPTION_SUNSHINE_IMAGE_TAG, CLI_OPTION_SUNSHINE_PASSWORD, CLI_OPTION_SUNSHINE_USERNAME, CliCommandGenerator, CreateCliArgs, UpdateCliArgs, CLI_OPTION_KEYBOARD_OPTIONS, CLI_OPTION_KEYBOARD_VARIANT, CLI_OPTION_KEYBOARD_MODEL, CLI_OPTION_KEYBOARD_LAYOUT, CLI_OPTION_USE_LOCALE, BuildCreateCommandArgs, BuildUpdateCommandArgs } from "../../cli/command";
 import { InteractiveInstanceInitializer } from "../../cli/initializer";
 import { RUN_COMMAND_CREATE, RUN_COMMAND_UPDATE } from "../../tools/analytics/events";
 import { InteractiveInstanceUpdater } from "../../cli/updater";
@@ -280,7 +280,7 @@ export class AzureInputPrompter extends AbstractInputPrompter<AzureCreateCliArgs
 
 export class AzureCliCommandGenerator extends CliCommandGenerator {
     
-    buildCreateCommand() {
+    buildCreateCommand(args: BuildCreateCommandArgs) {
         return this.getBaseCreateCommand(CLOUDYPAD_PROVIDER_AZURE)
             .addOption(CLI_OPTION_SPOT)
             .addOption(CLI_OPTION_DISK_SIZE)
@@ -309,7 +309,8 @@ export class AzureCliCommandGenerator extends CliCommandGenerator {
 
                 try {
                     await new InteractiveInstanceInitializer<AzureCreateCliArgs, AzureProvisionInputV1, CommonConfigurationInputV1>({ 
-                        inputPrompter: new AzureInputPrompter(),
+                        coreClient: args.coreClient,
+                        inputPrompter: new AzureInputPrompter({ coreClient: args.coreClient }),
                         provider: CLOUDYPAD_PROVIDER_AZURE,
                         initArgs: cliArgs
                     }).initializeInteractive()
@@ -320,7 +321,7 @@ export class AzureCliCommandGenerator extends CliCommandGenerator {
             })
     }
 
-    buildUpdateCommand() {
+    buildUpdateCommand(args: BuildUpdateCommandArgs) {
         return this.getBaseUpdateCommand(CLOUDYPAD_PROVIDER_AZURE)
             .addOption(CLI_OPTION_DISK_SIZE)
             .addOption(CLI_OPTION_PUBLIC_IP_TYPE)
@@ -344,8 +345,9 @@ export class AzureCliCommandGenerator extends CliCommandGenerator {
 
                 try {
                     await new InteractiveInstanceUpdater<AzureInstanceStateV1, AzureUpdateCliArgs>({
+                        coreClient: args.coreClient,
                         stateParser: new AzureStateParser(),
-                        inputPrompter: new AzureInputPrompter()
+                        inputPrompter: new AzureInputPrompter({ coreClient: args.coreClient }),
                     }).updateInteractive(cliArgs)
                     
                     console.info(`Updated instance ${cliArgs.name}`)

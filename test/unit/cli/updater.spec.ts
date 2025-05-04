@@ -1,11 +1,9 @@
 import * as assert from 'assert';
-import {DUMMY_AWS_PULUMI_OUTPUT, DUMMY_SSH_KEY_PATH, loadDumyAnonymousStateV1 } from '../utils';
+import {DUMMY_AWS_PULUMI_OUTPUT, getUnitTestCoreClient, loadDumyAnonymousStateV1 } from '../utils';
 import { InteractiveInstanceUpdater } from '../../../src/cli/updater';
 import { AwsUpdateCliArgs } from '../../../src/providers/aws/cli';
 import { AwsInputPrompter } from '../../../src/providers/aws/cli';
 import { AwsInstanceStateV1, AwsStateParser } from '../../../src/providers/aws/state';
-import { STREAMING_SERVER_WOLF } from '../../../src/cli/prompter';
-import { getCliCoreClient } from '../../../src/cli/core-client';
 
 describe('InteractiveInstanceUpdater', () => {
 
@@ -17,13 +15,14 @@ describe('InteractiveInstanceUpdater', () => {
         const instanceName = "aws-dummy-test-update"
         awsState.name = instanceName
 
-        const coreClient = getCliCoreClient()        
+        const coreClient = getUnitTestCoreClient()        
         const stateWriter = coreClient.buildStateWriterFor(awsState)
         await stateWriter.persistStateNow()
 
         const updater = new InteractiveInstanceUpdater<AwsInstanceStateV1, AwsUpdateCliArgs>({
             stateParser: new AwsStateParser(),
-            inputPrompter: new AwsInputPrompter()
+            inputPrompter: new AwsInputPrompter({ coreClient: coreClient }),
+            coreClient: coreClient
         })
         
         // Only check that interactive updater does perform a simple update

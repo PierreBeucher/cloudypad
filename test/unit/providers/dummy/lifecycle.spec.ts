@@ -3,11 +3,10 @@ import * as assert from 'assert';
 import { InteractiveInstanceInitializer } from '../../../../src/cli/initializer';
 import { CLOUDYPAD_PROVIDER_DUMMY } from '../../../../src/core/const';
 import { DummyCreateCliArgs, DummyInputPrompter } from '../../../../src/providers/dummy/cli';
-import { DEFAULT_COMMON_CLI_ARGS } from '../../utils';
+import { DEFAULT_COMMON_CLI_ARGS, getUnitTestCoreClient } from '../../utils';
 import { DummyProvisionInputV1 } from '../../../../src/providers/dummy/state';
 import { CommonConfigurationInputV1 } from '../../../../src/core/state/state';
 import { InstanceRunningStatus } from '../../../../src/core/runner';
-import { getCliCoreClient } from '../../../../src/cli/core-client';
 
 describe('Dummy instance lifecycle', () => {
 
@@ -25,13 +24,13 @@ describe('Dummy instance lifecycle', () => {
 
     it('should initialize a new Dummy instance', async () => {
 
-        const coreClient = getCliCoreClient()
-
+        const coreClient = getUnitTestCoreClient()
 
         await new InteractiveInstanceInitializer<DummyCreateCliArgs, DummyProvisionInputV1, CommonConfigurationInputV1>({ 
             provider: CLOUDYPAD_PROVIDER_DUMMY,
             initArgs: DUMMY_CLI_ARGS,
-            inputPrompter: new DummyInputPrompter()
+            inputPrompter: new DummyInputPrompter({ coreClient: coreClient }),
+            coreClient: coreClient
         }).initializeInteractive({ skipPostInitInfo: true })
 
         const loader = coreClient.buildStateLoader()
@@ -39,14 +38,14 @@ describe('Dummy instance lifecycle', () => {
     })
 
     it('should provision and configure Dummy instance', async () => {
-        const coreClient = getCliCoreClient()
+        const coreClient = getUnitTestCoreClient()
         const manager = await coreClient.buildInstanceManager(DUMMY_INSTANCE_NAME)
         await manager.provision()
         await manager.configure()
     })
 
     it('should start, stop, and restart the Dummy instance', async () => {
-        const coreClient = getCliCoreClient()
+        const coreClient = getUnitTestCoreClient()
         const manager = await coreClient.buildInstanceManager(DUMMY_INSTANCE_NAME)
 
         const detailsBeforeStart = await manager.getInstanceDetails()    
@@ -66,7 +65,7 @@ describe('Dummy instance lifecycle', () => {
     }).timeout(20000)
 
     it('should destroy the Dummy instance', async () => {
-        const coreClient = getCliCoreClient()
+        const coreClient = getUnitTestCoreClient()
         const manager = await coreClient.buildInstanceManager(DUMMY_INSTANCE_NAME)
         await manager.destroy()
     })

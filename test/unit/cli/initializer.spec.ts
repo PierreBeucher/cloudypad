@@ -1,15 +1,10 @@
 import * as assert from 'assert';
-import * as lodash from 'lodash';
-import * as sshpk from 'sshpk';
-import { GcpInstanceInput, GcpInstanceStateV1, GcpProvisionInputV1 } from '../../../src/providers/gcp/state';
+import { GcpInstanceInput, GcpInstanceStateV1 } from '../../../src/providers/gcp/state';
 import { CLOUDYPAD_CONFIGURATOR_ANSIBLE, CLOUDYPAD_PROVIDER_GCP, PUBLIC_IP_TYPE_STATIC } from '../../../src/core/const';
 import { DEFAULT_COMMON_INPUT, getUnitTestCoreClient } from '../utils';
 import { InteractiveInstanceInitializer } from '../../../src/cli/initializer';
 import { GcpCreateCliArgs, GcpInputPrompter } from '../../../src/providers/gcp/cli';
 import { STREAMING_SERVER_SUNSHINE } from '../../../src/cli/prompter';
-import { getCliCoreClient } from '../../../src/cli/core-client';
-import { fromBase64 } from '../../../src/tools/base64';
-import { CommonConfigurationInputV1 } from '../../../src/core/state/state';
 
 describe('Instance initializer', () => {
 
@@ -75,14 +70,17 @@ describe('Instance initializer', () => {
     // Testing here using GCP state, but Initializer is generic and should work with any statet
     it('interactive initializer should initialize instance state with provided arguments without prompting for input', async () => {
 
+        const coreClient = getUnitTestCoreClient()
+
         await new InteractiveInstanceInitializer({ 
+            coreClient: coreClient,
             provider: CLOUDYPAD_PROVIDER_GCP,
-            inputPrompter: new GcpInputPrompter(),
+            inputPrompter: new GcpInputPrompter({ coreClient: coreClient }),
             initArgs: TEST_CLI_ARGS,
         }).initializeInteractive({ skipPostInitInfo: true })
 
         // Check state has been written
-        const loader = getCliCoreClient().buildStateLoader()
+        const loader = coreClient.buildStateLoader()
         const state = await loader.loadInstanceState(instanceName)
 
         const expectState: GcpInstanceStateV1 = {
@@ -130,18 +128,22 @@ describe('Instance initializer', () => {
 
     it('should failed to initialize for existing instance with no overwrite', async () => {
 
+        const coreClient = getUnitTestCoreClient()
+
         // Initialize dummy instance 
         await new InteractiveInstanceInitializer({ 
+            coreClient: coreClient,
             provider: CLOUDYPAD_PROVIDER_GCP,
-            inputPrompter: new GcpInputPrompter(),
+            inputPrompter: new GcpInputPrompter({ coreClient: coreClient }),
             initArgs: TEST_CLI_ARGS_ALREADY_EXISTING
         }).initializeInteractive({ skipPostInitInfo: true })
 
         await assert.rejects(async () => {
             // Initialize again, should throw exception as overwriteExisting is false
             return new InteractiveInstanceInitializer({ 
+                coreClient: coreClient,
                 provider: CLOUDYPAD_PROVIDER_GCP,
-                inputPrompter: new GcpInputPrompter(),
+                inputPrompter: new GcpInputPrompter({ coreClient: coreClient }),
                 initArgs: TEST_CLI_ARGS_ALREADY_EXISTING
             }).initializeInteractive({ skipPostInitInfo: true })
         }, (thrown: unknown) => {
