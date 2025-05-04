@@ -11,7 +11,7 @@ import { confirm } from '@inquirer/prompts';
 import { ConfirmationPrompter } from './prompter';
 import { ScalewayCliCommandGenerator } from '../providers/scaleway/cli';
 import { DummyCliCommandGenerator } from '../providers/dummy/cli';
-import { DefaultConfigValues } from '../core/config/default';
+import { ConfigLoader } from '../core/config/default';
 import { CloudypadClient } from '../core/client';
 
 const logger = getLogger("program")
@@ -42,7 +42,8 @@ export function logFullError(e: unknown, prefix?: string){
 }
 
 function buildCoreClient(): CloudypadClient {
-    const defaultConfig = DefaultConfigValues.buildDefaultConfig()
+    const defaultConfig = new ConfigLoader().loadConfig()
+    
     logger.debug("Building core client with config: " + JSON.stringify(defaultConfig))
 
     const client = new CloudypadClient({

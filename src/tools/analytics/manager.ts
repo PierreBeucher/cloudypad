@@ -1,4 +1,4 @@
-import { ConfigManager } from "../../cli/config"
+import { CliConfigManager } from "../../cli/config"
 import { getLogger } from "../../log/utils"
 import { AnalyticsClient, NoOpAnalyticsClient, PostHogAnalyticsClient } from "./client"
 import os from "os"
@@ -31,7 +31,7 @@ export class AnalyticsManager {
             AnalyticsManager.client = new NoOpAnalyticsClient()
         }
 
-        const config = ConfigManager.getInstance().load()
+        const config = CliConfigManager.getInstance().load()
 
         AnalyticsManager.logger.debug("Initializing PostHog AnalyticsClient")
 

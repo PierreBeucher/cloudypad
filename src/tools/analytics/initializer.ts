@@ -1,10 +1,10 @@
 
 import { confirm } from '@inquirer/prompts'
-import { AnalyticsCollectionMethod, ConfigManager } from '../../cli/config'
+import { AnalyticsCollectionMethod, CliConfigManager } from '../../cli/config'
 
 export class AnalyticsInitializer {
 
-    private configManager = ConfigManager.getInstance()
+    private configManager = CliConfigManager.getInstance()
     
     private async promptPersonalDataCollectionApprovalAndSetAnalytics(): Promise<void>{
 

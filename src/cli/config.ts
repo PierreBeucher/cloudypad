@@ -5,7 +5,7 @@ import { z } from 'zod'
 import { getLogger } from '../log/utils'
 import { v4 as uuidv4 } from 'uuid'
 import * as lodash from 'lodash'
-import { DefaultConfigValues } from '../core/config/default'
+import { ConfigLoader as CoreConfigLoader } from '../core/config/default'
 
 export enum AnalyticsCollectionMethod {
     All = "all",
@@ -50,27 +50,27 @@ export const BASE_DEFAULT_CONFIG: CloudyPadGlobalConfigV1 = {
  * 
  * Configuration is stored locally in ${dataRootDir}/config.yml
  */
-export class ConfigManager {
+export class CliConfigManager {
 
-    private static instance: ConfigManager
+    private static instance: CliConfigManager
 
-    static getInstance(): ConfigManager {
-        if (!ConfigManager.instance) {
-            ConfigManager.instance = new ConfigManager()
+    static getInstance(): CliConfigManager {
+        if (!CliConfigManager.instance) {
+            CliConfigManager.instance = new CliConfigManager()
         }
-        return ConfigManager.instance
+        return CliConfigManager.instance
     }
 
     private configPath: string
     private dataRootDir: string
-    private logger = getLogger(ConfigManager.name)
+    private logger = getLogger(CliConfigManager.name)
 
     /**
      * Do not call constructor directly. Use getInstance() instead. (Can be used for testing purpose)
      * @param dataRootDir Do not use default dataRootDir. 
      */
     constructor(dataRootDir?: string) {
-        this.dataRootDir = dataRootDir ?? DefaultConfigValues.defaultLocalDataRootDir()
+        this.dataRootDir = dataRootDir ?? new CoreConfigLoader().loadLocalDataRootDir()
         this.configPath = path.join(this.dataRootDir, 'config.yml')
     }
 
