@@ -11,12 +11,13 @@ import { AzurePulumiClient } from '../../src/providers/azure/pulumi';
 import { GcpPulumiClient } from '../../src/providers/gcp/pulumi';
 import { ScalewayPulumiClient } from '../../src/providers/scaleway/pulumi';
 import { PaperspaceClient, PaperspaceMachine } from '../../src/providers/paperspace/client/client';
-import { DUMMY_AWS_PULUMI_OUTPUT, DUMMY_AZURE_PULUMI_OUTPUT, DUMMY_GCP_PULUMI_OUTPUT, DUMMY_PAPERSPACE_MACHINE, DUMMY_SCALEWAY_PULUMI_OUTPUT } from './utils';
+import { DUMMY_AWS_PULUMI_OUTPUT, DUMMY_AZURE_PULUMI_OUTPUT, DUMMY_GCP_PULUMI_OUTPUT, DUMMY_PAPERSPACE_MACHINE, DUMMY_SCALEWAY_PULUMI_OUTPUT, DUMMY_SSH_KEY_PATH } from './utils';
 import { AnalyticsManager } from '../../src/tools/analytics/manager';
 import { NoOpAnalyticsClient } from '../../src/tools/analytics/client';
 import { ScalewayClient } from '../../src/tools/scaleway';
 import { ConfigManager } from '../../src/cli/config';
 import { DefaultConfigValues } from '../../src/core/config/default';
+import { SshKeyLoader } from '../../src/tools/ssh';
 
 
 export const mochaHooks = {
@@ -84,5 +85,10 @@ export const mochaHooks = {
         const dummyMachine: PaperspaceMachine = DUMMY_PAPERSPACE_MACHINE
 
         sinon.stub(PaperspaceClient.prototype, 'createMachine').resolves(dummyMachine)
+
+        // SSH
+        sinon.stub(SshKeyLoader.prototype, 'loadSshPublicKeyContent').callsFake(() => {
+            return "dummy-private-key"
+        })
     }
 }

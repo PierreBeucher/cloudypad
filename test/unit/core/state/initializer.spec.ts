@@ -2,7 +2,7 @@ import * as assert from 'assert'
 import { StateInitializer } from '../../../../src/core/state/initializer'
 import { GcpInstanceInput, GcpInstanceStateV1 } from '../../../../src/providers/gcp/state'
 import { CLOUDYPAD_CONFIGURATOR_ANSIBLE, CLOUDYPAD_PROVIDER_GCP, PUBLIC_IP_TYPE_STATIC } from '../../../../src/core/const'
-import { DEFAULT_COMMON_INPUT, getEphemeralCoreClient } from '../../utils'
+import { DEFAULT_COMMON_INPUT, getUnitTestCoreClient } from '../../utils'
 
 describe('StateInitializer', function () {
 
@@ -43,14 +43,14 @@ describe('StateInitializer', function () {
         const initializer = new StateInitializer({
             input: TEST_INPUT,
             provider: CLOUDYPAD_PROVIDER_GCP,
-            stateWriter: getEphemeralCoreClient().buildEmptyStateWriter()
+            stateWriter: getUnitTestCoreClient().buildEmptyStateWriter()
         })
         const result = await initializer.initializeState()
 
         assert.deepStrictEqual(result, EXPECT_STATE)
 
         // try to load state from disk
-        const loader = getEphemeralCoreClient().buildStateLoader()
+        const loader = getUnitTestCoreClient().buildStateLoader()
         const loadedState = await loader.loadInstanceState(TEST_INPUT.instanceName)
 
         // don't compare output as it's "undefined" in memory but actually not set at all on persisted state

@@ -16,7 +16,7 @@ provision:
     useSpot: true
     ssh:
       user: ubuntu
-      privateKeyPath: /dummy/ssh/key/id_rsa
+      privateKeyContentBase64: ZHVtbXkta2V5
 configuration:
   configurator: ansible
   input:

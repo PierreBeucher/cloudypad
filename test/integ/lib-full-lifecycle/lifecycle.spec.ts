@@ -16,7 +16,7 @@ import { InstanceRunningStatus } from "../../../src/core/runner"
 import { makePin } from "../../../src/core/moonlight/pairer/abstract"
 import { CommonConfigurationInputV1 } from "../../../src/core/state/state"
 import { AwsProvisionInputV1 } from "../../../src/providers/aws/state"
-import { getEphemeralCoreClient } from "../../unit/utils"
+import { getUnitTestCoreClient } from "../../unit/utils"
 
 
 describe('Lib full lifecycle', () => {
@@ -24,7 +24,7 @@ describe('Lib full lifecycle', () => {
     const instanceName = "cloudypad-test-instance"
 
     function getInstanceManager(instanceName: string){
-        return getEphemeralCoreClient().buildInstanceManager(instanceName)
+        return getUnitTestCoreClient().buildInstanceManager(instanceName)
     }
 
     it('should initialize an instance', async () => {

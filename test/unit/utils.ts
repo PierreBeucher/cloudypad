@@ -128,7 +128,7 @@ const TEST_DATA_ROOT_DIR = createTempTestDir("data-root")
  * Create a Core client suitable for testing. The instance returned use the
  * a local data backend with a temporary directory which remains the same for all tests
  */
-export function getEphemeralCoreClient(): CloudypadClient{
+export function getUnitTestCoreClient(): CloudypadClient{
     return new CloudypadClient({
         config: {
             dataBackend: {
