@@ -6,7 +6,7 @@ import { DummyCreateCliArgs, DummyInputPrompter } from '../../../../src/provider
 import { DEFAULT_COMMON_CLI_ARGS, getUnitTestCoreClient } from '../../utils';
 import { DummyProvisionInputV1 } from '../../../../src/providers/dummy/state';
 import { CommonConfigurationInputV1 } from '../../../../src/core/state/state';
-import { InstanceRunningStatus } from '../../../../src/core/runner';
+import { ServerRunningStatus } from '../../../../src/core/runner';
 
 describe('Dummy instance lifecycle', () => {
 
@@ -48,20 +48,20 @@ describe('Dummy instance lifecycle', () => {
         const coreClient = getUnitTestCoreClient()
         const manager = await coreClient.buildInstanceManager(DUMMY_INSTANCE_NAME)
 
-        const detailsBeforeStart = await manager.getInstanceDetails()    
-        assert.equal(detailsBeforeStart.status, InstanceRunningStatus.Stopped, 'Instance should be stopped before start')
+        const detailsBeforeStart = await manager.getInstanceStatus()    
+        assert.equal(detailsBeforeStart.serverStatus, ServerRunningStatus.Stopped, 'Instance should be stopped before start')
 
         await manager.start({ wait: true })
-        const detailsAfterStart = await manager.getInstanceDetails()    
-        assert.equal(detailsAfterStart.status, InstanceRunningStatus.Running, 'Instance should be running after start')
+        const detailsAfterStart = await manager.getInstanceStatus()    
+        assert.equal(detailsAfterStart.serverStatus, ServerRunningStatus.Running, 'Instance should be running after start')
         
         await manager.stop({ wait: true })
-        const detailsAfterStop = await manager.getInstanceDetails()
-        assert.equal(detailsAfterStop.status, InstanceRunningStatus.Stopped, 'Instance should be stopped after stop')
+        const detailsAfterStop = await manager.getInstanceStatus()
+        assert.equal(detailsAfterStop.serverStatus, ServerRunningStatus.Stopped, 'Instance should be stopped after stop')
         
         await manager.restart({ wait: true })
-        const detailsAfterRestart = await manager.getInstanceDetails()
-        assert.equal(detailsAfterRestart.status, InstanceRunningStatus.Running, 'Instance should be running after restart')
+        const detailsAfterRestart = await manager.getInstanceStatus()
+        assert.equal(detailsAfterRestart.serverStatus, ServerRunningStatus.Running, 'Instance should be running after restart')
     }).timeout(20000)
 
     it('should destroy the Dummy instance', async () => {

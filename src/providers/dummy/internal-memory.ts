@@ -1,10 +1,10 @@
-import { InstanceRunningStatus } from "../../core/runner"
+import { ServerRunningStatus } from "../../core/runner"
 import { getLogger, Logger } from "../../log/utils"
 import { DummyInstanceStateV1 } from "./state"
 
 export interface DummyInstanceCloudDetails {
     instanceName: string
-    status: InstanceRunningStatus
+    status: ServerRunningStatus
 }
 
 /**

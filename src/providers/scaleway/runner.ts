@@ -1,5 +1,5 @@
 import { CLOUDYPAD_PROVIDER_SCALEWAY } from '../../core/const'
-import { AbstractInstanceRunner, InstanceRunnerArgs, InstanceRunningStatus, StartStopOptions } from '../../core/runner'
+import { AbstractInstanceRunner, InstanceRunnerArgs, ServerRunningStatus, StartStopOptions } from '../../core/runner'
 import { ScalewayClient, ScalewayServerState } from '../../tools/scaleway'
 import { ScalewayProvisionInputV1, ScalewayProvisionOutputV1 } from './state'
 
@@ -42,23 +42,23 @@ export class ScalewayInstanceRunner extends AbstractInstanceRunner<ScalewayProvi
         await this.client.restartInstance(instanceServerId, opts)
     }
 
-    async doGetInstanceStatus(): Promise<InstanceRunningStatus> {
+    async doGetInstanceStatus(): Promise<ServerRunningStatus> {
         const instanceServerId = this.getInstanceServerId()
         const status = await this.client.getInstanceStatus(instanceServerId)
 
         switch(status) {
             case ScalewayServerState.Running:
-                return InstanceRunningStatus.Running
+                return ServerRunningStatus.Running
             case ScalewayServerState.Stopped:
-                return InstanceRunningStatus.Stopped
+                return ServerRunningStatus.Stopped
             case ScalewayServerState.Starting:
-                return InstanceRunningStatus.Starting
+                return ServerRunningStatus.Starting
             case ScalewayServerState.Stopping:
-                return InstanceRunningStatus.Stopping
+                return ServerRunningStatus.Stopping
             case ScalewayServerState.Unknown:
-                return InstanceRunningStatus.Unknown
+                return ServerRunningStatus.Unknown
             default:
-                return InstanceRunningStatus.Unknown
+                return ServerRunningStatus.Unknown
         }
     }
 }

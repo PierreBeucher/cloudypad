@@ -69,6 +69,13 @@
   ansible.builtin.command: 
     cmd: udevadm trigger
 
+- name: Copy Wolf readiness check script
+  become: true
+  copy:
+    src: cloudypad-check-readiness.sh
+    dest: "/usr/local/bin/cloudypad-check-readiness"
+    mode: '0755'
+
 #
 # Wolf config
 #

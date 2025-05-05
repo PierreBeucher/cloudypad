@@ -2,42 +2,32 @@ import { CommonInstanceInput, InstanceStateV1 } from './state/state';
 import { InstanceProvisioner } from './provisioner';
 import { InstanceConfigurator } from './configurator';
 import { getLogger } from '../log/utils';
-import { InstanceRunner, InstanceRunningStatus, StartStopOptions } from './runner';
+import { InstanceRunner, ServerRunningStatus, StartStopOptions } from './runner';
 import { StateWriter } from './state/writer';
 import { AnsibleConfigurator } from '../configurators/ansible';
 import { CoreConfig } from './config/interface';
 
-/**
- * Instance details suitable for end users, hiding or simplyfing internal details
- */
-export interface CloudyPadInstanceDetails {
-    /**
-     * instance name
-     */
-    name: string
-
-    /**
-     * Public hostname (IP or address)
-     */
-    hostname: string
+export interface InstanceStatus {
 
     /**
      * Instance running status
      */
-    status: InstanceRunningStatus
+    serverStatus: ServerRunningStatus
 
     /**
-     * Moonlight pairing port
+     * True if instance has been provisioned at least once
      */
-    pairingPort: number
+    provisioned: boolean
 
     /**
-     * SSH config
+     * True if instance has been configured at least once
      */
-    ssh: {
-        user: string
-        port: number
-    }
+    configured: boolean
+
+    /**
+     * True if instance is ready to use and accept user connections
+     */
+    ready: boolean
 }
 
 /**
@@ -133,9 +123,38 @@ export interface InstanceManager {
     restart(opts?: StartStopOptions): Promise<void>
     pairInteractive(): Promise<void>
     pairSendPin(pin: string, retries?: number, retryDelay?: number): Promise<boolean>
-    getInstanceDetails(): Promise<CloudyPadInstanceDetails>
-    getStateJSON(): string
+
+    /**
+     * Returns detailed status of the instance: configurationd details, running status, provisioned, configured and readiness
+     */
+    getInstanceStatus(): Promise<InstanceStatus>
+
+    /**
+     * Returns the current internal state of the instance
+     */
+    getState(): Promise<InstanceStateV1>
+
+    /**
+     * Returns the current inputs of the instance
+     */
     getInputs(): Promise<CommonInstanceInput>
+
+    /**
+     * Check if instance has been fully configured at least onece after initialization. 
+     */
+    isConfigured(): Promise<boolean>
+
+    /**
+     * Check if instance has been fully provisioned at least onece after initialization.
+     */
+    isProvisioned(): Promise<boolean>
+
+    /**
+     * Check if instance is ready to use and accept user connections.
+     * Instance needs to be fully provisioned and configured, started 
+     * and streaming server running and ready to accept connections.
+     */
+    isReady(): Promise<boolean>
 }
 
 export interface InstanceManagerArgs<ST extends InstanceStateV1> {
@@ -192,6 +211,7 @@ export class GenericInstanceManager<ST extends InstanceStateV1> implements Insta
         const provisioner = await this.buildProvisioner()
         await provisioner.destroy()
         await this.stateWriter.setProvisionOutput(undefined)
+        await this.stateWriter.setConfigurationOutput(undefined)
         await this.stateWriter.destroyState()
     }
 
@@ -220,37 +240,37 @@ export class GenericInstanceManager<ST extends InstanceStateV1> implements Insta
         return runner.pairSendPin(pin, retries, retryDelay)
     }
     
-    private async buildRunner(){
+    private async buildRunner(): Promise<InstanceRunner> {
         return this.factory.buildRunner(this.stateWriter.cloneState())
     }
     
-    private async buildConfigurator(){
+    private async buildConfigurator(): Promise<InstanceConfigurator> {
         return this.factory.buildConfigurator(this.stateWriter.cloneState())
     }
     
-    private async buildProvisioner(){
+    private async buildProvisioner(): Promise<InstanceProvisioner> {
         return this.factory.buildProvisioner(this.stateWriter.cloneState())
     }
 
-    public async getInstanceDetails(): Promise<CloudyPadInstanceDetails> {
-        const runner = await this.buildRunner()
-        const state = this.stateWriter.cloneState()
-        const details: CloudyPadInstanceDetails = {
-            name: state.name,
-            hostname: state.provision.output?.host ?? "unknown",
-            pairingPort: 47989, // hardcoded for now*
-            status: await runner.instanceStatus(),
-            ssh: {
-                user: state.provision.input.ssh.user,
-                port: 22 // TODO as input or output
-            }
+    public async getInstanceStatus(): Promise<InstanceStatus> {
+        let serverStatus: ServerRunningStatus = ServerRunningStatus.Unknown
+        if(await this.isProvisioned()){
+            const runner = await this.buildRunner()
+            serverStatus = await runner.serverStatus()
+        }
+
+        const details: InstanceStatus = {
+            serverStatus: serverStatus,
+            provisioned: await this.isProvisioned(),
+            configured: await this.isConfigured(),
+            ready: await this.isReady(),
         }
 
         return details
     }
 
-    public getStateJSON(){
-        return JSON.stringify(this.stateWriter.cloneState(), null, 2)
+    public async getState(): Promise<ST> {
+        return this.stateWriter.cloneState()
     }
 
     async getInputs(): Promise<CommonInstanceInput> {
@@ -260,5 +280,27 @@ export class GenericInstanceManager<ST extends InstanceStateV1> implements Insta
             provision: state.provision.input,
             configuration: state.configuration.input
         }
+    }
+
+    async isConfigured(): Promise<boolean> {
+        const currentState = this.stateWriter.cloneState()
+        return currentState.configuration.output !== undefined
+    }
+
+    async isProvisioned(): Promise<boolean> {
+        const currentState = this.stateWriter.cloneState()
+        return currentState.provision.output !== undefined
+    }
+
+    async isReady(): Promise<boolean> {
+        const isConfiguredAndProvisioned = await this.isConfigured() && await this.isProvisioned()
+        if(!isConfiguredAndProvisioned){
+            return false
+        }
+
+        // building runner fails if instance is not provisioned
+        const runner = await this.buildRunner()
+        const streamingServerReady = await runner.isStreamingServerReady()
+        return streamingServerReady
     }
 }

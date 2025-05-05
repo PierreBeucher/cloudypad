@@ -24,9 +24,9 @@ function create_destroy_scaleway() {
 
     $cloudypad_cmd deploy $instance_name --yes
 
-    $cloudypad_cmd get $instance_name
-
     $cloudypad_cmd list | grep $instance_name
+
+    check_instance_status $instance_name
 
     $cloudypad_cmd stop $instance_name --wait
 

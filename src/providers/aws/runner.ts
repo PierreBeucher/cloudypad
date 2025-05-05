@@ -1,6 +1,6 @@
 import { InstanceStateName } from '@aws-sdk/client-ec2';
 import { CLOUDYPAD_PROVIDER_AWS } from '../../core/const';
-import { AbstractInstanceRunner, InstanceRunnerArgs, InstanceRunningStatus, StartStopOptions } from '../../core/runner';
+import { AbstractInstanceRunner, InstanceRunnerArgs, ServerRunningStatus, StartStopOptions } from '../../core/runner';
 import { AwsClient } from '../../tools/aws';
 import { AwsProvisionInputV1, AwsProvisionOutputV1 } from './state';
 
@@ -35,29 +35,29 @@ export class AwsInstanceRunner extends AbstractInstanceRunner<AwsProvisionInputV
         await this.awsClient.restartInstance(instanceId, opts)
     }
 
-    async doGetInstanceStatus(): Promise<InstanceRunningStatus> {
+    async doGetInstanceStatus(): Promise<ServerRunningStatus> {
         const instanceId = this.getInstanceId()
         const awsStatus = await this.awsClient.getInstanceState(instanceId)
 
         if(!awsStatus) {
-            return InstanceRunningStatus.Unknown
+            return ServerRunningStatus.Unknown
         }
 
         switch(awsStatus) { 
             case InstanceStateName.running:
-                return InstanceRunningStatus.Running
+                return ServerRunningStatus.Running
             case InstanceStateName.stopped:
-                return InstanceRunningStatus.Stopped
+                return ServerRunningStatus.Stopped
             case InstanceStateName.stopping:
-                return InstanceRunningStatus.Stopping
+                return ServerRunningStatus.Stopping
             case InstanceStateName.terminated:
-                return InstanceRunningStatus.Stopped
+                return ServerRunningStatus.Stopped
             case InstanceStateName.shutting_down:
-                return InstanceRunningStatus.Stopping
+                return ServerRunningStatus.Stopping
             case InstanceStateName.pending:
-                return InstanceRunningStatus.Starting
+                return ServerRunningStatus.Starting
             default:
-                return InstanceRunningStatus.Unknown
+                return ServerRunningStatus.Unknown
         }
     }
 }
