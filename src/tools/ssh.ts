@@ -201,6 +201,10 @@ export class SSHClient {
         
     }
     private async doConnect(){
+        // avoid multiple connections otherwise ssh client leave multiple connections open
+        // which make program hangs
+        if(this.client.isConnected()) return this.client
+
         return this.client.connect({
             host: this.args.host,
             port: this.args.port,
