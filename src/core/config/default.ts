@@ -1,7 +1,14 @@
 import { CoreConfig } from "../config/interface"
 import path from "path"
+import { getLogger } from "../../log/utils"
 
-export class DefaultConfigValues {    
+/**
+ * Load Core config from environments (local file, environment variables, etc.)
+ * Only default and environment variables are supported for now.
+ */
+export class ConfigLoader {
+
+    private logger = getLogger(ConfigLoader.name)
     
     /**
      * Return default local Cloudy Pad data root dir (aka Cloudy Pad Home), by order of priority:
@@ -9,7 +16,7 @@ export class DefaultConfigValues {
      * - $HOME/.cloudypad
      * - Fails is neither CLOUDYPAD_HOME nor HOME is set
      */
-    static defaultLocalDataRootDir(): string {
+    loadLocalDataRootDir(): string {
         if (process.env.CLOUDYPAD_HOME) {
             return process.env.CLOUDYPAD_HOME
         } else {
@@ -21,34 +28,42 @@ export class DefaultConfigValues {
         }
     }
 
-    static buildDefaultConfig(): CoreConfig {
-        return {
-            stateBackend: DefaultConfigValues.buildDefaultStateBackendConfig(),
-            pulumi: DefaultConfigValues.buildDefaultPulumiConfig()
+    loadConfig(): CoreConfig {
+
+        const config = {
+            stateBackend: this.loadStateBackendConfig(),
+            pulumi: this.loadPulumiConfig()
         }
+
+        this.logger.debug("Loaded Cloudypad Core config: " + JSON.stringify(config))
+        
+        return config
     }
 
-    /**
-     * Build default state backend config using local file under Cloudy Pad data home directory.
-     */
-    static buildDefaultStateBackendConfig(): CoreConfig["stateBackend"] {
-        return {
-            local: {
-                dataRootDir: DefaultConfigValues.defaultLocalDataRootDir()
+    loadStateBackendConfig(): CoreConfig["stateBackend"] {
+
+        if(process.env.CLOUDYPAD_STATE_BACKEND_S3_BUCKET_NAME) {
+            return {
+                s3: {
+                    bucketName: process.env.CLOUDYPAD_STATE_BACKEND_S3_BUCKET_NAME,
+                }
+            }
+        } else {
+            return {
+                local: {
+                    dataRootDir: this.loadLocalDataRootDir()
+                }
             }
         }
     }
 
-    /**
-     * Build default Pulumi config using local backend under Cloudy Pad data home directory.
-     */
-    static buildDefaultPulumiConfig(): CoreConfig["pulumi"] {
+    loadPulumiConfig(): CoreConfig["pulumi"] {
 
         return {
             workspaceOptions: {
                 envVars: {
-                    PULUMI_BACKEND_URL: `file://${path.join(DefaultConfigValues.defaultLocalDataRootDir(), "pulumi-backend")}`,
-                    PULUMI_CONFIG_PASSPHRASE: ""
+                    PULUMI_BACKEND_URL: process.env.PULUMI_BACKEND_URL ?? `file://${path.join(this.loadLocalDataRootDir(), "pulumi-backend")}`,
+                    PULUMI_CONFIG_PASSPHRASE: process.env.PULUMI_CONFIG_PASSPHRASE ?? ""
                 }
             }
         }

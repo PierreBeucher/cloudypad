@@ -15,8 +15,8 @@ import { DUMMY_AWS_PULUMI_OUTPUT, DUMMY_AZURE_PULUMI_OUTPUT, DUMMY_GCP_PULUMI_OU
 import { AnalyticsManager } from '../../src/tools/analytics/manager';
 import { NoOpAnalyticsClient } from '../../src/tools/analytics/client';
 import { ScalewayClient } from '../../src/tools/scaleway';
-import { ConfigManager } from '../../src/cli/config';
-import { DefaultConfigValues } from '../../src/core/config/default';
+import { CliConfigManager } from '../../src/cli/config';
+import { ConfigLoader } from '../../src/core/config/default';
 import { SshKeyLoader } from '../../src/tools/ssh';
 
 
@@ -43,12 +43,12 @@ export const mochaHooks = {
 
         // Force environment data root dir to a temp directory for unit tests
         const dummyCloudyPadHome = mkdtempSync(path.join(tmpdir(), ".cloudypad-unit-tests-data-root-dir"))
-        sinon.stub(DefaultConfigValues, 'defaultLocalDataRootDir').callsFake(() => {
+        sinon.stub(ConfigLoader.prototype, 'loadLocalDataRootDir').callsFake(() => {
             return dummyCloudyPadHome
         })
 
         // Initialize dummy config
-        const configManager = ConfigManager.getInstance()
+        const configManager = CliConfigManager.getInstance()
         configManager.init()
 
         // Force dummy analytics client

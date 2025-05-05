@@ -8,14 +8,14 @@
 // - Initialize analytics client if enabled
 //
 
-import { ConfigManager } from "./config"
+import { CliConfigManager } from "./config"
 import { buildProgram, shutdownAnalytics, cleanupAndExit, handleErrorAnalytics, logFullError } from "./program"
 import { AnalyticsInitializer } from "../tools/analytics/initializer"
 import { AnalyticsManager } from "../tools/analytics/manager"
 
 async function main(){
     try {
-        ConfigManager.getInstance().init()
+        CliConfigManager.getInstance().init()
         await new AnalyticsInitializer().promptAnalyticsConsentUnlessAlreadyDone()
 
         const program = buildProgram()

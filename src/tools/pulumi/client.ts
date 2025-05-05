@@ -1,7 +1,7 @@
 import * as fs from 'fs'
 import { CommandError, InlineProgramArgs, LocalWorkspace, LocalWorkspaceOptions, OutputMap, PulumiFn, Stack } from "@pulumi/pulumi/automation";
 import { getLogger, Logger } from '../../log/utils';
-import { ConfigManager } from '../../cli/config';
+import { CliConfigManager } from '../../cli/config';
 
 export interface InstancePulumiClientArgs {
     program: PulumiFn

@@ -1,7 +1,7 @@
 import * as fs from 'fs'
 import * as assert from 'assert'
 import * as yaml from 'js-yaml'
-import { ConfigManager, BASE_DEFAULT_CONFIG, CloudyPadGlobalConfigV1, CloudyPadGlobalConfigSchemaV1, AnalyticsCollectionMethod } from '../../../src/cli/config'
+import { CliConfigManager, BASE_DEFAULT_CONFIG, CloudyPadGlobalConfigV1, CloudyPadGlobalConfigSchemaV1, AnalyticsCollectionMethod } from '../../../src/cli/config'
 import { createTempTestDir } from '../utils'
 import path from 'path'
 import lodash from 'lodash'
@@ -12,7 +12,7 @@ describe('ConfigManager', () => {
     describe('Initialization', () => {
         it('init should create default config without overwriting existing config', () => {
             const tmpDataRootDir = createTempTestDir("config-manager-init")
-            const configManager = new ConfigManager(tmpDataRootDir)
+            const configManager = new CliConfigManager(tmpDataRootDir)
             configManager.init()
 
             // Ensure config has been written and is parseable wirh Zod
@@ -59,7 +59,7 @@ describe('ConfigManager', () => {
 
     describe('Config update', () => {
 
-        const configUpdateTestManager = new ConfigManager(createTempTestDir("config-manager-update"))
+        const configUpdateTestManager = new CliConfigManager(createTempTestDir("config-manager-update"))
         configUpdateTestManager.init()
 
         it('should update prompted approval', () => {
@@ -103,7 +103,7 @@ describe('ConfigManager', () => {
                 }
             })), "utf-8")
 
-            const configManager = new ConfigManager(tmpDataRootDir)
+            const configManager = new CliConfigManager(tmpDataRootDir)
             const loadedConfig = configManager.load() as any
 
             // Check config now has correct schema
@@ -125,7 +125,7 @@ describe('ConfigManager', () => {
             oldConfig.analytics.promptedApproval = true
             fs.writeFileSync(expectConfigPath, yaml.dump(oldConfig), "utf-8")
 
-            const configManager = new ConfigManager(tmpDataRootDir)
+            const configManager = new CliConfigManager(tmpDataRootDir)
             const loadedConfig = configManager.load() as any
 
             // Check config now has correct schema
@@ -155,7 +155,7 @@ describe('ConfigManager', () => {
             fs.writeFileSync(expectConfigPath, yaml.dump(dummyConfig), "utf-8")
 
             // Try to load
-            const configManager = new ConfigManager(tmpDataRootDir)
+            const configManager = new CliConfigManager(tmpDataRootDir)
             const loadedConfig = configManager.load()
 
             assert.deepStrictEqual(loadedConfig, dummyConfig, 'Loaded config should match the written config')
@@ -163,7 +163,7 @@ describe('ConfigManager', () => {
 
         it('should throw an error if config file is missing', () => {
             const tmpDataRootDir = createTempTestDir("config-manager-load-err")
-            const configManager = new ConfigManager(tmpDataRootDir)
+            const configManager = new CliConfigManager(tmpDataRootDir)
 
             assert.throws(
                 () => configManager.load(),
