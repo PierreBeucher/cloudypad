@@ -10,13 +10,17 @@ export CLOUDYPAD_IMAGE="ghcr.io/pierrebeucher/cloudypad:local"
 # Use container image or local script directly
 # Faster with local script but may miss container image issue
 
+# task build-core-container-local > /dev/null && cloudypad_cmd="./cloudypad.sh"
+cloudypad_cmd="npx tsx src/cli/main.ts" # TODO
 
 # Verify instance status after deployment
 # Use a retry pattern to wait for readiness
 function check_instance_status() {
     local instance_name=$1
-    local retries=6
+    local retries=3
     local wait_time=5
+
+    echo "Checking instance status for $instance_name"
 
     for ((i=1; i<=retries; i++)); do
         get_instance_result=$($cloudypad_cmd get $instance_name)

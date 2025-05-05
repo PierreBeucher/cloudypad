@@ -29,6 +29,8 @@ function create_destroy_aws() {
 
     $cloudypad_cmd list | grep $instance_name
 
+    check_instance_status $instance_name
+
     $cloudypad_cmd stop $instance_name --wait
 
     # Instance can't be started immediately after stop
