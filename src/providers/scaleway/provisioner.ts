@@ -49,6 +49,7 @@ export class ScalewayProvisioner extends AbstractInstanceProvisioner<ScalewayPro
             instanceName: pulumiOutputs.instanceName,
             instanceServerId: pulumiOutputs.instanceServerId,
             dataDiskId: pulumiOutputs.dataDiskId,
+            rootDiskId: pulumiOutputs.rootDiskId,
         }
 
     }

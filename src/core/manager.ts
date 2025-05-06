@@ -7,6 +7,34 @@ import { StateWriter } from './state/writer';
 import { AnsibleConfigurator } from '../configurators/ansible';
 import { CoreConfig } from './config/interface';
 
+/**
+ * Instance details suitable for end users, hiding or simplyfing internal details
+ */
+export interface CloudyPadInstanceDetails {
+    /**
+     * instance name
+     */
+    name: string
+
+    /**
+     * Public hostname (IP or address)
+     */
+    hostname: string
+
+    /**
+     * Moonlight pairing port
+     */
+    pairingPort: number
+
+    /**
+     * SSH config
+     */
+    ssh: {
+        user: string
+        port: number
+    }
+}
+
 export interface InstanceStatus {
 
     /**
@@ -123,6 +151,11 @@ export interface InstanceManager {
     restart(opts?: StartStopOptions): Promise<void>
     pairInteractive(): Promise<void>
     pairSendPin(pin: string, retries?: number, retryDelay?: number): Promise<boolean>
+
+    /**
+     * Returns the instance details: hostname, pairing port, ssh config...
+     */
+    getInstanceDetails(): Promise<CloudyPadInstanceDetails>
 
     /**
      * Returns detailed status of the instance: configurationd details, running status, provisioned, configured and readiness
@@ -250,6 +283,22 @@ export class GenericInstanceManager<ST extends InstanceStateV1> implements Insta
     
     private async buildProvisioner(): Promise<InstanceProvisioner> {
         return this.factory.buildProvisioner(this.stateWriter.cloneState())
+    }
+
+    public async getInstanceDetails(): Promise<CloudyPadInstanceDetails> {
+        const runner = await this.buildRunner()
+        const state = this.stateWriter.cloneState()
+        const details: CloudyPadInstanceDetails = {
+            name: state.name,
+            hostname: state.provision.output?.host ?? "unknown",
+            pairingPort: 47989, // hardcoded for now
+            ssh: {
+                user: state.provision.input.ssh.user,
+                port: 22 // TODO as input or output
+            }
+        }
+
+        return details
     }
 
     public async getInstanceStatus(): Promise<InstanceStatus> {

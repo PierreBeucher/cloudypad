@@ -6,6 +6,8 @@ import { GenericStateParser } from "../../core/state/parser"
 const ScalewayProvisionOutputV1Schema = CommonProvisionOutputV1Schema.extend({
     instanceName: z.string().describe("Scaleway instance name"),
     instanceServerId: z.string().describe("Scaleway instance server ID"),
+    rootDiskId: z.string().describe("Scaleway root disk ID").optional(),
+    dataDiskId: z.string().describe("Scaleway data disk ID").optional(),
 })
 
 const ScalewayProvisionInputV1Schema = CommonProvisionInputV1Schema.extend({
