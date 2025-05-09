@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.26.0](https://github.com/PierreBeucher/cloudypad/compare/v0.25.0...v0.26.0) (2025-05-09)
+
+
+### Features
+
+* add instance readiness checks ([5e0d155](https://github.com/PierreBeucher/cloudypad/commit/5e0d1552ddb6a807c03927c882f35731bb8cfec7))
+* S3 side effect ([5ac1fa7](https://github.com/PierreBeucher/cloudypad/commit/5ac1fa73ef46fbfa45721a81d03a85c7c976d3f3))
+
+
+### Bug Fixes
+
+* avoid multiple SSH connections causing program hang ([c6df5c4](https://github.com/PierreBeucher/cloudypad/commit/c6df5c4754c57ea5df268f7b8c739e2d94e13327))
+
 ## [0.25.0](https://github.com/PierreBeucher/cloudypad/compare/v0.24.0...v0.25.0) (2025-04-30)
 
 
