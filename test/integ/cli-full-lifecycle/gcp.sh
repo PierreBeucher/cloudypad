@@ -31,6 +31,8 @@ function create_destroy_gcp() {
 
     $cloudypad_cmd list | grep $instance_name
 
+    check_instance_status $instance_name
+
     $cloudypad_cmd stop $instance_name --wait
 
     $cloudypad_cmd start $instance_name --wait

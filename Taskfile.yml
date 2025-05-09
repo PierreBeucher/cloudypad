@@ -62,6 +62,12 @@ tasks:
     - docker tag $CLOUDYPAD_BUILD_SUNSHINE_IMAGE_REGISTRY:$CLOUDYPAD_BUILD_SUNSHINE_IMAGE_TAG $CLOUDYPAD_BUILD_SUNSHINE_IMAGE_REGISTRY:dev
     - docker push $CLOUDYPAD_BUILD_SUNSHINE_IMAGE_REGISTRY:dev
 
+  dev-docker-core-build-push-image:
+    cmds:
+    - task: build-core-container-local
+    - docker tag $CLOUDYPAD_BUILD_CORE_IMAGE_REGISTRY:$CLOUDYPAD_BUILD_CORE_IMAGE_TAG $CLOUDYPAD_BUILD_CORE_IMAGE_REGISTRY:dev
+    - docker push $CLOUDYPAD_BUILD_CORE_IMAGE_REGISTRY:dev
+
   #
   # Tests
 

@@ -21,6 +21,13 @@
   when: sunshine_nvidia_enable
   tags: [ nvidia ]
 
+- name: Copy Sunshine readiness check script
+  become: true
+  copy:
+    src: cloudypad-check-readiness.sh
+    dest: "/usr/local/bin/cloudypad-check-readiness"
+    mode: '0755'
+
 # List of Compose files to use depending on GPU used
 - name: Set Docker Compose files
   tags: [ sunshine-docker ]

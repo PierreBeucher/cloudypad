@@ -2,6 +2,7 @@
 - name: "Wait for machine to be reachable (timeout: 10min)"
   hosts: all
   gather_facts: false
+  tags: [ always ] # always run this task to wait for SSH
   tasks:
     - wait_for_connection:
         timeout: 600

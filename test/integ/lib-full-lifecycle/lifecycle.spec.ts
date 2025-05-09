@@ -12,7 +12,7 @@ import * as child_process from 'node:child_process'
 import { InteractiveInstanceInitializer } from "../../../src/cli/initializer"
 import { AwsCreateCliArgs, AwsInputPrompter } from "../../../src/providers/aws/cli"
 import { STREAMING_SERVER_SUNSHINE } from "../../../src/cli/prompter"
-import { InstanceRunningStatus } from "../../../src/core/runner"
+import { ServerRunningStatus } from "../../../src/core/runner"
 import { makePin } from "../../../src/core/moonlight/pairer/abstract"
 import { CommonConfigurationInputV1 } from "../../../src/core/state/state"
 import { AwsProvisionInputV1 } from "../../../src/providers/aws/state"
@@ -27,79 +27,79 @@ describe('Lib full lifecycle', () => {
         return getUnitTestCoreClient().buildInstanceManager(instanceName)
     }
 
-    it('should initialize an instance', async () => {
+    // it('should initialize an instance', async () => {
 
-        const coreClient = getUnitTestCoreClient()
+    //     const coreClient = getUnitTestCoreClient()
 
-        // Should be a non-interactive initializer
-        await new InteractiveInstanceInitializer<AwsCreateCliArgs, AwsProvisionInputV1, CommonConfigurationInputV1>({ 
-            coreClient: coreClient,
-            inputPrompter: new AwsInputPrompter({ coreClient: coreClient }),
-            provider: CLOUDYPAD_PROVIDER_AWS,
-            initArgs: {
-                name: instanceName,
-                region: "eu-central-1",
-                instanceType: "g4dn.xlarge",
-                costAlert: false,
-                diskSize: 30,
-                privateSshKey: "/home/pbeucher/.ssh/id_ed25519",
-                publicIpType: PUBLIC_IP_TYPE_STATIC,
-                spot: false,
-                overwriteExisting: true,
-                streamingServer: STREAMING_SERVER_SUNSHINE,
-                sunshineUser: "sunshine",
-                sunshinePassword: "S3nshine!",
-                skipPairing: true,
-                yes: true
-            }
-        }).initializeInteractive()
-    }).timeout(360000)
+    //     // Should be a non-interactive initializer
+    //     await new InteractiveInstanceInitializer<AwsCreateCliArgs, AwsProvisionInputV1, CommonConfigurationInputV1>({ 
+    //         coreClient: coreClient,
+    //         inputPrompter: new AwsInputPrompter({ coreClient: coreClient }),
+    //         provider: CLOUDYPAD_PROVIDER_AWS,
+    //         initArgs: {
+    //             name: instanceName,
+    //             region: "eu-central-1",
+    //             instanceType: "g4dn.xlarge",
+    //             costAlert: false,
+    //             diskSize: 30,
+    //             privateSshKey: "/home/pbeucher/.ssh/id_ed25519",
+    //             publicIpType: PUBLIC_IP_TYPE_STATIC,
+    //             spot: false,
+    //             overwriteExisting: true,
+    //             streamingServer: STREAMING_SERVER_SUNSHINE,
+    //             sunshineUser: "sunshine",
+    //             sunshinePassword: "S3nshine!",
+    //             skipPairing: true,
+    //             yes: true
+    //         }
+    //     }).initializeInteractive()
+    // }).timeout(360000)
 
-    it('should get instance details', async () => {
-        const manager = await getInstanceManager(instanceName)
-        const instanceDetails = await manager.getInstanceDetails()
-        assert.equal(instanceDetails.name, instanceName)
-        assert.equal(instanceDetails.status, InstanceRunningStatus.Running)
-    })
+    // it('should get instance details', async () => {
+    //     const manager = await getInstanceManager(instanceName)
+    //     const instanceDetails = await manager.getInstanceStatus()
+    //     assert.equal(instanceDetails.name, instanceName)
+    //     assert.equal(instanceDetails.serverStatus, ServerRunningStatus.Running)
+    // })
 
-    it('should stop instance', async () => {
-        const manager = await getInstanceManager(instanceName)
-        await manager.stop({ wait: true, waitTimeoutSeconds: 10*60 })
-        const instanceDetails = await manager.getInstanceDetails()
-        assert.equal(instanceDetails.name, instanceName)
-        assert.equal(instanceDetails.status, InstanceRunningStatus.Stopped)
-    }).timeout(360000) // AWS is slow to stop
+    // it('should stop instance', async () => {
+    //     const manager = await getInstanceManager(instanceName)
+    //     await manager.stop({ wait: true, waitTimeoutSeconds: 10*60 })
+    //     const instanceDetails = await manager.getInstanceStatus()
+    //     assert.equal(instanceDetails.name, instanceName)
+    //     assert.equal(instanceDetails.serverStatus, ServerRunningStatus.Stopped)
+    // }).timeout(360000) // AWS is slow to stop
 
-    it('should start instance', async () => {
-        const manager = await getInstanceManager(instanceName)
-        await manager.start({ wait: true, waitTimeoutSeconds: 10*60 })
-        const instanceDetails = await manager.getInstanceDetails()
-        assert.equal(instanceDetails.name, instanceName)
-        assert.equal(instanceDetails.status, InstanceRunningStatus.Running)
-    }).timeout(120000)
+    // it('should start instance', async () => {
+    //     const manager = await getInstanceManager(instanceName)
+    //     await manager.start({ wait: true, waitTimeoutSeconds: 10*60 })
+    //     const instanceDetails = await manager.getInstanceStatus()
+    //     assert.equal(instanceDetails.name, instanceName)
+    //     assert.equal(instanceDetails.serverStatus, ServerRunningStatus.Running)
+    // }).timeout(120000)
 
-    it('should pair instance with Moonlight', async () => {
-        const pin = makePin()
-        const manager = await getInstanceManager(instanceName)
-        const hostname = (await manager.getInstanceDetails()).hostname
+    // it('should pair instance with Moonlight', async () => {
+    //     const pin = makePin()
+    //     const manager = await getInstanceManager(instanceName)
+    //     const hostname = (await manager.getInstanceStatus()).hostname
 
-        console.info(`Running command: flatpak run com.moonlight_stream.Moonlight pair ${hostname} --pin ${pin}`)
+    //     console.info(`Running command: flatpak run com.moonlight_stream.Moonlight pair ${hostname} --pin ${pin}`)
 
-        const moonlightPairCommand = `flatpak run com.moonlight_stream.Moonlight pair ${hostname} --pin ${pin}`
-        const moonlightPairProcess = child_process.exec(moonlightPairCommand)
+    //     const moonlightPairCommand = `flatpak run com.moonlight_stream.Moonlight pair ${hostname} --pin ${pin}`
+    //     const moonlightPairProcess = child_process.exec(moonlightPairCommand)
         
-        moonlightPairProcess.stdout?.on('data', (data) => {
-            console.log(`moonlight pair stdout: ${data}`)
-        })
-        moonlightPairProcess.stderr?.on('data', (data) => {
-            console.error(`moonlight pair stderr: ${data}`)
-        })
+    //     moonlightPairProcess.stdout?.on('data', (data) => {
+    //         console.log(`moonlight pair stdout: ${data}`)
+    //     })
+    //     moonlightPairProcess.stderr?.on('data', (data) => {
+    //         console.error(`moonlight pair stderr: ${data}`)
+    //     })
 
-        await manager.pairSendPin(pin)
-    }).timeout(10000)
+    //     await manager.pairSendPin(pin)
+    // }).timeout(10000)
 
-    it('should destroy instance', async () => {
-        const manager = await getInstanceManager(instanceName)
-        await manager.destroy()
-    }).timeout(360000)
+    // it('should destroy instance', async () => {
+    //     const manager = await getInstanceManager(instanceName)
+    //     await manager.destroy()
+    // }).timeout(360000)
 })

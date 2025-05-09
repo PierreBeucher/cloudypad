@@ -1,12 +1,10 @@
 import { CommonConfigurationInputV1, CommonProvisionInputV1, CommonProvisionOutputV1 } from './state/state';
 import { getLogger, Logger } from '../log/utils';
-import { AnalyticsManager } from '../tools/analytics/manager';
-import { RUN_COMMAND_START } from '../tools/analytics/events';
 import { CLOUDYPAD_PROVIDER } from './const';
 import { SunshineMoonlightPairer } from './moonlight/pairer/sunshine';
 import { MoonlightPairer } from './moonlight/pairer/abstract';
 import { WolfMoonlightPairer } from './moonlight/pairer/wolf';
-import { SshKeyLoader } from '../tools/ssh';
+import { buildSshClientArgsForInstance, buildClientForInstance as buildSshClientForInstance, SSHClient, SshKeyLoader } from '../tools/ssh';
 
 /**
  * Options that may be passed to InstanceRunner functions
@@ -15,7 +13,7 @@ export interface InstanceRunnerOptions  {
 
 }
 
-export enum InstanceRunningStatus {
+export enum ServerRunningStatus {
     Running = 'running',
     Stopped = 'stopped',
     Restarting = 'restarting',
@@ -37,7 +35,7 @@ export interface InstanceRunner {
     /**
      * Returns the current running status of the instance
      */
-    instanceStatus(): Promise<InstanceRunningStatus>
+    serverStatus(): Promise<ServerRunningStatus>
 
     /**
      * Interactively pair with Moonlight. This is only suitable for interactive (eg. CLI) use
@@ -49,6 +47,12 @@ export interface InstanceRunner {
      * @returns true if the PIN was valid and pairing was successful, false otherwise
      */
     pairSendPin(pin: string, retries?: number, retryDelay?: number): Promise<boolean>
+
+    /**
+     * Check if the streaming server is ready
+     */
+    isStreamingServerReady(): Promise<boolean>
+
 }
 
 export interface InstanceRunnerArgs<C extends CommonProvisionInputV1, O extends CommonProvisionOutputV1>  {
@@ -90,7 +94,7 @@ export abstract class AbstractInstanceRunner<C extends CommonProvisionInputV1, O
         await this.doRestart(opts)
     }
 
-    async instanceStatus(): Promise<InstanceRunningStatus> {
+    async serverStatus(): Promise<ServerRunningStatus> {
         this.logger.info(`Getting instance state for ${this.args.instanceName}`) 
         return this.doGetInstanceStatus()
     }
@@ -98,18 +102,23 @@ export abstract class AbstractInstanceRunner<C extends CommonProvisionInputV1, O
     protected abstract doStart(opts?: StartStopOptions): Promise<void>
     protected abstract doStop(opts?: StartStopOptions): Promise<void>
     protected abstract doRestart(opts?: StartStopOptions): Promise<void>
-    protected abstract doGetInstanceStatus(): Promise<InstanceRunningStatus>
+    protected abstract doGetInstanceStatus(): Promise<ServerRunningStatus>
 
     private buildMoonlightPairer(): MoonlightPairer {
-        const sshKeyPath = new SshKeyLoader().getSshPrivateKeyPath(this.args.provisionInput.ssh)
+
+        const sshClientArgs = buildSshClientArgsForInstance({
+            instanceName: this.args.instanceName,
+            provisionInput: this.args.provisionInput,
+            provisionOutput: this.args.provisionOutput
+        })
 
         if(this.args.configurationInput.sunshine?.enable){
             return new SunshineMoonlightPairer({
                 instanceName: this.args.instanceName,
-                host: this.args.provisionOutput.host,
+                host: sshClientArgs.host,
                 ssh: {
-                    user: this.args.provisionInput.ssh.user,
-                    privateKeyPath: sshKeyPath
+                    user: sshClientArgs.user,
+                    privateKeyPath: sshClientArgs.privateKeyPath
                 },
                 sunshine: {
                     username: this.args.configurationInput.sunshine.username,
@@ -119,10 +128,10 @@ export abstract class AbstractInstanceRunner<C extends CommonProvisionInputV1, O
         } else if(this.args.configurationInput.wolf?.enable){
             return new WolfMoonlightPairer({
                 instanceName: this.args.instanceName,
-                host: this.args.provisionOutput.host,
+                host: sshClientArgs.host,
                 ssh: {
-                    user: this.args.provisionInput.ssh.user,
-                    privateKeyPath: sshKeyPath
+                    user: sshClientArgs.user,
+                    privateKeyPath: sshClientArgs.privateKeyPath
                 }
             })
         } else {
@@ -140,6 +149,53 @@ export abstract class AbstractInstanceRunner<C extends CommonProvisionInputV1, O
         await pairer.pairInteractive()
     }
 
-   
-}
+    /**
+     * Check if the streaming server is ready to accept connections.
+     * current implementation uses cloudypad-check-readiness script installed on machine
+     * this is an implicit interface every CloudyPad instance must have a "cloudypad-check-readiness" script installed
+     * otherwise this method will always return false
+     */
+    async isStreamingServerReady(): Promise<boolean> {
 
+        this.logger.debug(`Checking instance ${this.args.instanceName} readiness: checking if instance is started`)
+
+        const status = await this.serverStatus()
+        if(status !== ServerRunningStatus.Running){
+            this.logger.debug(`Checking instance ${this.args.instanceName} readiness: instance is not running, returning false`)
+            return false
+        }
+
+        const sshClient = buildSshClientForInstance({
+            instanceName: this.args.instanceName,
+            provisionInput: this.args.provisionInput,
+            provisionOutput: this.args.provisionOutput
+        })
+
+        try {
+
+            const isReady = await sshClient.isReady()
+            if(!isReady){
+                this.logger.debug(`Checking instance ${this.args.instanceName} readiness: SSH is not ready, returning false`)
+                return false
+            }
+
+            this.logger.debug(`Checking instance ${this.args.instanceName} readiness: running check ssh command`)
+
+            await sshClient.connect()
+
+            // ignore non-zero exit code as command is expected to fail if the streaming server is not ready
+            const result = await sshClient.command(['cloudypad-check-readiness'], {
+                ignoreNonZeroExitCode: true
+            })
+
+            this.logger.debug(`Checking instance ${this.args.instanceName} readiness: SSH command returned ${result.code}`)
+
+            return result.code === 0
+        } catch (error) {
+            this.logger.info(`Unexpected error while checking if streaming server is ready for instance ${this.args.instanceName}`, { cause: error })
+            return false
+        } finally {
+            sshClient.dispose()
+        }
+    }
+}

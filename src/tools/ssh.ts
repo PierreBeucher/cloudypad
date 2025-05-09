@@ -2,7 +2,7 @@ import { NodeSSH, SSHExecCommandResponse } from "node-ssh";
 import * as sshpk from 'sshpk';
 import * as fs from 'fs'
 import { getLogger, Logger } from "../log/utils";
-import { CommonProvisionInputV1 } from "../core/state/state";
+import { CommonProvisionInputV1, CommonProvisionOutputV1, InstanceStateV1 } from "../core/state/state";
 import * as tmp from "tmp"
 import { fromBase64 } from "./base64";
 
@@ -42,6 +42,43 @@ export interface SSHCommandOpts {
 }
 
 /**
+ * Build an SSH client for an instance. Use inputs and outputs to generate a client using proper SSH configs.
+ * @param instanceName - Instance name
+ * @param provisionInput - Instance provision input
+ * @param provisionOutput - Instance provision output
+ * @returns SSH client
+ */
+export function buildClientForInstance(args: {
+    instanceName: string,
+    provisionInput: CommonProvisionInputV1,
+    provisionOutput: CommonProvisionOutputV1
+}): SSHClient {
+    const sshKeyPath = new SshKeyLoader().getSshPrivateKeyPath(args.provisionInput.ssh)
+
+    return new SSHClient(buildSshClientArgsForInstance(args))
+}
+
+/**
+ * Build SSH client arguments for given instance. Args can be used to instantiate SSHClient.
+ * @param args - Instance arguments
+ * @returns SSH client arguments
+ */
+export function buildSshClientArgsForInstance(args: {
+    instanceName: string, 
+    provisionInput: CommonProvisionInputV1, 
+    provisionOutput: CommonProvisionOutputV1
+}): SSHClientArgs {
+    const sshKeyPath = new SshKeyLoader().getSshPrivateKeyPath(args.provisionInput.ssh)
+    return {
+        clientName: args.instanceName,
+        host: args.provisionOutput.host,
+        port: 22,
+        user: args.provisionInput.ssh.user,
+        privateKeyPath: sshKeyPath
+    }
+}
+
+/**
  * Simple SSH client implementation
  */
 export class SSHClient {
@@ -54,6 +91,21 @@ export class SSHClient {
         this.args = args
         this.client = new NodeSSH()
         this.logger = getLogger(args.clientName)
+    }
+
+    /**
+     * Check if SSH is ready by trying to connect to the server
+     * @returns true if SSH is ready, false otherwise
+     */
+    async isReady(){
+
+        try {
+            await this.connect()
+            return true
+        } catch (e) {
+            this.logger.debug(`Expected error checking for SSH connection: ${e}`)
+            return false
+        }
     }
 
     async command(cmd: string[], args?: SSHCommandOpts) : Promise<SSHExecCommandResponse>{
@@ -149,11 +201,15 @@ export class SSHClient {
         
     }
     private async doConnect(){
+        // avoid multiple connections otherwise ssh client leave multiple connections open
+        // which make program hangs
+        if(this.client.isConnected()) return this.client
+
         return this.client.connect({
             host: this.args.host,
             port: this.args.port,
             username: this.args.user,
-            privateKeyPath: this.args.privateKeyPath
+            privateKeyPath: this.args.privateKeyPath            
         });
     }
     

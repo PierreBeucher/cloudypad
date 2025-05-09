@@ -24,6 +24,7 @@ class CloudyPadScalewayInstance extends pulumi.ComponentResource {
     public readonly instanceName: pulumi.Output<string>
     public readonly instanceServerId: pulumi.Output<string>
     public readonly dataDiskId: pulumi.Output<string | undefined>
+    public readonly rootDiskId: pulumi.Output<string>
 
     constructor(name: string, args: ScalewayInstanceArgs, opts?: pulumi.ComponentResourceOptions) {
         super("crafteo:cloudypad:scaleway:vm", name, args, opts)
@@ -96,7 +97,8 @@ class CloudyPadScalewayInstance extends pulumi.ComponentResource {
 
         // disk id looks like this: "fr-par-2/4becedc8-51e9-4320-a45c-20f0f57033fa"
         // we want to extract only the ID
-        this.dataDiskId = dataDisk ? dataDisk.id.apply(id => id.split("/").pop() as string) : pulumi.output(undefined)
+        this.rootDiskId = server.rootVolume.volumeId.apply(id => id.split("/").pop() as string)
+        this.dataDiskId = dataDisk ? dataDisk.id.apply(id => id.split("/").pop()) : pulumi.output(undefined)
     }
 }
 
@@ -132,7 +134,8 @@ async function scalewayPulumiProgram(): Promise<Record<string, any> | void> {
         instanceName: instance.instanceName,
         publicIp: instance.publicIp,
         instanceServerId: instance.instanceServerId,
-        dataDiskId: instance.dataDiskId
+        dataDiskId: instance.dataDiskId,
+        rootDiskId: instance.rootDiskId
     }
 }
 
@@ -156,6 +159,7 @@ export interface ScalewayPulumiOutput {
     instanceName: string
     instanceServerId: string
     publicIp: string
+    rootDiskId: string
     dataDiskId?: string
 }
 
@@ -204,6 +208,7 @@ export class ScalewayPulumiClient extends InstancePulumiClient<PulumiStackConfig
             instanceName: outputs["instanceName"].value as string,
             publicIp: outputs["publicIp"].value as string,
             instanceServerId: outputs["instanceServerId"].value as string,
+            rootDiskId: outputs["rootDiskId"]?.value as string,
             dataDiskId: outputs["dataDiskId"]?.value as string | undefined
         }   
     }

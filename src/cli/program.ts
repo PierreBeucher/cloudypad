@@ -184,15 +184,21 @@ export function buildProgram(){
     
     program
         .command('get <name>')
-        .description('Get details of an instance')
+        .description('Get current state of an instance and its status (running, provisioned, configured, ready)')
         .action(async (name) => {
             try {
                 analyticsClient.sendEvent(RUN_COMMAND_GET)
 
                 const m = await coreClient.buildInstanceManager(name)
-                const details = m.getStateJSON()
+                const state = await m.getState()
+                const status = await m.getInstanceStatus()
+
+                const result = {
+                    ...state,
+                    status: status
+                }
     
-                console.info(details)
+                console.info(JSON.stringify(result, null, 2))
             } catch (error) {
                 throw new Error(`Failed to get details of instance ${name}`, { cause: error })
             }
