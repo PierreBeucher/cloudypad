@@ -88,7 +88,7 @@ const InstanceStateV1Schema = z.object({
         output: CommonConfigurationOutputV1Schema.optional(),
         input: CommonConfigurationInputV1Schema,
     })
-}).passthrough()
+})
 
 const CostAlertSchema = z.object({
     limit: z.number().describe("Cost alert limit"),

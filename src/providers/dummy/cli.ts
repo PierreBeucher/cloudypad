@@ -52,7 +52,7 @@ export class DummyInputPrompter extends AbstractInputPrompter<DummyCreateCliArgs
                     configurationDelaySeconds: partialInput.provision?.configurationDelaySeconds ?? 0,
                     provisioningDelaySeconds: partialInput.provision?.provisioningDelaySeconds ?? 0,
                     readinessAfterStartDelaySeconds: partialInput.provision?.readinessAfterStartDelaySeconds ?? 0,
-                    initialState: partialInput.provision?.initialServerStateAfterProvision ?? "stopped",
+                    initialState: partialInput.provision?.initialServerStateAfterProvision ?? "running",
                 }
             })
         

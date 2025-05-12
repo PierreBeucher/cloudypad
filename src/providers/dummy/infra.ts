@@ -75,7 +75,7 @@ class DummyInstanceInternalMemory {
         if (!currentInfra) {
             this.logger.debug(`Dummy instance infra: no infrastructure found for ${instanceName}, creating new infrastructure`)
             const newInfra: DummyInstanceInfrastructure = {
-                status: ServerRunningStatus.Unknown,
+                status: ServerRunningStatus.Stopped,
                 lastUpdate: 0
             }
             this.dummyInfrastructure.set(instanceName, newInfra)
