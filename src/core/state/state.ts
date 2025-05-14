@@ -43,6 +43,7 @@ const CommonConfigurationInputV1Schema = z.object({
         username: z.string().describe("Sunshine web UI username"),
         imageTag: z.string().optional().describe("Sunshine container image tag. Default to current Cloudy Pad version"),
         imageRegistry: z.string().optional().describe("Sunshine container image registry. Default to Cloudy Pad registry"),
+        serverName: z.string().optional().describe("Sunshine server name that will appear in Moonlight. Default to instance name."),
     })
     .nullish(),
     keyboard: z.object({

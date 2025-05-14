@@ -1,5 +1,5 @@
 import * as assert from 'assert';
-import { AnsibleConfigurator } from "../../../src/configurators/ansible"
+import { AnsibleConfigurator, AnsibleConfiguratorArgs } from "../../../src/configurators/ansible"
 import { DEFAULT_COMMON_INPUT } from "../utils"
 import { CLOUDYPAD_SUNSHINE_IMAGE_REGISTRY, CLOUDYPAD_VERSION } from '../../../src/core/const';
 
@@ -100,5 +100,49 @@ describe('Ansible configurator', function () {
         }
 
         assert.ok(inventoryJson.all?.hosts?.["test-ansible-configurator-instance-default"]?.ansible_ssh_private_key_file)
+    })
+
+    it('should use Sunshine server name if provided in input)', async function () {
+        const instanceName = "test-ansible-configurator-instance-default"
+        const testConfig: AnsibleConfiguratorArgs = {
+            instanceName: instanceName,
+            provider: "test-ansible-configurator-provider-default",
+            configurationInput: {
+                sunshine: {
+                    enable: true,
+                    username: "test-ansible-configurator-username",
+                    passwordBase64: "test-ansible-configurator-password-base64",
+                }
+            },
+            provisionInput: DEFAULT_COMMON_INPUT.provision,
+            provisionOutput: {
+                host: "test-ansible-configurator-host", 
+            },
+        }
+        const configurator = new AnsibleConfigurator(testConfig)
+
+        const inventoryJsonWithoutServerName = await configurator.generateInventoryJsonObject()
+        assert.strictEqual(
+            inventoryJsonWithoutServerName.all?.hosts?.[instanceName]?.sunshine_server_name,
+            instanceName
+        )
+
+        const serverNameOverride = "server-name-override"
+        const testConfigWithServerName: AnsibleConfiguratorArgs = {
+            ...testConfig,
+            configurationInput: {
+                ...testConfig.configurationInput,
+                sunshine: {
+                    ...testConfig.configurationInput.sunshine!,
+                    serverName: serverNameOverride
+                }
+            }
+        }
+        const configuratorWithServerName = new AnsibleConfigurator(testConfigWithServerName)
+        const inventoryJsonWithServerName = await configuratorWithServerName.generateInventoryJsonObject()
+        assert.strictEqual(
+            inventoryJsonWithServerName.all?.hosts?.[instanceName]?.sunshine_server_name,
+            serverNameOverride
+        )
     })
 })
