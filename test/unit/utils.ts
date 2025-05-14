@@ -91,7 +91,12 @@ export const DUMMY_GCP_PULUMI_OUTPUT: GcpPulumiOutput = { instanceName: "dummy-g
 /**
  * Dummy output returned by Pulumi during unit test for Scaleway
  */
-export const DUMMY_SCALEWAY_PULUMI_OUTPUT: ScalewayPulumiOutput = { instanceName: "dummy-scw", publicIp: "127.0.0.1", instanceServerId: "server-123456789"}
+export const DUMMY_SCALEWAY_PULUMI_OUTPUT: ScalewayPulumiOutput = { 
+    instanceName: "dummy-scw", 
+    publicIp: "127.0.0.1", 
+    instanceServerId: "server-123456789",
+    rootDiskId: "disk-123456789"
+}
 
 export const DUMMY_V1_ROOT_DATA_DIR = path.resolve(__dirname, "..", "resources", "states", "v1-root-data-dir")
 

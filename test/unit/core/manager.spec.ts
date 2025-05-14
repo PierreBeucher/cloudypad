@@ -22,8 +22,8 @@ describe('Instance manager', () => {
             {
                 ...DEFAULT_COMMON_INPUT.provision,
                 instanceType: "dummy-instance-type-1",
-                startingTimeSeconds: 0,
-                stoppingTimeSeconds: 0
+                startDelaySeconds: 0,
+                stopDelaySeconds: 0,
             },
             {
                 ...DEFAULT_COMMON_INPUT.configuration,
@@ -49,7 +49,7 @@ describe('Instance manager', () => {
         const expectedStatusAfterProvision: InstanceStatus = {
             provisioned: true,
             configured: false,
-            serverStatus: ServerRunningStatus.Stopped,
+            serverStatus: ServerRunningStatus.Running,
             ready: false
         }
         assert.deepStrictEqual(actualStatusAfterProvision, expectedStatusAfterProvision)

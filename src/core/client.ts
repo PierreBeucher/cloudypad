@@ -22,6 +22,7 @@ import { StateWriter } from './state/writer';
 import { InstanceInitializer } from './initializer';
 import { InstanceUpdater } from './updater';
 import { GenericStateParser } from './state/parser';
+import { DummyInstanceInfraManager } from '../providers/dummy/infra';
 
 // This is the global config !
 export interface CloudypadClientArgs {
@@ -118,11 +119,20 @@ export class CloudypadClient {
             })
         })
 
+        // dummy provider needs an additional DummyInstanceInfraManager to be emulate
+        // actions when instance is provisioned and started/stopped, etc. 
         this.registerProvider(CLOUDYPAD_PROVIDER_DUMMY, async (state: InstanceStateV1) => {
             const dummyState = new DummyStateParser().parse(state)
+            const stateWriter = this.stateManagerBuilder.buildStateWriter(dummyState)
+            const dummyInfraManager = new DummyInstanceInfraManager({
+                instanceName: dummyState.name
+            })
             return new GenericInstanceManager({
-                stateWriter: this.stateManagerBuilder.buildStateWriter(dummyState),
-                factory: new DummySubManagerFactory(this.args.config)
+                stateWriter: stateWriter,
+                factory: new DummySubManagerFactory({
+                    coreConfig: this.args.config,
+                    dummyInfraManager: dummyInfraManager
+                })
             })
         })
     }

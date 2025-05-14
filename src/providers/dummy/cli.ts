@@ -12,8 +12,11 @@ import { cleanupAndExit, logFullError } from "../../cli/program";
 
 export interface DummyCreateCliArgs extends CreateCliArgs {
     instanceType?: string
-    startingTimeSeconds?: number
-    stoppingTimeSeconds?: number
+    startDelaySeconds?: number
+    stopDelaySeconds?: number
+    configurationDelaySeconds?: number
+    provisioningDelaySeconds?: number
+    readinessDelaySeconds?: number
 }
 
 export type DummyUpdateCliArgs = UpdateCliArgs
@@ -25,8 +28,11 @@ export class DummyInputPrompter extends AbstractInputPrompter<DummyCreateCliArgs
         return {
             provision: {
                 instanceType: cliArgs.instanceType,
-                startingTimeSeconds: cliArgs.startingTimeSeconds,
-                stoppingTimeSeconds: cliArgs.stoppingTimeSeconds,
+                startDelaySeconds: cliArgs.startDelaySeconds,
+                stopDelaySeconds: cliArgs.stopDelaySeconds,
+                configurationDelaySeconds: cliArgs.configurationDelaySeconds,
+                provisioningDelaySeconds: cliArgs.provisioningDelaySeconds,
+                readinessAfterStartDelaySeconds: cliArgs.readinessDelaySeconds,
             }
         }
     }
@@ -41,8 +47,12 @@ export class DummyInputPrompter extends AbstractInputPrompter<DummyCreateCliArgs
             {
                 provision:{
                     instanceType: instanceType,
-                    startingTimeSeconds: partialInput.provision?.startingTimeSeconds ?? 10,
-                    stoppingTimeSeconds: partialInput.provision?.stoppingTimeSeconds ?? 10,
+                    startDelaySeconds: partialInput.provision?.startDelaySeconds ?? 10,
+                    stopDelaySeconds: partialInput.provision?.stopDelaySeconds ?? 10,
+                    configurationDelaySeconds: partialInput.provision?.configurationDelaySeconds ?? 0,
+                    provisioningDelaySeconds: partialInput.provision?.provisioningDelaySeconds ?? 0,
+                    readinessAfterStartDelaySeconds: partialInput.provision?.readinessAfterStartDelaySeconds ?? 0,
+                    initialState: partialInput.provision?.initialServerStateAfterProvision ?? "running",
                 }
             })
         
