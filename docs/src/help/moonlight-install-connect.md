@@ -2,8 +2,8 @@
 
 - [Download and install Moonlight](#download-and-install-moonlight)
 - [Connect to your instance](#connect-to-your-instance)
-  - [Cloudy Pad SaaS](#cloudy-pad-saas)
-  - [Cloudy Pad CLI](#cloudy-pad-cli)
+  - [Cloudy Pad Platform](#cloudy-pad-platform)
+  - [Cloudy Pad Community](#cloudy-pad-community)
 - [Moonlight usage and configuration](#moonlight-usage-and-configuration)
 ## Download and install Moonlight
 
@@ -17,13 +17,15 @@ See [Official Moonlight website](https://moonlight-stream.org/#) for more inform
 
 ## Connect to your instance
 
-You must pair your instance with Moonlight before you can connect to it.
+### Cloudy Pad Platform
 
-### Cloudy Pad SaaS
+[Cloudy Pad platform](https://app.cloudypad.gg) lets you create instances via a web interface.
 
-Using [app.cloudypad.gg](https://app.cloudypad.gg), you can pair your instance via the web UI. Click on "Connect" button and follow instructions.
+After creating your instance, to go _My Instances_, click on _Connect_ and follow instructions on screen
 
-### Cloudy Pad CLI
+![Cloudy Pad Platform](../assets/platform-connect.png)
+
+### Cloudy Pad Community
 
 Pairing is done automatically when you run `cloudypad create`.
 

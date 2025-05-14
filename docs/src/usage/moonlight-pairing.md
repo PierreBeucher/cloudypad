@@ -6,7 +6,7 @@ Cloudy Pad requires Moonlight streaming client to connect to your instance.
 
 Moonlight is available [Windows, MacOS and Linux](https://github.com/moonlight-stream/moonlight-qt/releases). 
 
-[See Moonlight installation instructions](../help/moonlight.md) for other installation methods.
+[See Moonlight installation instructions](../help/moonlight-install-connect.html) for other installation methods.
 
 ## Run Moonlight and connect to your instance
 
