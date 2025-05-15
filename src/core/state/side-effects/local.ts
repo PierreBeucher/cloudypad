@@ -1,6 +1,6 @@
 import path from "path";
 import * as fs from 'fs'
-import * as yaml from 'js-yaml'
+import * as yaml from 'yaml'
 import { StateSideEffect } from "./abstract";
 import { InstanceStateV1 } from "../state";
 
@@ -52,7 +52,7 @@ export class LocalStateSideEffect extends StateSideEffect {
         this.logger.debug(`Persisting state for ${state.name} at ${statePath}`)
 
         await this.ensureInstanceDirExists(state.name)
-        fs.writeFileSync(statePath, yaml.dump(state), 'utf-8')
+        fs.writeFileSync(statePath, yaml.stringify(state), 'utf-8')
     }
 
     private async ensureInstanceDirExists(instanceName: string): Promise<void> {
@@ -125,7 +125,7 @@ export class LocalStateSideEffect extends StateSideEffect {
 
             
             this.logger.debug(`Loading instance V1 state for ${instanceName} at ${instanceStatePath}`)
-            return yaml.load(fs.readFileSync(instanceStatePath, 'utf8'))
+            return yaml.parse(fs.readFileSync(instanceStatePath, 'utf8'))
 
         } else {
             throw new Error(`Instance '${instanceName}' state not found at '${instanceStatePath}'`)

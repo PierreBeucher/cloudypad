@@ -1,4 +1,4 @@
-import * as yaml from 'js-yaml'
+import * as yaml from 'yaml'
 import { S3ClientConfig } from '@aws-sdk/client-s3'
 import { StateSideEffect } from './abstract'
 import { InstanceStateV1 } from '../state'
@@ -37,7 +37,7 @@ export class S3StateSideEffect extends StateSideEffect {
         const params = {
             Bucket: this.args.bucketName,
             Key: this.getInstanceStateKey(state.name),
-            Body: yaml.dump(state),
+            Body: yaml.stringify(state),
         }
         await this.s3.putObject(params)
 
@@ -78,7 +78,7 @@ export class S3StateSideEffect extends StateSideEffect {
             throw new Error(`No body found for ${instanceName}`)
         }
         const bodyContents = await data.Body.transformToString("utf-8")
-        return yaml.load(bodyContents)
+        return yaml.parse(bodyContents)
     }
 
     public async destroyState(instanceName: string): Promise<void> {

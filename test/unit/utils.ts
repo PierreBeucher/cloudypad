@@ -1,7 +1,7 @@
 import { CommonInstanceInput, InstanceStateV1 } from "../../src/core/state/state";
 import path from "path"
 import fs, { mkdtempSync } from "fs"
-import yaml from 'js-yaml'
+import yaml from 'yaml'
 import { AwsPulumiOutput } from "../../src/providers/aws/pulumi";
 import { AzurePulumiOutput } from "../../src/providers/azure/pulumi";
 import { GcpPulumiOutput } from "../../src/providers/gcp/pulumi";
@@ -115,7 +115,7 @@ export const DUMMY_PAPERSPACE_MACHINE: PaperspaceMachine = {
 
 export function loadRawDummyStateV1(instanceName: string): unknown {
     const filePath = path.resolve(DUMMY_V1_ROOT_DATA_DIR, 'instances', instanceName, 'state.yml')
-    return yaml.load(fs.readFileSync(filePath, 'utf-8'))
+    return yaml.parse(fs.readFileSync(filePath, 'utf-8'))
 }
 
 export function loadDumyAnonymousStateV1(instanceName: string): InstanceStateV1 {

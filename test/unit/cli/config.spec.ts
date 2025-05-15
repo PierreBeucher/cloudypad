@@ -1,6 +1,6 @@
 import * as fs from 'fs'
 import * as assert from 'assert'
-import * as yaml from 'js-yaml'
+import * as yaml from 'yaml'
 import { CliConfigManager, BASE_DEFAULT_CONFIG, CloudyPadGlobalConfigV1, CloudyPadGlobalConfigSchemaV1, AnalyticsCollectionMethod } from '../../../src/cli/config'
 import { createTempTestDir } from '../utils'
 import path from 'path'
@@ -19,7 +19,7 @@ describe('ConfigManager', () => {
             const expectConfigPath = path.join(tmpDataRootDir, "config.yml")
             assert.ok(fs.existsSync(expectConfigPath), 'Default config file should be created')
 
-            const writtenConfigRaw = yaml.load(fs.readFileSync(expectConfigPath, 'utf-8'))
+            const writtenConfigRaw = yaml.parse(fs.readFileSync(expectConfigPath, 'utf-8'))
             const writtenConfigParsed = CloudyPadGlobalConfigSchemaV1.safeParse(writtenConfigRaw)
             assert.equal(writtenConfigParsed.success, true, 'Config should be parseable with Zod')
 
@@ -97,7 +97,7 @@ describe('ConfigManager', () => {
             const expectConfigPath = path.join(tmpDataRootDir, "config.yml")
 
             /// Generate dummy config with old "enabled" field
-            fs.writeFileSync(expectConfigPath, yaml.dump(lodash.merge({}, BASE_DEFAULT_CONFIG, {
+            fs.writeFileSync(expectConfigPath, yaml.stringify(lodash.merge({}, BASE_DEFAULT_CONFIG, {
                 analytics: {
                     enabled: true,
                 }
@@ -110,7 +110,7 @@ describe('ConfigManager', () => {
             // and config file on disk has been rewritten with correct schema
             assert.equal(loadedConfig.analytics.enabled, undefined)
 
-            const writtenConfig = yaml.load(fs.readFileSync(expectConfigPath, 'utf-8'))
+            const writtenConfig = yaml.parse(fs.readFileSync(expectConfigPath, 'utf-8'))
             assert.deepEqual(writtenConfig, BASE_DEFAULT_CONFIG)
         })
 
@@ -123,7 +123,7 @@ describe('ConfigManager', () => {
             const oldConfig = lodash.cloneDeep(BASE_DEFAULT_CONFIG) as any
             oldConfig.analytics.promptedPersonalDataCollectionApproval = undefined
             oldConfig.analytics.promptedApproval = true
-            fs.writeFileSync(expectConfigPath, yaml.dump(oldConfig), "utf-8")
+            fs.writeFileSync(expectConfigPath, yaml.stringify(oldConfig), "utf-8")
 
             const configManager = new CliConfigManager(tmpDataRootDir)
             const loadedConfig = configManager.load() as any
@@ -133,7 +133,7 @@ describe('ConfigManager', () => {
             assert.equal(loadedConfig.analytics.promptedPersonalDataCollectionApproval, BASE_DEFAULT_CONFIG.analytics.promptedPersonalDataCollectionApproval, "promptedPersonalDataCollectionApproval should be BASE_DEFAULT_CONFIG.analytics.promptedPersonalDataCollectionApproval")
             assert.equal(loadedConfig.analytics.promptedApproval, undefined, "promptedApproval should be undefined")
 
-            const writtenConfig = yaml.load(fs.readFileSync(expectConfigPath, 'utf-8'))
+            const writtenConfig = yaml.parse(fs.readFileSync(expectConfigPath, 'utf-8'))
             assert.deepEqual(writtenConfig, BASE_DEFAULT_CONFIG)
         })
     })
@@ -152,7 +152,7 @@ describe('ConfigManager', () => {
             const expectConfigPath = path.join(tmpDataRootDir, "config.yml")
             
             // Write dummy config
-            fs.writeFileSync(expectConfigPath, yaml.dump(dummyConfig), "utf-8")
+            fs.writeFileSync(expectConfigPath, yaml.stringify(dummyConfig), "utf-8")
 
             // Try to load
             const configManager = new CliConfigManager(tmpDataRootDir)

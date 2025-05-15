@@ -1,7 +1,7 @@
 import * as assert from 'assert'
 import * as path from 'path'
 import { StateLoader } from '../../../../src/core/state/loader'
-import * as yaml from 'js-yaml'
+import * as yaml from 'yaml'
 import * as fs from 'fs'
 import { AwsInstanceStateV1 } from '../../../../src/providers/aws/state'
 import { createTempTestDir, DUMMY_V1_ROOT_DATA_DIR } from '../../utils'
@@ -73,7 +73,7 @@ describe('StateLoader', function () {
             const loader = createLoader()
             const parsedState = await loader.loadInstanceState('aws-dummy')
 
-            const expectedState = yaml.load(fs.readFileSync(
+            const expectedState = yaml.parse(fs.readFileSync(
                 path.resolve(DUMMY_V1_ROOT_DATA_DIR, 'instances/aws-dummy/state.yml'),
                 'utf-8'
             )) as AwsInstanceStateV1

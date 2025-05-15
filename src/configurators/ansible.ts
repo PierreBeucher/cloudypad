@@ -2,7 +2,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';
-import * as yaml from 'js-yaml';
+import * as yaml from 'yaml';
 import { CommonConfigurationInputV1, CommonProvisionInputV1, CommonProvisionOutputV1, InstanceStateV1 } from '../core/state/state';
 import { AbstractInstanceConfigurator } from '../core/configurator';
 import { getLogger, Logger } from '../log/utils';
@@ -50,11 +50,11 @@ export class AnsibleConfigurator<ST extends InstanceStateV1> extends AbstractIns
 
         this.logger.debug(`Using playbook ${playbookPath}`)
 
-        const inventoryJSON = await this.generateInventoryJsonObject()
+        const inventoryObject = await this.generateInventoryObject()
 
-        this.logger.trace(`Inventory content: ${JSON.stringify(inventoryJSON)}`)
+        this.logger.trace(`Inventory content: ${JSON.stringify(inventoryObject)}`)
 
-        const inventoryPath = await this.writeTempInventory(inventoryJSON)
+        const inventoryPath = await this.writeTempInventory(inventoryObject)
 
         const ansible = new AnsibleClient()
         await ansible.runAnsible(inventoryPath, playbookPath, this.args.additionalAnsibleArgs ?? [])
@@ -77,7 +77,7 @@ export class AnsibleConfigurator<ST extends InstanceStateV1> extends AbstractIns
 
         this.logger.debug(`Writing inventory file at ${inventoryPath}`)
 
-        fs.writeFileSync(inventoryPath, yaml.dump(jsonObjectInventory), 'utf8')
+        fs.writeFileSync(inventoryPath, yaml.stringify(jsonObjectInventory), 'utf8')
 
         return inventoryPath
     }
@@ -86,7 +86,7 @@ export class AnsibleConfigurator<ST extends InstanceStateV1> extends AbstractIns
      * Generate inventory content for Ansible as a JSON object
      * @returns Inventory content as a JSON object
      */
-    public async generateInventoryJsonObject(): Promise<any>   {
+    public async generateInventoryObject(): Promise<any>   {
         const sshPrivateKeyPath = new SshKeyLoader().getSshPrivateKeyPath(this.args.provisionInput.ssh)
 
         return {

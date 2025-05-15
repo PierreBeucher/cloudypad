@@ -1,4 +1,6 @@
 import * as assert from 'assert';
+import * as yaml from 'yaml';
+import * as lodash from 'lodash';
 import { AnsibleConfigurator, AnsibleConfiguratorArgs } from "../../../src/configurators/ansible"
 import { DEFAULT_COMMON_INPUT } from "../utils"
 import { CLOUDYPAD_SUNSHINE_IMAGE_REGISTRY, CLOUDYPAD_VERSION } from '../../../src/core/const';
@@ -17,7 +19,7 @@ describe('Ansible configurator', function () {
             }
         })
 
-        const inventoryContent = await configurator.generateInventoryJsonObject()
+        const inventoryContent = await configurator.generateInventoryObject()
 
         const expectedInventory = {
             all: {
@@ -74,7 +76,7 @@ describe('Ansible configurator', function () {
             }
         })
 
-        const inventoryJson = await configurator.generateInventoryJsonObject()
+        const inventoryJson = await configurator.generateInventoryObject()
 
         const expectedInventory = {
             all: {
@@ -121,7 +123,7 @@ describe('Ansible configurator', function () {
         }
         const configurator = new AnsibleConfigurator(testConfig)
 
-        const inventoryJsonWithoutServerName = await configurator.generateInventoryJsonObject()
+        const inventoryJsonWithoutServerName = await configurator.generateInventoryObject()
         assert.strictEqual(
             inventoryJsonWithoutServerName.all?.hosts?.[instanceName]?.sunshine_server_name,
             instanceName
@@ -139,7 +141,7 @@ describe('Ansible configurator', function () {
             }
         }
         const configuratorWithServerName = new AnsibleConfigurator(testConfigWithServerName)
-        const inventoryJsonWithServerName = await configuratorWithServerName.generateInventoryJsonObject()
+        const inventoryJsonWithServerName = await configuratorWithServerName.generateInventoryObject()
         assert.strictEqual(
             inventoryJsonWithServerName.all?.hosts?.[instanceName]?.sunshine_server_name,
             serverNameOverride
