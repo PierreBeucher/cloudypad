@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.27.0](https://github.com/PierreBeucher/cloudypad/compare/v0.26.0...v0.27.0) (2025-05-15)
+
+
+### Features
+
+* allow Sunshine server name override ([0463e41](https://github.com/PierreBeucher/cloudypad/commit/0463e41f9bb065d34a0c027014952df3c8c07307))
+
 ## [0.26.0](https://github.com/PierreBeucher/cloudypad/compare/v0.25.0...v0.26.0) (2025-05-09)
 
 
