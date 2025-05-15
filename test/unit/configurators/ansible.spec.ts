@@ -147,4 +147,52 @@ describe('Ansible configurator', function () {
             serverNameOverride
         )
     })
+
+    // should not fail YAML validation
+    it('should handle special characters in Sunshine server name)', async function () {
+        const instanceName = "test-ansible-configurator-server-name-with-special-characters"
+        const baseTestConfig: AnsibleConfiguratorArgs = {
+            instanceName: instanceName,
+            provider: "test-ansible-configurator-provider-default",
+            configurationInput: {
+                sunshine: {
+                    enable: true,
+                    username: "test-ansible-configurator-username",
+                    passwordBase64: "test-ansible-configurator-password-base64",
+                }
+            },
+            provisionInput: DEFAULT_COMMON_INPUT.provision,
+            provisionOutput: {
+                host: "test-ansible-configurator-host", 
+            },
+        }
+
+        const test1 = lodash.merge(baseTestConfig, {
+            configurationInput: {
+                sunshine: {
+                    serverName: "test:\n|-\n<script>alert('foo')</script>\naa\n"
+                }
+            }
+        })
+        const configurator = new AnsibleConfigurator(test1)
+        const inventoryJson = await configurator.generateInventoryObject()
+        const yamlInventory = yaml.stringify(inventoryJson)
+        const yamlResult = yaml.parse(yamlInventory)
+
+        assert.strictEqual(yamlResult.all.hosts[instanceName].sunshine_server_name, "test:\n|-\n<script>alert('foo')</script>\naa\n")
+
+        const test2 = lodash.merge(baseTestConfig, {
+            configurationInput: {
+                sunshine: {
+                    serverName: "`~!@#$%^&*()\\_+{}|\n:\"<>?[]\;',./`-=€£¥§©®±¶•ªº¿½¼¾\\`"
+                }
+            }
+        })
+
+        const configurator2 = new AnsibleConfigurator(test2)
+        const inventoryJson2 = await configurator2.generateInventoryObject()
+        const yamlInventory2 = yaml.stringify(inventoryJson2)
+        const yamlResult2 = yaml.parse(yamlInventory2)
+        assert.strictEqual(yamlResult2.all.hosts[instanceName].sunshine_server_name, "`~!@#$%^&*()\\_+{}|\n:\"<>?[]\;',./`-=€£¥§©®±¶•ªº¿½¼¾\\`")
+    })
 })
