@@ -52,7 +52,8 @@ services:
       # If unset or empty, can be set via Web UI directly
       SUNSHINE_WEB_PASSWORD_BASE64: "{{ sunshine_web_password_base64 }}"
       SUNSHINE_WEB_USERNAME: "{{ sunshine_web_username }}"
-      SUNSHINE_SERVER_NAME: "{{ sunshine_server_name }}"
+      SUNSHINE_SERVER_NAME: >-
+        {{ sunshine_server_name | to_yaml | indent(8) }}
 
       # Optional additional Sunshine config
       # Use "\n" for multiple lines
