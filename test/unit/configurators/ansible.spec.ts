@@ -1,5 +1,7 @@
 import * as assert from 'assert';
-import { AnsibleConfigurator } from "../../../src/configurators/ansible"
+import * as yaml from 'yaml';
+import * as lodash from 'lodash';
+import { AnsibleConfigurator, AnsibleConfiguratorArgs } from "../../../src/configurators/ansible"
 import { DEFAULT_COMMON_INPUT } from "../utils"
 import { CLOUDYPAD_SUNSHINE_IMAGE_REGISTRY, CLOUDYPAD_VERSION } from '../../../src/core/const';
 
@@ -17,7 +19,7 @@ describe('Ansible configurator', function () {
             }
         })
 
-        const inventoryContent = await configurator.generateInventoryJsonObject()
+        const inventoryContent = await configurator.generateInventoryObject()
 
         const expectedInventory = {
             all: {
@@ -74,7 +76,7 @@ describe('Ansible configurator', function () {
             }
         })
 
-        const inventoryJson = await configurator.generateInventoryJsonObject()
+        const inventoryJson = await configurator.generateInventoryObject()
 
         const expectedInventory = {
             all: {
@@ -100,5 +102,97 @@ describe('Ansible configurator', function () {
         }
 
         assert.ok(inventoryJson.all?.hosts?.["test-ansible-configurator-instance-default"]?.ansible_ssh_private_key_file)
+    })
+
+    it('should use Sunshine server name if provided in input)', async function () {
+        const instanceName = "test-ansible-configurator-instance-default"
+        const testConfig: AnsibleConfiguratorArgs = {
+            instanceName: instanceName,
+            provider: "test-ansible-configurator-provider-default",
+            configurationInput: {
+                sunshine: {
+                    enable: true,
+                    username: "test-ansible-configurator-username",
+                    passwordBase64: "test-ansible-configurator-password-base64",
+                }
+            },
+            provisionInput: DEFAULT_COMMON_INPUT.provision,
+            provisionOutput: {
+                host: "test-ansible-configurator-host", 
+            },
+        }
+        const configurator = new AnsibleConfigurator(testConfig)
+
+        const inventoryJsonWithoutServerName = await configurator.generateInventoryObject()
+        assert.strictEqual(
+            inventoryJsonWithoutServerName.all?.hosts?.[instanceName]?.sunshine_server_name,
+            instanceName
+        )
+
+        const serverNameOverride = "server-name-override"
+        const testConfigWithServerName: AnsibleConfiguratorArgs = {
+            ...testConfig,
+            configurationInput: {
+                ...testConfig.configurationInput,
+                sunshine: {
+                    ...testConfig.configurationInput.sunshine!,
+                    serverName: serverNameOverride
+                }
+            }
+        }
+        const configuratorWithServerName = new AnsibleConfigurator(testConfigWithServerName)
+        const inventoryJsonWithServerName = await configuratorWithServerName.generateInventoryObject()
+        assert.strictEqual(
+            inventoryJsonWithServerName.all?.hosts?.[instanceName]?.sunshine_server_name,
+            serverNameOverride
+        )
+    })
+
+    // should not fail YAML validation
+    it('should handle special characters in Sunshine server name)', async function () {
+        const instanceName = "test-ansible-configurator-server-name-with-special-characters"
+        const baseTestConfig: AnsibleConfiguratorArgs = {
+            instanceName: instanceName,
+            provider: "test-ansible-configurator-provider-default",
+            configurationInput: {
+                sunshine: {
+                    enable: true,
+                    username: "test-ansible-configurator-username",
+                    passwordBase64: "test-ansible-configurator-password-base64",
+                }
+            },
+            provisionInput: DEFAULT_COMMON_INPUT.provision,
+            provisionOutput: {
+                host: "test-ansible-configurator-host", 
+            },
+        }
+
+        const test1 = lodash.merge(baseTestConfig, {
+            configurationInput: {
+                sunshine: {
+                    serverName: "test:\n|-\n<script>alert('foo')</script>\naa\n"
+                }
+            }
+        })
+        const configurator = new AnsibleConfigurator(test1)
+        const inventoryJson = await configurator.generateInventoryObject()
+        const yamlInventory = yaml.stringify(inventoryJson)
+        const yamlResult = yaml.parse(yamlInventory)
+
+        assert.strictEqual(yamlResult.all.hosts[instanceName].sunshine_server_name, "test:\n|-\n<script>alert('foo')</script>\naa\n")
+
+        const test2 = lodash.merge(baseTestConfig, {
+            configurationInput: {
+                sunshine: {
+                    serverName: "`~!@#$%^&*()\\_+{}|\n:\"<>?[]\;',./`-=€£¥§©®±¶•ªº¿½¼¾\\`"
+                }
+            }
+        })
+
+        const configurator2 = new AnsibleConfigurator(test2)
+        const inventoryJson2 = await configurator2.generateInventoryObject()
+        const yamlInventory2 = yaml.stringify(inventoryJson2)
+        const yamlResult2 = yaml.parse(yamlInventory2)
+        assert.strictEqual(yamlResult2.all.hosts[instanceName].sunshine_server_name, "`~!@#$%^&*()\\_+{}|\n:\"<>?[]\;',./`-=€£¥§©®±¶•ªº¿½¼¾\\`")
     })
 })

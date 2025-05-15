@@ -3,7 +3,7 @@ import * as fs from 'fs'
 import * as path from 'path'
 import { tmpdir } from 'os'
 import { mkdtempSync } from 'fs'
-import yaml from 'js-yaml'
+import yaml from 'yaml'
 import { StateWriter } from '../../../../src/core/state/writer'
 import { StateLoader } from '../../../../src/core/state/loader'
 import { AwsInstanceStateV1, AwsStateParser } from '../../../../src/providers/aws/state'
@@ -39,7 +39,7 @@ describe('StateWriter', function () {
     // Load state from given data dir to compare with expected result
     function loadResultPersistedState(dataDir: string){
         const filePath = path.resolve(path.join(dataDir, "instances", instanceName, "state.yml"))
-        return yaml.load(fs.readFileSync(filePath, 'utf-8'))
+        return yaml.parse(fs.readFileSync(filePath, 'utf-8'))
     }
 
     it('should write on disk state held in memory', async function () {

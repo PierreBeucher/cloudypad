@@ -1,6 +1,6 @@
 import fs from 'fs'
 import path from 'path'
-import yaml from 'js-yaml'
+import yaml from 'yaml'
 import { z } from 'zod'
 import { getLogger } from '../log/utils'
 import { v4 as uuidv4 } from 'uuid'
@@ -145,7 +145,7 @@ export class CliConfigManager {
             }
 
             const rawConfig = fs.readFileSync(this.configPath, 'utf-8')
-            const rawYaml = yaml.load(rawConfig)
+            const rawYaml = yaml.parse(rawConfig)
 
             this.logger.debug(`Read config at ${this.configPath}: ${JSON.stringify(rawYaml)}`)
 
@@ -166,7 +166,7 @@ export class CliConfigManager {
             }
 
             const parsedConfig = this.zodParseSafe(unsafeConfig, CloudyPadGlobalConfigSchemaV1)
-            const yamlContent = yaml.dump(parsedConfig)
+            const yamlContent = yaml.stringify(parsedConfig)
             fs.writeFileSync(this.configPath, yamlContent, 'utf-8')
 
             this.logger.debug(`Wrote parsed config ${JSON.stringify(parsedConfig)} at ${this.configPath}...`)

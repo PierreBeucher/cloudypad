@@ -2,7 +2,7 @@
 import * as assert from 'assert'
 import * as fs from 'fs'
 import * as path from 'path'
-import * as yaml from 'js-yaml'
+import * as yaml from 'yaml'
 import { InstanceStateV1 } from '../../../../../src/core/state/state'
 import { LocalStateSideEffect } from '../../../../../src/core/state/side-effects/local'
 import { createTempTestDir, loadDumyAnonymousStateV1 } from '../../../utils'
@@ -32,7 +32,7 @@ describe('LocalStateSideEffect', function () {
         assert.ok(fs.existsSync(expectStateFilePath))
 
         const stateFileContent = fs.readFileSync(expectStateFilePath, 'utf-8')
-        assert.equal(stateFileContent, yaml.dump(state))
+        assert.equal(stateFileContent, yaml.stringify(state))
 
         // load and check data loaded from disk
         const loadedState = await sideEffect.loadRawInstanceState('aws-dummy')

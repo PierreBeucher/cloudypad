@@ -1,5 +1,5 @@
 import * as assert from 'assert'
-import * as yaml from 'js-yaml'
+import * as yaml from 'yaml'
 import { S3Client, GetObjectCommand, PutObjectCommand, S3ClientConfig } from '@aws-sdk/client-s3'
 import { S3StateSideEffect } from '../../../src/core/state/side-effects/s3'
 import { InstanceStateV1 } from '../../../src/core/state/state'
@@ -106,7 +106,7 @@ describe('S3StateSideEffect', () => {
         }
         const data = await s3Client.send(new GetObjectCommand(params))
         const body = await data.Body?.transformToString()
-        assert.strictEqual(body, yaml.dump(dummyState1))
+        assert.strictEqual(body, yaml.stringify(dummyState1))
 
         // check state can be loaded
         const loadedState = await s3StateSideEffect.loadRawInstanceState(dummyInstance1)
