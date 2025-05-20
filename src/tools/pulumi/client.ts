@@ -55,6 +55,13 @@ export abstract class InstancePulumiClient<ConfigType, OutputType> {
             throw new Error(`Stack ${this.stackName} for project ${this.projectName} has already been initialized. This is probably an internal bug.`)
         }
 
+        // ensure local backend exists for file backend
+        const backendUrl = this.workspaceOptions?.envVars?.PULUMI_BACKEND_URL ?? this.workspaceOptions?.projectSettings?.backend?.url
+        if(backendUrl?.startsWith("file://")) {
+            const backendUrlPath = backendUrl.replace("file://", "")
+            fs.mkdirSync(backendUrlPath, { recursive: true })
+        }
+
         const workpaceOpts: LocalWorkspaceOptions | undefined = this.workspaceOptions
 
         const pulumiArgs: InlineProgramArgs = {
