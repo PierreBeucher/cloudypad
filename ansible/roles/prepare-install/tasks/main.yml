@@ -6,23 +6,11 @@
   import_tasks: scaleway.yml
   when: cloudypad_provider is defined and cloudypad_provider == "scaleway"
 
-- name: Create Docker service directory
-  file:
-    path: /etc/systemd/system/docker.service.d
-    state: directory
-    mode: '0755'
+- name: Disable ulimit commands in Docker init script
+  replace:
+    path: /etc/init.d/docker
+    regexp: '(\s*)ulimit (.*)$'
+    replace: '\1# ulimit \2  # Disabled for container compatibility'
+    backrefs: yes
 
-- name: Configure Docker service limits
-  copy:
-    dest: /etc/systemd/system/docker.service.d/limits.conf
-    content: |
-      [Service]
-      LimitNOFILE=65536
-      LimitNPROC=65536
-    mode: '0644'
 
-- name: Reload systemd configuration
-  command: systemctl daemon-reload
-
-- name: Restart Docker service
-  command: systemctl restart docker
