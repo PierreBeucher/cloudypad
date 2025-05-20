@@ -1,4 +1,3 @@
-
 import { CommonConfigurationInputV1, InstanceStateV1 } from '../../core/state/state';
 import { AbstractInstanceConfigurator } from '../../core/configurator';
 import { getLogger, Logger } from '../../log/utils';
