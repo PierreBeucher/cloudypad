@@ -21,6 +21,7 @@ const DummyProvisionInputV1Schema = CommonProvisionInputV1Schema.extend({
 
 const DummyConfigurationOutputV1Schema = CommonConfigurationOutputV1Schema.extend({
     configuredAt: z.number().describe("Timestamp (seconds) the instance was finished configured at"),
+    dataDiskConfigured: z.boolean().describe("Whether the data disk was configured")
 })
 
 const DummyInstanceStateV1Schema = InstanceStateV1Schema.extend({

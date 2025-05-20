@@ -1,4 +1,3 @@
-import { SshKeyLoader } from '../../tools/ssh';
 import { AbstractInstanceProvisioner, InstanceProvisionerArgs } from '../../core/provisioner';
 import { DummyProvisionInputV1, DummyProvisionOutputV1 } from './state';
 import { ServerRunningStatus } from '../../core/runner';
@@ -23,8 +22,6 @@ export class DummyProvisioner extends AbstractInstanceProvisioner<DummyProvision
 
         this.logger.debug(`Provisioning Dummy instance with args ${JSON.stringify(this.args)}`)
 
-        const sshPublicKeyContent = new SshKeyLoader().loadSshPublicKeyContent(this.args.provisionInput.ssh)
-
         if(this.args.provisionInput.provisioningDelaySeconds && this.args.provisionInput.provisioningDelaySeconds > 0){
             const delay = this.args.provisionInput.provisioningDelaySeconds * 1000
             this.logger.debug(`Emulating provision delay of Dummy instance ${this.args.instanceName}: ${delay}ms`)
@@ -39,7 +36,6 @@ export class DummyProvisioner extends AbstractInstanceProvisioner<DummyProvision
             publicIpType: this.args.provisionInput.publicIpType,
             region: this.args.provisionInput.region,
             rootVolumeSizeGB: this.args.provisionInput.diskSize,
-            publicSshKeyContent: sshPublicKeyContent,
             useSpot: this.args.provisionInput.useSpot,
             billingAlert: this.args.provisionInput.costAlert ?? undefined,
             ingressPorts: this.getStreamingServerPorts()
