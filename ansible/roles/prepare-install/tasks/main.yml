@@ -5,3 +5,31 @@
 - name: import Scaleway tasks
   import_tasks: scaleway.yml
   when: cloudypad_provider is defined and cloudypad_provider == "scaleway"
+
+# Prepare system for installation
+
+- name: Configure system limits for Docker
+  become: true
+  copy:
+    dest: /etc/security/limits.d/99-docker.conf
+    content: |
+      * soft nofile 65536
+      * hard nofile 65536
+      * soft nproc 65536
+      * hard nproc 65536
+    mode: '0644'
+
+- name: Configure systemd limits for Docker
+  become: true
+  copy:
+    dest: /etc/systemd/system.conf.d/99-docker.conf
+    content: |
+      [Manager]
+      DefaultLimitNOFILE=65536
+      DefaultLimitNPROC=65536
+    mode: '0644'
+
+- name: Reload systemd configuration
+  become: true
+  command: systemctl daemon-reload
+  when: true
