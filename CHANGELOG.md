@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.27.1](https://github.com/PierreBeucher/cloudypad/compare/v0.27.0...v0.27.1) (2025-05-20)
+
+
+### Bug Fixes
+
+* ensure pulumi local file backend existence ([1eafd37](https://github.com/PierreBeucher/cloudypad/commit/1eafd3745ee379d03c7e7b54d2dd386f24c63836))
+* ensure pulumi local file backend existence ([7c2aaae](https://github.com/PierreBeucher/cloudypad/commit/7c2aaaef9e607e9fc518ac0309e35359b150be2c))
+
 ## [0.27.0](https://github.com/PierreBeucher/cloudypad/compare/v0.26.0...v0.27.0) (2025-05-15)
 
 
