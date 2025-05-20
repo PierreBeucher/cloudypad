@@ -12,5 +12,6 @@
     regexp: '(\s*)ulimit (.*)$'
     replace: '\1# ulimit \2  # Disabled for container compatibility'
     backrefs: yes
+  when: cloudypad_provider is defined and cloudypad_provider == "dummy"
 
 
