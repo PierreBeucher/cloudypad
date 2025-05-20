@@ -67,16 +67,13 @@ export class DummyInputPrompter extends AbstractInputPrompter<DummyCreateCliArgs
         }
 
         const choices = [{
-            name: "Dummy Instance Type 1",
-            value: "dummy-instance-type-1"
-        }, {
-            name: "Dummy Instance Type 2 (best value !)",
-            value: "dummy-instance-type-2"
+            name: "Local (run on this machine)",
+            value: "local"
         }]
 
         const selectedInstanceType = await select({
             message: 'Choose an instance type:',
-            default: "dummy-instance-type-1",
+            default: "local",
             choices: choices,
             loop: false,
         })

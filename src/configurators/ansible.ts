@@ -1,4 +1,3 @@
-
 import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';
@@ -57,7 +56,11 @@ export class AnsibleConfigurator<ST extends InstanceStateV1> extends AbstractIns
         const inventoryPath = await this.writeTempInventory(inventoryObject)
 
         const ansible = new AnsibleClient()
-        await ansible.runAnsible(inventoryPath, playbookPath, this.args.additionalAnsibleArgs ?? [])
+        const additionalArgs = this.args.additionalAnsibleArgs ?? []
+        if (this.args.provider === 'dummy') {
+            additionalArgs.push('--skip-tags=reboot')
+        }
+        await ansible.runAnsible(inventoryPath, playbookPath, additionalArgs)
 
         return {
             // Running Ansible with data disk will ensure it's configured
@@ -87,6 +90,46 @@ export class AnsibleConfigurator<ST extends InstanceStateV1> extends AbstractIns
      * @returns Inventory content as a JSON object
      */
     public async generateInventoryObject(): Promise<any>   {
+        if (this.args.provider === 'dummy') {
+            return {
+                all: {
+                    hosts: {
+                            [this.args.instanceName]: {
+                                ansible_connection: "local",
+                                ansible_host: "0.0.0.0",
+                                ansible_user: "root",
+        
+                                cloudypad_provider: this.args.provider,
+        
+                                wolf_instance_name: this.args.instanceName,
+                                
+                                // use server name from input if provided, otherwise use instance name
+                                sunshine_server_name: this.args.configurationInput.sunshine?.serverName ?? this.args.instanceName,
+        
+                                sunshine_web_username: this.args.configurationInput.sunshine?.username,
+                                sunshine_web_password_base64: this.args.configurationInput.sunshine?.passwordBase64,
+                                sunshine_nvidia_enable: true,
+                                sunshine_image_tag: this.args.configurationInput.sunshine?.imageTag ?? CLOUDYPAD_VERSION,
+                                sunshine_image_registry: this.args.configurationInput.sunshine?.imageRegistry ?? CLOUDYPAD_SUNSHINE_IMAGE_REGISTRY,
+        
+                                sunshine_keyboard_layout: this.args.configurationInput.keyboard?.layout,
+                                sunshine_keyboard_variant: this.args.configurationInput.keyboard?.variant,
+                                sunshine_keyboard_model: this.args.configurationInput.keyboard?.model,
+                                sunshine_keyboard_options: this.args.configurationInput.keyboard?.options,
+        
+                                sunshine_locale: this.args.configurationInput.locale,
+                                
+                                autostop_enable: this.args.configurationInput.autostop?.enable,
+                                autostop_timeout_seconds: this.args.configurationInput.autostop?.timeoutSeconds,
+        
+                                cloudypad_data_disk_enabled: this.args.provisionOutput.dataDiskId !== undefined,
+                                cloudypad_data_disk_id: this.args.provisionOutput.dataDiskId,
+                        }
+                    }
+                }
+            }
+        }
+
         const sshPrivateKeyPath = new SshKeyLoader().getSshPrivateKeyPath(this.args.provisionInput.ssh)
 
         return {

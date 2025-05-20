@@ -5,10 +5,10 @@ import { CommonConfigurationInputV1 } from "../../core/state/state";
 import { DummyProvisioner } from "./provisioner";
 import { DummyInstanceRunner } from "./runner";
 import { DummyConfigurationOutputV1, DummyInstanceStateV1, DummyProvisionInputV1, DummyProvisionOutputV1, DummyStateParser } from "./state";
-import { DummyConfigurator } from "./configurator";
 import { InstanceConfigurator } from "../../core/configurator";
 import { DummyInstanceInfraManager } from "./infra";
 import { CoreConfig } from "../../core/config/interface";
+import { AnsibleConfigurator } from "../../configurators/ansible";
 
 export interface DummySubManagerFactoryArgs {
     dummyInfraManager: DummyInstanceInfraManager
@@ -50,8 +50,9 @@ export class DummySubManagerFactory extends AbstractSubManagerFactory<DummyInsta
     }
 
     async doBuildConfigurator(name: string, provider: string, provisionInput: DummyProvisionInputV1, provisionOutput: DummyProvisionOutputV1, configurationInput: CommonConfigurationInputV1): Promise<InstanceConfigurator> {
-        return new DummyConfigurator({ 
+        return new AnsibleConfigurator({ 
             instanceName: name,
+            provider: provider,
             provisionInput: provisionInput,
             provisionOutput: provisionOutput,
             configurationInput: configurationInput

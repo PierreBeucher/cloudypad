@@ -1,9 +1,9 @@
 version: '3'
 
 env:
-  CLOUDYPAD_BUILD_CORE_IMAGE_REGISTRY: "ghcr.io/pierrebeucher/cloudypad"
+  CLOUDYPAD_BUILD_CORE_IMAGE_REGISTRY: "ghcr.io/gabbelitov2/cloudypad"
   CLOUDYPAD_BUILD_CORE_IMAGE_TAG: "local"
-  CLOUDYPAD_BUILD_SUNSHINE_IMAGE_REGISTRY: "ghcr.io/pierrebeucher/cloudypad/sunshine"
+  CLOUDYPAD_BUILD_SUNSHINE_IMAGE_REGISTRY: "ghcr.io/gabbelitov2/cloudypad/sunshine"
   CLOUDYPAD_BUILD_SUNSHINE_IMAGE_TAG: "local"
 
 tasks:

@@ -1,0 +1,29 @@
+all:
+  hosts:
+    "0.0.0.0":
+      ansible_connection: local
+      ansible_user: root
+      
+      sunshine_server_name: local
+      sunshine_nvidia_enable: true
+      sunshine_compose_pull_images: always
+      sunshine_image_tag: local
+      autostop_timeout_seconds: 3600 # 1h
+
+      sunshine_keyboard_layout: sv
+      sunshine_keyboard_variant: ""
+      sunshine_keyboard_model: pc105
+      sunshine_keyboard_options: ""
+
+      sunshine_web_username: sunshine
+      sunshine_web_password_base64: c3Vuc2hpbmU=  # base64
+      
+      sunshine_locale: sv_SE.UTF-8
+      
+
+      sunshine_additional_config: "capture = x11"
+      
+      cloudypad_provider: "local"
+      
+
+      ansible_reboot_required: true

@@ -122,7 +122,7 @@ jobs:
       - name: Run install script
         shell: bash
         run: |
-          curl -fsSL https://raw.githubusercontent.com/PierreBeucher/cloudypad/${{ github.sha }}/install.sh | bash
+          curl -fsSL https://raw.githubusercontent.com/gabbelitov2/cloudypad/${{ github.sha }}/install.sh | bash
           echo " ==== .bashrc content ==="
           cat ~/.bashrc
           echo " ==== .bashrc content ==="
@@ -152,7 +152,7 @@ jobs:
           # to emulate real MacOS experience
           SHELL: /bin/zsh
         run: |
-          curl -fsSL https://raw.githubusercontent.com/PierreBeucher/cloudypad/${{ github.sha }}/install.sh | zsh
+          curl -fsSL https://raw.githubusercontent.com/gabbelitov2/cloudypad/${{ github.sha }}/install.sh | zsh
           echo " ==== .zshrc content ==="
           cat ~/.zshrc
           echo " ==== .zshrc content ==="

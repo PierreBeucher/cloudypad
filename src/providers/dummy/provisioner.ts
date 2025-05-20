@@ -52,11 +52,10 @@ export class DummyProvisioner extends AbstractInstanceProvisioner<DummyProvision
         }
 
         return {
-            host: `dummy-${this.args.instanceName}`,
+            host: "0.0.0.0",
             instanceId: `dummy-id-${this.args.instanceName}`,
             provisionedAt: Date.now(),
         }
-
     }
 
     async doDestroy(){
