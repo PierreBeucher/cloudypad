@@ -10,7 +10,14 @@ export class AnsibleClient {
 
     async runAnsible(inventoryPath: string, playbookPath: string, additionalAnsibleArgs: string[]){
         const ansibleCommand = 'ansible-playbook'
-        const ansibleArgs = ['-i', inventoryPath, playbookPath].concat(additionalAnsibleArgs)
+        const ansibleArgs = ['-i', inventoryPath, playbookPath]
+        
+        
+        if (additionalAnsibleArgs.includes('--skip-tags=reboot')) {
+            ansibleArgs.push('--connection=local')
+        }
+        
+        ansibleArgs.push(...additionalAnsibleArgs)
 
         this.logger.debug(`Ansible command: ${ansibleCommand} ${JSON.stringify(ansibleArgs)}`)
 
