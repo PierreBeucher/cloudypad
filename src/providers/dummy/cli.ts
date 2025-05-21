@@ -52,7 +52,9 @@ export class DummyInputPrompter extends AbstractInputPrompter<DummyCreateCliArgs
             };
             
             // Explicitly remove any ssh properties to avoid validation errors
-            delete input.provision.ssh;
+            if (input.provision.ssh !== undefined) {
+                delete input.provision.ssh;
+            }
         }
 
         return input;
@@ -107,7 +109,7 @@ export class DummyInputPrompter extends AbstractInputPrompter<DummyCreateCliArgs
             
             // Create a copy of commonInput without ssh properties to avoid validation errors
             const inputWithoutSsh = lodash.cloneDeep(commonInput);
-            if (inputWithoutSsh.provision && inputWithoutSsh.provision.ssh) {
+            if (inputWithoutSsh.provision && inputWithoutSsh.provision.ssh !== undefined) {
                 delete inputWithoutSsh.provision.ssh;
             }
             
