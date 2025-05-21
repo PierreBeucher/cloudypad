@@ -36,8 +36,17 @@ export class InstanceInitializer<PI extends CommonProvisionInputV1, CI extends C
         
         this.logger.debug(`Initializing instance with provisionInput ${JSON.stringify(provisionInput)} and configurationInput ${JSON.stringify(configurationInput)}`)
         
-        // Generate private SSH key if one is not already provided
-        if(!provisionInput.ssh.privateKeyPath && !provisionInput.ssh.privateKeyContentBase64){
+        // Check if we are using the auth object for password authentication 
+        // (mainly for the dummy provider)
+        const usesPasswordAuth = (provisionInput as any).auth && 
+                              (provisionInput as any).auth.type === "password";
+
+        // Only generate an SSH key if we are NOT using password authentication
+        // and if no key has been specified
+        if (!usesPasswordAuth && 
+            !provisionInput.ssh.privateKeyPath && 
+            !provisionInput.ssh.privateKeyContentBase64) {
+            
             const privateKeyContent = generatePrivateSshKey()
             const privateKeyContentBase64 = toBase64(privateKeyContent)
             provisionInput.ssh.privateKeyContentBase64 = privateKeyContentBase64

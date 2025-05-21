@@ -11,7 +11,10 @@ export interface SSHClientArgs {
     host: string,
     port?: number,
     user: string,
-    privateKeyPath: string
+    // For key-based authentication
+    privateKeyPath?: string,
+    // For password-based authentication
+    password?: string
 }
 
 export class SSHExecError extends Error{
@@ -53,8 +56,6 @@ export function buildClientForInstance(args: {
     provisionInput: CommonProvisionInputV1,
     provisionOutput: CommonProvisionOutputV1
 }): SSHClient {
-    const sshKeyPath = new SshKeyLoader().getSshPrivateKeyPath(args.provisionInput.ssh)
-
     return new SSHClient(buildSshClientArgsForInstance(args))
 }
 
@@ -68,13 +69,24 @@ export function buildSshClientArgsForInstance(args: {
     provisionInput: CommonProvisionInputV1, 
     provisionOutput: CommonProvisionOutputV1
 }): SSHClientArgs {
-    const sshKeyPath = new SshKeyLoader().getSshPrivateKeyPath(args.provisionInput.ssh)
-    return {
-        clientName: args.instanceName,
-        host: args.provisionOutput.host,
-        port: 22,
-        user: args.provisionInput.ssh.user,
-        privateKeyPath: sshKeyPath
+    // Check if we are using dummy provider with password authentication
+    if (args.provisionInput.auth && args.provisionInput.auth.type === "password") {
+        return {
+            clientName: args.instanceName,
+            host: args.provisionOutput.host,
+            port: 22,
+            user: args.provisionInput.auth.ssh.user,
+            password: args.provisionInput.auth.ssh.password
+        }
+    } else { // Standard authentication with SSH key
+        const sshKeyPath = new SshKeyLoader().getSshPrivateKeyPath(args.provisionInput.ssh)
+        return {
+            clientName: args.instanceName,
+            host: args.provisionOutput.host,
+            port: 22,
+            user: args.provisionInput.ssh.user,
+            privateKeyPath: sshKeyPath
+        }
     }
 }
 
@@ -205,12 +217,22 @@ export class SSHClient {
         // which make program hangs
         if(this.client.isConnected()) return this.client
 
-        return this.client.connect({
+        const connectConfig: any = {
             host: this.args.host,
             port: this.args.port,
             username: this.args.user,
-            privateKeyPath: this.args.privateKeyPath            
-        });
+        };
+
+        // Use either password or key-based authentication
+        if (this.args.password) {
+            connectConfig.password = this.args.password;
+        } else if (this.args.privateKeyPath) {
+            connectConfig.privateKeyPath = this.args.privateKeyPath;
+        } else {
+            throw new Error("No authentication method available. Either password or privateKeyPath must be specified.");
+        }
+
+        return this.client.connect(connectConfig);
     }
     
     async connect() {
@@ -248,27 +270,27 @@ export class SshKeyLoader {
             fs.writeFileSync(tempKeyFile.name, fromBase64(ssh.privateKeyContentBase64))
             return tempKeyFile.name
         } else {
-            throw new Error("No SSH private key provided, neither privateKeyPath nor privateKeyContentBase64 is set.")
+            throw new Error("No SSH private key found")
         }
     }
 
     /**
-     * Load SSH private key content from instance inputs
+     * Load SSH private key content from instance inputs. Return either content from file or decoded base64 content.
      * @param ssh - SSH access configuration
      * @returns SSH private key content
      */
     loadSshPrivateKeyContent(ssh: CommonProvisionInputV1["ssh"]){
         if(ssh.privateKeyPath){
-            return fs.readFileSync(ssh.privateKeyPath, { encoding: 'utf8' })
+            return fs.readFileSync(ssh.privateKeyPath, 'utf8')
         } else if (ssh.privateKeyContentBase64){
             return fromBase64(ssh.privateKeyContentBase64)
         } else {
-            throw new Error("No SSH private key provided, neither privateKeyPath nor privateKeyContentBase64 is set.")
+            throw new Error("No SSH private key found")
         }
     }
 
     /**
-     * Load SSH public key content from instance inputs
+     * Load SSH public key content from instance inputs. Return either content from file or generate public key from private.
      * @param ssh - SSH access configuration
      * @returns SSH public key content
      */
@@ -276,18 +298,15 @@ export class SshKeyLoader {
         return this._loadSshPublicKeyContent(ssh)
     }
 
-    // real function which won't be mocked
     _loadSshPublicKeyContent(ssh: CommonProvisionInputV1["ssh"]) {
-        const privateKeyContent = this.loadSshPrivateKeyContent(ssh)
-        return sshpk.parseKey(privateKeyContent, "ssh-private").toString("ssh")
+        // Key ID can be anything, only used for fingerprint which we don't need
+        const privateKey = this.loadSshPrivateKeyContent(ssh)
+        const key = sshpk.parsePrivateKey(privateKey, 'auto', { filename: "dummy_key" })
+
+        return key.toPublic().toString('ssh')
     }
 }
 
-/**
- * Generate a new SSH private key using ed25519 algorithm
- * @returns SSH private key content as string
- */
 export function generatePrivateSshKey(): string {
-    const newKey = sshpk.generatePrivateKey("ed25519")
-    return newKey.toString("ssh-private")
+    throw new Error("generatePrivateSshKey/ed25519 keys not mocked. Use a real key for testing.")
 }

@@ -47,8 +47,11 @@ export class DummyProvisioner extends AbstractInstanceProvisioner<DummyProvision
             await this.dummyInfraManager.setServerRunningStatus(ServerRunningStatus.Stopped)
         }
 
+        // Use customHost if specified, otherwise use default "0.0.0.0"
+        const host = this.args.provisionInput.customHost || "0.0.0.0";
+
         return {
-            host: "0.0.0.0",
+            host: host,
             instanceId: `dummy-id-${this.args.instanceName}`,
             provisionedAt: Date.now(),
         }

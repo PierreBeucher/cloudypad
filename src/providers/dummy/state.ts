@@ -9,6 +9,34 @@ const DummyProvisionOutputV1Schema = CommonProvisionOutputV1Schema.extend({
     provisionedAt: z.number().describe("Timestamp (seconds) the instance was finished provisioned at"),
 })
 
+const DummyAuthSchema = z.discriminatedUnion("type", [
+    z.object({
+        type: z.literal("ssh-key"),
+        ssh: z.object({
+            user: z.string().describe("SSH user"),
+            privateKeyPath: z.string().optional().describe("Local path to private key. Either privateKeyPath or privateKeyContentBase64 must be set, not both."),
+            privateKeyContentBase64: z.string().optional().describe("Private key content (base64 encoded). Either privateKeyPath or privateKeyContentBase64 must be set, not both."),
+        }).describe("SSH access configuration (key based)")
+        .refine((data) => {
+            if(data.privateKeyPath && data.privateKeyContentBase64 ||
+                !data.privateKeyPath && !data.privateKeyContentBase64
+            ){
+                return false
+            }
+            return true
+        }, {
+            message: "Exactly one of privateKeyPath or privateKeyContentBase64 must be set"
+        })
+    }),
+    z.object({
+        type: z.literal("password"),
+        ssh: z.object({
+            user: z.string().describe("SSH user"),
+            password: z.string().describe("SSH password"),
+        }).describe("SSH access configuration (password based)")
+    })
+]);
+
 const DummyProvisionInputV1Schema = CommonProvisionInputV1Schema.extend({
     instanceType: z.string().describe("Type of Dummy instance"),
     startDelaySeconds: z.number().describe("Time (seconds) during which the instance will remain in 'starting' state before becoming 'running' on start/restart operation.").default(10),
@@ -17,6 +45,8 @@ const DummyProvisionInputV1Schema = CommonProvisionInputV1Schema.extend({
     provisioningDelaySeconds: z.number().describe("Time (seconds) during which provisioning will run.").default(0).optional(),
     readinessAfterStartDelaySeconds: z.number().describe("Time (seconds) after starting the instance before it is considered ready to accept connections.").default(0).optional(),
     initialServerStateAfterProvision: z.enum(["running", "stopped"]).describe("Initial state of the instance server after provisioning.").default("running").optional(),
+    customHost: z.string().describe("Custom host IP for dummy instance").optional(),
+    auth: DummyAuthSchema.optional(),
 })
 
 const DummyConfigurationOutputV1Schema = CommonConfigurationOutputV1Schema.extend({
@@ -41,6 +71,7 @@ type DummyProvisionOutputV1 = z.infer<typeof DummyProvisionOutputV1Schema>
 type DummyProvisionInputV1 = z.infer<typeof DummyProvisionInputV1Schema>
 type DummyConfigurationOutputV1 = z.infer<typeof DummyConfigurationOutputV1Schema>
 type DummyInstanceInput = InstanceInputs<DummyProvisionInputV1>
+type DummyAuth = z.infer<typeof DummyAuthSchema>
 
 export {
     DummyProvisionOutputV1Schema,
@@ -52,6 +83,8 @@ export {
     DummyProvisionInputV1,
     DummyConfigurationOutputV1,
     DummyInstanceInput,
+    DummyAuthSchema,
+    DummyAuth
 }
 
 export class DummyStateParser extends GenericStateParser<DummyInstanceStateV1> {

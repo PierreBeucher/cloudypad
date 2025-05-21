@@ -1,6 +1,6 @@
 import { DummyInstanceInput, DummyInstanceStateV1, DummyProvisionInputV1, DummyStateParser } from "./state"
 import { CommonConfigurationInputV1, CommonInstanceInput } from "../../core/state/state"
-import { select } from '@inquirer/prompts';
+import { select, input, confirm } from '@inquirer/prompts';
 import { AbstractInputPrompter, PromptOptions } from "../../cli/prompter";
 import lodash from 'lodash'
 import { CliCommandGenerator, CreateCliArgs, UpdateCliArgs, CLI_OPTION_STREAMING_SERVER, CLI_OPTION_SUNSHINE_PASSWORD, CLI_OPTION_SUNSHINE_USERNAME, CLI_OPTION_SUNSHINE_IMAGE_REGISTRY, CLI_OPTION_SUNSHINE_IMAGE_TAG, CLI_OPTION_AUTO_STOP_TIMEOUT, CLI_OPTION_AUTO_STOP_ENABLE, CLI_OPTION_USE_LOCALE, CLI_OPTION_KEYBOARD_LAYOUT, CLI_OPTION_KEYBOARD_MODEL, CLI_OPTION_KEYBOARD_VARIANT, CLI_OPTION_KEYBOARD_OPTIONS, BuildCreateCommandArgs, BuildUpdateCommandArgs } from "../../cli/command";
@@ -17,6 +17,10 @@ export interface DummyCreateCliArgs extends CreateCliArgs {
     configurationDelaySeconds?: number
     provisioningDelaySeconds?: number
     readinessDelaySeconds?: number
+    host?: string
+    sshUser?: string
+    sshPassword?: string
+    usePasswordAuth?: boolean
 }
 
 export type DummyUpdateCliArgs = UpdateCliArgs
@@ -25,7 +29,7 @@ export type DummyUpdateCliArgs = UpdateCliArgs
 export class DummyInputPrompter extends AbstractInputPrompter<DummyCreateCliArgs, DummyProvisionInputV1, CommonConfigurationInputV1> {
     
     buildProvisionerInputFromCliArgs(cliArgs: DummyCreateCliArgs): PartialDeep<DummyInstanceInput> {
-        return {
+        const input: PartialDeep<DummyInstanceInput> = {
             provision: {
                 instanceType: cliArgs.instanceType,
                 startDelaySeconds: cliArgs.startDelaySeconds,
@@ -33,31 +37,100 @@ export class DummyInputPrompter extends AbstractInputPrompter<DummyCreateCliArgs
                 configurationDelaySeconds: cliArgs.configurationDelaySeconds,
                 provisioningDelaySeconds: cliArgs.provisioningDelaySeconds,
                 readinessAfterStartDelaySeconds: cliArgs.readinessDelaySeconds,
+                customHost: cliArgs.host,
             }
+        };
+
+        if (cliArgs.usePasswordAuth && cliArgs.sshUser && cliArgs.sshPassword) {
+            input.provision.auth = {
+                type: "password",
+                ssh: {
+                    user: cliArgs.sshUser,
+                    password: cliArgs.sshPassword
+                }
+            };
         }
+
+        return input;
     }
 
     protected async promptSpecificInput(commonInput: CommonInstanceInput, partialInput: PartialDeep<DummyInstanceInput>, createOptions: PromptOptions): Promise<DummyInstanceInput> {
 
         const instanceType = await this.instanceType(partialInput.provision?.instanceType)
-
-        const dummyInput: DummyInstanceInput = lodash.merge(
-            {},
-            commonInput, 
-            {
-                provision:{
-                    instanceType: instanceType,
-                    startDelaySeconds: partialInput.provision?.startDelaySeconds ?? 10,
-                    stopDelaySeconds: partialInput.provision?.stopDelaySeconds ?? 10,
-                    configurationDelaySeconds: partialInput.provision?.configurationDelaySeconds ?? 0,
-                    provisioningDelaySeconds: partialInput.provision?.provisioningDelaySeconds ?? 0,
-                    readinessAfterStartDelaySeconds: partialInput.provision?.readinessAfterStartDelaySeconds ?? 0,
-                    initialState: partialInput.provision?.initialServerStateAfterProvision ?? "running",
+        
+        // Ask if the user wants to use password authentication
+        const usePasswordAuth = await confirm({
+            message: 'Do you want to use password authentication instead of SSH key?',
+            default: partialInput.provision?.auth?.type === "password" ? true : false,
+        });
+        
+        let auth;
+        if (usePasswordAuth) {
+            // If we use password authentication
+            const customHost = await input({
+                message: 'Enter IP address or hostname:',
+                default: partialInput.provision?.customHost || '',
+            });
+            
+            const sshUser = await input({
+                message: 'Enter SSH username:',
+                default: partialInput.provision?.auth?.type === "password" 
+                    ? partialInput.provision.auth.ssh.user 
+                    : 'ubuntu',
+            });
+            
+            const sshPassword = await input({
+                message: 'Enter SSH password:',
+                default: partialInput.provision?.auth?.type === "password" 
+                    ? partialInput.provision.auth.ssh.password
+                    : '',
+            });
+            
+            auth = {
+                type: "password",
+                ssh: {
+                    user: sshUser,
+                    password: sshPassword
                 }
-            })
-        
-        return dummyInput
-        
+            };
+            
+            const dummyInput: DummyInstanceInput = lodash.merge(
+                {},
+                commonInput, 
+                {
+                    provision:{
+                        instanceType: instanceType,
+                        startDelaySeconds: partialInput.provision?.startDelaySeconds ?? 10,
+                        stopDelaySeconds: partialInput.provision?.stopDelaySeconds ?? 10,
+                        configurationDelaySeconds: partialInput.provision?.configurationDelaySeconds ?? 0,
+                        provisioningDelaySeconds: partialInput.provision?.provisioningDelaySeconds ?? 0,
+                        readinessAfterStartDelaySeconds: partialInput.provision?.readinessAfterStartDelaySeconds ?? 0,
+                        initialServerStateAfterProvision: partialInput.provision?.initialServerStateAfterProvision ?? "running",
+                        customHost: customHost,
+                        auth: auth
+                    }
+                })
+            
+            return dummyInput;
+        } else {
+            // If we use SSH key (default)
+            const dummyInput: DummyInstanceInput = lodash.merge(
+                {},
+                commonInput, 
+                {
+                    provision:{
+                        instanceType: instanceType,
+                        startDelaySeconds: partialInput.provision?.startDelaySeconds ?? 10,
+                        stopDelaySeconds: partialInput.provision?.stopDelaySeconds ?? 10,
+                        configurationDelaySeconds: partialInput.provision?.configurationDelaySeconds ?? 0,
+                        provisioningDelaySeconds: partialInput.provision?.provisioningDelaySeconds ?? 0,
+                        readinessAfterStartDelaySeconds: partialInput.provision?.readinessAfterStartDelaySeconds ?? 0,
+                        initialState: partialInput.provision?.initialServerStateAfterProvision ?? "running",
+                    }
+                })
+            
+            return dummyInput
+        }
     }
 
     private async instanceType(instanceType?: string): Promise<string> {
@@ -101,6 +174,10 @@ export class DummyCliCommandGenerator extends CliCommandGenerator {
             .addOption(CLI_OPTION_KEYBOARD_VARIANT)
             .addOption(CLI_OPTION_KEYBOARD_OPTIONS)
             .option('--instance-type <type>', 'EC2 instance type')
+            .option('--host <host>', 'Host IP or hostname for SSH connection')
+            .option('--ssh-user <user>', 'SSH username')
+            .option('--ssh-password <password>', 'SSH password')
+            .option('--use-password-auth', 'Use password authentication instead of SSH key', false)
             .action(async (cliArgs: DummyCreateCliArgs) => {
                 
                 try {
@@ -142,6 +219,10 @@ export class DummyCliCommandGenerator extends CliCommandGenerator {
             .addOption(CLI_OPTION_KEYBOARD_VARIANT)
             .addOption(CLI_OPTION_KEYBOARD_OPTIONS)
             .option('--instance-type <type>', 'EC2 instance type')
+            .option('--host <host>', 'Host IP or hostname for SSH connection')
+            .option('--ssh-user <user>', 'SSH username')
+            .option('--ssh-password <password>', 'SSH password')
+            .option('--use-password-auth', 'Use password authentication instead of SSH key', false)
             .action(async (cliArgs: DummyUpdateCliArgs) => {
                 
                 try {
