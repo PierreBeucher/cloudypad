@@ -6,11 +6,4 @@
   import_tasks: scaleway.yml
   when: cloudypad_provider is defined and cloudypad_provider == "scaleway"
 
-- name: Disable ulimit commands in Docker init script
-  replace:
-    path: /etc/init.d/docker
-    regexp: '(\s+)ulimit (.*)$'
-    replace: '\1# ulimit \2  # Disabled for container compatibility'
-  when: cloudypad_provider is defined and cloudypad_provider == "dummy"
-
 
