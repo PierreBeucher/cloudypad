@@ -51,10 +51,13 @@ export class DummyInputPrompter extends AbstractInputPrompter<DummyCreateCliArgs
                 }
             };
             
-            // Instead of deleting, create a new provision object without ssh
+            // Since ssh is required, we need to provide a dummy ssh configuration
             if (input.provision) {
-                const { ssh, ...provisionWithoutSsh } = input.provision;
-                input.provision = provisionWithoutSsh;
+                // Add a dummy ssh configuration with empty values that will not be used
+                input.provision.ssh = {
+                    user: cliArgs.sshUser || "ubuntu",
+                    privateKeyContentBase64: "" // Set to empty string but present to satisfy type
+                };
             }
         }
 
@@ -110,10 +113,13 @@ export class DummyInputPrompter extends AbstractInputPrompter<DummyCreateCliArgs
             
             // Create a copy of commonInput without ssh properties to avoid validation errors
             const inputWithoutSsh = lodash.cloneDeep(commonInput);
-            // Instead of deleting, create a new provision object without ssh
+            // Since ssh is required, we need to provide a dummy ssh configuration
             if (inputWithoutSsh.provision) {
-                const { ssh, ...provisionWithoutSsh } = inputWithoutSsh.provision;
-                inputWithoutSsh.provision = provisionWithoutSsh;
+                // Add a dummy ssh configuration with empty values that will not be used
+                inputWithoutSsh.provision.ssh = {
+                    user: "ubuntu",
+                    privateKeyContentBase64: "" // Set to empty string but present to satisfy type
+                };
             }
             
             const dummyInput: DummyInstanceInput = lodash.merge(

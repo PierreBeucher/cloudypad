@@ -80,6 +80,7 @@ export function buildSshClientArgsForInstance(args: {
         'password' in args.provisionInput.auth.ssh &&
         typeof args.provisionInput.auth.ssh.user === 'string' &&
         typeof args.provisionInput.auth.ssh.password === 'string') {
+        // Password authentication takes precedence
         return {
             clientName: args.instanceName,
             host: args.provisionOutput.host,
@@ -87,17 +88,30 @@ export function buildSshClientArgsForInstance(args: {
             user: args.provisionInput.auth.ssh.user,
             password: args.provisionInput.auth.ssh.password
         }
-    } else if (args.provisionInput.ssh) { // Standard authentication with SSH key
-        const sshKeyPath = new SshKeyLoader().getSshPrivateKeyPath(args.provisionInput.ssh)
-        return {
-            clientName: args.instanceName,
-            host: args.provisionOutput.host,
-            port: 22,
-            user: args.provisionInput.ssh.user,
-            privateKeyPath: sshKeyPath
+    } else if (args.provisionInput.ssh) {
+        // Check if we have valid SSH key info (not empty placeholder)
+        const hasValidKeyPath = args.provisionInput.ssh.privateKeyPath && 
+                                args.provisionInput.ssh.privateKeyPath.length > 0;
+        
+        const hasValidKeyContent = args.provisionInput.ssh.privateKeyContentBase64 && 
+                                   args.provisionInput.ssh.privateKeyContentBase64.length > 0;
+        
+        if (hasValidKeyPath || hasValidKeyContent) {
+            // Standard authentication with SSH key
+            const sshKeyPath = new SshKeyLoader().getSshPrivateKeyPath(args.provisionInput.ssh);
+            return {
+                clientName: args.instanceName,
+                host: args.provisionOutput.host,
+                port: 22,
+                user: args.provisionInput.ssh.user,
+                privateKeyPath: sshKeyPath
+            }
+        } else {
+            // Empty SSH key configuration - this is likely a placeholder for a password auth instance
+            throw new Error("SSH key configuration is empty or invalid - this may be a misconfigured password auth instance");
         }
     } else {
-        throw new Error("No valid authentication method found in provision input")
+        throw new Error("No valid authentication method found in provision input");
     }
 }
 
@@ -274,14 +288,17 @@ export class SshKeyLoader {
      * @returns SSH private key path
      */
     getSshPrivateKeyPath(ssh: CommonProvisionInputV1["ssh"]){
-        if(ssh.privateKeyPath){
+        // Check for valid privateKeyPath
+        if(ssh.privateKeyPath && ssh.privateKeyPath.length > 0){
             return ssh.privateKeyPath
-        } else if (ssh.privateKeyContentBase64){
+        } 
+        // Check for valid privateKeyContentBase64
+        else if (ssh.privateKeyContentBase64 && ssh.privateKeyContentBase64.length > 0){
             const tempKeyFile = tmp.fileSync({ mode: 0o600})
             fs.writeFileSync(tempKeyFile.name, fromBase64(ssh.privateKeyContentBase64))
             return tempKeyFile.name
         } else {
-            throw new Error("No SSH private key found")
+            throw new Error("No valid SSH private key found, both privateKeyPath and privateKeyContentBase64 are empty or missing")
         }
     }
 
