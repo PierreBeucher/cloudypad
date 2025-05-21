@@ -77,15 +77,17 @@ export function buildSshClientArgsForInstance(args: {
         typeof args.provisionInput.auth.ssh === 'object' &&
         args.provisionInput.auth.ssh !== null &&
         'user' in args.provisionInput.auth.ssh &&
-        'password' in args.provisionInput.auth.ssh) {
+        'password' in args.provisionInput.auth.ssh &&
+        typeof args.provisionInput.auth.ssh.user === 'string' &&
+        typeof args.provisionInput.auth.ssh.password === 'string') {
         return {
             clientName: args.instanceName,
             host: args.provisionOutput.host,
             port: 22,
-            user: args.provisionInput.auth.ssh.user as string,
-            password: args.provisionInput.auth.ssh.password as string
+            user: args.provisionInput.auth.ssh.user,
+            password: args.provisionInput.auth.ssh.password
         }
-    } else { // Standard authentication with SSH key
+    } else if (args.provisionInput.ssh) { // Standard authentication with SSH key
         const sshKeyPath = new SshKeyLoader().getSshPrivateKeyPath(args.provisionInput.ssh)
         return {
             clientName: args.instanceName,
@@ -94,6 +96,8 @@ export function buildSshClientArgsForInstance(args: {
             user: args.provisionInput.ssh.user,
             privateKeyPath: sshKeyPath
         }
+    } else {
+        throw new Error("No valid authentication method found in provision input")
     }
 }
 
@@ -165,11 +169,11 @@ export class SSHClient {
             },
             recursive: true,
             concurrency: 10,
-            validate: (itemPath) => {
+            validate: (itemPath: string) => {
                 this.logger.trace(`Transferring ${itemPath}`)
                 return true;
             },
-            tick:(localPath, remotePath, error) => {
+            tick:(localPath: string, remotePath: string, error: any) => {
                 if (error) {
                     this.logger.error(`Failed to copy ${localPath} to ${remotePath}: ${JSON.stringify(error)}`)
                     fail.push(localPath)
@@ -193,10 +197,10 @@ export class SSHClient {
         const command = exec[0]
         const sshResp = await this.client.exec(command, exec.slice(1), {
             stream: "both",
-            onStdout: (chunk) => {
+            onStdout: (chunk: Buffer) => {
                 this.logger.trace(`(stdout) ${logPrefix}: ${chunk.toString('utf8').trim()}`)
             },
-            onStderr: (chunk) => {
+            onStderr: (chunk: Buffer) => {
                 this.logger.trace(`(stderr) ${logPrefix}: ${chunk.toString('utf8').trim()}`)
             }
         })

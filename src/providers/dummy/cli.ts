@@ -42,6 +42,7 @@ export class DummyInputPrompter extends AbstractInputPrompter<DummyCreateCliArgs
         };
 
         if (cliArgs.usePasswordAuth && cliArgs.sshUser && cliArgs.sshPassword && input.provision) {
+            // When using password auth, we MUST NOT include any ssh key properties
             input.provision.auth = {
                 type: "password" as const,
                 ssh: {
@@ -49,6 +50,9 @@ export class DummyInputPrompter extends AbstractInputPrompter<DummyCreateCliArgs
                     password: cliArgs.sshPassword
                 }
             };
+            
+            // Explicitly remove any ssh properties to avoid validation errors
+            delete input.provision.ssh;
         }
 
         return input;
@@ -64,7 +68,6 @@ export class DummyInputPrompter extends AbstractInputPrompter<DummyCreateCliArgs
             default: partialInput.provision?.auth?.type === "password" ? true : false,
         });
         
-        let auth;
         if (usePasswordAuth) {
             // If we use password authentication
             const customHost = await input({
@@ -94,7 +97,7 @@ export class DummyInputPrompter extends AbstractInputPrompter<DummyCreateCliArgs
                 default: defaultPassword,
             });
             
-            auth = {
+            const auth = {
                 type: "password" as const,
                 ssh: {
                     user: sshUser,
@@ -102,9 +105,15 @@ export class DummyInputPrompter extends AbstractInputPrompter<DummyCreateCliArgs
                 }
             };
             
+            // Create a copy of commonInput without ssh properties to avoid validation errors
+            const inputWithoutSsh = lodash.cloneDeep(commonInput);
+            if (inputWithoutSsh.provision && inputWithoutSsh.provision.ssh) {
+                delete inputWithoutSsh.provision.ssh;
+            }
+            
             const dummyInput: DummyInstanceInput = lodash.merge(
                 {},
-                commonInput, 
+                inputWithoutSsh, 
                 {
                     provision:{
                         instanceType: instanceType,
@@ -133,7 +142,7 @@ export class DummyInputPrompter extends AbstractInputPrompter<DummyCreateCliArgs
                         configurationDelaySeconds: partialInput.provision?.configurationDelaySeconds ?? 0,
                         provisioningDelaySeconds: partialInput.provision?.provisioningDelaySeconds ?? 0,
                         readinessAfterStartDelaySeconds: partialInput.provision?.readinessAfterStartDelaySeconds ?? 0,
-                        initialState: partialInput.provision?.initialServerStateAfterProvision ?? "running",
+                        initialServerStateAfterProvision: partialInput.provision?.initialServerStateAfterProvision ?? "running",
                     }
                 })
             
