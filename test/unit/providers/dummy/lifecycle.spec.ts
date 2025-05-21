@@ -8,6 +8,43 @@ import { DummyInstanceInput, DummyProvisionInputV1 } from '../../../../src/provi
 import { CommonConfigurationInputV1 } from '../../../../src/core/state/state';
 import { ServerRunningStatus } from '../../../../src/core/runner';
 
+// Create a test-specific DummyInputPrompter that completely bypasses all interactive prompts
+class NoPromptDummyInputPrompter extends DummyInputPrompter {
+    // Override completeCliInput to bypass all interactive prompting
+    async completeCliInput(cliArgs: DummyCreateCliArgs) {
+        return {
+            instanceName: cliArgs.name || "dummy-instance",
+            provision: {
+                instanceType: cliArgs.instanceType || "local",
+                startDelaySeconds: cliArgs.startDelaySeconds || 0,
+                stopDelaySeconds: cliArgs.stopDelaySeconds || 0,
+                configurationDelaySeconds: 0,
+                provisioningDelaySeconds: 0,
+                readinessAfterStartDelaySeconds: 0,
+                initialServerStateAfterProvision: "running",
+                ssh: {
+                    user: "ubuntu",
+                    privateKeyContentBase64: "dummy-private-key-content-base64"
+                }
+            },
+            configuration: {
+                configurator: CLOUDYPAD_CONFIGURATOR_ANSIBLE,
+                sunshine: DEFAULT_COMMON_CLI_ARGS.streamingServer === "sunshine" ? {
+                    enable: true,
+                    username: "sunshine",
+                    passwordBase64: "c3Vuc2hpbmVQYXNzd29yZA==", // 'sunshinePassword' in base64
+                    imageTag: "local",
+                    imageRegistry: "dummy.registry.example.co"
+                } : undefined,
+                autostop: {
+                    enable: true,
+                    timeoutSeconds: 3600
+                }
+            }
+        };
+    }
+}
+
 describe('Dummy instance lifecycle', () => {
 
     const DUMMY_INSTANCE_NAME = "dummy-instance"
@@ -38,9 +75,7 @@ describe('Dummy instance lifecycle', () => {
         instanceType: DUMMY_INSTANCE_TYPE,
         overwriteExisting: true,
         startDelaySeconds: DUMMY_INSTANCE_INPUT.provision.startDelaySeconds,
-        stopDelaySeconds: DUMMY_INSTANCE_INPUT.provision.stopDelaySeconds,
-        // Explicit no password authentication
-        usePasswordAuth: false,
+        stopDelaySeconds: DUMMY_INSTANCE_INPUT.provision.stopDelaySeconds
     }
 
     it('should initialize a new Dummy instance', async () => {
@@ -118,7 +153,8 @@ describe('Dummy instance lifecycle', () => {
         await new InteractiveInstanceInitializer<DummyCreateCliArgs, DummyProvisionInputV1, CommonConfigurationInputV1>({ 
             provider: CLOUDYPAD_PROVIDER_DUMMY,
             initArgs: DUMMY_CLI_ARGS,
-            inputPrompter: new DummyInputPrompter({ coreClient: coreClient }),
+            // Use custom input prompter that skips all interactive prompts
+            inputPrompter: new NoPromptDummyInputPrompter({ coreClient: coreClient }),
             coreClient: coreClient
         }).initializeInteractive({ skipPostInitInfo: true })
     }).timeout(5000)

@@ -45,10 +45,8 @@ export interface SSHCommandOpts {
 }
 
 /**
- * Build an SSH client for an instance. Use inputs and outputs to generate a client using proper SSH configs.
- * @param instanceName - Instance name
- * @param provisionInput - Instance provision input
- * @param provisionOutput - Instance provision output
+ * Build SSH client for a given instance state.
+ * @param args - Instance arguments
  * @returns SSH client
  */
 export function buildClientForInstance(args: {
@@ -56,7 +54,8 @@ export function buildClientForInstance(args: {
     provisionInput: CommonProvisionInputV1,
     provisionOutput: CommonProvisionOutputV1
 }): SSHClient {
-    return new SSHClient(buildSshClientArgsForInstance(args))
+    const sshArgs = buildSshClientArgsForInstance(args)
+    return new SSHClient(sshArgs)
 }
 
 /**
@@ -74,13 +73,17 @@ export function buildSshClientArgsForInstance(args: {
         typeof args.provisionInput.auth === 'object' && 
         'type' in args.provisionInput.auth && 
         args.provisionInput.auth.type === "password" &&
-        'ssh' in args.provisionInput.auth) {
+        'ssh' in args.provisionInput.auth &&
+        typeof args.provisionInput.auth.ssh === 'object' &&
+        args.provisionInput.auth.ssh !== null &&
+        'user' in args.provisionInput.auth.ssh &&
+        'password' in args.provisionInput.auth.ssh) {
         return {
             clientName: args.instanceName,
             host: args.provisionOutput.host,
             port: 22,
-            user: args.provisionInput.auth.ssh.user,
-            password: args.provisionInput.auth.ssh.password
+            user: args.provisionInput.auth.ssh.user as string,
+            password: args.provisionInput.auth.ssh.password as string
         }
     } else { // Standard authentication with SSH key
         const sshKeyPath = new SshKeyLoader().getSshPrivateKeyPath(args.provisionInput.ssh)

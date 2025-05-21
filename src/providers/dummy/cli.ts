@@ -41,7 +41,7 @@ export class DummyInputPrompter extends AbstractInputPrompter<DummyCreateCliArgs
             }
         };
 
-        if (cliArgs.usePasswordAuth && cliArgs.sshUser && cliArgs.sshPassword) {
+        if (cliArgs.usePasswordAuth && cliArgs.sshUser && cliArgs.sshPassword && input.provision) {
             input.provision.auth = {
                 type: "password" as const,
                 ssh: {
@@ -72,18 +72,26 @@ export class DummyInputPrompter extends AbstractInputPrompter<DummyCreateCliArgs
                 default: partialInput.provision?.customHost || '',
             });
             
+            // Safe access to nested properties
+            const defaultUser = partialInput.provision?.auth?.type === "password" && 
+                               partialInput.provision?.auth?.ssh?.user ? 
+                               partialInput.provision.auth.ssh.user : 
+                               'ubuntu';
+            
             const sshUser = await input({
                 message: 'Enter SSH username:',
-                default: partialInput.provision?.auth?.type === "password" 
-                    ? partialInput.provision.auth.ssh.user 
-                    : 'ubuntu',
+                default: defaultUser,
             });
+            
+            // Safe access to nested properties
+            const defaultPassword = partialInput.provision?.auth?.type === "password" && 
+                                  partialInput.provision?.auth?.ssh?.password ? 
+                                  partialInput.provision.auth.ssh.password : 
+                                  '';
             
             const sshPassword = await input({
                 message: 'Enter SSH password:',
-                default: partialInput.provision?.auth?.type === "password" 
-                    ? partialInput.provision.auth.ssh.password
-                    : '',
+                default: defaultPassword,
             });
             
             auth = {
