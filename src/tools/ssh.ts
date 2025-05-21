@@ -70,7 +70,11 @@ export function buildSshClientArgsForInstance(args: {
     provisionOutput: CommonProvisionOutputV1
 }): SSHClientArgs {
     // Check if we are using auth with password authentication
-    if (args.provisionInput.auth && args.provisionInput.auth.type === "password") {
+    if (args.provisionInput.auth && 
+        typeof args.provisionInput.auth === 'object' && 
+        'type' in args.provisionInput.auth && 
+        args.provisionInput.auth.type === "password" &&
+        'ssh' in args.provisionInput.auth) {
         return {
             clientName: args.instanceName,
             host: args.provisionOutput.host,

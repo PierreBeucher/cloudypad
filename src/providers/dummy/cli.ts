@@ -43,7 +43,7 @@ export class DummyInputPrompter extends AbstractInputPrompter<DummyCreateCliArgs
 
         if (cliArgs.usePasswordAuth && cliArgs.sshUser && cliArgs.sshPassword) {
             input.provision.auth = {
-                type: "password",
+                type: "password" as const,
                 ssh: {
                     user: cliArgs.sshUser,
                     password: cliArgs.sshPassword
@@ -87,7 +87,7 @@ export class DummyInputPrompter extends AbstractInputPrompter<DummyCreateCliArgs
             });
             
             auth = {
-                type: "password",
+                type: "password" as const,
                 ssh: {
                     user: sshUser,
                     password: sshPassword

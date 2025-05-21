@@ -107,5 +107,42 @@ describe('Instance initializer', () => {
         const parsedKey = sshpk.parseKey(privateKeyContent, "ssh-private").toString("ssh-private")
         assert.ok(parsedKey.startsWith("-----BEGIN OPENSSH PUBLIC KEY-----"))
     })
+
+    // Lägg till ett nytt test för lösenordsautentisering
+    it('should skip SSH key generation when using password authentication', async () => {
+
+        // Använd default input men lägg till lösenordsautentisering
+        const testInput = lodash.cloneDeep(TEST_INPUT);
+        testInput.provision.ssh.privateKeyPath = undefined;
+        testInput.provision.ssh.privateKeyContentBase64 = undefined;
+        
+        // Lägg till auth-objekt för lösenordsautentisering
+        (testInput.provision as any).auth = {
+            type: "password" as const,
+            ssh: {
+                user: "test-user",
+                password: "test-password"
+            }
+        };
+
+        await new InstanceInitializer<GcpProvisionInputV1, CommonConfigurationInputV1>({ 
+            provider: CLOUDYPAD_PROVIDER_GCP,
+            stateWriter: getUnitTestCoreClient().buildEmptyStateWriter()
+        }).initializeStateOnly("test-password-auth", testInput.provision, testInput.configuration);
+
+        // Check state has been written
+        const loader = getUnitTestCoreClient().buildStateLoader();
+        const state = await loader.loadInstanceState("test-password-auth");
+
+        // Verifiera att auth-objektet finns
+        assert.ok((state.provision.input as any).auth);
+        assert.strictEqual((state.provision.input as any).auth.type, "password");
+        assert.strictEqual((state.provision.input as any).auth.ssh.user, "test-user");
+        assert.strictEqual((state.provision.input as any).auth.ssh.password, "test-password");
+
+        // Verifiera att ingen SSH-nyckel genererades
+        assert.equal(state.provision.input.ssh.privateKeyPath, undefined);
+        assert.equal(state.provision.input.ssh.privateKeyContentBase64, undefined);
+    });
 })
         

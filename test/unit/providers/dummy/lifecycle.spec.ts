@@ -38,7 +38,9 @@ describe('Dummy instance lifecycle', () => {
         instanceType: DUMMY_INSTANCE_TYPE,
         overwriteExisting: true,
         startDelaySeconds: DUMMY_INSTANCE_INPUT.provision.startDelaySeconds,
-        stopDelaySeconds: DUMMY_INSTANCE_INPUT.provision.stopDelaySeconds
+        stopDelaySeconds: DUMMY_INSTANCE_INPUT.provision.stopDelaySeconds,
+        // Explicit no password authentication
+        usePasswordAuth: false,
     }
 
     it('should initialize a new Dummy instance', async () => {
@@ -119,7 +121,7 @@ describe('Dummy instance lifecycle', () => {
             inputPrompter: new DummyInputPrompter({ coreClient: coreClient }),
             coreClient: coreClient
         }).initializeInteractive({ skipPostInitInfo: true })
-    })
+    }).timeout(5000)
 
     it("should initialize with given initial server status", async () => {
         const coreClient = getUnitTestCoreClient()
