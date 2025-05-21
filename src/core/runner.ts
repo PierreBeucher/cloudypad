@@ -113,26 +113,40 @@ export abstract class AbstractInstanceRunner<C extends CommonProvisionInputV1, O
         })
 
         if(this.args.configurationInput.sunshine?.enable){
+            const sshConfig = {
+                user: sshClientArgs.user
+            };
+            
+            if (sshClientArgs.password) {
+                Object.assign(sshConfig, { password: sshClientArgs.password });
+            } else if (sshClientArgs.privateKeyPath) {
+                Object.assign(sshConfig, { privateKeyPath: sshClientArgs.privateKeyPath });
+            }
+                
             return new SunshineMoonlightPairer({
                 instanceName: this.args.instanceName,
                 host: sshClientArgs.host,
-                ssh: {
-                    user: sshClientArgs.user,
-                    privateKeyPath: sshClientArgs.privateKeyPath
-                },
+                ssh: sshConfig,
                 sunshine: {
                     username: this.args.configurationInput.sunshine.username,
                     password: Buffer.from(this.args.configurationInput.sunshine.passwordBase64, 'base64').toString('utf-8')
                 }
             })
         } else if(this.args.configurationInput.wolf?.enable){
+            const sshConfig = {
+                user: sshClientArgs.user
+            };
+            
+            if (sshClientArgs.password) {
+                Object.assign(sshConfig, { password: sshClientArgs.password });
+            } else if (sshClientArgs.privateKeyPath) {
+                Object.assign(sshConfig, { privateKeyPath: sshClientArgs.privateKeyPath });
+            }
+                
             return new WolfMoonlightPairer({
                 instanceName: this.args.instanceName,
                 host: sshClientArgs.host,
-                ssh: {
-                    user: sshClientArgs.user,
-                    privateKeyPath: sshClientArgs.privateKeyPath
-                }
+                ssh: sshConfig
             })
         } else {
             throw new Error(`No Moonlight pairer found for instance ${this.args.instanceName}, neither Sunshine nor Wolf is enabled`)

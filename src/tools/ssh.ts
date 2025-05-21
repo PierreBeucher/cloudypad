@@ -69,7 +69,7 @@ export function buildSshClientArgsForInstance(args: {
     provisionInput: CommonProvisionInputV1, 
     provisionOutput: CommonProvisionOutputV1
 }): SSHClientArgs {
-    // Check if we are using dummy provider with password authentication
+    // Check if we are using auth with password authentication
     if (args.provisionInput.auth && args.provisionInput.auth.type === "password") {
         return {
             clientName: args.instanceName,

@@ -7,7 +7,8 @@ export interface SunshineMoonlightPairerArgs {
     host: string
     ssh: {
         user: string
-        privateKeyPath: string
+        privateKeyPath?: string
+        password?: string
     },
     sunshine: {
         username: string
@@ -30,13 +31,22 @@ export class SunshineMoonlightPairer extends AbstractMoonlightPairer implements 
     }
 
     private buildSshClient(): SSHClient {
-        return new SSHClient({
+        const sshConfig: any = {
             clientName: SunshineMoonlightPairer.name,
             host: this.args.host,
             port: 22,
             user: this.args.ssh.user,
-            privateKeyPath: this.args.ssh.privateKeyPath
-        })
+        };
+
+        if (this.args.ssh.password) {
+            sshConfig.password = this.args.ssh.password;
+        } else if (this.args.ssh.privateKeyPath) {
+            sshConfig.privateKeyPath = this.args.ssh.privateKeyPath;
+        } else {
+            throw new Error("No authentication method available for SSH. Either password or privateKeyPath must be specified.");
+        }
+
+        return new SSHClient(sshConfig);
     }
 
     protected async doPair() {

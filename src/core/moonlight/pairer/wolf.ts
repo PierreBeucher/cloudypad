@@ -11,7 +11,8 @@ export interface WolfMoonlightPairerArgs {
     host: string
     ssh: {
         user: string
-        privateKeyPath: string
+        privateKeyPath?: string
+        password?: string
     }
 }
 
@@ -37,17 +38,24 @@ export class WolfMoonlightPairer extends AbstractMoonlightPairer implements Moon
             const pairManual = "manual"
             const pairAuto = "auto"
 
-            const privateKey = fs.readFileSync(this.args.ssh.privateKeyPath, 'utf-8')
-
-            const docker = new Docker({
+            const dockerOptions: any = {
                 host: this.args.host,
                 protocol: 'ssh',
                 port: 22,
                 username: this.args.ssh.user,
-                sshOptions: {
-                    privateKey: privateKey
-                }
-            })
+                sshOptions: {}
+            };
+
+            // Använd antingen lösenord eller nyckelautentisering
+            if (this.args.ssh.password) {
+                dockerOptions.sshOptions.password = this.args.ssh.password;
+            } else if (this.args.ssh.privateKeyPath) {
+                dockerOptions.sshOptions.privateKey = fs.readFileSync(this.args.ssh.privateKeyPath, 'utf-8');
+            } else {
+                throw new Error("No authentication method available for SSH. Either password or privateKeyPath must be specified.");
+            }
+
+            const docker = new Docker(dockerOptions);
 
             const pairMethod = await select({
                 message: 'Pair Moonlight automatically or run Moonlight yourself to pair manually ?',
