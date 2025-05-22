@@ -9,6 +9,7 @@
     - [Development Virtual Machine](#development-virtual-machine)
   - [Local Pulumi stack manipulation](#local-pulumi-stack-manipulation)
 - [Maintenance](#maintenance)
+- [Regular updates](#regular-updates)
   - [Updating Wolf version](#updating-wolf-version)
 - [Adding a new provider](#adding-a-new-provider)
   - [Provider components](#provider-components)
@@ -138,6 +139,15 @@ pulumi destroy -s <organization/CloudyPad-XXX/STACK>
 
 
 ## Maintenance
+
+## Regular updates
+
+- [ ] Node deps
+- [ ] NVIDIA driver version `ansible/roles/nvidia-driver/defaults/main.yml` `nvidia_driver_dotrun_install_version`
+- [ ] Wolf version (see below)
+- [ ] Sunshine Dockerfile `containers/sunshine/Dockerfile`
+  - [ ] Base image version `FROM`
+  - [ ] Steam version `CLOUDYPAD_STEAM_VERSION`
 
 ### Updating Wolf version
 

@@ -14,6 +14,11 @@ services:
       # We need to enforce it here as X may fail to auto-detect proper PCI in some environments (eg. Azure)
       NVIDIA_PCI_BUS_ID: "{{ nvidia_pci_bus_id }}"
 
+      # Nvidia driver capabilities required to run games
+      # Set all capabilities to enable all features, including graphics, video and display
+      # See https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/docker-specialized.html
+      NVIDIA_DRIVER_CAPABILITIES: all
+
 {% if nvidia_gpu_model in nvidia_datacenter_gpu_models %}
       # Datacenter (Tesla) GPUs have a maximum resolution of 2560x1600
       # See https://github.com/PierreBeucher/cloudypad/issues/144
