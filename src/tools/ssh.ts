@@ -89,7 +89,7 @@ export function buildSshClientArgsForInstance(args: {
             password: args.provisionInput.auth.ssh.password
         }
     } else if (args.provisionInput.ssh) {
-        // Check if we have valid SSH key info (not empty placeholder)
+        // Check if we have valid SSH key info
         const hasValidKeyPath = args.provisionInput.ssh.privateKeyPath && 
                                 args.provisionInput.ssh.privateKeyPath.length > 0;
         
@@ -107,11 +107,10 @@ export function buildSshClientArgsForInstance(args: {
                 privateKeyPath: sshKeyPath
             }
         } else {
-            // Empty SSH key configuration - this is likely a placeholder for a password auth instance
-            throw new Error("SSH key configuration is empty or invalid - this may be a misconfigured password auth instance");
+            throw new Error("No valid SSH key found. Either privateKeyPath or privateKeyContentBase64 must be provided for SSH key authentication");
         }
     } else {
-        throw new Error("No valid authentication method found in provision input");
+        throw new Error("No valid authentication method found in provision input. Ensure either auth.ssh (password auth) or ssh (key auth) is properly configured");
     }
 }
 
