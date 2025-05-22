@@ -9,7 +9,7 @@
     - [Development Virtual Machine](#development-virtual-machine)
   - [Local Pulumi stack manipulation](#local-pulumi-stack-manipulation)
 - [Maintenance](#maintenance)
-- [Reguler updates](#reguler-updates)
+- [Regular updates](#regular-updates)
   - [Updating Wolf version](#updating-wolf-version)
 - [Adding a new provider](#adding-a-new-provider)
   - [Provider components](#provider-components)
@@ -140,7 +140,7 @@ pulumi destroy -s <organization/CloudyPad-XXX/STACK>
 
 ## Maintenance
 
-## Reguler updates
+## Regular updates
 
 - [ ] Node deps
 - [ ] NVIDIA driver version `ansible/roles/nvidia-driver/defaults/main.yml` `nvidia_driver_dotrun_install_version`
