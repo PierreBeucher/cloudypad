@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.28.0](https://github.com/PierreBeucher/cloudypad/compare/v0.27.1...v0.28.0) (2025-05-22)
+
+
+### Features
+
+* bump NVIDIA driver version ([6cac80e](https://github.com/PierreBeucher/cloudypad/commit/6cac80e2d4705015846793dbfe131e9919ff07d3))
+* bump Sunshine Ubuntu base version ([44e9538](https://github.com/PierreBeucher/cloudypad/commit/44e9538e8ff3705fad36dd277d8a9ca20998649d))
+
+
+### Bug Fixes
+
+* ensure required NVIDIA driver capabilities in Sunshine container ([62879a0](https://github.com/PierreBeucher/cloudypad/commit/62879a0ba514e45656a093f1c4fbe2069af80dd8))
+
 ## [0.27.1](https://github.com/PierreBeucher/cloudypad/compare/v0.27.0...v0.27.1) (2025-05-20)
 
 
