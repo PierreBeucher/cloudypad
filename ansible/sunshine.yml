@@ -39,7 +39,6 @@
       vars:
         # Do not add Docker repository on Scaleway as it's already set and keyrings would conflict otherwise
         docker_add_repo: "{{ cloudypad_provider != 'scaleway' }}"
-        # Disable resource limits for Docker in container environments (dummy provider)
 
     
     - role: roles/nvidia-driver

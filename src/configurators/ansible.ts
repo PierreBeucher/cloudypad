@@ -57,7 +57,7 @@ export class AnsibleConfigurator<ST extends InstanceStateV1> extends AbstractIns
 
         const ansible = new AnsibleClient()
         const additionalArgs = this.args.additionalAnsibleArgs ?? []
-        if (this.args.provider === 'dummy') {
+        if (this.args.provider === 'local') {
             additionalArgs.push('--skip-tags=reboot')
         }
         await ansible.runAnsible(inventoryPath, playbookPath, additionalArgs)
@@ -90,8 +90,8 @@ export class AnsibleConfigurator<ST extends InstanceStateV1> extends AbstractIns
      * @returns Inventory content as a JSON object
      */
     public async generateInventoryObject(): Promise<any>   {
-        if (this.args.provider === 'dummy') {
-            // For dummy provider - check if password authentication is enabled
+        if (this.args.provider === 'local') {
+            // For local provider - check if password authentication is enabled
             if ((this.args.provisionInput as any).auth && (this.args.provisionInput as any).auth.type === "password") {
                 const auth = (this.args.provisionInput as any).auth;
                 const customHost = (this.args.provisionInput as any).customHost || "0.0.0.0";
@@ -137,7 +137,7 @@ export class AnsibleConfigurator<ST extends InstanceStateV1> extends AbstractIns
             }
         }
 
-        // Standard SSH key-based authentication for other providers and dummy without password auth
+        // Standard SSH key-based authentication for other providers and local without password auth
         if (!this.args.provisionInput.ssh) {
             throw new Error("SSH configuration is required for key-based authentication but was not found in provision input");
         }
