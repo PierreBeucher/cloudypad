@@ -43,7 +43,7 @@ export class InstanceInitializer<PI extends CommonProvisionInputV1, CI extends C
 
         // Only generate an SSH key if we are NOT using password authentication
         // and if no key has been specified
-        if (!usesPasswordAuth && 
+        if (!usesPasswordAuth && provisionInput.ssh && 
             !provisionInput.ssh.privateKeyPath && 
             !provisionInput.ssh.privateKeyContentBase64) {
             

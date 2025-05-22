@@ -139,6 +139,10 @@ export class AnsibleConfigurator<ST extends InstanceStateV1> extends AbstractIns
         }
 
         // Standard SSH key-based authentication for other providers and dummy without password auth
+        if (!this.args.provisionInput.ssh) {
+            throw new Error("SSH configuration is required for key-based authentication but was not found in provision input");
+        }
+        
         const sshPrivateKeyPath = new SshKeyLoader().getSshPrivateKeyPath(this.args.provisionInput.ssh)
 
         return {

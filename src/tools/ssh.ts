@@ -287,6 +287,10 @@ export class SshKeyLoader {
      * @returns SSH private key path
      */
     getSshPrivateKeyPath(ssh: CommonProvisionInputV1["ssh"]){
+        if (!ssh) {
+            throw new Error("SSH configuration is undefined");
+        }
+        
         // Check for valid privateKeyPath
         if(ssh.privateKeyPath && ssh.privateKeyPath.length > 0){
             return ssh.privateKeyPath
@@ -307,6 +311,10 @@ export class SshKeyLoader {
      * @returns SSH private key content
      */
     loadSshPrivateKeyContent(ssh: CommonProvisionInputV1["ssh"]){
+        if (!ssh) {
+            throw new Error("SSH configuration is undefined");
+        }
+        
         if(ssh.privateKeyPath){
             return fs.readFileSync(ssh.privateKeyPath, 'utf8')
         } else if (ssh.privateKeyContentBase64){
@@ -326,6 +334,10 @@ export class SshKeyLoader {
     }
 
     _loadSshPublicKeyContent(ssh: CommonProvisionInputV1["ssh"]) {
+        if (!ssh) {
+            throw new Error("SSH configuration is undefined");
+        }
+        
         // Key ID can be anything, only used for fingerprint which we don't need
         const privateKey = this.loadSshPrivateKeyContent(ssh)
         const key = sshpk.parsePrivateKey(privateKey, 'auto', { filename: "dummy_key" })
