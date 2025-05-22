@@ -2,6 +2,7 @@ import { InstanceRunner, InstanceRunnerArgs, ServerRunningStatus, StartStopOptio
 import { getLogger, Logger } from '../../log/utils';
 import { DummyInstanceInfraManager } from './infra';
 import { DummyProvisionInputV1, DummyProvisionOutputV1 } from './state';
+import { SSHClient } from '../../tools/ssh';
 
 export interface DummyInstanceRunnerArgs extends InstanceRunnerArgs<DummyProvisionInputV1, DummyProvisionOutputV1> {
     dummyInfraManager: DummyInstanceInfraManager
@@ -23,9 +24,45 @@ export class DummyInstanceRunner implements InstanceRunner {
         this.args = args
     }
 
+    private buildSshClient(): SSHClient | null {
+        // Check if auth type is password
+        if ((this.args.provisionInput as any).auth && (this.args.provisionInput as any).auth.type === "password") {
+            const auth = (this.args.provisionInput as any).auth;
+            const customHost = (this.args.provisionInput as any).customHost || "0.0.0.0";
+            
+            const sshConfig: any = {
+                clientName: "DummyInstanceRunner",
+                host: customHost,
+                port: 22,
+                user: auth.ssh.user,
+                password: auth.ssh.password
+            };
+            
+            return new SSHClient(sshConfig);
+        }
+        return null;
+    }
 
     async start(opts?: StartStopOptions): Promise<void> {
         this.logger.debug(`Dummy start operation for instance: ${this.args.instanceName} (starting time: ${this.args.provisionInput.startDelaySeconds} seconds)`)
+        
+        // Try to use SSH if available
+        const sshClient = this.buildSshClient();
+        if (sshClient) {
+            try {
+                this.logger.debug(`Using SSH to start services on ${this.args.instanceName}`);
+                // Start Docker service and Sunshine container
+                await sshClient.command(['sudo', 'systemctl', 'start', 'docker']);
+                // Try to start existing container first, if it fails, just continue
+                try {
+                    await sshClient.command(['docker', 'start', 'cloudy']);
+                } catch (error) {
+                    this.logger.warn(`Failed to start cloudy container, might not exist yet: ${error}`);
+                }
+            } catch (error) {
+                this.logger.warn(`Failed to execute start command via SSH: ${error}`);
+            }
+        }
         
         if(this.args.provisionInput.startDelaySeconds > 0) {
             await this.args.dummyInfraManager.setServerRunningStatus(ServerRunningStatus.Starting)
@@ -45,6 +82,18 @@ export class DummyInstanceRunner implements InstanceRunner {
     async stop(opts?: StartStopOptions): Promise<void> {
         this.logger.debug(`Dummy stop operation for instance: ${this.args.instanceName} (stopping time: ${this.args.provisionInput.stopDelaySeconds} seconds)`)
 
+        // Try to use SSH if available
+        const sshClient = this.buildSshClient();
+        if (sshClient) {
+            try {
+                this.logger.debug(`Using SSH to stop services on ${this.args.instanceName}`);
+                // Stop sunshine container
+                await sshClient.command(['docker', 'stop', 'cloudy']);
+            } catch (error) {
+                this.logger.warn(`Failed to execute stop command via SSH: ${error}`);
+            }
+        }
+
         if(this.args.provisionInput.stopDelaySeconds > 0) {
             await this.args.dummyInfraManager.setServerRunningStatus(ServerRunningStatus.Stopping)
             const stoppingPromise = new Promise<void>(resolve => setTimeout(async () => {
@@ -62,23 +111,169 @@ export class DummyInstanceRunner implements InstanceRunner {
 
     async restart(opts?: StartStopOptions): Promise<void> {
         this.logger.debug(`Dummy restart operation for instance: ${this.args.instanceName}`)
-        await this.stop()
-        await this.start()
+        
+        // Try to use SSH if available
+        const sshClient = this.buildSshClient();
+        if (sshClient) {
+            try {
+                this.logger.debug(`Using SSH to restart services on ${this.args.instanceName}`);
+                // Restart sunshine container
+                await sshClient.command(['docker', 'restart', 'cloudy']);
+            } catch (error) {
+                this.logger.warn(`Failed to execute restart command via SSH: ${error}`);
+                // Fall back to stop/start
+                await this.stop(opts);
+                await this.start(opts);
+                return;
+            }
+        } else {
+            // Fall back to stop/start
+            await this.stop(opts);
+            await this.start(opts);
+        }
     }
 
     async serverStatus(): Promise<ServerRunningStatus> {
         this.logger.debug(`Dummy get status operation for instance: ${this.args.instanceName}`)
+        
+        // Try to check actual status via SSH if available
+        const sshClient = this.buildSshClient();
+        if (sshClient) {
+            try {
+                this.logger.debug(`Using SSH to check container status on ${this.args.instanceName}`);
+                const result = await sshClient.command(['docker', 'ps', '--filter', 'name=cloudy', '--format', '{{.Status}}']);
+                if (result.stdout && result.stdout.includes('Up')) {
+                    await this.args.dummyInfraManager.setServerRunningStatus(ServerRunningStatus.Running);
+                    return ServerRunningStatus.Running;
+                } else {
+                    await this.args.dummyInfraManager.setServerRunningStatus(ServerRunningStatus.Stopped);
+                    return ServerRunningStatus.Stopped;
+                }
+            } catch (error) {
+                this.logger.warn(`Failed to check status via SSH: ${error}`);
+            }
+        }
+        
         const status = await this.args.dummyInfraManager.getServerRunningStatus()
         return status.status
     }
 
     async pairInteractive(): Promise<void> {
         this.logger.debug(`Dummy pair interactive operation for instance: ${this.args.instanceName}`)
+        
+        // If we have SSH access, try to check if Sunshine is actually running
+        const sshClient = this.buildSshClient();
+        if (sshClient) {
+            try {
+                // Check if the Sunshine container is running
+                const result = await sshClient.command(['docker', 'ps', '--filter', 'name=cloudy', '--format', '{{.Status}}']);
+                if (!result.stdout || !result.stdout.includes('Up')) {
+                    this.logger.warn(`Sunshine container is not running. Starting it...`);
+                    await this.start({ wait: true });
+                }
+                
+                // Generate a PIN and provide instructions
+                const pin = Math.floor(1000 + Math.random() * 9000).toString(); // 4-digit PIN
+                
+                const host = (this.args.provisionInput as any).customHost || "0.0.0.0";
+                
+                console.info(`Run this command in another terminal to pair your instance:`)
+                console.info()
+                console.info(`  moonlight pair ${host} --pin ${pin}`)
+                console.info()
+                console.info(`For Mac / Apple devices, you may need to use this pseudo-IPv6 address:`)
+                console.info()
+                console.info(`  moonlight pair [::ffff:${host}] --pin ${pin}`)
+                console.info()
+                
+                // Try to send the PIN to Sunshine
+                console.info(`Sending PIN to Sunshine API...`)
+                
+                // Use curl via SSH to send the PIN to Sunshine
+                const username = this.args.configurationInput.sunshine?.username || "admin";
+                const passwordBase64 = this.args.configurationInput.sunshine?.passwordBase64 || "";
+                const password = Buffer.from(passwordBase64, 'base64').toString('utf-8');
+                
+                let success = false;
+                let attempts = 0;
+                const maxAttempts = 30;
+                
+                while (!success && attempts < maxAttempts) {
+                    try {
+                        const pairResult = await sshClient.command([
+                            'curl',
+                            '-v',
+                            '-u',
+                            `${username}:${password}`,
+                            '-X',
+                            'POST',
+                            '-k',
+                            'https://localhost:47990/api/pin',
+                            '-d',
+                            `{"pin":"${pin}","name":"${this.args.instanceName}"}`
+                        ]);
+                        
+                        this.logger.debug(`Sunshine pair attempt ${attempts + 1} result: ${pairResult.stdout}`);
+                        
+                        if (pairResult.stdout && pairResult.stdout.includes('"status":"true"')) {
+                            success = true;
+                            console.info(`✅ PIN sent successfully! Continue with Moonlight pairing.`);
+                        } else {
+                            attempts++;
+                            await new Promise(resolve => setTimeout(resolve, 2000));
+                        }
+                    } catch (error) {
+                        this.logger.warn(`Failed to send PIN attempt ${attempts + 1}: ${error}`);
+                        attempts++;
+                        await new Promise(resolve => setTimeout(resolve, 2000));
+                    }
+                }
+                
+                if (!success) {
+                    console.info(`❌ Failed to send PIN after ${maxAttempts} attempts. Please check if Sunshine is running correctly.`);
+                }
+            } catch (error) {
+                this.logger.warn(`Failed to execute pairing via SSH: ${error}`);
+            }
+        }
     }
 
     async pairSendPin(pin: string, retries?: number, retryDelay?: number): Promise<boolean> {
-        this.logger.debug(`Dummy pair send pin operation for instance: ${this.args.instanceName} with pin: ${pin}`)
-        return true
+        this.logger.debug(`Dummy pair send pin operation for instance: ${this.args.instanceName} with pin: ${pin}`);
+        
+        // If we have SSH access, try to send the PIN to Sunshine
+        const sshClient = this.buildSshClient();
+        if (sshClient) {
+            try {
+                // Use curl via SSH to send the PIN to Sunshine
+                const username = this.args.configurationInput.sunshine?.username || "admin";
+                const passwordBase64 = this.args.configurationInput.sunshine?.passwordBase64 || "";
+                const password = Buffer.from(passwordBase64, 'base64').toString('utf-8');
+                
+                const pairResult = await sshClient.command([
+                    'curl',
+                    '-v',
+                    '-u',
+                    `${username}:${password}`,
+                    '-X',
+                    'POST',
+                    '-k',
+                    'https://localhost:47990/api/pin',
+                    '-d',
+                    `{"pin":"${pin}","name":"${this.args.instanceName}"}`
+                ]);
+                
+                this.logger.debug(`Sunshine pair result: ${pairResult.stdout}`);
+                
+                if (pairResult.stdout && pairResult.stdout.includes('"status":"true"')) {
+                    return true;
+                }
+            } catch (error) {
+                this.logger.warn(`Failed to send PIN: ${error}`);
+            }
+        }
+        
+        return false;
     }
 
     /**
@@ -94,6 +289,23 @@ export class DummyInstanceRunner implements InstanceRunner {
         this.logger.trace(`Dummy instance ${this.args.instanceName} readiness - server status: ${status}`)
 
         if(status === ServerRunningStatus.Running) {
+            // Check actual readiness via SSH if available
+            const sshClient = this.buildSshClient();
+            if (sshClient) {
+                try {
+                    // Use cloudypad-check-readiness script to check if Sunshine is ready
+                    const result = await sshClient.command(['cloudypad-check-readiness']);
+                    this.logger.debug(`Sunshine readiness check result: ${result.stdout}`);
+                    if (result.code === 0) {
+                        this.logger.debug(`Sunshine is ready according to cloudypad-check-readiness`);
+                        return true;
+                    }
+                } catch (error) {
+                    this.logger.warn(`Failed to check readiness via SSH: ${error}`);
+                    // Fall back to standard logic
+                }
+            }
+            
             if(this.args.provisionInput.readinessAfterStartDelaySeconds === undefined || this.args.provisionInput.readinessAfterStartDelaySeconds <= 0) {
                 this.logger.trace(`Dummy instance ${this.args.instanceName} readiness result: true`)
                 return true
