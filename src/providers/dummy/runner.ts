@@ -43,26 +43,40 @@ export class DummyInstanceRunner implements InstanceRunner {
         return null;
     }
 
+    private async tryWithSshClient(action: (client: SSHClient) => Promise<void>): Promise<boolean> {
+        const sshClient = this.buildSshClient();
+        if (!sshClient) {
+            return false;
+        }
+        
+        try {
+            this.logger.debug(`Connecting to SSH server...`);
+            await sshClient.connect();
+            await action(sshClient);
+            return true;
+        } catch (error) {
+            this.logger.warn(`SSH operation failed: ${error}`);
+            return false;
+        } finally {
+            sshClient.dispose();
+        }
+    }
+
     async start(opts?: StartStopOptions): Promise<void> {
         this.logger.debug(`Dummy start operation for instance: ${this.args.instanceName} (starting time: ${this.args.provisionInput.startDelaySeconds} seconds)`)
         
         // Try to use SSH if available
-        const sshClient = this.buildSshClient();
-        if (sshClient) {
+        await this.tryWithSshClient(async (sshClient) => {
+            this.logger.debug(`Using SSH to start services on ${this.args.instanceName}`);
+            // Start Docker service and Sunshine container
+            await sshClient.command(['sudo', 'systemctl', 'start', 'docker']);
+            // Try to start existing container first, if it fails, just continue
             try {
-                this.logger.debug(`Using SSH to start services on ${this.args.instanceName}`);
-                // Start Docker service and Sunshine container
-                await sshClient.command(['sudo', 'systemctl', 'start', 'docker']);
-                // Try to start existing container first, if it fails, just continue
-                try {
-                    await sshClient.command(['docker', 'start', 'cloudy']);
-                } catch (error) {
-                    this.logger.warn(`Failed to start cloudy container, might not exist yet: ${error}`);
-                }
+                await sshClient.command(['docker', 'start', 'cloudy']);
             } catch (error) {
-                this.logger.warn(`Failed to execute start command via SSH: ${error}`);
+                this.logger.warn(`Failed to start cloudy container, might not exist yet: ${error}`);
             }
-        }
+        });
         
         if(this.args.provisionInput.startDelaySeconds > 0) {
             await this.args.dummyInfraManager.setServerRunningStatus(ServerRunningStatus.Starting)
@@ -83,16 +97,11 @@ export class DummyInstanceRunner implements InstanceRunner {
         this.logger.debug(`Dummy stop operation for instance: ${this.args.instanceName} (stopping time: ${this.args.provisionInput.stopDelaySeconds} seconds)`)
 
         // Try to use SSH if available
-        const sshClient = this.buildSshClient();
-        if (sshClient) {
-            try {
-                this.logger.debug(`Using SSH to stop services on ${this.args.instanceName}`);
-                // Stop sunshine container
-                await sshClient.command(['docker', 'stop', 'cloudy']);
-            } catch (error) {
-                this.logger.warn(`Failed to execute stop command via SSH: ${error}`);
-            }
-        }
+        await this.tryWithSshClient(async (sshClient) => {
+            this.logger.debug(`Using SSH to stop services on ${this.args.instanceName}`);
+            // Stop sunshine container
+            await sshClient.command(['docker', 'stop', 'cloudy']);
+        });
 
         if(this.args.provisionInput.stopDelaySeconds > 0) {
             await this.args.dummyInfraManager.setServerRunningStatus(ServerRunningStatus.Stopping)
@@ -113,21 +122,14 @@ export class DummyInstanceRunner implements InstanceRunner {
         this.logger.debug(`Dummy restart operation for instance: ${this.args.instanceName}`)
         
         // Try to use SSH if available
-        const sshClient = this.buildSshClient();
-        if (sshClient) {
-            try {
-                this.logger.debug(`Using SSH to restart services on ${this.args.instanceName}`);
-                // Restart sunshine container
-                await sshClient.command(['docker', 'restart', 'cloudy']);
-            } catch (error) {
-                this.logger.warn(`Failed to execute restart command via SSH: ${error}`);
-                // Fall back to stop/start
-                await this.stop(opts);
-                await this.start(opts);
-                return;
-            }
-        } else {
-            // Fall back to stop/start
+        const sshSuccess = await this.tryWithSshClient(async (sshClient) => {
+            this.logger.debug(`Using SSH to restart services on ${this.args.instanceName}`);
+            // Restart sunshine container
+            await sshClient.command(['docker', 'restart', 'cloudy']);
+        });
+        
+        // If SSH failed, fall back to stop/start
+        if (!sshSuccess) {
             await this.stop(opts);
             await this.start(opts);
         }
@@ -137,21 +139,22 @@ export class DummyInstanceRunner implements InstanceRunner {
         this.logger.debug(`Dummy get status operation for instance: ${this.args.instanceName}`)
         
         // Try to check actual status via SSH if available
-        const sshClient = this.buildSshClient();
-        if (sshClient) {
-            try {
-                this.logger.debug(`Using SSH to check container status on ${this.args.instanceName}`);
-                const result = await sshClient.command(['docker', 'ps', '--filter', 'name=cloudy', '--format', '{{.Status}}']);
-                if (result.stdout && result.stdout.includes('Up')) {
-                    await this.args.dummyInfraManager.setServerRunningStatus(ServerRunningStatus.Running);
-                    return ServerRunningStatus.Running;
-                } else {
-                    await this.args.dummyInfraManager.setServerRunningStatus(ServerRunningStatus.Stopped);
-                    return ServerRunningStatus.Stopped;
-                }
-            } catch (error) {
-                this.logger.warn(`Failed to check status via SSH: ${error}`);
+        let sshStatus: ServerRunningStatus | null = null;
+        
+        await this.tryWithSshClient(async (sshClient) => {
+            this.logger.debug(`Using SSH to check container status on ${this.args.instanceName}`);
+            const result = await sshClient.command(['docker', 'ps', '--filter', 'name=cloudy', '--format', '{{.Status}}']);
+            if (result.stdout && result.stdout.includes('Up')) {
+                await this.args.dummyInfraManager.setServerRunningStatus(ServerRunningStatus.Running);
+                sshStatus = ServerRunningStatus.Running;
+            } else {
+                await this.args.dummyInfraManager.setServerRunningStatus(ServerRunningStatus.Stopped);
+                sshStatus = ServerRunningStatus.Stopped;
             }
+        });
+        
+        if (sshStatus !== null) {
+            return sshStatus;
         }
         
         const status = await this.args.dummyInfraManager.getServerRunningStatus()
