@@ -245,8 +245,13 @@ export class LocalInstanceRunner implements InstanceRunner {
             
             this.logger.debug(`Sunshine pair result: ${pairResult.stdout}`);
             
-            if (pairResult.stdout && pairResult.stdout.includes('"status":"true"')) {
-                success = true;
+
+            try {
+                const json = JSON.parse(pairResult.stdout);
+                success = json.status === "true";
+                this.logger.debug(`Parsed JSON status: ${json.status}, success: ${success}`);
+            } catch (error) {
+                this.logger.warn(`Failed to parse Sunshine API JSON response: ${pairResult.stdout}`, { cause: error });
             }
         });
         
