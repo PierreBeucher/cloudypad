@@ -164,80 +164,59 @@ export class DummyInstanceRunner implements InstanceRunner {
     async pairInteractive(): Promise<void> {
         this.logger.debug(`Dummy pair interactive operation for instance: ${this.args.instanceName}`)
         
-        // If we have SSH access, try to check if Sunshine is actually running
-        const sshClient = this.buildSshClient();
-        if (sshClient) {
-            try {
-                // Check if the Sunshine container is running
-                const result = await sshClient.command(['docker', 'ps', '--filter', 'name=cloudy', '--format', '{{.Status}}']);
-                if (!result.stdout || !result.stdout.includes('Up')) {
-                    this.logger.warn(`Sunshine container is not running. Starting it...`);
-                    await this.start({ wait: true });
-                }
-                
-                // Generate a PIN and provide instructions
-                const pin = Math.floor(1000 + Math.random() * 9000).toString(); // 4-digit PIN
-                
-                const host = (this.args.provisionInput as any).customHost || "0.0.0.0";
-                
-                console.info(`Run this command in another terminal to pair your instance:`)
-                console.info()
-                console.info(`  moonlight pair ${host} --pin ${pin}`)
-                console.info()
-                console.info(`For Mac / Apple devices, you may need to use this pseudo-IPv6 address:`)
-                console.info()
-                console.info(`  moonlight pair [::ffff:${host}] --pin ${pin}`)
-                console.info()
-                
-                // Try to send the PIN to Sunshine
-                console.info(`Sending PIN to Sunshine API...`)
-                
-                // Use curl via SSH to send the PIN to Sunshine
-                const username = this.args.configurationInput.sunshine?.username || "admin";
-                const passwordBase64 = this.args.configurationInput.sunshine?.passwordBase64 || "";
-                const password = Buffer.from(passwordBase64, 'base64').toString('utf-8');
-                
-                let success = false;
-                let attempts = 0;
-                const maxAttempts = 30;
-                
-                while (!success && attempts < maxAttempts) {
-                    try {
-                        const pairResult = await sshClient.command([
-                            'curl',
-                            '-v',
-                            '-u',
-                            `${username}:${password}`,
-                            '-X',
-                            'POST',
-                            '-k',
-                            'https://localhost:47990/api/pin',
-                            '-d',
-                            `{"pin":"${pin}","name":"${this.args.instanceName}"}`
-                        ]);
-                        
-                        this.logger.debug(`Sunshine pair attempt ${attempts + 1} result: ${pairResult.stdout}`);
-                        
-                        if (pairResult.stdout && pairResult.stdout.includes('"status":"true"')) {
-                            success = true;
-                            console.info(`✅ PIN sent successfully! Continue with Moonlight pairing.`);
-                        } else {
-                            attempts++;
-                            await new Promise(resolve => setTimeout(resolve, 2000));
-                        }
-                    } catch (error) {
-                        this.logger.warn(`Failed to send PIN attempt ${attempts + 1}: ${error}`);
-                        attempts++;
-                        await new Promise(resolve => setTimeout(resolve, 2000));
-                    }
-                }
-                
-                if (!success) {
-                    console.info(`❌ Failed to send PIN after ${maxAttempts} attempts. Please check if Sunshine is running correctly.`);
-                }
-            } catch (error) {
-                this.logger.warn(`Failed to execute pairing via SSH: ${error}`);
+        let containerRunning = false;
+        
+        // Check if the Sunshine container is running and start it if needed
+        await this.tryWithSshClient(async (sshClient) => {
+            const result = await sshClient.command(['docker', 'ps', '--filter', 'name=cloudy', '--format', '{{.Status}}']);
+            if (!result.stdout || !result.stdout.includes('Up')) {
+                this.logger.warn(`Sunshine container is not running. Starting it...`);
+                await this.start({ wait: true });
+            } else {
+                containerRunning = true;
             }
+        });
+        
+        // If we couldn't even check if the container is running, try to start it anyway
+        if (!containerRunning) {
+            await this.start({ wait: true });
+        }
+        
+        // Generate a PIN and provide instructions
+        const pin = Math.floor(1000 + Math.random() * 9000).toString(); // 4-digit PIN
+        
+        const host = (this.args.provisionInput as any).customHost || "0.0.0.0";
+        
+        console.info(`Run this command in another terminal to pair your instance:`)
+        console.info()
+        console.info(`  moonlight pair ${host} --pin ${pin}`)
+        console.info()
+        console.info(`For Mac / Apple devices, you may need to use this pseudo-IPv6 address:`)
+        console.info()
+        console.info(`  moonlight pair [::ffff:${host}] --pin ${pin}`)
+        console.info()
+        
+        // Try to send the PIN to Sunshine
+        console.info(`Sending PIN to Sunshine API...`)
+        
+        let success = false;
+        let attempts = 0;
+        const maxAttempts = 30;
+        
+        while (!success && attempts < maxAttempts) {
+            success = await this.pairSendPin(pin);
+            if (success) {
+                console.info(`✅ PIN sent successfully! Continue with Moonlight pairing.`);
+                break;
+            }
+            
+            attempts++;
+            await new Promise(resolve => setTimeout(resolve, 2000));
+            console.info(`Trying again... (attempt ${attempts}/${maxAttempts})`);
+        }
+        
+        if (!success) {
+            console.info(`❌ Failed to send PIN after ${maxAttempts} attempts. Please check if Sunshine is running correctly.`);
         }
     }
 
@@ -245,38 +224,35 @@ export class DummyInstanceRunner implements InstanceRunner {
         this.logger.debug(`Dummy pair send pin operation for instance: ${this.args.instanceName} with pin: ${pin}`);
         
         // If we have SSH access, try to send the PIN to Sunshine
-        const sshClient = this.buildSshClient();
-        if (sshClient) {
-            try {
-                // Use curl via SSH to send the PIN to Sunshine
-                const username = this.args.configurationInput.sunshine?.username || "admin";
-                const passwordBase64 = this.args.configurationInput.sunshine?.passwordBase64 || "";
-                const password = Buffer.from(passwordBase64, 'base64').toString('utf-8');
-                
-                const pairResult = await sshClient.command([
-                    'curl',
-                    '-v',
-                    '-u',
-                    `${username}:${password}`,
-                    '-X',
-                    'POST',
-                    '-k',
-                    'https://localhost:47990/api/pin',
-                    '-d',
-                    `{"pin":"${pin}","name":"${this.args.instanceName}"}`
-                ]);
-                
-                this.logger.debug(`Sunshine pair result: ${pairResult.stdout}`);
-                
-                if (pairResult.stdout && pairResult.stdout.includes('"status":"true"')) {
-                    return true;
-                }
-            } catch (error) {
-                this.logger.warn(`Failed to send PIN: ${error}`);
-            }
-        }
+        let success = false;
         
-        return false;
+        await this.tryWithSshClient(async (sshClient) => {
+            // Use curl via SSH to send the PIN to Sunshine
+            const username = this.args.configurationInput.sunshine?.username || "admin";
+            const passwordBase64 = this.args.configurationInput.sunshine?.passwordBase64 || "";
+            const password = Buffer.from(passwordBase64, 'base64').toString('utf-8');
+            
+            const pairResult = await sshClient.command([
+                'curl',
+                '-v',
+                '-u',
+                `${username}:${password}`,
+                '-X',
+                'POST',
+                '-k',
+                'https://localhost:47990/api/pin',
+                '-d',
+                `{"pin":"${pin}","name":"${this.args.instanceName}"}`
+            ]);
+            
+            this.logger.debug(`Sunshine pair result: ${pairResult.stdout}`);
+            
+            if (pairResult.stdout && pairResult.stdout.includes('"status":"true"')) {
+                success = true;
+            }
+        });
+        
+        return success;
     }
 
     /**
