@@ -1,25 +1,23 @@
 import { InstanceRunner, InstanceRunnerArgs, ServerRunningStatus, StartStopOptions } from '../../core/runner';
 import { getLogger, Logger } from '../../log/utils';
-import { DummyInstanceInfraManager } from './infra';
-import { DummyProvisionInputV1, DummyProvisionOutputV1 } from './state';
+import { LocalInstanceInfraManager } from './infra';
+import { LocalProvisionInputV1, LocalProvisionOutputV1 } from './state';
 import { SSHClient } from '../../tools/ssh';
 
-export interface DummyInstanceRunnerArgs extends InstanceRunnerArgs<DummyProvisionInputV1, DummyProvisionOutputV1> {
-    dummyInfraManager: DummyInstanceInfraManager
+export interface LocalInstanceRunnerArgs extends InstanceRunnerArgs<LocalProvisionInputV1, LocalProvisionOutputV1> {
+    localInfraManager: LocalInstanceInfraManager
 }
 
 /**
- * A Dummy instance runner that simulates the behavior of an instance.
- * 
- * Voluntarily does not extend AbstractInstanceRunner for simplicity
- * and to avoid having stubs removing desired behavior during tests
+ * A Local instance runner that implements instance lifecycle operations.
+ * For connecting to local machines or machines accessible via SSH.
  */
-export class DummyInstanceRunner implements InstanceRunner {
+export class LocalInstanceRunner implements InstanceRunner {
 
     private readonly logger: Logger
-    private readonly args: DummyInstanceRunnerArgs
+    private readonly args: LocalInstanceRunnerArgs
 
-    constructor(args: DummyInstanceRunnerArgs) {
+    constructor(args: LocalInstanceRunnerArgs) {
         this.logger = getLogger(args.instanceName)
         this.args = args
     }
@@ -31,7 +29,7 @@ export class DummyInstanceRunner implements InstanceRunner {
             const customHost = (this.args.provisionInput as any).customHost || "0.0.0.0";
             
             const sshConfig: any = {
-                clientName: "DummyInstanceRunner",
+                clientName: "LocalInstanceRunner",
                 host: customHost,
                 port: 22,
                 user: auth.ssh.user,
@@ -63,7 +61,7 @@ export class DummyInstanceRunner implements InstanceRunner {
     }
 
     async start(opts?: StartStopOptions): Promise<void> {
-        this.logger.debug(`Dummy start operation for instance: ${this.args.instanceName} (starting time: ${this.args.provisionInput.startDelaySeconds} seconds)`)
+        this.logger.debug(`Local start operation for instance: ${this.args.instanceName} (starting time: ${this.args.provisionInput.startDelaySeconds} seconds)`)
         
         // Try to use SSH if available
         await this.tryWithSshClient(async (sshClient) => {
@@ -79,9 +77,9 @@ export class DummyInstanceRunner implements InstanceRunner {
         });
         
         if(this.args.provisionInput.startDelaySeconds > 0) {
-            await this.args.dummyInfraManager.setServerRunningStatus(ServerRunningStatus.Starting)
+            await this.args.localInfraManager.setServerRunningStatus(ServerRunningStatus.Starting)
             const startingPromise = new Promise<void>(resolve => setTimeout(async () => {
-                await this.args.dummyInfraManager.setServerRunningStatus(ServerRunningStatus.Running)
+                await this.args.localInfraManager.setServerRunningStatus(ServerRunningStatus.Running)
                 resolve()
             }, this.args.provisionInput.startDelaySeconds * 1000))
             
@@ -89,12 +87,12 @@ export class DummyInstanceRunner implements InstanceRunner {
                 await startingPromise
             }
         } else {
-            await this.args.dummyInfraManager.setServerRunningStatus(ServerRunningStatus.Running)
+            await this.args.localInfraManager.setServerRunningStatus(ServerRunningStatus.Running)
         }
     }
 
     async stop(opts?: StartStopOptions): Promise<void> {
-        this.logger.debug(`Dummy stop operation for instance: ${this.args.instanceName} (stopping time: ${this.args.provisionInput.stopDelaySeconds} seconds)`)
+        this.logger.debug(`Local stop operation for instance: ${this.args.instanceName} (stopping time: ${this.args.provisionInput.stopDelaySeconds} seconds)`)
 
         // Try to use SSH if available
         await this.tryWithSshClient(async (sshClient) => {
@@ -104,9 +102,9 @@ export class DummyInstanceRunner implements InstanceRunner {
         });
 
         if(this.args.provisionInput.stopDelaySeconds > 0) {
-            await this.args.dummyInfraManager.setServerRunningStatus(ServerRunningStatus.Stopping)
+            await this.args.localInfraManager.setServerRunningStatus(ServerRunningStatus.Stopping)
             const stoppingPromise = new Promise<void>(resolve => setTimeout(async () => {
-                await this.args.dummyInfraManager.setServerRunningStatus(ServerRunningStatus.Stopped)
+                await this.args.localInfraManager.setServerRunningStatus(ServerRunningStatus.Stopped)
                 resolve()
             }, this.args.provisionInput.stopDelaySeconds * 1000))
             
@@ -114,12 +112,12 @@ export class DummyInstanceRunner implements InstanceRunner {
                 await stoppingPromise
             }
         } else {
-            await this.args.dummyInfraManager.setServerRunningStatus(ServerRunningStatus.Stopped)
+            await this.args.localInfraManager.setServerRunningStatus(ServerRunningStatus.Stopped)
         }
     }
 
     async restart(opts?: StartStopOptions): Promise<void> {
-        this.logger.debug(`Dummy restart operation for instance: ${this.args.instanceName}`)
+        this.logger.debug(`Local restart operation for instance: ${this.args.instanceName}`)
         
         // Try to use SSH if available
         const sshSuccess = await this.tryWithSshClient(async (sshClient) => {
@@ -136,7 +134,7 @@ export class DummyInstanceRunner implements InstanceRunner {
     }
 
     async serverStatus(): Promise<ServerRunningStatus> {
-        this.logger.debug(`Dummy get status operation for instance: ${this.args.instanceName}`)
+        this.logger.debug(`Local get status operation for instance: ${this.args.instanceName}`)
         
         // Try to check actual status via SSH if available
         let sshStatus: ServerRunningStatus | null = null;
@@ -145,10 +143,10 @@ export class DummyInstanceRunner implements InstanceRunner {
             this.logger.debug(`Using SSH to check container status on ${this.args.instanceName}`);
             const result = await sshClient.command(['docker', 'ps', '--filter', 'name=cloudy', '--format', '{{.Status}}']);
             if (result.stdout && result.stdout.includes('Up')) {
-                await this.args.dummyInfraManager.setServerRunningStatus(ServerRunningStatus.Running);
+                await this.args.localInfraManager.setServerRunningStatus(ServerRunningStatus.Running);
                 sshStatus = ServerRunningStatus.Running;
             } else {
-                await this.args.dummyInfraManager.setServerRunningStatus(ServerRunningStatus.Stopped);
+                await this.args.localInfraManager.setServerRunningStatus(ServerRunningStatus.Stopped);
                 sshStatus = ServerRunningStatus.Stopped;
             }
         });
@@ -157,12 +155,12 @@ export class DummyInstanceRunner implements InstanceRunner {
             return sshStatus;
         }
         
-        const status = await this.args.dummyInfraManager.getServerRunningStatus()
+        const status = await this.args.localInfraManager.getServerRunningStatus()
         return status.status
     }
 
     async pairInteractive(): Promise<void> {
-        this.logger.debug(`Dummy pair interactive operation for instance: ${this.args.instanceName}`)
+        this.logger.debug(`Local pair interactive operation for instance: ${this.args.instanceName}`)
         
         let containerRunning = false;
         
@@ -221,7 +219,7 @@ export class DummyInstanceRunner implements InstanceRunner {
     }
 
     async pairSendPin(pin: string, retries?: number, retryDelay?: number): Promise<boolean> {
-        this.logger.debug(`Dummy pair send pin operation for instance: ${this.args.instanceName} with pin: ${pin}`);
+        this.logger.debug(`Local pair send pin operation for instance: ${this.args.instanceName} with pin: ${pin}`);
         
         // If we have SSH access, try to send the PIN to Sunshine
         let success = false;
@@ -256,16 +254,16 @@ export class DummyInstanceRunner implements InstanceRunner {
     }
 
     /**
-     * Dummy implementation of streaming server readiness. 
+     * Local implementation of streaming server readiness. 
      * Returns true is current server status and delay after starting is greater than
      * configured readiness after start time.
      */
     async isStreamingServerReady(): Promise<boolean> {
-        this.logger.trace(`Checking dummy readiness: ${this.args.instanceName}`)
+        this.logger.trace(`Checking local readiness: ${this.args.instanceName}`)
 
         const status = await this.serverStatus()
 
-        this.logger.trace(`Dummy instance ${this.args.instanceName} readiness - server status: ${status}`)
+        this.logger.trace(`Local instance ${this.args.instanceName} readiness - server status: ${status}`)
 
         if(status === ServerRunningStatus.Running) {
             // Check actual readiness via SSH if available
@@ -286,20 +284,20 @@ export class DummyInstanceRunner implements InstanceRunner {
             }
             
             if(this.args.provisionInput.readinessAfterStartDelaySeconds === undefined || this.args.provisionInput.readinessAfterStartDelaySeconds <= 0) {
-                this.logger.trace(`Dummy instance ${this.args.instanceName} readiness result: true`)
+                this.logger.trace(`Local instance ${this.args.instanceName} readiness result: true`)
                 return true
             }
 
-            const status = await this.args.dummyInfraManager.getServerRunningStatus()
+            const status = await this.args.localInfraManager.getServerRunningStatus()
             const delaySinceLastServerStatusChangeMs = Date.now() - status.lastUpdate
             const isReady = delaySinceLastServerStatusChangeMs >= this.args.provisionInput.readinessAfterStartDelaySeconds * 1000
             
-            this.logger.trace(`Dummy instance ${this.args.instanceName} readiness result: ${isReady} (delay since last server status update: ${delaySinceLastServerStatusChangeMs} ms)`)
+            this.logger.trace(`Local instance ${this.args.instanceName} readiness result: ${isReady} (delay since last server status update: ${delaySinceLastServerStatusChangeMs} ms)`)
 
             return isReady
         }
 
-        this.logger.trace(`Dummy instance ${this.args.instanceName} readiness result: false`)
+        this.logger.trace(`Local instance ${this.args.instanceName} readiness result: false`)
         return false
     }
 }   

@@ -1,16 +1,16 @@
-import { DummyInstanceInput, DummyInstanceStateV1, DummyProvisionInputV1, DummyStateParser } from "./state"
+import { LocalInstanceInput, LocalInstanceStateV1, LocalProvisionInputV1, LocalStateParser } from "./state"
 import { CommonConfigurationInputV1, CommonInstanceInput } from "../../core/state/state"
 import { select, input, confirm } from '@inquirer/prompts';
 import { AbstractInputPrompter, PromptOptions } from "../../cli/prompter";
 import lodash from 'lodash'
 import { CliCommandGenerator, CreateCliArgs, UpdateCliArgs, CLI_OPTION_STREAMING_SERVER, CLI_OPTION_SUNSHINE_PASSWORD, CLI_OPTION_SUNSHINE_USERNAME, CLI_OPTION_SUNSHINE_IMAGE_REGISTRY, CLI_OPTION_SUNSHINE_IMAGE_TAG, CLI_OPTION_AUTO_STOP_TIMEOUT, CLI_OPTION_AUTO_STOP_ENABLE, CLI_OPTION_USE_LOCALE, CLI_OPTION_KEYBOARD_LAYOUT, CLI_OPTION_KEYBOARD_MODEL, CLI_OPTION_KEYBOARD_VARIANT, CLI_OPTION_KEYBOARD_OPTIONS, BuildCreateCommandArgs, BuildUpdateCommandArgs } from "../../cli/command";
-import { CLOUDYPAD_PROVIDER_DUMMY } from "../../core/const";
+import { CLOUDYPAD_PROVIDER_LOCAL } from "../../core/const";
 import { InteractiveInstanceInitializer } from "../../cli/initializer";
 import { PartialDeep } from "type-fest";
 import { InteractiveInstanceUpdater } from "../../cli/updater";
 import { cleanupAndExit, logFullError } from "../../cli/program";
 
-export interface DummyCreateCliArgs extends CreateCliArgs {
+export interface LocalCreateCliArgs extends CreateCliArgs {
     instanceType?: string
     startDelaySeconds?: number
     stopDelaySeconds?: number
@@ -23,13 +23,13 @@ export interface DummyCreateCliArgs extends CreateCliArgs {
     usePasswordAuth?: boolean
 }
 
-export type DummyUpdateCliArgs = UpdateCliArgs
+export type LocalUpdateCliArgs = UpdateCliArgs
 
 
-export class DummyInputPrompter extends AbstractInputPrompter<DummyCreateCliArgs, DummyProvisionInputV1, CommonConfigurationInputV1> {
+export class LocalInputPrompter extends AbstractInputPrompter<LocalCreateCliArgs, LocalProvisionInputV1, CommonConfigurationInputV1> {
     
-    buildProvisionerInputFromCliArgs(cliArgs: DummyCreateCliArgs): PartialDeep<DummyInstanceInput> {
-        const input: PartialDeep<DummyInstanceInput> = {
+    buildProvisionerInputFromCliArgs(cliArgs: LocalCreateCliArgs): PartialDeep<LocalInstanceInput> {
+        const input: PartialDeep<LocalInstanceInput> = {
             provision: {
                 instanceType: cliArgs.instanceType,
                 startDelaySeconds: cliArgs.startDelaySeconds,
@@ -63,7 +63,7 @@ export class DummyInputPrompter extends AbstractInputPrompter<DummyCreateCliArgs
         return input;
     }
 
-    protected async promptSpecificInput(commonInput: CommonInstanceInput, partialInput: PartialDeep<DummyInstanceInput>, createOptions: PromptOptions): Promise<DummyInstanceInput> {
+    protected async promptSpecificInput(commonInput: CommonInstanceInput, partialInput: PartialDeep<LocalInstanceInput>, createOptions: PromptOptions): Promise<LocalInstanceInput> {
 
         const instanceType = await this.instanceType(partialInput.provision?.instanceType)
         
@@ -129,7 +129,7 @@ export class DummyInputPrompter extends AbstractInputPrompter<DummyCreateCliArgs
             const { provision, ...restCommonInput } = lodash.cloneDeep(commonInput);
             const { ssh, ...restProvision } = provision || {};
             
-            const dummyInput: DummyInstanceInput = lodash.merge(
+            const localInput: LocalInstanceInput = lodash.merge(
                 {},
                 { ...restCommonInput, provision: restProvision }, 
                 {
@@ -146,10 +146,10 @@ export class DummyInputPrompter extends AbstractInputPrompter<DummyCreateCliArgs
                     }
                 })
             
-            return dummyInput;
+            return localInput;
         } else {
             // If we use SSH key (default)
-            const dummyInput: DummyInstanceInput = lodash.merge(
+            const localInput: LocalInstanceInput = lodash.merge(
                 {},
                 commonInput, 
                 {
@@ -164,7 +164,7 @@ export class DummyInputPrompter extends AbstractInputPrompter<DummyCreateCliArgs
                     }
                 })
             
-            return dummyInput
+            return localInput
         }
     }
 
@@ -192,10 +192,10 @@ export class DummyInputPrompter extends AbstractInputPrompter<DummyCreateCliArgs
     
 }
 
-export class DummyCliCommandGenerator extends CliCommandGenerator {
+export class LocalCliCommandGenerator extends CliCommandGenerator {
     
     buildCreateCommand(args: BuildCreateCommandArgs) {
-        return this.getBaseCreateCommand(CLOUDYPAD_PROVIDER_DUMMY)
+        return this.getBaseCreateCommand(CLOUDYPAD_PROVIDER_LOCAL)
             .addOption(CLI_OPTION_STREAMING_SERVER)
             .addOption(CLI_OPTION_SUNSHINE_USERNAME)
             .addOption(CLI_OPTION_SUNSHINE_PASSWORD)
@@ -213,13 +213,13 @@ export class DummyCliCommandGenerator extends CliCommandGenerator {
             .option('--ssh-user <user>', 'SSH username')
             .option('--ssh-password <password>', 'SSH password')
             .option('--use-password-auth', 'Use password authentication instead of SSH key', false)
-            .action(async (cliArgs: DummyCreateCliArgs) => {
+            .action(async (cliArgs: LocalCreateCliArgs) => {
                 
                 try {
-                    await new InteractiveInstanceInitializer<DummyCreateCliArgs, DummyProvisionInputV1, CommonConfigurationInputV1>({ 
+                    await new InteractiveInstanceInitializer<LocalCreateCliArgs, LocalProvisionInputV1, CommonConfigurationInputV1>({ 
                         coreClient: args.coreClient,
-                        inputPrompter: new DummyInputPrompter({ coreClient: args.coreClient }),
-                        provider: CLOUDYPAD_PROVIDER_DUMMY,
+                        inputPrompter: new LocalInputPrompter({ coreClient: args.coreClient }),
+                        provider: CLOUDYPAD_PROVIDER_LOCAL,
                         initArgs: cliArgs
                     }).initializeInteractive()
                     
@@ -241,7 +241,7 @@ export class DummyCliCommandGenerator extends CliCommandGenerator {
     }
 
     buildUpdateCommand(args: BuildUpdateCommandArgs) {
-        return this.getBaseUpdateCommand(CLOUDYPAD_PROVIDER_DUMMY)
+        return this.getBaseUpdateCommand(CLOUDYPAD_PROVIDER_LOCAL)
             .addOption(CLI_OPTION_SUNSHINE_USERNAME)
             .addOption(CLI_OPTION_SUNSHINE_PASSWORD)
             .addOption(CLI_OPTION_SUNSHINE_IMAGE_TAG)
@@ -258,13 +258,13 @@ export class DummyCliCommandGenerator extends CliCommandGenerator {
             .option('--ssh-user <user>', 'SSH username')
             .option('--ssh-password <password>', 'SSH password')
             .option('--use-password-auth', 'Use password authentication instead of SSH key', false)
-            .action(async (cliArgs: DummyUpdateCliArgs) => {
+            .action(async (cliArgs: LocalUpdateCliArgs) => {
                 
                 try {
-                    await new InteractiveInstanceUpdater<DummyInstanceStateV1, DummyUpdateCliArgs>({
+                    await new InteractiveInstanceUpdater<LocalInstanceStateV1, LocalUpdateCliArgs>({
                         coreClient: args.coreClient,
-                        stateParser: new DummyStateParser(),
-                        inputPrompter: new DummyInputPrompter({ coreClient: args.coreClient }),
+                        stateParser: new LocalStateParser(),
+                        inputPrompter: new LocalInputPrompter({ coreClient: args.coreClient }),
                     }).updateInteractive(cliArgs)
                     
                     console.info(`Updated instance ${cliArgs.name}`)
