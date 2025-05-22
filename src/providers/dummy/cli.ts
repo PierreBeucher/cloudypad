@@ -97,10 +97,25 @@ export class DummyInputPrompter extends AbstractInputPrompter<DummyCreateCliArgs
                                   partialInput.provision.auth.ssh.password : 
                                   '';
             
-            const sshPassword = await input({
-                message: 'Enter SSH password:',
-                default: defaultPassword,
-            });
+            
+            let sshPassword = '';
+            let confirmedPassword = '';
+            
+            do {
+                sshPassword = await input({
+                    message: 'Enter SSH password:',
+                    default: defaultPassword,
+                });
+                
+                confirmedPassword = await input({
+                    message: 'Confirm SSH password:',
+                });
+                
+                if (sshPassword !== confirmedPassword) {
+                    console.error('Passwords do not match, please try again.');
+                }
+                
+            } while (sshPassword !== confirmedPassword);
             
             const auth = {
                 type: "password" as const,
