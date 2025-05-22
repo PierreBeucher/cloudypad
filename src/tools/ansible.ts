@@ -10,9 +10,7 @@ export class AnsibleClient {
 
     async runAnsible(inventoryPath: string, playbookPath: string, additionalAnsibleArgs: string[]){
         const ansibleCommand = 'ansible-playbook'
-        const ansibleArgs = ['-i', inventoryPath, playbookPath]
-        
-        ansibleArgs.push(...additionalAnsibleArgs)
+        const ansibleArgs = ['-i', inventoryPath, playbookPath].concat(additionalAnsibleArgs)
 
         this.logger.debug(`Ansible command: ${ansibleCommand} ${JSON.stringify(ansibleArgs)}`)
 
