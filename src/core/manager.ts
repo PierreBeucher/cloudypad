@@ -302,11 +302,11 @@ export class GenericInstanceManager<ST extends InstanceStateV1> implements Insta
             state.provision.input.auth.ssh &&
             'user' in state.provision.input.auth.ssh) {
             
-            sshUser = state.provision.input.auth.ssh.user;
+            sshUser = String(state.provision.input.auth.ssh.user);
         } 
         // If using key-based auth
         else if (state.provision.input.ssh) {
-            sshUser = state.provision.input.ssh.user;
+            sshUser = String(state.provision.input.ssh.user);
         }
         
         const details: CloudyPadInstanceDetails = {
