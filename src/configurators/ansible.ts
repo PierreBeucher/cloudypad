@@ -104,7 +104,6 @@ export class AnsibleConfigurator<ST extends InstanceStateV1> extends AbstractIns
                                 ansible_host: customHost,
                                 ansible_user: auth.ssh.user,
                                 ansible_ssh_pass: auth.ssh.password,
-                                ansible_ssh_common_args: '-o StrictHostKeyChecking=no',
                 
                                 cloudypad_provider: this.args.provider,
                 

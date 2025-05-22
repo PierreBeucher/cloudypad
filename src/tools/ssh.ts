@@ -347,5 +347,6 @@ export class SshKeyLoader {
 }
 
 export function generatePrivateSshKey(): string {
-    throw new Error("generatePrivateSshKey/ed25519 keys not mocked. Use a real key for testing.")
+    const newKey = sshpk.generatePrivateKey("ed25519")
+    return newKey.toString("ssh-private")
 }
