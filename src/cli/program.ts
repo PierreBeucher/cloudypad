@@ -76,7 +76,7 @@ export function buildProgram(){
     createCmd.addCommand(new GcpCliCommandGenerator().buildCreateCommand({ coreClient: coreClient }))
     createCmd.addCommand(new PaperspaceCliCommandGenerator().buildCreateCommand({ coreClient: coreClient }))
     createCmd.addCommand(new ScalewayCliCommandGenerator().buildCreateCommand({ coreClient: coreClient }))
-    createCmd.addCommand(new DummyCliCommandGenerator().buildCreateCommand({ coreClient: coreClient }), { hidden: true })
+    createCmd.addCommand(new DummyCliCommandGenerator().buildCreateCommand({ coreClient: coreClient }), { hidden: true})
     
     const updateCmd = program
         .command('update')
