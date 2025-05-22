@@ -48,6 +48,19 @@ const DummyProvisionInputV1Schema = CommonProvisionInputV1Schema.extend({
     customHost: z.string().describe("Custom host IP for dummy instance").optional(),
     auth: DummyAuthSchema.optional(),
 })
+.refine((data) => {
+    if (data.auth?.type === "password") {
+        return true;
+    }
+    
+    if (!data.ssh) {
+        return false;
+    }
+    
+    return true;
+}, {
+    message: "SSH configuration is required unless password authentication is used"
+});
 
 const DummyConfigurationOutputV1Schema = CommonConfigurationOutputV1Schema.extend({
     dataDiskConfigured: z.boolean().describe("Whether the data disk was configured")

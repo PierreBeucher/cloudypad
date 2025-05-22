@@ -26,6 +26,7 @@ const CommonProvisionInputV1Schema = z.object({
     }, {
         message: "Exactly one of privateKeyPath or privateKeyContentBase64 must be set"
     })
+    .optional() // Make ssh optional to support password-based auth
 }).passthrough()
 
 const CommonConfigurationInputV1Schema = z.object({

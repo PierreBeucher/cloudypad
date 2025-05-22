@@ -52,6 +52,12 @@ export class DummyInputPrompter extends AbstractInputPrompter<DummyCreateCliArgs
             };
             
             // DO NOT add any ssh configuration when using password auth
+        } else if (!cliArgs.usePasswordAuth && input.provision) {
+            // Regular SSH key-based auth needs the ssh field
+            input.provision.ssh = {
+                user: cliArgs.sshUser || "ubuntu",
+                privateKeyContentBase64: "" // Will be replaced by actual key later
+            };
         }
 
         return input;
