@@ -27,5 +27,23 @@
 - name: Update container runtime
   command: nvidia-ctk runtime configure --runtime=docker
 
-- name: Restart Docker daemon
+
+- name: Restart Docker daemon for local provider (async)
   command: systemctl restart docker
+  async: 1
+  poll: 0
+  when: cloudypad_provider == 'local'
+
+- name: Restart Docker daemon for other providers
+  command: systemctl restart docker
+  when: cloudypad_provider != 'local'
+
+- name: Wait a moment for Docker to restart (local provider only)
+  pause:
+    seconds: 10
+  when: cloudypad_provider == 'local'
+
+- name: Notify about Docker restart for local provider
+  debug:
+    msg: "Docker has been restarted in background. If installation fails, you may need to restart Docker manually and try again."
+  when: cloudypad_provider == 'local'

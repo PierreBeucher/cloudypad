@@ -8,83 +8,6 @@ import { DummyInstanceInput, DummyProvisionInputV1 } from '../../../../src/provi
 import { CommonConfigurationInputV1 } from '../../../../src/core/state/state';
 import { ServerRunningStatus } from '../../../../src/core/runner';
 
-// Create a test-specific DummyInputPrompter that completely bypasses all interactive prompts
-class NoPromptDummyInputPrompter extends DummyInputPrompter {
-    // Override completeCliInput to bypass all interactive prompting
-    async completeCliInput(cliArgs: DummyCreateCliArgs) {
-        // Check if we should use password authentication
-        if (cliArgs.usePasswordAuth) {
-            return {
-                instanceName: cliArgs.name || "dummy-instance",
-                provision: {
-                    instanceType: cliArgs.instanceType || "local",
-                    startDelaySeconds: cliArgs.startDelaySeconds || 0,
-                    stopDelaySeconds: cliArgs.stopDelaySeconds || 0,
-                    configurationDelaySeconds: 0,
-                    provisioningDelaySeconds: 0,
-                    readinessAfterStartDelaySeconds: 0,
-                    initialServerStateAfterProvision: "running",
-                    customHost: cliArgs.host || "localhost",
-                    // For password auth, we don't set ssh at all to avoid validation errors
-                    auth: {
-                        type: "password",
-                        ssh: {
-                            user: cliArgs.sshUser || "ubuntu",
-                            password: cliArgs.sshPassword || "dummy-password"
-                        }
-                    }
-                },
-                configuration: {
-                    configurator: CLOUDYPAD_CONFIGURATOR_ANSIBLE,
-                    sunshine: DEFAULT_COMMON_CLI_ARGS.streamingServer === "sunshine" ? {
-                        enable: true,
-                        username: "sunshine",
-                        passwordBase64: "c3Vuc2hpbmVQYXNzd29yZA==", // 'sunshinePassword' in base64
-                        imageTag: "local",
-                        imageRegistry: "dummy.registry.example.co"
-                    } : undefined,
-                    autostop: {
-                        enable: true,
-                        timeoutSeconds: 3600
-                    }
-                }
-            };
-        } else {
-            // Default to SSH key authentication
-            return {
-                instanceName: cliArgs.name || "dummy-instance",
-                provision: {
-                    instanceType: cliArgs.instanceType || "local",
-                    startDelaySeconds: cliArgs.startDelaySeconds || 0,
-                    stopDelaySeconds: cliArgs.stopDelaySeconds || 0,
-                    configurationDelaySeconds: 0,
-                    provisioningDelaySeconds: 0,
-                    readinessAfterStartDelaySeconds: 0,
-                    initialServerStateAfterProvision: "running",
-                    ssh: {
-                        user: "ubuntu",
-                        privateKeyContentBase64: "dummy-private-key-content-base64"
-                    }
-                },
-                configuration: {
-                    configurator: CLOUDYPAD_CONFIGURATOR_ANSIBLE,
-                    sunshine: DEFAULT_COMMON_CLI_ARGS.streamingServer === "sunshine" ? {
-                        enable: true,
-                        username: "sunshine",
-                        passwordBase64: "c3Vuc2hpbmVQYXNzd29yZA==", // 'sunshinePassword' in base64
-                        imageTag: "local",
-                        imageRegistry: "dummy.registry.example.co"
-                    } : undefined,
-                    autostop: {
-                        enable: true,
-                        timeoutSeconds: 3600
-                    }
-                }
-            };
-        }
-    }
-}
-
 describe('Dummy instance lifecycle', () => {
 
     const DUMMY_INSTANCE_NAME = "dummy-instance"
@@ -193,30 +116,10 @@ describe('Dummy instance lifecycle', () => {
         await new InteractiveInstanceInitializer<DummyCreateCliArgs, DummyProvisionInputV1, CommonConfigurationInputV1>({ 
             provider: CLOUDYPAD_PROVIDER_DUMMY,
             initArgs: DUMMY_CLI_ARGS,
-            // Use custom input prompter that skips all interactive prompts
-            inputPrompter: new NoPromptDummyInputPrompter({ coreClient: coreClient }),
+            inputPrompter: new DummyInputPrompter({ coreClient: coreClient }),
             coreClient: coreClient
         }).initializeInteractive({ skipPostInitInfo: true })
-    }).timeout(5000)
-
-    it("should initialize with password authentication without prompting", async () => {
-        const coreClient = getUnitTestCoreClient()
-        const cliArgsWithPasswordAuth: DummyCreateCliArgs = {
-            ...DUMMY_CLI_ARGS,
-            name: "dummy-password-auth-instance",
-            usePasswordAuth: true,
-            host: "192.168.1.100",
-            sshUser: "testuser",
-            sshPassword: "testpassword"
-        }
-        await new InteractiveInstanceInitializer<DummyCreateCliArgs, DummyProvisionInputV1, CommonConfigurationInputV1>({ 
-            provider: CLOUDYPAD_PROVIDER_DUMMY,
-            initArgs: cliArgsWithPasswordAuth,
-            // Use custom input prompter that skips all interactive prompts
-            inputPrompter: new NoPromptDummyInputPrompter({ coreClient: coreClient }),
-            coreClient: coreClient
-        }).initializeInteractive({ skipPostInitInfo: true })
-    }).timeout(5000)
+    })
 
     it("should initialize with given initial server status", async () => {
         const coreClient = getUnitTestCoreClient()

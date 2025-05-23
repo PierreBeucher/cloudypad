@@ -21,6 +21,8 @@
 
     - role: geerlingguy.docker
       tags: [ docker ]
+      # Skip Docker installation for local provider since it's running on the same system
+      when: cloudypad_provider != 'local'
       docker_users:
       - "{{ ansible_user_id }}"
       become: true

@@ -1,6 +1,6 @@
 # Installation arguments
 # Override by setting related environment variable
-DEFAULT_CLOUDYPAD_SCRIPT_REF=v0.28.0
+DEFAULT_CLOUDYPAD_SCRIPT_REF=v0.29.0
 CLOUDYPAD_HOME=${CLOUDYPAD_HOME:-"$HOME/.cloudypad"}
 CLOUDYPAD_SCRIPT_REF=${CLOUDYPAD_SCRIPT_REF:-$DEFAULT_CLOUDYPAD_SCRIPT_REF}
 
@@ -39,7 +39,7 @@ send_analytics_event "cli_install_start"
 
 echo "Installing Cloudy Pad version $CLOUDYPAD_SCRIPT_REF"
 
-CLOUDYPAD_SCRIPT_URL="https://raw.githubusercontent.com/gabbelitoV2/cloudypad/$CLOUDYPAD_SCRIPT_REF/cloudypad.sh"
+CLOUDYPAD_SCRIPT_URL="https://raw.githubusercontent.com/PierreBeucher/cloudypad/$CLOUDYPAD_SCRIPT_REF/cloudypad.sh"
 # ===
 
 # Constants, do not override

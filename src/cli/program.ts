@@ -13,6 +13,7 @@ import { ScalewayCliCommandGenerator } from '../providers/scaleway/cli';
 import { ConfigLoader } from '../core/config/default';
 import { CloudypadClient } from '../core/client';
 import { LocalCliCommandGenerator } from '../providers/local/cli';
+import { DummyCliCommandGenerator } from '../providers/dummy/cli';
 
 const logger = getLogger("program")
 
@@ -77,6 +78,8 @@ export function buildProgram(){
     createCmd.addCommand(new PaperspaceCliCommandGenerator().buildCreateCommand({ coreClient: coreClient }))
     createCmd.addCommand(new ScalewayCliCommandGenerator().buildCreateCommand({ coreClient: coreClient }))
     createCmd.addCommand(new LocalCliCommandGenerator().buildCreateCommand({ coreClient: coreClient }))
+    createCmd.addCommand(new DummyCliCommandGenerator().buildCreateCommand({ coreClient: coreClient }), { hidden: true })
+
     
     const updateCmd = program
         .command('update')
@@ -88,6 +91,7 @@ export function buildProgram(){
     updateCmd.addCommand(new PaperspaceCliCommandGenerator().buildUpdateCommand({ coreClient: coreClient }))
     updateCmd.addCommand(new ScalewayCliCommandGenerator().buildUpdateCommand({ coreClient: coreClient }))
     updateCmd.addCommand(new LocalCliCommandGenerator().buildUpdateCommand({ coreClient: coreClient }))
+    updateCmd.addCommand(new DummyCliCommandGenerator().buildUpdateCommand({ coreClient: coreClient }), { hidden: true })
 
     program
         .command('list')

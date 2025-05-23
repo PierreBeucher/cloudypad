@@ -2,7 +2,7 @@ all:
   hosts:
     "192.168.1.237":
       ansible_user: root
-      ansible_ssh_private_key_file: /root/sshkey
+      ansible_ssh_pass: "123"
       
       sunshine_server_name: local
       sunshine_nvidia_enable: true

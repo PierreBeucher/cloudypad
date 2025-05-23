@@ -6,6 +6,7 @@ export const CLOUDYPAD_PROVIDER_AZURE = "azure"
 export const CLOUDYPAD_PROVIDER_GCP = "gcp"
 export const CLOUDYPAD_PROVIDER_LOCAL = "local"
 export const CLOUDYPAD_PROVIDER_SCALEWAY = "scaleway"
+export const CLOUDYPAD_PROVIDER_DUMMY = "dummy"
 
 export type CLOUDYPAD_PROVIDER = 
     typeof CLOUDYPAD_PROVIDER_AWS | 
@@ -13,7 +14,8 @@ export type CLOUDYPAD_PROVIDER =
     typeof CLOUDYPAD_PROVIDER_AZURE | 
     typeof CLOUDYPAD_PROVIDER_GCP | 
     typeof CLOUDYPAD_PROVIDER_LOCAL |
-    typeof CLOUDYPAD_PROVIDER_SCALEWAY
+    typeof CLOUDYPAD_PROVIDER_SCALEWAY |
+    typeof CLOUDYPAD_PROVIDER_DUMMY
 
 export const CLOUDYPAD_PROVIDER_LIST = [ 
     CLOUDYPAD_PROVIDER_AWS, 
@@ -21,7 +23,8 @@ export const CLOUDYPAD_PROVIDER_LIST = [
     CLOUDYPAD_PROVIDER_AZURE, 
     CLOUDYPAD_PROVIDER_GCP, 
     CLOUDYPAD_PROVIDER_LOCAL,
-    CLOUDYPAD_PROVIDER_SCALEWAY
+    CLOUDYPAD_PROVIDER_SCALEWAY,
+    CLOUDYPAD_PROVIDER_DUMMY
 ] as const
 
 export const CLOUDYPAD_CONFIGURATOR_ANSIBLE = "ansible"
@@ -53,7 +56,7 @@ export const CLOUDYPAD_VERSION = version
 /**
  * Default registry for Sunshine container image
  */
-export const CLOUDYPAD_SUNSHINE_IMAGE_REGISTRY = "ghcr.io/gabbelitov2/cloudypad"
+export const CLOUDYPAD_SUNSHINE_IMAGE_REGISTRY = "ghcr.io/pierrebeucher/cloudypad"
 
 /**
  * Simple port definition (number and protocol)

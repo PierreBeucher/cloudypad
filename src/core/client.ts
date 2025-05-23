@@ -2,7 +2,7 @@ import { getLogger } from '../log/utils';
 import { InstanceManager } from './manager';
 import { StateLoader } from './state/loader';
 import { CommonProvisionInputV1, CommonConfigurationInputV1, InstanceStateV1 } from './state/state';
-import { CLOUDYPAD_PROVIDER, CLOUDYPAD_PROVIDER_AWS, CLOUDYPAD_PROVIDER_AZURE, CLOUDYPAD_PROVIDER_LOCAL, CLOUDYPAD_PROVIDER_GCP, CLOUDYPAD_PROVIDER_PAPERSPACE, CLOUDYPAD_PROVIDER_SCALEWAY } from './const';
+import { CLOUDYPAD_PROVIDER, CLOUDYPAD_PROVIDER_AWS, CLOUDYPAD_PROVIDER_AZURE, CLOUDYPAD_PROVIDER_LOCAL, CLOUDYPAD_PROVIDER_DUMMY, CLOUDYPAD_PROVIDER_GCP, CLOUDYPAD_PROVIDER_PAPERSPACE, CLOUDYPAD_PROVIDER_SCALEWAY } from './const';
 import { AwsSubManagerFactory } from '../providers/aws/factory';
 import { GcpSubManagerFactory } from '../providers/gcp/factory';
 import { AzureSubManagerFactory } from '../providers/azure/factory';
@@ -12,6 +12,8 @@ import { AwsStateParser } from '../providers/aws/state';
 import { AzureStateParser } from '../providers/azure/state';
 import { GcpStateParser } from '../providers/gcp/state';
 import { PaperspaceStateParser } from '../providers/paperspace/state';
+import { DummyStateParser } from '../providers/dummy/state';
+import { DummySubManagerFactory } from '../providers/dummy/factory';
 import { LocalStateParser } from '../providers/local/state';
 import { LocalSubManagerFactory } from '../providers/local/factory';
 import { ScalewaySubManagerFactory } from '../providers/scaleway/factory';
@@ -22,6 +24,7 @@ import { StateWriter } from './state/writer';
 import { InstanceInitializer } from './initializer';
 import { InstanceUpdater } from './updater';
 import { GenericStateParser } from './state/parser';
+import { DummyInstanceInfraManager } from '../providers/dummy/infra';
 import { LocalInstanceInfraManager } from '../providers/local/infra';
 
 // This is the global config !
@@ -116,6 +119,23 @@ export class CloudypadClient {
             return new GenericInstanceManager({
                 stateWriter: this.stateManagerBuilder.buildStateWriter(scalewayState),
                 factory: new ScalewaySubManagerFactory(this.args.config)
+            })
+        })
+
+        // dummy provider needs an additional DummyInstanceInfraManager to emulate
+        // actions when instance is provisioned and started/stopped, etc. 
+        this.registerProvider(CLOUDYPAD_PROVIDER_DUMMY, async (state: InstanceStateV1) => {
+            const dummyState = new DummyStateParser().parse(state)
+            const stateWriter = this.stateManagerBuilder.buildStateWriter(dummyState)
+            const dummyInfraManager = new DummyInstanceInfraManager({
+                instanceName: dummyState.name
+            })
+            return new GenericInstanceManager({
+                stateWriter: stateWriter,
+                factory: new DummySubManagerFactory({
+                    coreConfig: this.args.config,
+                    dummyInfraManager: dummyInfraManager
+                })
             })
         })
 
