@@ -177,3 +177,4 @@ echo "🐛 Found a bug? Create an issue: https://github.com/PierreBeucher/cloudy
 echo
 
 send_analytics_event "cli_install_finish"
+
