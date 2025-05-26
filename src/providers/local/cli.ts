@@ -1,6 +1,6 @@
 import { LocalInstanceInput, LocalInstanceStateV1, LocalProvisionInputV1, LocalStateParser } from "./state"
 import { CommonConfigurationInputV1, CommonInstanceInput } from "../../core/state/state"
-import { select, input, confirm } from '@inquirer/prompts';
+import { select, input, confirm, password } from '@inquirer/prompts';
 import { AbstractInputPrompter, PromptOptions } from "../../cli/prompter";
 import lodash from 'lodash'
 import { CliCommandGenerator, CreateCliArgs, UpdateCliArgs, CLI_OPTION_STREAMING_SERVER, CLI_OPTION_SUNSHINE_PASSWORD, CLI_OPTION_SUNSHINE_USERNAME, CLI_OPTION_SUNSHINE_IMAGE_REGISTRY, CLI_OPTION_SUNSHINE_IMAGE_TAG, CLI_OPTION_AUTO_STOP_TIMEOUT, CLI_OPTION_AUTO_STOP_ENABLE, CLI_OPTION_USE_LOCALE, CLI_OPTION_KEYBOARD_LAYOUT, CLI_OPTION_KEYBOARD_MODEL, CLI_OPTION_KEYBOARD_VARIANT, CLI_OPTION_KEYBOARD_OPTIONS, BuildCreateCommandArgs, BuildUpdateCommandArgs } from "../../cli/command";
@@ -102,12 +102,11 @@ export class LocalInputPrompter extends AbstractInputPrompter<LocalCreateCliArgs
             let confirmedPassword = '';
             
             do {
-                sshPassword = await input({
+                sshPassword = await password({
                     message: 'Enter SSH password:',
-                    default: defaultPassword,
                 });
                 
-                confirmedPassword = await input({
+                confirmedPassword = await password({
                     message: 'Confirm SSH password:',
                 });
                 
@@ -149,6 +148,27 @@ export class LocalInputPrompter extends AbstractInputPrompter<LocalCreateCliArgs
             return localInput;
         } else {
             // If we use SSH key (default)
+            
+            // Prompt for custom host
+            const customHost = await input({
+                message: 'Enter IP address or hostname:',
+                default: partialInput.provision?.customHost || '',
+            });
+            
+            // Prompt for SSH user
+            const defaultSshUser = commonInput.provision?.ssh?.user || 'ubuntu';
+            const sshUser = await input({
+                message: 'Enter SSH username:',
+                default: defaultSshUser,
+            });
+            
+            // Prompt for SSH private key path
+            const defaultSshKeyPath = commonInput.provision?.ssh?.privateKeyPath || '';
+            const sshKeyPath = await input({
+                message: 'Enter path to SSH private key:',
+                default: defaultSshKeyPath,
+            });
+            
             const localInput: LocalInstanceInput = lodash.merge(
                 {},
                 commonInput, 
@@ -161,6 +181,11 @@ export class LocalInputPrompter extends AbstractInputPrompter<LocalCreateCliArgs
                         provisioningDelaySeconds: partialInput.provision?.provisioningDelaySeconds ?? 0,
                         readinessAfterStartDelaySeconds: partialInput.provision?.readinessAfterStartDelaySeconds ?? 0,
                         initialServerStateAfterProvision: partialInput.provision?.initialServerStateAfterProvision ?? "running",
+                        customHost: customHost,
+                        ssh: {
+                            user: sshUser,
+                            privateKeyPath: sshKeyPath
+                        }
                     }
                 })
             

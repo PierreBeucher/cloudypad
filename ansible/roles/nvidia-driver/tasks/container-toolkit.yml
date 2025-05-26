@@ -42,8 +42,3 @@
   pause:
     seconds: 10
   when: cloudypad_provider == 'local'
-
-- name: Notify about Docker restart for local provider
-  debug:
-    msg: "Docker has been restarted in background. If installation fails, you may need to restart Docker manually and try again."
-  when: cloudypad_provider == 'local'
