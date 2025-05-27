@@ -17,6 +17,7 @@ const DummyProvisionInputV1Schema = CommonProvisionInputV1Schema.extend({
     provisioningDelaySeconds: z.number().describe("Time (seconds) during which provisioning will run.").default(0).optional(),
     readinessAfterStartDelaySeconds: z.number().describe("Time (seconds) after starting the instance before it is considered ready to accept connections.").default(0).optional(),
     initialServerStateAfterProvision: z.enum(["running", "stopped"]).describe("Initial state of the instance server after provisioning.").default("running").optional(),
+    deleteInstanceServerOnStop: z.boolean().describe("Whether instance server should be deleted on instance stop and re-created on next start").optional(),
 })
 
 const DummyConfigurationOutputV1Schema = CommonConfigurationOutputV1Schema.extend({

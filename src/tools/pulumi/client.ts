@@ -15,7 +15,7 @@ const LOG_ON_OUTPUT_COLOR = "always"
 /**
  * An abstract Pulumi client for a Cloudy Pad instance
  */
-export abstract class InstancePulumiClient<ConfigType, OutputType> {
+export abstract class InstancePulumiClient<ConfigType extends Object, OutputType> {
 
     readonly program: PulumiFn
     readonly projectName: string
@@ -37,6 +37,30 @@ export abstract class InstancePulumiClient<ConfigType, OutputType> {
             this.stack = await this.initStack()
         }
         return this.stack
+    }
+
+    public async getOutputs(): Promise<OutputType> {
+        const stack = await this.getStack()
+        const outputs = await stack.outputs()
+        return this.buildTypedOutput(outputs)
+    }
+
+    /**
+     * Destroy specific resources on the stack
+     * @param resourceIds IDs of the resources to destroy
+     */
+    async destroyResources(resourceIds: string[]): Promise<OutputType> {
+        const stack = await this.getStack()
+
+        this.logger.debug(`Destroying resources ${JSON.stringify(resourceIds)} on stack ${this.stackName}`)
+
+        const result = await stack.destroy({
+            target: resourceIds
+        })
+
+        this.logger.debug(`Destroy resources ${JSON.stringify(resourceIds)} result: ${JSON.stringify(result)}`)
+
+        return this.getOutputs()
     }
 
     public async setConfig(config: ConfigType): Promise<void> {
@@ -74,7 +98,7 @@ export abstract class InstancePulumiClient<ConfigType, OutputType> {
         return stack
     }
 
-    async up(){
+    async up(): Promise<OutputType>{
 
         try {
 

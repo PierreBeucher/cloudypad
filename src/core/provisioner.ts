@@ -1,10 +1,8 @@
-import { LocalWorkspaceOptions } from "@pulumi/pulumi/automation"
 import { getLogger, Logger } from "../log/utils"
 import { CLOUDYPAD_SUNSHINE_PORTS, CLOUDYPAD_WOLF_PORTS, SimplePortDefinition } from "./const"
 import { CommonProvisionInputV1, CommonProvisionOutputV1, CommonConfigurationInputV1 } from "./state/state"
 import { CoreConfig } from "./config/interface"
-import path from "path"
-import fs from "fs"
+
 /**
  * Provision instances: manage Cloud resources and infrastructure
  */
@@ -22,6 +20,11 @@ export interface InstanceProvisioner  {
      * @returns Outputs after provision
      */
     provision(): Promise<CommonProvisionOutputV1>
+
+    /**
+     * Destroy the instance server. Server can be re-created with provision().
+     */
+    destroyInstanceServer(): Promise<CommonProvisionOutputV1>
 
     /**
      * Destroy the instance. Every infrastructure and Cloud resources managed for this instance are destroyed. 
@@ -66,9 +69,21 @@ export abstract class AbstractInstanceProvisioner<PC extends CommonProvisionInpu
         this.logger.info(`Destroyed instance ${this.args.instanceName}`)
     }
 
+    async destroyInstanceServer(): Promise<PO> {
+        this.logger.info(`Destroying instance ${this.args.instanceName} server...`)
+        const outputs = await this.doDestroyInstanceServer()
+        this.logger.info(`Destroyed instance ${this.args.instanceName} server`)
+
+        return outputs
+    }
+
     protected abstract doVerifyConfig(): Promise<void>;
     protected abstract doProvision(): Promise<PO>;
     protected abstract doDestroy(): Promise<void>;
+    
+    protected doDestroyInstanceServer(): Promise<PO> {
+        throw new Error(`Instance ${this.args.instanceName} does not support instance server destruction`)
+    }
 
     /**
      * Return ports to expose on this instance for its current streaming server

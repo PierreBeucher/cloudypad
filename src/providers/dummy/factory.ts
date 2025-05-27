@@ -1,11 +1,11 @@
-import { AbstractSubManagerFactory } from "../../core/manager";
+import { AbstractConfiguratorFactory, AbstractProvisionerFactory, AbstractRunnerFactory } from "../../core/submanager-factory";
 import { InstanceProvisioner } from "../../core/provisioner";
 import { InstanceRunner } from "../../core/runner";
 import { CommonConfigurationInputV1 } from "../../core/state/state";
 import { DummyProvisioner } from "./provisioner";
 import { DummyInstanceRunner } from "./runner";
-import { DummyConfigurationOutputV1, DummyInstanceStateV1, DummyProvisionInputV1, DummyProvisionOutputV1, DummyStateParser } from "./state";
-import { DummyConfigurator } from "./configurator";
+import { DummyInstanceStateV1, DummyProvisionInputV1, DummyProvisionOutputV1 } from "./state";
+import { DummyConfigurator, DummyConfiguratorArgs } from "./configurator";
 import { InstanceConfigurator } from "../../core/configurator";
 import { DummyInstanceInfraManager } from "./infra";
 import { CoreConfig } from "../../core/config/interface";
@@ -15,7 +15,7 @@ export interface DummySubManagerFactoryArgs {
     coreConfig: CoreConfig
 }
 
-export class DummySubManagerFactory extends AbstractSubManagerFactory<DummyInstanceStateV1> {
+export class DummyProvisionerFactory extends AbstractProvisionerFactory<DummyInstanceStateV1> {
 
     private readonly dummyInfraManager: DummyInstanceInfraManager
     constructor(args: DummySubManagerFactoryArgs){
@@ -23,7 +23,7 @@ export class DummySubManagerFactory extends AbstractSubManagerFactory<DummyInsta
         this.dummyInfraManager = args.dummyInfraManager
     }
 
-    async doBuildProvisioner(name: string, provisionInput: DummyProvisionInputV1, provisionOutput: DummyProvisionOutputV1, configurationInput: CommonConfigurationInputV1): Promise<InstanceProvisioner> {
+    protected async doBuildProvisioner(name: string, provisionInput: DummyProvisionInputV1, provisionOutput: DummyProvisionOutputV1, configurationInput: CommonConfigurationInputV1): Promise<InstanceProvisioner> {
         return new DummyProvisioner({
             coreConfig: this.coreConfig,
             dummyInfraManager: this.dummyInfraManager,
@@ -33,8 +33,17 @@ export class DummySubManagerFactory extends AbstractSubManagerFactory<DummyInsta
             configurationInput: configurationInput
         })
     }
+}
 
-    async doBuildRunner(
+export class DummyRunnerFactory extends AbstractRunnerFactory<DummyInstanceStateV1> {
+
+    private readonly dummyInfraManager: DummyInstanceInfraManager
+    constructor(args: DummySubManagerFactoryArgs){
+        super(args.coreConfig)
+        this.dummyInfraManager = args.dummyInfraManager
+    }
+
+    protected async doBuildRunner(
         name: string, 
         provisionInput: DummyProvisionInputV1, 
         provisionOutput: DummyProvisionOutputV1, 
@@ -48,13 +57,17 @@ export class DummySubManagerFactory extends AbstractSubManagerFactory<DummyInsta
             dummyInfraManager: this.dummyInfraManager,
         })
     }
+}
+
+export class DummyConfiguratorFactory extends AbstractConfiguratorFactory<DummyInstanceStateV1, DummyConfiguratorArgs> {
 
     async doBuildConfigurator(name: string, provider: string, provisionInput: DummyProvisionInputV1, provisionOutput: DummyProvisionOutputV1, configurationInput: CommonConfigurationInputV1): Promise<InstanceConfigurator> {
         return new DummyConfigurator({ 
             instanceName: name,
             provisionInput: provisionInput,
             provisionOutput: provisionOutput,
-            configurationInput: configurationInput
+            configurationInput: configurationInput,
+            provider: provider,
         })
     }
 }

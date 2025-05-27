@@ -4,11 +4,13 @@ import * as path from 'path';
 import * as os from 'os';
 import * as yaml from 'yaml';
 import { CommonConfigurationInputV1, CommonProvisionInputV1, CommonProvisionOutputV1, InstanceStateV1 } from '../core/state/state';
-import { AbstractInstanceConfigurator } from '../core/configurator';
+import { AbstractInstanceConfigurator, InstanceConfigurator } from '../core/configurator';
 import { getLogger, Logger } from '../log/utils';
 import { AnsibleClient } from '../tools/ansible';
 import { CLOUDYPAD_SUNSHINE_IMAGE_REGISTRY, CLOUDYPAD_VERSION } from '../core/const';
 import { SshKeyLoader } from '../tools/ssh';
+import { AbstractConfiguratorFactory } from '../core/submanager-factory';
+
 
 export interface AnsibleConfiguratorArgs {
     instanceName: string
@@ -30,7 +32,7 @@ export class AnsibleConfigurator<ST extends InstanceStateV1> extends AbstractIns
         this.logger = getLogger(args.instanceName)
     }
 
-    async doConfigure() {
+    async doConfigure(): Promise<NonNullable<ST["configuration"]["output"]>> {
 
         this.logger.debug(`Running Ansible configuration with input: ${JSON.stringify(this.args.configurationInput)}`)
 
@@ -56,13 +58,17 @@ export class AnsibleConfigurator<ST extends InstanceStateV1> extends AbstractIns
 
         const inventoryPath = await this.writeTempInventory(inventoryObject)
 
-        const ansible = new AnsibleClient()
-        await ansible.runAnsible(inventoryPath, playbookPath, this.args.additionalAnsibleArgs ?? [])
+        await this.doRunAnsible(inventoryPath, playbookPath, this.args.additionalAnsibleArgs ?? [])
 
         return {
             // Running Ansible with data disk will ensure it's configured
             dataDiskConfigured: this.args.provisionOutput.dataDiskId !== undefined,
         }
+    }
+
+    protected async doRunAnsible(inventoryPath: string, playbookPath: string, additionalAnsibleArgs: string[]): Promise<void> {
+        const ansible = new AnsibleClient()
+        await ansible.runAnsible(inventoryPath, playbookPath, additionalAnsibleArgs)
     }
 
     /**
@@ -126,5 +132,36 @@ export class AnsibleConfigurator<ST extends InstanceStateV1> extends AbstractIns
                 },
             },
         }
+    }
+}
+
+export interface AnsibleConfiguratorOptions {
+    /**
+     * Additional arguments to pass to Ansible, eg. --extra-vars
+     */
+    additionalAnsibleArgs?: string[]
+}
+
+export class AnsibleConfiguratorFactory extends AbstractConfiguratorFactory<InstanceStateV1, AnsibleConfiguratorOptions> {
+
+    async doBuildConfigurator(
+        name: string,
+        provider: string,
+        provisionInput: InstanceStateV1["provision"]["input"],
+        provisionOutput: NonNullable<InstanceStateV1["provision"]["output"]>,
+        configurationInput: InstanceStateV1["configuration"]["input"],
+        configuratorOptions: AnsibleConfiguratorOptions
+    ): Promise<InstanceConfigurator> {
+
+        const configurator = new AnsibleConfigurator<InstanceStateV1>({
+            instanceName: name,
+            provider: provider,
+            provisionInput: provisionInput,
+            provisionOutput: provisionOutput,
+            configurationInput: configurationInput,
+            additionalAnsibleArgs: configuratorOptions?.additionalAnsibleArgs
+        })
+
+        return configurator
     }
 }
