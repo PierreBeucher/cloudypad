@@ -78,6 +78,13 @@ export const CLI_OPTION_COST_LIMIT = new Option('--cost-limit <limit>', 'Cost al
 })
 export const CLI_OPTION_COST_NOTIFICATION_EMAIL = new Option('--cost-notification-email <email>', 'Cost alert notification email. Imply --cost-alert.')
 
+export const CLI_OPTION_DELETE_INSTANCE_SERVER_ON_STOP = new Option('--delete-instance-server-on-stop [enable|yes|true|1]', 
+    'Whether to delete instance server on stop. ' +
+    'If enabled, instance server will be destroyed on stop and recreated on next start (along with provisioning and configuration). ' +
+    'Should be used along with independent data disk and custom image to avoid losing data and long starting.' +
+    'Passing "disable", "no", "0" or "false" will disable delete instance server on stop.')
+    .argParser(parseFalseOrDisable)
+
 export const CLI_OPTION_STREAMING_SERVER = new Option('--streaming-server <name>', 'Streaming server to use. Either "sunshine" or "wolf"')
 export const CLI_OPTION_SUNSHINE_USERNAME = new Option('--sunshine-user <name>', 'Sunshine username (ignored if streaming server is not sunshine)')
 export const CLI_OPTION_SUNSHINE_PASSWORD = new Option('--sunshine-password <password>', 'Sunshine password (ignored if streaming server is not sunshine)')

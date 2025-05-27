@@ -20,11 +20,12 @@ interface ScalewayInstanceArgs {
 
 class CloudyPadScalewayInstance extends pulumi.ComponentResource {
     
-    public readonly publicIp: pulumi.Output<string | undefined>
+    public readonly publicIp: pulumi.Output<string>
     public readonly instanceName: pulumi.Output<string>
     public readonly instanceServerId: pulumi.Output<string>
     public readonly dataDiskId: pulumi.Output<string | undefined>
-    public readonly rootDiskId: pulumi.Output<string>
+    public readonly rootDiskId: pulumi.Output<string | undefined>
+    public readonly instanceServerURN: pulumi.Output<string | undefined>
 
     constructor(name: string, args: ScalewayInstanceArgs, opts?: pulumi.ComponentResourceOptions) {
         super("crafteo:cloudypad:scaleway:vm", name, args, opts)
@@ -99,6 +100,8 @@ class CloudyPadScalewayInstance extends pulumi.ComponentResource {
         // we want to extract only the ID
         this.rootDiskId = server.rootVolume.volumeId.apply(id => id.split("/").pop() as string)
         this.dataDiskId = dataDisk ? dataDisk.id.apply(id => id.split("/").pop()) : pulumi.output(undefined)
+
+        this.instanceServerURN = server.urn
     }
 }
 
@@ -130,13 +133,24 @@ async function scalewayPulumiProgram(): Promise<Record<string, any> | void> {
         imageId: imageId
     })
 
-    return {
-        instanceName: instance.instanceName,
-        publicIp: instance.publicIp,
-        instanceServerId: instance.instanceServerId,
-        dataDiskId: instance.dataDiskId,
-        rootDiskId: instance.rootDiskId
-    }
+    return pulumi.all([
+        instance.instanceName, 
+        instance.publicIp, 
+        instance.instanceServerId, 
+        instance.dataDiskId, 
+        instance.rootDiskId, 
+        instance.instanceServerURN
+    ]).apply(([instanceName, publicIp, instanceServerId, dataDiskId, rootDiskId, instanceServerUrn]) => {
+        const result: ScalewayPulumiOutput = {
+            instanceName: instanceName,
+            publicIp: publicIp,
+            instanceServerId: instanceServerId,
+            dataDiskId: dataDiskId,
+            rootDiskId: rootDiskId,
+            instanceServerUrn: instanceServerUrn
+        }
+        return result
+    })
 }
 
 export interface PulumiStackConfigScaleway {
@@ -157,9 +171,30 @@ export interface PulumiStackConfigScaleway {
 
 export interface ScalewayPulumiOutput {
     instanceName: string
-    instanceServerId: string
+
+    /**
+     * ID of the instance server
+     */
+    instanceServerId?: string
+
+    /**
+     * Public IP address of the instance
+     */
     publicIp: string
-    rootDiskId: string
+
+    /**
+     * ID of the root OS disk
+     */
+    rootDiskId?: string
+
+    /**
+     * Pulumi URN of the root OS disk
+     */
+    instanceServerUrn?: string
+
+    /**
+     * ID of the data disk
+     */
     dataDiskId?: string
 }
 
@@ -209,6 +244,7 @@ export class ScalewayPulumiClient extends InstancePulumiClient<PulumiStackConfig
             publicIp: outputs["publicIp"].value as string,
             instanceServerId: outputs["instanceServerId"].value as string,
             rootDiskId: outputs["rootDiskId"]?.value as string,
+            instanceServerUrn: outputs["instanceServerUrn"]?.value as string | undefined,
             dataDiskId: outputs["dataDiskId"]?.value as string | undefined
         }   
     }

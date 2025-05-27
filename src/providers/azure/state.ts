@@ -30,7 +30,7 @@ const AzureProvisionInputV1Schema = CommonProvisionInputV1Schema.extend({
 
 const AzureInstanceStateV1Schema = InstanceStateV1Schema.extend({
     provision: z.object({
-        provider: z.literal(CLOUDYPAD_PROVIDER_AZURE),
+        provider: z.string(),
         output: AzureProvisionOutputV1Schema.optional(),
         input: AzureProvisionInputV1Schema,
     }),

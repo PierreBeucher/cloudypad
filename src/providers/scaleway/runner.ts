@@ -19,12 +19,25 @@ export class ScalewayInstanceRunner extends AbstractInstanceRunner<ScalewayProvi
         })
     }
 
-    private getInstanceServerId() {
+    /**
+     * Returns the instance server ID if it is available. Throws an error if it is not available.
+     * As instance server ID may be unset if the instance is not fully provisioned, this method will throw an error if the instance server ID is not set.
+     */
+    private getInstanceServerIdSafe() {
+        if(!this.args.provisionOutput.instanceServerId) {
+            throw new Error(`Instance server ID not found for instance ${this.args.provisionOutput.instanceName}. Is instance fully provisioned?`)
+        }
         return this.args.provisionOutput.instanceServerId
     }
 
     async doStart(opts?: StartStopOptions) {
-        const instanceServerId = this.getInstanceServerId()
+        const currentStatus = await this.doGetInstanceStatus()
+        if(currentStatus === ServerRunningStatus.Running) {
+            this.logger.info(`Instance ${this.args.provisionOutput.instanceName} is already running.`)
+            return
+        }
+
+        const instanceServerId = this.getInstanceServerIdSafe()
 
         await this.client.startInstance(instanceServerId, {
             wait: opts?.wait,
@@ -32,18 +45,24 @@ export class ScalewayInstanceRunner extends AbstractInstanceRunner<ScalewayProvi
     }
 
     async doStop(opts?: StartStopOptions) {
-        const instanceServerId = this.getInstanceServerId()
+        const currentStatus = await this.doGetInstanceStatus()
+        if(currentStatus === ServerRunningStatus.Stopped) {
+            this.logger.info(`Instance ${this.args.provisionOutput.instanceName} is already stopped.`)
+            return
+        }
+
+        const instanceServerId = this.getInstanceServerIdSafe()
 
         await this.client.stopInstance(instanceServerId, opts)
     }
 
     async doRestart(opts?: StartStopOptions) {
-        const instanceServerId = this.getInstanceServerId()
+        const instanceServerId = this.getInstanceServerIdSafe()
         await this.client.restartInstance(instanceServerId, opts)
     }
 
     async doGetInstanceStatus(): Promise<ServerRunningStatus> {
-        const instanceServerId = this.getInstanceServerId()
+        const instanceServerId = this.getInstanceServerIdSafe()
         const status = await this.client.getInstanceStatus(instanceServerId)
 
         switch(status) {

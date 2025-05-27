@@ -3,6 +3,7 @@ import { AbstractInstanceProvisioner, InstanceProvisionerArgs } from '../../core
 import { DummyProvisionInputV1, DummyProvisionOutputV1 } from './state';
 import { ServerRunningStatus } from '../../core/runner';
 import { DummyInstanceInfraManager } from './infra';
+import { objectOutputType, objectUtil, ZodString, ZodOptional, ZodNumber, ZodTypeAny } from 'zod';
 
 export interface DummyProvisionerArgs extends InstanceProvisionerArgs<DummyProvisionInputV1, DummyProvisionOutputV1> {
     dummyInfraManager: DummyInstanceInfraManager
@@ -15,6 +16,16 @@ export class DummyProvisioner extends AbstractInstanceProvisioner<DummyProvision
     constructor(args: DummyProvisionerArgs){
         super(args)
         this.dummyInfraManager = args.dummyInfraManager
+    }
+
+    protected async doDestroyInstanceServer(): Promise<DummyProvisionOutputV1> {
+        await this.dummyInfraManager.setServerRunningStatus(ServerRunningStatus.Unknown)
+
+        return {
+            host: `dummy-${this.args.instanceName}`,
+            instanceId: `dummy-id-${this.args.instanceName}`,
+            provisionedAt: Date.now(),
+        }
     }
 
     async doProvision(): Promise<DummyProvisionOutputV1> {
