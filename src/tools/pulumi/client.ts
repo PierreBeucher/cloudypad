@@ -63,6 +63,21 @@ export abstract class InstancePulumiClient<ConfigType extends Object, OutputType
         return this.getOutputs()
     }
 
+    async refresh(): Promise<OutputType> {
+        const stack = await this.getStack()
+
+        this.logger.debug(`Refreshing stack ${this.stackName}`)
+
+        const result = await stack.refresh({
+            onOutput: this.stackLogOnOutput,
+            color: LOG_ON_OUTPUT_COLOR,
+        })
+
+        this.logger.debug(`Refresh result: ${JSON.stringify(result)}`)
+
+        return this.getOutputs()
+    }
+
     public async setConfig(config: ConfigType): Promise<void> {
         // wrap call around this side-effect call to easily stub during test
         await this.doSetConfig(config)
