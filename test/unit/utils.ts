@@ -45,6 +45,9 @@ export const DEFAULT_COMMON_INPUT: CommonInstanceInput = {
             variant: "azerty",
             model: "pc105",
             options: "ctrl:swap_lalt_lctl"
+        },
+        ansible: {
+            additionalArgs: "-t dummytag"
         }
     },
 }
@@ -67,6 +70,7 @@ export const DEFAULT_COMMON_CLI_ARGS: CreateCliArgs = {
     keyboardVariant: DEFAULT_COMMON_INPUT.configuration.keyboard?.variant,
     keyboardModel: DEFAULT_COMMON_INPUT.configuration.keyboard?.model,
     keyboardOptions: DEFAULT_COMMON_INPUT.configuration.keyboard?.options,
+    ansibleAdditionalArgs: DEFAULT_COMMON_INPUT.configuration.ansible?.additionalArgs,
 }
 
 export const DUMMY_SSH_KEY_PATH = path.resolve(__dirname, '..', 'resources', 'ssh-key')
