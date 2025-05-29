@@ -10,6 +10,7 @@ interface ScalewayInstanceArgs {
     tags?: pulumi.Input<string[]>
     instanceType: pulumi.Input<string>
     imageId?: pulumi.Input<string>
+    noInstanceServer?: pulumi.Input<boolean>
     rootVolume: {
         sizeGb: pulumi.Input<number>
     },
@@ -21,11 +22,11 @@ interface ScalewayInstanceArgs {
 class CloudyPadScalewayInstance extends pulumi.ComponentResource {
     
     public readonly publicIp: pulumi.Output<string>
-    public readonly instanceName: pulumi.Output<string>
-    public readonly instanceServerId: pulumi.Output<string>
-    public readonly dataDiskId: pulumi.Output<string | undefined>
-    public readonly rootDiskId: pulumi.Output<string | undefined>
-    public readonly instanceServerURN: pulumi.Output<string | undefined>
+    public readonly instanceServerName: pulumi.Output<string | null>
+    public readonly instanceServerId: pulumi.Output<string | null>
+    public readonly dataDiskId: pulumi.Output<string | null>
+    public readonly rootDiskId: pulumi.Output<string | null>
+    public readonly instanceServerURN: pulumi.Output<string | null>
 
     constructor(name: string, args: ScalewayInstanceArgs, opts?: pulumi.ComponentResourceOptions) {
         super("crafteo:cloudypad:scaleway:vm", name, args, opts)
@@ -59,6 +60,8 @@ class CloudyPadScalewayInstance extends pulumi.ComponentResource {
             tags: globalTags
         }, commonPulumiOpts)
 
+        this.publicIp = publicIp.address
+
         let dataDisk: scw.block.Volume | undefined
         if(args.dataDisk){
             dataDisk = new scw.block.Volume(`${name}-data`, {
@@ -67,41 +70,47 @@ class CloudyPadScalewayInstance extends pulumi.ComponentResource {
                 iops: 5000,
                 tags: globalTags
             }, commonPulumiOpts)
+
+            dataDisk?.id.apply(id => {
+                pulumi.log.info(`Data disk: ${id}`)
+            })
+            this.dataDiskId = dataDisk.id.apply(id => id.split("/").pop() as string)
+        } else {
+            this.dataDiskId = pulumi.output(null)
         }
 
-        const server = new scw.instance.Server(`${name}-server`, {
-            name: name,
-            type: args.instanceType,
-            rootVolume: {
-                sizeInGb: args.rootVolume.sizeGb,
-                volumeType: "sbs_volume",
-            },
-            additionalVolumeIds: dataDisk ? [dataDisk.id] : [],
-            tags: globalTags,
-            securityGroupId: securityGroup.id,
-            image: args.imageId ?? "ubuntu_jammy_gpu_os_12",
-            ipIds: [publicIp.id],
-        }, {
-            ...commonPulumiOpts,
-            ignoreChanges: ["rootVolume.volumeType"] // avoid recreation of existing instances using legacy block volume type
-        })
+        if(!args.noInstanceServer){
+            const server = new scw.instance.Server(`${name}-server`, {
+                name: name,
+                type: args.instanceType,
+                rootVolume: {
+                    sizeInGb: args.rootVolume.sizeGb,
+                    volumeType: "sbs_volume",
+                },
+                additionalVolumeIds: dataDisk ? [dataDisk.id] : [],
+                tags: globalTags,
+                securityGroupId: securityGroup.id,
+                image: args.imageId ?? "ubuntu_jammy_gpu_os_12",
+                ipIds: [publicIp.id],
+            }, {
+                ...commonPulumiOpts,
+                ignoreChanges: ["rootVolume.volumeType"] // avoid recreation of existing instances using legacy block volume type
+            })
 
-        this.instanceName = server.name
-        // server id looks like this: "fr-par-2/4becedc8-51e9-4320-a45c-20f0f57033fa"
-        // we want to extract only the ID
-        this.instanceServerId = server.id.apply(id => id.split("/").pop() as string)
-        this.publicIp = publicIp.address
+            this.instanceServerName = server.name
+            
+            // server id looks like this: "fr-par-2/4becedc8-51e9-4320-a45c-20f0f57033fa"
+            // we want to extract only the ID
+            this.instanceServerId = server.id.apply(id => id.split("/").pop() as string)
 
-        dataDisk?.id.apply(id => {
-            pulumi.log.info(`Data disk: ${id}`)
-        })
-
-        // disk id looks like this: "fr-par-2/4becedc8-51e9-4320-a45c-20f0f57033fa"
-        // we want to extract only the ID
-        this.rootDiskId = server.rootVolume.volumeId.apply(id => id.split("/").pop() as string)
-        this.dataDiskId = dataDisk ? dataDisk.id.apply(id => id.split("/").pop()) : pulumi.output(undefined)
-
-        this.instanceServerURN = server.urn
+            this.instanceServerURN = server.urn
+            this.rootDiskId = server.rootVolume.volumeId.apply(id => id.split("/").pop() as string)
+        } else {
+            this.instanceServerName = pulumi.output(null)
+            this.instanceServerId = pulumi.output(null)
+            this.instanceServerURN = pulumi.output(null)
+            this.rootDiskId = pulumi.output(null)
+        }
     }
 }
 
@@ -114,10 +123,11 @@ async function scalewayPulumiProgram(): Promise<Record<string, any> | void> {
     const securityGroupPorts = config.requireObject<SimplePortDefinition[]>("securityGroupPorts")
     const dataDisk = config.getObject<ScalewayInstanceArgs["dataDisk"]>("dataDisk")
     const imageId = config.get("imageId")
+    const noInstanceServer = config.getBoolean("noInstanceServer")
 
-    const instanceName = pulumi.getStack()
+    const stackName = pulumi.getStack()
 
-    const instance = new CloudyPadScalewayInstance(instanceName, {
+    const instance = new CloudyPadScalewayInstance(stackName, {
         instanceType: instanceType,
         publicKeyContent: publicKeyContent,
         networkSecurityGroupRules: securityGroupPorts.map(p => ({
@@ -130,19 +140,20 @@ async function scalewayPulumiProgram(): Promise<Record<string, any> | void> {
             sizeGb: rootDiskSizeGB,
         },
         dataDisk: dataDisk,
-        imageId: imageId
+        imageId: imageId,
+        noInstanceServer: noInstanceServer
     })
 
     return pulumi.all([
-        instance.instanceName, 
+        instance.instanceServerName, 
         instance.publicIp, 
         instance.instanceServerId, 
         instance.dataDiskId, 
         instance.rootDiskId, 
         instance.instanceServerURN
-    ]).apply(([instanceName, publicIp, instanceServerId, dataDiskId, rootDiskId, instanceServerUrn]) => {
+    ]).apply(([instanceServerName, publicIp, instanceServerId, dataDiskId, rootDiskId, instanceServerUrn]) => {
         const result: ScalewayPulumiOutput = {
-            instanceName: instanceName,
+            instanceServerName: instanceServerName,
             publicIp: publicIp,
             instanceServerId: instanceServerId,
             dataDiskId: dataDiskId,
@@ -158,6 +169,7 @@ export interface PulumiStackConfigScaleway {
     region: string
     zone: string
     instanceType: string
+    noInstanceServer?: boolean
     imageId?: string
     rootDisk: {
         sizeGb: number
@@ -169,13 +181,18 @@ export interface PulumiStackConfigScaleway {
     }
 }
 
+/**
+ * Output of the Pulumi program for the Scaleway provider.
+ * Use null rather than undefined for fields that may not be set as otherwise Pulumi shows warnings about undefined outputs.
+ * Explicitly set null as we want to show that these fields are empty voluntarily.
+ */
 export interface ScalewayPulumiOutput {
-    instanceName: string
+    instanceServerName: string | null
 
     /**
      * ID of the instance server
      */
-    instanceServerId?: string
+    instanceServerId: string | null
 
     /**
      * Public IP address of the instance
@@ -185,17 +202,17 @@ export interface ScalewayPulumiOutput {
     /**
      * ID of the root OS disk
      */
-    rootDiskId?: string
+    rootDiskId: string | null
 
     /**
      * Pulumi URN of the root OS disk
      */
-    instanceServerUrn?: string
+    instanceServerUrn: string | null
 
     /**
      * ID of the data disk
      */
-    dataDiskId?: string
+    dataDiskId: string | null
 }
 
 export interface ScalewayPulumiClientArgs {
@@ -222,7 +239,9 @@ export class ScalewayPulumiClient extends InstancePulumiClient<PulumiStackConfig
         await stack.setConfig("scaleway:region", { value: config.region})
         await stack.setConfig("scaleway:zone", { value: config.zone})
         
+        if(config.noInstanceServer) await stack.setConfig("noInstanceServer", { value: config.noInstanceServer.toString()})
         await stack.setConfig("instanceType", { value: config.instanceType})
+
         if(config.imageId) await stack.setConfig("imageId", { value: config.imageId})
         if(config.dataDisk) await stack.setConfig("dataDisk", { value: JSON.stringify(config.dataDisk)})
 
@@ -240,12 +259,12 @@ export class ScalewayPulumiClient extends InstancePulumiClient<PulumiStackConfig
 
     protected async buildTypedOutput(outputs: OutputMap) : Promise<ScalewayPulumiOutput>{
         return {
-            instanceName: outputs["instanceName"].value as string,
+            instanceServerName: outputs["instanceServerName"]?.value as string,
             publicIp: outputs["publicIp"].value as string,
-            instanceServerId: outputs["instanceServerId"].value as string,
+            instanceServerId: outputs["instanceServerId"]?.value as string,
             rootDiskId: outputs["rootDiskId"]?.value as string,
-            instanceServerUrn: outputs["instanceServerUrn"]?.value as string | undefined,
-            dataDiskId: outputs["dataDiskId"]?.value as string | undefined
+            instanceServerUrn: outputs["instanceServerUrn"]?.value as string | null,
+            dataDiskId: outputs["dataDiskId"]?.value as string | null
         }   
     }
 

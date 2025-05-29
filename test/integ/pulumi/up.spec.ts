@@ -15,7 +15,7 @@ describe('Test Pulumi up', function() {
     // Especially for AWS which takes a long time to stop/delete instances
     this.timeout(15*60*1000);
 
-    async function upThenDestroy<C, O>(client: InstancePulumiClient<C, O>, input: C){
+    async function upThenDestroy<C extends Object, O>(client: InstancePulumiClient<C, O>, input: C){
         
         await client.setConfig(input)
         const upRes = await client.up()

@@ -20,27 +20,24 @@ export class ScalewayProvisioner extends AbstractInstanceProvisioner<ScalewayPro
         return pulumiClient
     }
 
+    /**
+     * Destroy the instance server by running Pulumi stack up with specific configs
+     * to remove instance server
+     */
     async destroyInstanceServer(): Promise<ScalewayProvisionOutputV1> {
 
         this.logger.info(`Destroying instance server for ${this.args.instanceName}`)
 
         const pulumiClient = this.buildPulumiClient()
-        const previousOutputs = await pulumiClient.getOutputs()
-        const instanceServerUrn = previousOutputs.instanceServerUrn
+        const stackConfig = this.buildPulumiConfig({ noInstanceServer: true })
+        await pulumiClient.setConfig(stackConfig)
+        await pulumiClient.up()
 
-        if(!instanceServerUrn){
-            this.logger.info(`Instance server URN not found for instance ${this.args.instanceName}. No need to delete instance server.`)
-            return this.pulumiOutputsToProvisionOutput(previousOutputs)
-        }
-
-        this.logger.info(`Deleting instance server ${instanceServerUrn} for instance ${this.args.instanceName}`)
-
-        const newOutputs = await pulumiClient.destroyResources([instanceServerUrn])
+        const newOutputs = await pulumiClient.getOutputs()
 
         this.logger.debug(`New outputs after destroying instance server: ${JSON.stringify(newOutputs)}`)
 
         return this.pulumiOutputsToProvisionOutput(newOutputs)
-        
     }
 
     async doProvision(): Promise<ScalewayProvisionOutputV1> {
@@ -49,11 +46,21 @@ export class ScalewayProvisioner extends AbstractInstanceProvisioner<ScalewayPro
 
         this.logger.debug(`Provisioning Scaleway instance ${this.args.instanceName} with args ${JSON.stringify(this.args)}`)
 
-        const sshPublicKeyContent = new SshKeyLoader().loadSshPublicKeyContent(this.args.provisionInput.ssh)
 
         const pulumiClient = this.buildPulumiClient()
+        const stackConfig = this.buildPulumiConfig()
 
-        const pulumiConfig: PulumiStackConfigScaleway = {
+        await pulumiClient.setConfig(stackConfig)
+        const pulumiOutputs = await pulumiClient.up()
+
+        return this.pulumiOutputsToProvisionOutput(pulumiOutputs)
+
+    }
+
+    private buildPulumiConfig(args?: { noInstanceServer?: boolean }): PulumiStackConfigScaleway {
+        const sshPublicKeyContent = new SshKeyLoader().loadSshPublicKeyContent(this.args.provisionInput.ssh)
+
+        return {
             projectId: this.args.provisionInput.projectId,
             region: this.args.provisionInput.region,
             zone: this.args.provisionInput.zone,
@@ -67,22 +74,17 @@ export class ScalewayProvisioner extends AbstractInstanceProvisioner<ScalewayPro
             imageId: this.args.provisionInput.imageId,
             securityGroupPorts: this.getStreamingServerPorts(),
             publicKeyContent: sshPublicKeyContent,
+            noInstanceServer: args?.noInstanceServer,
         }
-
-        await pulumiClient.setConfig(pulumiConfig)
-        const pulumiOutputs = await pulumiClient.up()
-
-        return this.pulumiOutputsToProvisionOutput(pulumiOutputs)
-
     }
 
     private pulumiOutputsToProvisionOutput(pulumiOutputs: ScalewayPulumiOutput): ScalewayProvisionOutputV1 {
         return {
             host: pulumiOutputs.publicIp,
-            instanceName: pulumiOutputs.instanceName,
-            instanceServerId: pulumiOutputs.instanceServerId,
-            dataDiskId: pulumiOutputs.dataDiskId,
-            rootDiskId: pulumiOutputs.rootDiskId,
+            instanceServerName: pulumiOutputs.instanceServerName ?? undefined,
+            instanceServerId: pulumiOutputs.instanceServerId ?? undefined,
+            dataDiskId: pulumiOutputs.dataDiskId ?? undefined,
+            rootDiskId: pulumiOutputs.rootDiskId ?? undefined,
         }
     }
 

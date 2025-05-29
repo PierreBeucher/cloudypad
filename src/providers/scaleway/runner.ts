@@ -12,7 +12,7 @@ export class ScalewayInstanceRunner extends AbstractInstanceRunner<ScalewayProvi
     constructor(args: ScalewayInstanceRunnerArgs) {
         super(CLOUDYPAD_PROVIDER_SCALEWAY, args)
 
-        this.client = new ScalewayClient(args.provisionOutput.instanceName, {
+        this.client = new ScalewayClient(args.instanceName, {
             projectId: args.provisionInput.projectId,
             zone: args.provisionInput.zone,
             region: args.provisionInput.region,
@@ -24,16 +24,21 @@ export class ScalewayInstanceRunner extends AbstractInstanceRunner<ScalewayProvi
      * As instance server ID may be unset if the instance is not fully provisioned, this method will throw an error if the instance server ID is not set.
      */
     private getInstanceServerIdSafe() {
-        if(!this.args.provisionOutput.instanceServerId) {
-            throw new Error(`Instance server ID not found for instance ${this.args.provisionOutput.instanceName}. Is instance fully provisioned?`)
+        const serverId = this.getInstanceServerId()
+        if(!serverId) {
+            throw new Error(`Instance server ID not found for instance ${this.args.provisionOutput.instanceServerName}. Is instance fully provisioned?`)
         }
+        return serverId
+    }
+
+    private getInstanceServerId(): string | undefined {
         return this.args.provisionOutput.instanceServerId
     }
 
     async doStart(opts?: StartStopOptions) {
         const currentStatus = await this.doGetInstanceStatus()
         if(currentStatus === ServerRunningStatus.Running) {
-            this.logger.info(`Instance ${this.args.provisionOutput.instanceName} is already running.`)
+            this.logger.info(`Instance ${this.args.provisionOutput.instanceServerName} is already running.`)
             return
         }
 
@@ -47,7 +52,7 @@ export class ScalewayInstanceRunner extends AbstractInstanceRunner<ScalewayProvi
     async doStop(opts?: StartStopOptions) {
         const currentStatus = await this.doGetInstanceStatus()
         if(currentStatus === ServerRunningStatus.Stopped) {
-            this.logger.info(`Instance ${this.args.provisionOutput.instanceName} is already stopped.`)
+            this.logger.info(`Instance ${this.args.provisionOutput.instanceServerName} is already stopped.`)
             return
         }
 
@@ -62,7 +67,11 @@ export class ScalewayInstanceRunner extends AbstractInstanceRunner<ScalewayProvi
     }
 
     async doGetInstanceStatus(): Promise<ServerRunningStatus> {
-        const instanceServerId = this.getInstanceServerIdSafe()
+        const instanceServerId = this.getInstanceServerId()
+        if(!instanceServerId) {
+            return ServerRunningStatus.Unknown
+        }
+
         const status = await this.client.getInstanceStatus(instanceServerId)
 
         switch(status) {

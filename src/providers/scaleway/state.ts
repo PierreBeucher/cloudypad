@@ -4,7 +4,7 @@ import { CLOUDYPAD_PROVIDER_SCALEWAY } from "../../core/const"
 import { GenericStateParser } from "../../core/state/parser"
 
 const ScalewayProvisionOutputV1Schema = CommonProvisionOutputV1Schema.extend({
-    instanceName: z.string().describe("Scaleway instance name"),
+    instanceServerName: z.string().describe("Scaleway instance server name").optional(),
     instanceServerId: z.string().describe("Scaleway instance server ID").optional(),
     rootDiskId: z.string().describe("Scaleway root disk ID").optional(),
     dataDiskId: z.string().describe("Scaleway data disk ID").optional(),

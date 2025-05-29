@@ -15,6 +15,7 @@ function create_destroy_scaleway() {
         --sunshine-password "sunshine!" \
         --autostop true \
         --autostop-timeout 300 \
+        --delete-instance-server-on-stop true \
         --yes --overwrite-existing --skip-pairing
 
     $cloudypad_cmd update scaleway \
@@ -27,10 +28,19 @@ function create_destroy_scaleway() {
     $cloudypad_cmd list | grep $instance_name
 
     check_instance_status $instance_name
+    
+    $cloudypad_cmd get $instance_name
 
+    # Stop/start twice to check idempotency
+    $cloudypad_cmd stop $instance_name --wait
     $cloudypad_cmd stop $instance_name --wait
 
+    $cloudypad_cmd get $instance_name
+
     $cloudypad_cmd start $instance_name --wait
+    $cloudypad_cmd start $instance_name --wait
+
+    $cloudypad_cmd get $instance_name
 
     $cloudypad_cmd restart $instance_name --wait
 

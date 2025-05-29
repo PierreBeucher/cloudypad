@@ -45,24 +45,6 @@ export abstract class InstancePulumiClient<ConfigType extends Object, OutputType
         return this.buildTypedOutput(outputs)
     }
 
-    /**
-     * Destroy specific resources on the stack
-     * @param resourceIds IDs of the resources to destroy
-     */
-    async destroyResources(resourceIds: string[]): Promise<OutputType> {
-        const stack = await this.getStack()
-
-        this.logger.debug(`Destroying resources ${JSON.stringify(resourceIds)} on stack ${this.stackName}`)
-
-        const result = await stack.destroy({
-            target: resourceIds
-        })
-
-        this.logger.debug(`Destroy resources ${JSON.stringify(resourceIds)} result: ${JSON.stringify(result)}`)
-
-        return this.getOutputs()
-    }
-
     async refresh(): Promise<OutputType> {
         const stack = await this.getStack()
 
