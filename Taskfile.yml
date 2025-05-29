@@ -188,8 +188,9 @@ tasks:
     cmds:
     - >
       docker buildx build . 
-      --cache-from type=registry,ref=$CLOUDYPAD_BUILD_CORE_IMAGE_REGISTRY:master-cache
+      --cache-from type=local,src=./tmp/core-container.cache.tgz
       --cache-to type=inline
+      --cache-to type=local,dest=./tmp/core-container.cache.tgz
       -t $CLOUDYPAD_BUILD_CORE_IMAGE_REGISTRY:$CLOUDYPAD_BUILD_CORE_IMAGE_TAG
       --load
 
