@@ -154,26 +154,30 @@ export interface GenericInstanceManagerArgs<ST extends InstanceStateV1> {
             enabled: boolean,
 
             /**
-             * Additional Ansible arguments to pass to configuration.
-             * to only configure required elements on re-configuration for faster start.
+             * Additional Ansible arguments to pass to after-start reconfiguration.
+             * These flags are specific to post-start reconfiguration to avoid re-running
+             * full configuration on every start and should be tailored to specific provider needs
+             * to ensure faster start while preserving functionality.
+             * 
+             * Ansible configuration args from CLI or state are ignored during post-start reconfiguration.
              */
-            configurationAnsibleAdditionalArgs?: string[]
+            postStartReconfigurationAnsibleAdditionalArgs?: string[]
         }
     }
 }
 
 /**
- * Default Ansible additional arguments to pass to configuration.
+ * Ansible additional arguments always passed to configurator.
  * Always skip host key checking as we don't have a known host key for the instance since it's defined randomly
  * and can't be known in advance. 
  */
-const DEFAULT_ANSIBLE_ADDITIONAL_ARGS = ['-e', '\'ansible_ssh_common_args="-o StrictHostKeyChecking=no"\'']
+const ALWAYS_ANSIBLE_ADDITIONAL_ARGS = ['-e', '\'ansible_ssh_common_args="-o StrictHostKeyChecking=no"\'']
 
 /**
  * Manage an instance. Delegate specifities to sub-manager:
- * - InstanceRunner for managing instance running status (stopping, starting, etc)
  * - InstanceProvisioner to manage Cloud resources
  * - an Ansible InstanceConfigurator to manage instance OS and system packages
+ * - InstanceRunner for managing instance running status (stopping, starting, etc)
  * 
  * Also manages instance state update and persistence on disk. After each operation where instance state
  * potentially change, it is persisted on disk. 
@@ -205,7 +209,10 @@ export class GenericInstanceManager<ST extends InstanceStateV1> implements Insta
     }
 
     async configure(): Promise<void> {
-        await this.doConfigure()
+        const currentState = await this.getState()
+        const configurationAnsibleAdditionalArgs = currentState.configuration.input.ansible?.additionalArgs ? 
+            [currentState.configuration.input.ansible.additionalArgs] : undefined
+        await this.doConfigure(configurationAnsibleAdditionalArgs)
     }
 
     async provision() {
@@ -228,10 +235,10 @@ export class GenericInstanceManager<ST extends InstanceStateV1> implements Insta
     async start(startOpts?: StartStopOptions): Promise<void> {
         
         // if deleteInstanceServerOnStop is enabled, instance server may have been deleted on last instance stop
-        // so we need to re-provision and re-configure instance
+        // so we need to re-provision and re-configure instance using specific Ansible args
         if(this.args.options?.deleteInstanceServerOnStop?.enabled){
             await this.doProvision()
-            await this.doConfigure(this.args.options.deleteInstanceServerOnStop.configurationAnsibleAdditionalArgs)
+            await this.doConfigure(this.args.options.deleteInstanceServerOnStop.postStartReconfigurationAnsibleAdditionalArgs)
         } else {
             const runner = await this.buildRunner()
             await runner.start(startOpts)
@@ -293,7 +300,7 @@ export class GenericInstanceManager<ST extends InstanceStateV1> implements Insta
      */
     private async doConfigure(additionalAnsibleArgs?: string[]): Promise<void> {
         const configurator = await this.buildConfigurator({
-            additionalAnsibleArgs: DEFAULT_ANSIBLE_ADDITIONAL_ARGS.concat(additionalAnsibleArgs ?? [])
+            additionalAnsibleArgs: ALWAYS_ANSIBLE_ADDITIONAL_ARGS.concat(additionalAnsibleArgs ?? [])
         })
         const output = await configurator.configure()
         await this.stateWriter.setConfigurationOutput(output)

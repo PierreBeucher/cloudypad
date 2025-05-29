@@ -28,6 +28,7 @@ export interface CreateCliArgs {
     keyboardModel?: string
     keyboardVariant?: string
     keyboardOptions?: string
+    ansibleAdditionalArgs?: string
 }
 
 /**
@@ -96,6 +97,8 @@ export const CLI_OPTION_AUTO_STOP_ENABLE = new Option('--autostop [disable|no|fa
 export const CLI_OPTION_AUTO_STOP_TIMEOUT = new Option('--autostop-timeout <seconds>', 'Auto Stop timeout in seconds')
     .argParser(parseInt)
 
+export const CLI_OPTION_ANSIBLE_ADDITIONAL_ARGS = new Option('--ansible-additional-args <args>', 'Additional Ansible arguments to pass to configuration, eg. "--tags data-disk -vvv"')
+
 function parseFalseOrDisable(value: string){
     return value === "disable" || value === "no" || value === "false" || value === "0" ? false : true
 }
@@ -126,6 +129,7 @@ export abstract class CliCommandGenerator {
             .addOption(CLI_OPTION_AUTO_APPROVE)
             .addOption(CLI_OPTION_OVERWRITE_EXISTING)
             .addOption(CLI_OPTION_SKIP_PAIRING)
+            .addOption(CLI_OPTION_ANSIBLE_ADDITIONAL_ARGS)
     }
 
     /**
@@ -136,6 +140,7 @@ export abstract class CliCommandGenerator {
             .description(`Update an existing Cloudy Pad instance using ${provider} provider.`)
             .requiredOption('--name <name>', 'Instance name')
             .addOption(CLI_OPTION_AUTO_APPROVE)
+            .addOption(CLI_OPTION_ANSIBLE_ADDITIONAL_ARGS)
     }
 
     /**

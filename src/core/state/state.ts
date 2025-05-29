@@ -55,8 +55,10 @@ const CommonConfigurationInputV1Schema = z.object({
     locale: z.string().describe("Desired locale, eg. fr_FR.UTF-8").nullish(),
     wolf: z.object({
         enable: z.boolean().describe("Whether Wolf is enabled"),
-    })
-    .nullish()
+    }).nullish(),
+    ansible: z.object({
+        additionalArgs: z.string().describe("Additional Ansible playbook command arguments, eg. '--tags data-disk -vvv'").optional(),
+    }).optional(),
 })
 .passthrough()
 // Only one of Sunshine or Wolf can be enabled at the same time
