@@ -74,6 +74,9 @@ describe('Instance initializer', () => {
                         model: DEFAULT_COMMON_INPUT.configuration.keyboard?.model,
                         variant: DEFAULT_COMMON_INPUT.configuration.keyboard?.variant,
                         options: DEFAULT_COMMON_INPUT.configuration.keyboard?.options
+                    },
+                    ansible: {
+                        additionalArgs: DEFAULT_COMMON_INPUT.configuration.ansible?.additionalArgs
                     }
                 }
             }
