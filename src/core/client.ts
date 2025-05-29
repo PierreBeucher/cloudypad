@@ -130,7 +130,7 @@ export class CloudypadClient {
                 options: {
                     deleteInstanceServerOnStop: {
                         enabled: scalewayState.provision.input.deleteInstanceServerOnStop ?? false,
-                        configurationAnsibleAdditionalArgs: [ "-t", "data-disk"] // TODO
+                        postStartReconfigurationAnsibleAdditionalArgs: [ "-t", "data-disk"]
                     }
                 }
             })
@@ -158,7 +158,7 @@ export class CloudypadClient {
                 options: {
                     deleteInstanceServerOnStop: {
                         enabled: dummyState.provision.input.deleteInstanceServerOnStop ?? false,
-                        configurationAnsibleAdditionalArgs: [ "-t", "data-disk"]
+                        postStartReconfigurationAnsibleAdditionalArgs: [ "-t", "data-disk"]
                     }
                 }
             })

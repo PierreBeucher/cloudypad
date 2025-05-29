@@ -137,6 +137,7 @@ export abstract class AbstractInputPrompter<
                 },
                 keyboard: partialInput.configuration?.keyboard,
                 locale: partialInput.configuration?.locale,
+                ansible: partialInput.configuration?.ansible,
             }
         }
 
@@ -201,7 +202,10 @@ export abstract class AbstractInputPrompter<
                     model: cliArgs.keyboardModel,
                     variant: cliArgs.keyboardVariant,
                     options: cliArgs.keyboardOptions,
-                } : undefined
+                } : undefined,
+                ansible: cliArgs.ansibleAdditionalArgs ? {
+                    additionalArgs: cliArgs.ansibleAdditionalArgs,
+                } : undefined,
             }
         }
     }
