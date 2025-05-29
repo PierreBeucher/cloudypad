@@ -1,21 +1,22 @@
 import * as assert from 'assert';
-import {DUMMY_AWS_PULUMI_OUTPUT, getUnitTestCoreClient, loadDumyAnonymousStateV1 } from '../utils';
+import { createDummyAwsState, DEFAULT_COMMON_CLI_ARGS, DEFAULT_COMMON_INPUT, DUMMY_AWS_PULUMI_OUTPUT, getUnitTestCoreClient, loadDumyAnonymousStateV1 } from '../utils';
 import { InteractiveInstanceUpdater } from '../../../src/cli/updater';
-import { AwsUpdateCliArgs } from '../../../src/providers/aws/cli';
+import { AwsCreateCliArgs, AwsUpdateCliArgs } from '../../../src/providers/aws/cli';
 import { AwsInputPrompter } from '../../../src/providers/aws/cli';
 import { AwsInstanceStateV1, AwsStateParser } from '../../../src/providers/aws/state';
+import { PUBLIC_IP_TYPE_STATIC } from '../../../src/core/const';
 
 describe('InteractiveInstanceUpdater', () => {
 
     it('should update instance with InteractiveInstanceUpdater wihout prompting', async () => {
-        
+
         // Load known state into dummy writer after changing its name to avoid collision
         const awsState = new AwsStateParser().parse(loadDumyAnonymousStateV1("aws-dummy"))
 
         const instanceName = "aws-dummy-test-update"
         awsState.name = instanceName
 
-        const coreClient = getUnitTestCoreClient()        
+        const coreClient = getUnitTestCoreClient()
         const stateWriter = coreClient.buildStateWriterFor(awsState)
         await stateWriter.persistStateNow()
 
@@ -24,7 +25,7 @@ describe('InteractiveInstanceUpdater', () => {
             inputPrompter: new AwsInputPrompter({ coreClient: coreClient }),
             coreClient: coreClient
         })
-        
+
         // Only check that interactive updater does perform a simple update
         // underlying InstanceUpdater is tested in Core and CLI args to Input is tested by provider
         await updater.updateInteractive({
@@ -60,9 +61,54 @@ describe('InteractiveInstanceUpdater', () => {
         // Check dummy state after update
         const loader = coreClient.buildStateLoader()
         const updatedState = await loader.loadInstanceState(instanceName)
-        
+
         assert.deepEqual(updatedState, expectedState)
     })
+
+    // regression test for bug where streaming server was nullified if not provided in CLI args during update
+    // instead of reusing existing state value
+    it('should not nullify streaming server if not provided in CLI args', async () => {
+        // Build dummy state with Sunshine enabled
+        const testState = createDummyAwsState({
+            name: "aws-dummy-test-update-no-nullify-sunshine",
+            configuration: {
+                input: {
+                    sunshine: {
+                        enable: true,
+                        username: "sunshine-user-no-nullify",
+                        passwordBase64: Buffer.from("sunshine-password-no-nullify").toString('base64')
+                    },
+                    wolf: null
+                }
+            }
+        })
+
+        const coreClient = getUnitTestCoreClient()
+        const stateWriter = coreClient.buildStateWriterFor(testState)
+        await stateWriter.persistStateNow()
+
+        // perform update and check resulting state
+        const updater = new InteractiveInstanceUpdater<AwsInstanceStateV1, AwsUpdateCliArgs>({
+            stateParser: new AwsStateParser(),
+            inputPrompter: new AwsInputPrompter({ coreClient: coreClient }),
+            coreClient: coreClient
+        })
+
+        // Only check that interactive updater does perform a simple update
+        // underlying InstanceUpdater is tested in Core and CLI args to Input is tested by provider
+        await updater.updateInteractive({
+            name: testState.name,
+            overwriteExisting: true,
+            yes: true,
+            diskSize: testState.provision.input.diskSize + 100,
+        })
+
+        const stateLoader = coreClient.buildStateLoader()
+        const newState = await stateLoader.loadInstanceState(testState.name)
+
+        assert.deepEqual(newState.configuration.input.sunshine, testState.configuration.input.sunshine)
+        assert.deepEqual(newState.configuration.input.wolf, testState.configuration.input.wolf)
+    })
 })
-    
+
 
