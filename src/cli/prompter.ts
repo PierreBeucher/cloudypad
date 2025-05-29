@@ -184,18 +184,19 @@ export abstract class AbstractInputPrompter<
                     enable: cliArgs.autostop,
                     timeoutSeconds: cliArgs.autostopTimeout,
                 } : undefined,
-                // only set streaming server is provided
-                // setting a streaming server argument without enabling it has not effect
+                // only set streaming server if provided
+                // if undefined, no specific CLI args was passed, leave undefined
+                // to re-use existing state value or prompt user
                 sunshine: cliArgs.streamingServer == STREAMING_SERVER_SUNSHINE ? {
                     enable: true,
                     username: cliArgs.sunshineUser,
                     passwordBase64: cliArgs.sunshinePassword ? Buffer.from(cliArgs.sunshinePassword).toString('base64') : undefined,
                     imageRegistry: cliArgs.sunshineImageRegistry,
                     imageTag: cliArgs.sunshineImageTag,
-                } : null,
+                } : undefined,
                 wolf: cliArgs.streamingServer == STREAMING_SERVER_WOLF ? {
                     enable: true,
-                } : null,
+                } : undefined,
                 locale: cliArgs.useLocale,
                 keyboard: cliArgs.keyboardLayout ? {
                     layout: cliArgs.keyboardLayout,

@@ -13,6 +13,10 @@ import { STREAMING_SERVER_SUNSHINE } from '../../src/cli/prompter';
 import { CreateCliArgs } from "../../src/cli/command";
 import { ScalewayPulumiOutput } from "../../src/providers/scaleway/pulumi";
 import { CloudypadClient } from "../../src";
+import { AwsInstanceStateV1 } from "../../src/providers/aws/state";
+import { PartialDeep } from "type-fest";
+import * as lodash from "lodash"
+
 /**
  * CommonInstanceInput with as most fields filled as possible while keeping it valid:
  * - privateKeyPath is set but not privateKeyContent
@@ -147,4 +151,38 @@ export function getUnitTestCoreClient(): CloudypadClient{
             }
         }
     })
+}
+
+/**
+ * Create a dummy AWS state that can be used for testing
+ * @param instanceName 
+ * @returns 
+ */
+export function createDummyAwsState(override: PartialDeep<AwsInstanceStateV1>): AwsInstanceStateV1 {
+
+    // clone deep to avoid later operation returned state
+    // to alter DEFAULT_COMMON_INPUT used in this state
+    const awsState: AwsInstanceStateV1 = lodash.cloneDeep({
+        version: "1",
+        provision: {
+            provider: "aws",
+            input: {
+                ...DEFAULT_COMMON_INPUT.provision,
+                diskSize: 100,
+                instanceType: "g4dn.xlarge",
+                region: "eu-west-1",
+                publicIpType: "static",
+                useSpot: true,
+            }
+        },
+        name: `dummy-aws-instance-${Date.now()}`,
+        configuration: {
+            configurator: "ansible",
+            input: {
+                ...DEFAULT_COMMON_INPUT.configuration,
+            },
+        }
+    })
+
+    return lodash.merge(awsState, override)
 }
