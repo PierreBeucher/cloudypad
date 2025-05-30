@@ -1,6 +1,8 @@
 # Development guide
 
 - [Release](#release)
+  - [Before release testing](#before-release-testing)
+  - [Do release](#do-release)
 - [Tests](#tests)
   - [Unit tests](#unit-tests)
   - [Integration tests](#integration-tests)
@@ -18,6 +20,16 @@
 - [Adding new CLI args](#adding-new-cli-args)
 
 ## Release
+
+### Before release testing
+
+Some tests are required before release:
+
+- [ ] `task test-unit` (done by CI)
+- [ ] `task test-integ-full-lifecycle-all` (done manually since it requires real Cloud accounts)
+- [ ] `task test-integ-scaleway-lifecycle-with-server-deletion` (done manually since it requires real Cloud accounts)
+
+### Do release
 
 Set `export GITHUB_TOKEN=xxx` variable and run:
 
