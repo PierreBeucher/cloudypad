@@ -12,8 +12,8 @@ export interface ScalewayVMDetails {
     name: string
     state: string
     tags?: string[]
+    id: string
 }
-
 
 const DEFAULT_START_STOP_OPTION_WAIT=false
 
@@ -149,7 +149,8 @@ export class ScalewayClient {
                 commercialType: server.commercialType,
                 name: server.name,
                 state: server.state,
-                tags: server.tags
+                tags: server.tags,
+                id: server.id
             })
         }
 
