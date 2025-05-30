@@ -5,8 +5,9 @@ pulumi/aws/Pulumi.*.yaml
 **/dist
 result 
 
-# Unit test tmp dir
+# test tmp dirs
 test/unit/core/state/TMP-v0-root-data-dir
 .vagrant
 **/__pycache__
 **/.venv
+test/integ/.data-root-dir
