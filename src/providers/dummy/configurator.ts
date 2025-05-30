@@ -11,6 +11,8 @@ export class DummyConfigurator extends AnsibleConfigurator<DummyInstanceStateV1>
     }
 
     async doConfigure(): Promise<NonNullable<DummyInstanceStateV1['configuration']['output']>> {
+        this.logger.debug(`Running dummy configurator for instance: ${this.args.instanceName}`)
+
         await super.doConfigure()
 
         return {

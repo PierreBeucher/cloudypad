@@ -209,9 +209,13 @@ export class GenericInstanceManager<ST extends InstanceStateV1> implements Insta
     }
 
     async configure(): Promise<void> {
+
+        this.logger.debug(`Configuring instance ${this.name()}`)
+
         const currentState = await this.getState()
         const configurationAnsibleAdditionalArgs = currentState.configuration.input.ansible?.additionalArgs ? 
             [currentState.configuration.input.ansible.additionalArgs] : undefined
+
         await this.doConfigure(configurationAnsibleAdditionalArgs)
     }
 
@@ -225,6 +229,8 @@ export class GenericInstanceManager<ST extends InstanceStateV1> implements Insta
     }
 
     async destroy() {
+        this.logger.debug(`Destroying instance ${this.name()}`)
+
         const provisioner = await this.buildProvisioner()
         await provisioner.destroy()
         await this.stateWriter.setProvisionOutput(undefined)
@@ -299,10 +305,15 @@ export class GenericInstanceManager<ST extends InstanceStateV1> implements Insta
      * Configure instance using Ansible configurator and update state with configuration output.
      */
     private async doConfigure(additionalAnsibleArgs?: string[]): Promise<void> {
+
+        this.logger.debug(`Do configure instance ${this.name()} with additional Ansible args: ${JSON.stringify(additionalAnsibleArgs)}`)
         const configurator = await this.buildConfigurator({
             additionalAnsibleArgs: ALWAYS_ANSIBLE_ADDITIONAL_ARGS.concat(additionalAnsibleArgs ?? [])
         })
         const output = await configurator.configure()
+        
+        this.logger.debug(`Configuration output for instance ${this.name()}: ${JSON.stringify(output)}`)
+
         await this.stateWriter.setConfigurationOutput(output)
     }
     
@@ -310,8 +321,14 @@ export class GenericInstanceManager<ST extends InstanceStateV1> implements Insta
      * Provision instance using provisioner and update state with provision output.
      */
     private async doProvision(): Promise<void> {
+
+        this.logger.debug(`Provisioning instance ${this.name()}`)
+
         const provisioner = await this.buildProvisioner()
         const newOutputs = await provisioner.provision()
+
+        this.logger.debug(`Provision output for instance ${this.name()}: ${JSON.stringify(newOutputs)}`)
+
         await this.stateWriter.setProvisionOutput(newOutputs)
     }
 

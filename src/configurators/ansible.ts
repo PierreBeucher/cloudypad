@@ -24,7 +24,7 @@ export interface AnsibleConfiguratorArgs {
 export class AnsibleConfigurator<ST extends InstanceStateV1> extends AbstractInstanceConfigurator<ST> {
 
     protected readonly logger: Logger
-    private readonly args: AnsibleConfiguratorArgs
+    protected readonly args: AnsibleConfiguratorArgs
 
     constructor(args: AnsibleConfiguratorArgs){
         super()
