@@ -1,4 +1,4 @@
-import { CommonInstanceInput, InstanceStateV1 } from './state';
+import { CommonInstanceInput, InstanceEventEnum, InstanceStateV1 } from './state';
 import { getLogger } from '../../log/utils';
 import { CLOUDYPAD_CONFIGURATOR_ANSIBLE, CLOUDYPAD_PROVIDER } from '../const';
 import { StateWriter } from './writer';
@@ -43,6 +43,7 @@ export class StateInitializer {
         }
 
         this.args.stateWriter.setState(initialState)
+        await this.args.stateWriter.addEvent(InstanceEventEnum.Init)
         await this.args.stateWriter.persistStateNow()
 
         return initialState

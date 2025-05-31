@@ -62,7 +62,9 @@ describe('InteractiveInstanceUpdater', () => {
         const loader = coreClient.buildStateLoader()
         const updatedState = await loader.loadInstanceState(instanceName)
 
-        assert.deepEqual(updatedState, expectedState)
+        assert.strictEqual(updatedState.name, expectedState.name)
+        assert.deepStrictEqual(updatedState.configuration, expectedState.configuration)
+        assert.deepStrictEqual(updatedState.provision, expectedState.provision)
     })
 
     // regression test for bug where streaming server was nullified if not provided in CLI args during update

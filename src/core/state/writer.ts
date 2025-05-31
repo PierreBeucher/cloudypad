@@ -1,5 +1,5 @@
 import { getLogger } from '../../log/utils'
-import { InstanceStateV1 } from './state'
+import { InstanceEventEnum, InstanceStateV1, STATE_MAX_EVENTS } from './state'
 import lodash from 'lodash'
 import { PartialDeep } from 'type-fest'
 import { StateSideEffect } from './side-effects/abstract'
@@ -98,6 +98,29 @@ export class StateWriter<ST extends InstanceStateV1> {
     async updateConfigurationInput(input: PartialDeep<ST["configuration"]["input"]>){
         const newState = lodash.cloneDeep(this.getState())
         lodash.merge(newState.configuration.input, input)
+        await this.persistState(newState)
+    }
+
+    /**
+     * Add an event to the state with optional date.
+     * @param event Event to add
+     * @param atDate Date of event, defaults to current date
+     */
+    async addEvent(event: InstanceEventEnum, atDate?: Date){
+        const newState = lodash.cloneDeep(this.getState())
+        if(!newState.events) newState.events = []
+
+        // if more than MAX events, remove oldest event
+        // sort events by date and remove oldest
+        if(newState.events.length >= STATE_MAX_EVENTS){
+            newState.events.sort((a, b) => a.date - b.date)
+            newState.events.shift()
+        }
+
+        newState.events.push({
+            type: event,
+            date: atDate ? atDate.getTime() : Date.now()
+        })
         await this.persistState(newState)
     }
 

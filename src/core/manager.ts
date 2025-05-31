@@ -1,4 +1,4 @@
-import { CommonInstanceInput, InstanceStateV1 } from './state/state';
+import { CommonInstanceInput, InstanceEvent, InstanceEventEnum, InstanceStateV1 } from './state/state';
 import { InstanceProvisioner } from './provisioner';
 import { InstanceConfigurator } from './configurator';
 import { getLogger } from '../log/utils';
@@ -74,6 +74,16 @@ export interface InstanceManager {
     restart(opts?: StartStopOptions): Promise<void>
     pairInteractive(): Promise<void>
     pairSendPin(pin: string, retries?: number, retryDelay?: number): Promise<boolean>
+
+    /**
+     * Returns all events of the instance
+     */
+    getEvents(): Promise<InstanceEvent[]> 
+
+    /**
+     * Returns the latest event of the instance
+     */
+    getLatestEvent(): Promise<InstanceEvent | undefined>
 
     /**
      * Returns the instance details: hostname, pairing port, ssh config...
@@ -179,6 +189,10 @@ const ALWAYS_ANSIBLE_ADDITIONAL_ARGS = ['-e', '\'ansible_ssh_common_args="-o Str
  * - an Ansible InstanceConfigurator to manage instance OS and system packages
  * - InstanceRunner for managing instance running status (stopping, starting, etc)
  * 
+ * Responsible for state updates:
+ * - Outputs are set on state after related operations
+ * - Events are added on state after related operations
+ * 
  * Also manages instance state update and persistence on disk. After each operation where instance state
  * potentially change, it is persisted on disk. 
  * 
@@ -216,11 +230,15 @@ export class GenericInstanceManager<ST extends InstanceStateV1> implements Insta
         const configurationAnsibleAdditionalArgs = currentState.configuration.input.ansible?.additionalArgs ? 
             [currentState.configuration.input.ansible.additionalArgs] : undefined
 
+        await this.addEvent(InstanceEventEnum.ConfigurationBegin)
         await this.doConfigure(configurationAnsibleAdditionalArgs)
+        await this.addEvent(InstanceEventEnum.ConfigurationEnd)
     }
 
     async provision() {
+        await this.addEvent(InstanceEventEnum.ProvisionBegin)
         await this.doProvision()
+        await this.addEvent(InstanceEventEnum.ProvisionEnd)
     }
 
     async deploy() {
@@ -232,14 +250,21 @@ export class GenericInstanceManager<ST extends InstanceStateV1> implements Insta
         this.logger.debug(`Destroying instance ${this.name()}`)
 
         const provisioner = await this.buildProvisioner()
+
+        await this.stateWriter.addEvent(InstanceEventEnum.DestroyBegin)
         await provisioner.destroy()
+
         await this.stateWriter.setProvisionOutput(undefined)
         await this.stateWriter.setConfigurationOutput(undefined)
+        await this.stateWriter.addEvent(InstanceEventEnum.DestroyEnd)
+
         await this.stateWriter.destroyState()
     }
 
     async start(startOpts?: StartStopOptions): Promise<void> {
-        
+
+        await this.addEvent(InstanceEventEnum.StartBegin)
+
         // if deleteInstanceServerOnStop is enabled, instance server may have been deleted on last instance stop
         // so we need to re-provision and re-configure instance using specific Ansible args
         if(this.args.options?.deleteInstanceServerOnStop?.enabled){
@@ -249,10 +274,14 @@ export class GenericInstanceManager<ST extends InstanceStateV1> implements Insta
             const runner = await this.buildRunner()
             await runner.start(startOpts)
         }
+
+        await this.addEvent(InstanceEventEnum.StartEnd)
     }
 
     async stop(opts?: StartStopOptions): Promise<void> {
         
+        await this.addEvent(InstanceEventEnum.StopBegin)
+
         // destroy instance server if deleteInstanceServerOnStop is enabled
         // only stop instance if deleteInstanceServerOnStop is not enabled
         // no sense in stopping instance if it's deleted right away
@@ -262,6 +291,8 @@ export class GenericInstanceManager<ST extends InstanceStateV1> implements Insta
             const runner = await this.buildRunner()
             await runner.stop(opts)
         }
+
+        await this.addEvent(InstanceEventEnum.StopEnd)
     }
 
     /**
@@ -272,8 +303,10 @@ export class GenericInstanceManager<ST extends InstanceStateV1> implements Insta
      * @param opts 
      */
     async restart(opts?: StartStopOptions): Promise<void> {
+        await this.addEvent(InstanceEventEnum.RestartBegin)
         const runner = await this.buildRunner()
         await runner.restart(opts)
+        await this.addEvent(InstanceEventEnum.RestartEnd)
     }
 
     async pairInteractive(): Promise<void> {
@@ -303,6 +336,7 @@ export class GenericInstanceManager<ST extends InstanceStateV1> implements Insta
 
     /**
      * Configure instance using Ansible configurator and update state with configuration output.
+     * Decorellated from mainn configure() method as it may be run for configuration and as post-start reconfiguration by start().
      */
     private async doConfigure(additionalAnsibleArgs?: string[]): Promise<void> {
 
@@ -319,6 +353,7 @@ export class GenericInstanceManager<ST extends InstanceStateV1> implements Insta
     
     /**
      * Provision instance using provisioner and update state with provision output.
+     * Decorellated from main provision() method as it may be run for configuration and as post-start reconfiguration by start().
      */
     private async doProvision(): Promise<void> {
 
@@ -342,6 +377,25 @@ export class GenericInstanceManager<ST extends InstanceStateV1> implements Insta
     
     private async buildProvisioner(): Promise<InstanceProvisioner> {
         return this.provisionerFactory.buildProvisioner(this.stateWriter.cloneState())
+    }
+
+    private async addEvent(event: InstanceEventEnum): Promise<void> {
+        await this.stateWriter.addEvent(event)
+    }
+
+    //
+    // Public methods to get instance info
+    //
+
+    public async getEvents(): Promise<InstanceEvent[]> {
+        const state = this.stateWriter.cloneState()
+        return state.events ?? []
+    }
+
+    public async getLatestEvent(): Promise<InstanceEvent | undefined> {
+        const events = await this.getEvents()
+        events.sort((a, b) => a.date - b.date)
+        return events.length > 0 ? events[events.length - 1] : undefined
     }
 
     public async getInstanceDetails(): Promise<CloudyPadInstanceDetails> {

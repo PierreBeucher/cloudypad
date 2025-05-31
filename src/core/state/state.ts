@@ -78,9 +78,56 @@ const CommonConfigurationOutputV1Schema = z.object({
     dataDiskConfigured: z.boolean().default(false).describe("Whether data disk has been configured."),
 }).passthrough()
 
+export enum InstanceEventEnum {
+    Init = "init",
+    
+    ProvisionBegin = "provision-begin",
+    ProvisionEnd = "provision-end",
+    
+    ConfigurationBegin = "configuration-begin",
+    ConfigurationEnd = "configuration-end",
+    
+    StartBegin = "start-begin",
+    StartEnd = "start-end",
+    
+    StopBegin = "stop-begin",
+    StopEnd = "stop-end",
+
+    RestartBegin = "restart-begin",
+    RestartEnd = "restart-end",
+    
+    DestroyBegin = "destroy-begin",
+    DestroyEnd = "destroy-end",
+}
+
+const InstanceEventSchema = z.object({
+    type: z.enum([
+        InstanceEventEnum.Init,
+        InstanceEventEnum.ProvisionBegin,
+        InstanceEventEnum.ProvisionEnd,
+        InstanceEventEnum.ConfigurationBegin,
+        InstanceEventEnum.ConfigurationEnd,
+        InstanceEventEnum.StartBegin,
+        InstanceEventEnum.StartEnd,
+        InstanceEventEnum.StopBegin,
+        InstanceEventEnum.StopEnd,
+        InstanceEventEnum.DestroyBegin,
+        InstanceEventEnum.DestroyEnd,
+        InstanceEventEnum.RestartBegin,
+        InstanceEventEnum.RestartEnd,
+    ]).describe("Event type"),
+    date: z.number().describe("Event date (Linux timestamp)"),
+})
+
+/**
+ * Maximum number of events in instance state. Oldest events are removed when this limit is reached.
+ */
+export const STATE_MAX_EVENTS = 10
+
 const InstanceStateV1Schema = z.object({
     version: z.literal("1").describe("State schema version, always 1"),
     name: z.string().describe("Unique instance name"),
+    events: z.array(InstanceEventSchema).optional().describe("List of recent instance events causing a state mutation or infrastructure change (up to 10 events)"),
     provision: z.object({
         provider: z.string().describe("Provider name"), // Any provider name is supported in schema
         output: CommonProvisionOutputV1Schema.optional(),
@@ -118,6 +165,8 @@ export type CommonProvisionOutputV1 = z.infer<typeof CommonProvisionOutputV1Sche
 
 export type CommonConfigurationInputV1 = z.infer<typeof CommonConfigurationInputV1Schema>
 export type CommonConfigurationOutputV1 = z.infer<typeof CommonConfigurationOutputV1Schema>
+
+export type InstanceEvent = z.infer<typeof InstanceEventSchema>
 
 /**
  * Wrapper around all possible Inputs for an instance

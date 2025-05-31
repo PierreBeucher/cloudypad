@@ -123,7 +123,9 @@ describe('Instance initializer', () => {
             }
         }
         
-        assert.deepEqual(state, expectState)
+        assert.strictEqual(state.name, expectState.name)
+        assert.deepStrictEqual(state.configuration, expectState.configuration)
+        assert.deepStrictEqual(state.provision, expectState.provision)
     })
 
     it('should failed to initialize for existing instance with no overwrite', async () => {
