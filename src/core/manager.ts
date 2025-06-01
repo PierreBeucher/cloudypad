@@ -270,10 +270,12 @@ export class GenericInstanceManager<ST extends InstanceStateV1> implements Insta
         if(this.args.options?.deleteInstanceServerOnStop?.enabled){
             await this.doProvision()
             await this.doConfigure(this.args.options.deleteInstanceServerOnStop.postStartReconfigurationAnsibleAdditionalArgs)
-        } else {
-            const runner = await this.buildRunner()
-            await runner.start(startOpts)
         }
+
+        // always start instance as provisioning and configuring may not start the server for all providers
+        // and startOptions logic is ported by runner
+        const runner = await this.buildRunner()
+        await runner.start(startOpts)
 
         await this.addEvent(InstanceEventEnum.StartEnd)
     }
@@ -282,14 +284,17 @@ export class GenericInstanceManager<ST extends InstanceStateV1> implements Insta
         
         await this.addEvent(InstanceEventEnum.StopBegin)
 
+        // always cleanly stop instance to avoid data inconsistency 
+        // as instance server may be deleted on stop and deleting without stopping may cause data inconsistency
+        // and stopOptions logic is ported by runner
+        const runner = await this.buildRunner()
+        await runner.stop(opts)
+
         // destroy instance server if deleteInstanceServerOnStop is enabled
         // only stop instance if deleteInstanceServerOnStop is not enabled
         // no sense in stopping instance if it's deleted right away
         if(this.args.options?.deleteInstanceServerOnStop?.enabled){
             await this.doDestroyInstanceServer()
-        } else {
-            const runner = await this.buildRunner()
-            await runner.stop(opts)
         }
 
         await this.addEvent(InstanceEventEnum.StopEnd)
