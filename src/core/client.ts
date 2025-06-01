@@ -3,19 +3,18 @@ import { InstanceManager } from './manager';
 import { StateLoader } from './state/loader';
 import { CommonProvisionInputV1, CommonConfigurationInputV1, InstanceStateV1 } from './state/state';
 import { CLOUDYPAD_PROVIDER, CLOUDYPAD_PROVIDER_AWS, CLOUDYPAD_PROVIDER_AZURE, CLOUDYPAD_PROVIDER_DUMMY, CLOUDYPAD_PROVIDER_GCP, CLOUDYPAD_PROVIDER_PAPERSPACE, CLOUDYPAD_PROVIDER_SCALEWAY } from './const';
-import { AwsSubManagerFactory } from '../providers/aws/factory';
-import { GcpSubManagerFactory } from '../providers/gcp/factory';
-import { AzureSubManagerFactory } from '../providers/azure/factory';
-import { PaperspaceSubManagerFactory } from '../providers/paperspace/factory';
+import { AwsProvisionerFactory, AwsRunnerFactory } from '../providers/aws/factory';
+import { GcpProvisionerFactory, GcpRunnerFactory } from '../providers/gcp/factory';
+import { AzureRunnerFactory, AzureProvisionerFactory } from '../providers/azure/factory';
+import { PaperspaceProvisionerFactory, PaperspaceRunnerFactory } from '../providers/paperspace/factory';
 import { GenericInstanceManager } from './manager';
-import { AwsStateParser } from '../providers/aws/state';
-import { AzureStateParser } from '../providers/azure/state';
-import { GcpStateParser } from '../providers/gcp/state';
-import { PaperspaceStateParser } from '../providers/paperspace/state';
-import { DummyStateParser } from '../providers/dummy/state';
-import { DummySubManagerFactory } from '../providers/dummy/factory';
-import { ScalewaySubManagerFactory } from '../providers/scaleway/factory';
-import { ScalewayStateParser } from '../providers/scaleway/state';
+import { AwsInstanceStateV1, AwsStateParser } from '../providers/aws/state';
+import { AzureInstanceStateV1, AzureStateParser } from '../providers/azure/state';
+import { GcpInstanceStateV1, GcpStateParser } from '../providers/gcp/state';
+import { PaperspaceInstanceStateV1, PaperspaceStateParser } from '../providers/paperspace/state';
+import { DummyInstanceStateV1, DummyStateParser } from '../providers/dummy/state';
+import { ScalewayRunnerFactory, ScalewayProvisionerFactory } from '../providers/scaleway/factory';
+import { ScalewayInstanceStateV1, ScalewayStateParser } from '../providers/scaleway/state';
 import { StateManagerBuilder } from './state/builders';
 import { CoreConfig } from './config/interface';
 import { StateWriter } from './state/writer';
@@ -23,6 +22,8 @@ import { InstanceInitializer } from './initializer';
 import { InstanceUpdater } from './updater';
 import { GenericStateParser } from './state/parser';
 import { DummyInstanceInfraManager } from '../providers/dummy/infra';
+import { AnsibleConfiguratorFactory } from '../configurators/ansible';
+import { DummyConfiguratorFactory, DummyProvisionerFactory, DummyRunnerFactory } from '../providers/dummy/factory';
 
 // This is the global config !
 export interface CloudypadClientArgs {
@@ -81,41 +82,57 @@ export class CloudypadClient {
 
         this.registerProvider(CLOUDYPAD_PROVIDER_AWS, async (state: InstanceStateV1) => {
             const awsState = new AwsStateParser().parse(state)
-            return new GenericInstanceManager({
+            return new GenericInstanceManager<AwsInstanceStateV1>({
+                provisionerFactory: new AwsProvisionerFactory(this.args.config),
+                runnerFactory: new AwsRunnerFactory(this.args.config),
+                configuratorFactory: new AnsibleConfiguratorFactory(),
                 stateWriter: this.stateManagerBuilder.buildStateWriter(awsState),
-                factory: new AwsSubManagerFactory(this.args.config)
             })
         })
 
         this.registerProvider(CLOUDYPAD_PROVIDER_AZURE, async (state: InstanceStateV1) => {
             const azureState = new AzureStateParser().parse(state)
-            return new GenericInstanceManager({
+            return new GenericInstanceManager<AzureInstanceStateV1>({
+                provisionerFactory: new AzureProvisionerFactory(this.args.config),
+                runnerFactory: new AzureRunnerFactory(this.args.config),
+                configuratorFactory: new AnsibleConfiguratorFactory(),
                 stateWriter: this.stateManagerBuilder.buildStateWriter(azureState),
-                factory: new AzureSubManagerFactory(this.args.config)
             })
         })
 
         this.registerProvider(CLOUDYPAD_PROVIDER_GCP, async (state: InstanceStateV1) => {
             const gcpState = new GcpStateParser().parse(state)
-            return new GenericInstanceManager({
+            return new GenericInstanceManager<GcpInstanceStateV1>({
+                provisionerFactory: new GcpProvisionerFactory(this.args.config),
+                runnerFactory: new GcpRunnerFactory(this.args.config),
+                configuratorFactory: new AnsibleConfiguratorFactory(),
                 stateWriter: this.stateManagerBuilder.buildStateWriter(gcpState),
-                factory: new GcpSubManagerFactory(this.args.config)
             })
         })
 
         this.registerProvider(CLOUDYPAD_PROVIDER_PAPERSPACE, async (state: InstanceStateV1) => {
             const paperspaceState = new PaperspaceStateParser().parse(state)
-            return new GenericInstanceManager({
+            return new GenericInstanceManager<PaperspaceInstanceStateV1>({
+                provisionerFactory: new PaperspaceProvisionerFactory(this.args.config),
+                runnerFactory: new PaperspaceRunnerFactory(this.args.config),
+                configuratorFactory: new AnsibleConfiguratorFactory(),
                 stateWriter: this.stateManagerBuilder.buildStateWriter(paperspaceState),
-                factory: new PaperspaceSubManagerFactory(this.args.config)
             })
         })
 
         this.registerProvider(CLOUDYPAD_PROVIDER_SCALEWAY, async (state: InstanceStateV1) => {
             const scalewayState = new ScalewayStateParser().parse(state)
-            return new GenericInstanceManager({
+            return new GenericInstanceManager<ScalewayInstanceStateV1>({
+                provisionerFactory: new ScalewayProvisionerFactory(this.args.config),
+                runnerFactory: new ScalewayRunnerFactory(this.args.config),
+                configuratorFactory: new AnsibleConfiguratorFactory(),
                 stateWriter: this.stateManagerBuilder.buildStateWriter(scalewayState),
-                factory: new ScalewaySubManagerFactory(this.args.config)
+                options: {
+                    deleteInstanceServerOnStop: {
+                        enabled: scalewayState.provision.input.deleteInstanceServerOnStop ?? false,
+                        postStartReconfigurationAnsibleAdditionalArgs: [ "-t", "data-disk,sunshine"]
+                    }
+                }
             })
         })
 
@@ -127,12 +144,23 @@ export class CloudypadClient {
             const dummyInfraManager = new DummyInstanceInfraManager({
                 instanceName: dummyState.name
             })
-            return new GenericInstanceManager({
-                stateWriter: stateWriter,
-                factory: new DummySubManagerFactory({
+            return new GenericInstanceManager<DummyInstanceStateV1>({
+                provisionerFactory: new DummyProvisionerFactory({
                     coreConfig: this.args.config,
                     dummyInfraManager: dummyInfraManager
-                })
+                }),
+                runnerFactory: new DummyRunnerFactory({
+                    coreConfig: this.args.config,
+                    dummyInfraManager: dummyInfraManager
+                }),
+                configuratorFactory: new DummyConfiguratorFactory(),  
+                stateWriter: stateWriter,
+                options: {
+                    deleteInstanceServerOnStop: {
+                        enabled: dummyState.provision.input.deleteInstanceServerOnStop ?? false,
+                        postStartReconfigurationAnsibleAdditionalArgs: [ "-t", "data-disk,sunshine"]
+                    }
+                }
             })
         })
     }

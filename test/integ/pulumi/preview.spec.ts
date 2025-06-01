@@ -10,7 +10,7 @@ describe('Test Pulumi preview', function() {
     // Pulumi is expected to take a few seconds, even minutes, to run
     this.timeout(5*60*1000); 
 
-    async function preview<C, O>(client: InstancePulumiClient<C, O>, input: C){
+    async function preview<C extends Object, O>(client: InstancePulumiClient<C, O>, input: C){
         await client.setConfig(input)
         
         const previewRes = await client.preview()

@@ -74,12 +74,17 @@ describe('Instance initializer', () => {
                         model: DEFAULT_COMMON_INPUT.configuration.keyboard?.model,
                         variant: DEFAULT_COMMON_INPUT.configuration.keyboard?.variant,
                         options: DEFAULT_COMMON_INPUT.configuration.keyboard?.options
+                    },
+                    ansible: {
+                        additionalArgs: DEFAULT_COMMON_INPUT.configuration.ansible?.additionalArgs
                     }
                 }
             }
         }
         
-        assert.deepEqual(state, expectState)
+        assert.deepStrictEqual(state.configuration, expectState.configuration)
+        assert.deepStrictEqual(state.provision, expectState.provision)
+        assert.deepStrictEqual(state.name, expectState.name)
     })
 
     it('should initialize instance with auto generated SSH key when no SSH key path or content is provided', async () => {

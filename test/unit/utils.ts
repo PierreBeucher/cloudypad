@@ -13,6 +13,10 @@ import { STREAMING_SERVER_SUNSHINE } from '../../src/cli/prompter';
 import { CreateCliArgs } from "../../src/cli/command";
 import { ScalewayPulumiOutput } from "../../src/providers/scaleway/pulumi";
 import { CloudypadClient } from "../../src";
+import { AwsInstanceStateV1 } from "../../src/providers/aws/state";
+import { PartialDeep } from "type-fest";
+import * as lodash from "lodash"
+
 /**
  * CommonInstanceInput with as most fields filled as possible while keeping it valid:
  * - privateKeyPath is set but not privateKeyContent
@@ -45,6 +49,9 @@ export const DEFAULT_COMMON_INPUT: CommonInstanceInput = {
             variant: "azerty",
             model: "pc105",
             options: "ctrl:swap_lalt_lctl"
+        },
+        ansible: {
+            additionalArgs: "-t dummytag"
         }
     },
 }
@@ -67,6 +74,7 @@ export const DEFAULT_COMMON_CLI_ARGS: CreateCliArgs = {
     keyboardVariant: DEFAULT_COMMON_INPUT.configuration.keyboard?.variant,
     keyboardModel: DEFAULT_COMMON_INPUT.configuration.keyboard?.model,
     keyboardOptions: DEFAULT_COMMON_INPUT.configuration.keyboard?.options,
+    ansibleAdditionalArgs: DEFAULT_COMMON_INPUT.configuration.ansible?.additionalArgs,
 }
 
 export const DUMMY_SSH_KEY_PATH = path.resolve(__dirname, '..', 'resources', 'ssh-key')
@@ -92,10 +100,12 @@ export const DUMMY_GCP_PULUMI_OUTPUT: GcpPulumiOutput = { instanceName: "dummy-g
  * Dummy output returned by Pulumi during unit test for Scaleway
  */
 export const DUMMY_SCALEWAY_PULUMI_OUTPUT: ScalewayPulumiOutput = { 
-    instanceName: "dummy-scw", 
+    instanceServerName: "dummy-scw", 
     publicIp: "127.0.0.1", 
     instanceServerId: "server-123456789",
-    rootDiskId: "disk-123456789"
+    rootDiskId: "disk-123456789",
+    dataDiskId: null,
+    instanceServerUrn: "urn:xxx"
 }
 
 export const DUMMY_V1_ROOT_DATA_DIR = path.resolve(__dirname, "..", "resources", "states", "v1-root-data-dir")
@@ -143,4 +153,38 @@ export function getUnitTestCoreClient(): CloudypadClient{
             }
         }
     })
+}
+
+/**
+ * Create a dummy AWS state that can be used for testing
+ * @param instanceName 
+ * @returns 
+ */
+export function createDummyAwsState(override: PartialDeep<AwsInstanceStateV1>): AwsInstanceStateV1 {
+
+    // clone deep to avoid later operation returned state
+    // to alter DEFAULT_COMMON_INPUT used in this state
+    const awsState: AwsInstanceStateV1 = lodash.cloneDeep({
+        version: "1",
+        provision: {
+            provider: "aws",
+            input: {
+                ...DEFAULT_COMMON_INPUT.provision,
+                diskSize: 100,
+                instanceType: "g4dn.xlarge",
+                region: "eu-west-1",
+                publicIpType: "static",
+                useSpot: true,
+            }
+        },
+        name: `dummy-aws-instance-${Date.now()}`,
+        configuration: {
+            configurator: "ansible",
+            input: {
+                ...DEFAULT_COMMON_INPUT.configuration,
+            },
+        }
+    })
+
+    return lodash.merge(awsState, override)
 }

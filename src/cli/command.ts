@@ -28,6 +28,7 @@ export interface CreateCliArgs {
     keyboardModel?: string
     keyboardVariant?: string
     keyboardOptions?: string
+    ansibleAdditionalArgs?: string
 }
 
 /**
@@ -78,6 +79,11 @@ export const CLI_OPTION_COST_LIMIT = new Option('--cost-limit <limit>', 'Cost al
 })
 export const CLI_OPTION_COST_NOTIFICATION_EMAIL = new Option('--cost-notification-email <email>', 'Cost alert notification email. Imply --cost-alert.')
 
+export const CLI_OPTION_DELETE_INSTANCE_SERVER_ON_STOP = new Option('--delete-instance-server-on-stop [enable|yes|true|1]', 
+    'Whether to delete instance server on stop. ' +
+    'If enabled, instance server will be destroyed on stop and recreated on next start (along with provisioning and configuration).')
+    .argParser(parseFalseOrDisable)
+
 export const CLI_OPTION_STREAMING_SERVER = new Option('--streaming-server <name>', 'Streaming server to use. Either "sunshine" or "wolf"')
 export const CLI_OPTION_SUNSHINE_USERNAME = new Option('--sunshine-user <name>', 'Sunshine username (ignored if streaming server is not sunshine)')
 export const CLI_OPTION_SUNSHINE_PASSWORD = new Option('--sunshine-password <password>', 'Sunshine password (ignored if streaming server is not sunshine)')
@@ -88,6 +94,8 @@ export const CLI_OPTION_AUTO_STOP_ENABLE = new Option('--autostop [disable|no|fa
     .argParser(parseFalseOrDisable)
 export const CLI_OPTION_AUTO_STOP_TIMEOUT = new Option('--autostop-timeout <seconds>', 'Auto Stop timeout in seconds')
     .argParser(parseInt)
+
+export const CLI_OPTION_ANSIBLE_ADDITIONAL_ARGS = new Option('--ansible-additional-args <args>', 'Additional Ansible arguments to pass to configuration, eg. "--tags data-disk -vvv"')
 
 function parseFalseOrDisable(value: string){
     return value === "disable" || value === "no" || value === "false" || value === "0" ? false : true
@@ -119,6 +127,7 @@ export abstract class CliCommandGenerator {
             .addOption(CLI_OPTION_AUTO_APPROVE)
             .addOption(CLI_OPTION_OVERWRITE_EXISTING)
             .addOption(CLI_OPTION_SKIP_PAIRING)
+            .addOption(CLI_OPTION_ANSIBLE_ADDITIONAL_ARGS)
     }
 
     /**
@@ -129,6 +138,7 @@ export abstract class CliCommandGenerator {
             .description(`Update an existing Cloudy Pad instance using ${provider} provider.`)
             .requiredOption('--name <name>', 'Instance name')
             .addOption(CLI_OPTION_AUTO_APPROVE)
+            .addOption(CLI_OPTION_ANSIBLE_ADDITIONAL_ARGS)
     }
 
     /**

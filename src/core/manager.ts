@@ -1,11 +1,13 @@
-import { CommonInstanceInput, InstanceStateV1 } from './state/state';
+import { CommonInstanceInput, InstanceEvent, InstanceEventEnum, InstanceStateV1 } from './state/state';
 import { InstanceProvisioner } from './provisioner';
 import { InstanceConfigurator } from './configurator';
 import { getLogger } from '../log/utils';
 import { InstanceRunner, ServerRunningStatus, StartStopOptions } from './runner';
 import { StateWriter } from './state/writer';
-import { AnsibleConfigurator } from '../configurators/ansible';
-import { CoreConfig } from './config/interface';
+import { ConfiguratorFactory } from './submanager-factory';
+import { ProvisionerFactory } from './submanager-factory';
+import { RunnerFactory } from './submanager-factory';
+import { AnsibleConfiguratorOptions } from '../configurators/ansible';
 
 /**
  * Instance details suitable for end users, hiding or simplyfing internal details
@@ -59,85 +61,6 @@ export interface InstanceStatus {
 }
 
 /**
- * Used by InstanceManager to build sub-managers
- */
-export interface SubManagerFactory<ST extends InstanceStateV1> {
-    buildProvisioner(state: ST): Promise<InstanceProvisioner>
-    buildRunner(state: ST): Promise<InstanceRunner>
-    buildConfigurator(state: ST): Promise<InstanceConfigurator>
-}
-
-export abstract class AbstractSubManagerFactory<ST extends InstanceStateV1> implements SubManagerFactory<ST> {
-
-    protected readonly coreConfig: CoreConfig
-
-    constructor(coreConfig: CoreConfig){
-        this.coreConfig = coreConfig
-    }
-
-    async buildProvisioner(state: ST): Promise<InstanceProvisioner> {
-        return this.doBuildProvisioner(state.name, state.provision.input, state.provision.output, state.configuration.input)
-    }
-
-    protected abstract doBuildProvisioner(
-        name: string, 
-        provisionInput: ST["provision"]["input"], 
-        provisionOutput: ST["provision"]["output"],
-        configurationInput: ST["configuration"]["input"],
-    ): Promise<InstanceProvisioner>
-    
-    async buildRunner(state: ST): Promise<InstanceRunner> {
-        if(!state.provision.output){
-            throw new Error(`Can't build Instance Runner for ${state.name}: no provision output in state. Was instance fully provisioned ?`)
-        }
-
-        return this.doBuildRunner(state.name, state.provision.input, state.provision.output, state.configuration.input)
-    }
-
-    protected abstract doBuildRunner(
-        name: string, 
-        provisionInput: ST["provision"]["input"], 
-        provisionOutput: NonNullable<ST["provision"]["output"]>,
-        configurationInput: ST["configuration"]["input"],
-    ): Promise<InstanceRunner>
-    
-    async buildConfigurator(state: ST): Promise<InstanceConfigurator> {
-
-        if(!state.provision.output) {
-            throw new Error("Missing common provision output. Was instance fully initialized ?")
-        }
-
-        return this.doBuildConfigurator(
-            state.name, 
-            state.provision.provider,
-            state.provision.input, 
-            state.provision.output,
-            state.configuration.input
-        )
-    }
-
-    protected async doBuildConfigurator(
-        name: string,
-        provider: string,
-        provisionInput: ST["provision"]["input"],
-        provisionOutput: NonNullable<ST["provision"]["output"]>,
-        configurationInput: ST["configuration"]["input"]
-    ): Promise<InstanceConfigurator> {
-
-        const configurator = new AnsibleConfigurator<ST>({
-            instanceName: name,
-            provider: provider,
-            provisionInput: provisionInput,
-            provisionOutput: provisionOutput,
-            configurationInput: configurationInput,
-            additionalAnsibleArgs: ['-e', '\'ansible_ssh_common_args="-o StrictHostKeyChecking=no"\''] //TODO only on first run
-        })
-
-        return configurator
-    }
-}
-
-/**
  * Main operation interface for an instance to start/stop/restart and run various operations.
  */
 export interface InstanceManager {
@@ -151,6 +74,16 @@ export interface InstanceManager {
     restart(opts?: StartStopOptions): Promise<void>
     pairInteractive(): Promise<void>
     pairSendPin(pin: string, retries?: number, retryDelay?: number): Promise<boolean>
+
+    /**
+     * Returns all events of the instance
+     */
+    getEvents(): Promise<InstanceEvent[]> 
+
+    /**
+     * Returns the latest event of the instance
+     */
+    getLatestEvent(): Promise<InstanceEvent | undefined>
 
     /**
      * Returns the instance details: hostname, pairing port, ssh config...
@@ -190,16 +123,75 @@ export interface InstanceManager {
     isReady(): Promise<boolean>
 }
 
-export interface InstanceManagerArgs<ST extends InstanceStateV1> {
+export interface GenericInstanceManagerArgs<ST extends InstanceStateV1> {
+    
     stateWriter: StateWriter<ST>
-    factory: SubManagerFactory<ST>
+
+    /**
+     * Factory to build runners
+     */
+    runnerFactory: RunnerFactory<ST>
+
+    /**
+     * Factory to build provisioners
+     */
+    provisionerFactory: ProvisionerFactory<ST>
+
+    /**
+     * Factory to build configurators
+     */
+    configuratorFactory: ConfiguratorFactory<ST, AnsibleConfiguratorOptions>
+
+    options?: {
+
+        /**
+         * Delete instance server on instance stop configuration.
+         * 
+         * If enabled, will cause instance server (and its associated disks) to be deleted on instance stop using Provisioner.
+         * On next start, instance will be re-provisioned and re-configured with a fresh instance server. 
+         * 
+         * This options should be enabled when: 
+         * - Both OS root disk and data disk are set to avoid data loss. If data disk is not set, 
+         *   game data held on instance server will be deleted on instance stop.
+         * - Instance is configured to use a pre-provisioned Image as OS root disk to avoid long starting time
+         *   as each start will run provision and configuration.
+         */
+        deleteInstanceServerOnStop?: {
+
+            /**
+             * Enable instance deletion on stop.
+             */
+            enabled: boolean,
+
+            /**
+             * Additional Ansible arguments to pass to after-start reconfiguration.
+             * These flags are specific to post-start reconfiguration to avoid re-running
+             * full configuration on every start and should be tailored to specific provider needs
+             * to ensure faster start while preserving functionality.
+             * 
+             * Ansible configuration args from CLI or state are ignored during post-start reconfiguration.
+             */
+            postStartReconfigurationAnsibleAdditionalArgs?: string[]
+        }
+    }
 }
 
 /**
+ * Ansible additional arguments always passed to configurator.
+ * Always skip host key checking as we don't have a known host key for the instance since it's defined randomly
+ * and can't be known in advance. 
+ */
+const ALWAYS_ANSIBLE_ADDITIONAL_ARGS = ['-e', '\'ansible_ssh_common_args="-o StrictHostKeyChecking=no"\'']
+
+/**
  * Manage an instance. Delegate specifities to sub-manager:
- * - InstanceRunner for managing instance running status (stopping, starting, etc)
  * - InstanceProvisioner to manage Cloud resources
- * - InstanceConfigurator to manage instance OS and system packages
+ * - an Ansible InstanceConfigurator to manage instance OS and system packages
+ * - InstanceRunner for managing instance running status (stopping, starting, etc)
+ * 
+ * Responsible for state updates:
+ * - Outputs are set on state after related operations
+ * - Events are added on state after related operations
  * 
  * Also manages instance state update and persistence on disk. After each operation where instance state
  * potentially change, it is persisted on disk. 
@@ -211,11 +203,18 @@ export class GenericInstanceManager<ST extends InstanceStateV1> implements Insta
 
     protected readonly logger
     protected readonly stateWriter: StateWriter<ST>
-    protected readonly factory: SubManagerFactory<ST>
+    protected readonly runnerFactory: RunnerFactory<ST>
+    protected readonly provisionerFactory: ProvisionerFactory<ST>
+    protected readonly configuratorFactory: ConfiguratorFactory<ST, AnsibleConfiguratorOptions>
 
-    constructor(args: InstanceManagerArgs<ST>){
+    protected readonly args: GenericInstanceManagerArgs<ST>
+
+    constructor(args: GenericInstanceManagerArgs<ST>){
         this.stateWriter = args.stateWriter
-        this.factory = args.factory
+        this.runnerFactory = args.runnerFactory
+        this.provisionerFactory = args.provisionerFactory
+        this.configuratorFactory = args.configuratorFactory
+        this.args = args
         this.logger = getLogger(args.stateWriter.instanceName())
     }
 
@@ -224,15 +223,22 @@ export class GenericInstanceManager<ST extends InstanceStateV1> implements Insta
     }
 
     async configure(): Promise<void> {
-        const configurator = await this.buildConfigurator()
-        const output = await configurator.configure()
-        await this.stateWriter.setConfigurationOutput(output)
+
+        this.logger.debug(`Configuring instance ${this.name()}`)
+
+        const currentState = await this.getState()
+        const configurationAnsibleAdditionalArgs = currentState.configuration.input.ansible?.additionalArgs ? 
+            [currentState.configuration.input.ansible.additionalArgs] : undefined
+
+        await this.addEvent(InstanceEventEnum.ConfigurationBegin)
+        await this.doConfigure(configurationAnsibleAdditionalArgs)
+        await this.addEvent(InstanceEventEnum.ConfigurationEnd)
     }
 
     async provision() {
-        const provisioner = await this.buildProvisioner()
-        const output = await provisioner.provision()
-        await this.stateWriter.setProvisionOutput(output)
+        await this.addEvent(InstanceEventEnum.ProvisionBegin)
+        await this.doProvision()
+        await this.addEvent(InstanceEventEnum.ProvisionEnd)
     }
 
     async deploy() {
@@ -241,26 +247,71 @@ export class GenericInstanceManager<ST extends InstanceStateV1> implements Insta
     }
 
     async destroy() {
+        this.logger.debug(`Destroying instance ${this.name()}`)
+
         const provisioner = await this.buildProvisioner()
+
+        await this.stateWriter.addEvent(InstanceEventEnum.DestroyBegin)
         await provisioner.destroy()
+
         await this.stateWriter.setProvisionOutput(undefined)
         await this.stateWriter.setConfigurationOutput(undefined)
+        await this.stateWriter.addEvent(InstanceEventEnum.DestroyEnd)
+
         await this.stateWriter.destroyState()
     }
 
-    async start(opts?: StartStopOptions): Promise<void> {
+    async start(startOpts?: StartStopOptions): Promise<void> {
+
+        await this.addEvent(InstanceEventEnum.StartBegin)
+
+        // if deleteInstanceServerOnStop is enabled, instance server may have been deleted on last instance stop
+        // so we need to re-provision and re-configure instance using specific Ansible args
+        if(this.args.options?.deleteInstanceServerOnStop?.enabled){
+            await this.doProvision()
+            await this.doConfigure(this.args.options.deleteInstanceServerOnStop.postStartReconfigurationAnsibleAdditionalArgs)
+        }
+
+        // always start instance as provisioning and configuring may not start the server for all providers
+        // and startOptions logic is ported by runner
         const runner = await this.buildRunner()
-        await runner.start(opts)
+        await runner.start(startOpts)
+
+        await this.addEvent(InstanceEventEnum.StartEnd)
     }
 
     async stop(opts?: StartStopOptions): Promise<void> {
+        
+        await this.addEvent(InstanceEventEnum.StopBegin)
+
+        // always cleanly stop instance to avoid data inconsistency 
+        // as instance server may be deleted on stop and deleting without stopping may cause data inconsistency
+        // and stopOptions logic is ported by runner
         const runner = await this.buildRunner()
         await runner.stop(opts)
+
+        // destroy instance server if deleteInstanceServerOnStop is enabled
+        // only stop instance if deleteInstanceServerOnStop is not enabled
+        // no sense in stopping instance if it's deleted right away
+        if(this.args.options?.deleteInstanceServerOnStop?.enabled){
+            await this.doDestroyInstanceServer()
+        }
+
+        await this.addEvent(InstanceEventEnum.StopEnd)
     }
 
+    /**
+     * Restart instance. 
+     * 
+     * Ignores deleteInstanceServerOnStop since instance is not stopped but restarted. 
+     * 
+     * @param opts 
+     */
     async restart(opts?: StartStopOptions): Promise<void> {
+        await this.addEvent(InstanceEventEnum.RestartBegin)
         const runner = await this.buildRunner()
         await runner.restart(opts)
+        await this.addEvent(InstanceEventEnum.RestartEnd)
     }
 
     async pairInteractive(): Promise<void> {
@@ -272,17 +323,84 @@ export class GenericInstanceManager<ST extends InstanceStateV1> implements Insta
         const runner = await this.buildRunner()
         return runner.pairSendPin(pin, retries, retryDelay)
     }
-    
-    private async buildRunner(): Promise<InstanceRunner> {
-        return this.factory.buildRunner(this.stateWriter.cloneState())
+
+    //
+    // Private methods to run provision/configuration and update state
+    //
+
+    /**
+     * Destroy instance server using provisioner and update state with provision output.
+     * Reset configuration output to undefined.
+     */
+    private async doDestroyInstanceServer(): Promise<void> {
+        const provisioner = await this.buildProvisioner()
+        const newOutputs = await provisioner.destroyInstanceServer()
+        await this.stateWriter.setProvisionOutput(newOutputs)
+        await this.stateWriter.setConfigurationOutput(undefined)
+    }
+
+    /**
+     * Configure instance using Ansible configurator and update state with configuration output.
+     * Decorellated from mainn configure() method as it may be run for configuration and as post-start reconfiguration by start().
+     */
+    private async doConfigure(additionalAnsibleArgs?: string[]): Promise<void> {
+
+        this.logger.debug(`Do configure instance ${this.name()} with additional Ansible args: ${JSON.stringify(additionalAnsibleArgs)}`)
+        const configurator = await this.buildConfigurator({
+            additionalAnsibleArgs: ALWAYS_ANSIBLE_ADDITIONAL_ARGS.concat(additionalAnsibleArgs ?? [])
+        })
+        const output = await configurator.configure()
+        
+        this.logger.debug(`Configuration output for instance ${this.name()}: ${JSON.stringify(output)}`)
+
+        await this.stateWriter.setConfigurationOutput(output)
     }
     
-    private async buildConfigurator(): Promise<InstanceConfigurator> {
-        return this.factory.buildConfigurator(this.stateWriter.cloneState())
+    /**
+     * Provision instance using provisioner and update state with provision output.
+     * Decorellated from main provision() method as it may be run for configuration and as post-start reconfiguration by start().
+     */
+    private async doProvision(): Promise<void> {
+
+        this.logger.debug(`Provisioning instance ${this.name()}`)
+
+        const provisioner = await this.buildProvisioner()
+        const newOutputs = await provisioner.provision()
+
+        this.logger.debug(`Provision output for instance ${this.name()}: ${JSON.stringify(newOutputs)}`)
+
+        await this.stateWriter.setProvisionOutput(newOutputs)
+    }
+
+    private async buildRunner(): Promise<InstanceRunner> {
+        return this.runnerFactory.buildRunner(this.stateWriter.cloneState())
+    }
+    
+    private async buildConfigurator(configuratorOptions?: AnsibleConfiguratorOptions): Promise<InstanceConfigurator> {
+        return this.configuratorFactory.buildConfigurator(this.stateWriter.cloneState(), configuratorOptions)
     }
     
     private async buildProvisioner(): Promise<InstanceProvisioner> {
-        return this.factory.buildProvisioner(this.stateWriter.cloneState())
+        return this.provisionerFactory.buildProvisioner(this.stateWriter.cloneState())
+    }
+
+    private async addEvent(event: InstanceEventEnum): Promise<void> {
+        await this.stateWriter.addEvent(event)
+    }
+
+    //
+    // Public methods to get instance info
+    //
+
+    public async getEvents(): Promise<InstanceEvent[]> {
+        const state = this.stateWriter.cloneState()
+        return state.events ?? []
+    }
+
+    public async getLatestEvent(): Promise<InstanceEvent | undefined> {
+        const events = await this.getEvents()
+        events.sort((a, b) => a.timestamp - b.timestamp)
+        return events.length > 0 ? events[events.length - 1] : undefined
     }
 
     public async getInstanceDetails(): Promise<CloudyPadInstanceDetails> {

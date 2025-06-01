@@ -2,12 +2,15 @@ import * as assert from 'assert';
 import { CLOUDYPAD_PROVIDER_DUMMY} from '../../../src/core/const';
 import { DEFAULT_COMMON_INPUT, getUnitTestCoreClient } from '../utils';
 import { InstanceInitializer } from '../../../src/core/initializer';
-import { CommonConfigurationInputV1 } from '../../../src/core/state/state';
+import { CommonConfigurationInputV1, InstanceEventEnum, STATE_MAX_EVENTS } from '../../../src/core/state/state';
 import { DummyProvisionInputV1 } from '../../../src/providers/dummy/state';
 import { InstanceStatus } from '../../../src/core/manager';
 import { ServerRunningStatus } from '../../../src/core/runner';
+import { getLogger } from '../../../src/log/utils';
 
 describe('Instance manager', () => {
+
+    const logger = getLogger("InstanceManager test")
 
     it('should be able to start, stop and restart an instance with expected status at every step', async () => {
         const client = getUnitTestCoreClient()
@@ -18,6 +21,10 @@ describe('Instance manager', () => {
             stateWriter: client.buildEmptyStateWriter(),
         })
         
+
+        //
+        // Init
+        // 
         await initiliazer.initializeStateOnly(instanceName,
             {
                 ...DEFAULT_COMMON_INPUT.provision,
@@ -43,8 +50,15 @@ describe('Instance manager', () => {
         }
         assert.deepStrictEqual(actualStatusAfterInit, expectedStatusAfterInit)
 
-        // provision the instance
+        const eventsBeforeProvision = await manager.getEvents()
+        assert.strictEqual(eventsBeforeProvision.length, 1)
+        assert.strictEqual(eventsBeforeProvision[0].type, InstanceEventEnum.Init)
+
+        //
+        // provision
+        //
         await manager.provision()
+
         const actualStatusAfterProvision = await manager.getInstanceStatus()
         const expectedStatusAfterProvision: InstanceStatus = {
             provisioned: true,
@@ -54,10 +68,17 @@ describe('Instance manager', () => {
         }
         assert.deepStrictEqual(actualStatusAfterProvision, expectedStatusAfterProvision)
 
-        // dummy instance is not automatically started after provision, do it manually
-        await manager.start()
+        const eventsAfterProvision = await manager.getEvents()
+        assert.strictEqual(eventsAfterProvision.length, 3)
+        assert.strictEqual(eventsAfterProvision[1].type, InstanceEventEnum.ProvisionBegin)
+        assert.strictEqual(eventsAfterProvision[2].type, InstanceEventEnum.ProvisionEnd)
+        
+        const latestEventAfterProvision = await manager.getLatestEvent()
+        assert.strictEqual(latestEventAfterProvision?.type, InstanceEventEnum.ProvisionEnd)
 
-        // configure the instance
+        //
+        // configure
+        //
         await manager.configure()
         const actualStatusAfterConfigure = await manager.getInstanceStatus()
         const expectedStatusAfterConfigure: InstanceStatus = {
@@ -68,7 +89,18 @@ describe('Instance manager', () => {
         }
         assert.deepStrictEqual(actualStatusAfterConfigure, expectedStatusAfterConfigure)
 
-        // stop and start instance
+        const eventsAfterConfigure = await manager.getEvents()
+        assert.strictEqual(eventsAfterConfigure.length, 5)
+        assert.strictEqual(eventsAfterConfigure[3].type, InstanceEventEnum.ConfigurationBegin)
+        assert.strictEqual(eventsAfterConfigure[4].type, InstanceEventEnum.ConfigurationEnd)
+
+        const latestEventAfterConfigure = await manager.getLatestEvent()
+        assert.strictEqual(latestEventAfterConfigure?.type, InstanceEventEnum.ConfigurationEnd)
+
+
+        //
+        // stop
+        //
         await manager.stop()
         const actualStatusAfterStop = await manager.getInstanceStatus()
         const expectedStatusAfterStop: InstanceStatus = {
@@ -79,6 +111,20 @@ describe('Instance manager', () => {
         }
         assert.deepStrictEqual(actualStatusAfterStop, expectedStatusAfterStop)
 
+        const eventsAfterStop = await manager.getEvents()
+
+        logger.debug(`Events after stop: ${JSON.stringify(eventsAfterStop)}`)
+
+        assert.strictEqual(eventsAfterStop.length, 7)
+        assert.strictEqual(eventsAfterStop[5].type, InstanceEventEnum.StopBegin)
+        assert.strictEqual(eventsAfterStop[6].type, InstanceEventEnum.StopEnd)
+
+        const latestEventAfterStop = await manager.getLatestEvent()
+        assert.strictEqual(latestEventAfterStop?.type, InstanceEventEnum.StopEnd)
+
+        //
+        // start
+        //
         await manager.start()
         const actualStatusAfterStart = await manager.getInstanceStatus()
         const expectedStatusAfterStart: InstanceStatus = {
@@ -89,7 +135,17 @@ describe('Instance manager', () => {
         }
         assert.deepStrictEqual(actualStatusAfterStart, expectedStatusAfterStart)
 
-        // restart the instance
+        const eventsAfterStart = await manager.getEvents()
+        assert.strictEqual(eventsAfterStart.length, 9)
+        assert.strictEqual(eventsAfterStart[7].type, InstanceEventEnum.StartBegin)
+        assert.strictEqual(eventsAfterStart[8].type, InstanceEventEnum.StartEnd)
+
+        const latestEventAfterStart = await manager.getLatestEvent()
+        assert.strictEqual(latestEventAfterStart?.type, InstanceEventEnum.StartEnd)
+
+        //
+        // restart
+        //
         await manager.restart()
         const actualStatusAfterRestart = await manager.getInstanceStatus()
         const expectedStatusAfterRestart: InstanceStatus = {
@@ -98,7 +154,22 @@ describe('Instance manager', () => {
             serverStatus: ServerRunningStatus.Running,
             ready: true
         }
+        assert.deepStrictEqual(actualStatusAfterRestart, expectedStatusAfterRestart)
 
+        const eventsAfterRestart = await manager.getEvents()
+
+        logger.debug(`Events after restart: ${JSON.stringify(eventsAfterRestart)}`)
+        assert.strictEqual(eventsAfterRestart.length, STATE_MAX_EVENTS)
+        assert.strictEqual(eventsAfterRestart[0].type, InstanceEventEnum.ProvisionBegin)
+        assert.strictEqual(eventsAfterRestart[8].type, InstanceEventEnum.RestartBegin)
+        assert.strictEqual(eventsAfterRestart[9].type, InstanceEventEnum.RestartEnd)
+
+        const latestEventAfterRestart = await manager.getLatestEvent()
+        assert.strictEqual(latestEventAfterRestart?.type, InstanceEventEnum.RestartEnd)
+
+        //
+        // deploy
+        //
         await manager.deploy()
         const actualStatusAfterDeploy = await manager.getInstanceStatus()
         const expectedStatusAfterDeploy: InstanceStatus = {
@@ -109,7 +180,20 @@ describe('Instance manager', () => {
         }
         assert.deepStrictEqual(actualStatusAfterDeploy, expectedStatusAfterDeploy)
 
-        // destroy the instance
+        const eventsAfterDeploy = await manager.getEvents()
+        assert.strictEqual(eventsAfterDeploy.length, STATE_MAX_EVENTS)
+        assert.strictEqual(eventsAfterDeploy[0].type, InstanceEventEnum.StopBegin)
+        assert.strictEqual(eventsAfterDeploy[6].type, InstanceEventEnum.ProvisionBegin)
+        assert.strictEqual(eventsAfterDeploy[7].type, InstanceEventEnum.ProvisionEnd)
+        assert.strictEqual(eventsAfterDeploy[8].type, InstanceEventEnum.ConfigurationBegin)
+        assert.strictEqual(eventsAfterDeploy[9].type, InstanceEventEnum.ConfigurationEnd)
+        
+        const latestEventAfterDeploy = await manager.getLatestEvent()
+        assert.strictEqual(latestEventAfterDeploy?.type, InstanceEventEnum.ConfigurationEnd)
+
+        //
+        // destroy
+        //
         await manager.destroy()
         const actualStatusAfterDestroy = await manager.getInstanceStatus()
         const expectedStatusAfterDestroy: InstanceStatus = {
@@ -119,5 +203,13 @@ describe('Instance manager', () => {
             ready: false
         }
         assert.deepStrictEqual(actualStatusAfterDestroy, expectedStatusAfterDestroy)
+
+        const eventsAfterDestroy = await manager.getEvents()
+        assert.strictEqual(eventsAfterDestroy.length, STATE_MAX_EVENTS)
+        assert.strictEqual(eventsAfterDestroy[8].type, InstanceEventEnum.DestroyBegin)
+        assert.strictEqual(eventsAfterDestroy[9].type, InstanceEventEnum.DestroyEnd)
+
+        const latestEventAfterDestroy = await manager.getLatestEvent()
+        assert.strictEqual(latestEventAfterDestroy?.type, InstanceEventEnum.DestroyEnd)
     })
 })

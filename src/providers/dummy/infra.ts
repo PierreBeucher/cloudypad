@@ -20,34 +20,51 @@ export class DummyInstanceInfraManager {
     }
 
     async setServerRunningStatus(status: ServerRunningStatus): Promise<void> {
-
-        this.logger.debug(`Dummy instance infra: setting running status of ${this.args.instanceName} to ${status}`)
-
         this.dummyMemoryManager.setInstanceStatus(this.args.instanceName, status)
-        
-        this.logger.debug(`Dummy instance infra: running status of ${this.args.instanceName} set to ${status}`)
+    }
+
+    async deleteInstanceServer(): Promise<void> {
+        this.dummyMemoryManager.deleteInstanceServer(this.args.instanceName)
+    }
+
+    async provision(args?: { serverId?: string, serverStatus?: ServerRunningStatus }): Promise<void> {
+        this.dummyMemoryManager.provision(this.args.instanceName, args?.serverId, args?.serverStatus)
+    }
+
+    async destroy(): Promise<void> {
+        this.dummyMemoryManager.destroy(this.args.instanceName)
     }
 
     async getServerRunningStatus(): Promise<{ status: ServerRunningStatus, lastUpdate: number }> {
-
-        this.logger.debug(`Dummy instance infra: getting running status of ${this.args.instanceName}`)
         
         const currentInfra = this.dummyMemoryManager.getInstanceInfra(this.args.instanceName)
 
         return {
-            status: currentInfra.status,
+            status: currentInfra.serverStatus,
             lastUpdate: currentInfra.lastUpdate
         }
     }
 }
 
-export interface DummyInstanceInfrastructure {
-    status: ServerRunningStatus
+export interface DummyInstanceInfraStatus {
+    /**
+     * Current dummy server status
+     */
+    serverStatus: ServerRunningStatus
+
+    /**
+     * Current dummy server id
+     */
+    serverId?: string
+
+    /**
+     * Last update time
+     */
     lastUpdate: number
 }
 
 /**
- * Internal memory for dummy instances. Used for operations on Dummy instances such as state update, start, stop, restart, etc.
+ * Singletong holding dummy instances in memory. Used for operations on Dummy instances such as state update, start, stop, restart, etc.
  */
 class DummyInstanceInternalMemory {
 
@@ -60,22 +77,22 @@ class DummyInstanceInternalMemory {
         return DummyInstanceInternalMemory.instance
     }
 
-    private dummyInfrastructure: Map<string, DummyInstanceInfrastructure>
+    private dummyInfrastructure: Map<string, DummyInstanceInfraStatus>
 
     private logger = getLogger('DummyInstanceProviderClient')
 
     private constructor() {
-        this.dummyInfrastructure = new Map<string, DummyInstanceInfrastructure>()
+        this.dummyInfrastructure = new Map<string, DummyInstanceInfraStatus>()
     }
 
-    public getInstanceInfra(instanceName: string): DummyInstanceInfrastructure {
+    public getInstanceInfra(instanceName: string): DummyInstanceInfraStatus {
         this.logger.debug(`Get dummy instance details for ${instanceName}`)
         const currentInfra = this.dummyInfrastructure.get(instanceName)
         
         if (!currentInfra) {
             this.logger.debug(`Dummy instance infra: no infrastructure found for ${instanceName}, creating new infrastructure`)
-            const newInfra: DummyInstanceInfrastructure = {
-                status: ServerRunningStatus.Stopped,
+            const newInfra: DummyInstanceInfraStatus = {
+                serverStatus: ServerRunningStatus.Stopped,
                 lastUpdate: 0
             }
             this.dummyInfrastructure.set(instanceName, newInfra)
@@ -85,10 +102,49 @@ class DummyInstanceInternalMemory {
         return currentInfra
     }
 
+    /**
+     * Create dummy instance infrastructure
+     * @param instanceName 
+     * @param serverId 
+     */
+    public provision(instanceName: string, serverId?: string, serverStatus: ServerRunningStatus = ServerRunningStatus.Running) {
+        this.logger.debug(`Provisioning dummy instance infrastructure for ${instanceName}: ${serverId}`)
+
+        if(!serverId) {
+            serverId = `dummy-id-${instanceName}-${Date.now()}`
+        }
+
+        this.dummyInfrastructure.set(instanceName, {
+            serverStatus: serverStatus,
+            serverId: serverId,
+            lastUpdate: Date.now()
+        })
+    }
+
+    public destroy(instanceName: string) {
+        this.logger.debug(`Destroying dummy instance infrastructure for ${instanceName}`)
+        this.dummyInfrastructure.delete(instanceName)
+    }
+
+    /**
+     * Delete dummy instance server. Internally set serverId to undefined and update lastUpdate time
+     * @param instanceName 
+     */
+    public deleteInstanceServer(instanceName: string) {
+        this.logger.debug(`Deleting dummy instance server for ${instanceName}`)
+        const currentInfra = this.dummyInfrastructure.get(instanceName)
+        if(currentInfra) {
+            currentInfra.serverId = undefined
+            currentInfra.lastUpdate = Date.now()
+
+            this.dummyInfrastructure.set(instanceName, currentInfra)
+        }
+    }
+
     public setInstanceStatus(instanceName: string, status: ServerRunningStatus) {
         this.logger.debug(`Set dummy instance status for ${instanceName}: ${status}`)
         this.dummyInfrastructure.set(instanceName, {
-            status: status,
+            serverStatus: status,
             lastUpdate: Date.now()
         })
     }
