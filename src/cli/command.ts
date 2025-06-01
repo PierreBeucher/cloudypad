@@ -81,9 +81,7 @@ export const CLI_OPTION_COST_NOTIFICATION_EMAIL = new Option('--cost-notificatio
 
 export const CLI_OPTION_DELETE_INSTANCE_SERVER_ON_STOP = new Option('--delete-instance-server-on-stop [enable|yes|true|1]', 
     'Whether to delete instance server on stop. ' +
-    'If enabled, instance server will be destroyed on stop and recreated on next start (along with provisioning and configuration). ' +
-    'Should be used along with independent data disk and custom image to avoid losing data and long starting.' +
-    'Passing "disable", "no", "0" or "false" will disable delete instance server on stop.')
+    'If enabled, instance server will be destroyed on stop and recreated on next start (along with provisioning and configuration).')
     .argParser(parseFalseOrDisable)
 
 export const CLI_OPTION_STREAMING_SERVER = new Option('--streaming-server <name>', 'Streaming server to use. Either "sunshine" or "wolf"')
