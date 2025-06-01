@@ -94,6 +94,10 @@ describe('Instance manager', () => {
         assert.strictEqual(eventsAfterConfigure[3].type, InstanceEventEnum.ConfigurationBegin)
         assert.strictEqual(eventsAfterConfigure[4].type, InstanceEventEnum.ConfigurationEnd)
 
+        const latestEventAfterConfigure = await manager.getLatestEvent()
+        assert.strictEqual(latestEventAfterConfigure?.type, InstanceEventEnum.ConfigurationEnd)
+
+
         //
         // stop
         //
@@ -156,6 +160,7 @@ describe('Instance manager', () => {
 
         logger.debug(`Events after restart: ${JSON.stringify(eventsAfterRestart)}`)
         assert.strictEqual(eventsAfterRestart.length, STATE_MAX_EVENTS)
+        assert.strictEqual(eventsAfterRestart[0].type, InstanceEventEnum.ProvisionBegin)
         assert.strictEqual(eventsAfterRestart[8].type, InstanceEventEnum.RestartBegin)
         assert.strictEqual(eventsAfterRestart[9].type, InstanceEventEnum.RestartEnd)
 
@@ -177,6 +182,7 @@ describe('Instance manager', () => {
 
         const eventsAfterDeploy = await manager.getEvents()
         assert.strictEqual(eventsAfterDeploy.length, STATE_MAX_EVENTS)
+        assert.strictEqual(eventsAfterDeploy[0].type, InstanceEventEnum.StopBegin)
         assert.strictEqual(eventsAfterDeploy[6].type, InstanceEventEnum.ProvisionBegin)
         assert.strictEqual(eventsAfterDeploy[7].type, InstanceEventEnum.ProvisionEnd)
         assert.strictEqual(eventsAfterDeploy[8].type, InstanceEventEnum.ConfigurationBegin)
