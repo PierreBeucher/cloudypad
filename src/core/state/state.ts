@@ -127,7 +127,7 @@ export const STATE_MAX_EVENTS = 10
 const InstanceStateV1Schema = z.object({
     version: z.literal("1").describe("State schema version, always 1"),
     name: z.string().describe("Unique instance name"),
-    events: z.array(InstanceEventSchema).optional().describe("List of recent instance events causing a state mutation or infrastructure change (up to 10 events)"),
+    events: z.array(InstanceEventSchema).optional().describe(`List of recent instance events causing a state mutation or infrastructure change (up to ${STATE_MAX_EVENTS} events)`),
     provision: z.object({
         provider: z.string().describe("Provider name"), // Any provider name is supported in schema
         output: CommonProvisionOutputV1Schema.optional(),
