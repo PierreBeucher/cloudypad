@@ -82,7 +82,9 @@ describe('Instance initializer', () => {
             }
         }
         
-        assert.deepEqual(state, expectState)
+        assert.deepStrictEqual(state.configuration, expectState.configuration)
+        assert.deepStrictEqual(state.provision, expectState.provision)
+        assert.deepStrictEqual(state.name, expectState.name)
     })
 
     it('should initialize instance with auto generated SSH key when no SSH key path or content is provided', async () => {

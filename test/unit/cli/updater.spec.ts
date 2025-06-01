@@ -1,10 +1,9 @@
 import * as assert from 'assert';
-import { createDummyAwsState, DEFAULT_COMMON_CLI_ARGS, DEFAULT_COMMON_INPUT, DUMMY_AWS_PULUMI_OUTPUT, getUnitTestCoreClient, loadDumyAnonymousStateV1 } from '../utils';
+import { createDummyAwsState, DUMMY_AWS_PULUMI_OUTPUT, getUnitTestCoreClient, loadDumyAnonymousStateV1 } from '../utils';
 import { InteractiveInstanceUpdater } from '../../../src/cli/updater';
-import { AwsCreateCliArgs, AwsUpdateCliArgs } from '../../../src/providers/aws/cli';
-import { AwsInputPrompter } from '../../../src/providers/aws/cli';
+import { AwsUpdateCliArgs, AwsInputPrompter } from '../../../src/providers/aws/cli';
 import { AwsInstanceStateV1, AwsStateParser } from '../../../src/providers/aws/state';
-import { PUBLIC_IP_TYPE_STATIC } from '../../../src/core/const';
+import * as lodash from 'lodash'
 
 describe('InteractiveInstanceUpdater', () => {
 
@@ -71,7 +70,7 @@ describe('InteractiveInstanceUpdater', () => {
     // instead of reusing existing state value
     it('should not nullify streaming server if not provided in CLI args', async () => {
         // Build dummy state with Sunshine enabled
-        const testState = createDummyAwsState({
+        const originalState = createDummyAwsState({
             name: "aws-dummy-test-update-no-nullify-sunshine",
             configuration: {
                 input: {
@@ -84,6 +83,8 @@ describe('InteractiveInstanceUpdater', () => {
                 }
             }
         })
+
+        const testState = lodash.cloneDeep(originalState)
 
         const coreClient = getUnitTestCoreClient()
         const stateWriter = coreClient.buildStateWriterFor(testState)
@@ -108,8 +109,8 @@ describe('InteractiveInstanceUpdater', () => {
         const stateLoader = coreClient.buildStateLoader()
         const newState = await stateLoader.loadInstanceState(testState.name)
 
-        assert.deepEqual(newState.configuration.input.sunshine, testState.configuration.input.sunshine)
-        assert.deepEqual(newState.configuration.input.wolf, testState.configuration.input.wolf)
+        assert.deepEqual(newState.configuration.input.sunshine, originalState.configuration.input.sunshine)
+        assert.deepEqual(newState.configuration.input.wolf, originalState.configuration.input.wolf)
     })
 })
 
