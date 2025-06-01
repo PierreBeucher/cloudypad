@@ -116,7 +116,7 @@ const InstanceEventSchema = z.object({
         InstanceEventEnum.RestartBegin,
         InstanceEventEnum.RestartEnd,
     ]).describe("Event type"),
-    date: z.number().describe("Event date (Linux timestamp)"),
+    timestamp: z.number().describe("Event date (Linux timestamp)"),
 })
 
 /**

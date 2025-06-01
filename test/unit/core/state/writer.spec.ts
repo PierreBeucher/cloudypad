@@ -243,27 +243,27 @@ describe('StateWriter', function () {
         assert.strictEqual(stateTenEvents.events?.length, 10)
 
         const tenEvents = lodash.cloneDeep(stateTenEvents.events)
-        tenEvents.sort((a, b) => a.date - b.date)
+        tenEvents.sort((a, b) => a.timestamp - b.timestamp)
         assert.strictEqual(tenEvents[0].type, InstanceEventEnum.ProvisionBegin)
-        assert.strictEqual(tenEvents[0].date, eventDate.getTime())
+        assert.strictEqual(tenEvents[0].timestamp, eventDate.getTime())
         assert.strictEqual(tenEvents[1].type, InstanceEventEnum.ProvisionEnd)
-        assert.strictEqual(tenEvents[1].date, eventDate.getTime() + 1)
+        assert.strictEqual(tenEvents[1].timestamp, eventDate.getTime() + 1)
         assert.strictEqual(tenEvents[2].type, InstanceEventEnum.ConfigurationBegin)
-        assert.strictEqual(tenEvents[2].date, eventDate.getTime() + 2)
+        assert.strictEqual(tenEvents[2].timestamp, eventDate.getTime() + 2)
         assert.strictEqual(tenEvents[3].type, InstanceEventEnum.ConfigurationEnd)
-        assert.strictEqual(tenEvents[3].date, eventDate.getTime() + 3)
+        assert.strictEqual(tenEvents[3].timestamp, eventDate.getTime() + 3)
         assert.strictEqual(tenEvents[4].type, InstanceEventEnum.StartBegin)
-        assert.strictEqual(tenEvents[4].date, eventDate.getTime() + 4)
+        assert.strictEqual(tenEvents[4].timestamp, eventDate.getTime() + 4)
         assert.strictEqual(tenEvents[5].type, InstanceEventEnum.StartEnd)
-        assert.strictEqual(tenEvents[5].date, eventDate.getTime() + 5)
+        assert.strictEqual(tenEvents[5].timestamp, eventDate.getTime() + 5)
         assert.strictEqual(tenEvents[6].type, InstanceEventEnum.StopBegin)
-        assert.strictEqual(tenEvents[6].date, eventDate.getTime() + 6)
+        assert.strictEqual(tenEvents[6].timestamp, eventDate.getTime() + 6)
         assert.strictEqual(tenEvents[7].type, InstanceEventEnum.StopEnd)
-        assert.strictEqual(tenEvents[7].date, eventDate.getTime() + 7)
+        assert.strictEqual(tenEvents[7].timestamp, eventDate.getTime() + 7)
         assert.strictEqual(tenEvents[8].type, InstanceEventEnum.DestroyBegin)
-        assert.strictEqual(tenEvents[8].date, eventDate.getTime() + 8)
+        assert.strictEqual(tenEvents[8].timestamp, eventDate.getTime() + 8)
         assert.strictEqual(tenEvents[9].type, InstanceEventEnum.DestroyEnd)
-        assert.strictEqual(tenEvents[9].date, eventDate.getTime() + 9)
+        assert.strictEqual(tenEvents[9].timestamp, eventDate.getTime() + 9)
 
         // add 11th event, should remove oldest event
         await writer.addEvent(InstanceEventEnum.ProvisionBegin, new Date(eventDate.getTime() + 10))
@@ -274,17 +274,17 @@ describe('StateWriter', function () {
         assert.strictEqual(stateElevenEvents.events?.length, 10)
 
         const elevenEvents = lodash.cloneDeep(stateElevenEvents.events)
-        elevenEvents.sort((a, b) => a.date - b.date)
+        elevenEvents.sort((a, b) => a.timestamp - b.timestamp)
 
         // oldest event should be removed
         assert.strictEqual(elevenEvents[0].type, InstanceEventEnum.ProvisionEnd)
-        assert.strictEqual(elevenEvents[0].date, eventDate.getTime() + 1)
+        assert.strictEqual(elevenEvents[0].timestamp, eventDate.getTime() + 1)
 
         assert.strictEqual(elevenEvents[1].type, InstanceEventEnum.ConfigurationBegin)
-        assert.strictEqual(elevenEvents[1].date, eventDate.getTime() + 2)
+        assert.strictEqual(elevenEvents[1].timestamp, eventDate.getTime() + 2)
 
         assert.strictEqual(elevenEvents[9].type, InstanceEventEnum.ProvisionBegin)
-        assert.strictEqual(elevenEvents[9].date, eventDate.getTime() + 10)
+        assert.strictEqual(elevenEvents[9].timestamp, eventDate.getTime() + 10)
 
         // again add 11th event, should remove oldest event
         await writer.addEvent(InstanceEventEnum.ProvisionEnd, new Date(eventDate.getTime() + 11))
@@ -294,14 +294,14 @@ describe('StateWriter', function () {
         assert.strictEqual(stateTwelveEvents.events?.length, 10)
 
         const twelveEvents = lodash.cloneDeep(stateTwelveEvents.events)
-        twelveEvents.sort((a, b) => a.date - b.date)
+        twelveEvents.sort((a, b) => a.timestamp - b.timestamp)
         assert.strictEqual(twelveEvents[0].type, InstanceEventEnum.ConfigurationBegin)
-        assert.strictEqual(twelveEvents[0].date, eventDate.getTime() + 2)
+        assert.strictEqual(twelveEvents[0].timestamp, eventDate.getTime() + 2)
 
         assert.strictEqual(twelveEvents[1].type, InstanceEventEnum.ConfigurationEnd)
-        assert.strictEqual(twelveEvents[1].date, eventDate.getTime() + 3)
+        assert.strictEqual(twelveEvents[1].timestamp, eventDate.getTime() + 3)
 
         assert.strictEqual(twelveEvents[9].type, InstanceEventEnum.ProvisionEnd)
-        assert.strictEqual(twelveEvents[9].date, eventDate.getTime() + 11)
+        assert.strictEqual(twelveEvents[9].timestamp, eventDate.getTime() + 11)
     })
 })

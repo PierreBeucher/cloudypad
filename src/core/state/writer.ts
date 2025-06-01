@@ -113,13 +113,13 @@ export class StateWriter<ST extends InstanceStateV1> {
         // if more than MAX events, remove oldest event
         // sort events by date and remove oldest
         if(newState.events.length >= STATE_MAX_EVENTS){
-            newState.events.sort((a, b) => a.date - b.date)
+            newState.events.sort((a, b) => a.timestamp - b.timestamp)
             newState.events.shift()
         }
 
         newState.events.push({
             type: event,
-            date: atDate ? atDate.getTime() : Date.now()
+            timestamp: atDate ? atDate.getTime() : Date.now()
         })
         await this.persistState(newState)
     }

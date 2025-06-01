@@ -399,7 +399,7 @@ export class GenericInstanceManager<ST extends InstanceStateV1> implements Insta
 
     public async getLatestEvent(): Promise<InstanceEvent | undefined> {
         const events = await this.getEvents()
-        events.sort((a, b) => a.date - b.date)
+        events.sort((a, b) => a.timestamp - b.timestamp)
         return events.length > 0 ? events[events.length - 1] : undefined
     }
 
