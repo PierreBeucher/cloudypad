@@ -3,8 +3,9 @@ import { CloudypadClient } from "../../core/client"
 import { CLOUDYPAD_PROVIDER_SCALEWAY } from "../../core/const"
 import { InstanceInitializer } from "../../core/initializer"
 import { CommonConfigurationInputV1 } from "../../core/state/state"
+import { InstanceUpdater } from "../../core/updater"
 import { ScalewayCreateCliArgs, ScalewayInputPrompter } from "./cli"
-import { ScalewayProvisionInputV1 } from "./state"
+import { ScalewayInstanceStateV1, ScalewayProvisionInputV1, ScalewayStateParser } from "./state"
 
 export class ScalewayProviderClient {
 
@@ -23,5 +24,17 @@ export class ScalewayProviderClient {
             provider: CLOUDYPAD_PROVIDER_SCALEWAY,
             initArgs: args.cliArgs
         })
+    }
+
+    getInstanceUpdater(args: { coreClient: CloudypadClient }): InstanceUpdater<ScalewayInstanceStateV1> {
+        const instanceUpdater = args.coreClient.buildInstanceUpdater(new ScalewayStateParser())
+
+        instanceUpdater.updateStateOnly({
+            instanceName: "test",
+            provisionInputs: {
+                
+            }
+        })
+        return instanceUpdater
     }
 }
