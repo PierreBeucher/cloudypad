@@ -57,7 +57,11 @@ describe('InstanceUpdater', () => {
             useSpot: false
         }
 
-        await updater.updateStateOnly(instanceName, newConfigurationInputs, newProvisionInputs)
+        await updater.updateStateOnly({ 
+            instanceName: instanceName, 
+            configurationInputs: newConfigurationInputs,
+            provisionInputs: newProvisionInputs
+        })
 
         const expectedState = {
             ...awsState,
