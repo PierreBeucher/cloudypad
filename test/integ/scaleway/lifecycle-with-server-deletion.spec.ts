@@ -1,7 +1,7 @@
 import * as assert from 'assert'
 import { ScalewayClient, ScalewayServerState } from '../../../src/tools/scaleway'
 import { ScalewayInstanceStateV1, ScalewayStateParser } from '../../../src/providers/scaleway/state'
-import { getIntegTestCoreClient } from '../utils'
+import { getIntegTestCoreClient, getIntegTestCoreConfig } from '../utils'
 import { ScalewayProviderClient } from '../../../src/providers/scaleway/provider'
 import { ServerRunningStatus } from '../../../src/core/runner'
 import { getLogger } from '../../../src/log/utils'
@@ -10,6 +10,7 @@ import { getLogger } from '../../../src/log/utils'
 
 describe('Scaleway lifecycle with instance server deletion', () => {
     const logger = getLogger("test-scaleway-lifecycle-with-server-deletion")
+    const coreConfig = getIntegTestCoreConfig()
     const coreClient = getIntegTestCoreClient()
     const instanceName = 'test-instance-scaleway-lifecycle-with-server-deletion'
 
@@ -39,7 +40,7 @@ describe('Scaleway lifecycle with instance server deletion', () => {
 
         assert.strictEqual(currentInstanceServerId, undefined)
 
-        const initializer = new ScalewayProviderClient().getInstanceInitializer({coreClient: coreClient})
+        const initializer = new ScalewayProviderClient({config: coreConfig}).getInstanceInitializer()
             await initializer.initializeStateOnly(instanceName, {
                 ssh: {
                     user: "ubuntu",
