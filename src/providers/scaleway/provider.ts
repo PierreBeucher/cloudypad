@@ -3,6 +3,7 @@ import { CloudypadClient } from "../../core/client"
 import { CLOUDYPAD_PROVIDER_SCALEWAY } from "../../core/const"
 import { InstanceInitializer } from "../../core/initializer"
 import { CommonConfigurationInputV1 } from "../../core/state/state"
+import { StateWriter } from "../../core/state/writer"
 import { InstanceUpdater } from "../../core/updater"
 import { ScalewayCreateCliArgs, ScalewayInputPrompter } from "./cli"
 import { ScalewayInstanceStateV1, ScalewayProvisionInputV1, ScalewayStateParser } from "./state"
@@ -28,13 +29,17 @@ export class ScalewayProviderClient {
 
     getInstanceUpdater(args: { coreClient: CloudypadClient }): InstanceUpdater<ScalewayInstanceStateV1> {
         const instanceUpdater = args.coreClient.buildInstanceUpdater(new ScalewayStateParser())
-
-        instanceUpdater.updateStateOnly({
-            instanceName: "test",
-            provisionInputs: {
-                
-            }
-        })
         return instanceUpdater
+    }
+
+    async getInstanceState(args: { instanceName: string, coreClient: CloudypadClient }): Promise<ScalewayInstanceStateV1> {
+        const loader = args.coreClient.buildStateLoader()
+        const parser = new ScalewayStateParser()
+        const rawState = await loader.loadInstanceState(args.instanceName)
+        return parser.parse(rawState)
+    }
+
+    getStateWriter(args: { state: ScalewayInstanceStateV1, coreClient: CloudypadClient }): StateWriter<ScalewayInstanceStateV1> {
+        return args.coreClient.buildStateWriterFor(args.state)
     }
 }
