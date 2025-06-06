@@ -31,21 +31,21 @@ export class InstanceUpdater<ST extends InstanceStateV1> {
      * @param configurationInputs 
      * @param provisionInputs 
      */
-    async updateStateOnly(
+    async updateStateOnly(args: {
         instanceName: string,
         configurationInputs?: PartialDeep<ST["configuration"]["input"]>, 
         provisionInputs?: PartialDeep<ST["provision"]["input"]>
-    ): Promise<void> {
+    }): Promise<void> {
 
-        this.logger.debug(`Updating state of instance ${instanceName} with configuration inputs: ` +
-            `${JSON.stringify(configurationInputs)} and provision inputs: ` +
-            `${JSON.stringify(provisionInputs)}`)
+        this.logger.debug(`Updating state of instance ${args.instanceName} with configuration inputs: ` +
+            `${JSON.stringify(args.configurationInputs)} and provision inputs: ` +
+            `${JSON.stringify(args.provisionInputs)}`)
 
-        const currentState = await this.loadState(instanceName)
+        const currentState = await this.loadState(args.instanceName)
 
         this.logger.debug(`State loaded for update: ${JSON.stringify(currentState)}`)
 
-        const newInputs = await this.mergeInputsWithStateInputs(currentState, configurationInputs, provisionInputs)
+        const newInputs = await this.mergeInputsWithStateInputs(currentState, args.configurationInputs, args.provisionInputs)
 
         this.logger.debug(`New inputs after merging with state inputs: ${JSON.stringify(newInputs)}`)
         

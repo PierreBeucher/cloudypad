@@ -208,7 +208,7 @@ describe('StateWriter', function () {
         assert.strictEqual(parentDirExists, false)
     })
 
-    it('should add event to state (up to 10 events)', async function () {
+    it('should add event to state (up to max events)', async function () {
         const { dataDir, writer } = await getTestWriter()
         const eventDate = new Date("2025-01-01T01:00:00Z")
 

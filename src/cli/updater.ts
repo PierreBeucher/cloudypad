@@ -50,7 +50,11 @@ export class InteractiveInstanceUpdater<ST extends InstanceStateV1, A extends Up
             throw new Error('Update aborted.')
         }
 
-        await this.instanceUpdater.updateStateOnly(instanceName, cliInput.configuration, cliInput.provision)
+        await this.instanceUpdater.updateStateOnly({
+            instanceName: instanceName,
+            configurationInputs: cliInput.configuration,
+            provisionInputs: cliInput.provision
+        })
 
         const manager = await this.coreClient.buildInstanceManager(instanceName)
         await manager.deploy()
