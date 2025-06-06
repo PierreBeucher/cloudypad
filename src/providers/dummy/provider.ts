@@ -1,27 +1,16 @@
 import { InteractiveInstanceInitializer } from "../../cli/initializer"
-import { CloudypadClient } from "../../core/client"
-import { CoreConfig } from "../../core/config/interface"
 import { CLOUDYPAD_PROVIDER_DUMMY } from "../../core/const"
 import { InstanceInitializer } from "../../core/initializer"
+import { AbstractProviderClient, ProviderClientArgs } from "../../core/provider"
 import { CommonConfigurationInputV1 } from "../../core/state/state"
 import { InstanceUpdater } from "../../core/updater"
 import { DummyCreateCliArgs, DummyInputPrompter } from "./cli"
 import { DummyInstanceStateV1, DummyProvisionInputV1, DummyStateParser } from "./state"
 
-export type DummyProviderClientArgs = {
-    coreConfig: CoreConfig
-}
+export class DummyProviderClient extends AbstractProviderClient<DummyInstanceStateV1> {
 
-export class DummyProviderClient {
-
-    private readonly args: DummyProviderClientArgs
-    private coreClient: CloudypadClient
-
-    constructor(args: DummyProviderClientArgs) {
-        this.args = args
-        this.coreClient = new CloudypadClient({
-            config: this.args.coreConfig
-        })
+    constructor(args: ProviderClientArgs) {
+        super(args)
     }
 
     getInstanceInitializer(): InstanceInitializer<DummyProvisionInputV1, CommonConfigurationInputV1> {
