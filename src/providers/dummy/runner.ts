@@ -100,6 +100,11 @@ export class DummyInstanceRunner implements InstanceRunner {
             }
 
             const status = await this.args.dummyInfraManager.getServerRunningStatus()
+
+            if(status.lastUpdate === undefined) {
+                throw new Error(`Dummy instance ${this.args.instanceName} has a running server but not last update date. This should never happen.`)
+            }
+
             const delaySinceLastServerStatusChangeMs = Date.now() - status.lastUpdate
             const isReady = delaySinceLastServerStatusChangeMs >= this.args.provisionInput.readinessAfterStartDelaySeconds * 1000
             

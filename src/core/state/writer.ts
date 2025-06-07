@@ -3,6 +3,7 @@ import { InstanceEventEnum, InstanceStateV1, STATE_MAX_EVENTS } from './state'
 import lodash from 'lodash'
 import { PartialDeep } from 'type-fest'
 import { StateSideEffect } from './side-effects/abstract'
+import { GenericStateParser } from './parser'
 
 export interface StateWriterArgs<ST extends InstanceStateV1> {
 
@@ -10,95 +11,78 @@ export interface StateWriterArgs<ST extends InstanceStateV1> {
      * Side effect to write instance state
      */
     sideEffect: StateSideEffect
+
+    /**
+     * Parser to parse instance state
+     */
+    stateParser: GenericStateParser<ST>
 }
 
 /**
  * Manages instance state writes using a side effect.
+ * Every update on state causes a side effect:
+ * - Read current state (side effect)
+ * - Perform desired update on current state
+ * - Persist state (side effect)
  */
 export class StateWriter<ST extends InstanceStateV1> {
 
-    protected logger = getLogger(StateWriter.name)
-
-    private state?: ST
-
-    public readonly sideEffect: StateSideEffect
+    private readonly logger = getLogger(StateWriter.name)
+    public readonly args: StateWriterArgs<ST>
     
     constructor(args: StateWriterArgs<ST>) {
-        this.sideEffect = args.sideEffect
-    }
-
-    setState(state: ST){
-        this.state = state
-    }
-
-    getState(): ST {
-        if(!this.state) throw new Error("State not set. Has this StateWriter been initialized with setState()?")
-        return this.state
+        this.args = args
     }
 
     /**
-     * @returns instance name for managed State
+     * Set the managed State and persist now. Override previous state as-is without any other side effect. 
      */
-    instanceName(): string {
-        return this.getState().name
+    async setState(state: ST){
+        await this.args.sideEffect.persistState(state)
     }
 
     /**
-     * Return a clone of managed State.
+     * Get the current state by reading it from side effect.
      */
-    cloneState(): ST {
-        return lodash.cloneDeep(this.getState())
-    }
-    
-    /**
-     * Persist managed State and update current state field.
-     */
-    private async persistState(newState: ST){
-        await this.sideEffect.persistState(newState)
-        this.state = newState
+    async getCurrentState(instanceName: string): Promise<ST> {
+        const state = await this.args.sideEffect.loadRawInstanceState(instanceName)
+        return this.args.stateParser.parse(state)
     }
 
-    /**
-     * Persist managed State on disk.
-     */
-    async persistStateNow(){
-        await this.sideEffect.persistState(this.getState())
-    }
-
-    async setProvisionInput(input: ST["provision"]["input"]){
-        const newState = lodash.cloneDeep(this.getState())
+    async setProvisionInput(instanceName: string, input: ST["provision"]["input"]){
+        const newState = await this.getCurrentState(instanceName)
         newState.provision.input = input
-        await this.persistState(newState)
+        await this.args.sideEffect.persistState(newState)
     }
 
-    async setProvisionOutput(output?: ST["provision"]["output"]){
-        const newState = lodash.cloneDeep(this.getState())
+    async setProvisionOutput(instanceName: string, output?: ST["provision"]["output"]){
+        const newState = await this.getCurrentState(instanceName)
         newState.provision.output = output
-        await this.persistState(newState)
+        await this.args.sideEffect.persistState(newState)
     }
 
-    async setConfigurationInput(input: ST["configuration"]["input"]){
-        const newState = lodash.cloneDeep(this.getState())
+    async setConfigurationInput(instanceName: string, input: ST["configuration"]["input"]){
+        const newState = await this.getCurrentState(instanceName)
         newState.configuration.input = input
-        await this.persistState(newState)
+        await this.args.sideEffect.persistState(newState)
     }
 
-    async setConfigurationOutput(output?: ST["configuration"]["output"]){
-        const newState = lodash.cloneDeep(this.getState())
+    async setConfigurationOutput(instanceName: string, output?: ST["configuration"]["output"]){
+        const newState = await this.getCurrentState(instanceName)
         newState.configuration.output = output
-        await this.persistState(newState)
+        await this.args.sideEffect.persistState(newState)
     }
 
-    async updateProvisionInput(input: PartialDeep<ST["provision"]["input"]>){
-        const newState = lodash.cloneDeep(this.getState())
+    async updateProvisionInput(instanceName: string, input: PartialDeep<ST["provision"]["input"]>){
+        const newState = await this.getCurrentState(instanceName)
         lodash.merge(newState.provision.input, input)
-        await this.persistState(newState)
+        await this.args.sideEffect.persistState(newState)
     }
     
-    async updateConfigurationInput(input: PartialDeep<ST["configuration"]["input"]>){
-        const newState = lodash.cloneDeep(this.getState())
+    async updateConfigurationInput(instanceName: string, input: PartialDeep<ST["configuration"]["input"]>){
+        const newState = await this.getCurrentState(instanceName)
         lodash.merge(newState.configuration.input, input)
-        await this.persistState(newState)
+        await this.args.sideEffect.persistState(newState)
     }
 
     /**
@@ -106,8 +90,8 @@ export class StateWriter<ST extends InstanceStateV1> {
      * @param event Event to add
      * @param atDate Date of event, defaults to current date
      */
-    async addEvent(event: InstanceEventEnum, atDate?: Date){
-        const newState = lodash.cloneDeep(this.getState())
+    async addEvent(instanceName: string, event: InstanceEventEnum, atDate?: Date){
+        const newState = await this.getCurrentState(instanceName)
         if(!newState.events) newState.events = []
 
         // if more than MAX events, remove oldest event
@@ -121,10 +105,10 @@ export class StateWriter<ST extends InstanceStateV1> {
             type: event,
             timestamp: atDate ? atDate.getTime() : Date.now()
         })
-        await this.persistState(newState)
+        await this.args.sideEffect.persistState(newState)
     }
 
-    async destroyState(){
-        this.sideEffect.destroyState(this.instanceName())
+    async destroyState(instanceName: string){
+        await this.args.sideEffect.destroyState(instanceName)
     }
 }

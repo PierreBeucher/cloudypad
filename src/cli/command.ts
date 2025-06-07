@@ -2,6 +2,7 @@ import { Command, Option } from "@commander-js/extra-typings";
 import { PUBLIC_IP_TYPE, PUBLIC_IP_TYPE_DYNAMIC, PUBLIC_IP_TYPE_STATIC } from "../core/const";
 import { AnalyticsManager } from "../tools/analytics/manager";
 import { CloudypadClient } from "../core/client";
+import { CoreConfig } from "../core/config/interface";
 
 //
 // Common CLI Option each providers can re-use
@@ -102,11 +103,11 @@ function parseFalseOrDisable(value: string){
 }
 
 export interface BuildCreateCommandArgs {
-    coreClient: CloudypadClient
+    coreConfig: CoreConfig
 }
 
 export interface BuildUpdateCommandArgs {
-    coreClient: CloudypadClient
+    coreConfig: CoreConfig
 }
 
 /**

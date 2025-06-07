@@ -1,13 +1,14 @@
 import * as assert from 'assert';
 import { AZURE_SUPPORTED_DISK_TYPES, AzureInstanceInput } from '../../../../src/providers/azure/state';
 import { PUBLIC_IP_TYPE_STATIC } from '../../../../src/core/const';
-import { DEFAULT_COMMON_CLI_ARGS, DEFAULT_COMMON_INPUT, getUnitTestCoreClient } from '../../utils';
+import { DEFAULT_COMMON_CLI_ARGS, DEFAULT_COMMON_INPUT, getUnitTestCoreClient, getUnitTestCoreConfig } from '../../utils';
 import { AzureCreateCliArgs, AzureInputPrompter } from '../../../../src/providers/azure/cli';
 import { PartialDeep } from 'type-fest';
 import * as lodash from 'lodash';
 describe('Azure input prompter', () => {
 
     const instanceName = "azure-dummy"
+    const coreConfig = getUnitTestCoreConfig()
 
     const TEST_INPUT: AzureInstanceInput = {
         instanceName: instanceName,
@@ -50,14 +51,12 @@ describe('Azure input prompter', () => {
     }
 
     it('should return provided inputs without prompting when full input provider', async () => {
-        const coreClient = getUnitTestCoreClient()
-        const result = await new AzureInputPrompter({ coreClient: coreClient }).promptInput(TEST_INPUT, { autoApprove: true })
+        const result = await new AzureInputPrompter({ coreConfig: coreConfig }).promptInput(TEST_INPUT, { autoApprove: true })
         assert.deepEqual(result, TEST_INPUT)
     })
 
     it('should convert CLI args into partial input', () => {
-        const coreClient = getUnitTestCoreClient()
-        const prompter = new AzureInputPrompter({ coreClient: coreClient })
+        const prompter = new AzureInputPrompter({ coreConfig: coreConfig })
         const result = prompter.cliArgsIntoPartialInput(TEST_CLI_ARGS)
 
         const expected: PartialDeep<AzureInstanceInput> = {

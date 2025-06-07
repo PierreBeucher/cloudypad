@@ -10,6 +10,7 @@ import { CLI_OPTION_AUTO_STOP_TIMEOUT, CLI_OPTION_AUTO_STOP_ENABLE, CLI_OPTION_C
 import { InteractiveInstanceInitializer } from "../../cli/initializer";
 import { RUN_COMMAND_CREATE, RUN_COMMAND_UPDATE } from "../../tools/analytics/events";
 import { InteractiveInstanceUpdater } from "../../cli/updater";
+import { AzureProviderClient } from "./provider";
 
 export interface AzureCreateCliArgs extends CreateCliArgs {
     subscriptionId?: string
@@ -308,10 +309,9 @@ export class AzureCliCommandGenerator extends CliCommandGenerator {
                 this.analytics.sendEvent(RUN_COMMAND_CREATE, { provider: CLOUDYPAD_PROVIDER_AZURE })
 
                 try {
-                    await new InteractiveInstanceInitializer<AzureCreateCliArgs, AzureProvisionInputV1, CommonConfigurationInputV1>({ 
-                        coreClient: args.coreClient,
-                        inputPrompter: new AzureInputPrompter({ coreClient: args.coreClient }),
-                        provider: CLOUDYPAD_PROVIDER_AZURE,
+                    await new InteractiveInstanceInitializer<AzureInstanceStateV1, AzureCreateCliArgs>({ 
+                        providerClient: new AzureProviderClient({ config: args.coreConfig }),
+                        inputPrompter: new AzureInputPrompter({ coreConfig: args.coreConfig }),
                         initArgs: cliArgs
                     }).initializeInteractive()
                     
@@ -345,9 +345,8 @@ export class AzureCliCommandGenerator extends CliCommandGenerator {
 
                 try {
                     await new InteractiveInstanceUpdater<AzureInstanceStateV1, AzureUpdateCliArgs>({
-                        coreClient: args.coreClient,
-                        stateParser: new AzureStateParser(),
-                        inputPrompter: new AzureInputPrompter({ coreClient: args.coreClient }),
+                        providerClient: new AzureProviderClient({ config: args.coreConfig }),
+                        inputPrompter: new AzureInputPrompter({ coreConfig: args.coreConfig }),
                     }).updateInteractive(cliArgs)
                     
                     console.info(`Updated instance ${cliArgs.name}`)

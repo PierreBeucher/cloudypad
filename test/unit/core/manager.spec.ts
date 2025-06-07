@@ -1,25 +1,21 @@
 import * as assert from 'assert';
-import { CLOUDYPAD_PROVIDER_DUMMY} from '../../../src/core/const';
-import { DEFAULT_COMMON_INPUT, getUnitTestCoreClient } from '../utils';
-import { InstanceInitializer } from '../../../src/core/initializer';
+import { DEFAULT_COMMON_INPUT, getUnitTestCoreConfig, getUnitTestDummyProviderClient } from '../utils';
 import { CommonConfigurationInputV1, InstanceEventEnum, STATE_MAX_EVENTS } from '../../../src/core/state/state';
-import { DummyProvisionInputV1 } from '../../../src/providers/dummy/state';
 import { InstanceStatus } from '../../../src/core/manager';
 import { ServerRunningStatus } from '../../../src/core/runner';
 import { getLogger } from '../../../src/log/utils';
+import { CloudypadClient } from '../../../src/core/client';
 
 describe('Instance manager', () => {
 
     const logger = getLogger("InstanceManager test")
+    const coreConfig = getUnitTestCoreConfig()
 
     it('should be able to start, stop and restart an instance with expected status at every step', async () => {
-        const client = getUnitTestCoreClient()
         const instanceName = "dummy-test-core-manager"
         
-        const initiliazer = new InstanceInitializer<DummyProvisionInputV1, CommonConfigurationInputV1>({ 
-            provider: CLOUDYPAD_PROVIDER_DUMMY,
-            stateWriter: client.buildEmptyStateWriter(),
-        })
+        const dummyProviderClient = getUnitTestDummyProviderClient()
+        const initiliazer = dummyProviderClient.getInstanceInitializer()
         
 
         //
@@ -37,7 +33,7 @@ describe('Instance manager', () => {
             }
         )
 
-        const manager = await client.buildInstanceManager(instanceName)
+        const manager = await dummyProviderClient.getInstanceManager(instanceName)
 
         // right after init, the instance should be in a stopped state
         // and status should be returned accordingly
@@ -195,21 +191,9 @@ describe('Instance manager', () => {
         // destroy
         //
         await manager.destroy()
-        const actualStatusAfterDestroy = await manager.getInstanceStatus()
-        const expectedStatusAfterDestroy: InstanceStatus = {
-            provisioned: false,
-            configured: false,
-            serverStatus: ServerRunningStatus.Unknown,
-            ready: false
-        }
-        assert.deepStrictEqual(actualStatusAfterDestroy, expectedStatusAfterDestroy)
-
-        const eventsAfterDestroy = await manager.getEvents()
-        assert.strictEqual(eventsAfterDestroy.length, STATE_MAX_EVENTS)
-        assert.strictEqual(eventsAfterDestroy[8].type, InstanceEventEnum.DestroyBegin)
-        assert.strictEqual(eventsAfterDestroy[9].type, InstanceEventEnum.DestroyEnd)
-
-        const latestEventAfterDestroy = await manager.getLatestEvent()
-        assert.strictEqual(latestEventAfterDestroy?.type, InstanceEventEnum.DestroyEnd)
+        
+        const cloudypadClient = new CloudypadClient({ config: coreConfig })
+        const instanceExists = await cloudypadClient.instanceExists(instanceName)
+        assert.strictEqual(instanceExists, false)
     })
 })

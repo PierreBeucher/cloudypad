@@ -8,7 +8,8 @@ import { getLogger } from "../log/utils";
 import { PUBLIC_IP_TYPE, PUBLIC_IP_TYPE_DYNAMIC, PUBLIC_IP_TYPE_STATIC } from '../core/const';
 import { CreateCliArgs } from './command';
 import { CostAlertOptions } from '../core/provisioner';
-import { CloudypadClient } from '../core/client';
+import { CoreConfig } from '../core/config/interface';
+import { StateManagerBuilder } from '../core/state/builders';
 
 const { kebabCase } = lodash
 
@@ -40,7 +41,7 @@ export interface PromptOptions {
 }
 
 export interface AbstractInputPrompterArgs {
-    coreClient: CloudypadClient
+    coreConfig: CoreConfig
 }
 
 /**
@@ -88,8 +89,8 @@ export abstract class AbstractInputPrompter<
         
         const instanceName = await this.instanceName(partialInput.instanceName)
         
-        const loader = this.args.coreClient.buildStateLoader()
-        const alreadyExists = await loader.instanceExists(instanceName)
+        const stateLoader = new StateManagerBuilder(this.args.coreConfig).buildStateLoader()
+        const alreadyExists = await stateLoader.instanceExists(instanceName)
         if(alreadyExists){
             const overwriteExisting = await this.promptOverwriteExisting(instanceName, createOptions?.overwriteExisting)
             if(!overwriteExisting) {

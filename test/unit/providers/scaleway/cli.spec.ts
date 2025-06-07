@@ -1,6 +1,6 @@
 import * as assert from 'assert';
 import { ScalewayCreateCliArgs, ScalewayInputPrompter } from '../../../../src/providers/scaleway/cli';
-import { DEFAULT_COMMON_CLI_ARGS, DEFAULT_COMMON_INPUT, getUnitTestCoreClient } from '../../utils';
+import { DEFAULT_COMMON_CLI_ARGS, DEFAULT_COMMON_INPUT, getUnitTestCoreClient, getUnitTestCoreConfig } from '../../utils';
 import { PartialDeep } from 'type-fest';
 import lodash from 'lodash';
 import { ScalewayInstanceInput } from '../../../../src/providers/scaleway/state';
@@ -8,6 +8,7 @@ import { ScalewayInstanceInput } from '../../../../src/providers/scaleway/state'
 describe('Scaleway input prompter', () => {
 
     const instanceName = "scaleway-dummy"
+    const coreConfig = getUnitTestCoreConfig()
 
     const TEST_INPUT: ScalewayInstanceInput = {
         instanceName: instanceName,
@@ -42,13 +43,12 @@ describe('Scaleway input prompter', () => {
 
     it('should return provided inputs without prompting when full input provider', async () => {
         const coreClient = getUnitTestCoreClient()
-        const result = await new ScalewayInputPrompter({ coreClient: coreClient }).promptInput(TEST_INPUT, { autoApprove: true })
+        const result = await new ScalewayInputPrompter({ coreConfig: coreConfig }).promptInput(TEST_INPUT, { autoApprove: true })
         assert.deepEqual(result, TEST_INPUT)
     })
 
     it('should convert CLI args into partial input', () => {
-        const coreClient = getUnitTestCoreClient()
-        const prompter = new ScalewayInputPrompter({ coreClient: coreClient })
+        const prompter = new ScalewayInputPrompter({ coreConfig: coreConfig })
         const result = prompter.cliArgsIntoPartialInput(TEST_CLI_ARGS)
 
         const expected: PartialDeep<ScalewayInstanceInput> = {
