@@ -54,7 +54,7 @@ export class StateInitializer<ST extends InstanceStateV1> {
 
         const initialState = this.args.stateParser.parse(initialStateRaw)
 
-        await this.args.stateWriter.setStateAndPersistNow(initialState)
+        await this.args.stateWriter.setState(initialState)
         await this.args.stateWriter.addEvent(instanceName, InstanceEventEnum.Init)
 
         return initialState

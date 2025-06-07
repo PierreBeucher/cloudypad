@@ -34,7 +34,7 @@ describe('StateWriter', function () {
             sideEffect: new LocalStateSideEffect({ dataRootDir: dataDir }),
             stateParser: new DummyStateParser()
         })
-        await writer.setStateAndPersistNow(dummyState)
+        await writer.setState(dummyState)
 
         return { dataDir: dataDir, writer: writer }
     }
@@ -48,7 +48,7 @@ describe('StateWriter', function () {
     it('should write on disk state held in memory', async function () {
         const { dataDir, writer } = await getTestWriter()
 
-        const expected = await writer.cloneState(testInstanceName)
+        const expected = await writer.getCurrentState(testInstanceName)
         const result = loadResultPersistedState(dataDir)
         assert.deepStrictEqual(expected, result)
     })
@@ -60,7 +60,7 @@ describe('StateWriter', function () {
             diskSize: 999,
         })
 
-        const clonedState = await writer.cloneState(testInstanceName)
+        const clonedState = await writer.getCurrentState(testInstanceName)
         const expected = lodash.merge(
             clonedState,
             {
@@ -83,7 +83,7 @@ describe('StateWriter', function () {
             dummyConfig: "bar",
         })
 
-        const clonedState = await writer.cloneState(testInstanceName)
+        const clonedState = await writer.getCurrentState(testInstanceName)
         const expected = lodash.merge(
             clonedState,
             {
@@ -102,7 +102,7 @@ describe('StateWriter', function () {
     it('should set provision input', async function () {
         const { dataDir, writer } = await getTestWriter()
 
-        const currentState = await writer.cloneState(testInstanceName)
+        const currentState = await writer.getCurrentState(testInstanceName)
 
         const newProvInput = { 
             ...currentState.provision.input,
@@ -111,7 +111,7 @@ describe('StateWriter', function () {
         }
         await writer.setProvisionInput(testInstanceName, newProvInput)
 
-        const stateAfterUpdate = await writer.cloneState(testInstanceName)
+        const stateAfterUpdate = await writer.getCurrentState(testInstanceName)
         const expected = lodash.merge(
             stateAfterUpdate,
             {
@@ -128,7 +128,7 @@ describe('StateWriter', function () {
     it('should set configuration input', async function () {
         const { dataDir, writer } = await getTestWriter()
 
-        const currentState = await writer.cloneState(testInstanceName)
+        const currentState = await writer.getCurrentState(testInstanceName)
 
         const newConfInput = { 
             ...currentState.configuration.input,
@@ -136,7 +136,7 @@ describe('StateWriter', function () {
         }
         await writer.setConfigurationInput(testInstanceName, newConfInput)
 
-        const stateAfterUpdate = await writer.cloneState(testInstanceName)
+        const stateAfterUpdate = await writer.getCurrentState(testInstanceName)
         const expected = lodash.merge(
             stateAfterUpdate,
             {
@@ -160,7 +160,7 @@ describe('StateWriter', function () {
 
         await writer.setConfigurationOutput(testInstanceName, expectedOutput)
 
-        const clonedState = await writer.cloneState(testInstanceName)
+        const clonedState = await writer.getCurrentState(testInstanceName)
         const expected = lodash.merge(
             clonedState,
             {
@@ -186,7 +186,7 @@ describe('StateWriter', function () {
 
         await writer.setProvisionOutput(testInstanceName, expectedOutput)
 
-        const clonedState = await writer.cloneState(testInstanceName)
+        const clonedState = await writer.getCurrentState(testInstanceName)
         const expected = lodash.merge(
             clonedState,
             {

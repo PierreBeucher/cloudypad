@@ -384,17 +384,17 @@ export class GenericInstanceManager<ST extends InstanceStateV1> implements Insta
     }
 
     private async buildRunner(): Promise<InstanceRunner> {
-        const state = await this.stateWriter.cloneState(this.instanceName)
+        const state = await this.stateWriter.getCurrentState(this.instanceName)
         return this.runnerFactory.buildRunner(state)
     }
     
     private async buildConfigurator(configuratorOptions?: AnsibleConfiguratorOptions): Promise<InstanceConfigurator> {
-        const state = await this.stateWriter.cloneState(this.instanceName)
+        const state = await this.stateWriter.getCurrentState(this.instanceName)
         return this.configuratorFactory.buildConfigurator(state, configuratorOptions)
     }
     
     private async buildProvisioner(): Promise<InstanceProvisioner> {
-        const state = await this.stateWriter.cloneState(this.instanceName)
+        const state = await this.stateWriter.getCurrentState(this.instanceName)
         return this.provisionerFactory.buildProvisioner(state)
     }
 
@@ -407,7 +407,7 @@ export class GenericInstanceManager<ST extends InstanceStateV1> implements Insta
     //
 
     public async getEvents(): Promise<InstanceEvent[]> {
-        const state = await this.stateWriter.cloneState(this.instanceName)
+        const state = await this.stateWriter.getCurrentState(this.instanceName)
         return state.events ?? []
     }
 
@@ -419,7 +419,7 @@ export class GenericInstanceManager<ST extends InstanceStateV1> implements Insta
 
     public async getInstanceDetails(): Promise<CloudyPadInstanceDetails> {
         const runner = await this.buildRunner()
-        const state = await this.stateWriter.cloneState(this.instanceName)
+        const state = await this.stateWriter.getCurrentState(this.instanceName)
         const details: CloudyPadInstanceDetails = {
             name: state.name,
             hostname: state.provision.output?.host ?? "unknown",
@@ -433,7 +433,7 @@ export class GenericInstanceManager<ST extends InstanceStateV1> implements Insta
         return details
     }
 
-    public async getInstanceStatus(): Promise<InstanceStatus> {
+    public async getInstanceStatus(): Promise<InstanceStatus> { 
         
         this.logger.debug(`Getting instance status for ${this.name()}`)
 
@@ -457,11 +457,11 @@ export class GenericInstanceManager<ST extends InstanceStateV1> implements Insta
     }
 
     public async getState(): Promise<ST> {
-        return this.stateWriter.cloneState(this.instanceName)
+        return this.stateWriter.getCurrentState(this.instanceName)
     }
 
     async getInputs(): Promise<CommonInstanceInput> {
-        const state = await this.stateWriter.cloneState(this.instanceName)
+        const state = await this.stateWriter.getCurrentState(this.instanceName)
         return {
             instanceName: state.name,
             provision: state.provision.input,
@@ -470,12 +470,12 @@ export class GenericInstanceManager<ST extends InstanceStateV1> implements Insta
     }
 
     async isConfigured(): Promise<boolean> {
-        const currentState = await this.stateWriter.cloneState(this.instanceName)
+        const currentState = await this.stateWriter.getCurrentState(this.instanceName)
         return currentState.configuration.output !== undefined
     }
 
     async isProvisioned(): Promise<boolean> {
-        const currentState = await this.stateWriter.cloneState(this.instanceName)
+        const currentState = await this.stateWriter.getCurrentState(this.instanceName)
         return currentState.provision.output !== undefined
     }
 

@@ -20,7 +20,7 @@ describe('InstanceUpdater', () => {
         // write a new state to avoid collision
         const dummyProviderClient = new DummyProviderClient({ config: coreConfig })
         const stateWriter = dummyProviderClient.getStateWriter()
-        await stateWriter.setStateAndPersistNow(dummyState)
+        await stateWriter.setState(dummyState)
 
         const stateLoader = dummyProviderClient.getStateLoader()
 

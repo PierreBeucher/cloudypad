@@ -21,7 +21,7 @@ describe('InteractiveInstanceUpdater', () => {
         dummyState.name = instanceName
 
         const stateWriter = dummyProviderClient.getStateWriter()
-        await stateWriter.setStateAndPersistNow(dummyState)
+        await stateWriter.setState(dummyState)
 
         const updater = new InteractiveInstanceUpdater<DummyInstanceStateV1, DummyUpdateCliArgs>({
             inputPrompter: new DummyInputPrompter({ coreConfig: coreConfig }),
@@ -87,7 +87,7 @@ describe('InteractiveInstanceUpdater', () => {
         const testState = lodash.cloneDeep(originalState)
 
         const stateWriter = dummyProviderClient.getStateWriter()
-        await stateWriter.setStateAndPersistNow(testState)
+        await stateWriter.setState(testState)
 
         // perform update and check resulting state
         const updater = new InteractiveInstanceUpdater<DummyInstanceStateV1, AwsUpdateCliArgs>({

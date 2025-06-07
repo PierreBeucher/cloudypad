@@ -104,7 +104,7 @@ class DummyInstanceInStateStatus {
 
         this.logger.debug(`Setting new state for dummy instance ${this.args.instanceName}: ${JSON.stringify(newState)}`)
 
-        await stateWriter.setStateAndPersistNow(newState)
+        await stateWriter.setState(newState)
     }
 }
 

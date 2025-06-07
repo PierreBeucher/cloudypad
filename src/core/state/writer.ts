@@ -37,8 +37,7 @@ export class StateWriter<ST extends InstanceStateV1> {
     /**
      * Set the managed State and persist now. Override previous state as-is without any other side effect. 
      */
-    // TODO rename setState to match with older function
-    async setStateAndPersistNow(state: ST){
+    async setState(state: ST){
         await this.args.sideEffect.persistState(state)
     }
 
@@ -48,12 +47,6 @@ export class StateWriter<ST extends InstanceStateV1> {
     async getCurrentState(instanceName: string): Promise<ST> {
         const state = await this.args.sideEffect.loadRawInstanceState(instanceName)
         return this.args.stateParser.parse(state)
-    }
-
-    // TODO rename getCurrentState to match with older function
-    async cloneState(instanceName: string): Promise<ST> {
-        const state = await this.getCurrentState(instanceName)
-        return state
     }
 
     async setProvisionInput(instanceName: string, input: ST["provision"]["input"]){
