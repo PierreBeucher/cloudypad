@@ -3,6 +3,7 @@ import { CLOUDYPAD_PROVIDER_DUMMY } from "../../core/const"
 import { InstanceInitializer } from "../../core/initializer"
 import { AbstractProviderClient, ProviderClientArgs } from "../../core/provider"
 import { CommonConfigurationInputV1 } from "../../core/state/state"
+import { StateWriter } from "../../core/state/writer"
 import { InstanceUpdater } from "../../core/updater"
 import { DummyCreateCliArgs, DummyInputPrompter } from "./cli"
 import { DummyInstanceStateV1, DummyProvisionInputV1, DummyStateParser } from "./state"
@@ -40,5 +41,10 @@ export class DummyProviderClient extends AbstractProviderClient<DummyInstanceSta
         const parser = new DummyStateParser()
         const rawState = await loader.loadInstanceState(instanceName)
         return parser.parse(rawState)
+    }
+
+    async getStateWriterFor(state: DummyInstanceStateV1): Promise<StateWriter<DummyInstanceStateV1>> {
+        const stateWriter = this.coreClient.buildStateWriterFor(state)
+        return stateWriter
     }
 }

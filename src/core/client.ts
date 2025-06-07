@@ -142,7 +142,8 @@ export class CloudypadClient {
             const dummyState = new DummyStateParser().parse(state)
             const stateWriter = this.stateManagerBuilder.buildStateWriter(dummyState)
             const dummyInfraManager = new DummyInstanceInfraManager({
-                instanceName: dummyState.name
+                instanceName: dummyState.name,
+                coreConfig: this.args.config
             })
             return new GenericInstanceManager<DummyInstanceStateV1>({
                 provisionerFactory: new DummyProvisionerFactory({

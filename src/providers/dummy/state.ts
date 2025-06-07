@@ -24,6 +24,12 @@ const DummyConfigurationOutputV1Schema = CommonConfigurationOutputV1Schema.exten
     configuredAt: z.number().describe("Timestamp (seconds) the instance was finished configured at"),
 })
 
+const DummyInfrastructureStatusSchema = z.object({
+    serverStatus: z.nativeEnum(ServerRunningStatus),
+    serverId: z.string().optional().describe("Current dummy server id"),
+    lastUpdate: z.number().describe("Timestamp (seconds) the infrastructure was last updated at"),
+})
+
 const DummyInstanceStateV1Schema = InstanceStateV1Schema.extend({
     provision: z.object({
         provider: z.literal(CLOUDYPAD_PROVIDER_DUMMY),
@@ -34,7 +40,9 @@ const DummyInstanceStateV1Schema = InstanceStateV1Schema.extend({
         configurator: z.literal(CLOUDYPAD_CONFIGURATOR_ANSIBLE),
         input: CommonConfigurationInputV1Schema,
         output: DummyConfigurationOutputV1Schema.optional(),
-    })
+    }),
+    dummyInfrastructure: DummyInfrastructureStatusSchema.optional()
+        .describe("Dummy infrastructure status. Updated by the dummy provider to emulate a real infrastructure."),
 })
 
 type DummyInstanceStateV1 = z.infer<typeof DummyInstanceStateV1Schema>
@@ -42,8 +50,10 @@ type DummyProvisionOutputV1 = z.infer<typeof DummyProvisionOutputV1Schema>
 type DummyProvisionInputV1 = z.infer<typeof DummyProvisionInputV1Schema>
 type DummyConfigurationOutputV1 = z.infer<typeof DummyConfigurationOutputV1Schema>
 type DummyInstanceInput = InstanceInputs<DummyProvisionInputV1>
+type DummyInfrastructureStatus = z.infer<typeof DummyInfrastructureStatusSchema>
 
 export {
+    DummyInfrastructureStatusSchema,
     DummyProvisionOutputV1Schema,
     DummyProvisionInputV1Schema,
     DummyConfigurationOutputV1Schema,
@@ -53,6 +63,7 @@ export {
     DummyProvisionInputV1,
     DummyConfigurationOutputV1,
     DummyInstanceInput,
+    DummyInfrastructureStatus,
 }
 
 export class DummyStateParser extends GenericStateParser<DummyInstanceStateV1> {
