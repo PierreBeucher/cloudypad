@@ -5,13 +5,14 @@ import { getIntegTestCoreClient, getIntegTestCoreConfig } from '../utils'
 import { ScalewayProviderClient } from '../../../src/providers/scaleway/provider'
 import { ServerRunningStatus } from '../../../src/core/runner'
 import { getLogger } from '../../../src/log/utils'
+import { CloudypadClient } from '../../../src'
 
 // This test is run manually using an existing instance
 
 describe('Scaleway lifecycle with instance server deletion', () => {
     const logger = getLogger("test-scaleway-lifecycle-with-server-deletion")
     const coreConfig = getIntegTestCoreConfig()
-    const coreClient = getIntegTestCoreClient()
+    const scalewayProviderClient = new ScalewayProviderClient({ config: coreConfig })
     const instanceName = 'test-instance-scaleway-lifecycle-with-server-deletion'
 
     const projectId = "297ea06f-4231-4ee7-bd5e-cb28cec4c4ee"
@@ -22,7 +23,7 @@ describe('Scaleway lifecycle with instance server deletion', () => {
 
     async function getCurrentState(): Promise<ScalewayInstanceStateV1> {
         // Not practical... TODO
-        const stateLoader = coreClient.buildStateLoader()
+        const stateLoader = scalewayProviderClient.getStateLoader()
         const rawState = await stateLoader.loadInstanceState(instanceName)
         const state = new ScalewayStateParser().parse(rawState)
         return state
@@ -66,7 +67,7 @@ describe('Scaleway lifecycle with instance server deletion', () => {
     })
 
     it('should deploy instance', async () => {
-        const instanceManager = await coreClient.buildInstanceManager(instanceName)
+        const instanceManager = await scalewayProviderClient.getInstanceManager(instanceName)
         await instanceManager.deploy()
     }).timeout(360000)
 
@@ -86,7 +87,7 @@ describe('Scaleway lifecycle with instance server deletion', () => {
     for (let i = 0; i < 2; i++) { 
 
         it(`should stop instance and delete instance server (${i+1}/2 for idempotency)`, async () => {
-            const instanceManager = await coreClient.buildInstanceManager(instanceName)
+            const instanceManager = await scalewayProviderClient.getInstanceManager(instanceName)
             await instanceManager.stop({ wait: true })
 
             const instanceStatus = await instanceManager.getInstanceStatus()
@@ -109,7 +110,7 @@ describe('Scaleway lifecycle with instance server deletion', () => {
     for (let i = 0; i < 2; i++) { 
 
         it(`should start instance with re-provisioning (${i+1}/2 for idempotency)`, async () => {
-            const instanceManager = await coreClient.buildInstanceManager(instanceName)
+            const instanceManager = await scalewayProviderClient.getInstanceManager(instanceName)
             await instanceManager.start({ wait: true })
 
             const instanceStatus = await instanceManager.getInstanceStatus()
@@ -125,7 +126,7 @@ describe('Scaleway lifecycle with instance server deletion', () => {
     }
 
     it('should wait for instance readiness', async () => {
-        const instanceManager = await coreClient.buildInstanceManager(instanceName)
+        const instanceManager = await scalewayProviderClient.getInstanceManager(instanceName)
         
         let isReady = false
         for (let attempt = 0; attempt < 60; attempt++) {
@@ -145,7 +146,7 @@ describe('Scaleway lifecycle with instance server deletion', () => {
 
         assert.ok(serverIdBefore)
 
-        const instanceManager = await coreClient.buildInstanceManager(instanceName)
+        const instanceManager = await scalewayProviderClient.getInstanceManager(instanceName)
         await instanceManager.restart({ wait: true })
 
         const stateAfter = await getCurrentState()
@@ -153,11 +154,12 @@ describe('Scaleway lifecycle with instance server deletion', () => {
     }).timeout(120000)
 
     it('should destroy instance', async () => {
-        const instanceManager = await coreClient.buildInstanceManager(instanceName)
+        const instanceManager = await scalewayProviderClient.getInstanceManager(instanceName)
         await instanceManager.destroy()
     }).timeout(120000)
 
     it('instance does not exist after destroy', async () => {
+        const coreClient = new CloudypadClient({ config: coreConfig })
         const instances = await coreClient.getAllInstances()
         assert.strictEqual(instances.find(instance => instance === instanceName), undefined)
     })

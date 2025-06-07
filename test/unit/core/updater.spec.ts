@@ -1,35 +1,42 @@
 import * as assert from 'assert';
-import { DUMMY_SSH_KEY_PATH, getUnitTestCoreClient, loadDumyAnonymousStateV1 } from '../utils';
+import { DUMMY_SSH_KEY_PATH, getUnitTestCoreClient, getUnitTestCoreConfig, loadDumyAnonymousStateV1 } from '../utils';
 import { AwsInstanceStateV1, AwsStateParser } from '../../../src/providers/aws/state';
 import { InstanceUpdater } from '../../../src/core/updater';
+import { DummyProviderClient } from '../../../src/providers/dummy/provider';
+import { DummyInstanceStateV1, DummyStateParser } from '../../../src/providers/dummy/state';
 
 describe('InstanceUpdater', () => {
+
+    const coreConfig = getUnitTestCoreConfig()
 
     it('should update instance state with provided arguments', async () => {
         
         // Load known state into dummy writer after changing its name to avoid collision
-        const awsState = new AwsStateParser().parse(loadDumyAnonymousStateV1("aws-dummy"))
+        const dummyState = new DummyStateParser().parse(loadDumyAnonymousStateV1("dummy-provider-state"))
 
-        const instanceName = "aws-dummy-test-update"
-        awsState.name = instanceName
+        const instanceName = "instance-updater-test-dummy-instance"
+        dummyState.name = instanceName
 
         // write a new state to avoid collision
-        const coreClient = getUnitTestCoreClient()
-        const stateWriter = coreClient.buildStateWriterFor(awsState)
-        await stateWriter.persistStateNow()
+        const dummyProviderClient = new DummyProviderClient({ config: coreConfig })
+        const stateWriter = dummyProviderClient.getStateWriter()
+        await stateWriter.setStateAndPersistNow(dummyState)
 
-        const stateLoader = coreClient.buildStateLoader()
+        const stateLoader = dummyProviderClient.getStateLoader()
 
-        const updater = new InstanceUpdater<AwsInstanceStateV1>({
-            stateParser: new AwsStateParser(),
+        const updater = new InstanceUpdater<DummyInstanceStateV1>({
+            stateParser: new DummyStateParser(),
             stateWriter: stateWriter,
             stateLoader: stateLoader
         })
 
-        const newConfigurationInputs: AwsInstanceStateV1["configuration"]["input"] = {
+        const newConfigurationInputs: DummyInstanceStateV1["configuration"]["input"] = {
             autostop: {
-                enable: !awsState.configuration.input.autostop?.enable,
-                timeoutSeconds: (awsState.configuration.input.autostop?.timeoutSeconds ?? 0) + 1
+                enable: !dummyState.configuration.input.autostop?.enable,
+                timeoutSeconds: (dummyState.configuration.input.autostop?.timeoutSeconds ?? 0) + 1
+            },
+            ansible: {
+                additionalArgs: "--new-additional-args"
             },
             keyboard: {
                 layout: "en-US",
@@ -41,20 +48,25 @@ describe('InstanceUpdater', () => {
             sunshine: {
                 enable: true,
                 passwordBase64: "xxx",
-                username: "xxx"
+                username: "xxx",
+                serverName: "new-server-name"
             },
             wolf: null
         }
 
-        const newProvisionInputs: AwsInstanceStateV1["provision"]["input"] = {
-            diskSize: awsState.provision.input.diskSize + 100,
-            instanceType: "t2.micro",
-            publicIpType: "static",
-            region: "us-east-1",
+        const newProvisionInputs: DummyInstanceStateV1["provision"]["input"] = {
+            instanceType: "dummy-instance-type-after-update",
+            startDelaySeconds: 999,
+            stopDelaySeconds: 999,
+            configurationDelaySeconds: 999,
+            provisioningDelaySeconds: 999,
+            readinessAfterStartDelaySeconds: 999,
+            initialServerStateAfterProvision: "stopped",
+            deleteInstanceServerOnStop: true,
             ssh: {
-                user: "test",
-            },
-            useSpot: false
+                user: "ssh-user-after-update",
+                privateKeyContentBase64: "ssh-private-key-after-update"
+            }
         }
 
         await updater.updateStateOnly({ 
@@ -64,21 +76,21 @@ describe('InstanceUpdater', () => {
         })
 
         const expectedState = {
-            ...awsState,
+            ...dummyState,
             provision: {
-                ...awsState.provision,
+                ...dummyState.provision,
                 input: {
-                    ...awsState.provision.input,
+                    ...dummyState.provision.input,
                     ...newProvisionInputs,
                     ssh: {
-                        ...awsState.provision.input.ssh,
+                        ...dummyState.provision.input.ssh,
                         ...newProvisionInputs.ssh,
                     }
                 },
-                output: awsState.provision.output,
+                output: dummyState.provision.output,
             },
             configuration: {
-                ...awsState.configuration,
+                ...dummyState.configuration,
                 input: newConfigurationInputs,
                 // output: awsState.configuration.output
             }

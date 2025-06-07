@@ -1,12 +1,20 @@
 import { InteractiveInstanceInitializer } from "../../cli/initializer"
-import { CLOUDYPAD_PROVIDER_DUMMY } from "../../core/const"
+import { CLOUDYPAD_PROVIDER_DUMMY, CLOUDYPAD_PROVIDER } from "../../core/const"
 import { InstanceInitializer } from "../../core/initializer"
+import { InstanceManager } from "../../core/manager"
+import { GenericInstanceManager } from "../../core/manager"
 import { AbstractProviderClient, ProviderClientArgs } from "../../core/provider"
-import { CommonConfigurationInputV1 } from "../../core/state/state"
+import { InstanceStateV1 } from "../../core/state/state"
 import { StateWriter } from "../../core/state/writer"
 import { InstanceUpdater } from "../../core/updater"
+import { DummyRunnerFactory } from "./factory"
 import { DummyCreateCliArgs, DummyInputPrompter } from "./cli"
+import { DummyProvisionerFactory } from "./factory"
+import { DummyConfiguratorFactory } from "./factory"
+import { DummyInstanceInfraManager } from "./infra"
 import { DummyInstanceStateV1, DummyProvisionInputV1, DummyStateParser } from "./state"
+import { GenericStateParser } from "../../core/state/parser"
+import { StateLoader } from "../../core/state/loader"
 
 export class DummyProviderClient extends AbstractProviderClient<DummyInstanceStateV1> {
 
@@ -14,37 +22,81 @@ export class DummyProviderClient extends AbstractProviderClient<DummyInstanceSta
         super(args)
     }
 
-    getInstanceInitializer(): InstanceInitializer<DummyProvisionInputV1, CommonConfigurationInputV1> {
-        const initializer: InstanceInitializer<DummyProvisionInputV1, CommonConfigurationInputV1> = 
-            this.coreClient.buildInstanceInitializer(CLOUDYPAD_PROVIDER_DUMMY)
-        return initializer
+    getProvider(): CLOUDYPAD_PROVIDER {
+        return CLOUDYPAD_PROVIDER_DUMMY
     }
- 
-    getInteractiveInstanceInitializer(args: { cliArgs: DummyCreateCliArgs })
-        : InteractiveInstanceInitializer<DummyCreateCliArgs, DummyProvisionInputV1, CommonConfigurationInputV1> 
-    {
-        return new InteractiveInstanceInitializer<DummyCreateCliArgs, DummyProvisionInputV1, CommonConfigurationInputV1>({ 
-            coreClient: this.coreClient,
-            inputPrompter: new DummyInputPrompter({ coreClient: this.coreClient }),
-            provider: CLOUDYPAD_PROVIDER_DUMMY,
-            initArgs: args.cliArgs
+    
+    getStateParser(): GenericStateParser<DummyInstanceStateV1> {
+        return new DummyStateParser()
+    }
+    
+    async getInstanceManagerFor(state: InstanceStateV1): Promise<InstanceManager> {
+        const parser = new DummyStateParser()
+        const dummyState = parser.parse(state)
+        const stateWriter = this.getStateWriter()
+        const dummyInfraManager = new DummyInstanceInfraManager({
+            instanceName: dummyState.name,
+            coreConfig: this.coreConfig
+        })
+
+        return new GenericInstanceManager<DummyInstanceStateV1>({
+            instanceName: dummyState.name,
+            provisionerFactory: new DummyProvisionerFactory({
+                coreConfig: this.coreConfig,
+                dummyInfraManager: dummyInfraManager
+            }),
+            runnerFactory: new DummyRunnerFactory({
+                coreConfig: this.coreConfig,
+                dummyInfraManager: dummyInfraManager
+            }),
+            configuratorFactory: new DummyConfiguratorFactory(),  
+            stateWriter: stateWriter,
+            options: {
+                deleteInstanceServerOnStop: {
+                    enabled: dummyState.provision.input.deleteInstanceServerOnStop ?? false,
+                    postStartReconfigurationAnsibleAdditionalArgs: [ "-t", "data-disk,sunshine"]
+                }
+            }
+        })
+    }
+    
+    async getInstanceManager(instanceName: string): Promise<InstanceManager> {
+        const state = await this.getInstanceState(instanceName)
+        return this.getInstanceManagerFor(state)
+    }
+
+    getInstanceInitializer(): InstanceInitializer<DummyInstanceStateV1> {
+        return new InstanceInitializer<DummyInstanceStateV1>({
+            stateWriter: this.getStateWriter(),
+            stateParser: new DummyStateParser(),
+            provider: CLOUDYPAD_PROVIDER_DUMMY
         })
     }
 
     getInstanceUpdater(): InstanceUpdater<DummyInstanceStateV1> {
-        const instanceUpdater = this.coreClient.buildInstanceUpdater(new DummyStateParser())
-        return instanceUpdater
+        return new InstanceUpdater<DummyInstanceStateV1>({
+            stateLoader: this.stateManagerBuilder.buildStateLoader(),
+            stateWriter: this.getStateWriter(),
+            stateParser: new DummyStateParser()
+        })
     }
 
     async getInstanceState(instanceName: string): Promise<DummyInstanceStateV1> {
-        const loader = this.coreClient.buildStateLoader()
+        const loader = this.stateManagerBuilder.buildStateLoader()
         const parser = new DummyStateParser()
         const rawState = await loader.loadInstanceState(instanceName)
         return parser.parse(rawState)
     }
 
-    async getStateWriterFor(state: DummyInstanceStateV1): Promise<StateWriter<DummyInstanceStateV1>> {
-        const stateWriter = this.coreClient.buildStateWriterFor(state)
-        return stateWriter
+    getStateWriter(): StateWriter<DummyInstanceStateV1> {
+        return new StateWriter<DummyInstanceStateV1>({
+            sideEffect: this.stateManagerBuilder.buildSideEffect(),
+            stateParser: new DummyStateParser()
+        })
     }
+
+    getStateLoader(): StateLoader {
+        return this.getInstanceUpdater().getStateLoader()
+    }
+
 }

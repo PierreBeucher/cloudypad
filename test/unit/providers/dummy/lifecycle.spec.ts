@@ -3,15 +3,18 @@ import * as assert from 'assert';
 import { InteractiveInstanceInitializer } from '../../../../src/cli/initializer';
 import { CLOUDYPAD_CONFIGURATOR_ANSIBLE, CLOUDYPAD_PROVIDER_DUMMY } from '../../../../src/core/const';
 import { DummyCreateCliArgs, DummyInputPrompter } from '../../../../src/providers/dummy/cli';
-import { DEFAULT_COMMON_CLI_ARGS, getUnitTestCoreClient } from '../../utils';
-import { DummyInstanceInput, DummyProvisionInputV1 } from '../../../../src/providers/dummy/state';
+import { DEFAULT_COMMON_CLI_ARGS, getUnitTestCoreClient, getUnitTestCoreConfig } from '../../utils';
+import { DummyInstanceInput, DummyInstanceStateV1, DummyProvisionInputV1 } from '../../../../src/providers/dummy/state';
 import { CommonConfigurationInputV1 } from '../../../../src/core/state/state';
 import { ServerRunningStatus } from '../../../../src/core/runner';
+import { DummyProviderClient } from '../../../../src/providers/dummy/provider';
 
 describe('Dummy instance lifecycle', () => {
 
-    const DUMMY_INSTANCE_NAME = "dummy-instance"
-    const DUMMY_INSTANCE_TYPE = "dummy-instance-type-1"
+    const coreConfig = getUnitTestCoreConfig()
+
+    const DUMMY_INSTANCE_NAME = "dummy-instance-lifecycle-test"
+    const DUMMY_INSTANCE_TYPE = "dummy-instance-lifecycle-test-type-1"
 
     const DUMMY_INSTANCE_INPUT: DummyInstanceInput = {
         instanceName: DUMMY_INSTANCE_NAME,
@@ -43,17 +46,17 @@ describe('Dummy instance lifecycle', () => {
 
     it('should initialize a new Dummy instance', async () => {
 
-        const coreClient = getUnitTestCoreClient()
-        const initializer = coreClient.buildInstanceInitializer<DummyProvisionInputV1, CommonConfigurationInputV1>(CLOUDYPAD_PROVIDER_DUMMY)
+        const providerClient = new DummyProviderClient({ config: coreConfig })
+        const initializer = providerClient.getInstanceInitializer()
         await initializer.initializeStateOnly(DUMMY_INSTANCE_NAME, DUMMY_INSTANCE_INPUT.provision, DUMMY_INSTANCE_INPUT.configuration)
 
-        const loader = coreClient.buildStateLoader()
+        const loader = providerClient.getStateLoader()
         const state = await loader.loadInstanceState(DUMMY_INSTANCE_NAME)
     })
 
     it('should provision and configure Dummy instance', async () => {
-        const coreClient = getUnitTestCoreClient()
-        const manager = await coreClient.buildInstanceManager(DUMMY_INSTANCE_NAME)
+        const providerClient = new DummyProviderClient({ config: coreConfig })
+        const manager = await providerClient.getInstanceManager(DUMMY_INSTANCE_NAME)
 
         const detailsBeforeProvision = await manager.getInstanceStatus()
         assert.equal(detailsBeforeProvision.serverStatus, ServerRunningStatus.Unknown, 'Instance should be in unknown state after initialization without provisioning')
@@ -82,8 +85,8 @@ describe('Dummy instance lifecycle', () => {
     })
 
     it('should start, stop, and restart the Dummy instance', async () => {
-        const coreClient = getUnitTestCoreClient()
-        const manager = await coreClient.buildInstanceManager(DUMMY_INSTANCE_NAME)
+        const providerClient = new DummyProviderClient({ config: coreConfig })
+        const manager = await providerClient.getInstanceManager(DUMMY_INSTANCE_NAME)
 
         const detailsBeforeStart = await manager.getInstanceStatus()   
         assert.equal(detailsBeforeStart.serverStatus, ServerRunningStatus.Running, 'Instance should be running before stop test')
@@ -106,24 +109,23 @@ describe('Dummy instance lifecycle', () => {
     }).timeout(20000)
 
     it('should destroy the Dummy instance', async () => {
-        const coreClient = getUnitTestCoreClient()
-        const manager = await coreClient.buildInstanceManager(DUMMY_INSTANCE_NAME)
+        const providerClient = new DummyProviderClient({ config: coreConfig })
+        const manager = await providerClient.getInstanceManager(DUMMY_INSTANCE_NAME)
         await manager.destroy()
     })
 
     it("should initialize with InteractiveInstanceInitializer without prompting", async () => {
-        const coreClient = getUnitTestCoreClient()
-        await new InteractiveInstanceInitializer<DummyCreateCliArgs, DummyProvisionInputV1, CommonConfigurationInputV1>({ 
-            provider: CLOUDYPAD_PROVIDER_DUMMY,
+        const providerClient = new DummyProviderClient({ config: coreConfig })
+        await new InteractiveInstanceInitializer<DummyInstanceStateV1, DummyCreateCliArgs>({ 
             initArgs: DUMMY_CLI_ARGS,
-            inputPrompter: new DummyInputPrompter({ coreClient: coreClient }),
-            coreClient: coreClient
+            inputPrompter: new DummyInputPrompter({ coreConfig: coreConfig }),
+            providerClient: providerClient
         }).initializeInteractive({ skipPostInitInfo: true })
     })
 
     it("should initialize with given initial server status", async () => {
-        const coreClient = getUnitTestCoreClient()
-        const initializer = coreClient.buildInstanceInitializer<DummyProvisionInputV1, CommonConfigurationInputV1>(CLOUDYPAD_PROVIDER_DUMMY)
+        const providerClient = new DummyProviderClient({ config: coreConfig })
+        const initializer = providerClient.getInstanceInitializer()
 
         const instanceUndefinedInitialServerState = "instance-undefined-initial-server-state"
         await initializer.initializeStateOnly(instanceUndefinedInitialServerState, {
@@ -131,7 +133,7 @@ describe('Dummy instance lifecycle', () => {
             initialServerStateAfterProvision: undefined
         }, DUMMY_INSTANCE_INPUT.configuration)
 
-        const managerUndefinedInitialServerState = await coreClient.buildInstanceManager(instanceUndefinedInitialServerState)
+        const managerUndefinedInitialServerState = await providerClient.getInstanceManager(instanceUndefinedInitialServerState)
         await managerUndefinedInitialServerState.provision()
         const detailsUndefinedInitialServerState = await managerUndefinedInitialServerState.getInstanceStatus()
         assert.equal(detailsUndefinedInitialServerState.serverStatus, ServerRunningStatus.Running)
@@ -142,7 +144,7 @@ describe('Dummy instance lifecycle', () => {
             ...DUMMY_INSTANCE_INPUT.provision,
             initialServerStateAfterProvision: ServerRunningStatus.Running
         }, DUMMY_INSTANCE_INPUT.configuration)
-        const managerRunningInitialServerState = await coreClient.buildInstanceManager(instanceRunningInitialServerState)
+        const managerRunningInitialServerState = await providerClient.getInstanceManager(instanceRunningInitialServerState)
         await managerRunningInitialServerState.provision()
         const detailsRunningInitialServerState = await managerRunningInitialServerState.getInstanceStatus()
         assert.equal(detailsRunningInitialServerState.serverStatus, ServerRunningStatus.Running)
@@ -153,7 +155,7 @@ describe('Dummy instance lifecycle', () => {
             ...DUMMY_INSTANCE_INPUT.provision,
             initialServerStateAfterProvision: ServerRunningStatus.Stopped
         }, DUMMY_INSTANCE_INPUT.configuration)
-        const managerStoppedInitialServerState = await coreClient.buildInstanceManager(instanceStoppedInitialServerState)
+        const managerStoppedInitialServerState = await providerClient.getInstanceManager(instanceStoppedInitialServerState)
         await managerStoppedInitialServerState.provision()
         const detailsStoppedInitialServerState = await managerStoppedInitialServerState.getInstanceStatus()
         assert.equal(detailsStoppedInitialServerState.serverStatus, ServerRunningStatus.Stopped)

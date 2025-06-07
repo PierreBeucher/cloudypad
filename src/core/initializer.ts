@@ -1,25 +1,27 @@
 import { getLogger } from "../log/utils"
 import { CLOUDYPAD_PROVIDER } from "../core/const"
 import { StateInitializer } from "../core/state/initializer"
-import { CommonConfigurationInputV1, CommonProvisionInputV1, InstanceStateV1 } from "./state/state"
+import { InstanceStateV1 } from "./state/state"
 import { generatePrivateSshKey } from "../tools/ssh"
 import { toBase64 } from "../tools/base64"
 import { StateWriter } from "./state/writer"
+import { GenericStateParser } from "./state/parser"
 
-export interface InstancerInitializerArgs {
+export interface InstanceInitializerArgs<ST extends InstanceStateV1> {
     provider: CLOUDYPAD_PROVIDER
-    stateWriter: StateWriter<InstanceStateV1>
+    stateWriter: StateWriter<ST>
+    stateParser: GenericStateParser<ST>
 }
 
 /**
  * Base class for initializing an instance. Can be extended to add custom steps before and after each step using before* and after* methods.
  */
-export class InstanceInitializer<PI extends CommonProvisionInputV1, CI extends CommonConfigurationInputV1> {
+export class InstanceInitializer<ST extends InstanceStateV1> {
 
     protected readonly logger = getLogger(InstanceInitializer.name)
-    protected readonly args: InstancerInitializerArgs
+    protected readonly args: InstanceInitializerArgs<ST>
 
-    constructor(args: InstancerInitializerArgs){
+    constructor(args: InstanceInitializerArgs<ST>){
         this.args = args
     }
 
@@ -32,7 +34,7 @@ export class InstanceInitializer<PI extends CommonProvisionInputV1, CI extends C
      * @param provisionInput 
      * @param configurationInput 
      */
-    async initializeStateOnly(instanceName: string, provisionInput: PI, configurationInput: CI): Promise<void> {
+    async initializeStateOnly(instanceName: string, provisionInput: ST["provision"]["input"], configurationInput: ST["configuration"]["input"]): Promise<void> {
         
         this.logger.debug(`Initializing instance with provisionInput ${JSON.stringify(provisionInput)} and configurationInput ${JSON.stringify(configurationInput)}`)
         
@@ -45,6 +47,7 @@ export class InstanceInitializer<PI extends CommonProvisionInputV1, CI extends C
 
         const state = await new StateInitializer({
             stateWriter: this.args.stateWriter,
+            stateParser: this.args.stateParser,
             input: {
                 instanceName: instanceName,
                 provision: provisionInput,

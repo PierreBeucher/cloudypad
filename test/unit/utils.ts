@@ -16,6 +16,9 @@ import { CloudypadClient } from "../../src";
 import { AwsInstanceStateV1 } from "../../src/providers/aws/state";
 import { PartialDeep } from "type-fest";
 import * as lodash from "lodash"
+import { CoreConfig } from "../../src/core/config/interface";
+import { DummyProviderClient } from "../../src/providers/dummy/provider";
+import { DummyInstanceStateV1, DummyProvisionInputV1, DummyConfigurationOutputV1 } from "../../src/providers/dummy/state";
 
 /**
  * CommonInstanceInput with as most fields filled as possible while keeping it valid:
@@ -145,13 +148,21 @@ const TEST_DATA_ROOT_DIR = createTempTestDir("data-root")
  */
 export function getUnitTestCoreClient(): CloudypadClient{
     return new CloudypadClient({
-        config: {
-            stateBackend: {
-                local: {
-                    dataRootDir: TEST_DATA_ROOT_DIR
-                }
-            }
+        config: getUnitTestCoreConfig()
+    })
+}
+
+export function getUnitTestCoreConfig(): CoreConfig {
+    return {
+        stateBackend: {
+            local: { dataRootDir: TEST_DATA_ROOT_DIR }
         }
+    }
+}
+
+export function getUnitTestDummyProviderClient(): DummyProviderClient {
+    return new DummyProviderClient({
+        config: getUnitTestCoreConfig()
     })
 }
 
@@ -187,4 +198,36 @@ export function createDummyAwsState(override: PartialDeep<AwsInstanceStateV1>): 
     })
 
     return lodash.merge(awsState, override)
+}
+
+/**
+ * Create a dummy state that can be used for testing
+ * @param override 
+ * @returns 
+ */
+export function createDummyState(override: PartialDeep<DummyInstanceStateV1>): DummyInstanceStateV1 {
+
+    // clone deep to avoid later operation returned state
+    // to alter DEFAULT_COMMON_INPUT used in this state
+    const dummyState: DummyInstanceStateV1 = lodash.cloneDeep({
+        version: "1",
+        provision: {
+            provider: "dummy",
+            input: {
+                ...DEFAULT_COMMON_INPUT.provision,
+                instanceType: "t2.micro",
+                startDelaySeconds: 5,
+                stopDelaySeconds: 5,
+            }
+        },
+        name: `dummy-instance-${Date.now()}`,
+        configuration: {
+            configurator: "ansible",
+            input: {
+                ...DEFAULT_COMMON_INPUT.configuration,
+            },
+        }
+    });
+
+    return lodash.merge(dummyState, override);
 }

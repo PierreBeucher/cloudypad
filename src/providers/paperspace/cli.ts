@@ -10,6 +10,7 @@ import { CLI_OPTION_AUTO_STOP_TIMEOUT, CLI_OPTION_AUTO_STOP_ENABLE, CLI_OPTION_D
 import { InteractiveInstanceInitializer } from "../../cli/initializer";
 import { RUN_COMMAND_CREATE, RUN_COMMAND_UPDATE } from "../../tools/analytics/events";
 import { InteractiveInstanceUpdater } from "../../cli/updater";
+import { PaperspaceProviderClient } from "./provider";
 
 export interface PaperspaceCreateCliArgs extends CreateCliArgs {
     apiKeyFile?: string
@@ -175,10 +176,9 @@ export class PaperspaceCliCommandGenerator extends CliCommandGenerator {
             .action(async (cliArgs: PaperspaceCreateCliArgs) => {
                 this.analytics.sendEvent(RUN_COMMAND_CREATE, { provider: CLOUDYPAD_PROVIDER_PAPERSPACE })
                 try {
-                    await new InteractiveInstanceInitializer<PaperspaceCreateCliArgs, PaperspaceProvisionInputV1, CommonConfigurationInputV1>({ 
-                        coreClient: args.coreClient,
-                        inputPrompter: new PaperspaceInputPrompter({ coreClient: args.coreClient }),
-                        provider: CLOUDYPAD_PROVIDER_PAPERSPACE,
+                    await new InteractiveInstanceInitializer<PaperspaceInstanceStateV1, PaperspaceCreateCliArgs>({ 
+                        providerClient: new PaperspaceProviderClient({ config: args.coreConfig }),
+                        inputPrompter: new PaperspaceInputPrompter({ coreConfig: args.coreConfig }),
                         initArgs: cliArgs
                     }).initializeInteractive()
                     
@@ -204,9 +204,8 @@ export class PaperspaceCliCommandGenerator extends CliCommandGenerator {
                 this.analytics.sendEvent(RUN_COMMAND_UPDATE, { provider: CLOUDYPAD_PROVIDER_PAPERSPACE })
                 try {
                     await new InteractiveInstanceUpdater<PaperspaceInstanceStateV1, PaperspaceUpdateCliArgs>({
-                        coreClient: args.coreClient,
-                        stateParser: new PaperspaceStateParser(),
-                        inputPrompter: new PaperspaceInputPrompter({ coreClient: args.coreClient }),
+                        providerClient: new PaperspaceProviderClient({ config: args.coreConfig }),
+                        inputPrompter: new PaperspaceInputPrompter({ coreConfig: args.coreConfig }),
                     }).updateInteractive(cliArgs)
                     
                     console.info(`Updated instance ${cliArgs.name}`)

@@ -24,6 +24,7 @@ describe('StateLoader', function () {
             const instances = await loader.listInstances()
 
             const expectedInstances = [
+                'dummy-provider-state',
                 'aws-dummy', 
                 'azure-dummy', 
                 'gcp-dummy', 

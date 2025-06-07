@@ -1,7 +1,7 @@
 import { AwsInstanceInput, AwsInstanceStateV1, AwsProvisionInputV1, AwsStateParser } from "./state"
 import { CommonConfigurationInputV1, CommonInstanceInput } from "../../core/state/state"
 import { input, select, confirm } from '@inquirer/prompts';
-import { AwsClient, EC2_QUOTA_CODE_ALL_G_AND_VT_SPOT_INSTANCES, EC2_QUOTA_CODE_RUNNING_ON_DEMAND_G_AND_VT_INSTANCES } from "../../tools/aws";
+import { AwsClient, EC2_QUOTA_CODE_ALL_G_AND_VT_SPOT_INSTANCES, EC2_QUOTA_CODE_RUNNING_ON_DEMAND_G_AND_VT_INSTANCES, DEFAULT_REGION } from "../../tools/aws";
 import { AbstractInputPrompter, AbstractInputPrompterArgs, costAlertCliArgsIntoConfig, PromptOptions } from "../../cli/prompter";
 import lodash from 'lodash'
 import { CLI_OPTION_COST_NOTIFICATION_EMAIL, CLI_OPTION_COST_ALERT, CLI_OPTION_COST_LIMIT, CLI_OPTION_DISK_SIZE, CLI_OPTION_PUBLIC_IP_TYPE, CLI_OPTION_SPOT, CliCommandGenerator, CreateCliArgs, UpdateCliArgs, CLI_OPTION_STREAMING_SERVER, CLI_OPTION_SUNSHINE_PASSWORD, CLI_OPTION_SUNSHINE_USERNAME, CLI_OPTION_SUNSHINE_IMAGE_REGISTRY, CLI_OPTION_SUNSHINE_IMAGE_TAG, CLI_OPTION_AUTO_STOP_TIMEOUT, CLI_OPTION_AUTO_STOP_ENABLE, CLI_OPTION_KEYBOARD_OPTIONS, CLI_OPTION_KEYBOARD_VARIANT, CLI_OPTION_KEYBOARD_MODEL, CLI_OPTION_KEYBOARD_LAYOUT, CLI_OPTION_USE_LOCALE, BuildCreateCommandArgs, BuildUpdateCommandArgs } from "../../cli/command";
@@ -11,7 +11,7 @@ import { PartialDeep } from "type-fest";
 import { RUN_COMMAND_CREATE, RUN_COMMAND_UPDATE } from "../../tools/analytics/events";
 import { InteractiveInstanceUpdater } from "../../cli/updater";
 import { cleanupAndExit, handleErrorAnalytics, logFullError } from "../../cli/program";
-import { CloudypadClient } from "../../core/client";
+import { AwsProviderClient } from "./provider";
 
 export interface AwsCreateCliArgs extends CreateCliArgs {
     spot?: boolean
@@ -227,10 +227,9 @@ export class AwsCliCommandGenerator extends CliCommandGenerator {
                 this.analytics.sendEvent(RUN_COMMAND_CREATE, { provider: CLOUDYPAD_PROVIDER_AWS })
                 
                 try {
-                    await new InteractiveInstanceInitializer<AwsCreateCliArgs, AwsProvisionInputV1, CommonConfigurationInputV1>({ 
-                        coreClient: args.coreClient,
-                        inputPrompter: new AwsInputPrompter({ coreClient: args.coreClient }),
-                        provider: CLOUDYPAD_PROVIDER_AWS,
+                    await new InteractiveInstanceInitializer<AwsInstanceStateV1, AwsCreateCliArgs>({ 
+                        providerClient: new AwsProviderClient({ config: args.coreConfig }),
+                        inputPrompter: new AwsInputPrompter({ coreConfig: args.coreConfig }),
                         initArgs: cliArgs
                     }).initializeInteractive()
                     
@@ -276,9 +275,8 @@ export class AwsCliCommandGenerator extends CliCommandGenerator {
                 
                 try {
                     await new InteractiveInstanceUpdater<AwsInstanceStateV1, AwsUpdateCliArgs>({
-                        coreClient: args.coreClient,
-                        stateParser: new AwsStateParser(),
-                        inputPrompter: new AwsInputPrompter({ coreClient: args.coreClient }),
+                        providerClient: new AwsProviderClient({ config: args.coreConfig }),
+                        inputPrompter: new AwsInputPrompter({ coreConfig: args.coreConfig }),
                     }).updateInteractive(cliArgs)
                     
                     console.info(`Updated instance ${cliArgs.name}`)

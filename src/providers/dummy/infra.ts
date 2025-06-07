@@ -90,7 +90,7 @@ class DummyInstanceInStateStatus {
         this.logger.debug(`Setting server running status for ${this.args.instanceName} to ${status}`)
 
         const currentState = await this.dummyProviderClient.getInstanceState(this.args.instanceName)
-        const stateWriter = await this.dummyProviderClient.getStateWriterFor(currentState)
+        const stateWriter = this.dummyProviderClient.getStateWriter()
         const currentInfra = currentState.dummyInfrastructure
         const newInfra = {
             ...currentInfra,
@@ -104,8 +104,7 @@ class DummyInstanceInStateStatus {
 
         this.logger.debug(`Setting new state for dummy instance ${this.args.instanceName}: ${JSON.stringify(newState)}`)
 
-        stateWriter.setState(newState)
-        await stateWriter.persistStateNow()
+        await stateWriter.setStateAndPersistNow(newState)
     }
 }
 

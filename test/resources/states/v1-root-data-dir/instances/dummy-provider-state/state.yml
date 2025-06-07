@@ -1,0 +1,46 @@
+name: "dummy-provider-state"
+version: "1"
+provision:
+  provider: dummy
+  output:
+    instanceId: "dummy-instance-id"
+    provisionedAt: 1234567890
+    host: "dummy-host"
+    dataDiskId: "dummy-data-disk-id"
+  input:
+    ssh:
+      user: "dummy-ssh-user"
+      privateKeyContentBase64: ZHVtbXktc3NoLXByaXZhdGUta2V5LWNvbnRlbnQtYmFzZTY0
+    instanceType: "dummy-instance-type"
+    startDelaySeconds: 10
+    stopDelaySeconds: 10
+    configurationDelaySeconds: 0
+    provisioningDelaySeconds: 0
+    readinessAfterStartDelaySeconds: 0
+    initialServerStateAfterProvision: "running"
+    deleteInstanceServerOnStop: false
+configuration:
+  configurator: ansible
+  input:
+    locale: "en_US.UTF-8"
+    autostop:
+      enable: true
+      timeoutSeconds: 3600
+    sunshine:
+      enable: true
+      passwordBase64: ZHVtbXktcGFzc3dvcmQtYmFzZTY0
+      username: "dummy-sunshine-username"
+      serverName: "dummy-sunshine-server-name"
+    ansible:
+      additionalArgs: "--tags data-disk -vvv"
+    keyboard:
+      layout: "us"
+      model: "pc105"
+      variant: "intl"
+      options: "ctrl:nocaps"
+  output:
+    configuredAt: 1234567890
+dummyInfrastructure:
+  serverStatus: "running"
+  serverId: "dummy-server-id"
+  lastUpdate: 1234567890

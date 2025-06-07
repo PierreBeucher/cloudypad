@@ -5,6 +5,7 @@ import { StateSideEffect } from "./side-effects/abstract";
 import { LocalStateSideEffect } from "./side-effects/local";
 import { S3StateSideEffect } from "./side-effects/s3";
 import { getLogger } from "../../log/utils";
+import { GenericStateParser } from "./parser";
 
 export interface StateManagerBuilderArgs {
     stateBackend: {
@@ -22,8 +23,7 @@ export interface StateManagerBuilderArgs {
 }
 
 /**
- * The StateManagerBuilder is a singleton builder for State managers: StateWriter, StateLoader and StateInitializer instances.
- * Singleton pattern is used here as State manager behaviors depends on current environments's Cloudy Pad config.
+ * The StateManagerBuilder is a builder for State managers: StateWriter, StateLoader and StateInitializer instances.
  */
 export class StateManagerBuilder {
 
@@ -71,14 +71,11 @@ export class StateManagerBuilder {
 
     }
 
-    public buildStateWriter<ST extends InstanceStateV1>(state?: ST): StateWriter<ST> {
+    public buildStateWriter<ST extends InstanceStateV1>(parser: GenericStateParser<ST>): StateWriter<ST> {
         const writer = new StateWriter<ST>({
-            sideEffect: this.buildSideEffect()
+            sideEffect: this.buildSideEffect(),
+            stateParser: parser
         })
-
-        if(state) {
-            writer.setState(state)
-        }
 
         return writer
     }

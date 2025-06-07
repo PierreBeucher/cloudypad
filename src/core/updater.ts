@@ -90,10 +90,14 @@ export class InstanceUpdater<ST extends InstanceStateV1> {
         this.logger.debug(`Updating with new configuration inputs: ${JSON.stringify(configurationInputs)}`)
         this.logger.debug(`Updating with new provision inputs: ${JSON.stringify(provisionInputs)}`)
 
-        await this.args.stateWriter.setState(prevState)
-        await this.args.stateWriter.setProvisionInput(provisionInputs)
-        await this.args.stateWriter.setConfigurationInput(configurationInputs)
+        await this.args.stateWriter.setProvisionInput(prevState.name, provisionInputs)
+        await this.args.stateWriter.setConfigurationInput(prevState.name, configurationInputs)
 
-        this.logger.debug(`State after update ${JSON.stringify(this.args.stateWriter.cloneState())}`)
+        const newState = await this.args.stateWriter.getCurrentState(prevState.name)
+        this.logger.debug(`State after update ${JSON.stringify(newState)}`)
+    }
+
+    getStateLoader(): StateLoader {
+        return this.args.stateLoader
     }
 }

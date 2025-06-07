@@ -9,6 +9,7 @@ import { CLI_OPTION_AUTO_STOP_TIMEOUT, CLI_OPTION_AUTO_STOP_ENABLE, CLI_OPTION_S
 import { InteractiveInstanceInitializer } from "../../cli/initializer";
 import { RUN_COMMAND_CREATE, RUN_COMMAND_UPDATE } from "../../tools/analytics/events";
 import { InteractiveInstanceUpdater } from "../../cli/updater";
+import { ScalewayProviderClient } from "./provider";
 
 export interface ScalewayCreateCliArgs extends CreateCliArgs {
     projectId?: string
@@ -233,12 +234,15 @@ export class ScalewayCliCommandGenerator extends CliCommandGenerator {
                 this.analytics.sendEvent(RUN_COMMAND_CREATE, { provider: CLOUDYPAD_PROVIDER_SCALEWAY })
 
                 try {
-                    await new InteractiveInstanceInitializer<ScalewayCreateCliArgs, ScalewayProvisionInputV1, CommonConfigurationInputV1>({ 
-                        coreClient: args.coreClient,
-                        inputPrompter: new ScalewayInputPrompter({ coreClient: args.coreClient }),
-                        provider: CLOUDYPAD_PROVIDER_SCALEWAY,
+                    const scalewayProviderClient = new ScalewayProviderClient({ config: args.coreConfig })
+                    const scalewayInstanceInitializer = new InteractiveInstanceInitializer<ScalewayInstanceStateV1, ScalewayCreateCliArgs>({
+                        providerClient: scalewayProviderClient,
+                        inputPrompter: new ScalewayInputPrompter({ coreConfig: args.coreConfig }),
                         initArgs: cliArgs
-                    }).initializeInteractive()
+                    })
+
+                    await scalewayInstanceInitializer.initializeInteractive()
+                    
                     
                 } catch (error) {   
                     throw new Error('Scaleway instance initilization failed', { cause: error })
@@ -269,9 +273,8 @@ export class ScalewayCliCommandGenerator extends CliCommandGenerator {
 
                 try {
                     await new InteractiveInstanceUpdater<ScalewayInstanceStateV1, ScalewayUpdateCliArgs>({
-                        coreClient: args.coreClient,
-                        stateParser: new ScalewayStateParser(),
-                        inputPrompter: new ScalewayInputPrompter({ coreClient: args.coreClient }),
+                        providerClient: new ScalewayProviderClient({ config: args.coreConfig }),
+                        inputPrompter: new ScalewayInputPrompter({ coreConfig: args.coreConfig }),
                     }).updateInteractive(cliArgs)
                     
                     console.info(`Updated instance ${cliArgs.name}`)
