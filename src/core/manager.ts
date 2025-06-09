@@ -295,10 +295,21 @@ export class GenericInstanceManager<ST extends InstanceStateV1> implements Insta
         
         await this.addEvent(InstanceEventEnum.StopBegin)
 
+
         // always cleanly stop instance to avoid data inconsistency 
         // as instance server may be deleted on stop and deleting without stopping may cause data inconsistency
         // and stopOptions logic is ported by runner
         const runner = await this.buildRunner()
+        
+        // if instance server is deleted on stop, check server status first as it may not exist
+        if(this.args.options?.deleteInstanceServerOnStop){
+            const serverStatus = await runner.serverStatus()
+            if(serverStatus === ServerRunningStatus.Unknown){
+                this.logger.info(`Instance ${this.name()} does not have a server. No need to stop.`)
+                return
+            }
+        }
+
         await runner.stop(opts)
 
         // destroy instance server if deleteInstanceServerOnStop is enabled
