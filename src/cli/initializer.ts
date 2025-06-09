@@ -43,7 +43,7 @@ export class InteractiveInstanceInitializer<
         this.instanceInitializer = new InstanceInitializer<ST>({
             stateWriter: this.args.providerClient.getStateWriter(),
             stateParser: this.args.providerClient.getStateParser(),
-            provider: this.args.providerClient.getProvider()
+            provider: this.args.providerClient.getProviderName()
         })
     }
 
@@ -133,7 +133,7 @@ export class InteractiveInstanceInitializer<
 
     private analyticsEvent(event: string, additionalProperties?: Record<string, any>) {
         this.analytics.sendEvent(event, { 
-            provider: this.args.providerClient.getProvider(), 
+            provider: this.args.providerClient.getProviderName(), 
             ...additionalProperties 
         })
     }

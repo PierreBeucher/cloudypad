@@ -34,7 +34,7 @@ export abstract class AbstractProviderClient<ST extends InstanceStateV1> {
         })
     }
 
-    abstract getProvider(): CLOUDYPAD_PROVIDER
+    abstract getProviderName(): CLOUDYPAD_PROVIDER
 
     abstract getInstanceInitializer(): InstanceInitializer<ST>
 

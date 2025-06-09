@@ -23,7 +23,7 @@ export class AwsProviderClient extends AbstractProviderClient<AwsInstanceStateV1
         super(args)
     }
 
-    getProvider(): CLOUDYPAD_PROVIDER {
+    getProviderName(): CLOUDYPAD_PROVIDER {
         return CLOUDYPAD_PROVIDER_AWS
     }
 

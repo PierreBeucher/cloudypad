@@ -23,7 +23,7 @@ export class AzureProviderClient extends AbstractProviderClient<AzureInstanceSta
         super(args)
     }
 
-    getProvider(): CLOUDYPAD_PROVIDER {
+    getProviderName(): CLOUDYPAD_PROVIDER {
         return CLOUDYPAD_PROVIDER_AZURE
     }
 

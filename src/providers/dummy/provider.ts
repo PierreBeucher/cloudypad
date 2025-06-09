@@ -22,7 +22,7 @@ export class DummyProviderClient extends AbstractProviderClient<DummyInstanceSta
         super(args)
     }
 
-    getProvider(): CLOUDYPAD_PROVIDER {
+    getProviderName(): CLOUDYPAD_PROVIDER {
         return CLOUDYPAD_PROVIDER_DUMMY
     }
     

@@ -23,7 +23,7 @@ export class PaperspaceProviderClient extends AbstractProviderClient<PaperspaceI
         super(args)
     }
 
-    getProvider(): CLOUDYPAD_PROVIDER {
+    getProviderName(): CLOUDYPAD_PROVIDER {
         return CLOUDYPAD_PROVIDER_PAPERSPACE
     }
 
