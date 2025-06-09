@@ -254,13 +254,14 @@ async function awsPulumiProgram(): Promise<Record<string, any> | void> {
 
     const ubuntuAmi = aws.ec2.getAmiOutput({
         mostRecent: true,
+        nameRegex: "^ubuntu/images/hvm-ssd-gp3/ubuntu-noble-24.04-amd64-server-[0-9]{8}$",
         filters: [
             {
                 name: "name",
                 // Use a specific version as much as possible to avoid reproducibility issues
                 // Can't use AMI ID as it's region dependent 
                 // and specifying AMI for all regions may not yield expected results and would be hard to maintain
-                values: ["ubuntu/images/hvm-ssd-gp3/ubuntu-noble-24.04-amd64-server-20250115"],
+                values: ["ubuntu/images/hvm-ssd-gp3/ubuntu-noble-24.04-amd64-server-*"],
             },
             {
                 name: "virtualization-type",
