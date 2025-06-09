@@ -205,11 +205,13 @@ export class SSHClient {
         // which make program hangs
         if(this.client.isConnected()) return this.client
 
+        this.logger.debug(`Connecting to '${this.args.user}@${this.args.host}' port '${this.args.port}' using ssh key ${this.args.privateKeyPath}...`)
+
         return this.client.connect({
             host: this.args.host,
             port: this.args.port,
             username: this.args.user,
-            privateKeyPath: this.args.privateKeyPath            
+            privateKeyPath: this.args.privateKeyPath,
         });
     }
     
