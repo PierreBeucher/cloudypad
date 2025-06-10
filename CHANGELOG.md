@@ -1,5 +1,25 @@
 # Changelog
 
+## [0.29.0](https://github.com/PierreBeucher/cloudypad/compare/v0.28.0...v0.29.0) (2025-06-10)
+
+
+### Features
+
+* add instance events in state ([b0aa974](https://github.com/PierreBeucher/cloudypad/commit/b0aa974876e949c4c2a1a8e3f73cdf4c9e0c5388))
+* option to delete instance server and OS disk on stop ([622f48b](https://github.com/PierreBeucher/cloudypad/commit/622f48b50e4713f7a8cda1a43ea242b682ff55b9))
+* pass configuration Ansible args via CLI --ansible-additional-args ([b4ef2b1](https://github.com/PierreBeucher/cloudypad/commit/b4ef2b17eb665e319bcc638e68c6d794248f834f))
+* pulumi client refresh() function ([72f9625](https://github.com/PierreBeucher/cloudypad/commit/72f9625c8ead3af6ec471a22ac74e2433b996f51))
+* **scaleway:** allow updating base image ID ([0f5e074](https://github.com/PierreBeucher/cloudypad/commit/0f5e0747db4c89e5b5c4d3aa6147cc4cffba1661))
+
+
+### Bug Fixes
+
+* do not nullify streaming server if no CLI arg is passed, use existing state if any ([2a5e47e](https://github.com/PierreBeucher/cloudypad/commit/2a5e47ec7abf11f780999ea7f4b11a4dd7975532))
+* ensure StateWriter always read latest state before updating ([03503f4](https://github.com/PierreBeucher/cloudypad/commit/03503f4344dc0471775aa5484f3e6c6b5a04c1d7))
+* Paperspece get command failed with "Not implemented" as server status not yet implemented. Warn instead with unknown status. ([ba63776](https://github.com/PierreBeucher/cloudypad/commit/ba6377613ae05d8d1a7b481b51c5d4ba8b9942e0))
+* pick up new amis automatically ([e037f21](https://github.com/PierreBeucher/cloudypad/commit/e037f211992f3b857898fc474ed6a690e9d51927))
+* **Wolf:** instance readiness check not working ([e540184](https://github.com/PierreBeucher/cloudypad/commit/e540184db56e11c002cd4d4257377d85bdd82aba))
+
 ## [0.28.0](https://github.com/PierreBeucher/cloudypad/compare/v0.27.1...v0.28.0) (2025-05-22)
 
 
