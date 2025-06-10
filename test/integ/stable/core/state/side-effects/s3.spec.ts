@@ -1,10 +1,10 @@
 import * as assert from 'assert'
 import * as yaml from 'yaml'
 import { S3Client, GetObjectCommand, PutObjectCommand, S3ClientConfig } from '@aws-sdk/client-s3'
-import { S3StateSideEffect } from '../../../src/core/state/side-effects/s3'
-import { InstanceStateV1 } from '../../../src/core/state/state'
+import { S3StateSideEffect } from '../../../../../../src/core/state/side-effects/s3'
+import { InstanceStateV1 } from '../../../../../../src/core/state/state'
 import Docker from 'dockerode'
-import { getLogger } from '../../../src/log/utils'
+import { getLogger } from '../../../../../../src/log/utils'
 
 describe('S3StateSideEffect', () => {
     

@@ -6,17 +6,17 @@
 // 5. Stop the instance
 // 6. Destroy the instanceg
 
-import { CLOUDYPAD_PROVIDER_AWS, PUBLIC_IP_TYPE_STATIC } from "../../../src/core/const"
+import { CLOUDYPAD_PROVIDER_AWS, PUBLIC_IP_TYPE_STATIC } from "../../../../src/core/const"
 import * as assert from 'assert'
 import * as child_process from 'node:child_process'
-import { InteractiveInstanceInitializer } from "../../../src/cli/initializer"
-import { AwsCreateCliArgs, AwsInputPrompter } from "../../../src/providers/aws/cli"
-import { STREAMING_SERVER_SUNSHINE } from "../../../src/cli/prompter"
-import { ServerRunningStatus } from "../../../src/core/runner"
-import { makePin } from "../../../src/core/moonlight/pairer/abstract"
-import { CommonConfigurationInputV1 } from "../../../src/core/state/state"
-import { AwsProvisionInputV1 } from "../../../src/providers/aws/state"
-import { getUnitTestCoreClient } from "../../unit/utils"
+import { InteractiveInstanceInitializer } from "../../../../src/cli/initializer"
+import { AwsCreateCliArgs, AwsInputPrompter } from "../../../../src/providers/aws/cli"
+import { STREAMING_SERVER_SUNSHINE } from "../../../../src/cli/prompter"
+import { ServerRunningStatus } from "../../../../src/core/runner"
+import { makePin } from "../../../../src/core/moonlight/pairer/abstract"
+import { CommonConfigurationInputV1 } from "../../../../src/core/state/state"
+import { AwsProvisionInputV1 } from "../../../../src/providers/aws/state"
+import { getUnitTestCoreClient } from "../../../unit/utils"
 
 
 describe('Lib full lifecycle', () => {
