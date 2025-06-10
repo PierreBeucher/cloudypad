@@ -3,7 +3,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';
 import * as yaml from 'yaml';
-import { CommonConfigurationInputV1, CommonProvisionInputV1, CommonProvisionOutputV1, InstanceStateV1 } from '../core/state/state';
+import { InstanceStateV1 } from '../core/state/state';
 import { AbstractInstanceConfigurator, InstanceConfigurator } from '../core/configurator';
 import { getLogger, Logger } from '../log/utils';
 import { AnsibleClient } from '../tools/ansible';
@@ -12,21 +12,21 @@ import { SshKeyLoader } from '../tools/ssh';
 import { AbstractConfiguratorFactory } from '../core/submanager-factory';
 
 
-export interface AnsibleConfiguratorArgs {
+export interface AnsibleConfiguratorArgs<ST extends InstanceStateV1> {
     instanceName: string
     provider: string
-    provisionInput: CommonProvisionInputV1
-    provisionOutput: CommonProvisionOutputV1
-    configurationInput: CommonConfigurationInputV1
+    provisionInput: ST["provision"]["input"]
+    provisionOutput: NonNullable<ST["provision"]["output"]>
+    configurationInput: ST["configuration"]["input"]
     additionalAnsibleArgs?: string[]
 }
 
 export class AnsibleConfigurator<ST extends InstanceStateV1> extends AbstractInstanceConfigurator<ST> {
 
     protected readonly logger: Logger
-    protected readonly args: AnsibleConfiguratorArgs
+    protected readonly args: AnsibleConfiguratorArgs<ST>
 
-    constructor(args: AnsibleConfiguratorArgs){
+    constructor(args: AnsibleConfiguratorArgs<ST>){
         super()
         this.args = args
         this.logger = getLogger(args.instanceName)

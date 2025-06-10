@@ -2,7 +2,7 @@
 import { AnsibleConfigurator, AnsibleConfiguratorArgs } from '../../configurators/ansible';
 import { DummyInstanceStateV1 } from './state';
 
-export interface DummyConfiguratorArgs extends AnsibleConfiguratorArgs {}
+export interface DummyConfiguratorArgs extends AnsibleConfiguratorArgs<DummyInstanceStateV1> {}
 
 export class DummyConfigurator extends AnsibleConfigurator<DummyInstanceStateV1> {
 
