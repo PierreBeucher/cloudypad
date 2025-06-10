@@ -3,7 +3,8 @@
 # Check Wolf readiness by checking if port 47990 (HTTP interface) is open
 echo "Checking Wolf readiness..."
 
-nc -v -z localhost 47990
+# Check Wolf HTTP port
+nc -v -z localhost 47989
 wolf_health=$?
 
 # Check if Wolf container is healthy
