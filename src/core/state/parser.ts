@@ -42,6 +42,10 @@ export abstract class GenericStateParser<S extends InstanceStateV1> {
     }
 }
 
+/**
+ * Parse a unknown state into a generic InstanceStateV1. Parsing is not strict but passthrough: additional fields are allowed.
+ * As this parser is designed to be used as pre-parse for concrete type, we must keep additional fields.
+ */
 export class AnonymousStateParser extends GenericStateParser<InstanceStateV1> {
 
     constructor() {
@@ -49,6 +53,6 @@ export class AnonymousStateParser extends GenericStateParser<InstanceStateV1> {
     }
 
     parse(rawState: unknown): InstanceStateV1 {
-        return this.zodParseSafe(rawState, InstanceStateV1Schema)
+        return this.zodParseSafe(rawState, InstanceStateV1Schema.passthrough())
     }
 }

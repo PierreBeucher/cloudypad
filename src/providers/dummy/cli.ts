@@ -9,6 +9,7 @@ import { InteractiveInstanceInitializer } from "../../cli/initializer";
 import { PartialDeep } from "type-fest";
 import { InteractiveInstanceUpdater } from "../../cli/updater";
 import { cleanupAndExit, logFullError } from "../../cli/program";
+import { DummyProviderClient } from "./provider";
 
 export interface DummyCreateCliArgs extends CreateCliArgs {
     instanceType?: string
@@ -52,7 +53,8 @@ export class DummyInputPrompter extends AbstractInputPrompter<DummyCreateCliArgs
                     configurationDelaySeconds: partialInput.provision?.configurationDelaySeconds ?? 0,
                     provisioningDelaySeconds: partialInput.provision?.provisioningDelaySeconds ?? 0,
                     readinessAfterStartDelaySeconds: partialInput.provision?.readinessAfterStartDelaySeconds ?? 0,
-                    initialState: partialInput.provision?.initialServerStateAfterProvision ?? "running",
+                    initialServerStateAfterProvision: partialInput.provision?.initialServerStateAfterProvision ?? "running",
+                    deleteInstanceServerOnStop: partialInput.provision?.deleteInstanceServerOnStop ?? false,
                 }
             })
         
@@ -107,10 +109,9 @@ export class DummyCliCommandGenerator extends CliCommandGenerator {
             .action(async (cliArgs: DummyCreateCliArgs) => {
                 
                 try {
-                    await new InteractiveInstanceInitializer<DummyCreateCliArgs, DummyProvisionInputV1, CommonConfigurationInputV1>({ 
-                        coreClient: args.coreClient,
-                        inputPrompter: new DummyInputPrompter({ coreClient: args.coreClient }),
-                        provider: CLOUDYPAD_PROVIDER_DUMMY,
+                    await new InteractiveInstanceInitializer<DummyInstanceStateV1, DummyCreateCliArgs>({ 
+                        providerClient: new DummyProviderClient({ config: args.coreConfig }),
+                        inputPrompter: new DummyInputPrompter({ coreConfig: args.coreConfig }),
                         initArgs: cliArgs
                     }).initializeInteractive()
                     
@@ -149,9 +150,8 @@ export class DummyCliCommandGenerator extends CliCommandGenerator {
                 
                 try {
                     await new InteractiveInstanceUpdater<DummyInstanceStateV1, DummyUpdateCliArgs>({
-                        coreClient: args.coreClient,
-                        stateParser: new DummyStateParser(),
-                        inputPrompter: new DummyInputPrompter({ coreClient: args.coreClient }),
+                        providerClient: new DummyProviderClient({ config: args.coreConfig }),
+                        inputPrompter: new DummyInputPrompter({ coreConfig: args.coreConfig }),
                     }).updateInteractive(cliArgs)
                     
                     console.info(`Updated instance ${cliArgs.name}`)

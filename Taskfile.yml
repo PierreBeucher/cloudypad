@@ -224,7 +224,6 @@ tasks:
     cmds:
     - >
       docker buildx build containers/sunshine/ 
-      --cache-from type=registry,ref=$CLOUDYPAD_BUILD_SUNSHINE_IMAGE_REGISTRY:master-cache
       --cache-from type=local,src=./tmp/sunshine-container.cache.tgz
       --cache-to type=inline
       --cache-to type=local,dest=./tmp/sunshine-container.cache.tgz

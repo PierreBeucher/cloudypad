@@ -2,32 +2,40 @@ import * as assert from 'assert';
 import * as lodash from 'lodash';
 import * as sshpk from 'sshpk';
 import { GcpInstanceInput, GcpInstanceStateV1, GcpProvisionInputV1 } from '../../../src/providers/gcp/state';
-import { CLOUDYPAD_CONFIGURATOR_ANSIBLE, CLOUDYPAD_PROVIDER_GCP, PUBLIC_IP_TYPE_STATIC } from '../../../src/core/const';
-import { DEFAULT_COMMON_INPUT, getUnitTestCoreClient } from '../utils';
+import { CLOUDYPAD_CONFIGURATOR_ANSIBLE, CLOUDYPAD_PROVIDER_GCP, PUBLIC_IP_TYPE_STATIC, CLOUDYPAD_PROVIDER_DUMMY } from '../../../src/core/const';
+import { DEFAULT_COMMON_INPUT, getUnitTestCoreClient, getUnitTestDummyProviderClient } from '../utils';
 import { fromBase64 } from '../../../src/tools/base64';
 import { InstanceInitializer } from '../../../src/core/initializer';
 import { CommonConfigurationInputV1 } from '../../../src/core/state/state';
+import { DummyInstanceInput, DummyInstanceStateV1, DummyProvisionInputV1 } from '../../../src/providers/dummy/state';
+import { GenericStateParser } from '../../../src/core/state/parser';
 
 describe('Instance initializer', () => {
 
     const instanceName = "gcp-dummy"
 
-    const TEST_INPUT: GcpInstanceInput = {
+    const TEST_INPUT: DummyInstanceInput = {
         instanceName: instanceName,
         provision: {
             ...DEFAULT_COMMON_INPUT.provision,
-            machineType: "n1-standard-8",
-            diskSize: 200,
+            machineType: "dummy-type",
+            diskSize: 100,
             publicIpType: PUBLIC_IP_TYPE_STATIC,
-            region: "europe-west4",
-            zone: "europe-west4-b",
-            acceleratorType: "nvidia-tesla-t4",
-            projectId: "crafteo-sandbox",
-            useSpot: true,
-            costAlert: null
+            region: "dummy-region",
+            zone: "dummy-zone",
+            acceleratorType: "dummy-accelerator",
+            projectId: "dummy-project",
+            useSpot: false,
+            instanceType: "dummy-instance-type",
+            startDelaySeconds: 10,
+            stopDelaySeconds: 10
         }, 
         configuration: {
-            ...DEFAULT_COMMON_INPUT.configuration
+            ansible: DEFAULT_COMMON_INPUT.configuration.ansible,
+            autostop: DEFAULT_COMMON_INPUT.configuration.autostop,
+            locale: DEFAULT_COMMON_INPUT.configuration.locale,
+            keyboard: DEFAULT_COMMON_INPUT.configuration.keyboard,
+            sunshine: DEFAULT_COMMON_INPUT.configuration.sunshine
         }
     }
 
@@ -38,47 +46,27 @@ describe('Instance initializer', () => {
 
         const testInstanceName = "base-initializer-test-instance-state-init"
 
+        const dummyProvider = getUnitTestDummyProviderClient()
         await new InstanceInitializer({ 
-            provider: CLOUDYPAD_PROVIDER_GCP,
-            stateWriter: getUnitTestCoreClient().buildEmptyStateWriter()
+            provider: CLOUDYPAD_PROVIDER_DUMMY,
+            stateWriter: dummyProvider.getStateWriter(),
+            stateParser: dummyProvider.getStateParser()
         }).initializeStateOnly(testInstanceName, TEST_INPUT.provision, TEST_INPUT.configuration)
 
         // Check state has been written
-        const loader = getUnitTestCoreClient().buildStateLoader()
+        const loader = dummyProvider.getStateLoader()
         const state = await loader.loadInstanceState(testInstanceName)
 
-        const expectState: GcpInstanceStateV1 = {
+        const expectState: DummyInstanceStateV1 = {
             version: "1",
             name: testInstanceName,
             provision: {
-                provider: CLOUDYPAD_PROVIDER_GCP,
+                provider: CLOUDYPAD_PROVIDER_DUMMY,
                 input: TEST_INPUT.provision,
             },
             configuration: {
                 configurator: CLOUDYPAD_CONFIGURATOR_ANSIBLE,
-                input: {
-                    sunshine: {
-                        enable: DEFAULT_COMMON_INPUT.configuration.sunshine?.enable ?? false,
-                        username: DEFAULT_COMMON_INPUT.configuration.sunshine?.username ?? "",
-                        passwordBase64: DEFAULT_COMMON_INPUT.configuration.sunshine?.passwordBase64 ?? "",
-                        imageTag: DEFAULT_COMMON_INPUT.configuration.sunshine?.imageTag ?? "",
-                        imageRegistry: DEFAULT_COMMON_INPUT.configuration.sunshine?.imageRegistry
-                    },
-                    autostop: {
-                        enable: DEFAULT_COMMON_INPUT.configuration.autostop?.enable ?? false,
-                        timeoutSeconds: DEFAULT_COMMON_INPUT.configuration.autostop?.timeoutSeconds ?? 999
-                    },
-                    locale: DEFAULT_COMMON_INPUT.configuration.locale,
-                    keyboard: {
-                        layout: DEFAULT_COMMON_INPUT.configuration.keyboard?.layout,
-                        model: DEFAULT_COMMON_INPUT.configuration.keyboard?.model,
-                        variant: DEFAULT_COMMON_INPUT.configuration.keyboard?.variant,
-                        options: DEFAULT_COMMON_INPUT.configuration.keyboard?.options
-                    },
-                    ansible: {
-                        additionalArgs: DEFAULT_COMMON_INPUT.configuration.ansible?.additionalArgs
-                    }
-                }
+                input: TEST_INPUT.configuration,
             }
         }
         
@@ -89,18 +77,21 @@ describe('Instance initializer', () => {
 
     it('should initialize instance with auto generated SSH key when no SSH key path or content is provided', async () => {
 
+        const dummyProviderClient = getUnitTestDummyProviderClient()
+
         // use default input but remove SSH key path and content for testing
         const testInput = lodash.cloneDeep(TEST_INPUT)
         testInput.provision.ssh.privateKeyPath = undefined
         testInput.provision.ssh.privateKeyContentBase64 = undefined
 
-        await new InstanceInitializer<GcpProvisionInputV1, CommonConfigurationInputV1>({ 
-            provider: CLOUDYPAD_PROVIDER_GCP,
-            stateWriter: getUnitTestCoreClient().buildEmptyStateWriter()
+        await new InstanceInitializer({ 
+            provider: CLOUDYPAD_PROVIDER_DUMMY,
+            stateWriter: dummyProviderClient.getStateWriter(),
+            stateParser: dummyProviderClient.getStateParser()
         }).initializeStateOnly("test-auto-generate-ssh-key", testInput.provision, testInput.configuration)
 
         // Check state has been written
-        const loader = getUnitTestCoreClient().buildStateLoader()
+        const loader = dummyProviderClient.getStateLoader()
         const state = await loader.loadInstanceState("test-auto-generate-ssh-key")
 
         assert.equal(state.provision.input.ssh.privateKeyPath, undefined)

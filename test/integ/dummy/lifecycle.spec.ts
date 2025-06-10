@@ -4,8 +4,9 @@ import { DummyProvisionInputV1 } from '../../../src/providers/dummy/state';
 import { ServerRunningStatus } from '../../../src/core/runner';
 import { DummyInstanceInput } from '../../../src/providers/dummy/state';
 import { CLOUDYPAD_CONFIGURATOR_ANSIBLE } from '../../../src/core/const';
-import { getUnitTestCoreClient } from '../../unit/utils';
+import { getUnitTestCoreClient, getUnitTestCoreConfig } from '../../unit/utils';
 import { CommonConfigurationInputV1 } from '../../../src/core/state/state';
+import { DummyProviderClient } from '../../../src/providers/dummy/provider';
 
 describe('Dummy instance lifecycle with delay', () => {
 
@@ -32,12 +33,12 @@ describe('Dummy instance lifecycle with delay', () => {
     }
 
     it('should ensure dummy infra status is updated correctly on action', async () => {
-
-        const coreClient = getUnitTestCoreClient()
-        const initializer = coreClient.buildInstanceInitializer<DummyProvisionInputV1, CommonConfigurationInputV1>(CLOUDYPAD_PROVIDER_DUMMY)
+        const coreConfig = getUnitTestCoreConfig()
+        const dummyProviderClient = new DummyProviderClient({ config: coreConfig })
+        const initializer = dummyProviderClient.getInstanceInitializer()
         await initializer.initializeStateOnly(DUMMY_INSTANCE_NAME, DUMMY_INSTANCE_INPUT.provision, DUMMY_INSTANCE_INPUT.configuration)
 
-        const manager = await coreClient.buildInstanceManager(DUMMY_INSTANCE_NAME)
+        const manager = await dummyProviderClient.getInstanceManager(DUMMY_INSTANCE_NAME)
 
         const statusBeforeProvision = await manager.getInstanceStatus()
         assert.equal(statusBeforeProvision.provisioned, false, 'Instance should not be provisioned before provisioning')

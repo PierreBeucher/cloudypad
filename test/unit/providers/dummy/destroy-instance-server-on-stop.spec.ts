@@ -3,7 +3,7 @@ import * as assert from 'assert';
 import { InteractiveInstanceInitializer } from '../../../../src/cli/initializer';
 import { CLOUDYPAD_CONFIGURATOR_ANSIBLE, CLOUDYPAD_PROVIDER_DUMMY } from '../../../../src/core/const';
 import { DummyCreateCliArgs, DummyInputPrompter } from '../../../../src/providers/dummy/cli';
-import { DEFAULT_COMMON_CLI_ARGS, getUnitTestCoreClient } from '../../utils';
+import { DEFAULT_COMMON_CLI_ARGS, getUnitTestCoreClient, getUnitTestDummyProviderClient } from '../../utils';
 import { DummyInstanceInput, DummyProvisionInputV1 } from '../../../../src/providers/dummy/state';
 import { CommonConfigurationInputV1 } from '../../../../src/core/state/state';
 import { ServerRunningStatus } from '../../../../src/core/runner';
@@ -35,11 +35,11 @@ describe('Should destroy instance server on stop and recreate it on start', () =
     }
 
     it('should create dummy instance server', async () => {
-        const coreClient = getUnitTestCoreClient()
-        const initializer = coreClient.buildInstanceInitializer<DummyProvisionInputV1, CommonConfigurationInputV1>(CLOUDYPAD_PROVIDER_DUMMY)
+        const dummyProviderClient = getUnitTestDummyProviderClient()
+        const initializer = dummyProviderClient.getInstanceInitializer()
         await initializer.initializeStateOnly(DUMMY_INSTANCE_NAME, DUMMY_INSTANCE_INPUT.provision, DUMMY_INSTANCE_INPUT.configuration)
         
-        const manager = await coreClient.buildInstanceManager(DUMMY_INSTANCE_NAME)
+        const manager = await dummyProviderClient.getInstanceManager(DUMMY_INSTANCE_NAME)
         await manager.deploy()
 
         const status = await manager.getInstanceStatus()
@@ -48,8 +48,8 @@ describe('Should destroy instance server on stop and recreate it on start', () =
     })
 
     it('should destroy dummy instance server on stop', async () => {
-        const coreClient = getUnitTestCoreClient()
-        const manager = await coreClient.buildInstanceManager(DUMMY_INSTANCE_NAME)
+        const dummyProviderClient = getUnitTestDummyProviderClient()
+        const manager = await dummyProviderClient.getInstanceManager(DUMMY_INSTANCE_NAME)
         await manager.stop()
 
         // after stop, instance server should be in unknown
@@ -66,8 +66,8 @@ describe('Should destroy instance server on stop and recreate it on start', () =
     })
 
     it('should recreate dummy instance server on start', async () => {
-        const coreClient = getUnitTestCoreClient()
-        const manager = await coreClient.buildInstanceManager(DUMMY_INSTANCE_NAME)
+        const dummyProviderClient = getUnitTestDummyProviderClient()
+        const manager = await dummyProviderClient.getInstanceManager(DUMMY_INSTANCE_NAME)
         await manager.start()
 
         const status = await manager.getInstanceStatus()

@@ -3,15 +3,15 @@ import { CreateCliArgs } from "./command"
 import { InputPrompter, UserVoluntaryInterruptionError } from "./prompter"
 import { confirm } from '@inquirer/prompts'
 import { AnalyticsManager } from "../tools/analytics/manager"
-import { CommonConfigurationInputV1, CommonInstanceInput, CommonProvisionInputV1, InstanceInputs } from "../core/state/state"
+import { InstanceInputs } from "../core/state/state"
 import { InstanceInitializer } from "../core/initializer"
 import { getLogger } from "../log/utils"
-import { CloudypadClient } from "../core/client"
+import { InstanceStateV1 } from "../core/state/state"
+import { AbstractProviderClient } from "../core/provider"
 
-export interface InteractiveInstancerInitializerArgs<A extends CreateCliArgs, PI extends CommonProvisionInputV1, CI extends CommonConfigurationInputV1> {
-    coreClient: CloudypadClient
-    provider: CLOUDYPAD_PROVIDER
-    inputPrompter: InputPrompter<A, PI, CI>
+export interface InteractiveInstancerInitializerArgs<ST extends InstanceStateV1, A extends CreateCliArgs> {
+    providerClient: AbstractProviderClient<ST>
+    inputPrompter: InputPrompter<A, ST["provision"]["input"], ST["configuration"]["input"]>
     initArgs: A
 }
 
@@ -29,19 +29,22 @@ export interface InstancerInitializationOptions {
  * After instance initialization, prompt user for pairing
  */
 export class InteractiveInstanceInitializer<
-    A extends CreateCliArgs, 
-    PI extends CommonProvisionInputV1, 
-    CI extends CommonConfigurationInputV1
+    ST extends InstanceStateV1,
+    A extends CreateCliArgs
 > {
 
     protected readonly analytics = AnalyticsManager.get()
-    private readonly args: InteractiveInstancerInitializerArgs<A, PI, CI>
+    private readonly args: InteractiveInstancerInitializerArgs<ST, A>
     private readonly logger = getLogger(InteractiveInstanceInitializer.name)
-    private readonly instanceInitializer: InstanceInitializer<PI, CI>
+    private readonly instanceInitializer: InstanceInitializer<ST>
 
-    constructor(args: InteractiveInstancerInitializerArgs<A, PI, CI>){
+    constructor(args: InteractiveInstancerInitializerArgs<ST, A>){
         this.args = args
-        this.instanceInitializer = this.args.coreClient.buildInstanceInitializer(args.provider)
+        this.instanceInitializer = new InstanceInitializer<ST>({
+            stateWriter: this.args.providerClient.getStateWriter(),
+            stateParser: this.args.providerClient.getStateParser(),
+            provider: this.args.providerClient.getProviderName()
+        })
     }
 
     async initializeInteractive(options?: InstancerInitializationOptions): Promise<void> {
@@ -74,14 +77,14 @@ export class InteractiveInstanceInitializer<
         }
     }
 
-    private async cliArgsToInput(cliArgs: A): Promise<InstanceInputs<PI, CI>> {
+    private async cliArgsToInput(cliArgs: A): Promise<InstanceInputs<ST["provision"]["input"], ST["configuration"]["input"]>> {
         this.analyticsEvent("create_instance_start_input_prompt")
         const input = await this.args.inputPrompter.completeCliInput(cliArgs)
         this.analyticsEvent("create_instance_finish_input_prompt")
         return input
     }
 
-    private async doInitializeState(instanceName: string, provisionInput: PI, configurationInput: CI) {
+    private async doInitializeState(instanceName: string, provisionInput: ST["provision"]["input"], configurationInput: ST["configuration"]["input"]) {
         this.analyticsEvent("create_instance_start_state_init")
         await this.instanceInitializer.initializeStateOnly(instanceName, provisionInput, configurationInput)
         this.analyticsEvent("create_instance_finish_state_init")
@@ -89,14 +92,14 @@ export class InteractiveInstanceInitializer<
 
     private async doDeploy(instanceName: string) {
         this.analyticsEvent("create_instance_start_deploy")
-        const manager = await this.args.coreClient.buildInstanceManager(instanceName)
+        const manager = await this.args.providerClient.getInstanceManager(instanceName)
         await manager.deploy()
         this.analyticsEvent("create_instance_finish_deploy")
     }
 
     private async doPair(instanceName: string, skipPairing: boolean, autoApprove: boolean) {
 
-        const manager = await this.args.coreClient.buildInstanceManager(instanceName)
+        const manager = await this.args.providerClient.getInstanceManager(instanceName)
 
         const doPair = skipPairing ? false : autoApprove ? true : await confirm({
             message: `Your instance is almost ready ! Do you want to pair Moonlight now?`,
@@ -130,7 +133,7 @@ export class InteractiveInstanceInitializer<
 
     private analyticsEvent(event: string, additionalProperties?: Record<string, any>) {
         this.analytics.sendEvent(event, { 
-            provider: this.args.provider, 
+            provider: this.args.providerClient.getProviderName(), 
             ...additionalProperties 
         })
     }

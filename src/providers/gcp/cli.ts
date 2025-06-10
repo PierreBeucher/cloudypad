@@ -10,6 +10,7 @@ import { InteractiveInstanceInitializer } from "../../cli/initializer";
 import { CLI_OPTION_AUTO_STOP_TIMEOUT, CLI_OPTION_AUTO_STOP_ENABLE, CLI_OPTION_COST_ALERT, CLI_OPTION_COST_LIMIT, CLI_OPTION_COST_NOTIFICATION_EMAIL, CLI_OPTION_DISK_SIZE, CLI_OPTION_PUBLIC_IP_TYPE, CLI_OPTION_SPOT, CLI_OPTION_STREAMING_SERVER, CLI_OPTION_SUNSHINE_IMAGE_REGISTRY, CLI_OPTION_SUNSHINE_IMAGE_TAG, CLI_OPTION_SUNSHINE_PASSWORD, CLI_OPTION_SUNSHINE_USERNAME, CliCommandGenerator, CreateCliArgs, UpdateCliArgs, CLI_OPTION_KEYBOARD_OPTIONS, CLI_OPTION_KEYBOARD_MODEL, CLI_OPTION_KEYBOARD_LAYOUT, CLI_OPTION_USE_LOCALE, CLI_OPTION_KEYBOARD_VARIANT, BuildCreateCommandArgs, BuildUpdateCommandArgs } from "../../cli/command";
 import { RUN_COMMAND_CREATE, RUN_COMMAND_UPDATE } from "../../tools/analytics/events";
 import { InteractiveInstanceUpdater } from "../../cli/updater";
+import { GcpProviderClient } from "./provider";
 
 export interface GcpCreateCliArgs extends CreateCliArgs {
     projectId?: string
@@ -250,10 +251,9 @@ export class GcpCliCommandGenerator extends CliCommandGenerator {
             .action(async (cliArgs: GcpCreateCliArgs) => {
                 this.analytics.sendEvent(RUN_COMMAND_CREATE, { provider: CLOUDYPAD_PROVIDER_GCP })
                 try {
-                    await new InteractiveInstanceInitializer<GcpCreateCliArgs, GcpProvisionInputV1, CommonConfigurationInputV1>({ 
-                        coreClient: args.coreClient,
-                        inputPrompter: new GcpInputPrompter({ coreClient: args.coreClient }),
-                        provider: CLOUDYPAD_PROVIDER_GCP,
+                    await new InteractiveInstanceInitializer<GcpInstanceStateV1, GcpCreateCliArgs>({ 
+                        providerClient: new GcpProviderClient({ config: args.coreConfig }),
+                        inputPrompter: new GcpInputPrompter({ coreConfig: args.coreConfig }),
                         initArgs: cliArgs
                     }).initializeInteractive()
                     
@@ -287,9 +287,8 @@ export class GcpCliCommandGenerator extends CliCommandGenerator {
                 this.analytics.sendEvent(RUN_COMMAND_UPDATE, { provider: CLOUDYPAD_PROVIDER_GCP })
                 try {
                     await new InteractiveInstanceUpdater<GcpInstanceStateV1, GcpUpdateCliArgs>({
-                        coreClient: args.coreClient,
-                        stateParser: new GcpStateParser(),
-                        inputPrompter: new GcpInputPrompter({ coreClient: args.coreClient }),
+                        providerClient: new GcpProviderClient({ config: args.coreConfig }),
+                        inputPrompter: new GcpInputPrompter({ coreConfig: args.coreConfig }),
                     }).updateInteractive(cliArgs)
 
                     console.info(`Updated instance ${cliArgs.name}`)

@@ -3,11 +3,12 @@ import { StateManagerBuilder } from "../../../../src/core/state/builders"
 import { LOCAL_STATE_SIDE_EFFECT_NAME, LocalStateSideEffect } from '../../../../src/core/state/side-effects/local'
 import { createTempTestDir, loadDumyAnonymousStateV1 } from '../../utils'
 import { S3_STATE_SIDE_EFFECT_NAME, S3StateSideEffect } from '../../../../src/core/state/side-effects/s3'
+import { DummyStateParser } from '../../../../src/providers/dummy/state'
 
 describe('StateManagerBuilder', () => {
 
 
-    const dummyState = loadDumyAnonymousStateV1("aws-dummy")
+    const dummyState = loadDumyAnonymousStateV1("dummy-provider-state")
 
     it('local StateManagerBuilder should build local side effects', () => {
         const localSmb = new StateManagerBuilder({
@@ -18,13 +19,13 @@ describe('StateManagerBuilder', () => {
             }
         })
 
-        const writer = localSmb.buildStateWriter(dummyState)
+        const writer = localSmb.buildStateWriter(new DummyStateParser())
         const loader = localSmb.buildStateLoader()
         const sideEffect = localSmb.buildSideEffect()
 
         assert.ok(sideEffect instanceof LocalStateSideEffect)
         assert.strictEqual(sideEffect.name, LOCAL_STATE_SIDE_EFFECT_NAME)
-        assert.strictEqual(writer.sideEffect.name, LOCAL_STATE_SIDE_EFFECT_NAME)
+        assert.strictEqual(writer.args.sideEffect.name, LOCAL_STATE_SIDE_EFFECT_NAME)
         assert.strictEqual(loader.sideEffect.name, LOCAL_STATE_SIDE_EFFECT_NAME)
     })
 
@@ -47,13 +48,13 @@ describe('StateManagerBuilder', () => {
             }
         })
 
-        const writer = s3Smb.buildStateWriter(dummyState)
+        const writer = s3Smb.buildStateWriter(new DummyStateParser())
         const loader = s3Smb.buildStateLoader()
         const sideEffect = s3Smb.buildSideEffect()
 
         assert.ok(sideEffect instanceof S3StateSideEffect)
         assert.strictEqual(sideEffect.name, S3_STATE_SIDE_EFFECT_NAME)        
-        assert.strictEqual(writer.sideEffect.name, S3_STATE_SIDE_EFFECT_NAME)
+        assert.strictEqual(writer.args.sideEffect.name, S3_STATE_SIDE_EFFECT_NAME)
         assert.strictEqual(loader.sideEffect.name, S3_STATE_SIDE_EFFECT_NAME)
 
         const s3SideEffect: S3StateSideEffect = sideEffect

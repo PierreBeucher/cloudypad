@@ -15,7 +15,6 @@ function create_destroy_scaleway() {
         --sunshine-password "sunshine!" \
         --autostop true \
         --autostop-timeout 300 \
-        --delete-instance-server-on-stop true \
         --yes --overwrite-existing --skip-pairing
 
     $cloudypad_cmd update scaleway \
