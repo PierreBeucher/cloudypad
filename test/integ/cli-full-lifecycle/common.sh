@@ -17,8 +17,8 @@ cloudypad_cmd="npx tsx src/cli/main.ts" # TODO
 # Use a retry pattern to wait for readiness
 function check_instance_status() {
     local instance_name=$1
-    local retries=3
-    local wait_time=5
+    local retries=12
+    local wait_time=10
 
     echo "Checking instance status for $instance_name"
 
