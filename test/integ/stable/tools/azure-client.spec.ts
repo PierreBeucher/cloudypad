@@ -1,6 +1,6 @@
 import * as assert from 'assert'
-import { AzureClient, AzureVmStatus } from '../../../../../../../src/tools/azure'
-import { AZURE_SUPPORTED_GPU } from '../../../../../../../src/providers/azure/cli'
+import { AzureClient, AzureVmStatus } from '../../../../src/tools/azure'
+import { AZURE_SUPPORTED_GPU } from '../../../../src/providers/azure/cli'
 
 describe('AzureClient', () => {
     let client = new AzureClient('AzureClientTest', "0dceb5ed-9096-4db7-b430-2609e7cc6a15")
