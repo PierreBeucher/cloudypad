@@ -212,6 +212,11 @@ export class ScalewayClient {
         }
     }
 
+    async getRawServerData(serverId: string): Promise<Instance.v1.Server | undefined> {
+        const server = await this.instanceClient.getServer({ serverId })
+        return server.server
+    }
+
     async getInstanceStatus(serverId: string): Promise<ScalewayServerState | undefined> {
         this.logger.debug(`Getting Scaleway virtual machine state: ${serverId}`)
 
