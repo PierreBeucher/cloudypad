@@ -1,5 +1,5 @@
 import * as assert from 'assert'
-import { ScalewayClient, ScalewayServerState } from '../../../../../../src/tools/scaleway'
+import { ScalewayClient, ScalewayServerState } from '../../../../../../src/providers/scaleway/sdk-client'
 import { ScalewayInstanceStateV1 } from '../../../../../../src/providers/scaleway/state'
 import { getIntegTestCoreConfig } from '../../../../utils'
 import { ScalewayProviderClient } from '../../../../../../src/providers/scaleway/provider'

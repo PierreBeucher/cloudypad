@@ -2,7 +2,7 @@ import { AzureInstanceInput, AzureStateParser, AzureInstanceStateV1, AZURE_SUPPO
 import { CommonConfigurationInputV1, CommonInstanceInput } from "../../core/state/state"
 import { input, select, confirm } from '@inquirer/prompts';
 import { AbstractInputPrompter, costAlertCliArgsIntoConfig, PromptOptions } from "../../cli/prompter";
-import { AzureClient } from "../../tools/azure";
+import { AzureClient } from "./sdk-client";
 import lodash from 'lodash'
 import { CLOUDYPAD_PROVIDER_AZURE, PUBLIC_IP_TYPE } from "../../core/const";
 import { PartialDeep } from "type-fest";

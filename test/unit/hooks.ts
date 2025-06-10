@@ -14,7 +14,7 @@ import { PaperspaceClient, PaperspaceMachine } from '../../src/providers/papersp
 import { DUMMY_AWS_PULUMI_OUTPUT, DUMMY_AZURE_PULUMI_OUTPUT, DUMMY_GCP_PULUMI_OUTPUT, DUMMY_PAPERSPACE_MACHINE, DUMMY_SCALEWAY_PULUMI_OUTPUT, DUMMY_SSH_KEY_PATH } from './utils';
 import { AnalyticsManager } from '../../src/tools/analytics/manager';
 import { NoOpAnalyticsClient } from '../../src/tools/analytics/client';
-import { ScalewayClient } from '../../src/tools/scaleway';
+import { ScalewayClient } from '../../src/providers/scaleway/sdk-client';
 import { CliConfigManager } from '../../src/cli/config';
 import { ConfigLoader } from '../../src/core/config/default';
 import { SshKeyLoader } from '../../src/tools/ssh';

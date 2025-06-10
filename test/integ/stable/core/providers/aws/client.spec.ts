@@ -1,8 +1,8 @@
 import * as assert from 'assert';
-import { AwsClient, EC2_QUOTA_CODE_ALL_G_AND_VT_SPOT_INSTANCES } from '../../../../src/tools/aws';
+import { AwsClient, EC2_QUOTA_CODE_ALL_G_AND_VT_SPOT_INSTANCES } from '../../../../src/providers/aws/sdk-client';
 import { _InstanceType, InstanceTypeInfo } from '@aws-sdk/client-ec2';
 import { SUPPORTED_INSTANCE_TYPES } from '../../../../src/providers/aws/cli';
-import { stringsToInstanceTypes } from '../../../../src/tools/aws';
+import { stringsToInstanceTypes } from '../../../../src/providers/aws/sdk-client';
 describe('AWS Client Integration Tests', () => {
     
     it('should convert strings to instance types', async () => {

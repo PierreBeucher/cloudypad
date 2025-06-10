@@ -1,5 +1,5 @@
 import * as assert from 'assert'
-import { GcpClient, GcpInstanceStatus } from '../../../../src/tools/gcp'
+import { GcpClient, GcpInstanceStatus } from '../../../../src/providers/gcp/sdk-client'
 
 describe('GcpClient', () => {
     

@@ -1,6 +1,6 @@
 import { CLOUDYPAD_PROVIDER_AZURE } from '../../core/const'
 import { AbstractInstanceRunner, InstanceRunnerArgs, ServerRunningStatus, StartStopOptions } from '../../core/runner'
-import { AzureClient, AzureVmStatus } from '../../tools/azure'
+import { AzureClient, AzureVmStatus } from './sdk-client'
 import { AzureProvisionInputV1, AzureProvisionOutputV1 } from './state'
 
 export type AzureInstanceRunnerArgs = InstanceRunnerArgs<AzureProvisionInputV1, AzureProvisionOutputV1>

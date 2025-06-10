@@ -1,7 +1,7 @@
 import { SshKeyLoader } from '../../tools/ssh';
 import { AbstractInstanceProvisioner, InstanceProvisionerArgs } from '../../core/provisioner';
 import { GcpPulumiClient, PulumiStackConfigGcp } from './pulumi';
-import { GcpClient } from '../../tools/gcp';
+import { GcpClient } from './sdk-client';
 import { GcpProvisionInputV1, GcpProvisionOutputV1} from './state';
 
 export type GcpProvisionerArgs = InstanceProvisionerArgs<GcpProvisionInputV1, GcpProvisionOutputV1>

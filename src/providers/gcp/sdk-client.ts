@@ -1,6 +1,6 @@
 import { InstancesClient, protos, RegionsClient, MachineTypesClient, AcceleratorTypesClient, ZoneOperationsClient } from '@google-cloud/compute'
 import { GoogleAuth } from 'google-auth-library'
-import { getLogger, Logger } from '../log/utils'
+import { getLogger, Logger } from '../../log/utils'
 import { ProjectsClient, protos as rmprotos  } from '@google-cloud/resource-manager'
 
 interface StartStopActionOpts {

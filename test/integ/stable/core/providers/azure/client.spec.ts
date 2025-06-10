@@ -1,5 +1,5 @@
 import * as assert from 'assert'
-import { AzureClient, AzureVmStatus } from '../../../../src/tools/azure'
+import { AzureClient, AzureVmStatus } from '../../../../src/providers/azure/sdk-client'
 import { AZURE_SUPPORTED_GPU } from '../../../../src/providers/azure/cli'
 
 describe('AzureClient', () => {

@@ -1,6 +1,6 @@
 import { ComputeManagementClient, VirtualMachine } from '@azure/arm-compute'
 import { DefaultAzureCredential } from '@azure/identity'
-import { getLogger, Logger } from '../log/utils'
+import { getLogger, Logger } from '../../log/utils'
 import { Subscription, SubscriptionClient } from '@azure/arm-subscriptions'
 import { AzureQuotaExtensionAPI, LimitObject } from "@azure/arm-quota"
 

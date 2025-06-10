@@ -1,4 +1,4 @@
-import { getLogger, Logger } from '../log/utils'
+import { getLogger, Logger } from '../../log/utils'
 import { createClient, Instance, Vpc, Account, Marketplace, Profile } from '@scaleway/sdk'
 import { loadProfileFromConfigurationFile } from '@scaleway/configuration-loader'
 

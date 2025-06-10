@@ -1,6 +1,6 @@
 import { EC2Client, DescribeInstancesCommand, Instance, StartInstancesCommand, StopInstancesCommand, RebootInstancesCommand, waitUntilInstanceRunning, waitUntilInstanceStopped, DescribeInstanceTypesCommand, _InstanceType, InstanceTypeInfo, InstanceTypeOffering, DescribeInstanceTypeOfferingsCommand, DescribeInstanceStatusCommand, InstanceStateName, paginateDescribeInstances, paginateDescribeInstanceTypes, paginateDescribeInstanceTypeOfferings } from '@aws-sdk/client-ec2'
 import { STSClient, GetCallerIdentityCommand } from '@aws-sdk/client-sts'
-import { getLogger, Logger } from '../log/utils'
+import { getLogger, Logger } from '../../log/utils'
 import { loadConfig } from "@smithy/node-config-provider"
 import { NODE_REGION_CONFIG_FILE_OPTIONS, NODE_REGION_CONFIG_OPTIONS } from "@smithy/config-resolver"
 import { AccountClient, ListRegionsCommand } from "@aws-sdk/client-account"

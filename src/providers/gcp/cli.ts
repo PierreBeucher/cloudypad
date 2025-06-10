@@ -2,7 +2,7 @@ import { GcpInstanceInput, GcpInstanceStateV1, GcpProvisionInputV1, GcpStatePars
 import { CommonConfigurationInputV1, CommonInstanceInput } from "../../core/state/state"
 import { input, select } from '@inquirer/prompts';
 import { AbstractInputPrompter, costAlertCliArgsIntoConfig, PromptOptions } from "../../cli/prompter";
-import { GcpClient } from "../../tools/gcp";
+import { GcpClient } from "./sdk-client";
 import lodash from 'lodash'
 import { CLOUDYPAD_PROVIDER_GCP, PUBLIC_IP_TYPE } from "../../core/const";
 import { PartialDeep } from "type-fest";
