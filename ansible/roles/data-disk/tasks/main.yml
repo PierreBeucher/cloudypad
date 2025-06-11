@@ -37,6 +37,51 @@
     group: root
     mode: '0755'
 
+# Before mounting the data disk, check if it is already a mountpoint
+# If not yet mounted, it may have some data present from previous deployment without data disk.
+# In that case, move the data to a temporary folder before mounting
+- name: Check if data disk is already a mountpoint
+  shell: "mountpoint -q {{ cloudypad_data_root }}"
+  register: data_root_mountpoint_check
+  ignore_errors: true
+
+- set_fact: 
+    cloudypad_move_data_for_data_disk_mount: "{{ data_root_mountpoint_check.rc != 0 }}"
+    cloudypad_data_root_tmp_before_mount: "{{ cloudypad_data_root }}-tmp-before-mount"
+
+- name: Stop Cloudy Pad autostop service if running
+  when: cloudypad_move_data_for_data_disk_mount
+  register: autostop_service_stop_result
+  systemd:
+    name: cloudypad-autostop
+    state: stopped
+    enabled: no
+  ignore_errors: true
+
+- name: Stop all Docker containers before moving data
+  when: cloudypad_move_data_for_data_disk_mount
+  shell: |
+    docker stop $(docker ps -q)
+  args:
+    executable: /bin/bash
+  ignore_errors: true
+
+- name: Create temp folder for data disk before mounting
+  when: cloudypad_move_data_for_data_disk_mount
+  file:
+    path: "{{ cloudypad_data_root_tmp_before_mount }}"
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+
+- name: Move existing data to temp folder before mounting data disk
+  when: cloudypad_move_data_for_data_disk_mount
+  shell: |
+    mv {{ cloudypad_data_root }}/* {{ cloudypad_data_root_tmp_before_mount }}
+  args:
+    executable: /bin/bash
+
 - name: Format Cloudy Pad data disk (ext4)
   filesystem:
     fstype: "ext4"
@@ -48,3 +93,19 @@
     src: "{{ cloudypad_data_disk_path }}"
     fstype: "ext4"
     state: mounted
+
+- name: Move data back from temp folder
+  when: cloudypad_move_data_for_data_disk_mount
+  shell: |
+    mv {{ cloudypad_data_root_tmp_before_mount }}/* {{ cloudypad_data_root }}/
+    rm -r {{ cloudypad_data_root_tmp_before_mount }}
+  args:
+    executable: /bin/bash
+
+# Start back autostop service if it was running before
+- name: Start Cloudy Pad autostop service
+  when: cloudypad_move_data_for_data_disk_mount and autostop_service_stop_result is success
+  systemd:
+    name: cloudypad-autostop
+    state: started
+    enabled: yes
