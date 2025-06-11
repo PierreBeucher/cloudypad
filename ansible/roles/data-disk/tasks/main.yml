@@ -3,6 +3,19 @@
     msg: "cloudypad_data_disk_id must be set"
   when: cloudypad_data_disk_id is not defined
 
+- name: copy wait-for-disk.sh to /usr/local/bin
+  become: true
+  copy:
+    src: wait-for-disk.sh
+    dest: /usr/local/bin/wait-for-disk.sh
+    mode: '0755'
+ 
+# After provisioning, the data disk may not be available immediately.
+# eg. if instance was already provisioned and a new disk is attached with an update
+# it may take a few moments to be visible on host
+- name: Wait for data disk to be available
+  shell: /usr/local/bin/wait-for-disk.sh "{{ cloudypad_data_disk_id }}"
+
 # depending on providers attached disk can be found under /dev/disk/by-id with various naming conventions
 # filter through available disks and find the one matching the data disk ID
 - name: Find disk matching data disk ID
