@@ -94,6 +94,11 @@
     fstype: "ext4"
     state: mounted
 
+    # Do not fail if the disk is not found at boot
+    # Oherwise instance won't boot at all if disk is missing
+    # Better have an instance that boots with data loss rather than unbootable instance
+    opts: "defaults,nofail"
+
 - name: Move data back from temp folder
   when: cloudypad_move_data_for_data_disk_mount
   shell: |
