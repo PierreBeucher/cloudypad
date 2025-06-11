@@ -49,6 +49,8 @@
     cloudypad_move_data_for_data_disk_mount: "{{ data_root_mountpoint_check.rc != 0 }}"
     cloudypad_data_root_tmp_before_mount: "{{ cloudypad_data_root }}-tmp-before-mount"
 
+# Try to stop autostop service and Docker containers if running
+# Ignore errors as they may not be installed yet or not running
 - name: Stop Cloudy Pad autostop service if running
   when: cloudypad_move_data_for_data_disk_mount
   register: autostop_service_stop_result
