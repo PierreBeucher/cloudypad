@@ -8,7 +8,7 @@
     flake-utils.lib.eachDefaultSystem (system:
       let  
         pkgs = import nixpkgs { system = system; config.allowUnfree = true; };
-        cloudypadVersion = "*0.30.0";
+        cloudypadVersion = "0.30.0";
       in {
         packages = rec {
           default = cloudypad;
