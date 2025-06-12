@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.30.0](https://github.com/PierreBeucher/cloudypad/compare/v0.29.0...v0.30.0) (2025-06-12)
+
+
+### Features
+
+* move existing data to data disk if any when a data disk is prov… ([4a5cfdc](https://github.com/PierreBeucher/cloudypad/commit/4a5cfdc1009ba7e7dfc0493adb71ec777c907506))
+* move existing data to data disk if any when a data disk is provisioned on instance after initial creation ([5462285](https://github.com/PierreBeucher/cloudypad/commit/546228598cbd34e47db9b87754c33f94ae0d6877))
+* wait for data disk to be available ([2f3336a](https://github.com/PierreBeucher/cloudypad/commit/2f3336a22c6e9deae4f9cb3416100716b63b39e2))
+
 ## [0.29.0](https://github.com/PierreBeucher/cloudypad/compare/v0.28.0...v0.29.0) (2025-06-10)
 
 
