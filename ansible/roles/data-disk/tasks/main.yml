@@ -3,6 +3,19 @@
     msg: "cloudypad_data_disk_id must be set"
   when: cloudypad_data_disk_id is not defined
 
+- name: copy wait-for-disk.sh to /usr/local/bin
+  become: true
+  copy:
+    src: wait-for-disk.sh
+    dest: /usr/local/bin/wait-for-disk.sh
+    mode: '0755'
+ 
+# After provisioning, the data disk may not be available immediately.
+# eg. if instance was already provisioned and a new disk is attached with an update
+# it may take a few moments to be visible on host
+- name: Wait for data disk to be available
+  shell: /usr/local/bin/wait-for-disk.sh "{{ cloudypad_data_disk_id }}"
+
 # depending on providers attached disk can be found under /dev/disk/by-id with various naming conventions
 # filter through available disks and find the one matching the data disk ID
 - name: Find disk matching data disk ID
@@ -37,6 +50,53 @@
     group: root
     mode: '0755'
 
+# Before mounting the data disk, check if it is already a mountpoint
+# If not yet mounted, it may have some data present from previous deployment without data disk.
+# In that case, move the data to a temporary folder before mounting
+- name: Check if data disk is already a mountpoint
+  shell: "mountpoint -q {{ cloudypad_data_root }}"
+  register: data_root_mountpoint_check
+  ignore_errors: true
+
+- set_fact: 
+    cloudypad_move_data_for_data_disk_mount: "{{ data_root_mountpoint_check.rc != 0 }}"
+    cloudypad_data_root_tmp_before_mount: "{{ cloudypad_data_root }}-tmp-before-mount"
+
+# Try to stop autostop service and Docker containers if running
+# Ignore errors as they may not be installed yet or not running
+- name: Stop Cloudy Pad autostop service if running
+  when: cloudypad_move_data_for_data_disk_mount
+  register: autostop_service_stop_result
+  systemd:
+    name: cloudypad-autostop
+    state: stopped
+    enabled: no
+  ignore_errors: true
+
+- name: Stop all Docker containers before moving data
+  when: cloudypad_move_data_for_data_disk_mount
+  shell: |
+    docker stop $(docker ps -q)
+  args:
+    executable: /bin/bash
+  ignore_errors: true
+
+- name: Create temp folder for data disk before mounting
+  when: cloudypad_move_data_for_data_disk_mount
+  file:
+    path: "{{ cloudypad_data_root_tmp_before_mount }}"
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+
+- name: Move existing data to temp folder before mounting data disk
+  when: cloudypad_move_data_for_data_disk_mount
+  shell: |
+    mv {{ cloudypad_data_root }}/* {{ cloudypad_data_root_tmp_before_mount }}
+  args:
+    executable: /bin/bash
+
 - name: Format Cloudy Pad data disk (ext4)
   filesystem:
     fstype: "ext4"
@@ -48,3 +108,24 @@
     src: "{{ cloudypad_data_disk_path }}"
     fstype: "ext4"
     state: mounted
+
+    # Do not fail if the disk is not found at boot
+    # Oherwise instance won't boot at all if disk is missing
+    # Better have an instance that boots with data loss rather than unbootable instance
+    opts: "defaults,nofail"
+
+- name: Move data back from temp folder
+  when: cloudypad_move_data_for_data_disk_mount
+  shell: |
+    mv {{ cloudypad_data_root_tmp_before_mount }}/* {{ cloudypad_data_root }}/
+    rm -r {{ cloudypad_data_root_tmp_before_mount }}
+  args:
+    executable: /bin/bash
+
+# Start back autostop service if it was running before
+- name: Start Cloudy Pad autostop service
+  when: cloudypad_move_data_for_data_disk_mount and autostop_service_stop_result is success
+  systemd:
+    name: cloudypad-autostop
+    state: started
+    enabled: yes
