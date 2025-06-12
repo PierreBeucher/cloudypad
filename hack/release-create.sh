@@ -99,25 +99,66 @@ create_release_pr_and_merge_in_release_branch() {
 merge_release_branch_in_master() {
   release_version=$1
   release_branch="release-$release_version"
-
+  release_tag="v$release_version"
+  
   if [ "$CLOUDYPAD_RELEASE_DRY_RUN" = true ]; then
     echo "Dry run enabled: Skipping release branch merge in master."
     return
   fi
 
-  read -p "About to merge release branch $release_branch in master. MAKE SURE TO WAIT for release tag CI jobs (Docker image build) to finish. Continue ?"
+  echo "Waiting for release tag CI jobs (Docker image build) to finish on tag $release_tag..."
+  
+  timeout=1200  # Set timeout to 20 minutes (1200 seconds)
+  start_time=$(date +%s)
+  release_jobs_success=false
 
-  gh pr create \
-    --title "Finalize release $release_version" \
-    --body "" \
-    --base master \
-    --head $release_branch
+  while true; do
+    current_time=$(date +%s)
+    elapsed_time=$((current_time - start_time))
 
-  gh pr merge $release_branch --merge
+    if [ $elapsed_time -ge $timeout ]; then
+      echo "Timeout reached: CI jobs did not complete within $timeout seconds."
+      exit 1
+    fi
 
-  echo "Checking out and pulling master after release..."
+    # Check for jobs on release tag
+    # Output is like: [ { { "name": "Release", "status": "in_progress" }]
+    release_jobs_status=$(gh run list -b "$release_tag" --json status,name)
 
-  git checkout master && git pull
+    echo "[$(date +%Y-%m-%d-%H:%M:%S)] Release jobs status: $release_jobs_status"
+
+    # filter for jobs with status "in_progress"
+    release_jobs_in_progress=$(echo "$release_jobs_status" | jq -r '.[] | select(.status == "in_progress") | .name')
+
+    # If no jobs are running (release_jobs_in_progress is an empty string), break: all release jobs completed
+    if [ -z "$release_jobs_in_progress" ]; then
+      echo "All CI jobs completed for $release_tag"
+      release_jobs_success=true
+      break
+    else
+      echo "CI jobs still running for $release_tag. Waiting..."
+      sleep 30
+    fi
+  done
+
+  if [ "$release_jobs_success" = true ]; then
+    echo "Merging release branch $release_branch in master..."
+
+    gh pr create \
+      --title "Finalize release $release_version" \
+      --body "" \
+      --base master \
+      --head $release_branch
+
+    gh pr merge $release_branch --merge
+
+    echo "Checking out and pulling master after release..."
+
+    git checkout master && git pull
+  else
+    echo "Timeout reached: CI jobs did not complete within $timeout seconds."
+    exit 1
+  fi
 }
 
 set -e
