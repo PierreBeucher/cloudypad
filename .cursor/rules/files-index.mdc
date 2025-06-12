@@ -1,0 +1,122 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+
+## Glossary
+
+## Source code files and organization
+
+- `src/`
+  - `core/` - System central logic with abstract components used by providers
+    - `client.ts` - `CloudypadClient` class to manage high-level generic functions like `getAllInstances()` or `instanceExists()`
+    - `config/` - Core configuration interface `CoreConfig`, default value and loading methods. `CoreConfig` is passed to components to define their behavior (eg. State Backend used, Pulumi config, etc.)
+      - `default.ts`
+      - `interface.ts`
+    - `state/` - Instance State implementation. State are objects representing an instance state: inputs, outputs, providers used, etc.States are written and read using a Side Effect (local file, S3, etc.) as YAML files. Various State Manager components manage state: Loader to read, Writer to write, Parser to check format using Zod. 
+      - `state.ts` - Instance representation `InstanceStateV1` with Inputs (provider to use, provider config, instance type, data disk size, etc.), Outputs (concrete instance ID, data disk ID, etc.) and recent events (start-begin, start-end, provision-begin, etc.). Each provider implements its own State format with specific Inputs and Outputs
+      - `builders.ts` - Build State Managers using provided `CoreConfig`
+      - `initializer.ts` - Generic `StateInitializer` class to initialize states for a given provider (a specific State implementation)
+      - `loader.ts` - Read States from Side Effects 
+      - `parser.ts` - Parse given States. Generic Parser and Providers extend to implement their own Parsers
+      - `side-effects/` - Implement Side effectS (S3, Local...) from an abstract class.
+      - `writer.ts` - Write State to specified Side Effect
+    - `initializer.ts` - Generic class to Initialize Instances. Leverages StateInitializer.
+    - `manager.ts` - High-level `InstanceManager` (provider agnostic) to manage instance lifecycle after initialization leveraging sub-classes to provision/destroy (`InstanceProvisioner`), configure (`InstanceConfigurator`), start/stop/restart/get status (`InstanceRunner`)
+    - `provisioner.ts` - `InstanceProvisioner` to Provision an Instance by running Pulumi (or creating infrastructure using Cloud Provider API directly). Each Providers extends to implement their own.
+    - `configurator.ts` - `InstanceConfigurator` to Configure an instance after Provisioning: OS config, Cloudy Pad installation... Using Ansible for all providers.
+    - `runner.ts` - `InstanceRunner` to manager an Instance running status: start/stop/restart/get status and details. Each Providers extends to implement their own.
+    - `updater.ts` - `InstanceUpdater` to Update an Instance State. 
+    - `const.ts` - Global constants like Provider names `CLOUDYPAD_PROVIDER_AWS="aws`, `CLOUDYPAD_VERSION`, etc.
+    - `manager-builder.ts` - Build `InstanceManager`s for existing Instances.
+    - `moonlight/`
+      - `pairer`
+    - `provider.ts` - Define `ProviderClient` abstract class each Provider extends to implement `getInstanceInitializer()`, `getStateWriter()` and related function to generate provider-specific Initializer, Provisioner, Configurator, Runner, Updater, StateWriter, StateParser, etc. 
+    - `submanager-factory.ts` - `ProvisionerFactory` for sub-managers used by `InstanceManager`:  Runners, Configurators, Provisioner
+  - `cli/` - Wrap Core components around a CLI
+    - `command.ts` - Define global CLI args format and function to generate commands
+    - `config.ts` - CLI specific config
+    - `initializer.ts` - CLI wrapper around Core Initializer
+    - `main.ts` - CLI main executable
+    - `program.ts` - Define CLI program and available commands like `start`, `create` per provider, etc.
+    - `prompter.ts` - Abstract class to prompt user and transform CLI args into Instance State Inputs 
+    - `updater.ts` CLI wrapper around Core Updater
+  - `configurators/` - Core Configurators implementation. Only Ansible exists for now.
+    - `ansible.ts` - Core Configurator Ansible implementation
+  - `index.ts` - Index file with global exports
+  - `log/` - Logging utils, including `getLogger(name: string)` and `Logger` used as logging mechanism by components. Use this method to get a Logger instance.
+    - `utils.ts`
+  - `providers/` - Providers implementation. Each Provider has the same structure to extend Core components, only AWS is documented explicitely for brievity.
+    - `aws/`
+      - `state.ts` - Extends `InstanceStateV1` with Inputs and Outputs specific to this provider
+      - `provisioner.ts` - Implements `InstanceProvisioner` for this provider. Use State Inputs to configure and run Pulumi stacks (or create infra with Provider API directly)
+      - `runner.ts` - Implements `InstanceRunner` for this provider. Use a Provider specific client to call Provider API to start/stop/... instance infrastructure. 
+      - `cli.ts` - CLI implementation for this provider. Define Provider specific CLI args and command implementation (eg. `create` arguments which are specific per providers)
+      - `factory.ts` - Implements `ProvisionerFactory` for this Provider. (TODO this can probably be merged into `provider.ts`)
+      - `pulumi.ts` - Implements Pulumi stack for this provider. 
+      - `provider.ts` - Implements `ProviderClient` for this Provider.
+      - `sdk-client.ts` - or in a `client/` folder. Provider specific SDK clients to interact with various resources (get server status, list available regions, etc.)
+    - `azure/` - Microsoft Azure
+      - `cli.ts`
+      - `factory.ts`
+      - `provider.ts`
+      - `provisioner.ts`
+      - `pulumi.ts`
+      - `runner.ts`
+      - `state.ts`
+      - `sdk-client.ts`
+    - `dummy/` - Dummy provider for testing purposes. Used in Unit Tests. Fully implement all provider but simulates provisioning and configuration, otherwise use a real State with usual side effects and overal implementation. Provisioning updates State with a `dummyInfrastructure` field in state representing current infra status (eg. dummy server ID, dummy disk ID...) rather than call a real Provider API or Pulumi. Configurator is a no-op (only logs), Ansible does not run. 
+      - `cli.ts`
+      - `configurator.ts`
+      - `factory.ts`
+      - `infra.ts` - manages Dummy infrastructure in State
+      - `provider.ts`
+      - `provisioner.ts`
+      - `runner.ts`
+      - `state.ts`
+    - `gcp/` - Google Cloud Platform
+      - `cli.ts`
+      - `factory.ts`
+      - `provider.ts`
+      - `provisioner.ts`
+      - `pulumi.ts`
+      - `runner.ts`
+      - `state.ts`
+      - `sdk-client.ts`
+    - `paperspace/` - Paperspace - do not use Pulumi but direct Paperspace API call for provisioning.
+      - `client/`
+      - `cli.ts`
+      - `factory.ts`
+      - `provider.ts`
+      - `provisioner.ts`
+      - `runner.ts`
+      - `state.ts`
+      - `client/`
+    - `scaleway/` - Scaleway
+      - `cli.ts`
+      - `factory.ts`
+      - `provider.ts`
+      - `provisioner.ts`
+      - `pulumi.ts`
+      - `runner.ts`
+      - `state.ts`
+      - `sdk-client.ts`
+  - `tools/` - Various tools and utils
+    - `analytics/` - Analytics client to generate usage events and tracking
+      - `client.ts`
+      - `events.ts`
+      - `initializer.ts`
+      - `manager.ts`
+    - `ansible.ts` - Ansible client used by Ansible configurator. Runs `ansible-playbook` sub-process.
+    - `aws.ts` - AWS Client wrapping AWS SDK with utility methods.
+    - `axios.ts` - Axios utils, mostly handle errors for Axios return values
+    - `azure.ts` - Azure Client wrapping Azure SDK with utility methods.
+    - `base64.ts` - Base64 utils
+    - `gcp.ts` - GCP Client wrapping GCP SDK with utility methods.
+    - `pulumi/`
+      - `client.ts` - Pulumi Client wrapping Pulumi Automation API. Defines `InstancePulumiClient` extended by Provider's Pulumi stacks.
+    - `s3.ts` - S3 client wrapping AWS S3 SDK.
+    - `scaleway.ts` - Scaleway Client wrapping Scaleway SDK with utility methods.
+    - `ssh.ts` - SSH client wrapping NodeSSH library.
+    - `user-config-detector.ts` - Auto-detect user current config (keyboard layout, etc.)

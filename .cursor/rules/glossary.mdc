@@ -1,0 +1,25 @@
+---
+description: Describe important terms and object names
+globs:
+alwaysApply: true
+---
+
+- Cloudy Pad - the project name. Deploy and manage Cloud-based gaming machines where users can install their own games (Steam, Lutris, etc.) and use a client to stream video games from powerful Cloud machines to their own machine. Users can play games with high quality and performance games, typically Windows games, from any machine (MacOS, less powerful Windows machines, Linux, tablet, phones....) Provides a CLI and let user customize their settings (instance type, disk size, etc.). "Cloudy" as everything happens in the Cloud. "Pad": a way to call video game controller.
+- Instance - a Cloudy Pad instance. "Instance" represent overall instance components: its infrastructure (servers, disk, etc.), internal State, status and everything associated.
+- Instance Server - The Cloud server / machine / VM for an instance. 
+- Instance State - Cloudy Pad internal state for an instance with its Inputs (provider, instance server type, disk size...) and Outputs (concrete server ID, known hostname / IP address...). Represented as a YAML file in a State Backend written by Side Effects. In code as `InstanceStateV1` and extending classes per providers. 
+- Cloudy Pad config - Global configuration object used by components. Define State backend (side effect to use), Pulumi config, etc.
+- Provider - A Cloud provider like AWS, Azure, GCP, Scaleway, Paperspace...  
+- Side Effect - Name given to classes used to read/write Instance States on local files / S3 / ...
+- Instance Initializer / initialization: Initialization of an Instance means creating the Instance initial state and persisting via a Side Effect. After Initialization, Instance State is valid with all required Inputs but no Output as provisioning and configuration is not done yet.
+- Instance Provisioner / provisioning - Provision an instance Cloud infrastructure: instance server, IP address, disks, etc. and destroy it.
+- Instance Configurator / configuration: Configure an instance server: OS config, NVIDIA drivers, Cloudy Pad installation, etc. Typically via Ansible. 
+- Instance Runner - Manage instance runtime lifecycle: start/stop/restart, get status, etc.
+- Instance Updater
+- Instance Manager - High-level component to manage an instance after initialization: start/stop/restart, provision, configure, destroy...
+- Streaming server - Streaming server installed on instance server to stream video and inputs from/to client's machine. Either Sunshine or Wolf. 
+- Moonlight - Streaming client compatible with Sunshine and Wolf. An application installed on user's machine which can be connected (paired) to an instance streaming server.
+- Sunshine - A streaming server https://github.com/LizardByte/Sunshine
+- Wolf - A streaming server https://games-on-whales.github.io/wolf/stable/
+- pair / instance pairing - Act of pairing Moonlight with a streaming server. Invoves user entering a PIN between client and server to establish a trust relationship between both. Once paired, a client can connect and stream from the instance server. 
+- MoonlightPairer - Implement pairing process for streaming servers 
