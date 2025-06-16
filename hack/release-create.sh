@@ -123,16 +123,18 @@ merge_release_branch_in_master() {
 
     # Check for jobs on release tag
     # Output is like: [ { { "name": "Release", "status": "in_progress" }]
-    release_jobs_status=$(gh run list -b "$release_tag" --json status,name)
+    release_jobs_response=$(gh run list -b "$release_tag" --json status,name)
 
-    echo "[$(date +%Y-%m-%d-%H:%M:%S)] Release jobs status: $release_jobs_status"
+    echo "[$(date +%Y-%m-%d-%H:%M:%S)] Release jobs status: $release_jobs_response"
 
     # filter for jobs with status "in_progress"
-    release_jobs_in_progress=$(echo "$release_jobs_status" | jq -r '.[] | select(.status == "in_progress") | .name')
+    release_job_status=$(echo "$release_jobs_response" | jq -r '.[] | select(.name == "Release") | .status')
+
+    echo "Release job status: '$release_job_status'"
 
     # If no jobs are running (release_jobs_in_progress is an empty string), break: all release jobs completed
-    if [ -z "$release_jobs_in_progress" ]; then
-      echo "All CI jobs completed for $release_tag"
+    if [ "$release_job_status" = "completed" ]; then
+      echo "Release CI job completed for $release_tag"
       release_jobs_success=true
       break
     else
@@ -140,6 +142,12 @@ merge_release_branch_in_master() {
       sleep 30
     fi
   done
+
+  read -p "Merge release branch $release_branch into master? (y/N): " confirm_merge
+  if [[ "$confirm_merge" != "y" ]]; then
+    echo "Merge aborted."
+    exit 1
+  fi
 
   if [ "$release_jobs_success" = true ]; then
     echo "Merging release branch $release_branch in master..."
