@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.30.1](https://github.com/PierreBeucher/cloudypad/compare/v0.30.0...v0.30.1) (2025-06-16)
+
+
+### Bug Fixes
+
+* prepare release 0.30.1 - update version in package files and scripts ([547f47f](https://github.com/PierreBeucher/cloudypad/commit/547f47fd332b3b066efe564d466185ca90740d9a))
+
 ## [0.30.0](https://github.com/PierreBeucher/cloudypad/compare/v0.29.0...v0.30.0) (2025-06-12)
 
 
