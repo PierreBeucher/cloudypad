@@ -207,15 +207,26 @@ tasks:
       -t $CLOUDYPAD_BUILD_CORE_IMAGE_REGISTRY:$CLOUDYPAD_BUILD_CORE_IMAGE_TAG
       --load
 
-  # Both amd64 and arm64
+  # Build and push core container image for release with required labels and target architectures
+  # Image labels are important for some processing (eg. cleanup), don't remove them
   build-core-container-release:
+    vars:
+      CLOUDYPAD_VERSION:
+        sh: jq -r .version package.json
     cmds:
+    - >
+      if [ -z "{{ .CLOUDYPAD_VERSION }}" ]; then
+        echo "CLOUDYPAD_VERSION={{ .CLOUDYPAD_VERSION }}"
+        echo "CLOUDYPAD_VERSION not set. It should have been set from package.json - this is certainly a bug."
+        exit 1
+      fi
     - >
       docker buildx build . 
       --cache-from type=registry,ref=$CLOUDYPAD_BUILD_CORE_IMAGE_REGISTRY:$CLOUDYPAD_BUILD_CORE_IMAGE_TAG-cache
       --cache-from type=registry,ref=$CLOUDYPAD_BUILD_CORE_IMAGE_REGISTRY:master-cache
       -t $CLOUDYPAD_BUILD_CORE_IMAGE_REGISTRY:$CLOUDYPAD_BUILD_CORE_IMAGE_TAG
       --platform "linux/amd64,linux/arm64"
+      --label "cloudypad.version={{ .CLOUDYPAD_VERSION }}"
       --push
 
   # Sunshine
