@@ -96,7 +96,15 @@ export abstract class AbstractInstanceRunner<C extends CommonProvisionInputV1, O
 
     async serverStatus(): Promise<ServerRunningStatus> {
         this.logger.info(`Getting instance state for ${this.args.instanceName}`) 
-        return this.doGetInstanceStatus()
+
+        try {
+            return await this.doGetInstanceStatus()
+        } catch (error) {
+            this.logger.info(`Couldn't get server status for instance ${this.args.instanceName}.` +
+                    `This situation is expected (the server didn't exist, eg. has been removed).` +
+                    `Error: ${error}`)
+            return ServerRunningStatus.Unknown
+        }
     }
 
     protected abstract doStart(opts?: StartStopOptions): Promise<void>
