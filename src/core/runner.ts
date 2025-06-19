@@ -100,11 +100,9 @@ export abstract class AbstractInstanceRunner<C extends CommonProvisionInputV1, O
         try {
             return await this.doGetInstanceStatus()
         } catch (error) {
-            // the runner implementation may throw an error if the server is not running or not existing as expected
-            // May happen if the server was stopped or removed concurrently to a status check
-            // return Unknown in this situation
-            this.logger.warn(`Error getting server status for instance ${this.args.instanceName}.` +
-                `It's possible server was stopped or removed during a status check. Error: ${error}`)
+            this.logger.info(`Couldn't get server status for instance ${this.args.instanceName}.` +
+                    `This situation is expected (the server didn't exist, eg. has been removed).` +
+                    `Error: ${error}`)
             return ServerRunningStatus.Unknown
         }
     }
