@@ -33,8 +33,6 @@ export const mochaHooks = {
         sinon.stub(InstancePulumiClient.prototype, 'destroy').resolves()
         sinon.stub(InstancePulumiClient.prototype, 'setConfig').resolves()
 
-        sinon.stub(AbstractInstanceRunner.prototype, 'stop').resolves()
-        sinon.stub(AbstractInstanceRunner.prototype, 'start').resolves()
         sinon.stub(AbstractInstanceRunner.prototype, 'pairSendPin').resolves()
         sinon.stub(AbstractInstanceRunner.prototype, 'pairInteractive').resolves()
 
