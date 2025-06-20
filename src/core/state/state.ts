@@ -78,6 +78,13 @@ const CommonConfigurationOutputV1Schema = z.object({
     dataDiskConfigured: z.boolean().default(false).describe("Whether data disk has been configured."),
 }).passthrough()
 
+const StateMetadataSchema = z.object({
+    lastConfigurationDate: z.number().describe("Last successful configuration date (Linux timestamp)").optional(),
+    lastConfigurationCloudypadVersion: z.string().describe("Cloudy Pad version used for the last successful configuration").optional(),
+    lastProvisionDate: z.number().describe("Last successful provision date (Linux timestamp)").optional(),
+    lastProvisionCloudypadVersion: z.string().describe("Cloudy Pad version used for the last successful provision").optional(),
+})
+
 export enum InstanceEventEnum {
     Init = "init",
     
@@ -137,7 +144,8 @@ const InstanceStateV1Schema = z.object({
         configurator: z.enum(CLOUDYPAD_CONFIGURATOR_LIST).describe("Supported configurators"),
         output: CommonConfigurationOutputV1Schema.optional(),
         input: CommonConfigurationInputV1Schema,
-    })
+    }),
+    metadata: StateMetadataSchema.optional(),
 })
 
 const CostAlertSchema = z.object({
@@ -165,6 +173,8 @@ export type CommonProvisionOutputV1 = z.infer<typeof CommonProvisionOutputV1Sche
 
 export type CommonConfigurationInputV1 = z.infer<typeof CommonConfigurationInputV1Schema>
 export type CommonConfigurationOutputV1 = z.infer<typeof CommonConfigurationOutputV1Schema>
+
+export type StateMetadata = z.infer<typeof StateMetadataSchema>
 
 export type InstanceEvent = z.infer<typeof InstanceEventSchema>
 
