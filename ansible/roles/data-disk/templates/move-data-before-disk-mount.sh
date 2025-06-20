@@ -15,12 +15,11 @@ if [ -d "$CLOUDYPAD_DATA_ROOT" ]; then
         exit 0
     fi
     
-    # # Check if already a mountpoint
-    # ENABLE ME !!!
-    # if mountpoint -q "$CLOUDYPAD_DATA_ROOT"; then
-    #     echo "Data root directory is already a mountpoint, no need to move data"
-    #     exit 0
-    # fi
+    # Check if already a mountpoint, no need to move data in that case
+    if mountpoint -q "$CLOUDYPAD_DATA_ROOT"; then
+        echo "Data root directory is already a mountpoint, no need to move data"
+        exit 0
+    fi
     
     echo "Data root directory contains data and is not mounted, moving data to temporary location"
     

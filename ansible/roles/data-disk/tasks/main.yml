@@ -59,7 +59,7 @@
     dest: /usr/local/bin/move-data-before-disk-mount.sh
     mode: '0755'
 
-- name: Execute move-data-before-disk-mount.sh script
+- name: Move existing data before disk mount (if any)
   shell: /usr/local/bin/move-data-before-disk-mount.sh
 
 # Format and mount data disk
@@ -87,5 +87,5 @@
     dest: /usr/local/bin/move-data-after-disk-mount.sh
     mode: '0755'
 
-- name: Execute move-data-after-disk-mount.sh script
+- name: Move existing ata back after disk mount (if any)
   shell: /usr/local/bin/move-data-after-disk-mount.sh
