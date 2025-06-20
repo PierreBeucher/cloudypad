@@ -1,0 +1,16 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+When your run command, always execute it under a Nix development shell, eg. instead or running directly:
+
+```sh
+echo foobar
+```
+
+Run:
+
+```sh
+nix develop -c "echo foobar"
+```
