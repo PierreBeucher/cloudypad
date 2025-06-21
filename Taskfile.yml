@@ -70,25 +70,56 @@ tasks:
 
   #
   # Tests
+  #
 
   # Detect potential circular deps with Madge
   test-circular-deps:
     cmd: npx -y madge --ts-config ./tsconfig.json -c .
 
-  # Run integration tests with local containers
-  # Only some test can be run using only local containers as some tests depend on real infrastructure
-  test-integ-with-local-containers:
+  test-integ-stable:
     cmds:
-    - task: test-integ-containers-setup
     - task: test-integ-s3-side-effects
+    - task: test-integ-provider-dummy
+    - task: test-integ-provider-scaleway
+    - task: test-integ-provider-aws
+    - task: test-integ-provider-azure
+    - task: test-integ-provider-gcp
+    - task: test-integ-provider-paperspace
 
+  # Setup containers for integration tests
   test-integ-containers-setup:
     cmds:
     - docker compose -f test/integ/docker-compose.yml up -d
 
+  # Run side-effects tests
   test-integ-s3-side-effects:
     cmds:
-    - npx mocha --config test/integ/.mocharc.json ./test/integ/side-effects/s3.spec.ts
+    - task: test-integ-containers-setup
+    - npx mocha --config test/integ/.mocharc.json ./test/integ/stable/core/state/side-effects/s3.spec.ts
+
+  test-integ-provider-aws:
+    cmds:
+    # - task: npx mocha --config test/integ/.mocharc.json ./test/integ/stable/core/providers/aws/lifecycle.spec.ts 
+
+  test-integ-provider-scaleway:
+    cmds:
+    - task: npx mocha --config test/integ/.mocharc.json ./test/integ/stable/core/providers/scaleway/lifecycle.spec.ts 
+
+  test-integ-provider-azure:
+    cmds:
+    # - task: npx mocha --config test/integ/.mocharc.json ./test/integ/stable/core/providers/azure/lifecycle.spec.ts 
+
+  test-integ-provider-gcp:
+    cmds:
+    # - task: npx mocha --config test/integ/.mocharc.json ./test/integ/stable/core/providers/gcp/lifecycle.spec.ts 
+
+  test-integ-provider-paperspace:
+    cmds:
+    # - task: npx mocha --config test/integ/.mocharc.json ./test/integ/stable/core/providers/paperspace/lifecycle.spec.ts 
+
+  test-integ-provider-dummy:
+    cmds:
+    - task: npx mocha --config test/integ/.mocharc.json ./test/integ/stable/core/providers/dummy/lifecycle.spec.ts 
 
   test-integ-full-lifecycle-all:
     cmds:
@@ -116,17 +147,15 @@ tasks:
   test-integ-scaleway-lifecycle-with-server-deletion:
     - npx mocha --config test/integ/.mocharc.json ./test/integ/scaleway/lifecycle-with-server-deletion.spec.ts 
 
-  test-integ-side-effects-s3:
-    cmds:
-    - docker compose -f test/integ/side-effects/docker-compose.yml up -d
-    - npx mocha --config test/integ/.mocharc.json ./test/integ/side-effects/s3.spec.ts
-
+  # Ensure analytics key are matching in various places in code 
   test-analytics-key-match:
     - cmd: test/shell/test-matching-analytics-key.sh
 
+  # Ensure install script is working
   test-install-script:
     - cmd: test/shell/test-install.sh
-  
+
+  # Smoke test to check container image is working
   test-container-smoke-test:
     cmds:
     - task: build-core-container-local

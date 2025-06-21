@@ -78,7 +78,7 @@ create_release_pr_and_merge_in_release_branch() {
       --token $GITHUB_TOKEN \
       --target-branch $release_branch
 
-  echo "Release is ready to be merged in release branch. You can review PR before merge."
+  echo "Release is ready to be merged in release branch."
 
   gh pr merge "release-please--branches--$release_branch--components--cloudypad" --merge
 

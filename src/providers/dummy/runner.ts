@@ -27,12 +27,13 @@ export class DummyInstanceRunner extends AbstractInstanceRunner<DummyProvisionIn
     async doStart(opts?: StartStopOptions): Promise<void> {        
         this.logger.debug(`Dummy start operation for instance: ${this.args.instanceName} (starting time: ${this.args.provisionInput.startDelaySeconds} seconds)`)
         
-        if(this.args.provisionInput.startDelaySeconds > 0) {
+        if(this.args.provisionInput.startDelaySeconds && this.args.provisionInput.startDelaySeconds > 0) {
+            const delay = this.args.provisionInput.startDelaySeconds
             await this.dummyInfraManager.setServerRunningStatus(ServerRunningStatus.Starting)
             const startingPromise = new Promise<void>(resolve => setTimeout(async () => {
                 await this.dummyInfraManager.setServerRunningStatus(ServerRunningStatus.Running)
                 resolve()
-            }, this.args.provisionInput.startDelaySeconds * 1000))
+            }, delay * 1000))
             
             if(opts?.wait) {
                 await startingPromise
@@ -45,12 +46,13 @@ export class DummyInstanceRunner extends AbstractInstanceRunner<DummyProvisionIn
     async doStop(opts?: StartStopOptions): Promise<void> {
         this.logger.debug(`Dummy stop operation for instance: ${this.args.instanceName} (stopping time: ${this.args.provisionInput.stopDelaySeconds} seconds)`)
 
-        if(this.args.provisionInput.stopDelaySeconds > 0) {
+        if(this.args.provisionInput.stopDelaySeconds && this.args.provisionInput.stopDelaySeconds > 0) {
+            const delay = this.args.provisionInput.stopDelaySeconds
             await this.dummyInfraManager.setServerRunningStatus(ServerRunningStatus.Stopping)
             const stoppingPromise = new Promise<void>(resolve => setTimeout(async () => {
                 await this.dummyInfraManager.setServerRunningStatus(ServerRunningStatus.Stopped)
                 resolve()
-            }, this.args.provisionInput.stopDelaySeconds * 1000))
+            }, delay * 1000))
             
             if(opts?.wait) {
                 await stoppingPromise

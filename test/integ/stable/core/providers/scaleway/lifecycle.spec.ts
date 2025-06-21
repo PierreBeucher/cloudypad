@@ -1,11 +1,11 @@
 import * as assert from 'assert'
-import { ScalewayClient, ScalewayServerState } from '../../../src/tools/scaleway'
-import { ScalewayInstanceStateV1, ScalewayStateParser } from '../../../src/providers/scaleway/state'
-import { getIntegTestCoreClient, getIntegTestCoreConfig } from '../utils'
-import { ScalewayProviderClient } from '../../../src/providers/scaleway/provider'
-import { ServerRunningStatus } from '../../../src/core/runner'
-import { getLogger } from '../../../src/log/utils'
-import { CloudypadClient } from '../../../src'
+import { ScalewayClient, ScalewayServerState } from '../../../../../../src/providers/scaleway/sdk-client'
+import { ScalewayInstanceStateV1 } from '../../../../../../src/providers/scaleway/state'
+import { getIntegTestCoreConfig } from '../../../../utils'
+import { ScalewayProviderClient } from '../../../../../../src/providers/scaleway/provider'
+import { ServerRunningStatus } from '../../../../../../src/core/runner'
+import { getLogger } from '../../../../../../src/log/utils'
+import { CloudypadClient } from '../../../../../../src/core/client'
 
 // This test is run manually using an existing instance
 
@@ -21,16 +21,12 @@ describe('Scaleway lifecycle with instance server deletion', () => {
 
     let currentInstanceServerId: string | undefined = undefined
 
-    async function getCurrentState(): Promise<ScalewayInstanceStateV1> {
-        // Not practical... TODO
-        const stateLoader = scalewayProviderClient.getStateLoader()
-        const rawState = await stateLoader.loadInstanceState(instanceName)
-        const state = new ScalewayStateParser().parse(rawState)
-        return state
+    async function getCurrentTestState(): Promise<ScalewayInstanceStateV1> {
+        return scalewayProviderClient.getInstanceState(instanceName)
     }
 
     function getScalewayClient(): ScalewayClient {    
-        return new ScalewayClient("test-scaleway-lifecycle-with-server-deletion", {
+        return new ScalewayClient(instanceName, {
             projectId: projectId,
             region: region,
             zone: zone,
@@ -69,10 +65,42 @@ describe('Scaleway lifecycle with instance server deletion', () => {
     it('should deploy instance', async () => {
         const instanceManager = await scalewayProviderClient.getInstanceManager(instanceName)
         await instanceManager.deploy()
+
+        const scalewayClient = getScalewayClient()
+        const state = await getCurrentTestState()
+
+        assert.ok(state.provision.output?.instanceServerId)
+        currentInstanceServerId = state.provision.output.instanceServerId
+
+        const serverData = await scalewayClient.getRawServerData(currentInstanceServerId)
+        assert.strictEqual(serverData?.commercialType, "L4-1-24G")
+    }).timeout(360000)
+
+    it('should update instance', async () => {
+        const instanceUpdater = scalewayProviderClient.getInstanceUpdater()
+        await instanceUpdater.updateStateOnly({
+            instanceName: instanceName,
+            provisionInputs: {
+                instanceType: "GPU-3070-S",
+            }, 
+        })
+
+        const instanceManager = await scalewayProviderClient.getInstanceManager(instanceName)
+        await instanceManager.deploy()
+
+        const scalewayClient = getScalewayClient()
+        const state = await getCurrentTestState()
+
+        assert.ok(state.provision.output?.instanceServerId)
+        currentInstanceServerId = state.provision.output.instanceServerId
+
+        const serverData = await scalewayClient.getRawServerData(currentInstanceServerId)
+        assert.strictEqual(serverData?.commercialType, "GPU-3070-S")
+
     }).timeout(360000)
 
     it('should have a valid instance server output with existing server', async () => {
-        const state = await getCurrentState()
+        const state = await getCurrentTestState()
         
         assert.ok(state.provision.output?.instanceServerId)
         currentInstanceServerId = state.provision.output.instanceServerId
@@ -94,7 +122,7 @@ describe('Scaleway lifecycle with instance server deletion', () => {
             assert.strictEqual(instanceStatus.configured, false)
             assert.strictEqual(instanceStatus.serverStatus, ServerRunningStatus.Unknown)
 
-            const state = await getCurrentState()
+            const state = await getCurrentTestState()
             assert.strictEqual(state.provision.output?.instanceServerId, undefined)
 
             const scalewayClient = getScalewayClient()
@@ -118,7 +146,7 @@ describe('Scaleway lifecycle with instance server deletion', () => {
             assert.strictEqual(instanceStatus.provisioned, true)
             assert.strictEqual(instanceStatus.serverStatus, ServerRunningStatus.Running)
 
-            const state = await getCurrentState()
+            const state = await getCurrentTestState()
             assert.ok(state.provision.output?.instanceServerId)
 
             currentInstanceServerId = state.provision.output.instanceServerId
@@ -141,7 +169,7 @@ describe('Scaleway lifecycle with instance server deletion', () => {
 
     it('should restart instance without deleting or re-provisioning', async () => {
 
-        const stateBefore = await getCurrentState()
+        const stateBefore = await getCurrentTestState()
         const serverIdBefore = stateBefore.provision.output?.instanceServerId
 
         assert.ok(serverIdBefore)
@@ -149,7 +177,7 @@ describe('Scaleway lifecycle with instance server deletion', () => {
         const instanceManager = await scalewayProviderClient.getInstanceManager(instanceName)
         await instanceManager.restart({ wait: true })
 
-        const stateAfter = await getCurrentState()
+        const stateAfter = await getCurrentTestState()
         assert.strictEqual(stateAfter.provision.output?.instanceServerId, serverIdBefore)
     }).timeout(120000)
 

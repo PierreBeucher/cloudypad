@@ -1,4 +1,4 @@
-import { getLogger, Logger } from '../log/utils'
+import { getLogger, Logger } from '../../log/utils'
 import { createClient, Instance, Vpc, Account, Marketplace, Profile } from '@scaleway/sdk'
 import { loadProfileFromConfigurationFile } from '@scaleway/configuration-loader'
 
@@ -210,6 +210,11 @@ export class ScalewayClient {
         } catch (error) {
             throw new Error(`Failed to restart virtual machine ${serverId}`, { cause: error })
         }
+    }
+
+    async getRawServerData(serverId: string): Promise<Instance.v1.Server | undefined> {
+        const server = await this.instanceClient.getServer({ serverId })
+        return server.server
     }
 
     async getInstanceStatus(serverId: string): Promise<ScalewayServerState | undefined> {

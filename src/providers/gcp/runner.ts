@@ -1,6 +1,6 @@
 import { CLOUDYPAD_PROVIDER_GCP } from '../../core/const';
 import { AbstractInstanceRunner, InstanceRunnerArgs, ServerRunningStatus, StartStopOptions } from '../../core/runner';
-import { GcpClient, GcpInstanceStatus } from '../../tools/gcp';
+import { GcpClient, GcpInstanceStatus } from './sdk-client';
 import { GcpProvisionInputV1, GcpProvisionOutputV1 } from './state';
 
 export type GcpInstanceRunnerArgs = InstanceRunnerArgs<GcpProvisionInputV1, GcpProvisionOutputV1>

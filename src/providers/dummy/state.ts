@@ -10,9 +10,9 @@ const DummyProvisionOutputV1Schema = CommonProvisionOutputV1Schema.extend({
 })
 
 const DummyProvisionInputV1Schema = CommonProvisionInputV1Schema.extend({
-    instanceType: z.string().describe("Type of Dummy instance"),
-    startDelaySeconds: z.number().describe("Time (seconds) during which the instance will remain in 'starting' state before becoming 'running' on start/restart operation.").default(10),
-    stopDelaySeconds: z.number().describe("Time (seconds) during which the instance will remain in 'stopping' state before becoming 'stopped' on stop/restart operation.").default(10),
+    instanceType: z.string().describe("Type of Dummy instance").optional(),
+    startDelaySeconds: z.number().describe("Time (seconds) during which the instance will remain in 'starting' state before becoming 'running' on start/restart operation.").default(0).optional(),
+    stopDelaySeconds: z.number().describe("Time (seconds) during which the instance will remain in 'stopping' state before becoming 'stopped' on stop/restart operation.").default(0).optional(),
     configurationDelaySeconds: z.number().describe("Time (seconds) during which configuration will run.").default(0).optional(),
     provisioningDelaySeconds: z.number().describe("Time (seconds) during which provisioning will run.").default(0).optional(),
     readinessAfterStartDelaySeconds: z.number().describe("Time (seconds) after starting the instance before it is considered ready to accept connections.").default(0).optional(),

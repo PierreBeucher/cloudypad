@@ -1,8 +1,8 @@
 import * as assert from 'assert';
-import { AwsClient, EC2_QUOTA_CODE_ALL_G_AND_VT_SPOT_INSTANCES } from '../../../src/tools/aws';
-import { _InstanceType, InstanceTypeInfo } from '@aws-sdk/client-ec2';
-import { SUPPORTED_INSTANCE_TYPES } from '../../../src/providers/aws/cli';
-import { stringsToInstanceTypes } from '../../../src/tools/aws';
+import { AwsClient } from '../../../../../../src/providers/aws/sdk-client';
+import { _InstanceType } from '@aws-sdk/client-ec2';
+import { SUPPORTED_INSTANCE_TYPES } from '../../../../../../src/providers/aws/cli';
+import { stringsToInstanceTypes } from '../../../../../../src/providers/aws/sdk-client';
 describe('AWS Client Integration Tests', () => {
     
     it('should convert strings to instance types', async () => {
@@ -70,10 +70,11 @@ describe('AWS Client Integration Tests', () => {
         }, /Failed to fetch instance details for instance type/)    
     }).timeout(60000)
 
-    it('should get instance state', async () => {
-        const instanceId = 'i-08a558204090d96a7'
-        const awsClient = new AwsClient('integ-test', 'eu-west-3')
-        const state = await awsClient.getInstanceState(instanceId)
-        assert.equal(state, 'stopped')
-    })
+    // don't test instance-specific methods as they are indirectly tested by lifecycle tests
+    // it('should get instance state', async () => {
+    //     const instanceId = 'i-08a558204090d96a7'
+    //     const awsClient = new AwsClient('integ-test', 'eu-west-3')
+    //     const state = await awsClient.getInstanceState(instanceId)
+    //     assert.equal(state, 'stopped')
+    // })
 }) 

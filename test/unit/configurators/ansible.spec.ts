@@ -4,6 +4,7 @@ import * as lodash from 'lodash';
 import { AnsibleConfigurator, AnsibleConfiguratorArgs } from "../../../src/configurators/ansible"
 import { DEFAULT_COMMON_INPUT } from "../utils"
 import { CLOUDYPAD_SUNSHINE_IMAGE_REGISTRY, CLOUDYPAD_VERSION } from '../../../src/core/const';
+import { DummyInstanceStateV1 } from '../../../src/providers/dummy/state';
 
 describe('Ansible configurator', function () {
 
@@ -106,7 +107,7 @@ describe('Ansible configurator', function () {
 
     it('should use Sunshine server name if provided in input)', async function () {
         const instanceName = "test-ansible-configurator-instance-default"
-        const testConfig: AnsibleConfiguratorArgs = {
+        const testConfig: AnsibleConfiguratorArgs<DummyInstanceStateV1> = {
             instanceName: instanceName,
             provider: "test-ansible-configurator-provider-default",
             configurationInput: {
@@ -119,6 +120,9 @@ describe('Ansible configurator', function () {
             provisionInput: DEFAULT_COMMON_INPUT.provision,
             provisionOutput: {
                 host: "test-ansible-configurator-host", 
+                instanceId: "dummy-instance-id",
+                provisionedAt: new Date().getTime(),
+                dataDiskId: "dummy-data-disk-id",
             },
         }
         const configurator = new AnsibleConfigurator(testConfig)
@@ -130,7 +134,7 @@ describe('Ansible configurator', function () {
         )
 
         const serverNameOverride = "server-name-override"
-        const testConfigWithServerName: AnsibleConfiguratorArgs = {
+        const testConfigWithServerName: AnsibleConfiguratorArgs<DummyInstanceStateV1> = {
             ...testConfig,
             configurationInput: {
                 ...testConfig.configurationInput,
@@ -151,7 +155,7 @@ describe('Ansible configurator', function () {
     // should not fail YAML validation
     it('should handle special characters in Sunshine server name)', async function () {
         const instanceName = "test-ansible-configurator-server-name-with-special-characters"
-        const baseTestConfig: AnsibleConfiguratorArgs = {
+        const baseTestConfig: AnsibleConfiguratorArgs<DummyInstanceStateV1> = {
             instanceName: instanceName,
             provider: "test-ansible-configurator-provider-default",
             configurationInput: {
@@ -161,9 +165,15 @@ describe('Ansible configurator', function () {
                     passwordBase64: "test-ansible-configurator-password-base64",
                 }
             },
-            provisionInput: DEFAULT_COMMON_INPUT.provision,
+            provisionInput: {
+                ...DEFAULT_COMMON_INPUT.provision,
+                instanceType: "dummy-instance-type-1",
+            },
             provisionOutput: {
-                host: "test-ansible-configurator-host", 
+                host: "test-ansible-configurator-host",
+                instanceId: "dummy-instance-id",
+                provisionedAt: new Date().getTime(),
+                dataDiskId: "dummy-data-disk-id",
             },
         }
 

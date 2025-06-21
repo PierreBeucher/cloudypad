@@ -1,12 +1,12 @@
 import * as assert from 'assert';
-import { CLOUDYPAD_PROVIDER_DUMMY } from '../../../src/core/const';
-import { DummyProvisionInputV1 } from '../../../src/providers/dummy/state';
-import { ServerRunningStatus } from '../../../src/core/runner';
-import { DummyInstanceInput } from '../../../src/providers/dummy/state';
-import { CLOUDYPAD_CONFIGURATOR_ANSIBLE } from '../../../src/core/const';
-import { getUnitTestCoreClient, getUnitTestCoreConfig } from '../../unit/utils';
-import { CommonConfigurationInputV1 } from '../../../src/core/state/state';
-import { DummyProviderClient } from '../../../src/providers/dummy/provider';
+import { CLOUDYPAD_PROVIDER_DUMMY } from '../../../../../../src/core/const';
+import { DummyProvisionInputV1 } from '../../../../../../src/providers/dummy/state';
+import { ServerRunningStatus } from '../../../../../../src/core/runner';
+import { DummyInstanceInput } from '../../../../../../src/providers/dummy/state';
+import { CLOUDYPAD_CONFIGURATOR_ANSIBLE } from '../../../../../../src/core/const';
+import { getUnitTestCoreClient, getUnitTestCoreConfig } from '../../../../../unit/utils';
+import { CommonConfigurationInputV1 } from '../../../../../../src/core/state/state';
+import { DummyProviderClient } from '../../../../../../src/providers/dummy/provider';
 
 describe('Dummy instance lifecycle with delay', () => {
 

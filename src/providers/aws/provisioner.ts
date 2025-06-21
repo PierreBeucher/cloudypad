@@ -1,7 +1,7 @@
 import { SshKeyLoader } from '../../tools/ssh';
 import { AwsPulumiClient, PulumiStackConfigAws } from './pulumi';
 import { AbstractInstanceProvisioner, InstanceProvisionerArgs } from '../../core/provisioner';
-import { AwsClient } from '../../tools/aws';
+import { AwsClient } from './sdk-client';
 import { AwsProvisionInputV1, AwsProvisionOutputV1 } from './state';
 
 export type AwsProvisionerArgs = InstanceProvisionerArgs<AwsProvisionInputV1, AwsProvisionOutputV1>

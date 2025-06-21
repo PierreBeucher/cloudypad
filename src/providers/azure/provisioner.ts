@@ -1,7 +1,7 @@
 import { SshKeyLoader } from '../../tools/ssh'
 import { AzurePulumiClient, PulumiStackConfigAzure } from './pulumi'
 import { AbstractInstanceProvisioner, InstanceProvisionerArgs } from '../../core/provisioner'
-import { AzureClient } from '../../tools/azure'
+import { AzureClient } from './sdk-client'
 import { AzureProvisionInputV1, AzureProvisionOutputV1 } from './state'
 
 export type AzureProvisionerArgs = InstanceProvisionerArgs<AzureProvisionInputV1, AzureProvisionOutputV1>

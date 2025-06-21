@@ -1,7 +1,7 @@
 import { InstanceStateName } from '@aws-sdk/client-ec2';
 import { CLOUDYPAD_PROVIDER_AWS } from '../../core/const';
 import { AbstractInstanceRunner, InstanceRunnerArgs, ServerRunningStatus, StartStopOptions } from '../../core/runner';
-import { AwsClient } from '../../tools/aws';
+import { AwsClient } from './sdk-client';
 import { AwsProvisionInputV1, AwsProvisionOutputV1 } from './state';
 
 export type AwsInstanceRunnerArgs = InstanceRunnerArgs<AwsProvisionInputV1, AwsProvisionOutputV1>
