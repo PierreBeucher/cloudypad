@@ -1,5 +1,5 @@
-import { PUBLIC_IP_TYPE_STATIC } from '../../../../src/core/const';
-import { fetchApiKeyFromEnvironment, PaperspaceClient } from '../../../../src/providers/paperspace/client/client';
+import { PUBLIC_IP_TYPE_STATIC } from '../../../../../../src/core/const';
+import { fetchApiKeyFromEnvironment, PaperspaceClient } from '../../../../../../src/providers/paperspace/client/client';
 import * as assert from 'assert';
 
 describe('PaperspaceClient', function () {

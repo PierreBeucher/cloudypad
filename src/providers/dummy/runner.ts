@@ -29,7 +29,7 @@ export class DummyInstanceRunner extends AbstractInstanceRunner<DummyProvisionIn
         
         if(this.args.provisionInput.startDelaySeconds && this.args.provisionInput.startDelaySeconds > 0) {
             const delay = this.args.provisionInput.startDelaySeconds
-            await this.args.dummyInfraManager.setServerRunningStatus(ServerRunningStatus.Starting)
+            await this.dummyInfraManager.setServerRunningStatus(ServerRunningStatus.Starting)
             const startingPromise = new Promise<void>(resolve => setTimeout(async () => {
                 await this.dummyInfraManager.setServerRunningStatus(ServerRunningStatus.Running)
                 resolve()
@@ -48,7 +48,7 @@ export class DummyInstanceRunner extends AbstractInstanceRunner<DummyProvisionIn
 
         if(this.args.provisionInput.stopDelaySeconds && this.args.provisionInput.stopDelaySeconds > 0) {
             const delay = this.args.provisionInput.stopDelaySeconds
-            await this.args.dummyInfraManager.setServerRunningStatus(ServerRunningStatus.Stopping)
+            await this.dummyInfraManager.setServerRunningStatus(ServerRunningStatus.Stopping)
             const stoppingPromise = new Promise<void>(resolve => setTimeout(async () => {
                 await this.dummyInfraManager.setServerRunningStatus(ServerRunningStatus.Stopped)
                 resolve()

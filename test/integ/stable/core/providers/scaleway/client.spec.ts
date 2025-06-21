@@ -1,5 +1,5 @@
 import * as assert from 'assert'
-import { ScalewayClient, ScalewayServerState } from '../../../../src/providers/scaleway/sdk-client'
+import { ScalewayClient } from '../../../../../../src/providers/scaleway/sdk-client'
 
 // This test is run manually using an existing instance
 
