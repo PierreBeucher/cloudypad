@@ -11,7 +11,7 @@ if [ -n "$CLOUDYPAD_CLI_LAUNCHER_DEBUG" ]; then
   set -x
 fi
 
-CLOUDYPAD_VERSION=0.30.1
+CLOUDYPAD_VERSION=0.31.0
 CLOUDYPAD_IMAGE="${CLOUDYPAD_IMAGE:-"ghcr.io/pierrebeucher/cloudypad:$CLOUDYPAD_VERSION"}"
 CLOUDYPAD_TARGET_IMAGE="cloudypad/local-runner:local"
 
