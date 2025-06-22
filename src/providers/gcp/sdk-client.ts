@@ -76,10 +76,13 @@ export class GcpClient {
         }
     }
 
-    async listInstances(): Promise<protos.google.cloud.compute.v1.IInstance[]>{
-        this.logger.debug(`Listing Google Cloud instances`)
+    async listInstances(zone: string): Promise<protos.google.cloud.compute.v1.IInstance[]>{
+        this.logger.debug(`Listing Google Cloud instances in zone ${zone}`)
         try {
-            const [instances] = await this.instances.list({})
+            const [instances] = await this.instances.list({ 
+                project: this.projectId,
+                zone: zone
+            })
             this.logger.debug(`List instances response: ${JSON.stringify(instances)}`)
             return instances
         } catch (error) {
