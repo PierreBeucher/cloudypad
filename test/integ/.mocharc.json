@@ -2,5 +2,6 @@
   "extension": ["ts"],
   "require": [
     "ts-node/register/transpile-only"
-  ]
+  ],
+  "bail": true
 }
