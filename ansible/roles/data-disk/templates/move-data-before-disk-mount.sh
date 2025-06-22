@@ -25,8 +25,8 @@ if [ -d "$CLOUDYPAD_DATA_ROOT" ]; then
 
     # Check if data disk already contains data, in which case do not try to move existing data as data disk takes priority
     mkdir -p "$CLOUDYPAD_TEMP_MOUNT_DIR"
+    mount -t auto "$CLOUDYPAD_DATA_DISK_PATH" "$CLOUDYPAD_TEMP_MOUNT_DIR"
     
-    mount "$CLOUDYPAD_DATA_DISK_PATH" "$CLOUDYPAD_TEMP_MOUNT_DIR"
     # Check if mounted disk contains data
     if [ -n "$(ls -A "$CLOUDYPAD_TEMP_MOUNT_DIR" 2>/dev/null)" ]; then
         echo "Data disk already contains data, data disk takes priority - no need to move existing data from OS disk"

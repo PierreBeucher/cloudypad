@@ -42,7 +42,12 @@
     msg: "No disk found matching data disk ID '{{ cloudypad_data_disk_id }}'"
   when: cloudypad_data_disk_name is not defined
 
-- name: Create Cloudy Pad data directory
+- name: Format Cloudy Pad data disk (ext4)
+  filesystem:
+    fstype: "ext4"
+    dev: "{{ cloudypad_data_disk_path }}"
+
+- name: Ensure Cloudy Pad data directory exists
   file:
     path: "{{ cloudypad_data_root }}"
     state: directory
@@ -61,12 +66,6 @@
 
 - name: Move existing data before disk mount (if any)
   shell: /usr/local/bin/move-data-before-disk-mount.sh
-
-# Format and mount data disk
-- name: Format Cloudy Pad data disk (ext4)
-  filesystem:
-    fstype: "ext4"
-    dev: "{{ cloudypad_data_disk_path }}"
 
 - name: Mount and configure fstab for Cloudy Pad data disk
   mount:
