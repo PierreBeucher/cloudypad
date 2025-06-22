@@ -138,8 +138,11 @@ export class GcpClient {
         if(!opts?.wait) {
             throw new Error(`--wait is required to restart GCP instance.`)
         }
-        await this.stopInstance(zone, instanceName, opts)
-        await this.stopInstance(zone, instanceName, opts)
+        await this.stopInstance(zone, instanceName, {
+            ...opts,
+            wait: true
+        })
+        await this.startInstance(zone, instanceName, opts)
     }
 
     async listRegions(): Promise<protos.google.cloud.compute.v1.IRegion[]> {
