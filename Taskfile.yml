@@ -99,27 +99,31 @@ tasks:
 
   test-integ-provider-aws:
     cmds:
-    # - task: npx mocha --config test/integ/.mocharc.json ./test/integ/stable/core/providers/aws/lifecycle.spec.ts 
+    - npx mocha --config test/integ/.mocharc.json ./test/integ/stable/core/providers/aws/client.spec.ts
+    - npx mocha --config test/integ/.mocharc.json ./test/integ/stable/core/providers/aws/lifecycle.spec.ts 
 
   test-integ-provider-scaleway:
     cmds:
-    - task: npx mocha --config test/integ/.mocharc.json ./test/integ/stable/core/providers/scaleway/lifecycle.spec.ts 
+    - npx mocha --config test/integ/.mocharc.json ./test/integ/stable/core/providers/scaleway/client.spec.ts
+    - npx mocha --config test/integ/.mocharc.json ./test/integ/stable/core/providers/scaleway/lifecycle.spec.ts 
 
   test-integ-provider-azure:
     cmds:
-    # - task: npx mocha --config test/integ/.mocharc.json ./test/integ/stable/core/providers/azure/lifecycle.spec.ts 
+    - npx mocha --config test/integ/.mocharc.json ./test/integ/stable/core/providers/azure/client.spec.ts
+    - npx mocha --config test/integ/.mocharc.json ./test/integ/stable/core/providers/azure/lifecycle.spec.ts 
 
   test-integ-provider-gcp:
     cmds:
-    # - task: npx mocha --config test/integ/.mocharc.json ./test/integ/stable/core/providers/gcp/lifecycle.spec.ts 
+    - npx mocha --config test/integ/.mocharc.json ./test/integ/stable/core/providers/gcp/lifecycle.spec.ts 
 
   test-integ-provider-paperspace:
     cmds:
-    # - task: npx mocha --config test/integ/.mocharc.json ./test/integ/stable/core/providers/paperspace/lifecycle.spec.ts 
+    - npx mocha --config test/integ/.mocharc.json ./test/integ/stable/core/providers/paperspace/client.spec.ts
+    - npx mocha --config test/integ/.mocharc.json ./test/integ/stable/core/providers/paperspace/lifecycle.spec.ts 
 
   test-integ-provider-dummy:
     cmds:
-    - task: npx mocha --config test/integ/.mocharc.json ./test/integ/stable/core/providers/dummy/lifecycle.spec.ts 
+    - npx mocha --config test/integ/.mocharc.json ./test/integ/stable/core/providers/dummy/lifecycle.spec.ts 
 
   test-integ-full-lifecycle-all:
     cmds:

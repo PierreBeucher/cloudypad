@@ -32,7 +32,7 @@ describe('Dummy instance lifecycle with delay', () => {
         }
     }
 
-    it('should ensure dummy infra status is updated correctly on action', async () => {
+    it('should ensure dummy infra lifecycle works', async () => {
         const coreConfig = getUnitTestCoreConfig()
         const dummyProviderClient = new DummyProviderClient({ config: coreConfig })
         const initializer = dummyProviderClient.getInstanceInitializer()
