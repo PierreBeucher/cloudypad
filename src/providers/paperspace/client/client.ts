@@ -14,6 +14,8 @@ export interface PaperspaceClientArgs {
     apiKey: string
 }
 
+export type PaperspaceMachineState = paperspace.MachinesCreate200ResponseDataStateEnum
+
 const staticLogger = getLogger("PaperspaceClientStatic")
 
 /**
@@ -22,7 +24,7 @@ const staticLogger = getLogger("PaperspaceClientStatic")
 export interface PaperspaceMachine {
     id: string
     name: string
-    state: string
+    state: PaperspaceMachineState
     machineType: string
     privateIp?: string
     publicIp?: string
@@ -216,6 +218,14 @@ export class PaperspaceClient {
 
     async stopMachine(machineId: string): Promise<void> {
         try {
+            // Check current status first
+            const machine = await this.getMachine(machineId)
+            const currentState = machine.state.toLowerCase()
+            
+            if (currentState === 'off' || currentState === 'stopping') {
+                this.logger.debug(`Machine ${machineId} is already ${currentState}, skipping stop operation`)
+                return
+            }
             
             this.logger.debug(`Stopping machine: ${JSON.stringify(machineId)}`)
 
@@ -233,6 +243,15 @@ export class PaperspaceClient {
 
     async startMachine(machineId: string): Promise<void> {
         try {
+            // Check current status first
+            const machine = await this.getMachine(machineId)
+            const currentState = machine.state.toLowerCase()
+            
+            if (currentState === 'ready' || currentState === 'starting') {
+                this.logger.debug(`Machine ${machineId} is already ${currentState}, skipping start operation`)
+                return
+            }
+            
             this.logger.debug(`Starting machine: ${JSON.stringify(machineId)}`)
 
             const response = await this.machineClient.machinesStart(machineId, merge(this.baseOptions, { 
@@ -250,6 +269,15 @@ export class PaperspaceClient {
 
     async restartMachine(machineId: string): Promise<void> {
         try {
+            // Check current status first
+            const machine = await this.getMachine(machineId)
+            const currentState = machine.state.toLowerCase()
+            
+            if (currentState === 'restarting') {
+                this.logger.debug(`Machine ${machineId} is already restarting, skipping restart operation`)
+                return
+            }
+            
             this.logger.debug(`Restarting machine: ${JSON.stringify(machineId)}`)
 
             const response = await this.machineClient.machinesRestart(machineId, merge(this.baseOptions, {

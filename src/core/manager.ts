@@ -493,6 +493,7 @@ export class GenericInstanceManager<ST extends InstanceStateV1> implements Insta
     async isReady(): Promise<boolean> {
         const isConfiguredAndProvisioned = await this.isConfigured() && await this.isProvisioned()
         if(!isConfiguredAndProvisioned){
+            this.logger.debug(`Instance ${this.name()} is not configured or provisioned. Not ready.`)
             return false
         }
 
