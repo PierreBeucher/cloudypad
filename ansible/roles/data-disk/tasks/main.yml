@@ -87,5 +87,5 @@
     dest: /usr/local/bin/move-data-after-disk-mount.sh
     mode: '0755'
 
-- name: Move existing ata back after disk mount (if any)
+- name: Move existing data back after disk mount (if any)
   shell: /usr/local/bin/move-data-after-disk-mount.sh
