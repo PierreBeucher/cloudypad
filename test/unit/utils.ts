@@ -119,7 +119,7 @@ export const DUMMY_V1_ROOT_DATA_DIR = path.resolve(__dirname, "..", "resources",
 export const DUMMY_PAPERSPACE_MACHINE: PaperspaceMachine = {
     id: "machine-123456788",
     name: "test-machine",
-    state: "running",
+    state: "ready",
     machineType: "RTX4000",
     privateIp: "192.168.0.10",
     publicIp: "127.0.0.1",

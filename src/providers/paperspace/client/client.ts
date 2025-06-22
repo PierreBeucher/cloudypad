@@ -14,6 +14,7 @@ export interface PaperspaceClientArgs {
     apiKey: string
 }
 
+export type PaperspaceMachineState = paperspace.MachinesCreate200ResponseDataStateEnum
 const staticLogger = getLogger("PaperspaceClientStatic")
 
 /**
@@ -22,7 +23,7 @@ const staticLogger = getLogger("PaperspaceClientStatic")
 export interface PaperspaceMachine {
     id: string
     name: string
-    state: string
+    state: PaperspaceMachineState
     machineType: string
     privateIp?: string
     publicIp?: string
