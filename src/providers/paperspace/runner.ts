@@ -32,8 +32,11 @@ export class PaperspaceInstanceRunner extends AbstractInstanceRunner<PaperspaceP
     }
 
     async doGetInstanceStatus(): Promise<ServerRunningStatus> {
-        this.logger.warn("Paperspace instance status fetch is not yet implemented. Instance server status will be reported as 'unknown'.")
-        return ServerRunningStatus.Unknown
+        const machine = await this.client.getMachine(this.args.provisionOutput.machineId)
+        if (machine.state === MachinesCreate200ResponseDataStateEnum.Off) {
+            return ServerRunningStatus.Stopped
+        }
+        return ServerRunningStatus.Running
     }
 
 }
