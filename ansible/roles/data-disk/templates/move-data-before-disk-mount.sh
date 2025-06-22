@@ -5,6 +5,8 @@ set -e
 # Templated by Ansible
 CLOUDYPAD_DATA_ROOT="{{ cloudypad_data_root }}"
 CLOUDYPAD_DATA_TEMP_DIR="{{ cloudypad_data_root }}-tmp-before-mount"
+CLOUDYPAD_TEMP_MOUNT_DIR="{{ cloudypad_data_root }}-tmp-mount-check"
+CLOUDYPAD_DATA_DISK_PATH="{{ cloudypad_data_disk_path }}"
 
 # Check if data root directory exists and is not empty
 if [ -d "$CLOUDYPAD_DATA_ROOT" ]; then
@@ -20,8 +22,24 @@ if [ -d "$CLOUDYPAD_DATA_ROOT" ]; then
         echo "Data root directory is already a mountpoint, no need to move data"
         exit 0
     fi
+
+    # Check if data disk already contains data, in which case do not try to move existing data as data disk takes priority
+    mkdir -p "$CLOUDYPAD_TEMP_MOUNT_DIR"
+    mount -t auto "$CLOUDYPAD_DATA_DISK_PATH" "$CLOUDYPAD_TEMP_MOUNT_DIR"
     
-    echo "Data root directory contains data and is not mounted, moving data to temporary location"
+    # Check if mounted disk contains data
+    if [ -n "$(ls -A "$CLOUDYPAD_TEMP_MOUNT_DIR" 2>/dev/null)" ]; then
+        echo "Data disk already contains data, data disk takes priority - no need to move existing data from OS disk"
+        umount "$CLOUDYPAD_TEMP_MOUNT_DIR"
+        rmdir "$CLOUDYPAD_TEMP_MOUNT_DIR"
+        exit 0
+    else
+        echo "Data disk is empty, moving existing data from OS disk to temporary location"
+        umount "$CLOUDYPAD_TEMP_MOUNT_DIR"
+        rmdir "$CLOUDYPAD_TEMP_MOUNT_DIR"
+    fi
+
+    echo "Data root directory contains data on OS disk (not a mountpoint), moving data to temporary location to safely mount data disk"
     
     # Try to stop autostop service if running
     if systemctl is-active --quiet cloudypad-autostop; then

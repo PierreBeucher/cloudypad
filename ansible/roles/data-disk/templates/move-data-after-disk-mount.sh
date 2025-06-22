@@ -8,19 +8,19 @@ CLOUDYPAD_DATA_TEMP_DIR="{{ cloudypad_data_root }}-tmp-before-mount"
 
 # Check if temp directory exists and is not empty
 if [ -d "$CLOUDYPAD_DATA_TEMP_DIR" ]; then
-    
-    # If dir is empty do not try to run move task below as they would fail
+
+    # If temp dir is empty or non-existent do not try to run move task below as they would fail
     if [ -z "$(ls -A "$CLOUDYPAD_DATA_TEMP_DIR" 2>/dev/null)" ]; then
         echo "Temp directory is empty, removing it"
         rmdir "$CLOUDYPAD_DATA_TEMP_DIR"
         exit 0
     fi
-    
+
     echo "Moving data back from $CLOUDYPAD_DATA_TEMP_DIR to $CLOUDYPAD_DATA_ROOT"
     
     # Move data back from temp directory
-    mv "$CLOUDYPAD_DATA_TEMP_DIR"/* "$CLOUDYPAD_DATA_ROOT/" 2>/dev/null || true
-    mv "$CLOUDYPAD_DATA_TEMP_DIR"/.* "$CLOUDYPAD_DATA_ROOT/" 2>/dev/null || true
+    mv "$CLOUDYPAD_DATA_TEMP_DIR"/* "$CLOUDYPAD_DATA_ROOT/" || true
+    mv "$CLOUDYPAD_DATA_TEMP_DIR"/.* "$CLOUDYPAD_DATA_ROOT/" || true
     
     # Remove temp directory
     rmdir "$CLOUDYPAD_DATA_TEMP_DIR"
@@ -34,7 +34,7 @@ if [ -d "$CLOUDYPAD_DATA_TEMP_DIR" ]; then
     fi
 
     echo "Data moved back successfully !"
-    
+
 else
     echo "Temp directory does not exist, no data to move back"
 fi 
