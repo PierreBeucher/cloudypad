@@ -53,6 +53,7 @@ RUN apt update && apt install -y \
     python3-pip \
     curl \
     ssh \
+    sshpass \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 

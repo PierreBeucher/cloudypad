@@ -33,6 +33,9 @@
         <!-- Steam -->
         <value type="int" value="9"/>
 
+        <!-- Heroic Games Launcher -->
+        <value type="int" value="7"/>
+
         <!-- Separator -->
         <value type="int" value="98"/>
 
@@ -71,6 +74,13 @@
     <property name="plugin-9" type="string" value="launcher">
       <property name="items" type="array">
         <value type="string" value="steam.desktop"/>
+      </property>
+    </property>
+
+    <!-- Heroic Games Launcher -->
+    <property name="plugin-7" type="string" value="launcher">
+      <property name="items" type="array">
+        <value type="string" value="heroic.desktop"/>
       </property>
     </property>
 
