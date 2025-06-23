@@ -4,6 +4,7 @@ import lodash from 'lodash'
 import { PartialDeep } from 'type-fest'
 import { StateSideEffect } from './side-effects/abstract'
 import { GenericStateParser } from './parser'
+import { CLOUDYPAD_VERSION } from '../const'
 
 export interface StateWriterArgs<ST extends InstanceStateV1> {
 
@@ -58,6 +59,13 @@ export class StateWriter<ST extends InstanceStateV1> {
     async setProvisionOutput(instanceName: string, output?: ST["provision"]["output"]){
         const newState = await this.getCurrentState(instanceName)
         newState.provision.output = output
+
+        newState.metadata = {
+            ...newState.metadata,
+            lastProvisionDate: Date.now(),
+            lastProvisionCloudypadVersion: CLOUDYPAD_VERSION
+        }
+        
         await this.args.sideEffect.persistState(newState)
     }
 
@@ -70,6 +78,13 @@ export class StateWriter<ST extends InstanceStateV1> {
     async setConfigurationOutput(instanceName: string, output?: ST["configuration"]["output"]){
         const newState = await this.getCurrentState(instanceName)
         newState.configuration.output = output
+
+        newState.metadata = {
+            ...newState.metadata,
+            lastConfigurationDate: Date.now(),
+            lastConfigurationCloudypadVersion: CLOUDYPAD_VERSION
+        }
+
         await this.args.sideEffect.persistState(newState)
     }
 

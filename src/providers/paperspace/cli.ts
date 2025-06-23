@@ -11,6 +11,9 @@ import { InteractiveInstanceInitializer } from "../../cli/initializer";
 import { RUN_COMMAND_CREATE, RUN_COMMAND_UPDATE } from "../../tools/analytics/events";
 import { InteractiveInstanceUpdater } from "../../cli/updater";
 import { PaperspaceProviderClient } from "./provider";
+import * as fs from 'fs';
+import * as path from 'path';
+import * as os from 'os';
 
 export interface PaperspaceCreateCliArgs extends CreateCliArgs {
     apiKeyFile?: string
@@ -18,6 +21,7 @@ export interface PaperspaceCreateCliArgs extends CreateCliArgs {
     diskSize?: number
     publicIpType?: PUBLIC_IP_TYPE
     region?: string
+    sshKeyPath?: string
 }
 
 export type PaperspaceUpdateCliArgs = UpdateCliArgs & Omit<PaperspaceCreateCliArgs, "region">
@@ -33,6 +37,9 @@ export class PaperspaceInputPrompter extends AbstractInputPrompter<PaperspaceCre
                 diskSize: cliArgs.diskSize,
                 publicIpType: cliArgs.publicIpType,
                 region: cliArgs.region,
+                ssh: {
+                    privateKeyPath: cliArgs.sshKeyPath,
+                }
             },
         }
     }
@@ -49,6 +56,7 @@ export class PaperspaceInputPrompter extends AbstractInputPrompter<PaperspaceCre
         const publicIpType = await this.publicIpType(partialInput.provision?.publicIpType)
         const region = await this.region(partialInput.provision?.region)
         const sshUser = "paperspace" // Paperspace uses 'paperspace' SSH user, enforce it
+        const sshKeyPath = await this.sshPrivateKeyPath(partialInput.provision?.ssh?.privateKeyPath)
 
         if(!createOptions.autoApprove){
             await this.promptBillingAlertSetup()
@@ -63,6 +71,7 @@ export class PaperspaceInputPrompter extends AbstractInputPrompter<PaperspaceCre
                 region: region,
                 ssh: {
                     user: sshUser,
+                    privateKeyPath: sshKeyPath,
                 }
             },
         }
@@ -149,6 +158,50 @@ export class PaperspaceInputPrompter extends AbstractInputPrompter<PaperspaceCre
                 "(Later version will support multiple keys and let you specify a team to choose from)")
         }
     }
+
+    protected async sshPrivateKeyPath(keyPath?: string): Promise<string> {
+        if (keyPath) {
+            return keyPath;
+        }
+
+        const homeDir = os.homedir();
+        const sshDir = path.join(homeDir, '.ssh');
+        
+        let choices: { name: string, value: string }[] = [];
+        
+        try {
+            if (fs.existsSync(sshDir)) {
+                const files = fs.readdirSync(sshDir);
+                const keyFiles = files.filter(file => 
+                    file.includes('id_') && !file.includes('.pub')
+                );
+                
+                choices = keyFiles.map(file => ({
+                    name: file,
+                    value: path.join(sshDir, file)
+                }));
+            }
+        } catch (error) {
+            this.logger.warn(`Couldn't read SSH directory '${sshDir}': `, error)
+        }
+        
+        choices.push({ name: "Enter custom path", value: "_" });
+        
+        const selectedKeyPath = await select({
+            message: 'Select SSH private key:',
+            choices: choices,
+            default: choices.length > 1 ? choices[0].value : "_"
+        });
+
+        if (selectedKeyPath === '_') {
+            return await input({
+                message: 'Enter SSH private key path:',
+                default: path.join(sshDir, 'id_rsa')
+            });
+        }
+
+        return selectedKeyPath;
+    }
 }
 
 export class PaperspaceCliCommandGenerator extends CliCommandGenerator {
@@ -173,6 +226,7 @@ export class PaperspaceCliCommandGenerator extends CliCommandGenerator {
             .option('--api-key-file <apikeyfile>', 'Path to Paperspace API key file')
             .option('--machine-type <type>', 'Machine type')
             .option('--region <region>', 'Region in which to deploy instance')
+            .option('--ssh-key-path <path>', 'Path to SSH private key')
             .action(async (cliArgs: PaperspaceCreateCliArgs) => {
                 this.analytics.sendEvent(RUN_COMMAND_CREATE, { provider: CLOUDYPAD_PROVIDER_PAPERSPACE })
                 try {
@@ -200,6 +254,7 @@ export class PaperspaceCliCommandGenerator extends CliCommandGenerator {
             .addOption(CLI_OPTION_AUTO_STOP_TIMEOUT)
             .option('--api-key-file <apikeyfile>', 'Path to Paperspace API key file')
             .option('--machine-type <type>', 'Machine type')
+            .option('--ssh-key-path <path>', 'Path to SSH private key')
             .action(async (cliArgs: PaperspaceUpdateCliArgs) => {
                 this.analytics.sendEvent(RUN_COMMAND_UPDATE, { provider: CLOUDYPAD_PROVIDER_PAPERSPACE })
                 try {

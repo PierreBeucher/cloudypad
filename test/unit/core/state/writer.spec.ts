@@ -13,6 +13,7 @@ import { DUMMY_V1_ROOT_DATA_DIR } from '../../utils'
 import { InstanceEventEnum } from '../../../../src/core/state/state'
 import { AnonymousStateParser, GenericStateParser } from '../../../../src/core/state/parser'
 import { DummyInstanceStateV1, DummyStateParser } from '../../../../src/providers/dummy/state'
+import { CLOUDYPAD_VERSION } from '../../../../src/core/const'
 
 describe('StateWriter', function () {
 
@@ -316,4 +317,53 @@ describe('StateWriter', function () {
         assert.strictEqual(twelveEvents[9].type, InstanceEventEnum.ProvisionEnd)
         assert.strictEqual(twelveEvents[9].timestamp, eventDate.getTime() + 11)
     })
+
+    it('should update metadata when setting provision and configuration outputs', async function () {
+        const { dataDir, writer } = await getTestWriter()
+
+        // Set provision output and check metadata
+        const provisionOutput: DummyInstanceStateV1['provision']['output'] = {
+            host: "1.2.3.4",
+            instanceId: "i-123456758",
+            provisionedAt: new Date("2025-01-01T01:00:00Z").getTime(),
+            dataDiskId: "ssd-123456758",
+        }
+        await writer.setProvisionOutput(testInstanceName, provisionOutput)
+
+        const stateAfterProvision = await writer.getCurrentState(testInstanceName)
+        assert.ok(stateAfterProvision.metadata?.lastProvisionDate)
+        assert.strictEqual(stateAfterProvision.metadata?.lastProvisionCloudypadVersion, CLOUDYPAD_VERSION)
+        assert.ok(!stateAfterProvision.metadata?.lastConfigurationDate)
+        assert.ok(!stateAfterProvision.metadata?.lastConfigurationCloudypadVersion)
+
+        // Set configuration output and check metadata (provision metadata should still be there)
+        const configurationOutput: DummyInstanceStateV1['configuration']['output'] = {
+            configuredAt: new Date("2025-01-01T02:00:00Z").getTime(),
+            dataDiskConfigured: true,
+        }
+        await writer.setConfigurationOutput(testInstanceName, configurationOutput)
+
+        const stateAfterConfiguration = await writer.getCurrentState(testInstanceName)
+        assert.ok(stateAfterConfiguration.metadata?.lastProvisionDate)
+        assert.strictEqual(stateAfterConfiguration.metadata?.lastProvisionCloudypadVersion, CLOUDYPAD_VERSION)
+        assert.ok(stateAfterConfiguration.metadata?.lastConfigurationDate)
+        assert.strictEqual(stateAfterConfiguration.metadata?.lastConfigurationCloudypadVersion, CLOUDYPAD_VERSION)
+
+        // Set provision output again and check configuration metadata still there
+        const newProvisionOutput: DummyInstanceStateV1['provision']['output'] = {
+            host: "5.6.7.8",
+            instanceId: "i-87654321",
+            provisionedAt: new Date("2025-01-01T03:00:00Z").getTime(),
+            dataDiskId: "ssd-87654321",
+        }
+        await writer.setProvisionOutput(testInstanceName, newProvisionOutput)
+
+        const stateAfterSecondProvision = await writer.getCurrentState(testInstanceName)
+        assert.ok(stateAfterSecondProvision.metadata?.lastProvisionDate)
+        assert.strictEqual(stateAfterSecondProvision.metadata?.lastProvisionCloudypadVersion, CLOUDYPAD_VERSION)
+        assert.ok(stateAfterSecondProvision.metadata?.lastConfigurationDate)
+        assert.strictEqual(stateAfterSecondProvision.metadata?.lastConfigurationCloudypadVersion, CLOUDYPAD_VERSION)
+    })
+
+    
 })

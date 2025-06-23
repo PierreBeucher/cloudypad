@@ -3,13 +3,13 @@ wolf_instance_name: wolf
 
 # Image versions to use for each apps
 # Lock version with hash for better reproducibility
-wolf_server_image: ghcr.io/games-on-whales/wolf:edge@sha256:688c83adcbadc6f721c67e10545849a0ccb07ad7807c00fbb14fe4071a2ac7ab
-wolf_app_steam_image: ghcr.io/games-on-whales/steam:edge@sha256:607587a3b7c2b626f59fd8f9394f0637249a8d909a7d345a9a77d557a7a68682
-wolf_app_lutris_image: ghcr.io/games-on-whales/lutris:edge@sha256:c968d14f87fb29e1bfe2ecdf0c138544bdadd480289dff65409124a00de447f4
-wolf_app_pegasus_image: ghcr.io/games-on-whales/pegasus:edge@sha256:b460aa89406fbbbe94c1983fdc5625d5ce221aa96b0606d60e6fad0cde8d9eab
-wolf_app_retroarch_image: ghcr.io/games-on-whales/retroarch:edge@sha256:10f12b0d2dd99a80a2f93b5e613d2c31c6651a8e8ae2fac994c184616192e1aa
-wolf_app_prismlauncher_image: ghcr.io/games-on-whales/prismlauncher:edge@sha256:7ebe852490135c7a1af7c532e1f0b2a79fd972d48c725b3cfb52347af9a9d350
-wolf_app_firefox_image: ghcr.io/games-on-whales/firefox:edge@sha256:e8f523e07c3d8b43307924f8a20b4eed7e26f7342b99a8c0f5b4dcab3e7db3ea
+wolf_server_image: ghcr.io/games-on-whales/wolf:stable@sha256:963f8c71c405b8d536545c82c95b5d5cc7e11abeab26cd3a49174c6333db1453
+wolf_app_steam_image: ghcr.io/games-on-whales/steam:edge@sha256:3880f0bccf2427a96d5c31202d6b2b3666518467feb3c590aa1c4fce07a50a89
+wolf_app_lutris_image: ghcr.io/games-on-whales/lutris:edge@sha256:c9fa3deb3ba1174cde3bf65641f23b53660096395e58c6be9c12ba5251086d2d
+wolf_app_pegasus_image: ghcr.io/games-on-whales/pegasus:edge@sha256:293d740af8bde55855075ed98c7262b3653475a511f5587c2730707cc28a5b0d
+wolf_app_retroarch_image: ghcr.io/games-on-whales/retroarch:edge@sha256:d67d50e69ca2cf8f18ff812321f9ca1cb0a1e0bfb9f51e1d4becf0d2174381c4
+wolf_app_prismlauncher_image: ghcr.io/games-on-whales/prismlauncher:edge@sha256:80f3efb940d6790440a052fc1d6f4b987916de22ef1ee75b755c9931b73fe41e
+wolf_app_firefox_image: ghcr.io/games-on-whales/firefox:edge@sha256:8cddb5be3fde7bc26f5a7883779c105a4585de1718e77fb4068550476781a1a1
 
 # Directory where Wolf project config is stored (eg. Docker Compose files)
 wolf_project_dir: "{{ ansible_user_dir }}/wolf"

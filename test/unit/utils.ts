@@ -119,7 +119,7 @@ export const DUMMY_V1_ROOT_DATA_DIR = path.resolve(__dirname, "..", "resources",
 export const DUMMY_PAPERSPACE_MACHINE: PaperspaceMachine = {
     id: "machine-123456788",
     name: "test-machine",
-    state: "running",
+    state: "ready",
     machineType: "RTX4000",
     privateIp: "192.168.0.10",
     publicIp: "127.0.0.1",
@@ -205,7 +205,7 @@ export function createDummyAwsState(override: PartialDeep<AwsInstanceStateV1>): 
  * @param override 
  * @returns 
  */
-export function createDummyState(override: PartialDeep<DummyInstanceStateV1>): DummyInstanceStateV1 {
+export function createDummyState(override?: PartialDeep<DummyInstanceStateV1>): DummyInstanceStateV1 {
 
     // clone deep to avoid later operation returned state
     // to alter DEFAULT_COMMON_INPUT used in this state
@@ -230,4 +230,17 @@ export function createDummyState(override: PartialDeep<DummyInstanceStateV1>): D
     });
 
     return lodash.merge(dummyState, override);
+}
+
+export async function createDummyInstance(instanceName: string): Promise<DummyInstanceStateV1> {
+    const dummyState = createDummyState({
+        name: instanceName,
+    })
+    const dummyClient = getUnitTestDummyProviderClient()
+    const initializer = dummyClient.getInstanceInitializer()
+    await initializer.initializeStateOnly(instanceName,
+        dummyState.provision.input,
+        dummyState.configuration.input
+    )
+    return dummyState
 }

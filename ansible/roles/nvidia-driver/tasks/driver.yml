@@ -107,12 +107,18 @@
     url: https://download.nvidia.com/XFree86/Linux-x86_64/{{ nvidia_driver_dotrun_install_version }}/NVIDIA-Linux-x86_64-{{ nvidia_driver_dotrun_install_version }}.run
     dest: /tmp/NVIDIA-Linux-x86_64-{{ nvidia_driver_dotrun_install_version }}.run
     mode: '0755'
+  retries: 3
+  delay: 10
+  register: nvidia_driver_download
 
 - name: Download NVIDIA driver SHA256 checksum
   when: nvidia_driver_version != nvidia_driver_dotrun_install_version
   get_url:
     url: https://download.nvidia.com/XFree86/Linux-x86_64/{{ nvidia_driver_dotrun_install_version }}/NVIDIA-Linux-x86_64-{{ nvidia_driver_dotrun_install_version }}.run.sha256sum
     dest: /tmp/NVIDIA-Linux-x86_64-{{ nvidia_driver_dotrun_install_version }}.run.sha256sum
+  retries: 3
+  delay: 10
+  register: nvidia_checksum_download
 
 - name: Verify SHA256 checksum
   when: nvidia_driver_version != nvidia_driver_dotrun_install_version

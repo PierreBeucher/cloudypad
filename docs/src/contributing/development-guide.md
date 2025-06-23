@@ -12,7 +12,6 @@
   - [Local Pulumi stack manipulation](#local-pulumi-stack-manipulation)
 - [Maintenance](#maintenance)
 - [Regular updates](#regular-updates)
-  - [Updating Wolf version](#updating-wolf-version)
 - [Adding a new provider](#adding-a-new-provider)
   - [Provider components](#provider-components)
   - [Integrate provider in Core](#integrate-provider-in-core)
@@ -155,27 +154,44 @@ pulumi destroy -s <organization/CloudyPad-XXX/STACK>
 ## Regular updates
 
 - [ ] Node deps
-- [ ] NVIDIA driver version `ansible/roles/nvidia-driver/defaults/main.yml` `nvidia_driver_dotrun_install_version`
-- [ ] Wolf version (see below)
+  ```
+  npm update
+  ```
+- [ ] NVIDIA driver version 
+  - Take latest Production Linux x86_64 version at [NVIDIA Unix Driver archive page](https://www.nvidia.com/en-us/drivers/unix/)
+  - Update in `ansible/roles/nvidia-driver/defaults/main.yml` `nvidia_driver_dotrun_install_version`
+- [ ] Wolf version and config
+  - [ ] Run `hack/update-wolf-images.sh` to update default images in Ansible role
+  - [ ] Update Wolf config template in `ansible/roles/wolf/templates/wolf-config.toml` using default config
+    - Generate default config by running a Wolf container (will generate default config on start) and copy it:
+    ```
+    docker pull ghcr.io/games-on-whales/wolf:stable
+
+    # Run Wolf in the background to auto-generate config file on startup
+    docker run -d --name wolf-config ghcr.io/games-on-whales/wolf:stable
+
+    # Copy config file
+    docker cp wolf-config:/etc/wolf/cfg/config.toml .
+    ```
+    - Ensure proper Ansible templates variables are used in TOML config:
+      ```toml
+      hostname = "{{ wolf_instance_name }}"
+      uuid = "{{ wolf_instance_name | ansible.builtin.to_uuid }}"
+      # ...
+
+      # For each app, use the related Ansible image, eg for Firefox:
+      [apps.runner]
+      type = "docker"
+      name = "WolfFirefox"
+      image = '{{ wolf_app_firefox_image }}'
+      ```
 - [ ] Sunshine Dockerfile `containers/sunshine/Dockerfile`
-  - [ ] Base image version `FROM`
-  - [ ] Steam version `CLOUDYPAD_STEAM_VERSION`
-
-### Updating Wolf version
-
-Wolf is deployed via Docker Compose and templated config. To ensure reproducibility, Wolf version and apps images are pinned to a specific SHA.
-
-To update Wolf:
-
-- Update Wolf version in `ansible/roles/wolf/templates/docker-compose.nvidia.yml` (stable with SHA)
-- Update images versions in `ansible/roles/wolf/defaults/main.yml` to use latest stable (master with SHA)
-- Update Wolf config template in `ansible/roles/wolf/templates/wolf-config.toml` using default config
-  - Generate default config by running a Wolf container (will generate default config on start) and copy it:
-  ```
-  docker run --name wolf-config ghcr.io/games-on-whales/wolf:stable # exit with CTRL+C
-  docker cp wolf-config:/etc/wolf/cfg/config.toml .
-  ```
-  - Ensure proper Ansible templates variables are used
+  - [ ] Base image version `FROM` - See available tags from [Docker Hub](https://hub.docker.com/_/ubuntu). Make sure to use the imaghe SHA for reproducibility.
+  - [ ] Steam version `CLOUDYPAD_STEAM_VERSION` - see stable version at [Steam archive](https://repo.steampowered.com/steam/archive/stable)
+- [ ] CLI Dockerfile (`Dockerfile` at root)
+  - [ ] Pulumi version - see [Pulumi release](https://github.com/pulumi/pulumi/releases)
+  - [ ] Node version - see [Docker Hub](https://hub.docker.com/_/node)
+  - [ ] Ansible version installed by pip - See [Ansible PyPI page](https://pypi.org/project/ansible/)
 
 ## Adding a new provider
 
