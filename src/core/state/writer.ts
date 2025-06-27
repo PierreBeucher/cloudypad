@@ -84,7 +84,6 @@ export class StateWriter<ST extends InstanceStateV1> {
             lastConfigurationDate: Date.now(),
             lastConfigurationCloudypadVersion: CLOUDYPAD_VERSION
         }
-
         await this.args.sideEffect.persistState(newState)
     }
 

@@ -4,7 +4,7 @@
 set -e
 
 # Build local image to run tests
-export CLOUDYPAD_IMAGE="ghcr.io/pierrebeucher/cloudypad:local"
+export CLOUDYPAD_IMAGE="ghcr.io/gabbelitov2/cloudypad:local"
 # export CLOUDYPAD_CLI_LAUNCHER_DEBUG=true
 
 # Use container image or local script directly

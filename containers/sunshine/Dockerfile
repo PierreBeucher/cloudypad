@@ -122,12 +122,32 @@ RUN --mount=type=cache,target=/var/cache --mount=type=tmpfs,target=/var/log \
     rm steam.deb
 
 #
+# Heroic Games Launcher
+#
+RUN --mount=type=cache,target=/var/cache --mount=type=tmpfs,target=/var/log \
+    apt update && \
+    mkdir -p /tmp/heroic && \
+    cd /tmp/heroic && \
+    LATEST_RELEASE=$(curl -s https://api.github.com/repos/Heroic-Games-Launcher/HeroicGamesLauncher/releases/latest) && \
+    DEB_URL=$(echo "$LATEST_RELEASE" | grep -o "https://.*\.deb" | head -n 1) && \
+    curl -L -o heroic.deb "$DEB_URL" && \
+    apt install -y ./heroic.deb && \
+    cd - && \
+    rm -rf /tmp/heroic
+
+# Create Sunshine images directory and download icons
+RUN --mount=type=cache,target=/var/cache --mount=type=tmpfs,target=/var/log \
+    mkdir -p /usr/share/sunshine && \
+    curl -L -o /usr/share/sunshine/heroic.png "https://raw.githubusercontent.com/Heroic-Games-Launcher/HeroicGamesLauncher/main/public/icon.png"
+
+#
 # Desktop
 #
 # Install xfce4 desktop environment
 # but remove xfce4-panel to void showinf uneeded/unwanted panels (see https://unix.stackexchange.com/questions/38048/how-to-remove-all-the-panels-in-xfce)
 #
 RUN --mount=type=cache,target=/var/cache --mount=type=tmpfs,target=/var/log \
+    apt update && \
     apt install -y xfce4 && \
     apt clean
 
@@ -210,6 +230,9 @@ ENV CLOUDYPAD_STEAM_ARGS="steam://open/games"
 RUN useradd -m -d /home/cloudy -s /bin/bash -u 1001 $CLOUDYPAD_USER
 
 COPY overlay /
+
+# Set executable permissions on all shell scripts in /cloudy/bin/
+RUN chmod +x /cloudy/bin/*.sh
 
 # Run healthcheck using script
 HEALTHCHECK --interval=5s --timeout=5s --start-period=5s --retries=3 \
