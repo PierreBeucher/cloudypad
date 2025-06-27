@@ -431,12 +431,33 @@ export class GenericInstanceManager<ST extends InstanceStateV1> implements Insta
     public async getInstanceDetails(): Promise<CloudyPadInstanceDetails> {
         const runner = await this.buildRunner()
         const state = await this.stateWriter.getCurrentState(this.instanceName)
+
+        // Handle both key-based and password-based authentication
+        let sshUser = "unknown";
+
+        // If using password auth
+        if (state.provision.input.auth && 
+            typeof state.provision.input.auth === 'object' && 
+            'type' in state.provision.input.auth && 
+            state.provision.input.auth.type === "password" && 
+            'ssh' in state.provision.input.auth && 
+            typeof state.provision.input.auth.ssh === 'object' && 
+            state.provision.input.auth.ssh && 
+            'user' in state.provision.input.auth.ssh) {
+
+            sshUser = (state.provision.input.auth.ssh as any).user;
+        }
+        // If using key-based auth
+        else if (state.provision.input.ssh) {
+            sshUser = state.provision.input.ssh.user;
+        }
+
         const details: CloudyPadInstanceDetails = {
             name: state.name,
             hostname: state.provision.output?.host ?? "unknown",
             pairingPort: 47989, // hardcoded for now
             ssh: {
-                user: state.provision.input.ssh.user,
+                user: sshUser,
                 port: 22 // TODO as input or output
             }
         }

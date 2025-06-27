@@ -42,7 +42,12 @@
     msg: "No disk found matching data disk ID '{{ cloudypad_data_disk_id }}'"
   when: cloudypad_data_disk_name is not defined
 
-- name: Create Cloudy Pad data directory
+- name: Format Cloudy Pad data disk (ext4)
+  filesystem:
+    fstype: "ext4"
+    dev: "{{ cloudypad_data_disk_path }}"
+
+- name: Ensure Cloudy Pad data directory exists
   file:
     path: "{{ cloudypad_data_root }}"
     state: directory
@@ -50,57 +55,17 @@
     group: root
     mode: '0755'
 
-# Before mounting the data disk, check if it is already a mountpoint
-# If not yet mounted, it may have some data present from previous deployment without data disk.
-# In that case, move the data to a temporary folder before mounting
-- name: Check if data disk is already a mountpoint
-  shell: "mountpoint -q {{ cloudypad_data_root }}"
-  register: data_root_mountpoint_check
-  ignore_errors: true
-
-- set_fact: 
-    cloudypad_move_data_for_data_disk_mount: "{{ data_root_mountpoint_check.rc != 0 }}"
-    cloudypad_data_root_tmp_before_mount: "{{ cloudypad_data_root }}-tmp-before-mount"
-
-# Try to stop autostop service and Docker containers if running
-# Ignore errors as they may not be installed yet or not running
-- name: Stop Cloudy Pad autostop service if running
-  when: cloudypad_move_data_for_data_disk_mount
-  register: autostop_service_stop_result
-  systemd:
-    name: cloudypad-autostop
-    state: stopped
-    enabled: no
-  ignore_errors: true
-
-- name: Stop all Docker containers before moving data
-  when: cloudypad_move_data_for_data_disk_mount
-  shell: |
-    docker stop $(docker ps -q)
-  args:
-    executable: /bin/bash
-  ignore_errors: true
-
-- name: Create temp folder for data disk before mounting
-  when: cloudypad_move_data_for_data_disk_mount
-  file:
-    path: "{{ cloudypad_data_root_tmp_before_mount }}"
-    state: directory
-    owner: root
-    group: root
+# Some data may already be present on disk before mounting the data disk
+# To avoid losing data, move it to a temporary location before mounting the data disk
+# Copy and execute bash script to move data before mounting
+- name: Copy move-data-before-disk-mount.sh script
+  template:
+    src: move-data-before-disk-mount.sh
+    dest: /usr/local/bin/move-data-before-disk-mount.sh
     mode: '0755'
 
-- name: Move existing data to temp folder before mounting data disk
-  when: cloudypad_move_data_for_data_disk_mount
-  shell: |
-    mv {{ cloudypad_data_root }}/* {{ cloudypad_data_root_tmp_before_mount }}
-  args:
-    executable: /bin/bash
-
-- name: Format Cloudy Pad data disk (ext4)
-  filesystem:
-    fstype: "ext4"
-    dev: "{{ cloudypad_data_disk_path }}"
+- name: Move existing data before disk mount (if any)
+  shell: /usr/local/bin/move-data-before-disk-mount.sh
 
 - name: Mount and configure fstab for Cloudy Pad data disk
   mount:
@@ -114,18 +79,12 @@
     # Better have an instance that boots with data loss rather than unbootable instance
     opts: "defaults,nofail"
 
-- name: Move data back from temp folder
-  when: cloudypad_move_data_for_data_disk_mount
-  shell: |
-    mv {{ cloudypad_data_root_tmp_before_mount }}/* {{ cloudypad_data_root }}/
-    rm -r {{ cloudypad_data_root_tmp_before_mount }}
-  args:
-    executable: /bin/bash
+# Copy and execute bash script to move data back after mounting
+- name: Copy move-data-after-disk-mount.sh script
+  template:
+    src: move-data-after-disk-mount.sh
+    dest: /usr/local/bin/move-data-after-disk-mount.sh
+    mode: '0755'
 
-# Start back autostop service if it was running before
-- name: Start Cloudy Pad autostop service
-  when: cloudypad_move_data_for_data_disk_mount and autostop_service_stop_result is success
-  systemd:
-    name: cloudypad-autostop
-    state: started
-    enabled: yes
+- name: Move existing ata back after disk mount (if any)
+  shell: /usr/local/bin/move-data-after-disk-mount.sh

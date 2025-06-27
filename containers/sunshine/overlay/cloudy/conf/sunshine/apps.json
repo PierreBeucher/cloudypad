@@ -19,6 +19,23 @@
           "auto-detach": "true",
           "wait-all": "true",
           "exit-timeout": "5"
-      }
+        },
+        {
+            "name": "Heroic Games Launcher",
+            "image-path": "heroic.png",
+            "prep-cmd": [
+                {
+                    "do": "sh -c \"sunshine-app-startup.sh > \/tmp\/sunshine-session-start.log 2>&1\"",
+                    "undo": ""
+                }
+            ],
+            "detached": [
+                ""
+            ],
+            "exclude-global-prep-cmd": "false",
+            "auto-detach": "true",
+            "wait-all": "true",
+            "exit-timeout": "5"
+        }
   ]
 }

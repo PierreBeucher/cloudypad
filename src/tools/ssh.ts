@@ -243,6 +243,10 @@ export class SshKeyLoader {
      * @returns SSH private key path
      */
     getSshPrivateKeyPath(ssh: CommonProvisionInputV1["ssh"]){
+        if (!ssh) {
+            throw new Error("SSH configuration is undefined");
+        }
+
         if(ssh.privateKeyPath){
             return ssh.privateKeyPath
         } else if (ssh.privateKeyContentBase64){
@@ -260,6 +264,10 @@ export class SshKeyLoader {
      * @returns SSH private key content
      */
     loadSshPrivateKeyContent(ssh: CommonProvisionInputV1["ssh"]){
+        if (!ssh) {
+            throw new Error("SSH configuration is undefined");
+        }
+
         if(ssh.privateKeyPath){
             return fs.readFileSync(ssh.privateKeyPath, { encoding: 'utf8' })
         } else if (ssh.privateKeyContentBase64){
@@ -280,6 +288,10 @@ export class SshKeyLoader {
 
     // real function which won't be mocked
     _loadSshPublicKeyContent(ssh: CommonProvisionInputV1["ssh"]) {
+        if (!ssh) {
+            throw new Error("SSH configuration is undefined");
+        }
+
         const privateKeyContent = this.loadSshPrivateKeyContent(ssh)
         return sshpk.parseKey(privateKeyContent, "ssh-private").toString("ssh")
     }

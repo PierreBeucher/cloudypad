@@ -1,9 +1,9 @@
 version: '3'
 
 env:
-  CLOUDYPAD_BUILD_CORE_IMAGE_REGISTRY: "ghcr.io/pierrebeucher/cloudypad"
+  CLOUDYPAD_BUILD_CORE_IMAGE_REGISTRY: "ghcr.io/gabbelitov2/cloudypad"
   CLOUDYPAD_BUILD_CORE_IMAGE_TAG: "local"
-  CLOUDYPAD_BUILD_SUNSHINE_IMAGE_REGISTRY: "ghcr.io/pierrebeucher/cloudypad/sunshine"
+  CLOUDYPAD_BUILD_SUNSHINE_IMAGE_REGISTRY: "ghcr.io/gabbelitov2/cloudypad/sunshine"
   CLOUDYPAD_BUILD_SUNSHINE_IMAGE_TAG: "local"
 
 tasks:
@@ -70,25 +70,60 @@ tasks:
 
   #
   # Tests
+  #
 
   # Detect potential circular deps with Madge
   test-circular-deps:
     cmd: npx -y madge --ts-config ./tsconfig.json -c .
 
-  # Run integration tests with local containers
-  # Only some test can be run using only local containers as some tests depend on real infrastructure
-  test-integ-with-local-containers:
+  test-integ-stable:
     cmds:
-    - task: test-integ-containers-setup
     - task: test-integ-s3-side-effects
+    - task: test-integ-provider-dummy
+    - task: test-integ-provider-scaleway
+    - task: test-integ-provider-aws
+    - task: test-integ-provider-azure
+    - task: test-integ-provider-gcp
+    - task: test-integ-provider-paperspace
 
+  # Setup containers for integration tests
   test-integ-containers-setup:
     cmds:
     - docker compose -f test/integ/docker-compose.yml up -d
 
+  # Run side-effects tests
   test-integ-s3-side-effects:
     cmds:
-    - npx mocha --config test/integ/.mocharc.json ./test/integ/side-effects/s3.spec.ts
+    - task: test-integ-containers-setup
+    - npx mocha --config test/integ/.mocharc.json ./test/integ/stable/core/state/side-effects/s3.spec.ts
+
+  test-integ-provider-aws:
+    cmds:
+    - npx mocha --config test/integ/.mocharc.json ./test/integ/stable/core/providers/aws/client.spec.ts
+    - npx mocha --config test/integ/.mocharc.json ./test/integ/stable/core/providers/aws/lifecycle.spec.ts 
+
+  test-integ-provider-scaleway:
+    cmds:
+    - npx mocha --config test/integ/.mocharc.json ./test/integ/stable/core/providers/scaleway/client.spec.ts
+    - npx mocha --config test/integ/.mocharc.json ./test/integ/stable/core/providers/scaleway/lifecycle.spec.ts 
+
+  test-integ-provider-azure:
+    cmds:
+    - npx mocha --config test/integ/.mocharc.json ./test/integ/stable/core/providers/azure/client.spec.ts
+    - npx mocha --config test/integ/.mocharc.json ./test/integ/stable/core/providers/azure/lifecycle.spec.ts 
+
+  test-integ-provider-gcp:
+    cmds:
+    - npx mocha --config test/integ/.mocharc.json ./test/integ/stable/core/providers/gcp/lifecycle.spec.ts 
+
+  test-integ-provider-paperspace:
+    cmds:
+    - npx mocha --config test/integ/.mocharc.json ./test/integ/stable/core/providers/paperspace/client.spec.ts
+    - npx mocha --config test/integ/.mocharc.json ./test/integ/stable/core/providers/paperspace/lifecycle.spec.ts 
+
+  test-integ-provider-dummy:
+    cmds:
+    - npx mocha --config test/integ/.mocharc.json ./test/integ/stable/core/providers/dummy/lifecycle.spec.ts 
 
   test-integ-full-lifecycle-all:
     cmds:
@@ -116,17 +151,15 @@ tasks:
   test-integ-scaleway-lifecycle-with-server-deletion:
     - npx mocha --config test/integ/.mocharc.json ./test/integ/scaleway/lifecycle-with-server-deletion.spec.ts 
 
-  test-integ-side-effects-s3:
-    cmds:
-    - docker compose -f test/integ/side-effects/docker-compose.yml up -d
-    - npx mocha --config test/integ/.mocharc.json ./test/integ/side-effects/s3.spec.ts
-
+  # Ensure analytics key are matching in various places in code 
   test-analytics-key-match:
     - cmd: test/shell/test-matching-analytics-key.sh
 
+  # Ensure install script is working
   test-install-script:
     - cmd: test/shell/test-install.sh
-  
+
+  # Smoke test to check container image is working
   test-container-smoke-test:
     cmds:
     - task: build-core-container-local
@@ -207,15 +240,26 @@ tasks:
       -t $CLOUDYPAD_BUILD_CORE_IMAGE_REGISTRY:$CLOUDYPAD_BUILD_CORE_IMAGE_TAG
       --load
 
-  # Both amd64 and arm64
+  # Build and push core container image for release with required labels and target architectures
+  # Image labels are important for some processing (eg. cleanup), don't remove them
   build-core-container-release:
+    vars:
+      CLOUDYPAD_VERSION:
+        sh: jq -r .version package.json
     cmds:
+    - >
+      if [ -z "{{ .CLOUDYPAD_VERSION }}" ]; then
+        echo "CLOUDYPAD_VERSION={{ .CLOUDYPAD_VERSION }}"
+        echo "CLOUDYPAD_VERSION not set. It should have been set from package.json - this is certainly a bug."
+        exit 1
+      fi
     - >
       docker buildx build . 
       --cache-from type=registry,ref=$CLOUDYPAD_BUILD_CORE_IMAGE_REGISTRY:$CLOUDYPAD_BUILD_CORE_IMAGE_TAG-cache
       --cache-from type=registry,ref=$CLOUDYPAD_BUILD_CORE_IMAGE_REGISTRY:master-cache
       -t $CLOUDYPAD_BUILD_CORE_IMAGE_REGISTRY:$CLOUDYPAD_BUILD_CORE_IMAGE_TAG
       --platform "linux/amd64,linux/arm64"
+      --label "cloudypad.version={{ .CLOUDYPAD_VERSION }}"
       --push
 
   # Sunshine

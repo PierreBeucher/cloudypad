@@ -28,12 +28,19 @@ export class PaperspaceInstanceRunner extends AbstractInstanceRunner<PaperspaceP
 
     async doRestart(opts?: StartStopOptions) {
         await this.client.restartMachine(this.args.provisionOutput.machineId)
+        // wait for machine to be restarting before checking for ready state
+        // to avoid false positive as machine will still be "ready" for a few seconds after restart request
+        // unless restart is blastingly fast this should work as expected
+        await this.client.waitForMachineState(this.args.provisionOutput.machineId, MachinesCreate200ResponseDataStateEnum.Restarting)
         await this.client.waitForMachineState(this.args.provisionOutput.machineId, MachinesCreate200ResponseDataStateEnum.Ready)
     }
 
     async doGetInstanceStatus(): Promise<ServerRunningStatus> {
-        this.logger.warn("Paperspace instance status fetch is not yet implemented. Instance server status will be reported as 'unknown'.")
-        return ServerRunningStatus.Unknown
+        const machine = await this.client.getMachine(this.args.provisionOutput.machineId)
+        if (machine.state === MachinesCreate200ResponseDataStateEnum.Off) {
+            return ServerRunningStatus.Stopped
+        }
+        return ServerRunningStatus.Running
     }
 
 }

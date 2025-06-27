@@ -2,7 +2,7 @@ import { SshKeyLoader } from '../../tools/ssh'
 import { ScalewayPulumiClient, PulumiStackConfigScaleway, ScalewayPulumiOutput } from './pulumi'
 import { AbstractInstanceProvisioner, InstanceProvisionerArgs } from '../../core/provisioner'
 import { ScalewayProvisionInputV1, ScalewayProvisionOutputV1 } from './state'
-import { ScalewayClient } from '../../tools/scaleway'
+import { ScalewayClient } from './sdk-client'
 
 export type ScalewayProvisionerArgs = InstanceProvisionerArgs<ScalewayProvisionInputV1, ScalewayProvisionOutputV1>
 

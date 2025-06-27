@@ -1,5 +1,40 @@
 # Changelog
 
+## [0.31.0](https://github.com/PierreBeucher/cloudypad/compare/v0.30.1...v0.31.0) (2025-06-22)More actions
+
+
+### Features
+
+* add State metadata (latest version and date used for provision … ([c7b8303](https://github.com/PierreBeucher/cloudypad/commit/c7b830393260758e4f54a3aea30db17fb35ba1d5))
+* add State metadata (latest version and date used for provision and configuration) ([08a1824](https://github.com/PierreBeucher/cloudypad/commit/08a1824a13820cbb9a0596aa23186d64b502c393))
+* Paperspace get instance status implementation ([d8309c3](https://github.com/PierreBeucher/cloudypad/commit/d8309c3a65872bfd71e000e25423a83a1250d07f))
+* Scaleway client getRawServerData function ([3b02920](https://github.com/PierreBeucher/cloudypad/commit/3b02920b4c3672974060173e9155e421becd7f42))
+* update all dependencies ([fd91ae5](https://github.com/PierreBeucher/cloudypad/commit/fd91ae5615ba5cd98d80fdc64a7d8390d40059e4))
+* update NVIDIA driver to 570.169 ([268e803](https://github.com/PierreBeucher/cloudypad/commit/268e80379ab1c8266546a3121af9bb04032cbfae))
+* update Wolf to latest version ([c72cb68](https://github.com/PierreBeucher/cloudypad/commit/c72cb683f3e344c223c8a52f513b73479982dfc9))
+
+
+### Bug Fixes
+
+* Google restart did not wait for restart, eneded-up stopping instance ([cc51fb2](https://github.com/PierreBeucher/cloudypad/commit/cc51fb230688404401838a298e155e7f4fade814))
+* handle instance status server check failure without failing over… ([88eac21](https://github.com/PierreBeucher/cloudypad/commit/88eac212b805b51e3e0e0d2ecab506aec4787225))
+* handle instance status server check failure without failing overall status check call ([3128286](https://github.com/PierreBeucher/cloudypad/commit/312828664b6773dcb240c5f56dea03f38a975090))
+* ignored dummy instance configuration time ([1a4f17d](https://github.com/PierreBeucher/cloudypad/commit/1a4f17df84a22beeb693b9e38a0ab0a0f45b9fa6))
+* NVIDIA driver download retry pattern ([eb55ccf](https://github.com/PierreBeucher/cloudypad/commit/eb55ccf99d99d19680bde6d2d7b9452d89ecb839))
+* Paperspace prompt for ssh key rather than auto generated key which wont worked as not configured on UI ([030dae0](https://github.com/PierreBeucher/cloudypad/commit/030dae00e5b061449f4f2e5ed1f423d1d7d4f7db))
+* Paperspace restart wait for restarting state to avoid returning immediaely as machine is still ready right after restart request ([c6f10e0](https://github.com/PierreBeucher/cloudypad/commit/c6f10e036b5c13a6dd67ddc44aaddac3bba8f3bd))
+* Paperspace stop/start/restart skip operation if already transitioning ([b027013](https://github.com/PierreBeucher/cloudypad/commit/b02701352293afe60c94f7f04a73f3a72c10bcff))
+* Scaleway data mount failure when both OS disk and Data disk hold… ([55b0396](https://github.com/PierreBeucher/cloudypad/commit/55b0396e378e1c2d348c656738b6bfa5aca89275))
+* Scaleway data mount failure when both OS disk and Data disk holds data ([3439667](https://github.com/PierreBeucher/cloudypad/commit/3439667e5214e4ff5c2433889bbe9f99cfd4afe8))
+* use plain script to move existing data back and forth on data disk mount ([fa38a17](https://github.com/PierreBeucher/cloudypad/commit/fa38a1723b46a35b79059edc4aca83c129952202))
+
+## [0.30.1](https://github.com/PierreBeucher/cloudypad/compare/v0.30.0...v0.30.1) (2025-06-16)
+
+
+### Bug Fixes
+
+* prepare release 0.30.1 - update version in package files and scripts ([547f47f](https://github.com/PierreBeucher/cloudypad/commit/547f47fd332b3b066efe564d466185ca90740d9a))
+
 ## [0.30.0](https://github.com/PierreBeucher/cloudypad/compare/v0.29.0...v0.30.0) (2025-06-12)
 
 

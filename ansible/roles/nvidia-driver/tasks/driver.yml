@@ -8,7 +8,7 @@
       options nouveau modeset=0
 
 - name: Reboot after nouveau driver blacklist update
-  when: nvidia_nouveau_driver_blacklist.changed
+  when: nvidia_nouveau_driver_blacklist.changed and cloudypad_provider != "local"
   reboot:
     post_reboot_delay: 10
 
@@ -26,7 +26,7 @@
     - gcc-multilib
 
 - name: Reboot after previous install method package removal
-  when: previous_install_method_package_remove.changed
+  when: previous_install_method_package_remove.changed and cloudypad_provider != "local"
   reboot:
     post_reboot_delay: 10  
 
@@ -107,12 +107,18 @@
     url: https://download.nvidia.com/XFree86/Linux-x86_64/{{ nvidia_driver_dotrun_install_version }}/NVIDIA-Linux-x86_64-{{ nvidia_driver_dotrun_install_version }}.run
     dest: /tmp/NVIDIA-Linux-x86_64-{{ nvidia_driver_dotrun_install_version }}.run
     mode: '0755'
+  retries: 3
+  delay: 10
+  register: nvidia_driver_download
 
 - name: Download NVIDIA driver SHA256 checksum
   when: nvidia_driver_version != nvidia_driver_dotrun_install_version
   get_url:
     url: https://download.nvidia.com/XFree86/Linux-x86_64/{{ nvidia_driver_dotrun_install_version }}/NVIDIA-Linux-x86_64-{{ nvidia_driver_dotrun_install_version }}.run.sha256sum
     dest: /tmp/NVIDIA-Linux-x86_64-{{ nvidia_driver_dotrun_install_version }}.run.sha256sum
+  retries: 3
+  delay: 10
+  register: nvidia_checksum_download
 
 - name: Verify SHA256 checksum
   when: nvidia_driver_version != nvidia_driver_dotrun_install_version
@@ -128,6 +134,6 @@
   command: /tmp/NVIDIA-Linux-x86_64-{{ nvidia_driver_dotrun_install_version }}.run --no-questions --ui=none --dkms
 
 - name: Reboot after dotrun driver install
-  when: nvidia_driver_version != nvidia_driver_dotrun_install_version
+  when: nvidia_driver_version != nvidia_driver_dotrun_install_version and cloudypad_provider != "local"
   reboot:
     post_reboot_delay: 10

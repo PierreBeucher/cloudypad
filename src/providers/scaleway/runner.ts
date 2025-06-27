@@ -1,6 +1,6 @@
 import { CLOUDYPAD_PROVIDER_SCALEWAY } from '../../core/const'
 import { AbstractInstanceRunner, InstanceRunnerArgs, ServerRunningStatus, StartStopOptions } from '../../core/runner'
-import { ScalewayClient, ScalewayServerState } from '../../tools/scaleway'
+import { ScalewayClient, ScalewayServerState } from './sdk-client'
 import { ScalewayProvisionInputV1, ScalewayProvisionOutputV1 } from './state'
 
 export type ScalewayInstanceRunnerArgs = InstanceRunnerArgs<ScalewayProvisionInputV1, ScalewayProvisionOutputV1>

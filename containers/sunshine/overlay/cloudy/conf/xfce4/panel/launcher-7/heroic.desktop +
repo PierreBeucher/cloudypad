@@ -1,0 +1,13 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=Heroic Games Launcher
+Comment=An Open Source GOG and Epic Games Launcher
+Exec=heroic
+Icon=heroic
+Path=
+Terminal=false
+Categories=Game;
+StartupNotify=true
+PrefersNonDefaultGPU=true
+X-KDE-RunOnDiscreteGpu=true

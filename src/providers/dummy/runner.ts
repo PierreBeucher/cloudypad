@@ -1,5 +1,5 @@
-import { InstanceRunner, InstanceRunnerArgs, ServerRunningStatus, StartStopOptions } from '../../core/runner';
-import { getLogger, Logger } from '../../log/utils';
+import { CLOUDYPAD_PROVIDER_DUMMY } from '../../core/const';
+import { AbstractInstanceRunner, InstanceRunner, InstanceRunnerArgs, ServerRunningStatus, StartStopOptions } from '../../core/runner';
 import { DummyInstanceInfraManager } from './infra';
 import { DummyProvisionInputV1, DummyProvisionOutputV1 } from './state';
 
@@ -13,62 +13,64 @@ export interface DummyInstanceRunnerArgs extends InstanceRunnerArgs<DummyProvisi
  * Voluntarily does not extend AbstractInstanceRunner for simplicity
  * and to avoid having stubs removing desired behavior during tests
  */
-export class DummyInstanceRunner implements InstanceRunner {
+export class DummyInstanceRunner extends AbstractInstanceRunner<DummyProvisionInputV1, DummyProvisionOutputV1> implements InstanceRunner {
 
-    private readonly logger: Logger
-    private readonly args: DummyInstanceRunnerArgs
+    // private readonly args: DummyInstanceRunnerArgs
+
+    private readonly dummyInfraManager: DummyInstanceInfraManager
 
     constructor(args: DummyInstanceRunnerArgs) {
-        this.logger = getLogger(args.instanceName)
-        this.args = args
+        super(CLOUDYPAD_PROVIDER_DUMMY, args)
+        this.dummyInfraManager = args.dummyInfraManager
     }
 
-
-    async start(opts?: StartStopOptions): Promise<void> {
+    async doStart(opts?: StartStopOptions): Promise<void> {        
         this.logger.debug(`Dummy start operation for instance: ${this.args.instanceName} (starting time: ${this.args.provisionInput.startDelaySeconds} seconds)`)
         
-        if(this.args.provisionInput.startDelaySeconds > 0) {
-            await this.args.dummyInfraManager.setServerRunningStatus(ServerRunningStatus.Starting)
+        if(this.args.provisionInput.startDelaySeconds && this.args.provisionInput.startDelaySeconds > 0) {
+            const delay = this.args.provisionInput.startDelaySeconds
+            await this.dummyInfraManager.setServerRunningStatus(ServerRunningStatus.Starting)
             const startingPromise = new Promise<void>(resolve => setTimeout(async () => {
-                await this.args.dummyInfraManager.setServerRunningStatus(ServerRunningStatus.Running)
+                await this.dummyInfraManager.setServerRunningStatus(ServerRunningStatus.Running)
                 resolve()
-            }, this.args.provisionInput.startDelaySeconds * 1000))
+            }, delay * 1000))
             
             if(opts?.wait) {
                 await startingPromise
             }
         } else {
-            await this.args.dummyInfraManager.setServerRunningStatus(ServerRunningStatus.Running)
+            await this.dummyInfraManager.setServerRunningStatus(ServerRunningStatus.Running)
         }
     }
 
-    async stop(opts?: StartStopOptions): Promise<void> {
+    async doStop(opts?: StartStopOptions): Promise<void> {
         this.logger.debug(`Dummy stop operation for instance: ${this.args.instanceName} (stopping time: ${this.args.provisionInput.stopDelaySeconds} seconds)`)
 
-        if(this.args.provisionInput.stopDelaySeconds > 0) {
-            await this.args.dummyInfraManager.setServerRunningStatus(ServerRunningStatus.Stopping)
+        if(this.args.provisionInput.stopDelaySeconds && this.args.provisionInput.stopDelaySeconds > 0) {
+            const delay = this.args.provisionInput.stopDelaySeconds
+            await this.dummyInfraManager.setServerRunningStatus(ServerRunningStatus.Stopping)
             const stoppingPromise = new Promise<void>(resolve => setTimeout(async () => {
-                await this.args.dummyInfraManager.setServerRunningStatus(ServerRunningStatus.Stopped)
+                await this.dummyInfraManager.setServerRunningStatus(ServerRunningStatus.Stopped)
                 resolve()
-            }, this.args.provisionInput.stopDelaySeconds * 1000))
+            }, delay * 1000))
             
             if(opts?.wait) {
                 await stoppingPromise
             }
         } else {
-            await this.args.dummyInfraManager.setServerRunningStatus(ServerRunningStatus.Stopped)
+            await this.dummyInfraManager.setServerRunningStatus(ServerRunningStatus.Stopped)
         }
     }
 
-    async restart(opts?: StartStopOptions): Promise<void> {
+    async doRestart(opts?: StartStopOptions): Promise<void> {
         this.logger.debug(`Dummy restart operation for instance: ${this.args.instanceName}`)
         await this.stop()
         await this.start()
     }
 
-    async serverStatus(): Promise<ServerRunningStatus> {
+    async doGetInstanceStatus(): Promise<ServerRunningStatus> {
         this.logger.debug(`Dummy get status operation for instance: ${this.args.instanceName}`)
-        const status = await this.args.dummyInfraManager.getServerRunningStatus()
+        const status = await this.dummyInfraManager.getServerRunningStatus()
         return status.status
     }
 
@@ -99,7 +101,7 @@ export class DummyInstanceRunner implements InstanceRunner {
                 return true
             }
 
-            const status = await this.args.dummyInfraManager.getServerRunningStatus()
+            const status = await this.dummyInfraManager.getServerRunningStatus()
 
             if(status.lastUpdate === undefined) {
                 throw new Error(`Dummy instance ${this.args.instanceName} has a running server but not last update date. This should never happen.`)

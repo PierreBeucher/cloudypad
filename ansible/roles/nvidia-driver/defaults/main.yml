@@ -11,4 +11,4 @@ nvidia_driver_module_file: /etc/modprobe.d/nvidia.conf
 nvidia_driver_module_params: ''
 
 # Install version from .run file
-nvidia_driver_dotrun_install_version: "550.163.01"
+nvidia_driver_dotrun_install_version: "570.169"
