@@ -1,9 +1,9 @@
 version: '3'
 
 env:
-  CLOUDYPAD_BUILD_CORE_IMAGE_REGISTRY: "ghcr.io/pierrebeucher/cloudypad"
+  CLOUDYPAD_BUILD_CORE_IMAGE_REGISTRY: "ghcr.io/gabbelitov2/cloudypad"
   CLOUDYPAD_BUILD_CORE_IMAGE_TAG: "local"
-  CLOUDYPAD_BUILD_SUNSHINE_IMAGE_REGISTRY: "ghcr.io/pierrebeucher/cloudypad/sunshine"
+  CLOUDYPAD_BUILD_SUNSHINE_IMAGE_REGISTRY: "ghcr.io/gabbelitov2/cloudypad/sunshine"
   CLOUDYPAD_BUILD_SUNSHINE_IMAGE_TAG: "local"
 
 tasks:
@@ -261,6 +261,12 @@ tasks:
       CLOUDYPAD_VERSION:
         sh: jq -r .version package.json
     cmds:
+    - >
+      if [ -z "{{ .CLOUDYPAD_VERSION }}" ]; then
+        echo "CLOUDYPAD_VERSION={{ .CLOUDYPAD_VERSION }}"
+        echo "CLOUDYPAD_VERSION not set. It should have been set from package.json - this is certainly a bug."
+        exit 1
+      fi
     - >
       if [ -z "{{ .CLOUDYPAD_VERSION }}" ]; then
         echo "CLOUDYPAD_VERSION={{ .CLOUDYPAD_VERSION }}"
