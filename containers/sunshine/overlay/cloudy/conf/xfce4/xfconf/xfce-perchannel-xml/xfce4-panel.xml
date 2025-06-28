@@ -46,6 +46,7 @@
         <value type="int" value="99"/>
 
         <!-- Help and Exit session -->
+        <value type="int" value="6"/>
         <value type="int" value="5"/>
 
       </property>
@@ -92,5 +93,11 @@
       </property>
     </property>
     
+    <property name="plugin-6" type="string" value="launcher">
+      <property name="items" type="array">
+        <value type="string" value="help.desktop"/>
+      </property>
+    </property>
+
   </property>
 </channel>
