@@ -121,14 +121,22 @@ export abstract class AbstractInstanceRunner<C extends CommonProvisionInputV1, O
             provisionOutput: this.args.provisionOutput
         })
 
+        // Build SSH config that supports both password and key authentication
+        const sshConfig: any = {
+            user: sshClientArgs.user
+        };
+
+        if (sshClientArgs.password) {
+            sshConfig.password = sshClientArgs.password;
+        } else if (sshClientArgs.privateKeyPath) {
+            sshConfig.privateKeyPath = sshClientArgs.privateKeyPath;
+        }
+
         if(this.args.configurationInput.sunshine?.enable){
             return new SunshineMoonlightPairer({
                 instanceName: this.args.instanceName,
                 host: sshClientArgs.host,
-                ssh: {
-                    user: sshClientArgs.user,
-                    privateKeyPath: sshClientArgs.privateKeyPath
-                },
+                ssh: sshConfig,
                 sunshine: {
                     username: this.args.configurationInput.sunshine.username,
                     password: Buffer.from(this.args.configurationInput.sunshine.passwordBase64, 'base64').toString('utf-8')
@@ -138,10 +146,7 @@ export abstract class AbstractInstanceRunner<C extends CommonProvisionInputV1, O
             return new WolfMoonlightPairer({
                 instanceName: this.args.instanceName,
                 host: sshClientArgs.host,
-                ssh: {
-                    user: sshClientArgs.user,
-                    privateKeyPath: sshClientArgs.privateKeyPath
-                }
+                ssh: sshConfig
             })
         } else {
             throw new Error(`No Moonlight pairer found for instance ${this.args.instanceName}, neither Sunshine nor Wolf is enabled`)
