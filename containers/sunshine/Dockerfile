@@ -136,7 +136,7 @@ RUN --mount=type=cache,target=/var/cache --mount=type=tmpfs,target=/var/log \
     rm -rf /tmp/heroic
 
 # Create Sunshine images directory and download icons
-RUN \
+RUN --mount=type=cache,target=/var/cache --mount=type=tmpfs,target=/var/log \
     mkdir -p /cloudy/conf/sunshine/images && \
     curl -L -o /cloudy/conf/sunshine/images/heroic.png "https://raw.githubusercontent.com/Heroic-Games-Launcher/HeroicGamesLauncher/main/public/icon.png"
 
@@ -147,6 +147,7 @@ RUN \
 # but remove xfce4-panel to void showinf uneeded/unwanted panels (see https://unix.stackexchange.com/questions/38048/how-to-remove-all-the-panels-in-xfce)
 #
 RUN --mount=type=cache,target=/var/cache --mount=type=tmpfs,target=/var/log \
+    apt update && \
     apt install -y xfce4 && \
     apt clean
 
