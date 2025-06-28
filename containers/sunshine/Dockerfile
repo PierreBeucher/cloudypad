@@ -137,6 +137,7 @@ RUN --mount=type=cache,target=/var/cache --mount=type=tmpfs,target=/var/log \
 
 # Create Sunshine images directory and download icons
 RUN \
+    mkdir -p /cloudy/conf/sunshine/images && \
     curl -L -o /cloudy/conf/sunshine/images/heroic.png "https://raw.githubusercontent.com/Heroic-Games-Launcher/HeroicGamesLauncher/main/public/icon.png"
 
 #
