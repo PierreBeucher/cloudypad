@@ -3,6 +3,7 @@ import { LocalInstanceInfraManager } from './infra';
 import { LocalProvisionInputV1, LocalProvisionOutputV1 } from './state';
 import { SSHClient, SshKeyLoader } from '../../tools/ssh';
 import { CLOUDYPAD_PROVIDER_LOCAL } from '../../core/const';
+import { buildSshClientArgsForInstance } from '../../tools/ssh';
 
 export interface LocalInstanceRunnerArgs extends InstanceRunnerArgs<LocalProvisionInputV1, LocalProvisionOutputV1> {
     localInfraManager: LocalInstanceInfraManager
@@ -22,47 +23,19 @@ export class LocalInstanceRunner extends AbstractInstanceRunner<LocalProvisionIn
     }
 
     private buildSshClient(): SSHClient | null {
-        // Check if we have any auth configuration
-        const auth = (this.localArgs.provisionInput as any).auth;
-        const customHost = (this.localArgs.provisionInput as any).customHost || "0.0.0.0";
-        
-        if (!auth) {
+        // Use the same logic as buildSshClientArgsForInstance for consistency
+        try {
+            const sshClientArgs = buildSshClientArgsForInstance({
+                instanceName: this.localArgs.instanceName,
+                provisionInput: this.localArgs.provisionInput as any,
+                provisionOutput: this.localArgs.provisionOutput as any
+            });
+            
+            return new SSHClient(sshClientArgs);
+        } catch (error) {
+            this.logger.warn(`Failed to build SSH client: ${error}`);
             return null;
         }
-        
-        if (auth.type === "password") {
-            // Password authentication
-            const sshConfig: any = {
-                clientName: "LocalInstanceRunner",
-                host: customHost,
-                port: 22,
-                user: auth.ssh.user,
-                password: auth.ssh.password
-            };
-            
-            return new SSHClient(sshConfig);
-        } else if (auth.type === "ssh-key") {
-            // SSH key authentication
-            try {
-                const sshKeyLoader = new SshKeyLoader();
-                const privateKeyPath = sshKeyLoader.getSshPrivateKeyPath(auth.ssh);
-                
-                const sshConfig: any = {
-                    clientName: "LocalInstanceRunner",
-                    host: customHost,
-                    port: 22,
-                    user: auth.ssh.user,
-                    privateKeyPath: privateKeyPath
-                };
-                
-                return new SSHClient(sshConfig);
-            } catch (error) {
-                this.logger.warn(`Failed to setup SSH key authentication: ${error}`);
-                return null;
-            }
-        }
-        
-        return null;
     }
 
     private async tryWithSshClient(action: (client: SSHClient) => Promise<void>): Promise<boolean> {
