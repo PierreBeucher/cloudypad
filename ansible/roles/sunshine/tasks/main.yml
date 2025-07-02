@@ -12,6 +12,13 @@
     state: directory
     mode: '0750'
 
+- name: Ensure Sunshine persistent config directory exists
+  become: true # required since container user may not match host user. TODO fix this
+  file:
+    path: "{{ sunshine_persistent_config_dir }}"
+    state: directory
+    mode: '0750'
+
 - name: import legacy data move tasks
   import_tasks: legacy-data.yml
   tags: [ legacy-data ]
