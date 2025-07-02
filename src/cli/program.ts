@@ -16,6 +16,7 @@ import { CloudypadClient } from '../core/client';
 import { CoreConfig } from '../core/config/interface';
 import { InstanceManagerBuilder } from '../core/manager-builder';
 import { InstanceManager } from '../core/manager';
+import { CLI_OPTION_RETRIES, CLI_OPTION_RETRY_DELAY } from './command';
 
 const logger = getLogger("program")
 
@@ -139,13 +140,20 @@ export function buildProgram(){
         .description('Start an instance')
         .option('--wait', 'Wait for instance to be fully started.')
         .option('--timeout <seconds>', 'Timeout when waiting for instance to be fully started. Ignored if --wait not set.', parseInt)
+        .addOption(CLI_OPTION_RETRIES)
+        .addOption(CLI_OPTION_RETRY_DELAY)
         .action(async (name, opts) => {
             try {
                 analyticsClient.sendEvent(RUN_COMMAND_START)
 
                 console.info(`Starting instance ${name}...`)
                 const m = await getInstanceManager(name)
-                await m.start({ wait: opts.wait, waitTimeoutSeconds: opts.timeout})
+                await m.start({ 
+                    wait: opts.wait, 
+                    waitTimeoutSeconds: opts.timeout, 
+                    retries: opts.retries, 
+                    retryDelaySeconds: opts.retryDelay
+                })
     
                 if(opts.wait){
                     console.info(`Started instance ${name}`)
@@ -163,13 +171,20 @@ export function buildProgram(){
         .description('Stop an instance')
         .option('--wait', 'Wait for instance to be fully stopped.')
         .option('--timeout <seconds>', 'Timeout when waiting for instance to be fully stopped. Ignored if --wait not set.', parseInt)
+        .addOption(CLI_OPTION_RETRIES)
+        .addOption(CLI_OPTION_RETRY_DELAY)
         .action(async (name, opts) => {
             try {
                 analyticsClient.sendEvent(RUN_COMMAND_STOP)
 
                 console.info(`Stopping instance ${name}...`)
                 const m = await getInstanceManager(name)
-                await m.stop({ wait: opts.wait, waitTimeoutSeconds: opts.timeout})
+                await m.stop({ 
+                    wait: opts.wait, 
+                    waitTimeoutSeconds: opts.timeout, 
+                    retries: opts.retries, 
+                    retryDelaySeconds: opts.retryDelay
+                })
                 
                 if(opts.wait){
                     console.info(`Stopped instance ${name}`)
@@ -187,13 +202,20 @@ export function buildProgram(){
         .description('Restart an instance. Depending on provider this operation may be synchronous.')
         .option('--wait', 'Wait for instance to be fully restarted.')
         .option('--timeout <seconds>', 'Timeout when waiting for instance to be fully restarted. Ignored if --wait not set.', parseInt)
+        .addOption(CLI_OPTION_RETRIES)
+        .addOption(CLI_OPTION_RETRY_DELAY)
         .action(async (name, opts) => {
             try {
                 analyticsClient.sendEvent(RUN_COMMAND_RESTART)
 
                 console.info(`Restarting instance ${name}...`)
                 const m = await getInstanceManager(name)
-                await m.restart({ wait: opts.wait, waitTimeoutSeconds: opts.timeout})
+                await m.restart({ 
+                    wait: opts.wait, 
+                    waitTimeoutSeconds: opts.timeout, 
+                    retries: opts.retries,
+                    retryDelaySeconds: opts.retryDelay
+                })
                 
             } catch (error) {
                 throw new Error(`Failed to restart instance ${name}`, { cause: error })
@@ -226,6 +248,8 @@ export function buildProgram(){
         .command('provision <name>')
         .description('Provision an instance (deploy or update Cloud resources)')
         .option('--yes', 'Do not prompt for approval, automatically approve and continue')
+        .addOption(CLI_OPTION_RETRIES)
+        .addOption(CLI_OPTION_RETRY_DELAY)
         .action(async (name, opts) => {
             try {
                 analyticsClient.sendEvent(RUN_COMMAND_PROVISION)
@@ -239,7 +263,10 @@ export function buildProgram(){
                     throw new Error('Provision aborted.')
                 }
 
-                await manager.provision()
+                await manager.provision({ 
+                    retries: opts.retries, 
+                    retryDelaySeconds: opts.retryDelay
+                })
     
                 console.info(`Provisioned instance ${name}`)
             } catch (error) {
@@ -250,12 +277,17 @@ export function buildProgram(){
     program
         .command('configure <name>')
         .description('Configure an instance (connect to instance and install drivers, packages, etc.)')
-        .action(async (name) => {
+        .addOption(CLI_OPTION_RETRIES)
+        .addOption(CLI_OPTION_RETRY_DELAY)
+        .action(async (name, opts) => {
             try {
                 analyticsClient.sendEvent(RUN_COMMAND_CONFIGURE)
 
                 const m = await getInstanceManager(name)
-                await m.configure()
+                await m.configure({ 
+                    retries: opts.retries, 
+                    retryDelaySeconds: opts.retryDelay
+                })
     
                 console.info("")
                 console.info(`Configured instance ${name}`)
@@ -268,6 +300,8 @@ export function buildProgram(){
         .command('deploy <name>')
         .option('--yes', 'Do not prompt for approval, automatically approve and continue')
         .description('Deploy an instance: provision and configure it. Equivalent to running provision and configure commands sequentially.')
+        .addOption(CLI_OPTION_RETRIES)
+        .addOption(CLI_OPTION_RETRY_DELAY)
         .action(async (name, opts) => {
 
             const manager = await getInstanceManager(name)
@@ -281,13 +315,18 @@ export function buildProgram(){
 
             analyticsClient.sendEvent(RUN_COMMAND_DEPLOY)
 
-            await manager.deploy()
+            await manager.deploy({ 
+                retries: opts.retries, 
+                retryDelaySeconds: opts.retryDelay
+            })
         })
 
     program
         .command('destroy <name>')
         .description('Destroy an instance')
         .option('--yes', 'Do not prompt for approval, automatically approve and continue')
+        .addOption(CLI_OPTION_RETRIES)
+        .addOption(CLI_OPTION_RETRY_DELAY)
         .action(async (name, opts) => {
             try {
                 analyticsClient.sendEvent(RUN_COMMAND_DESTROY)
@@ -305,7 +344,10 @@ export function buildProgram(){
                 }
 
                 const m = await getInstanceManager(name)
-                await m.destroy()
+                await m.destroy({ 
+                    retries: opts.retries, 
+                    retryDelaySeconds: opts.retryDelay
+                })
     
                 console.info("")
                 console.info(`Destroyed instance ${name}`)

@@ -1,10 +1,11 @@
 import * as assert from 'assert';
-import { DEFAULT_COMMON_INPUT, getUnitTestCoreConfig, getUnitTestDummyProviderClient } from '../utils';
+import { DEFAULT_COMMON_INPUT, getUnitTestCoreConfig, getUnitTestDummyProviderClient, initializeDummyInstanceState } from '../utils';
 import { CommonConfigurationInputV1, InstanceEventEnum, STATE_MAX_EVENTS } from '../../../src/core/state/state';
-import { InstanceStatus } from '../../../src/core/manager';
+import { InstanceStatus, GenericInstanceManager, InstanceManager } from '../../../src/core/manager';
 import { ServerRunningStatus } from '../../../src/core/runner';
 import { getLogger } from '../../../src/log/utils';
 import { CloudypadClient } from '../../../src/core/client';
+import * as sinon from 'sinon';
 
 describe('Instance manager', () => {
 
@@ -195,5 +196,60 @@ describe('Instance manager', () => {
         const cloudypadClient = new CloudypadClient({ config: coreConfig })
         const instanceExists = await cloudypadClient.instanceExists(instanceName)
         assert.strictEqual(instanceExists, false)
+   })
+
+
+    it(`should not retry action when it succeeds`, async () => {
+        const instanceName = `dummy-test-core-manager-action-no-retry`
+        await initializeDummyInstanceState(instanceName)
+        const dummyProviderClient = getUnitTestDummyProviderClient()
+        const manager = await dummyProviderClient.getInstanceManager(instanceName)
+
+        const retryArgs = { retries: 3, retryDelaySeconds: 0 }
+        const actionsToTest: { action: () => Promise<void>, stubName: keyof InstanceManager }[] = [
+            { action: async() => { return manager.configure(retryArgs) }, stubName: 'doConfigure' },
+            { action: async() => { return manager.provision(retryArgs) }, stubName: 'doProvision' },
+            { action: async() => { return manager.start(retryArgs) }, stubName: 'doStart' },
+            { action: async() => { return manager.stop(retryArgs) }, stubName: 'doStop' },
+            { action: async() => { return manager.restart(retryArgs) }, stubName: 'doRestart' },
+            { action: async() => { return manager.destroy(retryArgs) }, stubName: 'doDestroy' },
+        ]
+
+        for (const action of actionsToTest) {
+            // stub doAction function to succeed immediately, should not retry
+            const stubFn = sinon.stub(manager, action.stubName)
+            stubFn.resolves()
+
+            await action.action()
+            assert.strictEqual(stubFn.callCount, 1)
+        }
+    })
+
+    it(`should retry action when it fails`, async () => {
+        const instanceName = `dummy-test-core-manager-action-retry`
+        await initializeDummyInstanceState(instanceName)
+        const dummyProviderClient = getUnitTestDummyProviderClient()
+        const manager = await dummyProviderClient.getInstanceManager(instanceName)
+
+        const retryArgs = { retries: 3, retryDelaySeconds: 0 }
+        const actionsToTest: { action: () => Promise<void>, stubName: keyof InstanceManager }[] = [
+            { action: async() => { return manager.configure(retryArgs) }, stubName: 'doConfigure' },
+            { action: async() => { return manager.provision(retryArgs) }, stubName: 'doProvision' },
+            { action: async() => { return manager.start(retryArgs) }, stubName: 'doStart' },
+            { action: async() => { return manager.stop(retryArgs) }, stubName: 'doStop' },
+            { action: async() => { return manager.restart(retryArgs) }, stubName: 'doRestart' },
+            { action: async() => { return manager.destroy(retryArgs) }, stubName: 'doDestroy' },
+        ]
+
+        for (const action of actionsToTest) {
+            // stub doAction function to fail, should retry
+            const stubFn = sinon.stub(manager, action.stubName)
+            stubFn.onFirstCall().rejects(new Error('First failure'))
+            stubFn.onSecondCall().rejects(new Error('Second failure'))
+            stubFn.onThirdCall().resolves()
+
+            await action.action()
+            assert.strictEqual(stubFn.callCount, 3)
+        }
     })
 })

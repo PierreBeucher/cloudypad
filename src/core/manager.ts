@@ -8,6 +8,46 @@ import { ConfiguratorFactory } from './submanager-factory';
 import { ProvisionerFactory } from './submanager-factory';
 import { RunnerFactory } from './submanager-factory';
 import { AnsibleConfiguratorOptions } from '../configurators/ansible';
+import { Retrier } from '../tools/retrier';
+
+const DEFAULT_RETRIES = 1
+const DEFAULT_RETRY_DELAY_SECONDS = 10
+
+/**
+ * Base options interface for all manager actions
+ */
+export interface ActionOptions {
+    /**
+     * Number of retries for the action. Default: 0 (no retry)
+     */
+    retries?: number
+
+    /**
+     * Delay between retries in seconds. Default: 10 seconds
+     */
+    retryDelaySeconds?: number
+}
+
+export interface DeployOptions extends ActionOptions {
+}
+
+export interface ConfigureOptions extends ActionOptions {
+}
+
+export interface ProvisionOptions extends ActionOptions {
+}
+
+export interface StartOptions extends StartStopOptions, ActionOptions {
+}
+
+export interface StopOptions extends StartStopOptions, ActionOptions {
+}
+
+export interface RestartOptions extends StartStopOptions, ActionOptions {
+}
+
+export interface DestroyOptions extends ActionOptions {
+}
 
 /**
  * Instance details suitable for end users, hiding or simplyfing internal details
@@ -65,13 +105,21 @@ export interface InstanceStatus {
  */
 export interface InstanceManager {
     name(): string
-    configure(): Promise<void>
-    provision(): Promise<void>
-    deploy(): Promise<void>
-    destroy(): Promise<void>
-    start(opts?: StartStopOptions): Promise<void>
-    stop(opts?: StartStopOptions): Promise<void>
-    restart(opts?: StartStopOptions): Promise<void>
+    configure(opts?: ConfigureOptions): Promise<void>
+    provision(opts?: ProvisionOptions): Promise<void>
+    deploy(opts?: DeployOptions): Promise<void>
+    destroy(opts?: DestroyOptions): Promise<void>
+    start(opts?: StartOptions): Promise<void>
+    stop(opts?: StopOptions): Promise<void>
+    restart(opts?: RestartOptions): Promise<void>
+
+    doProvision(): Promise<void>
+    doConfigure(additionalAnsibleArgs?: string[]): Promise<void>
+    doStart(opts?: StartOptions): Promise<void>
+    doStop(opts?: StopOptions): Promise<void>
+    doRestart(opts?: RestartOptions): Promise<void>
+    doDestroy(opts?: DestroyOptions): Promise<void>
+
     pairInteractive(): Promise<void>
     pairSendPin(pin: string, retries?: number, retryDelay?: number): Promise<boolean>
 
@@ -233,7 +281,7 @@ export class GenericInstanceManager<ST extends InstanceStateV1> implements Insta
         return this.instanceName
     }
 
-    async configure(): Promise<void> {
+    async configure(opts?: ConfigureOptions): Promise<void> {
 
         this.logger.debug(`Configuring instance ${this.name()}`)
 
@@ -242,83 +290,57 @@ export class GenericInstanceManager<ST extends InstanceStateV1> implements Insta
             [currentState.configuration.input.ansible.additionalArgs] : undefined
 
         await this.addEvent(InstanceEventEnum.ConfigurationBegin)
-        await this.doConfigure(configurationAnsibleAdditionalArgs)
+        await this.doWithRetry(async () => {
+            await this.doConfigure(configurationAnsibleAdditionalArgs)
+        }, 'Configuration', opts)
         await this.addEvent(InstanceEventEnum.ConfigurationEnd)
     }
 
-    async provision() {
+    async provision(opts?: ProvisionOptions): Promise<void> {
+        this.logger.debug(`Provisioning instance ${this.name()}`)
+
         await this.addEvent(InstanceEventEnum.ProvisionBegin)
-        await this.doProvision()
+        await this.doWithRetry(async () => {
+            await this.doProvision()
+        }, 'Provision', opts)
         await this.addEvent(InstanceEventEnum.ProvisionEnd)
     }
 
-    async deploy() {
-        await this.provision()
-        await this.configure()
+    async deploy(opts?: DeployOptions): Promise<void> {
+        await this.provision(opts)
+        await this.configure(opts)
     }
 
-    async destroy() {
+    async destroy(opts?: DestroyOptions): Promise<void> {
         this.logger.debug(`Destroying instance ${this.name()}`)
 
-        const provisioner = await this.buildProvisioner()
-
         await this.addEvent(InstanceEventEnum.DestroyBegin)
-        await provisioner.destroy()
-
-        await this.stateWriter.setProvisionOutput(this.instanceName, undefined)
-        await this.stateWriter.setConfigurationOutput(this.instanceName, undefined)
+        await this.doWithRetry(async () => {
+            await this.doDestroy()
+        }, 'Destroy', opts)
         await this.addEvent(InstanceEventEnum.DestroyEnd)
-
         await this.stateWriter.destroyState(this.instanceName)
     }
 
-    async start(startOpts?: StartStopOptions): Promise<void> {
+    async start(opts?: StartOptions): Promise<void> {
+
+        this.logger.debug(`Starting instance ${this.name()}`)
 
         await this.addEvent(InstanceEventEnum.StartBegin)
-
-        // if deleteInstanceServerOnStop is enabled, instance server may have been deleted on last instance stop
-        // so we need to re-provision and re-configure instance using specific Ansible args
-        if(this.args.options?.deleteInstanceServerOnStop?.enabled){
-            await this.doProvision()
-            await this.doConfigure(this.args.options.deleteInstanceServerOnStop.postStartReconfigurationAnsibleAdditionalArgs)
-        }
-
-        // always start instance as provisioning and configuring may not start the server for all providers
-        // and startOptions logic is ported by runner
-        const runner = await this.buildRunner()
-        await runner.start(startOpts)
-
+        await this.doWithRetry(async () => {
+            await this.doStart(opts)
+        }, 'Start', opts)
         await this.addEvent(InstanceEventEnum.StartEnd)
     }
 
-    async stop(opts?: StartStopOptions): Promise<void> {
+    async stop(opts?: StopOptions): Promise<void> {
         
+        this.logger.debug(`Stopping instance ${this.name()}`)
+
         await this.addEvent(InstanceEventEnum.StopBegin)
-
-
-        // always cleanly stop instance to avoid data inconsistency 
-        // as instance server may be deleted on stop and deleting without stopping may cause data inconsistency
-        // and stopOptions logic is ported by runner
-        const runner = await this.buildRunner()
-        
-        // if instance server is deleted on stop, check server status first as it may not exist
-        if(this.args.options?.deleteInstanceServerOnStop){
-            const serverStatus = await runner.serverStatus()
-            if(serverStatus === ServerRunningStatus.Unknown){
-                this.logger.info(`Instance ${this.name()} does not have a server. No need to stop.`)
-                return
-            }
-        }
-
-        await runner.stop(opts)
-
-        // destroy instance server if deleteInstanceServerOnStop is enabled
-        // only stop instance if deleteInstanceServerOnStop is not enabled
-        // no sense in stopping instance if it's deleted right away
-        if(this.args.options?.deleteInstanceServerOnStop?.enabled){
-            await this.doDestroyInstanceServer()
-        }
-
+        await this.doWithRetry(async () => {
+            await this.doStop(opts)
+        }, 'Stop', opts)
         await this.addEvent(InstanceEventEnum.StopEnd)
     }
 
@@ -329,10 +351,11 @@ export class GenericInstanceManager<ST extends InstanceStateV1> implements Insta
      * 
      * @param opts 
      */
-    async restart(opts?: StartStopOptions): Promise<void> {
+    async restart(opts?: RestartOptions): Promise<void> {
         await this.addEvent(InstanceEventEnum.RestartBegin)
-        const runner = await this.buildRunner()
-        await runner.restart(opts)
+        await this.doWithRetry(async () => {
+            await this.doRestart(opts)
+        }, 'Restart', opts)
         await this.addEvent(InstanceEventEnum.RestartEnd)
     }
 
@@ -354,7 +377,7 @@ export class GenericInstanceManager<ST extends InstanceStateV1> implements Insta
      * Destroy instance server using provisioner and update state with provision output.
      * Reset configuration output to undefined.
      */
-    private async doDestroyInstanceServer(): Promise<void> {
+    async doDestroyInstanceServer(): Promise<void> {
         const provisioner = await this.buildProvisioner()
         const newOutputs = await provisioner.destroyInstanceServer()
         await this.stateWriter.setProvisionOutput(this.instanceName, newOutputs)
@@ -365,7 +388,7 @@ export class GenericInstanceManager<ST extends InstanceStateV1> implements Insta
      * Configure instance using Ansible configurator and update state with configuration output.
      * Decorellated from mainn configure() method as it may be run for configuration and as post-start reconfiguration by start().
      */
-    private async doConfigure(additionalAnsibleArgs?: string[]): Promise<void> {
+    async doConfigure(additionalAnsibleArgs?: string[]): Promise<void> {
 
         this.logger.debug(`Do configure instance ${this.name()} with additional Ansible args: ${JSON.stringify(additionalAnsibleArgs)}`)
         const configurator = await this.buildConfigurator({
@@ -382,9 +405,9 @@ export class GenericInstanceManager<ST extends InstanceStateV1> implements Insta
      * Provision instance using provisioner and update state with provision output.
      * Decorellated from main provision() method as it may be run for configuration and as post-start reconfiguration by start().
      */
-    private async doProvision(): Promise<void> {
+    async doProvision(): Promise<void> {
 
-        this.logger.debug(`Provisioning instance ${this.name()}`)
+        this.logger.debug(`Do provision instance ${this.name()}`)
 
         const provisioner = await this.buildProvisioner()
         const newOutputs = await provisioner.provision()
@@ -394,6 +417,81 @@ export class GenericInstanceManager<ST extends InstanceStateV1> implements Insta
         await this.stateWriter.setProvisionOutput(this.instanceName, newOutputs)
     }
 
+    /**
+     * Start instance using runner.
+     */
+    async doStart(opts?: StartOptions): Promise<void> {
+
+        // if deleteInstanceServerOnStop is enabled, instance server may have been deleted on last instance stop
+        // so we need to re-provision and re-configure instance using specific Ansible args
+        if(this.args.options?.deleteInstanceServerOnStop?.enabled){
+            await this.doProvision()
+            await this.doConfigure(this.args.options.deleteInstanceServerOnStop.postStartReconfigurationAnsibleAdditionalArgs)
+        }
+
+        // always start instance as provisioning and configuring may not start the server for all providers
+        // and startOptions logic is ported by runner
+        const runner = await this.buildRunner()
+        await runner.start(opts)
+    }
+
+    /**
+     * Stop instance using runner.
+     */
+    async doStop(opts?: StopOptions): Promise<void> {
+        const runner = await this.buildRunner()
+        
+        // if instance server is deleted on stop, check server status first as it may not exist
+        if(this.args.options?.deleteInstanceServerOnStop){
+            const serverStatus = await runner.serverStatus()
+            if(serverStatus === ServerRunningStatus.Unknown){
+                this.logger.info(`Instance ${this.name()} does not have a server. No need to stop.`)
+                return
+            }
+        }
+
+        // always cleanly stop instance to avoid data inconsistency 
+        // as instance server may be deleted on stop and deleting without stopping may cause data inconsistency
+        // and stopOptions logic is ported by runner
+        await runner.stop(opts)
+
+        // destroy instance server if deleteInstanceServerOnStop is enabled
+        if(this.args.options?.deleteInstanceServerOnStop?.enabled){
+            await this.doDestroyInstanceServer()
+        }
+    }
+
+    /**
+     * Restart instance using runner with retry logic.
+     */
+    async doRestart(opts?: RestartOptions): Promise<void> {
+        const runner = await this.buildRunner()
+        await runner.restart(opts)
+    }
+
+    async doDestroy(opts?: DestroyOptions): Promise<void> {
+        const provisioner = await this.buildProvisioner()
+        await provisioner.destroy()
+        await this.stateWriter.setProvisionOutput(this.instanceName, undefined)
+        await this.stateWriter.setConfigurationOutput(this.instanceName, undefined)
+    }
+
+    /**
+     * Perform an action with retry logic.
+     * @param actionFn Action to perform
+     * @param actionName Name of the action to log
+     * @param retryOptions Number of retries and delay between retries.
+     */
+    private async doWithRetry<R>(actionFn: () => Promise<R>, actionName: string, retryOptions?: { retries?: number, retryDelaySeconds?: number }): Promise<R> {
+        const retrier = new Retrier({
+            actionFn: actionFn,
+            actionName: actionName,
+            retries: retryOptions?.retries ?? DEFAULT_RETRIES,
+            retryDelaySeconds: retryOptions?.retryDelaySeconds ?? DEFAULT_RETRY_DELAY_SECONDS
+        })
+        return retrier.run()
+    }
+    
     private async buildRunner(): Promise<InstanceRunner> {
         const state = await this.stateWriter.getCurrentState(this.instanceName)
         return this.runnerFactory.buildRunner(state)

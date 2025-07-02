@@ -1,6 +1,6 @@
 import * as assert from 'assert';
 import sinon from 'sinon';
-import { createDummyInstance, getUnitTestCoreConfig } from '../utils';
+import { initializeDummyInstanceState, getUnitTestCoreConfig } from '../utils';
 import { ServerRunningStatus } from '../../../src/core/runner';
 import { getLogger } from '../../../src/log/utils';
 import { DummyInstanceRunner } from '../../../src/providers/dummy/runner';
@@ -14,7 +14,7 @@ describe('InstanceRunner', () => {
         it('should return Unknown when doGetInstanceStatus throws an error', async () => {
 
             const instanceName = 'test-instance-instance-status-no-fail-on-server-check-failure'
-            const dummyState = await createDummyInstance(instanceName)
+            const dummyState = await initializeDummyInstanceState(instanceName)
 
             const dummyInfraManager = new DummyInstanceInfraManager({
                 instanceName: instanceName,

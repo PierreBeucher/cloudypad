@@ -232,7 +232,7 @@ export function createDummyState(override?: PartialDeep<DummyInstanceStateV1>): 
     return lodash.merge(dummyState, override);
 }
 
-export async function createDummyInstance(instanceName: string): Promise<DummyInstanceStateV1> {
+export async function initializeDummyInstanceState(instanceName: string): Promise<DummyInstanceStateV1> {
     const dummyState = createDummyState({
         name: instanceName,
     })
