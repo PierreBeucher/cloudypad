@@ -23,6 +23,10 @@ tasks:
     cmds:
     - task: build-npm
     - (cd dist && npm pack)
+  
+  test-compile:
+    cmds:
+    - npx tsc
 
   #
   # Local development
