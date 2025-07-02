@@ -43,8 +43,8 @@ RUN --mount=type=cache,target=/var/cache --mount=type=tmpfs,target=/var/log \
 # Sunshine
 #
 RUN --mount=type=cache,target=/var/cache --mount=type=tmpfs,target=/var/log \
-    curl -L -o /tmp/sunshine.deb https://github.com/LizardByte/Sunshine/releases/download/v2025.122.141614/sunshine-ubuntu-24.04-amd64.deb && \
-    apt install -y /tmp/sunshine.deb && \
+    curl -L -o /tmp/sunshine.deb https://github.com/LizardByte/Sunshine/releases/download/v2025.628.4510/sunshine-ubuntu-24.04-amd64.deb && \
+    apt update && apt install -y /tmp/sunshine.deb && \
     rm /tmp/sunshine.deb
 
 #
