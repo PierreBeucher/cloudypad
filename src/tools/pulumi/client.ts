@@ -1,5 +1,5 @@
 import * as fs from 'fs'
-import { CommandError, InlineProgramArgs, LocalWorkspace, LocalWorkspaceOptions, OutputMap, PulumiFn, Stack } from "@pulumi/pulumi/automation";
+import { CommandError, ConcurrentUpdateError, InlineProgramArgs, LocalWorkspace, LocalWorkspaceOptions, OutputMap, PulumiFn, Stack } from "@pulumi/pulumi/automation";
 import { getLogger, Logger } from '../../log/utils';
 import { CliConfigManager } from '../../cli/config';
 
@@ -8,12 +8,47 @@ export interface InstancePulumiClientArgs {
     projectName: string
     stackName: string
     workspaceOptions?: LocalWorkspaceOptions
+    clientOptions?: {
+
+        /**
+         * Options for retrying actions on locked stacks
+         */
+        retry?: {
+
+            /**
+             * The condition under which the action should be retried. Default: "OnConcurrentUpdateError"
+             * 
+             * "OnConcurrentUpdateError" - Retry only on ConcurrentUpdateError (when a concurrent update is detected as a lockfile is present)
+             */
+            when?: "OnConcurrentUpdateError" | "Always"
+
+            /**
+             * The maximum number of retries. Default: 3
+             */
+            maxRetries?: number
+
+            /**
+             * The delay between retries in milliseconds. Default: 10000
+             */
+            retryDelay?: number
+
+            /**
+             * The behavior of the logger when retrying. Default: "warn"
+             */
+            logBehavior?: "error" | "warn" | "info" | "debug" | "trace" | "silent"
+        }
+    }
 }
 
 const LOG_ON_OUTPUT_COLOR = "always"
 
 /**
- * An abstract Pulumi client for a Cloudy Pad instance
+ * An abstract Pulumi client for a Cloudy Pad instance. 
+ * 
+ * This class is abstract and must be extended to create a concrete Pulumi client for a specific Cloudy Pad instance.
+ *
+ * Implement tries to be lock-safe: when running on a stack that is locked, it will retry up to a max number of times with a delay between retries.
+ * 
  */
 export abstract class InstancePulumiClient<ConfigType extends Object, OutputType> {
 
@@ -23,17 +58,18 @@ export abstract class InstancePulumiClient<ConfigType extends Object, OutputType
     protected readonly logger: Logger
     private stack: Stack | undefined
     private workspaceOptions?: LocalWorkspaceOptions
-
-    constructor(args: InstancePulumiClientArgs){
+    private clientOptions?: InstancePulumiClientArgs["clientOptions"]
+    constructor(args: InstancePulumiClientArgs) {
         this.program = args.program
         this.projectName = args.projectName
         this.stackName = args.stackName
         this.logger = getLogger(`${args.projectName}-${args.stackName}`)
         this.workspaceOptions = args.workspaceOptions
+        this.clientOptions = args.clientOptions
     }
 
-    protected async getStack(): Promise<Stack>{
-        if(this.stack === undefined) {
+    protected async getStack(): Promise<Stack> {
+        if (this.stack === undefined) {
             this.stack = await this.initStack()
         }
         return this.stack
@@ -46,6 +82,10 @@ export abstract class InstancePulumiClient<ConfigType extends Object, OutputType
     }
 
     async refresh(): Promise<OutputType> {
+        return this._doStackActionRetryOnLocked({ action: () => this._doRefresh() })
+    }
+
+    async _doRefresh(): Promise<OutputType> {
         const stack = await this.getStack()
 
         this.logger.debug(`Refreshing stack ${this.stackName}`)
@@ -69,16 +109,16 @@ export abstract class InstancePulumiClient<ConfigType extends Object, OutputType
 
     protected abstract buildTypedOutput(outputs: OutputMap): Promise<OutputType>
 
-    private async initStack(){
+    private async initStack() {
         this.logger.debug(`Initializing stack and config`)
 
-        if(this.stack !== undefined) {
+        if (this.stack !== undefined) {
             throw new Error(`Stack ${this.stackName} for project ${this.projectName} has already been initialized. This is probably an internal bug.`)
         }
 
         // ensure local backend exists for file backend
         const backendUrl = this.workspaceOptions?.envVars?.PULUMI_BACKEND_URL ?? this.workspaceOptions?.projectSettings?.backend?.url
-        if(backendUrl?.startsWith("file://")) {
+        if (backendUrl?.startsWith("file://")) {
             const backendUrlPath = backendUrl.replace("file://", "")
             fs.mkdirSync(backendUrlPath, { recursive: true })
         }
@@ -95,7 +135,11 @@ export abstract class InstancePulumiClient<ConfigType extends Object, OutputType
         return stack
     }
 
-    async up(): Promise<OutputType>{
+    async up(): Promise<OutputType> {
+        return this._doStackActionRetryOnLocked({ action: () => this._doUp() })
+    }
+
+    async _doUp(): Promise<OutputType> {
 
         try {
 
@@ -104,16 +148,10 @@ export abstract class InstancePulumiClient<ConfigType extends Object, OutputType
             this.logger.debug(`Running Pulumi up: ${stack.name}`)
             this.logger.debug(`Config before up: ${JSON.stringify(await stack.getAllConfig())}`)
 
-            // Always cancel in case command was interrupted before
-            // Considering use case it's unlikely a parallel update might occur
-            // But it's likely that user will interrupt leaving stack with a lock which would stuck otherwise
-            // Might become a flag later
-            await stack.cancel()
-
             const upRes = await stack.up({ onOutput: this.stackLogOnOutput, color: LOG_ON_OUTPUT_COLOR, refresh: true })
-            
+
             this.logger.trace(`Up result: ${JSON.stringify(upRes)}`)
-            
+
             const outputs = await stack.outputs()
 
             this.logger.debug(`Up outputs: ${JSON.stringify(outputs)}`)
@@ -121,7 +159,7 @@ export abstract class InstancePulumiClient<ConfigType extends Object, OutputType
             return this.buildTypedOutput(outputs)
 
         } catch (e) {
-            if(e instanceof CommandError) {
+            if (e instanceof CommandError) {
                 try {
                     // CommandError contains the entire Pulumi output stderr/stdout in message and stack field which renders error unusable as-is
                     // Instead transform private commandResult objecft fields which may actually be useful
@@ -136,7 +174,7 @@ export abstract class InstancePulumiClient<ConfigType extends Object, OutputType
                         isCanceled: commandResultJson.err?.isCanceled,
                         killed: commandResultJson.err?.killed
                     }
-                    
+
                     throw new Error(`Pulumi up command failure. See above error logs for details. Error data: ${JSON.stringify(pulumiErrorData)}`)
 
                 } catch (e) {
@@ -149,35 +187,31 @@ export abstract class InstancePulumiClient<ConfigType extends Object, OutputType
         }
     }
 
-    async preview(){
+    async preview() {
+        return this._doStackActionRetryOnLocked({ action: () => this._doPreview() })
+    }
+
+    async _doPreview() {
         const stack = await this.getStack()
 
         this.logger.debug(`Running Pulumi preview: ${stack.name}`)
         this.logger.debug(`Config before up: ${JSON.stringify(await stack.getAllConfig())}`)
 
-        // Always cancel in case command was interrupted before
-        // Considering use case it's unlikely a parallel update might occur
-        // But it's likely that user will interrupt leaving stack with a lock which would stuck otherwise
-        // Might become a flag later
-        await stack.cancel()
-
         const prevRes = await stack.preview({ onOutput: this.stackLogOnOutput, color: LOG_ON_OUTPUT_COLOR, refresh: true })
-        
+
         this.logger.trace(`Preview result: ${JSON.stringify(prevRes)}`)
 
         return prevRes
     }
 
-    async destroy(){
+    async destroy() {
+        return this._doStackActionRetryOnLocked({ action: () => this._doDestroy() })
+    }
+
+    async _doDestroy() {
         this.logger.debug(`Destroying stack`)
         const stack = await this.getStack()
 
-        // Always cancel in case command was interrupted before
-        // Considering use case it's unlikely a parallel update might occur
-        // But it's likely that user will interrupt leaving stack with a lock which would stuck otherwise
-        // Might become a flag later
-        await stack.cancel()
-        
         this.logger.debug(`Refreshing stack ${stack.name} before destroy result`)
 
         const refreshRes = await stack.refresh({ onOutput: this.stackLogOnOutput, color: LOG_ON_OUTPUT_COLOR })
@@ -185,17 +219,62 @@ export abstract class InstancePulumiClient<ConfigType extends Object, OutputType
 
         const destroyRes = await stack.destroy({ onOutput: this.stackLogOnOutput, color: LOG_ON_OUTPUT_COLOR, remove: true })
         this.logger.trace(`Destroy result: ${JSON.stringify(destroyRes)}`)
-   }
+    }
 
-   /**
-    * Log Pulumi output to console using stdout directly and tweaking a bit the output for nicer display
-    * @param msg raw pulumi output on stack action
-    */
-   private async stackLogOnOutput(_msg: string){
+    /**
+     * Log Pulumi output to console using stdout directly and tweaking a bit the output for nicer display
+     * @param msg raw pulumi output on stack action
+     */
+    private async stackLogOnOutput(_msg: string) {
 
-    let msg = _msg
-    if(msg.trim() === ".") msg = "." // if msg is a dot with newlines or spaces, print it as a dot without newline
+        let msg = _msg
+        if (msg.trim() === ".") msg = "." // if msg is a dot with newlines or spaces, print it as a dot without newline
 
-    process.stdout.write(msg)
-   }
+        process.stdout.write(msg)
+    }
+
+    /**
+     * Execute a Pulumi action with retry logic. Retry logic is only applied to ConcurrentUpdateError (when a concurrent update is detected a a lockfile is present)
+     * @param args.action - The action to execute
+     * @param args.maxRetries - The maximum number of retries, 0 means no retries. (default: 3)
+     * @param args.retryDelay - The delay between retries in milliseconds (default: 10000)
+     * @returns The result of the action    
+     */
+    async _doStackActionRetryOnLocked<O>(args: { action: () => Promise<O>, maxRetries?: number, retryDelay?: number }): Promise<O> {
+        const maxRetries = args.maxRetries ?? this.clientOptions?.retry?.maxRetries ?? 3
+        const retryDelay = args.retryDelay ?? this.clientOptions?.retry?.retryDelay ?? 10000 // 10 seconds
+
+        try {
+            // await is important to get error if any
+            return await args.action()
+        } catch (e) {
+            if (e instanceof ConcurrentUpdateError && maxRetries > 0) {
+                const logBehavior = this.clientOptions?.retry?.logBehavior ?? "warn"
+                const logMsg = `Concurrent update error, retrying in ${retryDelay}ms... Original error:`
+                switch (logBehavior) {
+                    case "error":
+                        this.logger.error(logMsg, e)
+                        break
+                    case "warn":
+                        this.logger.warn(logMsg, e)
+                        break
+                    case "info":
+                        this.logger.info(logMsg, e)
+                        break
+                    case "debug":
+                        this.logger.debug(logMsg, e)
+                        break
+                    case "trace":
+                        this.logger.trace(logMsg, e)
+                        break
+                    case "silent":
+                        break
+                }
+                await new Promise(resolve => setTimeout(resolve, retryDelay))
+                return this._doStackActionRetryOnLocked({ action: args.action, maxRetries: maxRetries - 1, retryDelay })
+            }
+
+            throw new Error(`Pulumi action failure. `, { cause: e })
+        }
+    }
 }

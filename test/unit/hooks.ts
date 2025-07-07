@@ -28,11 +28,6 @@ export const mochaHooks = {
         // Stub side effects
         //
 
-        // Common and abstract classes
-        sinon.stub(InstancePulumiClient.prototype, 'preview').resolves()
-        sinon.stub(InstancePulumiClient.prototype, 'destroy').resolves()
-        sinon.stub(InstancePulumiClient.prototype, 'setConfig').resolves()
-
         sinon.stub(AbstractInstanceRunner.prototype, 'pairSendPin').resolves()
         sinon.stub(AbstractInstanceRunner.prototype, 'pairInteractive').resolves()
 
