@@ -140,51 +140,20 @@ export abstract class InstancePulumiClient<ConfigType extends Object, OutputType
     }
 
     async _doUp(): Promise<OutputType> {
+        const stack = await this.getStack()
 
-        try {
+        this.logger.debug(`Running Pulumi up: ${stack.name}`)
+        this.logger.debug(`Config before up: ${JSON.stringify(await stack.getAllConfig())}`)
 
-            const stack = await this.getStack()
+        const upRes = await stack.up({ onOutput: this.stackLogOnOutput, color: LOG_ON_OUTPUT_COLOR, refresh: true })
 
-            this.logger.debug(`Running Pulumi up: ${stack.name}`)
-            this.logger.debug(`Config before up: ${JSON.stringify(await stack.getAllConfig())}`)
+        this.logger.trace(`Up result: ${JSON.stringify(upRes)}`)
 
-            const upRes = await stack.up({ onOutput: this.stackLogOnOutput, color: LOG_ON_OUTPUT_COLOR, refresh: true })
+        const outputs = await stack.outputs()
 
-            this.logger.trace(`Up result: ${JSON.stringify(upRes)}`)
+        this.logger.debug(`Up outputs: ${JSON.stringify(outputs)}`)
 
-            const outputs = await stack.outputs()
-
-            this.logger.debug(`Up outputs: ${JSON.stringify(outputs)}`)
-
-            return this.buildTypedOutput(outputs)
-
-        } catch (e) {
-            if (e instanceof CommandError) {
-                try {
-                    // CommandError contains the entire Pulumi output stderr/stdout in message and stack field which renders error unusable as-is
-                    // Instead transform private commandResult objecft fields which may actually be useful
-                    const commandResultJson = JSON.parse(JSON.stringify(e))
-
-                    const pulumiErrorData = {
-                        code: commandResultJson.code,
-                        command: commandResultJson.err?.command,
-                        exitCode: commandResultJson.err?.exitCode,
-                        failed: commandResultJson.err?.failed,
-                        timedOut: commandResultJson.err?.timedOut,
-                        isCanceled: commandResultJson.err?.isCanceled,
-                        killed: commandResultJson.err?.killed
-                    }
-
-                    throw new Error(`Pulumi up command failure. See above error logs for details. Error data: ${JSON.stringify(pulumiErrorData)}`)
-
-                } catch (e) {
-                    // Throw anyway if somehow we couldn't parse original PulumiError error
-                    throw new Error(`Pulumi up command failure. See above error logs for details.`)
-                }
-            } else {
-                throw new Error(`Pulumi up failure`, { cause: e })
-            }
-        }
+        return this.buildTypedOutput(outputs)
     }
 
     async preview() {
