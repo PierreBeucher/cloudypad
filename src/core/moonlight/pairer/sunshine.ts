@@ -123,7 +123,8 @@ export class SunshineMoonlightPairer extends AbstractMoonlightPairer implements 
             
             this.logger.debug(`Sunshine /api/pin POST JSON output: ${JSON.stringify(json)}`)
 
-            return json.status == "true"    
+            // Sunshine server may respond with true (boolean) or "true" (string)
+            return json.status == "true" || json.status == true
         } catch (error) {
             this.logger.warn(`Failed to parse Sunshine API JSON response from raw output ${JSON.stringify(result.stdout)}. If you think this is a bug please report it.`, error);
             return false
