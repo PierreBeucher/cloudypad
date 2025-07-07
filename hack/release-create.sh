@@ -108,7 +108,7 @@ merge_release_branch_in_master() {
 
   echo "Waiting for release tag CI jobs (Docker image build) to finish on tag $release_tag..."
   
-  timeout=1200  # Set timeout to 20 minutes (1200 seconds)
+  timeout=1800  # Set timeout to 30 minutes (1800 seconds)
   start_time=$(date +%s)
   release_jobs_success=false
 
