@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.32.0](https://github.com/PierreBeucher/cloudypad/compare/v0.31.0...v0.32.0) (2025-07-07)
+
+
+### Features
+
+* bump Sunshine version ([26ccd16](https://github.com/PierreBeucher/cloudypad/commit/26ccd1619482893d5c8dfbd1c01e8f46ab9417e4))
+* disable shader pre-caching by default ([c78e8a5](https://github.com/PierreBeucher/cloudypad/commit/c78e8a5792677da23ad50396cb828ad87da10b51))
+* keep user desktop kustomization (eg. keybvoard layout) on update and container deletion ([14aa989](https://github.com/PierreBeucher/cloudypad/commit/14aa989f52cd02a2498565f2716aefe58fc335a7))
+* Pulumi retry on a locked stack to avoid unecessary errors on concurrent updates ([1ce8d9f](https://github.com/PierreBeucher/cloudypad/commit/1ce8d9fbe831fc33431aad8a699513a9f305f37a))
+* retry pattern for main actions (provision, configure, start/stop/restart) ([9bd3940](https://github.com/PierreBeucher/cloudypad/commit/9bd3940be9c7adb2e1949294e7e5d1d21ff2e731))
+* Steam Big Picture support on Sunshine ([0bc8df5](https://github.com/PierreBeucher/cloudypad/commit/0bc8df51b81cb3a8d92f0ba48860c90df4b0713b))
+
 ## [0.31.0](https://github.com/PierreBeucher/cloudypad/compare/v0.30.1...v0.31.0) (2025-06-22)
 
 
