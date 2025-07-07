@@ -120,16 +120,17 @@ Fast Sunshine container build and import:
 task dev-docker-sunshine-to-vm
 ```
 
-Ansible test:
+Ansible configuration:
 
 ```sh
-ansible-playbook -i ansible/inventories/dev-vagrant.yml ansible/sunshine.yml -t sunshine
+task dev-ansible-config
 ```
 
 Connect to Sunshine web UI (Sunshine is forwarded to local machine):
 
 ```sh
-http://localhost:47990
+https://localhost:47990
+# Or directly Vagrant machine IP: https://192.168.56.43:47990/
 ```
 
 ### Local Pulumi stack manipulation
