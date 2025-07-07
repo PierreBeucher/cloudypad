@@ -1,24 +1,42 @@
 {
-  "env": {
-      "PATH": "$(PATH):$(HOME)\/.local\/bin"
-  },
-  "apps": [
-      {
-          "name": "Steam",
-          "image-path": "steam.png",
-          "prep-cmd": [
-              {
-                  "do": "sh -c \"sunshine-app-startup.sh > \/tmp\/sunshine-session-start.log 2>&1\"",
-                  "undo": ""
-              }
-          ],
-          "detached": [
-              ""
-          ],
-          "exclude-global-prep-cmd": "false",
-          "auto-detach": "true",
-          "wait-all": "true",
-          "exit-timeout": "5"
-      }
-  ]
+    "env": {
+        "PATH": "$(PATH):$(HOME)\/.local\/bin"
+    },
+    "apps": [
+        {
+            "name": "Steam",
+            "image-path": "steam.png",
+            "prep-cmd": [
+                {
+                    "do": "sh -c \"sunshine-app-startup.sh > \/tmp\/sunshine-session-start.log 2>&1\"",
+                    "undo": ""
+                }
+            ],
+            "detached": [
+                ""
+            ],
+            "exclude-global-prep-cmd": "false",
+            "auto-detach": "true",
+            "wait-all": "true",
+            "exit-timeout": "5"
+        },
+        {
+            "name": "Steam (Big Picture)",
+            "image-path": "$(XDG_CONFIG_HOME)/sunshine/assets/steam-big-picture.png",
+            "prep-cmd": [
+                {
+                    "do": "sh -c \"sunshine-app-startup.sh > \/tmp\/sunshine-session-start.log 2>&1\"",
+                    "undo": "steam steam:\/\/close\/bigpicture"
+                }
+            ],
+            "detached": [
+                "steam steam:\/\/open\/bigpicture"
+            ],
+            "exclude-global-prep-cmd": "false",
+            "auto-detach": "true",
+            "wait-all": "true",
+            "exit-timeout": "5",
+            "cmd": ""
+        }
+    ]
 }
