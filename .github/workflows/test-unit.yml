@@ -74,6 +74,10 @@ jobs:
       - name: Smoke test container image
         run: nix develop -c task test-container-smoke-test
 
+      - name: Push image as dev (master branch only)
+        if: github.ref == 'refs/heads/master'
+        run: nix develop -c task build-core-container-push-current-as-dev
+
   build-sunshine:
     name: Build Sunshine container image
     runs-on: ubuntu-24.04
@@ -103,6 +107,10 @@ jobs:
 
       - name: Build container image
         run: nix develop -c task build-sunshine-container-ci
+
+      - name: Push image as dev (master branch only)
+        if: github.ref == 'refs/heads/master'
+        run: nix develop -c task build-sunshine-container-push-current-as-dev
 
   test-install:
     name: Test install/run Ubuntu

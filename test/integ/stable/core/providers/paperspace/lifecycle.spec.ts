@@ -95,8 +95,8 @@ describe('Paperspace lifecycle', () => {
     })
 
     it('should deploy instance', async () => {
-        // const instanceManager = await paperspaceProviderClient.getInstanceManager(instanceName);
-        // await instanceManager.deploy();
+        const instanceManager = await paperspaceProviderClient.getInstanceManager(instanceName);
+        await instanceManager.deploy();
 
         const paperspaceClient = await getPaperspaceClient();
         const state = await getCurrentTestState();

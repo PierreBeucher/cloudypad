@@ -244,6 +244,16 @@ tasks:
       -t $CLOUDYPAD_BUILD_CORE_IMAGE_REGISTRY:$CLOUDYPAD_BUILD_CORE_IMAGE_TAG
       --load
 
+  # Push currently built core container image as "dev" tag
+  build-core-container-push-current-as-dev:
+    cmds:
+    - >-
+      docker tag 
+      $CLOUDYPAD_BUILD_CORE_IMAGE_REGISTRY:$CLOUDYPAD_BUILD_CORE_IMAGE_TAG 
+      $CLOUDYPAD_BUILD_CORE_IMAGE_REGISTRY:dev
+    - docker push $CLOUDYPAD_BUILD_CORE_IMAGE_REGISTRY:dev
+
+
   # Build and push core container image for release with required labels and target architectures
   # Image labels are important for some processing (eg. cleanup), don't remove them
   build-core-container-release:
@@ -287,6 +297,15 @@ tasks:
       --cache-to type=registry,ref=$CLOUDYPAD_BUILD_SUNSHINE_IMAGE_REGISTRY:$CLOUDYPAD_BUILD_SUNSHINE_IMAGE_TAG-cache
       -t $CLOUDYPAD_BUILD_SUNSHINE_IMAGE_REGISTRY:$CLOUDYPAD_BUILD_SUNSHINE_IMAGE_TAG
       --load
+  
+  # Push currently built Sunshine image as "dev" tag
+  build-sunshine-container-push-current-as-dev:
+    cmds:
+    - >-
+      docker tag 
+      $CLOUDYPAD_BUILD_SUNSHINE_IMAGE_REGISTRY:$CLOUDYPAD_BUILD_SUNSHINE_IMAGE_TAG 
+      $CLOUDYPAD_BUILD_SUNSHINE_IMAGE_REGISTRY:dev
+    - docker push $CLOUDYPAD_BUILD_SUNSHINE_IMAGE_REGISTRY:dev
 
   build-sunshine-container-release:
     cmds:
