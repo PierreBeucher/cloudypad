@@ -65,12 +65,14 @@ export class SunshineMoonlightPairer extends AbstractMoonlightPairer implements 
     async pairSendPin(pin: string, retries=3, retryDelayMs=2000): Promise<boolean> {
         const sshClient = this.buildSshClient()
         let pinResult = false
+        let lastError: unknown | undefined = undefined
         for (let attempt = 0; attempt < retries; attempt++) {
             try {
                 await sshClient.connect()
                 pinResult = await this.tryPin(sshClient, pin)
                 if (pinResult) break;
             } catch (error) {
+                lastError = error
                 this.logger.warn(`Attempt ${attempt + 1} failed to send pin to Sunshine API. Retrying...`, { cause: error })
             } finally {
                 sshClient.dispose()
@@ -81,7 +83,7 @@ export class SunshineMoonlightPairer extends AbstractMoonlightPairer implements 
         }
 
         if (!pinResult) {
-            throw new Error(`Failed to send pin to Sunshine API after ${retries} attempts.`)
+            throw new Error(`Failed to send pin to Sunshine API after ${retries} attempts. Last error:`, { cause: lastError })
         }
 
         return pinResult
@@ -102,6 +104,7 @@ export class SunshineMoonlightPairer extends AbstractMoonlightPairer implements 
                 'POST',
                 '-k',
                 'https://localhost:47990/api/pin',
+                '-H', 'Content-Type: application/json',
                 '-d',
                 JSON.stringify({ pin: pin, name: this.args.instanceName })
             ])
