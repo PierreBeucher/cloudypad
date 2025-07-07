@@ -93,7 +93,14 @@ create_release_pr_and_merge_in_release_branch() {
     --repo-url https://github.com/PierreBeucher/cloudypad \
     --token=${GITHUB_TOKEN} \
     --target-branch $release_branch \
-    --draft
+    --prerelease
+
+  # Despite using --prerelease, release-please github-release will publish release as latest
+  # Ensure release is prerelease with subsequent command
+  current_release=$(gh release list -L 1 | cut -d$'\t' -f1)
+  echo "Found release: $current_release - marking it as prerelease"
+  gh release edit "${current_release}" --prerelease
+
 }
 
 merge_release_branch_in_master() {
@@ -160,6 +167,11 @@ merge_release_branch_in_master() {
 
     gh pr merge $release_branch --merge
 
+    # Mark release as latest
+    current_release=$(gh release list -L 1 | cut -d$'\t' -f1)
+    echo "Found release: $current_release - marking it as latest"
+    gh release edit "${current_release}" --latest --prerelease=false
+
     echo "Checking out and pulling master after release..."
 
     git checkout master && git pull
@@ -182,8 +194,8 @@ else
     release_version=$1
 fi
 
-update_versions_in_package_files $release_version
-create_push_release_branch $release_version
+# update_versions_in_package_files $release_version
+# create_push_release_branch $release_version
 
 create_release_pr_and_merge_in_release_branch $release_version
 merge_release_branch_in_master $release_version
