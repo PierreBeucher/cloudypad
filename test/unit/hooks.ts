@@ -18,6 +18,7 @@ import { ScalewayClient } from '../../src/providers/scaleway/sdk-client';
 import { CliConfigManager } from '../../src/cli/config';
 import { ConfigLoader } from '../../src/core/config/default';
 import { SshKeyLoader } from '../../src/tools/ssh';
+import { Retrier } from '../../src/tools/retrier';
 
 
 export const mochaHooks = {
@@ -30,6 +31,11 @@ export const mochaHooks = {
 
         sinon.stub(AbstractInstanceRunner.prototype, 'pairSendPin').resolves()
         sinon.stub(AbstractInstanceRunner.prototype, 'pairInteractive').resolves()
+
+        // force default retry log behavior to debug for unit tests
+        sinon.stub(Retrier, 'getDefaultRetryLogBehavior').callsFake(() => {
+            return "debug"
+        })
 
         sinon.stub(AbstractInstanceProvisioner.prototype, 'verifyConfig').resolves()
         // don't sub provision() and destroy() as they have logic we want to test

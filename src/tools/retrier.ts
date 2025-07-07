@@ -47,7 +47,7 @@ export class Retrier<R> {
                 
                 if (attempt < retries) {
                     const logMessage = `${this.args.actionName} attempt ${attempt + 1}/${retries + 1} failed, retrying in ${retryDelaySeconds} seconds.`
-                    switch (this.args.onRetryLogBehavior ?? "warning") {
+                    switch (this.args.onRetryLogBehavior ?? Retrier.getDefaultRetryLogBehavior()) {
                         case "error":
                             this.logger.error(logMessage, lastError)
                             break
@@ -70,5 +70,14 @@ export class Retrier<R> {
         }
 
         throw new Error(`${this.args.actionName} failed after ${retries + 1} attempts.`, { cause: lastError })
+    }
+
+    /**
+     * Default log behavior on error and retry. Set as static function to be mocked in tests.
+     * 
+     * @returns Default log behavior
+     */
+    static getDefaultRetryLogBehavior(): "error" | "warning" | "info" | "debug" | "silent" {
+        return "warning"
     }
 }
