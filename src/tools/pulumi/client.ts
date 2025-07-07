@@ -1,7 +1,10 @@
 import * as fs from 'fs'
-import { CommandError, ConcurrentUpdateError, InlineProgramArgs, LocalWorkspace, LocalWorkspaceOptions, OutputMap, PulumiFn, Stack } from "@pulumi/pulumi/automation";
+import { ConcurrentUpdateError, InlineProgramArgs, LocalWorkspace, LocalWorkspaceOptions, OutputMap, PulumiFn, Stack } from "@pulumi/pulumi/automation";
 import { getLogger, Logger } from '../../log/utils';
-import { CliConfigManager } from '../../cli/config';
+
+export const DEFAULT_RETRY_DELAY = 10000
+export const DEFAULT_RETRY_MAX_RETRIES = 12
+export const DEFAULT_RETRY_LOG_BEHAVIOR = "warn"
 
 export interface InstancePulumiClientArgs {
     program: PulumiFn
@@ -210,15 +213,15 @@ export abstract class InstancePulumiClient<ConfigType extends Object, OutputType
      * @returns The result of the action    
      */
     async _doStackActionRetryOnLocked<O>(args: { action: () => Promise<O>, maxRetries?: number, retryDelay?: number }): Promise<O> {
-        const maxRetries = args.maxRetries ?? this.clientOptions?.retry?.maxRetries ?? 3
-        const retryDelay = args.retryDelay ?? this.clientOptions?.retry?.retryDelay ?? 10000 // 10 seconds
+        const maxRetries = args.maxRetries ?? this.clientOptions?.retry?.maxRetries ?? DEFAULT_RETRY_MAX_RETRIES
+        const retryDelay = args.retryDelay ?? this.clientOptions?.retry?.retryDelay ?? DEFAULT_RETRY_DELAY
 
         try {
             // await is important to get error if any
             return await args.action()
         } catch (e) {
             if (e instanceof ConcurrentUpdateError && maxRetries > 0) {
-                const logBehavior = this.clientOptions?.retry?.logBehavior ?? "warn"
+                const logBehavior = this.clientOptions?.retry?.logBehavior ?? DEFAULT_RETRY_LOG_BEHAVIOR
                 const logMsg = `Concurrent update error, retrying in ${retryDelay}ms... Original error:`
                 switch (logBehavior) {
                     case "error":
