@@ -2,9 +2,9 @@
     "version": "2.0.0",
     "tasks": [
         {
-            "label": "test-integ-full-lifecycle-aws",
+            "label": "test-integ-provider-aws",
             "type": "shell",
-            "command": "nix develop -c -- task test-integ-full-lifecycle-aws",
+            "command": "nix develop -c -- task test-integ-provider-aws",
             "group": "none",
             "presentation": {
                 "reveal": "always",
@@ -12,9 +12,9 @@
             }
         },
         {
-            "label": "test-integ-full-lifecycle-azure",
+            "label": "test-integ-provider-azure",
             "type": "shell",
-            "command": "nix develop -c -- task test-integ-full-lifecycle-azure",
+            "command": "nix develop -c -- task test-integ-provider-azure",
             "group": "none",
             "presentation": {
                 "reveal": "always",
@@ -22,9 +22,9 @@
             }
         },
         {
-            "label": "test-integ-full-lifecycle-gcp",
+            "label": "test-integ-provider-gcp",
             "type": "shell",
-            "command": "nix develop -c -- task test-integ-full-lifecycle-gcp",
+            "command": "nix develop -c -- task test-integ-provider-gcp",
             "group": "none",
             "presentation": {
                 "reveal": "always",
@@ -32,9 +32,9 @@
             }
         },
         {
-            "label": "test-integ-full-lifecycle-paperspace",
+            "label": "test-integ-provider-paperspace",
             "type": "shell",
-            "command": "nix develop -c -- task test-integ-full-lifecycle-paperspace",
+            "command": "nix develop -c -- task test-integ-provider-paperspace",
             "group": "none",
             "presentation": {
                 "reveal": "always",
@@ -42,9 +42,9 @@
             }
         },
         {
-            "label": "test-integ-full-lifecycle-scaleway",
+            "label": "test-integ-provider-scaleway",
             "type": "shell",
-            "command": "nix develop -c -- task test-integ-full-lifecycle-scaleway",
+            "command": "nix develop -c -- task test-integ-provider-scaleway",
             "group": "none",
             "presentation": {
                 "reveal": "always",
@@ -52,13 +52,13 @@
             }
         },
         {
-            "label": "test-integ-full-lifecycle-all",
+            "label": "test-integ-provider-all",
             "dependsOn": [
-                "test-integ-full-lifecycle-aws",
-                "test-integ-full-lifecycle-azure",
-                "test-integ-full-lifecycle-gcp",
-                "test-integ-full-lifecycle-paperspace",
-                "test-integ-full-lifecycle-scaleway"
+                "test-integ-provider-aws",
+                "test-integ-provider-azure",
+                "test-integ-provider-gcp",
+                "test-integ-provider-paperspace",
+                "test-integ-provider-scaleway"
             ],
             "group": "none",
             "presentation": {
