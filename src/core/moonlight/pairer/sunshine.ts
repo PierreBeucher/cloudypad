@@ -65,12 +65,14 @@ export class SunshineMoonlightPairer extends AbstractMoonlightPairer implements 
     async pairSendPin(pin: string, retries=3, retryDelayMs=2000): Promise<boolean> {
         const sshClient = this.buildSshClient()
         let pinResult = false
+        let lastError: unknown | undefined = undefined
         for (let attempt = 0; attempt < retries; attempt++) {
             try {
                 await sshClient.connect()
                 pinResult = await this.tryPin(sshClient, pin)
                 if (pinResult) break;
             } catch (error) {
+                lastError = error
                 this.logger.warn(`Attempt ${attempt + 1} failed to send pin to Sunshine API. Retrying...`, { cause: error })
             } finally {
                 sshClient.dispose()
@@ -81,7 +83,7 @@ export class SunshineMoonlightPairer extends AbstractMoonlightPairer implements 
         }
 
         if (!pinResult) {
-            throw new Error(`Failed to send pin to Sunshine API after ${retries} attempts.`)
+            throw new Error(`Failed to send pin to Sunshine API after ${retries} attempts. Last error:`, { cause: lastError })
         }
 
         return pinResult
@@ -102,6 +104,7 @@ export class SunshineMoonlightPairer extends AbstractMoonlightPairer implements 
                 'POST',
                 '-k',
                 'https://localhost:47990/api/pin',
+                '-H', 'Content-Type: application/json',
                 '-d',
                 JSON.stringify({ pin: pin, name: this.args.instanceName })
             ])
@@ -120,7 +123,8 @@ export class SunshineMoonlightPairer extends AbstractMoonlightPairer implements 
             
             this.logger.debug(`Sunshine /api/pin POST JSON output: ${JSON.stringify(json)}`)
 
-            return json.status == "true"    
+            // Sunshine server may respond with true (boolean) or "true" (string)
+            return json.status == "true" || json.status == true
         } catch (error) {
             this.logger.warn(`Failed to parse Sunshine API JSON response from raw output ${JSON.stringify(result.stdout)}. If you think this is a bug please report it.`, error);
             return false
