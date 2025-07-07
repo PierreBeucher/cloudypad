@@ -35,11 +35,6 @@ describe('InstancePulumiClient', () => {
         })
     }
 
-    before(() => {
-
-        
-    })
-
     describe('Pulumi client retry logic', () => {
         it('should retry on ConcurrentUpdateError and succeed on third attempt', async () => {
             const concurrentError = new ConcurrentUpdateError('Mock concurrent update error for testing')
