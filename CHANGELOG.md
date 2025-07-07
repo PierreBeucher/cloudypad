@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.32.1](https://github.com/PierreBeucher/cloudypad/compare/v0.32.0...v0.32.1) (2025-07-07)
+
+
+### Bug Fixes
+
+* Sunshine API content type header ([8bac93f](https://github.com/PierreBeucher/cloudypad/commit/8bac93f0d3ca8bfc00398f6377b3f5e6b9949f73))
+* Sunshine pair API return value changed from to string or boolean ([9fa6112](https://github.com/PierreBeucher/cloudypad/commit/9fa6112ef035827e9f70edbe1e4ebe7b75611014))
+
 ## [0.32.0](https://github.com/PierreBeucher/cloudypad/compare/v0.31.0...v0.32.0) (2025-07-07)
 
 
