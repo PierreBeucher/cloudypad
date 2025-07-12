@@ -41,7 +41,7 @@ describe('Instance initializer', () => {
         name: TEST_INPUT.instanceName,
         yes: true,
         overwriteExisting: true,
-        privateSshKey: TEST_INPUT.provision.ssh?.privateKeyPath as string,
+        sshPrivateKey: TEST_INPUT.provision.ssh?.privateKeyPath as string,
         ansibleAdditionalArgs: "",
         configurationDelaySeconds: 0,
         streamingServer: STREAMING_SERVER_SUNSHINE,

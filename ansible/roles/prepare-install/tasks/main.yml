@@ -5,3 +5,7 @@
 - name: import Scaleway tasks
   import_tasks: scaleway.yml
   when: cloudypad_provider is defined and cloudypad_provider == "scaleway"
+
+- name: import Local tasks
+  import_tasks: ssh.yml
+  when: cloudypad_provider is defined and cloudypad_provider == "ssh"

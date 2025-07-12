@@ -6,14 +6,15 @@ import { CommonProvisionInputV1, CommonProvisionOutputV1, InstanceStateV1 } from
 import * as tmp from "tmp"
 import { fromBase64 } from "./base64";
 
+/**
+ * SSH client arguments. Either privateKeyPath or password must be provided, not both.
+ */
 export interface SSHClientArgs {
     clientName: string
     host: string,
     port?: number,
     user: string,
-    // For key-based authentication
     privateKeyPath?: string,
-    // For password-based authentication
     password?: string
 }
 
@@ -42,76 +43,6 @@ export class SSHFileTransferError extends Error{
 export interface SSHCommandOpts {
     logPrefix?: string, 
     ignoreNonZeroExitCode?: boolean
-}
-
-/**
- * Build SSH client for a given instance state.
- * @param args - Instance arguments
- * @returns SSH client
- */
-export function buildClientForInstance(args: {
-    instanceName: string,
-    provisionInput: CommonProvisionInputV1,
-    provisionOutput: CommonProvisionOutputV1
-}): SSHClient {
-    const sshArgs = buildSshClientArgsForInstance(args)
-    return new SSHClient(sshArgs)
-}
-
-/**
- * Build SSH client arguments for given instance. Args can be used to instantiate SSHClient.
- * @param args - Instance arguments
- * @returns SSH client arguments
- */
-export function buildSshClientArgsForInstance(args: {
-    instanceName: string, 
-    provisionInput: CommonProvisionInputV1, 
-    provisionOutput: CommonProvisionOutputV1
-}): SSHClientArgs {
-    // Check if we are using auth with password authentication
-    if (args.provisionInput.auth && 
-        typeof args.provisionInput.auth === 'object' && 
-        'type' in args.provisionInput.auth && 
-        args.provisionInput.auth.type === "password" &&
-        'ssh' in args.provisionInput.auth &&
-        typeof args.provisionInput.auth.ssh === 'object' &&
-        args.provisionInput.auth.ssh !== null &&
-        'user' in args.provisionInput.auth.ssh &&
-        'password' in args.provisionInput.auth.ssh &&
-        typeof args.provisionInput.auth.ssh.user === 'string' &&
-        typeof args.provisionInput.auth.ssh.password === 'string') {
-        // Password authentication takes precedence
-        return {
-            clientName: args.instanceName,
-            host: args.provisionOutput.host,
-            port: 22,
-            user: args.provisionInput.auth.ssh.user,
-            password: args.provisionInput.auth.ssh.password
-        }
-    } else if (args.provisionInput.ssh) {
-        // Check if we have valid SSH key info
-        const hasValidKeyPath = args.provisionInput.ssh.privateKeyPath && 
-                                args.provisionInput.ssh.privateKeyPath.length > 0;
-        
-        const hasValidKeyContent = args.provisionInput.ssh.privateKeyContentBase64 && 
-                                   args.provisionInput.ssh.privateKeyContentBase64.length > 0;
-        
-        if (hasValidKeyPath || hasValidKeyContent) {
-            // Standard authentication with SSH key
-            const sshKeyPath = new SshKeyLoader().getSshPrivateKeyPath(args.provisionInput.ssh);
-            return {
-                clientName: args.instanceName,
-                host: args.provisionOutput.host,
-                port: 22,
-                user: args.provisionInput.ssh.user,
-                privateKeyPath: sshKeyPath
-            }
-        } else {
-            throw new Error("No valid SSH key found. Either privateKeyPath or privateKeyContentBase64 must be provided for SSH key authentication");
-        }
-    } else {
-        throw new Error("No valid authentication method found in provision input. Ensure either auth.ssh (password auth) or ssh (key auth) is properly configured");
-    }
 }
 
 /**
@@ -182,11 +113,11 @@ export class SSHClient {
             },
             recursive: true,
             concurrency: 10,
-            validate: (itemPath: string) => {
+            validate: (itemPath) => {
                 this.logger.trace(`Transferring ${itemPath}`)
                 return true;
             },
-            tick:(localPath: string, remotePath: string, error: any) => {
+            tick:(localPath, remotePath, error) => {
                 if (error) {
                     this.logger.error(`Failed to copy ${localPath} to ${remotePath}: ${JSON.stringify(error)}`)
                     fail.push(localPath)
@@ -210,10 +141,10 @@ export class SSHClient {
         const command = exec[0]
         const sshResp = await this.client.exec(command, exec.slice(1), {
             stream: "both",
-            onStdout: (chunk: Buffer) => {
+            onStdout: (chunk) => {
                 this.logger.trace(`(stdout) ${logPrefix}: ${chunk.toString('utf8').trim()}`)
             },
-            onStderr: (chunk: Buffer) => {
+            onStderr: (chunk) => {
                 this.logger.trace(`(stderr) ${logPrefix}: ${chunk.toString('utf8').trim()}`)
             }
         })
@@ -241,22 +172,16 @@ export class SSHClient {
         // which make program hangs
         if(this.client.isConnected()) return this.client
 
-        const connectConfig: any = {
+        this.logger.debug(`Connecting to '${this.args.user}@${this.args.host}' port '${this.args.port}'` + 
+            `(ssh key: '${this.args.privateKeyPath}', password: ${this.args.password ? 'yes' : 'no'})`)
+
+        return this.client.connect({
             host: this.args.host,
             port: this.args.port,
             username: this.args.user,
-        };
-
-        // Use either password or key-based authentication
-        if (this.args.password) {
-            connectConfig.password = this.args.password;
-        } else if (this.args.privateKeyPath) {
-            connectConfig.privateKeyPath = this.args.privateKeyPath;
-        } else {
-            throw new Error("No authentication method available. Either password or privateKeyPath must be specified.");
-        }
-
-        return this.client.connect(connectConfig);
+            privateKeyPath: this.args.privateKeyPath,
+            password: this.args.password
+        });
     }
     
     async connect() {
@@ -275,57 +200,64 @@ export class SSHClient {
     
 }
 
+export interface SshAuth {
+    privateKeyPath?: string,
+    password?: string
+}
+
 /**
  * Load SSH keys from instance inputs
  */
 export class SshKeyLoader {
 
     /**
-     * Get SSH private key path from instance inputs. Return key path from privateKeyPath or 
-     * generate a temporary secure key file from privateKeyContentBase64.
+     * Get an SSH private key or password from given ssh args. Throws an error if the given args
+     * cannot produce either an ssh key path or a password.
+     * If both SSH key path and base64 content are provided, SSH key path is preferred.
      * @param ssh - SSH access configuration
-     * @returns SSH private key path
+     * @returns SSH private key path or password. Guaranteed to have at least one of key or password. An exception is thrown otherwise.
      */
-    getSshPrivateKeyPath(ssh: CommonProvisionInputV1["ssh"]){
-        if (!ssh) {
-            throw new Error("SSH configuration is undefined");
-        }
+    getSshAuth(ssh: CommonProvisionInputV1["ssh"]): SshAuth {
+        const result: SshAuth = {}
         
-        // Check for valid privateKeyPath
-        if(ssh.privateKeyPath && ssh.privateKeyPath.length > 0){
-            return ssh.privateKeyPath
-        } 
-        // Check for valid privateKeyContentBase64
-        else if (ssh.privateKeyContentBase64 && ssh.privateKeyContentBase64.length > 0){
+        // set private key path if given, try to decode base64 content otherwise
+        if(ssh.privateKeyPath){
+            result.privateKeyPath = ssh.privateKeyPath
+        } else if (ssh.privateKeyContentBase64){
             const tempKeyFile = tmp.fileSync({ mode: 0o600})
             fs.writeFileSync(tempKeyFile.name, fromBase64(ssh.privateKeyContentBase64))
-            return tempKeyFile.name
-        } else {
-            throw new Error("No valid SSH private key found, both privateKeyPath and privateKeyContentBase64 are empty or missing")
+            result.privateKeyPath = tempKeyFile.name
         }
+
+        // set password if given
+        if (ssh.passwordBase64){
+            result.password = Buffer.from(ssh.passwordBase64, 'base64').toString('utf-8')
+        }
+
+        if (!result.privateKeyPath && !result.password){
+            throw new Error("No SSH private key or password provided.")
+        }
+
+        return result
     }
 
     /**
-     * Load SSH private key content from instance inputs. Return either content from file or decoded base64 content.
+     * Load SSH private key content from instance inputs
      * @param ssh - SSH access configuration
      * @returns SSH private key content
      */
     loadSshPrivateKeyContent(ssh: CommonProvisionInputV1["ssh"]){
-        if (!ssh) {
-            throw new Error("SSH configuration is undefined");
-        }
-        
         if(ssh.privateKeyPath){
-            return fs.readFileSync(ssh.privateKeyPath, 'utf8')
+            return fs.readFileSync(ssh.privateKeyPath, { encoding: 'utf8' })
         } else if (ssh.privateKeyContentBase64){
             return fromBase64(ssh.privateKeyContentBase64)
         } else {
-            throw new Error("No SSH private key found")
+            throw new Error("No SSH private key provided, neither privateKeyPath nor privateKeyContentBase64 is set.")
         }
     }
 
     /**
-     * Load SSH public key content from instance inputs. Return either content from file or generate public key from private.
+     * Load SSH public key content from instance inputs
      * @param ssh - SSH access configuration
      * @returns SSH public key content
      */
@@ -333,19 +265,17 @@ export class SshKeyLoader {
         return this._loadSshPublicKeyContent(ssh)
     }
 
+    // real function which won't be mocked
     _loadSshPublicKeyContent(ssh: CommonProvisionInputV1["ssh"]) {
-        if (!ssh) {
-            throw new Error("SSH configuration is undefined");
-        }
-        
-        // Key ID can be anything, only used for fingerprint which we don't need
-        const privateKey = this.loadSshPrivateKeyContent(ssh)
-        const key = sshpk.parsePrivateKey(privateKey, 'auto', { filename: "dummy_key" })
-
-        return key.toPublic().toString('ssh')
+        const privateKeyContent = this.loadSshPrivateKeyContent(ssh)
+        return sshpk.parseKey(privateKeyContent, "ssh-private").toString("ssh")
     }
 }
 
+/**
+ * Generate a new SSH private key using ed25519 algorithm
+ * @returns SSH private key content as string
+ */
 export function generatePrivateSshKey(): string {
     const newKey = sshpk.generatePrivateKey("ed25519")
     return newKey.toString("ssh-private")

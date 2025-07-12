@@ -2,7 +2,7 @@ import { InstanceManager } from "./manager";
 import { CoreConfig } from "./config/interface";
 import { StateManagerBuilder } from "./state/builders";
 import { StateLoader } from "./state/loader";
-import { CLOUDYPAD_PROVIDER_AWS, CLOUDYPAD_PROVIDER_DUMMY, CLOUDYPAD_PROVIDER_GCP, CLOUDYPAD_PROVIDER_LOCAL, CLOUDYPAD_PROVIDER_PAPERSPACE, CLOUDYPAD_PROVIDER_SCALEWAY } from "./const";
+import { CLOUDYPAD_PROVIDER_AWS, CLOUDYPAD_PROVIDER_DUMMY, CLOUDYPAD_PROVIDER_GCP, CLOUDYPAD_PROVIDER_SSH, CLOUDYPAD_PROVIDER_PAPERSPACE, CLOUDYPAD_PROVIDER_SCALEWAY } from "./const";
 import { CLOUDYPAD_PROVIDER_AZURE } from "./const";
 import { ScalewayProviderClient } from "../providers/scaleway/provider";
 import { DummyProviderClient } from "../providers/dummy/provider";
@@ -10,7 +10,7 @@ import { AzureProviderClient } from "../providers/azure/provider";
 import { GcpProviderClient } from "../providers/gcp/provider";
 import { AwsProviderClient } from "../providers/aws/provider";
 import { PaperspaceProviderClient } from "../providers/paperspace/provider";
-import { LocalProviderClient } from "../providers/local/provider";
+import { SshProviderClient } from "../providers/ssh/provider";
 
 export interface InstanceManagerBuilderArgs {
     config: CoreConfig
@@ -56,8 +56,8 @@ export class InstanceManagerBuilder {
             case CLOUDYPAD_PROVIDER_PAPERSPACE:
                 const paperspaceProviderClient = new PaperspaceProviderClient({ config: this.config })
                 return paperspaceProviderClient.getInstanceManagerFor(state)
-            case CLOUDYPAD_PROVIDER_LOCAL:
-                const localProviderClient = new LocalProviderClient({ config: this.config })
+            case CLOUDYPAD_PROVIDER_SSH:
+                const localProviderClient = new SshProviderClient({ config: this.config })
                 return localProviderClient.getInstanceManagerFor(state)
             default:
                 throw new Error(`Provider ${providerClient} not supported`)

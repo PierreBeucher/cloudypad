@@ -4,7 +4,7 @@ import { CLOUDYPAD_PROVIDER } from './const';
 import { SunshineMoonlightPairer } from './moonlight/pairer/sunshine';
 import { MoonlightPairer } from './moonlight/pairer/abstract';
 import { WolfMoonlightPairer } from './moonlight/pairer/wolf';
-import { buildSshClientArgsForInstance, buildClientForInstance as buildSshClientForInstance, SSHClient, SshKeyLoader } from '../tools/ssh';
+import { SSHClient, SSHClientArgs, SshKeyLoader } from '../tools/ssh';
 
 /**
  * Options that may be passed to InstanceRunner functions
@@ -114,28 +114,13 @@ export abstract class AbstractInstanceRunner<C extends CommonProvisionInputV1, O
 
     private buildMoonlightPairer(): MoonlightPairer {
 
-        const sshClientArgs = buildSshClientArgsForInstance({
-            instanceName: this.args.instanceName,
-            provisionInput: this.args.provisionInput,
-            provisionOutput: this.args.provisionOutput
-        })
-
-        // Build SSH config that supports both password and key authentication
-        const sshConfig: any = {
-            user: sshClientArgs.user
-        };
-
-        if (sshClientArgs.password) {
-            sshConfig.password = sshClientArgs.password;
-        } else if (sshClientArgs.privateKeyPath) {
-            sshConfig.privateKeyPath = sshClientArgs.privateKeyPath;
-        }
+        const sshClientArgs = this.buildSshClientArgs()
 
         if(this.args.configurationInput.sunshine?.enable){
             return new SunshineMoonlightPairer({
                 instanceName: this.args.instanceName,
                 host: sshClientArgs.host,
-                ssh: sshConfig,
+                ssh: sshClientArgs,
                 sunshine: {
                     username: this.args.configurationInput.sunshine.username,
                     password: Buffer.from(this.args.configurationInput.sunshine.passwordBase64, 'base64').toString('utf-8')
@@ -145,7 +130,7 @@ export abstract class AbstractInstanceRunner<C extends CommonProvisionInputV1, O
             return new WolfMoonlightPairer({
                 instanceName: this.args.instanceName,
                 host: sshClientArgs.host,
-                ssh: sshConfig
+                ssh: sshClientArgs
             })
         } else {
             throw new Error(`No Moonlight pairer found for instance ${this.args.instanceName}, neither Sunshine nor Wolf is enabled`)
@@ -178,11 +163,7 @@ export abstract class AbstractInstanceRunner<C extends CommonProvisionInputV1, O
             return false
         }
 
-        const sshClient = buildSshClientForInstance({
-            instanceName: this.args.instanceName,
-            provisionInput: this.args.provisionInput,
-            provisionOutput: this.args.provisionOutput
-        })
+        const sshClient = this.buildSshClient()
 
         try {
 
@@ -209,6 +190,35 @@ export abstract class AbstractInstanceRunner<C extends CommonProvisionInputV1, O
             return false
         } finally {
             sshClient.dispose()
+        }
+    }
+
+    /**
+     * Build an SSH client for instance manager by this runner. This method is generic to use CommonProvisionInputV1 and CommonProvisionOutputV1
+     * but specialized runners can override this method to provide more specific SSH client configs
+     * @returns SSH client
+     */
+    protected buildSshClient(): SSHClient {
+        return new SSHClient(this.buildSshClientArgs())
+    }
+
+    /**
+     * Build an SSH client for instance manager by this runner. This method is generic to use CommonProvisionInputV1 and CommonProvisionOutputV1
+     * but specialized runners can override this method to provide more specific SSH client configs
+     * @returns SSH client
+     */
+    protected buildSshClientArgs(): SSHClientArgs {
+        this.logger.debug(`Building generic SSH client args for instance ${this.args.instanceName}`)
+
+        const sshAuth = new SshKeyLoader().getSshAuth(this.args.provisionInput.ssh)
+
+        return {
+            clientName: this.args.instanceName,
+            host: this.args.provisionOutput.host,
+            port: 22,
+            user: this.args.provisionInput.ssh.user,
+            privateKeyPath: sshAuth.privateKeyPath,
+            password: sshAuth.password
         }
     }
 }

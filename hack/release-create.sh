@@ -74,7 +74,7 @@ create_release_pr_and_merge_in_release_branch() {
   echo "Creating release PR..."
 
   npx --yes release-please release-pr \
-      --repo-url https://github.com/gabbelitoV2/cloudypad \
+      --repo-url https://github.com/PierreBeucher/cloudypad \
       --token $GITHUB_TOKEN \
       --target-branch $release_branch
 
@@ -90,7 +90,7 @@ create_release_pr_and_merge_in_release_branch() {
   # Create Git tag and GitHub release
   # Git tag will result in new Docker images being pushed
   npx release-please github-release \
-    --repo-url https://github.com/gabbelitoV2/cloudypad \
+    --repo-url https://github.com/PierreBeucher/cloudypad \
     --token=${GITHUB_TOKEN} \
     --target-branch $release_branch \
     --prerelease

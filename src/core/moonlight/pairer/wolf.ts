@@ -5,15 +5,12 @@ import axios from 'axios';
 import { URL } from 'url'
 import { buildAxiosError } from '../../../tools/axios';
 import { AbstractMoonlightPairer, makePin, MoonlightPairer } from "./abstract";
+import { SSHClientArgs } from '../../../tools/ssh';
 
 export interface WolfMoonlightPairerArgs {
     instanceName: string
     host: string
-    ssh: {
-        user: string
-        privateKeyPath?: string
-        password?: string
-    }
+    ssh: SSHClientArgs
 }
 
 export class WolfMoonlightPairer extends AbstractMoonlightPairer implements MoonlightPairer {
@@ -38,24 +35,18 @@ export class WolfMoonlightPairer extends AbstractMoonlightPairer implements Moon
             const pairManual = "manual"
             const pairAuto = "auto"
 
-            const dockerOptions: any = {
+            const privateKeyContent = this.args.ssh.privateKeyPath ? fs.readFileSync(this.args.ssh.privateKeyPath, 'utf-8') : undefined
+
+            const docker = new Docker({
                 host: this.args.host,
                 protocol: 'ssh',
                 port: 22,
                 username: this.args.ssh.user,
-                sshOptions: {}
-            };
-
-            // Använd antingen lösenord eller nyckelautentisering
-            if (this.args.ssh.password) {
-                dockerOptions.sshOptions.password = this.args.ssh.password;
-            } else if (this.args.ssh.privateKeyPath) {
-                dockerOptions.sshOptions.privateKey = fs.readFileSync(this.args.ssh.privateKeyPath, 'utf-8');
-            } else {
-                throw new Error("No authentication method available for SSH. Either password or privateKeyPath must be specified.");
-            }
-
-            const docker = new Docker(dockerOptions);
+                sshOptions: {
+                    privateKey: privateKeyContent,
+                    password: this.args.ssh.password
+                }
+            });
 
             const pairMethod = await select({
                 message: 'Pair Moonlight automatically or run Moonlight yourself to pair manually ?',
