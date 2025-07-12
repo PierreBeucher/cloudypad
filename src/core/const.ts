@@ -56,7 +56,7 @@ export const CLOUDYPAD_VERSION = version
 /**
  * Default registry for Sunshine container image
  */
-export const CLOUDYPAD_SUNSHINE_IMAGE_REGISTRY = "ghcr.io/gabbelitov2/cloudypad"
+export const CLOUDYPAD_SUNSHINE_IMAGE_REGISTRY = "ghcr.io/pierrebeucher/cloudypad"
 
 /**
  * Simple port definition (number and protocol)

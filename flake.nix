@@ -29,7 +29,7 @@
 
             meta = with pkgs.lib; {
               description = "Cloudypad script";
-              homepage = "https://github.com/gabbelitoV2/cloudypad";
+              homepage = "https://github.com/PierreBeucher/cloudypad";
               license = licenses.agpl3Plus;
             };
           };

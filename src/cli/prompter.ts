@@ -177,7 +177,7 @@ export abstract class AbstractInputPrompter<
             instanceName: cliArgs.name,
             provision: {
                 ssh: {
-                    privateKeyPath: cliArgs.privateSshKey,
+                    privateKeyPath: cliArgs.sshPrivateKey,
                 }
             },
             configuration: {

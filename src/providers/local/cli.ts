@@ -12,12 +12,7 @@ import { cleanupAndExit, logFullError } from "../../cli/program";
 import { LocalProviderClient } from "./provider";
 
 export interface LocalCreateCliArgs extends CreateCliArgs {
-    startDelaySeconds?: number
-    stopDelaySeconds?: number
-    configurationDelaySeconds?: number
-    provisioningDelaySeconds?: number
-    readinessDelaySeconds?: number
-    host?: string
+    hostname?: string
     sshUser?: string
     sshPassword?: string
 }
@@ -30,181 +25,127 @@ export class LocalInputPrompter extends AbstractInputPrompter<LocalCreateCliArgs
     buildProvisionerInputFromCliArgs(cliArgs: LocalCreateCliArgs): PartialDeep<LocalInstanceInput> {
         const input: PartialDeep<LocalInstanceInput> = {
             provision: {
-                startDelaySeconds: cliArgs.startDelaySeconds,
-                stopDelaySeconds: cliArgs.stopDelaySeconds,
-                configurationDelaySeconds: cliArgs.configurationDelaySeconds,
-                provisioningDelaySeconds: cliArgs.provisioningDelaySeconds,
-                readinessAfterStartDelaySeconds: cliArgs.readinessDelaySeconds,
-                customHost: cliArgs.host,
+                ssh: {
+                    // private key is already handled by CLI args
+                    hostname: cliArgs.hostname,
+                    user: cliArgs.sshUser,
+                    passwordBase64: cliArgs.sshPassword ? Buffer.from(cliArgs.sshPassword).toString('base64') : undefined
+                }
             }
         };
-
-        if (cliArgs.sshPassword && cliArgs.sshUser && input.provision) {
-            // When SSH password is provided, set up password auth
-            input.provision.auth = {
-                type: "password" as const,
-                ssh: {
-                    user: cliArgs.sshUser,
-                    password: cliArgs.sshPassword
-                }
-            };
-            
-            // DO NOT add any ssh configuration when using password auth
-        } else if (input.provision) {
-            // Regular SSH key-based auth needs the ssh field
-            input.provision.ssh = {
-                user: cliArgs.sshUser || "ubuntu",
-                privateKeyContentBase64: "" // Will be replaced by actual key later
-            };
-        }
 
         return input;
     }
 
     protected async promptSpecificInput(commonInput: CommonInstanceInput, partialInput: PartialDeep<LocalInstanceInput>, createOptions: PromptOptions): Promise<LocalInstanceInput> {
 
-        const instanceType = await this.instanceType(partialInput.provision?.instanceType)
+        const hostname = await this.hostname(partialInput.provision?.ssh?.hostname)
+        const sshUser = await this.sshUser(partialInput.provision?.ssh?.user)
+        const sshAuth = await this.sshAuth(partialInput)
         
-        // Ask if the user wants to use password authentication
-        const usePasswordAuth = await confirm({
-            message: 'Do you want to use password authentication instead of SSH key?',
-            default: partialInput.provision?.auth?.type === "password" ? true : false,
-        });
+        const localInput: LocalInstanceInput = lodash.merge(
+            {},
+            commonInput, 
+            {
+                provision: {
+                    ssh: {
+                        hostname: hostname,
+                        user: sshUser,
+                        privateKeyPath: sshAuth.sshPrivateKeyPath,
+                        privateKeyContentBase64: sshAuth.sshKeyContentBase64,
+                        passwordBase64: sshAuth.sshPasswordBase64
+                    }
+                }
+            })
         
-        if (usePasswordAuth) {
-            // If we use password authentication
-            const customHost = await input({
-                message: 'Enter IP address or hostname:',
-                default: partialInput.provision?.customHost || '',
-            });
-            
-            // Safe access to nested properties
-            const defaultUser = partialInput.provision?.auth?.type === "password" && 
-                               partialInput.provision?.auth?.ssh?.user ? 
-                               partialInput.provision.auth.ssh.user : 
-                               'ubuntu';
-            
-            const sshUser = await input({
-                message: 'Enter SSH username:',
-                default: defaultUser,
-            });
-            
-            // Safe access to nested properties
-            const defaultPassword = partialInput.provision?.auth?.type === "password" && 
-                                  partialInput.provision?.auth?.ssh?.password ? 
-                                  partialInput.provision.auth.ssh.password : 
-                                  '';
-            
-            
-            let sshPassword = '';
-            let confirmedPassword = '';
-            
-            do {
-                sshPassword = await password({
-                    message: 'Enter SSH password:',
-                });
-                
-                confirmedPassword = await password({
-                    message: 'Confirm SSH password:',
-                });
-                
-                if (sshPassword !== confirmedPassword) {
-                    console.error('Passwords do not match, please try again.');
-                }
-                
-            } while (sshPassword !== confirmedPassword);
-            
-            const auth = {
-                type: "password" as const,
-                ssh: {
-                    user: sshUser,
-                    password: sshPassword
-                }
-            };
-            
-            // Create a copy of commonInput without ssh properties to avoid validation errors
-            const { provision, ...restCommonInput } = lodash.cloneDeep(commonInput);
-            const { ssh, ...restProvision } = provision || {};
-            
-            const localInput: LocalInstanceInput = lodash.merge(
-                {},
-                { ...restCommonInput, provision: restProvision }, 
-                {
-                    provision:{
-                        instanceType: instanceType,
-                        startDelaySeconds: partialInput.provision?.startDelaySeconds ?? 10,
-                        stopDelaySeconds: partialInput.provision?.stopDelaySeconds ?? 10,
-                        configurationDelaySeconds: partialInput.provision?.configurationDelaySeconds ?? 0,
-                        provisioningDelaySeconds: partialInput.provision?.provisioningDelaySeconds ?? 0,
-                        readinessAfterStartDelaySeconds: partialInput.provision?.readinessAfterStartDelaySeconds ?? 0,
-                        initialServerStateAfterProvision: partialInput.provision?.initialServerStateAfterProvision ?? "running",
-                        customHost: customHost,
-                        auth: auth,
-                        ssh: {
-                            user: sshUser,
-                            privateKeyContentBase64: "local-not-used-for-password-auth"
-                        }
-                    }
-                })
-            
-            return localInput;
-        } else {
-            // If we use SSH key (default)
-            
-            // Prompt for sshkeys
-            const customHost = await input({
-                message: 'Enter IP address or hostname:',
-                default: partialInput.provision?.customHost || '',
-            });
-            
-            // Prompt for SSH user
-            const defaultSshUser = commonInput.provision?.ssh?.user || 'ubuntu';
-            const sshUser = await input({
-                message: 'Enter SSH username:',
-                default: defaultSshUser,
-            });
-            
-            // Prompt for SSH private key path
-            const defaultSshKeyPath = commonInput.provision?.ssh?.privateKeyPath || '';
-            const sshKeyPath = await input({
-                message: 'Enter path to SSH private key:',
-                default: defaultSshKeyPath,
-            });
-            
-            const localInput: LocalInstanceInput = lodash.merge(
-                {},
-                commonInput, 
-                {
-                    provision:{
-                        instanceType: instanceType,
-                        startDelaySeconds: partialInput.provision?.startDelaySeconds ?? 10,
-                        stopDelaySeconds: partialInput.provision?.stopDelaySeconds ?? 10,
-                        configurationDelaySeconds: partialInput.provision?.configurationDelaySeconds ?? 0,
-                        provisioningDelaySeconds: partialInput.provision?.provisioningDelaySeconds ?? 0,
-                        readinessAfterStartDelaySeconds: partialInput.provision?.readinessAfterStartDelaySeconds ?? 0,
-                        initialServerStateAfterProvision: partialInput.provision?.initialServerStateAfterProvision ?? "running",
-                        customHost: customHost,
-                        ssh: {
-                            user: sshUser,
-                            privateKeyPath: sshKeyPath
-                        }
-                    }
-                })
-            
-            return localInput
-        }
-    }
-
-    private async instanceType(instanceType?: string): Promise<string> {
-
-        if (instanceType) {
-            return instanceType;
-        }
-
-
-        return "local";
+        return localInput;
     }
     
+    private async hostname(hostname?: string): Promise<string> {
+        if (hostname) {
+            return hostname
+        }
+
+        return await input({
+            message: 'Your machine IP address or hostname:',
+        })
+    }
+
+    private async sshUser(sshUser?: string): Promise<string> {
+        if (sshUser) {
+            return sshUser
+        }
+
+        return await input({
+            message: 'SSH username:',
+            default: 'ubuntu'
+        })
+    }
+
+    private async sshAuth(partialInput: PartialDeep<LocalInstanceInput>): Promise<{
+        sshPrivateKeyPath: string | undefined
+        sshPasswordBase64: string | undefined
+        sshKeyContentBase64: string | undefined
+    }> {
+        
+        // Prompt for authentication method choice unless password or private key is provided
+        let sshPrivateKeyPath: string | undefined
+        let sshPasswordBase64: string | undefined
+        let sshKeyContentBase64: string | undefined
+
+        if(partialInput.provision?.ssh?.privateKeyPath) {
+            sshPrivateKeyPath = partialInput.provision.ssh.privateKeyPath
+        } else if(partialInput.provision?.ssh?.privateKeyContentBase64) {
+            sshKeyContentBase64 = partialInput.provision.ssh.privateKeyContentBase64
+        } else if(partialInput.provision?.ssh?.passwordBase64) {
+            sshPasswordBase64 = partialInput.provision.ssh.passwordBase64
+        } else {
+            const authMethod = await select({
+                message: 'Choose authentication method:',
+                choices: [
+                    { name: 'SSH Private Key', value: 'privateKey' },
+                    { name: 'Password', value: 'password' }
+                ],
+                default: 'privateKey'
+            })
+
+            if(authMethod === 'privateKey') {
+
+                // TODO list all private keys in ~/.ssh and let user enter custom path
+
+                sshPrivateKeyPath = await input({
+                    message: 'Enter path to SSH private key:',
+                })
+            } else if(authMethod === 'password') {
+                let sshPassword = '';
+                let confirmedPassword = '';
+                
+                do {
+                    sshPassword = await password({
+                        message: 'Enter SSH password:',
+                    });
+                    
+                    confirmedPassword = await password({
+                        message: 'Confirm SSH password:',
+                    });
+                    
+                    if (sshPassword !== confirmedPassword) {
+                        console.error('Passwords do not match, please try again.');
+                    }
+                    
+                } while (sshPassword !== confirmedPassword);
+                
+            } else {
+                throw new Error('Invalid authentication method')
+            }
+        }
+
+        return {
+            sshPrivateKeyPath,
+            sshPasswordBase64,
+            sshKeyContentBase64
+        }
+    }
 }
 
 export class LocalCliCommandGenerator extends CliCommandGenerator {

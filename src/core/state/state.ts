@@ -16,6 +16,7 @@ const CommonProvisionInputV1Schema = z.object({
         privateKeyPath: z.string().optional().describe("Local path to private key. Either privateKeyPath or privateKeyContentBase64 must be set, not both."),
         privateKeyContentBase64: z.string().optional().describe("Private key content (base64 encoded). Either privateKeyPath or privateKeyContentBase64 must be set, not both."),
     }).describe("SSH access configuration")
+    .passthrough()
     .refine((data) => {
         if(data.privateKeyPath && data.privateKeyContentBase64 ||
             !data.privateKeyPath && !data.privateKeyContentBase64
