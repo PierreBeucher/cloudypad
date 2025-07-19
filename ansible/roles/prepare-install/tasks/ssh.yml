@@ -1,4 +1,12 @@
-- name: Local - remove unwanted apt sources (if any)
+- name: SSH Provider - Check Ubuntu version
+  ansible.builtin.pause:
+    prompt: >-
+      WARNING: Cloudy Pad is designed to run on Ubuntu 22.04 or 24.04.
+      Detected version: {{ ansible_distribution }} {{ ansible_distribution_version }}.
+      Some features may not work correctly. Do you want to continue?
+  when: ansible_distribution != "Ubuntu" or ansible_distribution_major_version not in ["22", "24"]
+
+- name: SSH Provider - remove unwanted apt sources (if any)
   become: true
   file:
     state: absent
@@ -10,9 +18,9 @@
 
 # Scaleway comes with pre-installed NVIDIA packages
 # But we want to use our fixed, reproducible package install method with nvidia role
-- name: Local - remove unwanted apt NVIDIA packages
+- name: SSH Provider - remove unwanted apt NVIDIA packages
   become: true
-  register: local_apt_remove_nvidia_packages
+  register: ssh_apt_remove_nvidia_packages
   ansible.builtin.apt:
     name:
       - libnvidia-cfg1-*
@@ -26,14 +34,14 @@
     state: absent
     purge: yes
 
-- name: Local - apt autoremove 
+- name: SSH Provider - apt autoremove 
   become: true
-  when: local_apt_remove_nvidia_packages.changed
+  when: ssh_apt_remove_nvidia_packages.changed
   ansible.builtin.apt:
     autoremove: yes
 
-- name: Scaleway - clean apt cache
+- name: SSH Provider - clean apt cache
   become: true
-  when: local_apt_remove_nvidia_packages.changed
+  when: ssh_apt_remove_nvidia_packages.changed
   ansible.builtin.apt:
     clean: yes
