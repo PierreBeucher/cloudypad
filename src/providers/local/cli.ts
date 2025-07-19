@@ -25,9 +25,9 @@ export class LocalInputPrompter extends AbstractInputPrompter<LocalCreateCliArgs
     buildProvisionerInputFromCliArgs(cliArgs: LocalCreateCliArgs): PartialDeep<LocalInstanceInput> {
         const input: PartialDeep<LocalInstanceInput> = {
             provision: {
+                hostname: cliArgs.hostname,
                 ssh: {
                     // private key is already handled by CLI args
-                    hostname: cliArgs.hostname,
                     user: cliArgs.sshUser,
                     passwordBase64: cliArgs.sshPassword ? Buffer.from(cliArgs.sshPassword).toString('base64') : undefined
                 }
@@ -39,7 +39,7 @@ export class LocalInputPrompter extends AbstractInputPrompter<LocalCreateCliArgs
 
     protected async promptSpecificInput(commonInput: CommonInstanceInput, partialInput: PartialDeep<LocalInstanceInput>, createOptions: PromptOptions): Promise<LocalInstanceInput> {
 
-        const hostname = await this.hostname(partialInput.provision?.ssh?.hostname)
+        const hostname = await this.hostname(partialInput.provision?.hostname)
         const sshUser = await this.sshUser(partialInput.provision?.ssh?.user)
         const sshAuth = await this.sshAuth(partialInput)
         
@@ -48,8 +48,8 @@ export class LocalInputPrompter extends AbstractInputPrompter<LocalCreateCliArgs
             commonInput, 
             {
                 provision: {
+                    hostname: hostname,
                     ssh: {
-                        hostname: hostname,
                         user: sshUser,
                         privateKeyPath: sshAuth.sshPrivateKeyPath,
                         privateKeyContentBase64: sshAuth.sshKeyContentBase64,
@@ -132,6 +132,8 @@ export class LocalInputPrompter extends AbstractInputPrompter<LocalCreateCliArgs
                     if (sshPassword !== confirmedPassword) {
                         console.error('Passwords do not match, please try again.');
                     }
+
+                    sshPasswordBase64 = Buffer.from(sshPassword).toString('base64')
                     
                 } while (sshPassword !== confirmedPassword);
                 
@@ -164,7 +166,7 @@ export class LocalCliCommandGenerator extends CliCommandGenerator {
             .addOption(CLI_OPTION_KEYBOARD_MODEL)
             .addOption(CLI_OPTION_KEYBOARD_VARIANT)
             .addOption(CLI_OPTION_KEYBOARD_OPTIONS)
-            .option('--host <host>', 'Host IP or hostname for SSH connection')
+            .option('--hostname <hostname>', 'Server IP or hostname on which to deploy the instance')
             .option('--ssh-user <user>', 'SSH username')
             .option('--ssh-password <password>', 'SSH password')
             .action(async (cliArgs: LocalCreateCliArgs) => {

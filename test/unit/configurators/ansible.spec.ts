@@ -28,6 +28,7 @@ describe('Ansible configurator', function () {
                     "test-ansible-configurator-instance": {
                         ansible_host: "test-ansible-configurator-host",
                         ansible_user: DEFAULT_COMMON_INPUT.provision.ssh.user,
+                        ansible_ssh_pass: undefined,
                         ansible_ssh_private_key_file: DEFAULT_COMMON_INPUT.provision.ssh.privateKeyPath,
 
                         cloudypad_provider: "test-ansible-configurator-provider",

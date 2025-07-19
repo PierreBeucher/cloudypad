@@ -93,60 +93,8 @@ export class AnsibleConfigurator<ST extends InstanceStateV1> extends AbstractIns
      * @returns Inventory content as a JSON object
      */
         public async generateInventoryObject(): Promise<any>   {
-        if (this.args.provider === 'local') {
-            // For local provider - check if password authentication is enabled
-            if ((this.args.provisionInput as any).auth && (this.args.provisionInput as any).auth.type === "password") {
-                const auth = (this.args.provisionInput as any).auth;
-                const customHost = (this.args.provisionInput as any).customHost || "0.0.0.0";
 
-                return {
-                    all: {
-                        hosts: {
-                            [this.args.instanceName]: {
-                                ansible_connection: "ssh",
-                                ansible_host: customHost,
-                                ansible_user: auth.ssh.user,
-                                ansible_ssh_pass: auth.ssh.password,
-                                ansible_ssh_common_args: '-o StrictHostKeyChecking=no',
-
-                                cloudypad_provider: this.args.provider,
-
-                                wolf_instance_name: this.args.instanceName,
-
-                                // use server name from input if provided, otherwise use instance name
-                                sunshine_server_name: this.args.configurationInput.sunshine?.serverName ?? this.args.instanceName,
-
-                                sunshine_web_username: this.args.configurationInput.sunshine?.username,
-                                sunshine_web_password_base64: this.args.configurationInput.sunshine?.passwordBase64,
-                                sunshine_nvidia_enable: true,
-                                sunshine_image_tag: this.args.configurationInput.sunshine?.imageTag ?? CLOUDYPAD_VERSION,
-                                sunshine_image_registry: this.args.configurationInput.sunshine?.imageRegistry ?? CLOUDYPAD_SUNSHINE_IMAGE_REGISTRY,
-
-                                sunshine_keyboard_layout: this.args.configurationInput.keyboard?.layout,
-                                sunshine_keyboard_variant: this.args.configurationInput.keyboard?.variant,
-                                sunshine_keyboard_model: this.args.configurationInput.keyboard?.model,
-                                sunshine_keyboard_options: this.args.configurationInput.keyboard?.options,
-
-                                sunshine_locale: this.args.configurationInput.locale,
-
-                                autostop_enable: this.args.configurationInput.autostop?.enable,
-                                autostop_timeout_seconds: this.args.configurationInput.autostop?.timeoutSeconds,
-
-                                cloudypad_data_disk_enabled: this.args.provisionOutput.dataDiskId !== undefined,
-                                cloudypad_data_disk_id: this.args.provisionOutput.dataDiskId,
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
-        // Standard SSH key-based authentication for other providers and local without password auth
-        if (!this.args.provisionInput.ssh) {
-            throw new Error("SSH configuration is required for key-based authentication but was not found in provision input");
-        }
-
-        const sshPrivateKeyPath = new SshKeyLoader().getSshPrivateKeyPath(this.args.provisionInput.ssh)
+        const sshAuth = new SshKeyLoader().getSshAuth(this.args.provisionInput.ssh)
 
         return {
             all: {
@@ -154,7 +102,8 @@ export class AnsibleConfigurator<ST extends InstanceStateV1> extends AbstractIns
                     [this.args.instanceName]: {
                         ansible_host: this.args.provisionOutput.host,
                         ansible_user: this.args.provisionInput.ssh.user,
-                        ansible_ssh_private_key_file: sshPrivateKeyPath,
+                        ansible_ssh_private_key_file: sshAuth.privateKeyPath,
+                        ansible_password: sshAuth.password,
 
                         cloudypad_provider: this.args.provider,
 

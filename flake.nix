@@ -48,6 +48,7 @@
               podman
               podman-compose
               ansible
+              sshpass # for Ansible password auth
               yq
               jq
               gh

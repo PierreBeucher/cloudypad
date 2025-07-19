@@ -64,7 +64,7 @@ export class SunshineMoonlightPairer extends AbstractMoonlightPairer implements 
                 if (pinResult) break;
             } catch (error) {
                 lastError = error
-                this.logger.warn(`Attempt ${attempt + 1} failed to send pin to Sunshine API. Retrying...`, { cause: error })
+                this.logger.warn(`Attempt ${attempt + 1} failed to send pin to Sunshine API. Retrying...`, error)
             } finally {
                 sshClient.dispose()
             }

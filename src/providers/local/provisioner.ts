@@ -15,7 +15,7 @@ export class LocalProvisioner extends AbstractInstanceProvisioner<LocalProvision
 
         return {
             provisionedAt: new Date().getTime(),
-            host: this.args.provisionInput.ssh.hostname,
+            host: this.args.provisionInput.hostname,
         }
     }
 

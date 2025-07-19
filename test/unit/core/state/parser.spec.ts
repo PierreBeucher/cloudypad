@@ -50,14 +50,14 @@ describe('AnonymousStateParser', function () {
             const rawState = loadRawDummyStateV1('wrong-state-both-ssh-key')
             assert.throws(() => {
                 parser.parse(rawState)
-            }, /Exactly one of privateKeyPath or privateKeyContentBase64 must be set/)
+            }, /Exactly one of/)
         })
 
         it('should throw an error when no SSH keys is provided', function () {
             const rawState = loadRawDummyStateV1('wrong-state-no-ssh-key')
             assert.throws(() => {
                 parser.parse(rawState)
-            }, /Exactly one of privateKeyPath or privateKeyContentBase64 must be set/)
+            }, /Exactly one of/)
         })  
     })
 })

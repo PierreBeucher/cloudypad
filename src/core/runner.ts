@@ -210,13 +210,15 @@ export abstract class AbstractInstanceRunner<C extends CommonProvisionInputV1, O
     protected buildSshClientArgs(): SSHClientArgs {
         this.logger.debug(`Building generic SSH client args for instance ${this.args.instanceName}`)
 
-        const sshKeyPath = new SshKeyLoader().getSshPrivateKeyPath(this.args.provisionInput.ssh)
+        const sshAuth = new SshKeyLoader().getSshAuth(this.args.provisionInput.ssh)
+
         return {
             clientName: this.args.instanceName,
             host: this.args.provisionOutput.host,
             port: 22,
             user: this.args.provisionInput.ssh.user,
-            privateKeyPath: sshKeyPath,
+            privateKeyPath: sshAuth.privateKeyPath,
+            password: sshAuth.password
         }
     }
 }

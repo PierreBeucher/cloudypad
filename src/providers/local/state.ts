@@ -10,25 +10,7 @@ const LocalProvisionOutputV1Schema = CommonProvisionOutputV1Schema.extend({
 
 // Override SSH config to provide hostname and password directly as input
 const LocalProvisionInputV1Schema = CommonProvisionInputV1Schema.extend({
-    ssh: z.object({
-        hostname: z.string().describe("Host IP address"),
-        user: z.string().describe("SSH user"),
-        privateKeyPath: z.string().optional().describe("Local path to private key. Either privateKeyPath or privateKeyContentBase64 must be set, not both."),
-        privateKeyContentBase64: z.string().optional().describe("Private key content (base64 encoded). Either privateKeyPath or privateKeyContentBase64 must be set, not both."),
-        passwordBase64: z.string().optional().describe("Password (base64 encoded). Either passwordBase64 or password must be set, not both."),
-    })
-    .describe("SSH access configuration")
-    .passthrough()
-    .refine((data) => {
-        // to check a single auth method is set, increment counter and check exactly one is set
-        let setAuthMethods = 0
-        if(data.privateKeyPath) setAuthMethods++
-        if(data.privateKeyContentBase64) setAuthMethods++
-        if(data.passwordBase64) setAuthMethods++
-        return setAuthMethods === 1
-    }, {
-        message: "Exactly one of privateKeyPath, privateKeyContentBase64 or passwordBase64 must be set"
-    })
+    hostname: z.string().describe("Server IP address or hostname"),
 }).passthrough()
 
 const LocalInstanceStateV1Schema = InstanceStateV1Schema.extend({

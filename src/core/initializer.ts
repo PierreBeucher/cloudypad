@@ -38,17 +38,11 @@ export class InstanceInitializer<ST extends InstanceStateV1> {
         
         this.logger.debug(`Initializing instance with provisionInput ${JSON.stringify(provisionInput)} and configurationInput ${JSON.stringify(configurationInput)}`)
         
-        // Check if we're using password authentication
-        const usesPasswordAuth = provisionInput.auth && 
-                                typeof provisionInput.auth === 'object' && 
-                                'type' in provisionInput.auth && 
-                                provisionInput.auth.type === "password";
-
-        // Only generate an SSH key if we are NOT using password authentication
-        // and if no key has been specified
-        if (!usesPasswordAuth && provisionInput.ssh && 
-            !provisionInput.ssh.privateKeyPath && 
-            !provisionInput.ssh.privateKeyContentBase64) {
+        // Generate SSH private key if no other auth method is provided
+        if (!provisionInput.ssh.privateKeyPath && 
+            !provisionInput.ssh.privateKeyContentBase64 && 
+            !provisionInput.ssh.passwordBase64
+        ) {
             const privateKeyContent = generatePrivateSshKey()
             const privateKeyContentBase64 = toBase64(privateKeyContent)
             provisionInput.ssh.privateKeyContentBase64 = privateKeyContentBase64

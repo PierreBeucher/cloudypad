@@ -1,0 +1,11 @@
+npx tsx src/cli/main.ts  create local \
+        --name test-local-vagrant \
+        --streaming-server sunshine \
+        --sunshine-user sunshine \
+        --sunshine-password "sunshine!" \
+        --autostop true \
+        --autostop-timeout 300 \
+        --hostname 192.168.56.43 \
+        --ssh-user vagrant \
+        --ssh-password vagrant \
+        --yes --overwrite-existing --skip-pairing
