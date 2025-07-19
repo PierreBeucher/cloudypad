@@ -39,6 +39,8 @@ export class LocalInputPrompter extends AbstractInputPrompter<LocalCreateCliArgs
 
     protected async promptSpecificInput(commonInput: CommonInstanceInput, partialInput: PartialDeep<LocalInstanceInput>, createOptions: PromptOptions): Promise<LocalInstanceInput> {
 
+        await this.warnExperimentalProvider()
+
         const hostname = await this.hostname(partialInput.provision?.hostname)
         const sshUser = await this.sshUser(partialInput.provision?.ssh?.user)
         const sshAuth = await this.sshAuth(partialInput)
@@ -147,6 +149,16 @@ export class LocalInputPrompter extends AbstractInputPrompter<LocalCreateCliArgs
             sshPasswordBase64,
             sshKeyContentBase64
         }
+    }
+
+    private async warnExperimentalProvider(){
+        await input({ message: `Please note the SSH provider is EXPERIMENTAL and requires:\n` +
+            `- An Ubuntu 22.04 or 24.04 machine with NVIDIA GPU\n` +
+            `- SSH access (password or private key) with sudo access\n\n` +
+            `If you encounter problems or have feedback please create an issue on GitHub: ` +
+            `https://github.com/PierreBeucher/cloudypad/issues\n\n` +
+            `Press enter to continue...`,
+        })
     }
 }
 
