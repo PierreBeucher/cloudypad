@@ -1,0 +1,4 @@
+# SSH provider must skip reboot and Docker restart
+# as typical use case is to self-deploy from current server
+nvidia_driver_skip_docker_restart: true
+nvidia_driver_skip_reboot: true

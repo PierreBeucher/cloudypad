@@ -30,7 +30,7 @@
 - name: reboot after old driver package removal
   reboot:
     post_reboot_delay: 10
-  when: install_driver.changed and cloudypad_provider != "local"
+  when: not nvidia_driver_skip_docker_restart
 
 # required on some system to create /dev/nvidia-caps* automatically, see https://docs.nvidia.com/cuda/cuda-installation-guide-linux/index.html#device-node-verification
 - name: install nvidia-modprobe 
@@ -88,7 +88,7 @@
 - name: reboot after initramfs or NVIDIA devices script update
   reboot:
     post_reboot_delay: 10
-  when: (nvidia_driver_module_file_result.changed or nvidia_dev_systemd_unit.changed or nvidia_dev_script.changed) and cloudypad_provider != "local"
+  when: (nvidia_driver_module_file_result.changed or nvidia_dev_systemd_unit.changed or nvidia_dev_script.changed) and not nvidia_driver_skip_reboot
 
 - name: install NVIDIA container toolkit
   import_tasks: container-toolkit.yml
