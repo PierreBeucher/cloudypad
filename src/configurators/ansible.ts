@@ -92,8 +92,9 @@ export class AnsibleConfigurator<ST extends InstanceStateV1> extends AbstractIns
      * Generate inventory content for Ansible as a JSON object
      * @returns Inventory content as a JSON object
      */
-    public async generateInventoryObject(): Promise<any>   {
-        const sshPrivateKeyPath = new SshKeyLoader().getSshPrivateKeyPath(this.args.provisionInput.ssh)
+        public async generateInventoryObject(): Promise<any>   {
+
+        const sshAuth = new SshKeyLoader().getSshAuth(this.args.provisionInput.ssh)
 
         return {
             all: {
@@ -101,7 +102,8 @@ export class AnsibleConfigurator<ST extends InstanceStateV1> extends AbstractIns
                     [this.args.instanceName]: {
                         ansible_host: this.args.provisionOutput.host,
                         ansible_user: this.args.provisionInput.ssh.user,
-                        ansible_ssh_private_key_file: sshPrivateKeyPath,
+                        ansible_ssh_private_key_file: sshAuth.privateKeyPath,
+                        ansible_password: sshAuth.password,
 
                         cloudypad_provider: this.args.provider,
 

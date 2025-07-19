@@ -29,3 +29,4 @@
 
 - name: Restart Docker daemon
   command: systemctl restart docker
+  when: not nvidia_driver_skip_docker_restart

@@ -1,14 +1,11 @@
 import { AbstractMoonlightPairer, makePin, MoonlightPairer } from "./abstract";
-import { SSHClient } from "../../../tools/ssh";
+import { SSHClient, SSHClientArgs } from "../../../tools/ssh";
 import { SSHExecCommandResponse } from "node-ssh";
 
 export interface SunshineMoonlightPairerArgs {
     instanceName: string
     host: string
-    ssh: {
-        user: string
-        privateKeyPath: string
-    },
+    ssh: SSHClientArgs,
     sunshine: {
         username: string
         password: string
@@ -30,13 +27,7 @@ export class SunshineMoonlightPairer extends AbstractMoonlightPairer implements 
     }
 
     private buildSshClient(): SSHClient {
-        return new SSHClient({
-            clientName: SunshineMoonlightPairer.name,
-            host: this.args.host,
-            port: 22,
-            user: this.args.ssh.user,
-            privateKeyPath: this.args.ssh.privateKeyPath
-        })
+        return new SSHClient(this.args.ssh);
     }
 
     protected async doPair() {
@@ -73,7 +64,7 @@ export class SunshineMoonlightPairer extends AbstractMoonlightPairer implements 
                 if (pinResult) break;
             } catch (error) {
                 lastError = error
-                this.logger.warn(`Attempt ${attempt + 1} failed to send pin to Sunshine API. Retrying...`, { cause: error })
+                this.logger.warn(`Attempt ${attempt + 1} failed to send pin to Sunshine API. Retrying...`, error)
             } finally {
                 sshClient.dispose()
             }

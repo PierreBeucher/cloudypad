@@ -13,3 +13,9 @@ nvidia_driver_module_params: ''
 # Install version from .run file
 # See https://www.nvidia.com/en-us/drivers/unix/ or https://download.nvidia.com/XFree86/Linux-x86_64
 nvidia_driver_dotrun_install_version: "570.169"
+
+# Skip Docker restart during NVIDIA driver installation
+nvidia_driver_skip_docker_restart: false
+
+# Skip reboot during NVIDIA driver installation
+nvidia_driver_skip_reboot: false

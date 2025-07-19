@@ -1,0 +1,7 @@
+- name: SSH Provider - Check Ubuntu version
+  ansible.builtin.pause:
+    prompt: >-
+      WARNING: Cloudy Pad is designed to run on Ubuntu 22.04 or 24.04.
+      Detected version: {{ ansible_distribution }} {{ ansible_distribution_version }}.
+      Some features may not work correctly. Do you want to continue?
+  when: ansible_distribution != "Ubuntu" or ansible_distribution_major_version not in ["22", "24"]

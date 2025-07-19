@@ -34,7 +34,8 @@ describe('StateLoader', function () {
                 'wrong-state-version',
                 'wrong-state-both-ssh-key',
                 'wrong-state-no-ssh-key',
-                'scaleway-dummy'
+                'scaleway-dummy',
+                'ssh-dummy'
             ]
             assert.deepStrictEqual(instances.sort(), expectedInstances.sort())
         })

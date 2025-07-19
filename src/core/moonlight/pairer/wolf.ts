@@ -5,14 +5,12 @@ import axios from 'axios';
 import { URL } from 'url'
 import { buildAxiosError } from '../../../tools/axios';
 import { AbstractMoonlightPairer, makePin, MoonlightPairer } from "./abstract";
+import { SSHClientArgs } from '../../../tools/ssh';
 
 export interface WolfMoonlightPairerArgs {
     instanceName: string
     host: string
-    ssh: {
-        user: string
-        privateKeyPath: string
-    }
+    ssh: SSHClientArgs
 }
 
 export class WolfMoonlightPairer extends AbstractMoonlightPairer implements MoonlightPairer {
@@ -37,7 +35,7 @@ export class WolfMoonlightPairer extends AbstractMoonlightPairer implements Moon
             const pairManual = "manual"
             const pairAuto = "auto"
 
-            const privateKey = fs.readFileSync(this.args.ssh.privateKeyPath, 'utf-8')
+            const privateKeyContent = this.args.ssh.privateKeyPath ? fs.readFileSync(this.args.ssh.privateKeyPath, 'utf-8') : undefined
 
             const docker = new Docker({
                 host: this.args.host,
@@ -45,9 +43,10 @@ export class WolfMoonlightPairer extends AbstractMoonlightPairer implements Moon
                 port: 22,
                 username: this.args.ssh.user,
                 sshOptions: {
-                    privateKey: privateKey
+                    privateKey: privateKeyContent,
+                    password: this.args.ssh.password
                 }
-            })
+            });
 
             const pairMethod = await select({
                 message: 'Pair Moonlight automatically or run Moonlight yourself to pair manually ?',

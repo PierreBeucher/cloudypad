@@ -13,18 +13,20 @@ const CommonProvisionOutputV1Schema = z.object({
 const CommonProvisionInputV1Schema = z.object({
     ssh: z.object({
         user: z.string().describe("SSH user"),
-        privateKeyPath: z.string().optional().describe("Local path to private key. Either privateKeyPath or privateKeyContentBase64 must be set, not both."),
-        privateKeyContentBase64: z.string().optional().describe("Private key content (base64 encoded). Either privateKeyPath or privateKeyContentBase64 must be set, not both."),
+        privateKeyPath: z.string().optional().describe("Local path to private key. Exactly one SSH authentication method must be set."),
+        privateKeyContentBase64: z.string().optional().describe("Private key content (base64 encoded). Exactly one SSH authentication method must be set."),
+        passwordBase64: z.string().optional().describe("Password (base64 encoded). Exactly one SSH authentication method must be set."),
     }).describe("SSH access configuration")
+    .passthrough()
     .refine((data) => {
-        if(data.privateKeyPath && data.privateKeyContentBase64 ||
-            !data.privateKeyPath && !data.privateKeyContentBase64
-        ){
-            return false
-        }
-        return true
+        // to check a single auth method is set, increment counter and check exactly one is set
+        let setAuthMethods = 0
+        if(data.privateKeyPath) setAuthMethods++
+        if(data.privateKeyContentBase64) setAuthMethods++
+        if(data.passwordBase64) setAuthMethods++
+        return setAuthMethods === 1
     }, {
-        message: "Exactly one of privateKeyPath or privateKeyContentBase64 must be set"
+        message: "Exactly one of privateKeyPath, privateKeyContentBase64 or passwordBase64 must be set"
     })
 }).passthrough()
 
