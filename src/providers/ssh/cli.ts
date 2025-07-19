@@ -39,7 +39,9 @@ export class SshInputPrompter extends AbstractInputPrompter<SshCreateCliArgs, Ss
 
     protected async promptSpecificInput(commonInput: CommonInstanceInput, partialInput: PartialDeep<SshInstanceInput>, createOptions: PromptOptions): Promise<SshInstanceInput> {
 
-        await this.warnExperimentalProvider()
+        if(createOptions.autoApprove !== true) {
+            await this.warnExperimentalProvider()
+        }
 
         const hostname = await this.hostname(partialInput.provision?.hostname)
         const sshUser = await this.sshUser(partialInput.provision?.ssh?.user)
