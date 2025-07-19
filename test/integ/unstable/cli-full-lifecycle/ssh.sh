@@ -1,11 +1,11 @@
-npx tsx src/cli/main.ts  create local \
-        --name test-local-vagrant \
+npx tsx src/cli/main.ts  create ssh \
+        --name test-ssh-scaleway \
         --streaming-server sunshine \
         --sunshine-user sunshine \
         --sunshine-password "sunshine!" \
         --autostop true \
         --autostop-timeout 300 \
-        --hostname 192.168.56.43 \
-        --ssh-user vagrant \
-        --ssh-password vagrant \
+        --hostname 51.159.139.175 \
+        --ssh-user ubuntu \
+        --ssh-private-key ~/.ssh/id_ed25519 \
         --yes --overwrite-existing --skip-pairing
