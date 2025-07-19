@@ -1,15 +1,15 @@
 import { AbstractInstanceProvisioner, InstanceProvisionerArgs } from '../../core/provisioner';
-import { LocalProvisionInputV1, LocalProvisionOutputV1 } from './state';
+import { SshProvisionInputV1, SshProvisionOutputV1 } from './state';
 
-export interface LocalProvisionerArgs extends InstanceProvisionerArgs<LocalProvisionInputV1, LocalProvisionOutputV1> { }
+export interface SshProvisionerArgs extends InstanceProvisionerArgs<SshProvisionInputV1, SshProvisionOutputV1> { }
 
-export class LocalProvisioner extends AbstractInstanceProvisioner<LocalProvisionInputV1, LocalProvisionOutputV1> {
+export class SshProvisioner extends AbstractInstanceProvisioner<SshProvisionInputV1, SshProvisionOutputV1> {
 
-    constructor(args: LocalProvisionerArgs){
+    constructor(args: SshProvisionerArgs){
         super(args)
     }
 
-    async doProvision(): Promise<LocalProvisionOutputV1> {
+    async doProvision(): Promise<SshProvisionOutputV1> {
 
         this.logger.info(`Provisioning local instance ${this.args.instanceName} is a no-op, no action done but setting provision outputs.`)
 
@@ -20,7 +20,7 @@ export class LocalProvisioner extends AbstractInstanceProvisioner<LocalProvision
     }
 
     async doDestroy(){
-        this.logger.info(`Local provider destroy is a no-op, no action done. Provision output will be set to undefined.`)
+        this.logger.info(`SSH provider destroy is a no-op, no action done. Provision output will be set to undefined.`)
         this.args.provisionOutput = undefined
     }
 

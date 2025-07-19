@@ -11,7 +11,7 @@ import { confirm } from '@inquirer/prompts';
 import { ConfirmationPrompter } from './prompter';
 import { ScalewayCliCommandGenerator } from '../providers/scaleway/cli';
 import { DummyCliCommandGenerator } from '../providers/dummy/cli';
-import { LocalCliCommandGenerator } from '../providers/local/cli';
+import { SshCliCommandGenerator } from '../providers/ssh/cli';
 import { ConfigLoader } from '../core/config/default';
 import { CloudypadClient } from '../core/client';
 import { CoreConfig } from '../core/config/interface';
@@ -95,7 +95,7 @@ export function buildProgram(){
     createCmd.addCommand(new GcpCliCommandGenerator().buildCreateCommand({ coreConfig: coreConfig }))
     createCmd.addCommand(new PaperspaceCliCommandGenerator().buildCreateCommand({ coreConfig: coreConfig }))
     createCmd.addCommand(new ScalewayCliCommandGenerator().buildCreateCommand({ coreConfig: coreConfig }))
-    createCmd.addCommand(new LocalCliCommandGenerator().buildCreateCommand({ coreConfig: coreConfig }))
+    createCmd.addCommand(new SshCliCommandGenerator().buildCreateCommand({ coreConfig: coreConfig }))
     createCmd.addCommand(new DummyCliCommandGenerator().buildCreateCommand({ coreConfig: coreConfig }), { hidden: true })
     
     const updateCmd = program
@@ -107,7 +107,7 @@ export function buildProgram(){
     updateCmd.addCommand(new GcpCliCommandGenerator().buildUpdateCommand({ coreConfig: coreConfig }))
     updateCmd.addCommand(new PaperspaceCliCommandGenerator().buildUpdateCommand({ coreConfig: coreConfig }))
     updateCmd.addCommand(new ScalewayCliCommandGenerator().buildUpdateCommand({ coreConfig: coreConfig }))
-    updateCmd.addCommand(new LocalCliCommandGenerator().buildUpdateCommand({ coreConfig: coreConfig }))
+    updateCmd.addCommand(new SshCliCommandGenerator().buildUpdateCommand({ coreConfig: coreConfig }))
     updateCmd.addCommand(new DummyCliCommandGenerator().buildUpdateCommand({ coreConfig: coreConfig }), { hidden: true })
 
     program

@@ -1,29 +1,29 @@
-import { LocalInstanceInput, LocalInstanceStateV1, LocalProvisionInputV1, LocalStateParser } from "./state"
+import { SshInstanceInput as SshInstanceInput, SshInstanceStateV1 as SshInstanceStateV1, SshProvisionInputV1 as SshProvisionInputV1, SshStateParser } from "./state"
 import { CommonConfigurationInputV1, CommonInstanceInput } from "../../core/state/state"
 import { select, input, confirm, password } from '@inquirer/prompts';
 import { AbstractInputPrompter, PromptOptions } from "../../cli/prompter";
 import lodash from 'lodash'
 import { CliCommandGenerator, CreateCliArgs, UpdateCliArgs, CLI_OPTION_STREAMING_SERVER, CLI_OPTION_SUNSHINE_PASSWORD, CLI_OPTION_SUNSHINE_USERNAME, CLI_OPTION_SUNSHINE_IMAGE_REGISTRY, CLI_OPTION_SUNSHINE_IMAGE_TAG, CLI_OPTION_AUTO_STOP_TIMEOUT, CLI_OPTION_AUTO_STOP_ENABLE, CLI_OPTION_USE_LOCALE, CLI_OPTION_KEYBOARD_LAYOUT, CLI_OPTION_KEYBOARD_MODEL, CLI_OPTION_KEYBOARD_VARIANT, CLI_OPTION_KEYBOARD_OPTIONS, BuildCreateCommandArgs, BuildUpdateCommandArgs } from "../../cli/command";
-import { CLOUDYPAD_PROVIDER_LOCAL } from "../../core/const";
+import { CLOUDYPAD_PROVIDER_SSH } from "../../core/const";
 import { InteractiveInstanceInitializer } from "../../cli/initializer";
 import { PartialDeep } from "type-fest";
 import { InteractiveInstanceUpdater } from "../../cli/updater";
 import { cleanupAndExit, logFullError } from "../../cli/program";
-import { LocalProviderClient } from "./provider";
+import { SshProviderClient as SshProviderClient } from "./provider";
 
-export interface LocalCreateCliArgs extends CreateCliArgs {
+export interface SshCreateCliArgs extends CreateCliArgs {
     hostname?: string
     sshUser?: string
     sshPassword?: string
 }
 
-export type LocalUpdateCliArgs = UpdateCliArgs
+export type SshUpdateCliArgs = UpdateCliArgs
 
 
-export class LocalInputPrompter extends AbstractInputPrompter<LocalCreateCliArgs, LocalProvisionInputV1, CommonConfigurationInputV1> {
+export class SshInputPrompter extends AbstractInputPrompter<SshCreateCliArgs, SshProvisionInputV1, CommonConfigurationInputV1> {
     
-    buildProvisionerInputFromCliArgs(cliArgs: LocalCreateCliArgs): PartialDeep<LocalInstanceInput> {
-        const input: PartialDeep<LocalInstanceInput> = {
+    buildProvisionerInputFromCliArgs(cliArgs: SshCreateCliArgs): PartialDeep<SshInstanceInput> {
+        const input: PartialDeep<SshInstanceInput> = {
             provision: {
                 hostname: cliArgs.hostname,
                 ssh: {
@@ -37,7 +37,7 @@ export class LocalInputPrompter extends AbstractInputPrompter<LocalCreateCliArgs
         return input;
     }
 
-    protected async promptSpecificInput(commonInput: CommonInstanceInput, partialInput: PartialDeep<LocalInstanceInput>, createOptions: PromptOptions): Promise<LocalInstanceInput> {
+    protected async promptSpecificInput(commonInput: CommonInstanceInput, partialInput: PartialDeep<SshInstanceInput>, createOptions: PromptOptions): Promise<SshInstanceInput> {
 
         await this.warnExperimentalProvider()
 
@@ -45,7 +45,7 @@ export class LocalInputPrompter extends AbstractInputPrompter<LocalCreateCliArgs
         const sshUser = await this.sshUser(partialInput.provision?.ssh?.user)
         const sshAuth = await this.sshAuth(partialInput)
         
-        const localInput: LocalInstanceInput = lodash.merge(
+        const localInput: SshInstanceInput = lodash.merge(
             {},
             commonInput, 
             {
@@ -84,7 +84,7 @@ export class LocalInputPrompter extends AbstractInputPrompter<LocalCreateCliArgs
         })
     }
 
-    private async sshAuth(partialInput: PartialDeep<LocalInstanceInput>): Promise<{
+    private async sshAuth(partialInput: PartialDeep<SshInstanceInput>): Promise<{
         sshPrivateKeyPath: string | undefined
         sshPasswordBase64: string | undefined
         sshKeyContentBase64: string | undefined
@@ -162,10 +162,10 @@ export class LocalInputPrompter extends AbstractInputPrompter<LocalCreateCliArgs
     }
 }
 
-export class LocalCliCommandGenerator extends CliCommandGenerator {
+export class SshCliCommandGenerator extends CliCommandGenerator {
     
     buildCreateCommand(args: BuildCreateCommandArgs) {
-        return this.getBaseCreateCommand(CLOUDYPAD_PROVIDER_LOCAL)
+        return this.getBaseCreateCommand(CLOUDYPAD_PROVIDER_SSH)
             .addOption(CLI_OPTION_STREAMING_SERVER)
             .addOption(CLI_OPTION_SUNSHINE_USERNAME)
             .addOption(CLI_OPTION_SUNSHINE_PASSWORD)
@@ -181,12 +181,12 @@ export class LocalCliCommandGenerator extends CliCommandGenerator {
             .option('--hostname <hostname>', 'Server IP or hostname on which to deploy the instance')
             .option('--ssh-user <user>', 'SSH username')
             .option('--ssh-password <password>', 'SSH password')
-            .action(async (cliArgs: LocalCreateCliArgs) => {
+            .action(async (cliArgs: SshCreateCliArgs) => {
                 
                 try {
-                    await new InteractiveInstanceInitializer<LocalInstanceStateV1, LocalCreateCliArgs>({ 
-                        providerClient: new LocalProviderClient({ config: args.coreConfig }),
-                        inputPrompter: new LocalInputPrompter({ coreConfig: args.coreConfig }),
+                    await new InteractiveInstanceInitializer<SshInstanceStateV1, SshCreateCliArgs>({ 
+                        providerClient: new SshProviderClient({ config: args.coreConfig }),
+                        inputPrompter: new SshInputPrompter({ coreConfig: args.coreConfig }),
                         initArgs: cliArgs
                     }).initializeInteractive()
                     
@@ -208,7 +208,7 @@ export class LocalCliCommandGenerator extends CliCommandGenerator {
     }
 
     buildUpdateCommand(args: BuildUpdateCommandArgs) {
-        return this.getBaseUpdateCommand(CLOUDYPAD_PROVIDER_LOCAL)
+        return this.getBaseUpdateCommand(CLOUDYPAD_PROVIDER_SSH)
             .addOption(CLI_OPTION_SUNSHINE_USERNAME)
             .addOption(CLI_OPTION_SUNSHINE_PASSWORD)
             .addOption(CLI_OPTION_SUNSHINE_IMAGE_TAG)
@@ -223,12 +223,12 @@ export class LocalCliCommandGenerator extends CliCommandGenerator {
             .option('--host <host>', 'Host IP or hostname for SSH connection')
             .option('--ssh-user <user>', 'SSH username')
             .option('--ssh-password <password>', 'SSH password')
-            .action(async (cliArgs: LocalUpdateCliArgs) => {
+            .action(async (cliArgs: SshUpdateCliArgs) => {
                 
                 try {
-                    await new InteractiveInstanceUpdater<LocalInstanceStateV1, LocalUpdateCliArgs>({
-                        providerClient: new LocalProviderClient({ config: args.coreConfig }),
-                        inputPrompter: new LocalInputPrompter({ coreConfig: args.coreConfig }),
+                    await new InteractiveInstanceUpdater<SshInstanceStateV1, SshUpdateCliArgs>({
+                        providerClient: new SshProviderClient({ config: args.coreConfig }),
+                        inputPrompter: new SshInputPrompter({ coreConfig: args.coreConfig }),
                     }).updateInteractive(cliArgs)
                     
                     console.info(`Updated instance ${cliArgs.name}`)

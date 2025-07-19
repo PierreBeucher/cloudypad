@@ -1,18 +1,18 @@
 import { AbstractInstanceRunner, InstanceRunnerArgs, ServerRunningStatus, StartStopOptions } from '../../core/runner';
-import { LocalProvisionInputV1, LocalProvisionOutputV1 } from './state';
-import { SSHClient, SSHClientArgs, SshKeyLoader } from '../../tools/ssh';
-import { CLOUDYPAD_PROVIDER_LOCAL } from '../../core/const';
+import { SshProvisionInputV1, SshProvisionOutputV1 } from './state';
+import { SSHClient, SSHClientArgs } from '../../tools/ssh';
+import { CLOUDYPAD_PROVIDER_SSH } from '../../core/const';
 
-export interface LocalInstanceRunnerArgs extends InstanceRunnerArgs<LocalProvisionInputV1, LocalProvisionOutputV1> {}
+export interface SshInstanceRunnerArgs extends InstanceRunnerArgs<SshProvisionInputV1, SshProvisionOutputV1> {}
 
 /**
- * A Local instance runner that implements instance lifecycle operations.
+ * A SSH instance runner that implements instance lifecycle operations.
  * For connecting to local machines or machines accessible via SSH.
  */
-export class LocalInstanceRunner extends AbstractInstanceRunner<LocalProvisionInputV1, LocalProvisionOutputV1> {
+export class SshInstanceRunner extends AbstractInstanceRunner<SshProvisionInputV1, SshProvisionOutputV1> {
 
-    constructor(args: LocalInstanceRunnerArgs) {
-        super(CLOUDYPAD_PROVIDER_LOCAL, args);
+    constructor(args: SshInstanceRunnerArgs) {
+        super(CLOUDYPAD_PROVIDER_SSH, args);
     }
 
     protected buildSshClientArgs(): SSHClientArgs {
@@ -75,7 +75,7 @@ export class LocalInstanceRunner extends AbstractInstanceRunner<LocalProvisionIn
     }
 
     async doGetInstanceStatus(): Promise<ServerRunningStatus> {
-        this.logger.debug(`Local get status operation for instance: ${this.args.instanceName}`)
+        this.logger.debug(`SSH get status operation for instance: ${this.args.instanceName}`)
         
         // try to run an SSH command on instance
         // No error means instance is running properly

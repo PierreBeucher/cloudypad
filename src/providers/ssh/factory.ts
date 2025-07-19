@@ -1,13 +1,13 @@
 import { InstanceProvisioner } from "../../core/provisioner";
 import { InstanceRunner } from "../../core/runner";
 import { CommonConfigurationInputV1 } from "../../core/state/state";
-import { LocalProvisioner } from "./provisioner";
-import { LocalInstanceRunner } from "./runner";
-import { LocalInstanceStateV1, LocalProvisionInputV1, LocalProvisionOutputV1 } from "./state";
+import { SshProvisioner } from "./provisioner";
+import { SshInstanceRunner } from "./runner";
+import { SshInstanceStateV1, SshProvisionInputV1, SshProvisionOutputV1 } from "./state";
 import { CoreConfig } from "../../core/config/interface";
 import { AbstractProvisionerFactory, AbstractRunnerFactory } from "../../core/submanager-factory";
 
-export class LocalProvisionerFactory extends AbstractProvisionerFactory<LocalInstanceStateV1> {
+export class SshProvisionerFactory extends AbstractProvisionerFactory<SshInstanceStateV1> {
 
     constructor(coreConfig: CoreConfig) {
         super(coreConfig)
@@ -15,11 +15,11 @@ export class LocalProvisionerFactory extends AbstractProvisionerFactory<LocalIns
 
     protected async doBuildProvisioner(
         name: string, 
-        provisionInput: LocalProvisionInputV1, 
-        provisionOutput: LocalProvisionOutputV1, 
+        provisionInput: SshProvisionInputV1, 
+        provisionOutput: SshProvisionOutputV1, 
         configurationInput: CommonConfigurationInputV1
     ): Promise<InstanceProvisioner> {
-        return new LocalProvisioner({
+        return new SshProvisioner({
             coreConfig: this.coreConfig,
             instanceName: name,
             provisionInput: provisionInput,
@@ -29,7 +29,7 @@ export class LocalProvisionerFactory extends AbstractProvisionerFactory<LocalIns
     }
 }
 
-export class LocalRunnerFactory extends AbstractRunnerFactory<LocalInstanceStateV1> {
+export class SshRunnerFactory extends AbstractRunnerFactory<SshInstanceStateV1> {
 
     constructor(coreConfig: CoreConfig) {
         super(coreConfig)
@@ -37,11 +37,11 @@ export class LocalRunnerFactory extends AbstractRunnerFactory<LocalInstanceState
 
     protected async doBuildRunner(
         name: string, 
-        provisionInput: LocalProvisionInputV1, 
-        provisionOutput: LocalProvisionOutputV1, 
+        provisionInput: SshProvisionInputV1, 
+        provisionOutput: SshProvisionOutputV1, 
         configurationInput: CommonConfigurationInputV1
     ): Promise<InstanceRunner> {
-        return new LocalInstanceRunner({
+        return new SshInstanceRunner({
             instanceName: name,
             provisionInput: provisionInput,
             provisionOutput: provisionOutput,

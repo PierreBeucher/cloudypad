@@ -1,65 +1,65 @@
 import { CoreConfig } from "../../core/config/interface"
-import { CLOUDYPAD_PROVIDER_LOCAL } from "../../core/const"
+import { CLOUDYPAD_PROVIDER_SSH } from "../../core/const"
 import { InstanceInitializer } from "../../core/initializer"
 import { GenericInstanceManager, InstanceManager } from "../../core/manager"
 import { AbstractProviderClient } from "../../core/provider"
 import { InstanceStateV1 } from "../../core/state/state"
 import { StateWriter } from "../../core/state/writer"
 import { InstanceUpdater } from "../../core/updater"
-import { LocalInstanceStateV1, LocalStateParser } from "./state"
-import { LocalProvisionerFactory, LocalRunnerFactory } from "./factory"
+import { SshInstanceStateV1, SshStateParser } from "./state"
+import { SshProvisionerFactory, SshRunnerFactory } from "./factory"
 import { AnsibleConfiguratorFactory } from "../../configurators/ansible"
 import { GenericStateParser } from "../../core/state/parser"
 import { CLOUDYPAD_PROVIDER } from "../../core/const"
 
-export type LocalProviderClientArgs = {
+export type SshProviderClientArgs = {
     config: CoreConfig
 }
 
-export class LocalProviderClient extends AbstractProviderClient<LocalInstanceStateV1> {
+export class SshProviderClient extends AbstractProviderClient<SshInstanceStateV1> {
 
-    constructor(args: LocalProviderClientArgs) {
+    constructor(args: SshProviderClientArgs) {
         super(args)
     }
 
     getProviderName(): CLOUDYPAD_PROVIDER {
-        return CLOUDYPAD_PROVIDER_LOCAL
+        return CLOUDYPAD_PROVIDER_SSH
     }
 
-    getStateParser(): GenericStateParser<LocalInstanceStateV1> {
-        return new LocalStateParser()
+    getStateParser(): GenericStateParser<SshInstanceStateV1> {
+        return new SshStateParser()
     }
 
-    getInstanceInitializer(): InstanceInitializer<LocalInstanceStateV1> {
-        return new InstanceInitializer<LocalInstanceStateV1>({
+    getInstanceInitializer(): InstanceInitializer<SshInstanceStateV1> {
+        return new InstanceInitializer<SshInstanceStateV1>({
             stateWriter: this.getStateWriter(),
-            stateParser: new LocalStateParser(),
-            provider: CLOUDYPAD_PROVIDER_LOCAL
+            stateParser: new SshStateParser(),
+            provider: CLOUDYPAD_PROVIDER_SSH
         })
     }
 
-    getInstanceUpdater(): InstanceUpdater<LocalInstanceStateV1> {
-        return new InstanceUpdater<LocalInstanceStateV1>({
-            stateParser: new LocalStateParser(),
+    getInstanceUpdater(): InstanceUpdater<SshInstanceStateV1> {
+        return new InstanceUpdater<SshInstanceStateV1>({
+            stateParser: new SshStateParser(),
             stateWriter: this.getStateWriter(),
             stateLoader: this.stateManagerBuilder.buildStateLoader()
         })
     }
 
-    async getInstanceState(instanceName: string): Promise<LocalInstanceStateV1> {
+    async getInstanceState(instanceName: string): Promise<SshInstanceStateV1> {
         const loader = this.stateManagerBuilder.buildStateLoader()
-        const parser = new LocalStateParser()
+        const parser = new SshStateParser()
         const rawState = await loader.loadInstanceState(instanceName)
         return parser.parse(rawState)
     }
 
     async getInstanceManagerFor(state: InstanceStateV1): Promise<InstanceManager> {
-        const parser = new LocalStateParser()
+        const parser = new SshStateParser()
         const localState = parser.parse(state)
-        return new GenericInstanceManager<LocalInstanceStateV1>({
+        return new GenericInstanceManager<SshInstanceStateV1>({
             instanceName: localState.name,
-            provisionerFactory: new LocalProvisionerFactory(this.coreConfig),
-            runnerFactory: new LocalRunnerFactory(this.coreConfig),
+            provisionerFactory: new SshProvisionerFactory(this.coreConfig),
+            runnerFactory: new SshRunnerFactory(this.coreConfig),
             configuratorFactory: new AnsibleConfiguratorFactory(),
             stateWriter: this.getStateWriter(),
         })
@@ -70,10 +70,10 @@ export class LocalProviderClient extends AbstractProviderClient<LocalInstanceSta
         return this.getInstanceManagerFor(state)
     }
 
-    getStateWriter(): StateWriter<LocalInstanceStateV1> {
-        return new StateWriter<LocalInstanceStateV1>({
+    getStateWriter(): StateWriter<SshInstanceStateV1> {
+        return new StateWriter<SshInstanceStateV1>({
             sideEffect: this.stateManagerBuilder.buildSideEffect(),
-            stateParser: new LocalStateParser()
+            stateParser: new SshStateParser()
         })
     }
 } 
