@@ -22,6 +22,14 @@
       include_vars: "providers/{{ cloudypad_provider }}/vars.yml"
       when: provider_vars_exists
 
+    - name: Check if provider specific pre-tasks file exists
+      set_fact:
+        provider_pre_tasks_exists: "{{ lookup('file', 'providers/' + cloudypad_provider + '/pre-tasks.yml', errors='ignore') is not none }}"
+
+    - name: Load provider specific tasks
+      include_tasks: "providers/{{ cloudypad_provider }}/pre-tasks.yml"
+      when: provider_pre_tasks_exists
+
   roles:
     - role: roles/prepare-install
       tags: [ prepare-install ]
