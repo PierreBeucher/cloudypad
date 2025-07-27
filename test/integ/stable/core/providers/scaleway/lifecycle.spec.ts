@@ -49,7 +49,7 @@ describe('Scaleway lifecycle with instance server deletion', () => {
                 diskSizeGb: 30,
                 dataDiskSizeGb: 50,
                 deleteInstanceServerOnStop: true,
-                imageId: "0dc5f115-4256-44c1-ae8c-681fc534a40e"
+                imageId: "c0a1b6c7-649c-4bb1-8e77-8322e956a301" // pre-installed image
             }, {
                 sunshine: {
                     enable: true,
