@@ -9,13 +9,13 @@ import { CloudypadClient } from '../../../../../../src/core/client'
 
 // This test is run manually using an existing instance
 
-describe('Scaleway lifecycle', () => {
-    const logger = getLogger("test-scaleway-lifecycle")
+describe('Scaleway lifecycle with instance server deletion', () => {
+    const logger = getLogger("test-scaleway-lifecycle-with-server-deletion")
     const coreConfig = getIntegTestCoreConfig()
     const scalewayProviderClient = new ScalewayProviderClient({ config: coreConfig })
-    const instanceName = 'test-instance-scaleway-lifecycle'
+    const instanceName = 'test-instance-scaleway-lifecycle-with-server-deletion'
 
-    const projectId = "02d02f86-9414-4161-b807-efb2bd22d266"
+    const projectId = "297ea06f-4231-4ee7-bd5e-cb28cec4c4ee"
     const region = "fr-par"
     const zone = "fr-par-2"
 
@@ -48,12 +48,17 @@ describe('Scaleway lifecycle', () => {
                 instanceType: "L4-1-24G",
                 diskSizeGb: 30,
                 dataDiskSizeGb: 50,
+                deleteInstanceServerOnStop: true,
+                imageId: "c0a1b6c7-649c-4bb1-8e77-8322e956a301" // pre-installed image
             }, {
                 sunshine: {
                     enable: true,
                     username: "sunshine",
                     passwordBase64: Buffer.from("Sunshine!").toString('base64')
                 }, 
+                ansible: {
+                    additionalArgs: "-t data-disk,sunshine"
+                }
             })
     })
 
@@ -69,7 +74,7 @@ describe('Scaleway lifecycle', () => {
 
         const serverData = await scalewayClient.getRawServerData(currentInstanceServerId)
         assert.strictEqual(serverData?.commercialType, "L4-1-24G")
-    }).timeout(20*60*1000) // 20 minutes timeout
+    }).timeout(360000)
 
     it('should update instance', async () => {
         const instanceUpdater = scalewayProviderClient.getInstanceUpdater()
@@ -92,7 +97,7 @@ describe('Scaleway lifecycle', () => {
         const serverData = await scalewayClient.getRawServerData(currentInstanceServerId)
         assert.strictEqual(serverData?.commercialType, "GPU-3070-S")
 
-    }).timeout(20*60*1000) // 20 minutes timeout
+    }).timeout(360000)
 
     it('should have a valid instance server output with existing server', async () => {
         const state = await getCurrentTestState()
@@ -103,27 +108,29 @@ describe('Scaleway lifecycle', () => {
         const scalewayClient = getScalewayClient()
         
         const serverStatus = await scalewayClient.getInstanceStatus(currentInstanceServerId)
-        // assert.strictEqual(serverStatus, ScalewayServerState.Running)
+        assert.strictEqual(serverStatus, ScalewayServerState.Running)
     }).timeout(10000)
 
     // run twice for idempotency
     for (let i = 0; i < 2; i++) { 
 
-        it(`should stop instance and keep instance server (${i+1}/2 for idempotency)`, async () => {
+        it(`should stop instance and delete instance server (${i+1}/2 for idempotency)`, async () => {
             const instanceManager = await scalewayProviderClient.getInstanceManager(instanceName)
             await instanceManager.stop({ wait: true })
 
             const instanceStatus = await instanceManager.getInstanceStatus()
-            assert.strictEqual(instanceStatus.configured, true)
-            assert.strictEqual(instanceStatus.serverStatus, ServerRunningStatus.Stopped)
+            assert.strictEqual(instanceStatus.configured, false)
+            assert.strictEqual(instanceStatus.serverStatus, ServerRunningStatus.Unknown)
 
             const state = await getCurrentTestState()
-            assert.strictEqual(state.provision.output?.instanceServerId, currentInstanceServerId)
+            assert.strictEqual(state.provision.output?.instanceServerId, undefined)
 
             const scalewayClient = getScalewayClient()
             const instances = await scalewayClient.listInstances()
             const instance = instances.find(instance => instance.id === currentInstanceServerId)
-            assert.ok(instance)
+            assert.strictEqual(instance, undefined)
+
+            currentInstanceServerId = undefined
         }).timeout(120000)
     }
 
