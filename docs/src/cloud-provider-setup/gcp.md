@@ -1,4 +1,4 @@
-# Google Cloud account setup
+# Google Cloud provider setup
 
 If you don't already have a Google Cloud account, [create an account](https://console.cloud.google.com/) or use an existing account.
 

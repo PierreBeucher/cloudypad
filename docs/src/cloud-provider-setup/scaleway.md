@@ -1,4 +1,4 @@
-# Scaleway account setup
+# Scaleway provider setup
 
 If you don't already have an Scaleway account, [create an account](https://www.scaleway.com) or use an existing account.
 

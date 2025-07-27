@@ -1,8 +1,8 @@
 # Summary
 
 [Introduction](README.md)
-[What is Cloud Gaming ?](what-is-cloud-gaming.md)
 [Getting started 🚀](getting-started.md)
+[What is Cloud Gaming ?](what-is-cloud-gaming.md)
 [Roadmap](roadmap.md)
 
 # CLI Usage
@@ -13,6 +13,16 @@
 - [Streaming servers: Sunshine and Wolf](./usage/streaming-server.md)
 - [Auto shutdown of inactive instances](./usage/autostop.md)
 - [Connect to instance with SSH](./usage/ssh.md)
+
+# Providers
+
+- [SSH - Deploy on your own server](./cloud-provider-setup/ssh.md)
+- [Cloud account setup: introduction](./cloud-provider-setup/README.md)
+- [AWS](./cloud-provider-setup/aws.md)
+- [Azure](./cloud-provider-setup/azure.md)
+- [Google Cloud](./cloud-provider-setup/gcp.md)
+- [Paperspace](./cloud-provider-setup/paperspace.md)
+- [Scaleway](./cloud-provider-setup/scaleway.md)
 
 # Help and troubleshooting
 
@@ -25,15 +35,6 @@
 - [General FAQ](./help/faq.md)
 - [Known issues](./help/known-issues.md)
 - [Upgrade guide](./help/upgrade-guide.md)
-
-# Cloud provider account setup
-
-- [Cloud account setup: introduction](./cloud-provider-setup/README.md)
-- [AWS](./cloud-provider-setup/aws.md)
-- [Azure](./cloud-provider-setup/azure.md)
-- [Google Cloud](./cloud-provider-setup/gcp.md)
-- [Paperspace](./cloud-provider-setup/paperspace.md)
-- [Scaleway](./cloud-provider-setup/scaleway.md)
 
 # Cost Optimization 💰
 
