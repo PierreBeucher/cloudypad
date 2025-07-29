@@ -2,7 +2,7 @@
 
 wait-x-availability.sh
 
-echo "Starting Steam with args: ${CLOUDYPAD_STEAM_ARGS:-}"
+echo "Starting Steam with args: $@"
 
 # Copy default Steam config to enable Proton globally if not already present
 if [ ! -f $CLOUDYPAD_DATA_DIR/Steam/config/config.vdf ]; then
@@ -11,4 +11,4 @@ if [ ! -f $CLOUDYPAD_DATA_DIR/Steam/config/config.vdf ]; then
     chmod 0644 $CLOUDYPAD_DATA_DIR/Steam/config/config.vdf
 fi
 
-steam ${CLOUDYPAD_STEAM_ARGS:-}
+steam "$@"

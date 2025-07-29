@@ -9,11 +9,11 @@
             "prep-cmd": [
                 {
                     "do": "sh -c \"sunshine-app-startup.sh > \/tmp\/sunshine-session-start.log 2>&1\"",
-                    "undo": ""
+                    "undo": "sh -c \"steam-stop.sh > \/tmp\/steam-stop.log 2>&1\""
                 }
             ],
             "detached": [
-                ""
+                "sh -c \"steam-start.sh steam:\/\/open\/games > \/tmp\/steam-start.log 2>&1\""
             ],
             "exclude-global-prep-cmd": "false",
             "auto-detach": "true",
@@ -26,11 +26,11 @@
             "prep-cmd": [
                 {
                     "do": "sh -c \"sunshine-app-startup.sh > \/tmp\/sunshine-session-start.log 2>&1\"",
-                    "undo": "steam steam:\/\/close\/bigpicture"
+                    "undo": "sh -c \"steam-stop.sh > \/tmp\/steam-stop.log 2>&1\""
                 }
             ],
             "detached": [
-                "steam steam:\/\/open\/bigpicture"
+                "sh -c \"steam-start.sh steam:\/\/open\/bigpicture > \/tmp\/steam-start-big-picture.log 2>&1\""
             ],
             "exclude-global-prep-cmd": "false",
             "auto-detach": "true",
