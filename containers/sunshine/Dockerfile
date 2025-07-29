@@ -15,7 +15,11 @@ RUN curl -o /app/steam-libs-amd64.deb "https://repo.steampowered.com/steam/archi
 RUN curl -o /app/steam-libs-i386.deb "https://repo.steampowered.com/steam/archive/stable/steam-libs-i386_${STEAM_VERSION}_i386.deb"
 RUN curl -o /app/steam.deb "https://repo.steampowered.com/steam/archive/stable/steam-launcher_${STEAM_VERSION}_all.deb"
 
-# Ubuntu 24.04
+# Heroic
+FROM download-base AS download-heroic
+ARG HEROIC_VERSION="2.18.0"
+RUN curl -L -o /app/heroic.deb "https://github.com/Heroic-Games-Launcher/HeroicGamesLauncher/releases/download/v${HEROIC_VERSION}/Heroic-${HEROIC_VERSION}-linux-amd64.deb"
+
 # 
 # Sunshine image based on Ubuntu 24.04
 # with desktop environment, game launchers and dependencies
@@ -181,6 +185,21 @@ apt install -y /app/steam-libs-i386.deb
 apt install -y /app/steam.deb
 
 _STEAM
+
+
+#
+# Heroic
+#
+RUN --mount=type=bind,from=download-heroic,source=/app/heroic.deb,target=/app/heroic.deb <<_HEROIC
+
+set -e
+apt install -y /app/heroic.deb
+
+_HEROIC
+
+# GE-Proton version that will be installed and configured for Heroic by default
+ENV CLOUDYPAD_HEROIC_DEFAULT_GEPROTON_VERSION="GE-Proton10-10"
+
 # 
 # Global environment variables
 #
@@ -220,9 +239,6 @@ ENV XDG_CACHE_HOME=$CLOUDYPAD_USER_HOME/.cache
 ENV XDG_DATA_HOME=$CLOUDYPAD_DATA_DIR
 
 ENV DBUS_SYSTEM_BUS_ADDRESS="unix:path=$XDG_RUNTIME_DIR/dbus"
-
-# Start Steam on library page by default
-ENV CLOUDYPAD_STEAM_ARGS="steam://open/games"
 
 # Run as non-root user
 # TODO use host UID/GID for better portability and usage from host ?

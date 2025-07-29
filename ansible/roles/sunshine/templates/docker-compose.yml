@@ -25,6 +25,9 @@ services:
     # Keep xfce4 config on host as user may customize it (eg. keyboard layout)
     - "{{ sunshine_persistent_config_dir }}/xfce4:/cloudy/conf/xfce4"
 
+    # Keep Heroic config and data
+    - "{{ sunshine_persistent_config_dir }}/heroic:/cloudy/conf/heroic"
+
     # Keep user's home directory
     # Some important data are stored in $HOME by numerous apps (like Heroic or Lutris)
     # persisting this folder makes sense to keep user's data across container recreation

@@ -37,6 +37,24 @@
             "wait-all": "true",
             "exit-timeout": "5",
             "cmd": ""
+        },
+        {
+            "name": "Heroic Games Launcher",
+            "image-path": "$(XDG_CONFIG_HOME)/sunshine/assets/heroic.png",
+            "prep-cmd": [
+                {
+                    "do": "sh -c \"sunshine-app-startup.sh > \/tmp\/sunshine-session-start.log 2>&1\"",
+                    "undo": "sh -c \"heroic-stop.sh > \/tmp\/heroic-stop.log 2>&1\""
+                }
+            ],
+            "detached": [
+                "sh -c \"heroic-start.sh > \/tmp\/heroic-start.log 2>&1\""
+            ],
+            "exclude-global-prep-cmd": "false",
+            "auto-detach": "true",
+            "wait-all": "true",
+            "exit-timeout": "5",
+            "cmd": ""
         }
     ]
 }
