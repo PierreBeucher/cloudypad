@@ -25,6 +25,11 @@ services:
     # Keep xfce4 config on host as user may customize it (eg. keyboard layout)
     - "{{ sunshine_persistent_config_dir }}/xfce4:/cloudy/conf/xfce4"
 
+    # Keep user's home directory
+    # Some important data are stored in $HOME by numerous apps (like Heroic or Lutris)
+    # persisting this folder makes sense to keep user's data across container recreation
+    - "{{ sunshine_persistent_home_dir }}:/home/cloudy"
+
     # Allow container to read/write/manage attributes on character device 13
     # 13 matches /dev/input mouse, keyboard, etc. devices
     # thus allowing process in container to manage input which we need for Sunshine

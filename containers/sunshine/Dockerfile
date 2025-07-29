@@ -190,6 +190,7 @@ ENV DISPLAY=":42"
 
 # User under which non-root services and softwares will run
 ENV CLOUDYPAD_USER=cloudy
+ENV CLOUDYPAD_USER_HOME=/home/$CLOUDYPAD_USER
 
 # Data directory that should be persisted via volume or bind mount
 ENV CLOUDYPAD_DATA_DIR=/cloudy/data
@@ -211,7 +212,7 @@ ENV SUNSHINE_SERVER_NAME="Sunshine"
 # 
 ENV XDG_RUNTIME_DIR=$CLOUDYPAD_RUNTIME_DIR
 ENV XDG_CONFIG_HOME=$CLOUDYPAD_CONF_DIR
-ENV XDG_CACHE_HOME=/home/$CLOUDYPAD_USER/.cache
+ENV XDG_CACHE_HOME=$CLOUDYPAD_USER_HOME/.cache
 
 # Write data in known directory for persistence
 # XDG_DATA_HOME is used by various programs (like Steam) to store data
@@ -225,7 +226,7 @@ ENV CLOUDYPAD_STEAM_ARGS="steam://open/games"
 
 # Run as non-root user
 # TODO use host UID/GID for better portability and usage from host ?
-RUN useradd -m -d /home/cloudy -s /bin/bash -u 1001 $CLOUDYPAD_USER
+RUN useradd -m -d $CLOUDYPAD_USER_HOME -s /bin/bash -u 1001 $CLOUDYPAD_USER
 
 # Copy overlay files: startup scripts, default config, etc. 
 COPY overlay /

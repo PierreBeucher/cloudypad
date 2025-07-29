@@ -16,6 +16,9 @@ sunshine_data_dir: "/var/lib/cloudypad/sunshine/data"
 # Bind mounted in Sunshine container for persistence
 sunshine_persistent_config_dir: "/var/lib/cloudypad/sunshine/conf"
 
+# Directory where user's home directory from container is persisted
+sunshine_persistent_home_dir: "/var/lib/cloudypad/sunshine/home"
+
 # Legacy Sunshine data directory
 # If data is found in this directory it will be moved to sunshine_data_dir
 sunshine_legacy_data_dir: "{{ sunshine_project_dir }}/data"
