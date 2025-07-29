@@ -115,7 +115,7 @@ merge_release_branch_in_master() {
 
   echo "Waiting for release tag CI jobs (Docker image build) to finish on tag $release_tag..."
   
-  timeout=1800  # Set timeout to 30 minutes (1800 seconds)
+  timeout=3600  # Set timeout to 60 minutes (3600 seconds)
   start_time=$(date +%s)
   release_jobs_success=false
 
@@ -194,10 +194,10 @@ else
     release_version=$1
 fi
 
-update_versions_in_package_files $release_version
-create_push_release_branch $release_version
+# update_versions_in_package_files $release_version
+# create_push_release_branch $release_version
 
-create_release_pr_and_merge_in_release_branch $release_version
+# create_release_pr_and_merge_in_release_branch $release_version
 merge_release_branch_in_master $release_version
 
 echo "Release done ! ✨"
