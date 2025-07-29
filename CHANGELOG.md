@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.33.0](https://github.com/PierreBeucher/cloudypad/compare/v0.32.1...v0.33.0) (2025-07-29)
+
+
+### Features
+
+* refactor SSH provider and prepare code for merge ([4659821](https://github.com/PierreBeucher/cloudypad/commit/46598212b401d2517adb286bd4bf8dd52dab96ad))
+* SSH provider ([a69de0a](https://github.com/PierreBeucher/cloudypad/commit/a69de0a03eaf041c7e439c42f76ebc5ca4aad8d0))
+
 ## [0.32.1](https://github.com/PierreBeucher/cloudypad/compare/v0.32.0...v0.32.1) (2025-07-07)
 
 
