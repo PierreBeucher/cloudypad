@@ -1,31 +1,40 @@
 # Getting started 🚀
 
-Cloudy Pad deploys a Cloud gaming gear using a Cloud provider of your choice:
-- 💰 While Cloudy Pad itself is free and open-source, charges may incur for Cloud provider usage. Make sure you [understand the costs](cost.md)
-- Cloudy Pad lets you play on Linux. Using Steam may require [Proton](https://github.com/ValveSoftware/Proton). You can check your game compatibility on [ProtonDB website](https://www.protondb.com/) or see [how to play games on Steam](#how-to-play-game-on-steam--why-does-my-steam-game-doesnt-launch-).
+Deploy a Cloud gaming instance using your own servers or directly on a Cloud provider like AWS, Azure or Google Cloud
+
+- 💰 While Cloudy Pad itself is free and open-source, charges may be incurred for Cloud provider usage. Make sure you [understand the costs](cost.md)
+- Cloudy Pad is Linux-based. Using Steam requires [Proton](https://github.com/ValveSoftware/Proton). You can check your game compatibility on [ProtonDB website](https://www.protondb.com/) or see [how to play games on Steam](#how-to-play-game-on-steam--why-does-my-steam-game-doesnt-launch-).
+
+**Cloudy Pad App**
+
+Instructions below are aimed for **tech-savvy users who are familiar with terms such as "server", "ssh" and "NVIDIA drivers".**
+
+If that's not your cup of tea, **you might prefer to use [Cloudy Pad App](https://app.cloudypad.gg/)** instead: a simple, intuitive web platform to deploy your gaming instance in a few minutes.
+
+[🎮 Join Cloudy Pad App](https://app.cloudypad.gg/)
 
 ---
 
 - [Prerequisites](#prerequisites)
 - [Installation](#installation)
-- [Cloud provider setup](#cloud-provider-setup)
+- [Choose your Provider](#choose-your-provider)
 - [Deploy your instance](#deploy-your-instance)
-- [Run Moonlight and connect to your instance](#run-moonlight-and-connect-to-your-instance)
-- [Sign-in to Steam and play your game](#sign-in-to-steam-and-play-your-game)
 - [Stop your instance after gaming sessions](#stop-your-instance-after-gaming-sessions)
 - [Problem ?](#problem-)
+
+
 
 ## Prerequisites
 
 - [Moonlight](https://moonlight-stream.org/) streaming client
   - Moonlight is client allowing you to connect to your instance and play your games
-- A Cloud provider account, one of:
+- Either your own server with an NVIDIA GPU or a Cloud provider:
   - AWS
   - Azure
   - Google Cloud
   - Paperspace
   - Scaleway
-- [Docker](https://docs.docker.com/engine/install/) 
+- [Docker](https://docs.docker.com/engine/install/) client
   - Rootless Docker is not supported yet
   - For MacOS, [OrbStack](https://orbstack.dev/) is recommended over Docker Desktop
 
@@ -39,11 +48,18 @@ curl -fsSL https://raw.githubusercontent.com/PierreBeucher/cloudypad/master/inst
 
 [➡️ See Installation page](./installation.md) for more installation methods on Linux, Mac and Windows.
 
-## Cloud provider setup
+## Choose your Provider
 
-You may need to setup a few things on your Cloud provider (eg. API key or SSH key). 
+Choose a provider:
 
-[➡️ Checkout per-Cloud provider setup specifities](./cloud-provider-setup).
+- [SSH](./cloud-provider-setup/ssh) - Deploy on your own server or machine directly via SSH
+- [AWS](./cloud-provider-setup/aws.md) - Create an instance directly on AWS
+- [Azure](./cloud-provider-setup/azure.md) - Create an instance directly on Microsoft Azure
+- [Google Cloud](./cloud-provider-setup/gcp.md) - Create an instance directly on Google Cloud
+- [Scaleway](./cloud-provider-setup/scaleway.md) - Create an instance directly on Scaleway
+- [Paperspace](./cloud-provider-setup/paperspace.md) - Create an instance directly on Paperspace
+
+[➡️ Check out per-Cloud provider setup specificities](./cloud-provider-setup).
 
 ## Deploy your instance
 
@@ -60,24 +76,18 @@ cloudypad create
 # 🥳 Your Cloudy Pad instance is ready !
 ```
 
-Cloudy Pad will guide you through creation process:
-- Prompt important information (eg. machine type, GPU, cost alerts, etc.) 
-- Create a new Cloud machine and related configurations automatically
+Cloudy Pad will do everything for you automatically:
+
+- Prompt for important information (you can also pass CLI args) 
+- Provision and configure your instance
 - Install GPU drivers and streaming server ([Wolf](https://games-on-whales.github.io/wolf/stable/) or [Sunshine](https://github.com/LizardByte/Sunshine))
-- Help your Pair with [Moonlight](https://moonlight-stream.org/) streaming client
+- Help you pair with [Moonlight](https://moonlight-stream.org/) streaming client
 
-## Run Moonlight and connect to your instance
+Once the installation is complete, run Moonlight, connect and start playing ! 🎮
 
-Run Moonlight, select your instance and run Steam. `cloudypad create` should have let you pair your Moonlight client with your instance. If needed, you can pair your Moonlight client with your instance manually:
+[➡️ Steam Sign-in guide](./help/steam.md)
 
-[➡️ See Moonlight setup and pairing guide](./usage/moonlight-setup.md)
-
-## Sign-in to Steam and play your game
-
-To sign-in to Steam, either:
-- Type your login and password directly
-  - 💡 **Copy/pasting your login and password in Moonlight**: use `CTRL+C` on your host and paste in Moonlight with `CTRL+SHIFT+ALT+V`
-- Use Steam mobile app and scan QR code: run Steam app on your phone, and click on shield 🛡️ button (bottom middle of the screen). Scan QR code from Moonlight.
+[➡️ Moonlight usage and optimization guide](./help/moonlight-usage.md)
 
 ## Stop your instance after gaming sessions
 
@@ -91,4 +101,4 @@ cloudypad stop mypad
 
 ## Problem ?
 
-😱 Something went wrong? See [FAQ and known issues](./usage/faq.md) or [create an issue](https://github.com/PierreBeucher/cloudypad/issues)
+😱 Something went wrong? See _Help and Troubleshooting_ section on the left, [FAQ and known issues](./help/faq.md) or [create an issue](https://github.com/PierreBeucher/cloudypad/issues)

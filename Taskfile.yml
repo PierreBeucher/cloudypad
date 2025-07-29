@@ -268,6 +268,12 @@ tasks:
         exit 1
       fi
     - >
+      if [ -z "{{ .CLOUDYPAD_VERSION }}" ]; then
+        echo "CLOUDYPAD_VERSION={{ .CLOUDYPAD_VERSION }}"
+        echo "CLOUDYPAD_VERSION not set. It should have been set from package.json - this is certainly a bug."
+        exit 1
+      fi
+    - >
       docker buildx build . 
       --cache-from type=registry,ref=$CLOUDYPAD_BUILD_CORE_IMAGE_REGISTRY:$CLOUDYPAD_BUILD_CORE_IMAGE_TAG-cache
       --cache-from type=registry,ref=$CLOUDYPAD_BUILD_CORE_IMAGE_REGISTRY:master-cache

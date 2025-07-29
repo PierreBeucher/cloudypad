@@ -13,8 +13,8 @@ describe('SshKeyLoader', () => {
             user: "test-user",
             privateKeyPath: DUMMY_SSH_KEY_PATH
         }
-        const privateKeyPath = sshKeyLoader.getSshPrivateKeyPath(ssh)
-        assert.strictEqual(privateKeyPath, ssh.privateKeyPath)
+        const actualAuth = sshKeyLoader.getSshAuth(ssh)
+        assert.strictEqual(actualAuth.privateKeyPath, ssh.privateKeyPath)
     })
 
     it('should return private key path using string content', () => {
@@ -24,11 +24,48 @@ describe('SshKeyLoader', () => {
             privateKeyContentBase64: toBase64(sshPrivateKeyContent)
         }
         
-        const actualPrivateKeyPath = sshKeyLoader.getSshPrivateKeyPath(ssh)
-        assert.ok(actualPrivateKeyPath)
+        const actualAuth = sshKeyLoader.getSshAuth(ssh)
+        assert.ok(actualAuth.privateKeyPath)
 
-        const actualPrivateKeyContent = fs.readFileSync(actualPrivateKeyPath, { encoding: 'utf8' })
+        const actualPrivateKeyContent = fs.readFileSync(actualAuth.privateKeyPath, { encoding: 'utf8' })
         assert.strictEqual(actualPrivateKeyContent, sshPrivateKeyContent)
+    })
+
+    it('should return password using password base64', () => {
+        const ssh: CommonProvisionInputV1["ssh"] = {
+            user: "test-user",
+            passwordBase64: toBase64("dummy-password")
+        }
+        const actualAuth = sshKeyLoader.getSshAuth(ssh)
+        assert.strictEqual(actualAuth.password, "dummy-password")
+    })
+
+    it('should throw an error if no private key or password is provided', () => {
+        const ssh: CommonProvisionInputV1["ssh"] = {
+            user: "test-user"
+        }
+        assert.throws(() => sshKeyLoader.getSshAuth(ssh), /No SSH private key or password provided/)
+    })
+
+    it('should return key path if both private key and key content are provided', () => {
+        const ssh: CommonProvisionInputV1["ssh"] = {
+            user: "test-user",
+            privateKeyPath: DUMMY_SSH_KEY_PATH,
+            privateKeyContentBase64: toBase64(fs.readFileSync(DUMMY_SSH_KEY_PATH, { encoding: 'utf8' }))
+        }
+        const actualAuth = sshKeyLoader.getSshAuth(ssh)
+        assert.strictEqual(actualAuth.privateKeyPath, ssh.privateKeyPath)
+    })
+
+    it('should return key path and password if both private key and password are provided', () => {
+        const ssh: CommonProvisionInputV1["ssh"] = {
+            user: "test-user",
+            privateKeyPath: DUMMY_SSH_KEY_PATH,
+            passwordBase64: toBase64("dummy-password")
+        }
+        const actualAuth = sshKeyLoader.getSshAuth(ssh)
+        assert.strictEqual(actualAuth.privateKeyPath, ssh.privateKeyPath)
+        assert.strictEqual(actualAuth.password, "dummy-password")
     })
 
     it('should return public key content using private key path', () => {

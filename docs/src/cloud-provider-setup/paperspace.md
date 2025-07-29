@@ -1,4 +1,4 @@
-# Paperspace account setup
+# Paperspace provider setup
 
 If you don't already have a Paperspace account, [create an account](https://console.paperspace.com/signup).
 

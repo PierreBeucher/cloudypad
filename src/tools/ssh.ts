@@ -6,12 +6,16 @@ import { CommonProvisionInputV1, CommonProvisionOutputV1, InstanceStateV1 } from
 import * as tmp from "tmp"
 import { fromBase64 } from "./base64";
 
+/**
+ * SSH client arguments. Either privateKeyPath or password must be provided, not both.
+ */
 export interface SSHClientArgs {
     clientName: string
     host: string,
     port?: number,
     user: string,
-    privateKeyPath: string
+    privateKeyPath?: string,
+    password?: string
 }
 
 export class SSHExecError extends Error{
@@ -39,43 +43,6 @@ export class SSHFileTransferError extends Error{
 export interface SSHCommandOpts {
     logPrefix?: string, 
     ignoreNonZeroExitCode?: boolean
-}
-
-/**
- * Build an SSH client for an instance. Use inputs and outputs to generate a client using proper SSH configs.
- * @param instanceName - Instance name
- * @param provisionInput - Instance provision input
- * @param provisionOutput - Instance provision output
- * @returns SSH client
- */
-export function buildClientForInstance(args: {
-    instanceName: string,
-    provisionInput: CommonProvisionInputV1,
-    provisionOutput: CommonProvisionOutputV1
-}): SSHClient {
-    const sshKeyPath = new SshKeyLoader().getSshPrivateKeyPath(args.provisionInput.ssh)
-
-    return new SSHClient(buildSshClientArgsForInstance(args))
-}
-
-/**
- * Build SSH client arguments for given instance. Args can be used to instantiate SSHClient.
- * @param args - Instance arguments
- * @returns SSH client arguments
- */
-export function buildSshClientArgsForInstance(args: {
-    instanceName: string, 
-    provisionInput: CommonProvisionInputV1, 
-    provisionOutput: CommonProvisionOutputV1
-}): SSHClientArgs {
-    const sshKeyPath = new SshKeyLoader().getSshPrivateKeyPath(args.provisionInput.ssh)
-    return {
-        clientName: args.instanceName,
-        host: args.provisionOutput.host,
-        port: 22,
-        user: args.provisionInput.ssh.user,
-        privateKeyPath: sshKeyPath
-    }
 }
 
 /**
@@ -205,13 +172,15 @@ export class SSHClient {
         // which make program hangs
         if(this.client.isConnected()) return this.client
 
-        this.logger.debug(`Connecting to '${this.args.user}@${this.args.host}' port '${this.args.port}' using ssh key ${this.args.privateKeyPath}...`)
+        this.logger.debug(`Connecting to '${this.args.user}@${this.args.host}' port '${this.args.port}'` + 
+            `(ssh key: '${this.args.privateKeyPath}', password: ${this.args.password ? 'yes' : 'no'})`)
 
         return this.client.connect({
             host: this.args.host,
             port: this.args.port,
             username: this.args.user,
             privateKeyPath: this.args.privateKeyPath,
+            password: this.args.password
         });
     }
     
@@ -231,27 +200,45 @@ export class SSHClient {
     
 }
 
+export interface SshAuth {
+    privateKeyPath?: string,
+    password?: string
+}
+
 /**
  * Load SSH keys from instance inputs
  */
 export class SshKeyLoader {
 
     /**
-     * Get SSH private key path from instance inputs. Return key path from privateKeyPath or 
-     * generate a temporary secure key file from privateKeyContentBase64.
+     * Get an SSH private key or password from given ssh args. Throws an error if the given args
+     * cannot produce either an ssh key path or a password.
+     * If both SSH key path and base64 content are provided, SSH key path is preferred.
      * @param ssh - SSH access configuration
-     * @returns SSH private key path
+     * @returns SSH private key path or password. Guaranteed to have at least one of key or password. An exception is thrown otherwise.
      */
-    getSshPrivateKeyPath(ssh: CommonProvisionInputV1["ssh"]){
+    getSshAuth(ssh: CommonProvisionInputV1["ssh"]): SshAuth {
+        const result: SshAuth = {}
+        
+        // set private key path if given, try to decode base64 content otherwise
         if(ssh.privateKeyPath){
-            return ssh.privateKeyPath
+            result.privateKeyPath = ssh.privateKeyPath
         } else if (ssh.privateKeyContentBase64){
             const tempKeyFile = tmp.fileSync({ mode: 0o600})
             fs.writeFileSync(tempKeyFile.name, fromBase64(ssh.privateKeyContentBase64))
-            return tempKeyFile.name
-        } else {
-            throw new Error("No SSH private key provided, neither privateKeyPath nor privateKeyContentBase64 is set.")
+            result.privateKeyPath = tempKeyFile.name
         }
+
+        // set password if given
+        if (ssh.passwordBase64){
+            result.password = Buffer.from(ssh.passwordBase64, 'base64').toString('utf-8')
+        }
+
+        if (!result.privateKeyPath && !result.password){
+            throw new Error("No SSH private key or password provided.")
+        }
+
+        return result
     }
 
     /**

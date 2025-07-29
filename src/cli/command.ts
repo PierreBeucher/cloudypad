@@ -1,7 +1,6 @@
 import { Command, Option } from "@commander-js/extra-typings";
 import { PUBLIC_IP_TYPE, PUBLIC_IP_TYPE_DYNAMIC, PUBLIC_IP_TYPE_STATIC } from "../core/const";
 import { AnalyticsManager } from "../tools/analytics/manager";
-import { CloudypadClient } from "../core/client";
 import { CoreConfig } from "../core/config/interface";
 
 //
@@ -13,7 +12,7 @@ import { CoreConfig } from "../core/config/interface";
  */
 export interface CreateCliArgs {
     name?: string
-    privateSshKey?: string
+    sshPrivateKey?: string
     yes?: boolean // auto approve
     overwriteExisting?: boolean
     skipPairing?: boolean
@@ -36,14 +35,18 @@ export interface CreateCliArgs {
 
 /**
  * Arguments any Provider can take as parameter for update command. Omit config that cannot/shouldn't be updated
- * - privateSshKey: updating would recreated the instance entirely. Since root volume is used to persist data, it would be lost. 
+ * - sshCrivateKey: updating would recreated the instance entirely. Since root volume is used to persist data, it would be lost. 
  *  May be supported once we persist data in a dedicated volume.
  * - streamingServer: too complex to handle as it would leave behind existing streaming server data and config. Maybe possible in the future.
  */
-export type UpdateCliArgs = Omit<CreateCliArgs, | "privateSshKey" | "streamingServer" > & { name: string }
+export type UpdateCliArgs = Omit<CreateCliArgs, | "sshPrivateKey" | "streamingServer" > & { name: string }
 
 export const CLI_OPTION_INSTANCE_NAME = new Option('--name <name>', 'Instance name')
-export const CLI_OPTION_PRIVATE_SSH_KEY = new Option('--private-ssh-key <path>', 'Path to private SSH key to use to connect to instance')
+
+// same flags but ssh-private-key is preferred (to play better with ssh provider ssh-user and ssh-password), hide the legacy one
+export const CLI_OPTION_PRIVATE_SSH_KEY_OLD = new Option('--private-ssh-key <path>', 'Path to private SSH key to use to connect to instance', )
+export const CLI_OPTION_PRIVATE_SSH_KEY = new Option('--ssh-private-key <path>', 'Path to private SSH key to use to connect to instance')
+
 export const CLI_OPTION_AUTO_APPROVE = new Option('--yes', 'Do not prompt for approval, automatically approve and continue')
 export const CLI_OPTION_OVERWRITE_EXISTING = new Option('--overwrite-existing', 'If an instance with the same name already exists, override without warning prompt')
 
@@ -132,6 +135,7 @@ export abstract class CliCommandGenerator {
         return new Command(provider)
             .description(`Create a new Cloudy Pad instance using ${provider} provider.`)
             .addOption(CLI_OPTION_INSTANCE_NAME)
+            .addOption(CLI_OPTION_PRIVATE_SSH_KEY_OLD)
             .addOption(CLI_OPTION_PRIVATE_SSH_KEY)
             .addOption(CLI_OPTION_AUTO_APPROVE)
             .addOption(CLI_OPTION_OVERWRITE_EXISTING)

@@ -1,4 +1,4 @@
-# AWS account setup
+# AWS provider setup
 
 If you don't already have an AWS account, [create an account](https://signin.aws.amazon.com/signup?request_type=register) or use an existing account.
 

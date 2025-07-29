@@ -1,4 +1,4 @@
-# Azure account setup
+# Azure provider setup
 
 If you don't already have an Azure account, [create an account](https://account.azure.com/signup?showCatalog%20=%20True) or use an existing account.
 

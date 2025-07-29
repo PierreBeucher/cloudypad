@@ -1,0 +1,35 @@
+version: "1"
+name: ssh-dummy
+events:
+  - type: init
+    timestamp: 1752932174820
+  - type: provision-begin
+    timestamp: 1752932174828
+  - type: provision-end
+    timestamp: 1752932174841
+  - type: configuration-begin
+    timestamp: 1752932174848
+provision:
+  provider: ssh
+  output:
+    host: 192.168.56.43
+    provisionedAt: 1752932174835
+  input:
+    ssh:
+      user: vagrant
+      passwordBase64: dmFncmFudA==
+    hostname: 192.168.56.43
+configuration:
+  configurator: ansible
+  input:
+    autostop:
+      enable: true
+      timeoutSeconds: 600
+    sunshine:
+      enable: true
+      passwordBase64: c3Vu
+      username: sun
+    wolf: null
+metadata:
+  lastProvisionDate: 1752932174837
+  lastProvisionCloudypadVersion: 0.32.1

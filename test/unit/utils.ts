@@ -61,7 +61,7 @@ export const DEFAULT_COMMON_INPUT: CommonInstanceInput = {
 
 export const DEFAULT_COMMON_CLI_ARGS: CreateCliArgs = {
     name: DEFAULT_COMMON_INPUT.instanceName,
-    privateSshKey: DEFAULT_COMMON_INPUT.provision.ssh.privateKeyPath,
+    sshPrivateKey: DEFAULT_COMMON_INPUT.provision.ssh.privateKeyPath,
     yes: true,
     overwriteExisting: false,
     skipPairing: true,
