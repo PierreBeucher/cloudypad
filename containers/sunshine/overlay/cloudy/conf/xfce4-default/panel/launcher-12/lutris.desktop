@@ -1,0 +1,18 @@
+[Desktop Entry]
+Name=Leroic
+Comment=Application for managing and playing games on Steam
+Exec=/usr/games/lutris
+Icon=lutris
+Terminal=false
+Type=Application
+Categories=Network;FileTransfer;Game;
+Actions=Launch
+PrefersNonDefaultGPU=true
+X-KDE-RunOnDiscreteGpu=true
+X-XFCE-Source=file:///usr/share/applications/lutris.desktop
+Path=
+StartupNotify=false
+
+[Desktop Action Launch]
+Name=Launch
+Exec=lutris

@@ -15,6 +15,11 @@ RUN curl -o /app/steam-libs-amd64.deb "https://repo.steampowered.com/steam/archi
 RUN curl -o /app/steam-libs-i386.deb "https://repo.steampowered.com/steam/archive/stable/steam-libs-i386_${STEAM_VERSION}_i386.deb"
 RUN curl -o /app/steam.deb "https://repo.steampowered.com/steam/archive/stable/steam-launcher_${STEAM_VERSION}_all.deb"
 
+# Lutris
+FROM download-base AS download-lutris
+ARG LUTRIS_VERSION="0.5.18"
+RUN curl -L -o /app/lutris.deb "https://github.com/lutris/lutris/releases/download/v${LUTRIS_VERSION}/lutris_${LUTRIS_VERSION}_all.deb"
+
 # Heroic
 FROM download-base AS download-heroic
 ARG HEROIC_VERSION="2.18.0"
@@ -186,6 +191,15 @@ apt install -y /app/steam.deb
 
 _STEAM
 
+#
+# Lutris
+#
+RUN --mount=type=bind,from=download-lutris,source=/app/lutris.deb,target=/app/lutris.deb <<_LUTRIS
+
+set -e
+apt install -y /app/lutris.deb
+
+_LUTRIS
 
 #
 # Heroic
