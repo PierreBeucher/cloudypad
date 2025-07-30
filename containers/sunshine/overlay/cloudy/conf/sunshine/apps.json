@@ -4,6 +4,22 @@
     },
     "apps": [
         {
+            "auto-detach": true,
+            "cmd": [],
+            "elevated": false,
+            "exclude-global-prep-cmd": false,
+            "exit-timeout": 5,
+            "image-path": "desktop.png",
+            "prep-cmd": [
+                {
+                    "do": "sh -c \"sunshine-app-startup.sh > \/tmp\/sunshine-session-start.log 2>&1\""
+                }
+            ],
+            "name": "Desktop",
+            "output": "",
+            "wait-all": true
+        },
+        {
             "name": "Steam",
             "image-path": "steam.png",
             "prep-cmd": [
