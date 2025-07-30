@@ -5,6 +5,9 @@
 # to setup screen resolution and other session-dependent settings
 #
 
+# Export DBUS_SESSION_BUS_ADDRESS variable to be used by other scripts
+source export-dbus-address.sh
+
 # Setup screen resolution
 setup-sunshine-screen-mode.sh
 
