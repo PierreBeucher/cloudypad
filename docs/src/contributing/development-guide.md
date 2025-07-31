@@ -105,33 +105,63 @@ Will eventually add an easier way to pass custom Ansible options such as `--ansi
 #### Development Virtual Machine
 
 A local Virtual Machine can be created with Vagrant:
+- Machine IP is hardcoded in Vagrantfile to `192.168.56.43`
+- See `Vagrantfile` for details
+  
+**Initial setup**
 
 ```sh
+# Create machine
 vagrant up
+
+# Setup Cloudy Pad
+task dev-ansible-config
+
+# Might fail as :local tag doesn't exists
+# Push local container image to VM
+task dev-docker-sunshine-to-vm
 ```
 
-Machine IP is hardcoded in Vagrantfile to `192.168.56.43`.
+To pair connect to Sunshine web UI and use Moonlight manually:
 
-Can be used to run Sunshine container and test Ansible playbook easily.
+```sh
+https://192.168.56.43:47990/
+```
 
-Fast Sunshine container build and import:
+**Development usage**
+
+Build Sunshine container locally and import inn VM:
 
 ```sh
 task dev-docker-sunshine-to-vm
 ```
 
-Ansible configuration:
+For faster development feedback loop, it's possible to build container image directly in VM:
 
 ```sh
-task dev-ansible-config
+vagrant ssh
+$ cd /vagrant 
+# this folder is mapped to host Git project's directory
+# Run the command defined by dev-docker-sunshine-to-vm directly in this folder
 ```
 
-Connect to Sunshine web UI (Sunshine is forwarded to local machine):
+During Sunshine container development, it's possible to use a Vagrant-specific Docker Compose which will mount folders selectively to test local Git changes directly in container:
 
 ```sh
-https://localhost:47990
-# Or directly Vagrant machine IP: https://192.168.56.43:47990/
+docker compose -f /vagrant/test/resources/docker-compose.vagrant.yml -p sunshine up -d --force-recreate
 ```
+
+For example, while working on scripts in `/cloudy/bin`, use a bind mount such as:
+
+```yaml
+  volumes:
+  # [...]
+  #
+  # Mount local project's folder directly in container to test changes live
+  - "/vagrant/containers/sunshine/overlay/cloudy/bin:/cloudy/bin"
+```
+
+Which will make the local Git project files directly from host into container through `/vagrant` mount point, allowing faster testing. Note this only work well with read-only files since permission might now match for read-write. 
 
 ### Local Pulumi stack manipulation
 
