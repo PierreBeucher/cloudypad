@@ -169,9 +169,10 @@ RUN locale-gen en_US.UTF-8 && \
 #
 # Sunshine
 #
-RUN --mount=type=bind,from=download-sunshine,source=/app,target=/app <<_SUNSHINE
+RUN --mount=type=cache,target=/var/cache --mount=type=tmpfs,target=/var/log --mount=type=bind,from=download-sunshine,source=/app,target=/app <<_SUNSHINE
 
 set -e
+
 apt update
 apt install -y /app/sunshine.deb
 
@@ -182,9 +183,10 @@ _SUNSHINE
 #
 
 # Install Steam and Steam libs via official .deb
-RUN --mount=type=bind,from=download-steam,source=/app,target=/app <<_STEAM
+RUN --mount=type=cache,target=/var/cache --mount=type=tmpfs,target=/var/log --mount=type=bind,from=download-steam,source=/app,target=/app <<_STEAM
 
 set -e
+
 apt install -y /app/steam-libs-amd64.deb
 apt install -y /app/steam-libs-i386.deb
 apt install -y /app/steam.deb
@@ -197,6 +199,7 @@ _STEAM
 RUN --mount=type=bind,from=download-lutris,source=/app/lutris.deb,target=/app/lutris.deb <<_LUTRIS
 
 set -e
+
 apt install -y /app/lutris.deb
 
 _LUTRIS
@@ -204,9 +207,10 @@ _LUTRIS
 #
 # Heroic
 #
-RUN --mount=type=bind,from=download-heroic,source=/app/heroic.deb,target=/app/heroic.deb <<_HEROIC
+RUN --mount=type=cache,target=/var/cache --mount=type=tmpfs,target=/var/log --mount=type=bind,from=download-heroic,source=/app/heroic.deb,target=/app/heroic.deb <<_HEROIC
 
 set -e
+
 apt install -y /app/heroic.deb
 
 _HEROIC
