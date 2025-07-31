@@ -281,6 +281,8 @@ tasks:
       --platform "linux/amd64,linux/arm64"
       --label "cloudypad.version={{ .CLOUDYPAD_VERSION }}"
       --push
+    - echo "Built $CLOUDYPAD_BUILD_CORE_IMAGE_REGISTRY:$CLOUDYPAD_BUILD_CORE_IMAGE_TAG"
+
 
   # Sunshine
 
@@ -293,6 +295,7 @@ tasks:
       --cache-to type=local,dest=./tmp/sunshine-container.cache.tgz
       -t $CLOUDYPAD_BUILD_SUNSHINE_IMAGE_REGISTRY:$CLOUDYPAD_BUILD_SUNSHINE_IMAGE_TAG
       --load
+    - echo "Built $CLOUDYPAD_BUILD_SUNSHINE_IMAGE_REGISTRY:$CLOUDYPAD_BUILD_SUNSHINE_IMAGE_TAG"
 
   build-sunshine-container-ci:
     cmds:
