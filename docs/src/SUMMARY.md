@@ -24,6 +24,15 @@
 - [Paperspace](./cloud-provider-setup/paperspace.md)
 - [Scaleway](./cloud-provider-setup/scaleway.md)
 
+# Game Launchers
+
+- [Steam](./game-launchers/steam.md)
+- [Epic](./game-launchers/epic.md)
+- [GOG](./game-launchers/gog.md)
+- [Heroic](./game-launchers/heroic.md)
+- [Lutris](./game-launchers/lutris.md)
+- [Amazon Prime Games](./game-launchers/amazon-prime-games.md)
+
 # Help and troubleshooting
 
 - [Moonlight: install and connect/pair](./help/moonlight-install-connect.md)
