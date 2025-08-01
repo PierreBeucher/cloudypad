@@ -14,6 +14,8 @@ Vagrant.configure("2") do |config|
       vb.memory = "8192"
       vb.cpus = 8
     end
+
+    config.vm.disk :disk, size: "100GB", primary: true
   
     config.vm.provision "shell", inline: <<-SHELL
       # apt-get update

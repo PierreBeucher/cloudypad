@@ -17,9 +17,4 @@ icon_size=$(($current_screen_height / 10))
 
 echo "Setting desktop icon size to $icon_size for resolution: $current_screen_resolution (width: $current_screen_width, height: $current_screen_height)"
 
-if [ -f "$XDG_RUNTIME_DIR/xfce4-dbus-session-bus-address" ]; then
-    export DBUS_SESSION_BUS_ADDRESS=$(cat $XDG_RUNTIME_DIR/xfce4-dbus-session-bus-address)
-    xfconf-query -c xfce4-panel -p /panels/panel-2/size -s $icon_size
-else
-    echo "WARNING: $XDG_RUNTIME_DIR/xfce4-dbus-session-bus-address does not exist. Can't set desktop icon size."
-fi
+xfconf-query -c xfce4-panel -p /panels/panel-2/size -s $icon_size

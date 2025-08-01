@@ -1,6 +1,13 @@
+# Debug in Vagrant VM Compose file. 
+# Run from Vagrant VM with:
+#
+#   docker compose -f /vagrant/test/resources/docker-compose.vagrant.yml -p sunshine up -d --force-recreate
+#
+# To update, run Ansible configuration on VM and copy resulting compose file here.
+#
 services:
   cloudy:
-    image: {{ sunshine_image_repo }}:{{ sunshine_image_tag }}
+    image: ghcr.io/pierrebeucher/cloudypad/sunshine:local
     # This container name is used by various scripts and functions to identify the container
     # Don't change it
     container_name: cloudy
@@ -20,19 +27,27 @@ services:
     - /dev/input:/dev/input
     
     # Cloudy Pad data and XDG_DATA_HOME where data should be persisted (game files, Sunshine state, etc.)
-    - "{{ sunshine_data_dir }}:/cloudy/data"
+    - "/var/lib/cloudypad/sunshine/data:/cloudy/data"
 
     # Keep xfce4 config on host as user may customize it (eg. keyboard layout)
-    - "{{ sunshine_persistent_config_dir }}/xfce4:/cloudy/conf/xfce4"
+    - "/var/lib/cloudypad/sunshine/conf/xfce4:/cloudy/conf/xfce4"
 
     # Keep Heroic config and data
-    - "{{ sunshine_persistent_config_dir }}/heroic:/cloudy/conf/heroic"
+    - "/var/lib/cloudypad/sunshine/conf/heroic:/cloudy/conf/heroic"
 
     # Keep user's home directory
     # Some important data are stored in $HOME by numerous apps (like Heroic or Lutris)
     # persisting this folder makes sense to keep user's data across container recreation
-    - "{{ sunshine_persistent_home_dir }}:/home/cloudy"
-
+    - "/var/lib/cloudypad/sunshine/home:/home/cloudy"
+    
+    # Local overlay debug
+    - "/vagrant/containers/sunshine/overlay/cloudy/bin:/cloudy/bin"
+    # - "/vagrant/containers/sunshine/overlay/cloudy/conf/heroic-default:/cloudy/conf/heroic-default"
+    - "/vagrant/containers/sunshine/overlay/cloudy/conf/xfce4-default:/cloudy/conf/xfce4-default"
+    - "/vagrant/containers/sunshine/overlay/cloudy/conf/sunshine/apps.json:/cloudy/conf/sunshine/apps.json"
+    - "/vagrant/containers/sunshine/overlay/cloudy/conf/sunshine/assets:/cloudy/conf/sunshine/assets"
+    - "/vagrant/containers/sunshine/overlay/cloudy/conf/supervisor:/cloudy/conf/supervisor"
+    
     # Allow container to read/write/manage attributes on character device 13
     # 13 matches /dev/input mouse, keyboard, etc. devices
     # thus allowing process in container to manage input which we need for Sunshine
@@ -54,22 +69,23 @@ services:
       # Passed to Xorg config as per https://wiki.archlinux.org/title/Xorg/Keyboard_configuration#Using_X_configuration_files
       #
       # Variables are passed to template overlay/cloudy/conf/x11/templates/00-keyboard.conf
-      CLOUDYPAD_KEYBOARD_LAYOUT: {{ sunshine_keyboard_layout }}
-      CLOUDYPAD_KEYBOARD_MODEL: {{ sunshine_keyboard_model }}
-      CLOUDYPAD_KEYBOARD_VARIANT: {{ sunshine_keyboard_variant }}
-      CLOUDYPAD_KEYBOARD_OPTIONS: {{ sunshine_keyboard_options }}
+      CLOUDYPAD_KEYBOARD_LAYOUT: fr
+      CLOUDYPAD_KEYBOARD_MODEL: pc104
+      CLOUDYPAD_KEYBOARD_VARIANT: azerty
+      CLOUDYPAD_KEYBOARD_OPTIONS: terminate:ctrl_alt_bksp
 
       # Desired locale
-      CLOUDYPAD_LOCALE: {{ sunshine_locale }}
+      CLOUDYPAD_LOCALE: fr_FR.UTF-8
 
       # Sunshine Web UI password
       # If unset or empty, can be set via Web UI directly
-      SUNSHINE_WEB_PASSWORD_BASE64: "{{ sunshine_web_password_base64 }}"
-      SUNSHINE_WEB_USERNAME: "{{ sunshine_web_username }}"
+      SUNSHINE_WEB_PASSWORD_BASE64: "QCEvOiw/ISojJ+KCrGBfXMK1JD0iZm9v"
+      SUNSHINE_WEB_USERNAME: "sunshine"
       SUNSHINE_SERVER_NAME: >-
-        {{ sunshine_server_name | to_yaml | indent(8) }}
+        dev-vagrant
+
 
       # Optional additional Sunshine config
       # Use "\n" for multiple lines
       # eg. "capture = x11\nfoo = bar"
-      CLOUDYPAD_SUNSHINE_ADDITIONAL_CONFIG: "{{ sunshine_additional_config }}"
+      CLOUDYPAD_SUNSHINE_ADDITIONAL_CONFIG: "capture = x11"

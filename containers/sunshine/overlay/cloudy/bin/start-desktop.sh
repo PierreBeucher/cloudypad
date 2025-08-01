@@ -11,4 +11,10 @@ echo $DBUS_SESSION_BUS_ADDRESS > "$XDG_RUNTIME_DIR/xfce4-dbus-session-bus-addres
 echo "Starting xfce4 desktop with bus address: $DBUS_SESSION_BUS_ADDRESS"
 
 # Shows a bunch of warning but at least doesn't crash ¯\_(ツ)_/¯
-startxfce4
+startxfce4 &
+XFCE_PID=$!
+
+setup-xfce4-default-wallpaper.sh
+
+# Wait for xfce4 process
+wait $XFCE_PID

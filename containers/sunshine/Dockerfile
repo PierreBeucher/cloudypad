@@ -1,11 +1,49 @@
-# Ubuntu 24.04
+# Download installers in base to bind-mount them in other stages
+FROM alpine/curl:8.14.1 AS download-base
+WORKDIR /app
+
+# Sunshine
+FROM download-base AS download-sunshine
+ARG SUNSHINE_VERSION=2025.628.4510
+
+RUN curl -L -o /app/sunshine.deb "https://github.com/LizardByte/Sunshine/releases/download/v${SUNSHINE_VERSION}/sunshine-ubuntu-24.04-amd64.deb"
+
+# Steam
+FROM download-base AS download-steam
+ARG STEAM_VERSION="1.0.0.81"
+RUN curl -o /app/steam-libs-amd64.deb "https://repo.steampowered.com/steam/archive/stable/steam-libs-amd64_${STEAM_VERSION}_amd64.deb"
+RUN curl -o /app/steam-libs-i386.deb "https://repo.steampowered.com/steam/archive/stable/steam-libs-i386_${STEAM_VERSION}_i386.deb"
+RUN curl -o /app/steam.deb "https://repo.steampowered.com/steam/archive/stable/steam-launcher_${STEAM_VERSION}_all.deb"
+
+# Lutris
+FROM download-base AS download-lutris
+ARG LUTRIS_VERSION="0.5.18"
+RUN curl -L -o /app/lutris.deb "https://github.com/lutris/lutris/releases/download/v${LUTRIS_VERSION}/lutris_${LUTRIS_VERSION}_all.deb"
+
+# Heroic
+FROM download-base AS download-heroic
+ARG HEROIC_VERSION="2.18.0"
+RUN curl -L -o /app/heroic.deb "https://github.com/Heroic-Games-Launcher/HeroicGamesLauncher/releases/download/v${HEROIC_VERSION}/Heroic-${HEROIC_VERSION}-linux-amd64.deb"
+
+# 
+# Sunshine image based on Ubuntu 24.04
+# with desktop environment, game launchers and dependencies
+#
 FROM ubuntu:noble-20250415.1@sha256:dc17125eaac86538c57da886e494a34489122fb6a3ebb6411153d742594c2ddc
 
 ENV DEBIAN_FRONTEND=noninteractive
 
-# Main packages: X server and deps, dbus, pulseaudio, supervisor
-RUN --mount=type=cache,target=/var/cache --mount=type=tmpfs,target=/var/log \
-    apt update && apt install -y \
+RUN --mount=type=cache,target=/var/cache --mount=type=tmpfs,target=/var/log <<_MAIN_PACKAGES
+
+set -e 
+
+# Required for some Steam packages  
+dpkg --add-architecture i386
+
+apt update
+
+# Main system packages: X server and deps, dbus, pulseaudio, supervisor...
+apt install -y \
     xserver-xorg \
     curl \
     x11-utils \
@@ -37,27 +75,16 @@ RUN --mount=type=cache,target=/var/cache --mount=type=tmpfs,target=/var/log \
     supervisor \
     pulseaudio \
     gettext-base \
-    bc
+    bc \
+    python3-apt \
+    xterm \
+    xz-utils \
+    zenity \
+    bubblewrap \
+    software-properties-common
 
-#
-# Sunshine
-#
-RUN --mount=type=cache,target=/var/cache --mount=type=tmpfs,target=/var/log \
-    curl -L -o /tmp/sunshine.deb https://github.com/LizardByte/Sunshine/releases/download/v2025.628.4510/sunshine-ubuntu-24.04-amd64.deb && \
-    apt update && apt install -y /tmp/sunshine.deb && \
-    rm /tmp/sunshine.deb
-
-#
-# Steam
-#
-
-# Add i386 (32 bit) architecture as Steam needs to run on both 32 and 64 bit packages
-# Install packages required by Steam 
-# (normally done by Steam with steamdeps on first run but allow faster startup) 
-# TODO probably too much packages here, maybe we can cleanup a bit
-RUN --mount=type=cache,target=/var/cache --mount=type=tmpfs,target=/var/log \
-    dpkg --add-architecture i386 && apt update && \
-    apt install -y \
+# Vulkan, LibGL and other video related packages
+apt install -y \
     libxcb1:i386 \
     libxcb1:amd64 \
     libc6:amd64 \
@@ -97,64 +124,25 @@ RUN --mount=type=cache,target=/var/cache --mount=type=tmpfs,target=/var/log \
     libegl1:i386 \
     libgl1-mesa-dri:amd64 \
     libgl1-mesa-dri:i386 \
-    libnvidia-egl-gbm1 \
-    python3-apt \
-    xterm \
-    xz-utils \
-    zenity \
-    bubblewrap
+    libnvidia-egl-gbm1
 
-# Install specific version of Steam for better reproducibility
-ENV CLOUDYPAD_STEAM_VERSION="1.0.0.81"
+apt clean
 
-# Install Steam and Steam libs via official .deb
-RUN --mount=type=cache,target=/var/cache --mount=type=tmpfs,target=/var/log \
-    curl -o /tmp/steam-libs-amd64.deb "https://repo.steampowered.com/steam/archive/stable/steam-libs-amd64_${CLOUDYPAD_STEAM_VERSION}_amd64.deb" && \
-    curl -o /tmp/steam-libs-i386.deb "https://repo.steampowered.com/steam/archive/stable/steam-libs-i386_${CLOUDYPAD_STEAM_VERSION}_i386.deb" && \
-    apt install -y /tmp/steam-libs-amd64.deb && \
-    apt install -y /tmp/steam-libs-i386.deb && \
-    rm /tmp/steam-libs-amd64.deb && \
-    rm /tmp/steam-libs-i386.deb
-
-RUN --mount=type=cache,target=/var/cache --mount=type=tmpfs,target=/var/log \
-    curl -o steam.deb "https://repo.steampowered.com/steam/archive/stable/steam-launcher_${CLOUDYPAD_STEAM_VERSION}_all.deb" && \
-    apt install -y ./steam.deb && \
-    rm steam.deb
+_MAIN_PACKAGES
 
 #
-# Desktop
+# Desktop (xfce4) and utilities
 #
-# Install xfce4 desktop environment
-# but remove xfce4-panel to void showinf uneeded/unwanted panels (see https://unix.stackexchange.com/questions/38048/how-to-remove-all-the-panels-in-xfce)
-#
-RUN --mount=type=cache,target=/var/cache --mount=type=tmpfs,target=/var/log \
-    apt install -y xfce4 && \
-    apt clean
+RUN --mount=type=cache,target=/var/cache --mount=type=tmpfs,target=/var/log <<_DESKTOP
 
-# Install sudo
-RUN --mount=type=cache,target=/var/cache --mount=type=tmpfs,target=/var/log \
-    apt update && \
-    apt install -y sudo && \
-    apt clean
-
-# Install default locale
-RUN --mount=type=cache,target=/var/cache --mount=type=tmpfs,target=/var/log \
-    apt update && \
-    apt install -y locales && \
-    locale-gen en_US.UTF-8 && \
-    update-locale LANG=en_US.UTF-8
+set -e 
 
 # Install Firefox as apt package (not snap)
 # Need to explicitely avoid snap by using Firefox PPA and prioritising non-snap version
 # See https://askubuntu.com/a/1404401
-# TODO as single RUN
-RUN --mount=type=cache,target=/var/cache --mount=type=tmpfs,target=/var/log \
-    apt update && \
-    apt install -y software-properties-common && \
-    apt clean && \
-    add-apt-repository ppa:mozillateam/ppa
+add-apt-repository ppa:mozillateam/ppa
 
-RUN echo "\
+echo "\
 Package: * \n\
 Pin: release o=LP-PPA-mozillateam \n\
 Pin-Priority: 1001 \n\
@@ -163,15 +151,83 @@ Package: firefox \n\
 Pin: version 1:1snap* \n\
 Pin-Priority: -1" | tee /etc/apt/preferences.d/mozilla-firefox
 
-RUN apt update && \
-    apt install -y firefox && \
-    apt clean
+apt update
+apt install -y \
+    xfce4 \
+    sudo \
+    locales \
+    firefox
+
+apt clean
+
+_DESKTOP
+
+# Default locale
+RUN locale-gen en_US.UTF-8 && \
+    update-locale LANG=en_US.UTF-8
+
+#
+# Sunshine
+#
+RUN --mount=type=cache,target=/var/cache --mount=type=tmpfs,target=/var/log --mount=type=bind,from=download-sunshine,source=/app,target=/app <<_SUNSHINE
+
+set -e
+
+apt update
+apt install -y /app/sunshine.deb
+
+_SUNSHINE
+
+#
+# Steam
+#
+
+# Install Steam and Steam libs via official .deb
+RUN --mount=type=cache,target=/var/cache --mount=type=tmpfs,target=/var/log --mount=type=bind,from=download-steam,source=/app,target=/app <<_STEAM
+
+set -e
+
+apt install -y /app/steam-libs-amd64.deb
+apt install -y /app/steam-libs-i386.deb
+apt install -y /app/steam.deb
+
+_STEAM
+
+#
+# Lutris
+#
+RUN --mount=type=bind,from=download-lutris,source=/app/lutris.deb,target=/app/lutris.deb <<_LUTRIS
+
+set -e
+
+apt install -y /app/lutris.deb
+
+_LUTRIS
+
+#
+# Heroic
+#
+RUN --mount=type=cache,target=/var/cache --mount=type=tmpfs,target=/var/log --mount=type=bind,from=download-heroic,source=/app/heroic.deb,target=/app/heroic.deb <<_HEROIC
+
+set -e
+
+apt install -y /app/heroic.deb
+
+_HEROIC
+
+# GE-Proton version that will be installed and configured for Heroic by default
+ENV CLOUDYPAD_HEROIC_DEFAULT_GEPROTON_VERSION="GE-Proton10-10"
+
+# 
+# Global environment variables
+#
 
 # Use this display by default, should not conflict with other displays
 ENV DISPLAY=":42"
 
 # User under which non-root services and softwares will run
 ENV CLOUDYPAD_USER=cloudy
+ENV CLOUDYPAD_USER_HOME=/home/$CLOUDYPAD_USER
 
 # Data directory that should be persisted via volume or bind mount
 ENV CLOUDYPAD_DATA_DIR=/cloudy/data
@@ -193,7 +249,7 @@ ENV SUNSHINE_SERVER_NAME="Sunshine"
 # 
 ENV XDG_RUNTIME_DIR=$CLOUDYPAD_RUNTIME_DIR
 ENV XDG_CONFIG_HOME=$CLOUDYPAD_CONF_DIR
-ENV XDG_CACHE_HOME=/home/$CLOUDYPAD_USER/.cache
+ENV XDG_CACHE_HOME=$CLOUDYPAD_USER_HOME/.cache
 
 # Write data in known directory for persistence
 # XDG_DATA_HOME is used by various programs (like Steam) to store data
@@ -202,13 +258,11 @@ ENV XDG_DATA_HOME=$CLOUDYPAD_DATA_DIR
 
 ENV DBUS_SYSTEM_BUS_ADDRESS="unix:path=$XDG_RUNTIME_DIR/dbus"
 
-# Start Steam on library page by default
-ENV CLOUDYPAD_STEAM_ARGS="steam://open/games"
-
 # Run as non-root user
 # TODO use host UID/GID for better portability and usage from host ?
-RUN useradd -m -d /home/cloudy -s /bin/bash -u 1001 $CLOUDYPAD_USER
+RUN useradd -m -d $CLOUDYPAD_USER_HOME -s /bin/bash -u 1001 $CLOUDYPAD_USER
 
+# Copy overlay files: startup scripts, default config, etc. 
 COPY overlay /
 
 # Run healthcheck using script
