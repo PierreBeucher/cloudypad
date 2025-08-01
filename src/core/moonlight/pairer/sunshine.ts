@@ -21,7 +21,8 @@ export class SunshineMoonlightPairer extends AbstractMoonlightPairer implements 
 
     constructor(args: SunshineMoonlightPairerArgs) {
         super({
-            instanceName: args.instanceName
+            instanceName: args.instanceName,
+            host: args.host
         })
         this.args = args
     }
@@ -30,20 +31,8 @@ export class SunshineMoonlightPairer extends AbstractMoonlightPairer implements 
         return new SSHClient(this.args.ssh);
     }
 
-    protected async doPair() {
+    protected async doPair(pin: string) {
 
-        const pin = makePin()
-
-        console.info(`Run this command in another terminal to pair your instance:`)
-        console.info()
-        console.info(`  moonlight pair ${this.args.host} --pin ${pin}`)
-        console.info()
-        console.info(`For Mac / Apple devices, you may need to use this pseudo-IPv6 address:`)
-        console.info()
-        console.info(`  moonlight pair [::ffff:${this.args.host}] --pin ${pin}`)
-        console.info()
-        console.info(`Sending PIN to Sunshine API...`)
-        
         const ssh = this.buildSshClient()
     
         // try to pair for 2 min by punshing through Sunshine API with our pin

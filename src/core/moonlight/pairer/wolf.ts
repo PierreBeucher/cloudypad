@@ -3,7 +3,7 @@ import { input, select } from '@inquirer/prompts';
 import Docker from 'dockerode';
 import axios from 'axios';
 import { URL } from 'url'
-import { buildAxiosError } from '../../../tools/axios';
+import { buildAxiosError, CloudyPadAxiosError } from '../../../tools/axios';
 import { AbstractMoonlightPairer, makePin, MoonlightPairer } from "./abstract";
 import { SSHClientArgs } from '../../../tools/ssh';
 
@@ -19,7 +19,8 @@ export class WolfMoonlightPairer extends AbstractMoonlightPairer implements Moon
 
     constructor(args: WolfMoonlightPairerArgs) {
         super({
-            instanceName: args.instanceName
+            instanceName: args.instanceName,
+            host: args.host
         })
         this.args = args
     }
@@ -28,105 +29,80 @@ export class WolfMoonlightPairer extends AbstractMoonlightPairer implements Moon
         throw new Error("Not implemented")
     }
 
-    protected async doPair(){
-        
-        try {
+    private buildDockerClient(): Docker {
 
-            const pairManual = "manual"
-            const pairAuto = "auto"
+        const privateKeyContent = this.args.ssh.privateKeyPath ? fs.readFileSync(this.args.ssh.privateKeyPath, 'utf-8') : undefined
 
-            const privateKeyContent = this.args.ssh.privateKeyPath ? fs.readFileSync(this.args.ssh.privateKeyPath, 'utf-8') : undefined
-
-            const docker = new Docker({
-                host: this.args.host,
-                protocol: 'ssh',
-                port: 22,
-                username: this.args.ssh.user,
-                sshOptions: {
-                    privateKey: privateKeyContent,
-                    password: this.args.ssh.password
-                }
-            });
-
-            const pairMethod = await select({
-                message: 'Pair Moonlight automatically or run Moonlight yourself to pair manually ?',
-                default: pairAuto,
-                choices: [{
-                    name: "manual: run Moonlight yourself and add your instance.",
-                    value: pairManual
-                }, {
-                    name: "automatic: run a single command to pair your instance.",
-                    value: pairAuto
-                }],
-                loop: false,
-            })
-
-            if(pairMethod === pairManual) {
-                await this.pairManual(docker, this.args.host)
-            } else if (pairMethod === pairAuto){
-                await this.pairAuto(docker, this.args.host)
-            } else {
-                throw new Error(`Unrecognized pair method '${pairMethod}'. This is probably an internal bug.`)
+        const docker = new Docker({
+            host: this.args.host,
+            protocol: 'ssh',
+            port: 22,
+            username: this.args.ssh.user,
+            sshOptions: {
+                privateKey: privateKeyContent,
+                password: this.args.ssh.password
             }
+        });
 
-        } catch (error) {
-            const eventProps = error instanceof Error ? { errorMessage: error.message, stackTrace: error.stack } : { errorMessage: String(error), stackTrace: "unknown" }
-            throw new Error(`Instance pairing failed.`, { cause: error })
-        }
+        return docker
     }
  
-    private async waitForPinURL(docker: Docker, host: string) {
+    private async getLatestPinURL(docker: Docker, host: string): Promise<string | undefined> {
         const containerName = 'wolf';
         const pinUrlLogMatch = 'Insert pin at';
-        const timeout = 600000; // 10min
-        const pollInterval = 1000; // 1s
     
-        // Fetch Wolf container logs since this function run until we find a PIN URL log line or timeout
-        const startTime = Date.now();
-        while (Date.now() - startTime < timeout) {
-            try {
+        try {
+            const container = docker.getContainer(containerName)
 
-                const container = docker.getContainer(containerName)
+            const logs = (await container.logs({
+                stdout: true,
+                stderr: true,
+                tail: 500,
+            }))
+            .toString('utf-8')
+            .trim()
+            .split('\n')
 
-                const newLogs = (await container.logs({
-                    stdout: true,
-                    stderr: true,
-                    // Actually use seconds and note UNX timestamp as documented by Docker API
-                    since: (startTime / 1000), 
-                }))
-                .toString('utf-8')
-                .trim()
-                .split('\n')
+            this.logger.trace(`Checking logs for PIN: ${JSON.stringify(logs)}`)
 
-                this.logger.trace(`Checking logs for PIN: ${JSON.stringify(newLogs)}`)
-        
-                const maybePinLogsIndex = newLogs.find(l => l.includes(pinUrlLogMatch))
-
-                if (maybePinLogsIndex) {
-                    this.logger.debug(`Found PIN URL: ${maybePinLogsIndex}`)
-                    const urlRegex = /(http:\/\/[0-9]{1,3}(\.[0-9]{1,3}){3}:[0-9]+\/pin\/#?[0-9A-F]+)/;
-                    const match = maybePinLogsIndex.match(urlRegex);
+            // Find the latest line that matches the PIN URL pattern
+            const pinUrlRegex = /(http:\/\/[0-9]{1,3}(\.[0-9]{1,3}){3}:[0-9]+\/pin\/#?[0-9A-F]+)/;
+            
+            // Look per line in reverse order (start by last line) to match against most recent lines first
+            for (let i = logs.length - 1; i >= 0; i--) {
+                const logLine = logs[i];
+                if (logLine.includes(pinUrlLogMatch)) {
+                    this.logger.debug(`Found PIN URL line: ${logLine}`)
+                    const match = logLine.match(pinUrlRegex);
         
                     if (match && match[0]) {
                         const url = match[0];
                         const replacedUrl = url.replace(/[0-9]{1,3}(\.[0-9]{1,3}){3}/, host);
                         return replacedUrl;
                     } else {
-                        this.logger.warn(`Found a line that looked like it contained a PIN URL but didn't: ${maybePinLogsIndex}. Please report a bug with this log.`)
+                        this.logger.warn(`Found a line that looked like it contained a PIN URL but didn't: ${logLine}. Please report a bug with this log.`)
                     }
                 }
-
-                await new Promise(resolve => setTimeout(resolve, pollInterval))
-            } catch (error) {
-                this.logger.warn(`Failed to fetch Wolf logs. Will retry in ${pollInterval}ms.`, { cause: error })
-                await new Promise(resolve => setTimeout(resolve, pollInterval))
             }
-        }
 
-        throw new Error(`PIN validation URL not found in Wolf logs after ${Date.now() - startTime}ms`);
+            return undefined;
+        } catch (error) {
+            this.logger.warn(`Failed to fetch Wolf logs.`, { cause: error })
+            return undefined;
+        }
     }
     
-    private async sendPinData(publicPinUrl: string, pin: string, retries=3, retryDelay=2000): Promise<void> {
+    /**
+     * Send the PIN to Wolf API. Getting errors from Wolf API is expected since it will return 200 and "OK" even if pairing failed
+     * but may return 400 is PIN URL is tried multiple times. 
+     * 
+     * Such API errors are shown at debug level and won't trigger a retry nor an exception.
+     * Over errors are shown are rethrown.
+     * 
+     * @param publicPinUrl - PIN URL to send the PIN to.
+     * @param pin - PIN to send.
+     */
+    private async sendPinData(publicPinUrl: string, pin: string): Promise<void> {
 
         try {
             this.logger.info(`Sending PIN to ${publicPinUrl}`)
@@ -152,66 +128,123 @@ export class WolfMoonlightPairer extends AbstractMoonlightPairer implements Moon
             this.logger.debug(`Posting ${JSON.stringify(postData)} to ${postPinUrl}`)
             
             try {
-                await axios.post(postPinUrl, postData, {
+                const response = await axios.post(postPinUrl, postData, {
                     headers: {
                         'Content-Type': 'application/json'
-                    }
+                    },
                 })
+
+                this.logger.debug(`Wolf pair request response: ${JSON.stringify(response.data)}`)
+
             } catch (e){
                 throw buildAxiosError(e)
             }
         } catch (e) {
-            if(retries > 0){
-                this.logger.warn(`Failed to send pin to Wolf API. Retrying...`, { cause: e })
-                await new Promise(resolve => setTimeout(resolve, retryDelay))
-                return this.sendPinData(publicPinUrl, pin, retries - 1, retryDelay)
+           
+            if(e instanceof CloudyPadAxiosError){
+                this.logger.debug(`Failed to send pin to Wolf API. This is expected if the PIN URL is already used or using a previous PIN URL.`, { cause: e })
+            } else {
+                throw new Error(`Unexpected error sending pin to Wolf API.`, { cause: e })
             }
-
-            this.logger.error(`Failed to send pin to Wolf API. Giving up.`, { cause: e })
-            throw e
         }
     }
 
-    private async pairManual(docker: Docker, host: string) {
-        
-        console.info(`Run Moonlight and add instance manually (top right '+' button):`)
-        console.info()
-        console.info(`  ${host}`)
-        console.info()
-        console.info("Then click on the new machine (with a lock icon). It will generate a PIN we'll use to pair your instance.")
-        console.info()
-        console.info('Waiting for PIN URL to appear in Wolf logs...')
-        
-        const publicPinUrl = await this.waitForPinURL(docker, host)
+    /**
+     * Check if the pairing was successful by looking for a success message in the logs.
+     * Only logs appearing after the given date are considered.
+     */
+    private async checkPairingSuccess(docker: Docker, notBefore: Date): Promise<boolean> {
+        const containerName = 'wolf';
+        const successLogMatch = 'Succesfully paired';
 
-        const pin = await input({
-            message: 'Enter PIN shown by Moonlight to finalize pairing:',
-        })
+        try {
+            const container = docker.getContainer(containerName)
 
-        console.info("Sending PIN to Wolf...")
- 
-        await this.sendPinData(publicPinUrl, pin)
+            const logs = (await container.logs({
+                stdout: true,
+                stderr: true,
+                tail: 100,
+                // Only check logs appeared after given date
+                // Actually use seconds and note UNX timestamp as documented by Docker API
+                since: (notBefore.getTime() / 1000), 
+            }))
+            .toString('utf-8')
+            .trim()
+            .split('\n')
+
+            // Check for success or failure messages in recent logs
+            for (let i = logs.length - 1; i >= 0; i--) {
+                const logLine = logs[i];
+                if (logLine.includes(successLogMatch)) {
+                    this.logger.debug(`Found pairing success: ${logLine}`)
+                    return true;
+                }
+            }
+
+            // If no success/failure message found, assume still in progress or failed
+            return false;
+        } catch (error) {
+            this.logger.warn(`Failed to check pairing status.`, { cause: error })
+            return false;
+        }
     }
 
-    private async pairAuto(docker: Docker, host: string) {
+    /**
+     * May be called in both situations:
+     * - User has not initiated the pairing process yet and generated a PIN through Moonlight. A PIN URL should be available in Wolf logs.
+     * - User has not yet initiated the pairing process. A PIN URL is not available in Wolf logs, or the last one available is outdated.
+     * 
+     * To accountf for both situation, send the PIN in a loop until success. Since Wolf API always returns 200 and "OK" even
+     * if pairing failed, rely on logs to check if pairing was successful.
+     */
+    protected async doPair(pin: string) {
 
-        const pin = makePin()
+        this.logger.debug(`Pairing instance ${this.instanceName} with Wolf for host ${this.args.host}`)
 
-        console.info(`Run this command to pair your instance:`)
-        console.info()
-        console.info(`  moonlight pair ${host} --pin ${pin}`)
-        console.info()
-        console.info(`For Mac / Apple devices, you may need to use this pseudo-IPv6 address:`)
-        console.info()
-        console.info(`  moonlight pair ::ffff:${host} --pin ${pin}`)
-        console.info()
-        console.info('Waiting for PIN URL to appear in Wolf logs...')
+        const docker = this.buildDockerClient()
+        const timeout = 60 * 5 * 1000; // 5 minutes
+        const pollInterval = 2000; // 2s
+        const startTime = new Date();
 
-        const publicPinUrl = await this.waitForPinURL(docker, host)
-
+        // voluntary console.info to show in user's console
         console.info("Sending PIN to Wolf...")
- 
-        await this.sendPinData(publicPinUrl, pin)
+
+        while (Date.now() - startTime.getTime() < timeout) {
+            try {
+
+                this.logger.debug(`Fetching latest PIN URL in logs of Wolf container...`)
+
+                const publicPinUrl = await this.getLatestPinURL(docker, this.args.host)
+         
+                if (!publicPinUrl) {
+                    this.logger.debug(`No PIN URL found in logs, waiting for user to initiate pairing...`)
+                    await new Promise(resolve => setTimeout(resolve, pollInterval))
+                    continue;
+                }
+
+                this.logger.debug(`Sending PIN to ${publicPinUrl}...`)
+
+                await this.sendPinData(publicPinUrl, pin)
+
+                this.logger.debug(`Checking in logs if pairing was successful...`)
+
+                const pairingSuccess = await this.checkPairingSuccess(docker, startTime)
+
+                if (pairingSuccess) {
+                    this.logger.info(`Successfully paired instance ${this.instanceName} with Wolf`)
+                    return;
+                }
+
+                this.logger.debug(`Pairing not yet successful, will retry in ${pollInterval}ms...`)
+                await new Promise(resolve => setTimeout(resolve, pollInterval))
+
+            } catch (e) {
+                this.logger.error(`Failed to pair instance ${this.instanceName} with Wolf.`, { cause: e })
+                await new Promise(resolve => setTimeout(resolve, pollInterval))
+            }
+        }
+
+        throw new Error(`Failed to pair instance ${this.instanceName} with Wolf after ${timeout}ms timeout`);
     }
-    
+        
 }
