@@ -219,6 +219,10 @@ pulumi destroy -s <organization/CloudyPad-XXX/STACK>
 - [ ] Sunshine Dockerfile `containers/sunshine/Dockerfile`
   - [ ] Base image version `FROM` - See available tags from [Docker Hub](https://hub.docker.com/_/ubuntu). Make sure to use the imaghe SHA for reproducibility.
   - [ ] Steam version `CLOUDYPAD_STEAM_VERSION` - see stable version at [Steam archive](https://repo.steampowered.com/steam/archive/stable)
+  - [ ] Update `SUNSHINE_VERSION` with [latest Sunshine release](https://github.com/LizardByte/Sunshine/releases)
+  - [ ] Update `LUTRIS_VERSION` with [latest Lutris release](https://github.com/lutris/lutris/releases)
+  - [ ] Update `HEROIC_VERSION` with [latest Heroic Games Launcher version](https://github.com/Heroic-Games-Launcher/HeroicGamesLauncher/releases)
+  - [ ] Update `CLOUDYPAD_HEROIC_DEFAULT_GEPROTON_VERSION` with [latest GE-Proton version](https://github.com/GloriousEggroll/proton-ge-custom/releases)
 - [ ] CLI Dockerfile (`Dockerfile` at root)
   - [ ] Pulumi version - see [Pulumi release](https://github.com/pulumi/pulumi/releases)
   - [ ] Node version - see [Docker Hub](https://hub.docker.com/_/node)
