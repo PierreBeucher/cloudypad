@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.34.0](https://github.com/PierreBeucher/cloudypad/compare/v0.33.0...v0.34.0) (2025-08-01)
+
+
+### Features
+
+* manual pairing process to enter PIN manually ([1e0613b](https://github.com/PierreBeucher/cloudypad/commit/1e0613b0aa79096df010897638fce0402cee45e4))
+* manual pairing process to enter PIN manually ([17a695d](https://github.com/PierreBeucher/cloudypad/commit/17a695daf189c9f960c3b78e741bd251a80746b4))
+* **sunshine:** add a Simple desktop app ([8790b3b](https://github.com/PierreBeucher/cloudypad/commit/8790b3b173586e801aa81b349086cf6961244129))
+* **sunshine:** default Cloudy Pad wallpaper ([17d9034](https://github.com/PierreBeucher/cloudypad/commit/17d90348924775948510768d08d5d29bd829df2b))
+* **sunshine:** Heroic Games Launcher support ([306d941](https://github.com/PierreBeucher/cloudypad/commit/306d9410e847e2082821af12d1043415af8cde38))
+* **sunshine:** Lutris games launcher support ([7307cba](https://github.com/PierreBeucher/cloudypad/commit/7307cbac3c9756a039bbdddd45388f1b69f1128e))
+* **sunshine:** persist container $HOME directory ([6a60778](https://github.com/PierreBeucher/cloudypad/commit/6a60778b693e2ee2388f44f2d3d9d32c378edaf7))
+
 ## [0.33.0](https://github.com/PierreBeucher/cloudypad/compare/v0.32.1...v0.33.0) (2025-07-29)
 
 
