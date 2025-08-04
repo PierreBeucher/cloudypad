@@ -11,6 +11,8 @@
 
 wait-x-availability.sh
 
+source export-dbus-address.sh
+
 echo "Preparing to start Heroic Games Launcher with args: $@"
 
 # Copy default Heroic config if not already present

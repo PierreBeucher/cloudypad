@@ -2,6 +2,8 @@
 
 wait-x-availability.sh
 
+source export-dbus-address.sh
+
 /usr/games/lutris &
 
 LUTRIS_PID=$!
