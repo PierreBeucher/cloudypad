@@ -13,7 +13,7 @@
         "checkForUpdatesOnStartup": true,
         "autoUpdateGames": false,
         "customWinePaths": [],
-        "defaultInstallPath": "$XDG_DATA_HOME/heroic",
+        "defaultInstallPath": "$XDG_DATA_HOME/heroic/Games",
         "libraryTopSection": "disabled",
         "defaultSteamPath": "$HOME/.steam/steam",
         "defaultWinePrefix": "$XDG_DATA_HOME/heroic/Prefixes",
