@@ -5,7 +5,8 @@ services:
     # Don't change it
     container_name: cloudy
     # Need generous shared memory size as some services (eg. Steam) require a lot
-    shm_size: "2G"
+    # Half available memory (as is the case for most Linux distros)
+    shm_size: "{{ (ansible_memtotal_mb / 2) | int }}M"
     # Privileged required to run Steam with bwrap (sandboxing)
     privileged: true
     # Always start container on machine startup unless specifically stopped
