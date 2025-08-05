@@ -2,6 +2,8 @@
 
 wait-x-availability.sh
 
+source export-dbus-address.sh
+
 echo "Starting Steam with args: $@"
 
 # Copy default Steam config to enable Proton globally if not already present

@@ -191,6 +191,10 @@ apt install -y /app/steam-libs-amd64.deb
 apt install -y /app/steam-libs-i386.deb
 apt install -y /app/steam.deb
 
+# Patch steam launch script to prevent Desktop shortcut creation on first launch:
+# The file is redundant with launchbar shortcut but is on trusted by default on desktop and does not use Cloudy Pad launcher script
+sed -i 's/if \[ ! -L "\$DESKTOP_DIR\/\$STEAMPACKAGE\.desktop" \]; then/if false; then # Patched by Cloudy Pad: prevent deskop shortcut creation/' /usr/lib/steam/bin_steam.sh
+
 _STEAM
 
 #
