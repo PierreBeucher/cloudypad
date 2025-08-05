@@ -1,0 +1,26 @@
+/!\ CHANGES MADE WITH sudo COMMANDS MAY NOT PERSIST /!\
+
+You *can* run sudo command in Cloudy Pad but be aware:
+
+Cloudy Pad runs inside a container. This means that any packages
+you install or system updates you make outside of standard usage
+may NOT persist: the container is re-created every time your 
+instance starts.
+
+If you know what you are doing, go ahead! We'd actually love to hear
+about your sudo use cases: share them on Discord or GitHub so we can
+consider integrating them natively in Cloudy Pad. 
+
+Keep in mind: sudo commands can break things, and we may not be
+able to provide support for issues caused by sudo-related usage. 
+
+Persistent data can be stored under $XDG_DATA_HOME, this folder and its 
+contents will persist across sessions. This folder contains your games 
+and user data - be careful not to break anything important!
+
+Your sudo password is:
+
+    $CLOUDYPAD_USER_PASSWORD
+
+Alternatively, use get-cloudy-password command to show your sudo password.
+

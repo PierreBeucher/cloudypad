@@ -16,3 +16,6 @@ set -e
 # apt cache is non-existent (as is the case after Docker build).
 # Updating cache seems to solve the issue
 apt update
+
+# Setup sudo config for cloudypad user with random password
+setup-sudo.sh
