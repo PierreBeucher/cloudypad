@@ -81,7 +81,8 @@ apt install -y \
     xz-utils \
     zenity \
     bubblewrap \
-    software-properties-common
+    software-properties-common \
+    nano
 
 # Vulkan, LibGL and other video related packages
 apt install -y \
