@@ -13,6 +13,7 @@ fi
 
 echo "Creating password file for CLOUDYPAD_USER $CLOUDYPAD_USER"
 
+# Keep password file in data folder to ensure it persists across container restarts
 CLOUDY_PASSWORD_DIR="${XDG_DATA_HOME}/cloudypad/sudo"
 CLOUDY_PASSWORD_FILE="${CLOUDY_PASSWORD_DIR}/password"
 
