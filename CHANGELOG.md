@@ -1,5 +1,21 @@
 # Changelog
 
+## [0.35.0](https://github.com/PierreBeucher/cloudypad/compare/v0.34.0...v0.35.0) (2025-08-11)
+
+
+### Features
+
+* **sunshine:** possibility to run sudo command in Cloudy Pad container ([15a85a0](https://github.com/PierreBeucher/cloudypad/commit/15a85a066d0009b87165e04ce8a0ee788cbe125a))
+
+
+### Bug Fixes
+
+* **sunshine:** affect half host memory as /dev/shm (as do most Linux distros) ([f4c31c8](https://github.com/PierreBeucher/cloudypad/commit/f4c31c85ef81d89ace3b5af03b356e954cb579c0))
+* **sunshine:** do not create untrusted Steam Desktop shortcut on first launch ([788744b](https://github.com/PierreBeucher/cloudypad/commit/788744b11890c26d19ef352e3658237082e43b49))
+* **sunshine:** launcher use start command instead of plain binary ([eb77e1b](https://github.com/PierreBeucher/cloudypad/commit/eb77e1b8f53a7e50474a8f833ff4d75f13be3012))
+* **sunshine:** launcher use start command instead of plain binary ([f721211](https://github.com/PierreBeucher/cloudypad/commit/f721211e96ddf1399faf6a4cf4fc80513f58a796))
+* **sunshine:** pass DBUS env vars to launchers ([fb055da](https://github.com/PierreBeucher/cloudypad/commit/fb055daa5b0a193dcd29d8ca4ebc272ca2217666))
+
 ## [0.34.0](https://github.com/PierreBeucher/cloudypad/compare/v0.33.0...v0.34.0) (2025-08-01)
 
 
