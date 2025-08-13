@@ -40,15 +40,16 @@ export const AZURE_SUPPORTED_GPU = [
     { machineType: "Standard_NC24rs_v3", gpuType: "NVIDIA", gpuName: "Tesla V100", quotaName: "standardNCSv3Family" },
     { machineType: "Standard_NC24s_v3", gpuType: "NVIDIA", gpuName: "Tesla V100", quotaName: "standardNCSv3Family" },
     
-    // Not supported yet, requires datacenter GPU
-    // { machineType: "Standard_NC24ads_A100_v4", gpuType: "NVIDIA", gpuName: "A100", quotaName: "standardNCADSA100v4Family" },
-    // { machineType: "Standard_NC48ads_A100_v4", gpuType: "NVIDIA", gpuName: "A100", quotaName: "standardNCADSA100v4Family" },
-    // { machineType: "Standard_NC96ads_A100_v4", gpuType: "NVIDIA", gpuName: "A100", quotaName: "standardNCADSA100v4Family" },
+    { machineType: "Standard_NC24ads_A100_v4", gpuType: "NVIDIA", gpuName: "A100", quotaName: "standardNCADSA100v4Family" },
+    { machineType: "Standard_NC48ads_A100_v4", gpuType: "NVIDIA", gpuName: "A100", quotaName: "standardNCADSA100v4Family" },
+    { machineType: "Standard_NC96ads_A100_v4", gpuType: "NVIDIA", gpuName: "A100", quotaName: "standardNCADSA100v4Family" },
 
+    // AMD GPU, not supported yet
     // { machineType: "Standard_NV4as_v4", gpuType: "AMD", gpuName: "Radeon MI25" },
     // { machineType: "Standard_NV8as_v4", gpuType: "AMD", gpuName: "Radeon MI25" },
     // { machineType: "Standard_NV16as_v4", gpuType: "AMD", gpuName: "Radeon MI25" },
     // { machineType: "Standard_NV32as_v4", gpuType: "AMD", gpuName: "Radeon MI25" },
+
     { machineType: "Standard_NV6s_v2", gpuType: "NVIDIA", gpuName: "Tesla P40", quotaName: "standardNVSv2Family" },
     { machineType: "Standard_NV12s_v2", gpuType: "NVIDIA", gpuName: "Tesla P40", quotaName: "standardNVSv2Family" },
     { machineType: "Standard_NV24s_v2", gpuType: "NVIDIA", gpuName: "Tesla P40", quotaName: "standardNVSv2Family" },
@@ -57,7 +58,9 @@ export const AZURE_SUPPORTED_GPU = [
     { machineType: "Standard_NV24s_v3", gpuType: "NVIDIA", gpuName: "Tesla V100", quotaName: "standardNVSv3Family" },
     { machineType: "Standard_NV48s_v3", gpuType: "NVIDIA", gpuName: "Tesla V100", quotaName: "standardNVSv3Family" },
     
-    // Not supported yet, requires datacenter GPU
+    // Still not supported despite datacenter drivers
+    // Would need Azure GRID drivers
+    // See https://learn.microsoft.com/en-us/azure/virtual-machines/linux/n-series-driver-setup
     // { machineType: "Standard_NV6ads_A10_v5", gpuType: "NVIDIA", gpuName: "A10", quotaName: "StandardNVADSA10v5Family" },
     // { machineType: "Standard_NV12ads_A10_v5", gpuType: "NVIDIA", gpuName: "A10", quotaName: "StandardNVADSA10v5Family"},
     // { machineType: "Standard_NV18ads_A10_v5", gpuType: "NVIDIA", gpuName: "A10", quotaName: "StandardNVADSA10v5Family"},
