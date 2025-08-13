@@ -33,7 +33,7 @@ export class StateManagerBuilder {
 
     constructor(args: StateManagerBuilderArgs) {
         if(args.stateBackend.local && args.stateBackend.s3 || !args.stateBackend.local && !args.stateBackend.s3) {
-            throw new Error(`Exactly one of local or s3 must be provided, got: ${JSON.stringify(Object.keys(args.stateBackend))}`)
+            throw new Error(`Exactly one of local or s3 must be provided, got: ${JSON.stringify(args.stateBackend)}`)
         }
         this.args = args
     }
