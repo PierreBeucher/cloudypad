@@ -69,6 +69,7 @@ class CloudyPadGCEInstance extends pulumi.ComponentResource {
         if (args.publicIpType === PUBLIC_IP_TYPE_STATIC) {
             publicIp = new gcp.compute.Address(`${name}-eip`, {
                 name: gcpResourceNamePrefix,
+                networkTier: "STANDARD",
             }, commonPulumiOpts)
         } else if (args.publicIpType !== PUBLIC_IP_TYPE_DYNAMIC) {
             throw `publicIpType must be either '${PUBLIC_IP_TYPE_STATIC}' or '${PUBLIC_IP_TYPE_DYNAMIC}'`
@@ -87,7 +88,10 @@ class CloudyPadGCEInstance extends pulumi.ComponentResource {
             networkInterfaces: [{
                 network: network.id,
                 subnetwork: subnet.id,
-                accessConfigs: [{ natIp: publicIp ? publicIp.address : undefined }],
+                accessConfigs: [{ 
+                    natIp: publicIp ? publicIp.address : undefined,
+                    networkTier: "STANDARD",
+                }],
             }],
             allowStoppingForUpdate: true,
             metadata: {
