@@ -5,8 +5,11 @@ services:
     environment:
       # Enable Nvidia to trigger specific behaviors in container
       NVIDIA_ENABLE: true
-      # Nvidia driver version matching host driver
+
+      # Nvidia driver version and type to install in container
+      # It must exactly match host driver version and type
       NVIDIA_DRIVER_VERSION: "{{ sunshine_nvidia_driver_version }}"
+      NVIDIA_DRIVER_TYPE: "{{ nvidia_required_driver_type }}"
 
       # Nvidia PCI bus ID suitable for X server config
       # Must be in format "bus@domain:device.function"
@@ -18,6 +21,7 @@ services:
       # Set all capabilities to enable all features, including graphics, video and display
       # See https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/docker-specialized.html
       NVIDIA_DRIVER_CAPABILITIES: all
+
 
 {% if nvidia_gpu_model in nvidia_datacenter_gpu_models %}
       # Datacenter (Tesla) GPUs have a maximum resolution of 2560x1600

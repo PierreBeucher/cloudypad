@@ -1,0 +1,21 @@
+# Install datacenter driver only if not already installed
+# Designed to be imported by driver.yml
+- name: Download NVIDIA driver installer
+  when: nvidia_driver_version != nvidia_driver_datacenter_dotrun_install_version
+  get_url:
+    url: https://us.download.nvidia.com/tesla/{{ nvidia_driver_datacenter_dotrun_install_version }}/NVIDIA-Linux-x86_64-{{ nvidia_driver_datacenter_dotrun_install_version }}.run
+    dest: /tmp/NVIDIA-Linux-x86_64-{{ nvidia_driver_datacenter_dotrun_install_version }}.run
+    mode: '0755'
+  retries: 3
+  delay: 10
+  register: nvidia_driver_download
+
+# Use dkms to ensure kernel modules are updated when kernel is updated
+- name: Install NVIDIA driver
+  when: nvidia_driver_version != nvidia_driver_datacenter_dotrun_install_version
+  command: /tmp/NVIDIA-Linux-x86_64-{{ nvidia_driver_datacenter_dotrun_install_version }}.run --no-questions --ui=none --dkms
+
+- name: Reboot after dotrun driver install
+  when: nvidia_driver_version != nvidia_driver_datacenter_dotrun_install_version and not nvidia_driver_skip_reboot
+  reboot:
+    post_reboot_delay: 10

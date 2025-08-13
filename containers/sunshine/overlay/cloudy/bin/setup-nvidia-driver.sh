@@ -1,10 +1,15 @@
 #!/usr/bin/env bash
 
-# Some Nvidia components are required in container 
+# 
+# Some NVIDIA drivers components are required in container
 # to use Nvidia options of X server
 # and ensure games are running on GPU
 #
+# Installed drivers must match those on host:
+# DRIVER_TYPE and DRIVER_VERSION are passed as environment variables
+#
 # Use the .run install with a few options to keep only what's needed
+#
 
 set -e
 
@@ -16,24 +21,36 @@ if [ -z "${NVIDIA_DRIVER_VERSION}" ]; then
     exit 1
 fi
 
-NVIDIA_INSTALLER="$NVIDIA_DATA_DIR/nvidia-${NVIDIA_DRIVER_VERSION}.run"
+if [ -z "${NVIDIA_DRIVER_TYPE}" ]; then
+    echo "WARNING: NVIDIA_DRIVER_TYPE is not set. Using 'datacenter' as default."
+    NVIDIA_DRIVER_TYPE="datacenter"
+fi
+
+NVIDIA_INSTALLER="$NVIDIA_DATA_DIR/nvidia-${NVIDIA_DRIVER_TYPE}-${NVIDIA_DRIVER_VERSION}.run"
 
 # Create a marker file in XDG_RUNTIME_DIR to indicate that the driver is installed
 # This is used to avoid reinstalling the driver on container restart
 # But driver should be installed in freshly created container
-NVIDIA_INSTALL_MARKER="$XDG_RUNTIME_DIR/nvidia-driver-${NVIDIA_DRIVER_VERSION}.installed"
+NVIDIA_INSTALL_MARKER="$XDG_RUNTIME_DIR/nvidia-driver-${NVIDIA_DRIVER_TYPE}-${NVIDIA_DRIVER_VERSION}.installed"
 
-echo "Checking Nvidia driver ${NVIDIA_DRIVER_VERSION} component installation..."
+echo "Checking Nvidia driver ${NVIDIA_DRIVER_VERSION} (${NVIDIA_DRIVER_TYPE}) component installation..."
 
 # Check if the file already exists
 if [ ! -f "$NVIDIA_INSTALLER" ]; then
-    echo "NVIDIA driver version ${NVIDIA_DRIVER_VERSION} not found. Downloading..."
+    echo "NVIDIA driver version ${NVIDIA_DRIVER_VERSION} (type: '${NVIDIA_DRIVER_TYPE}') not found. Downloading..."
     
     echo "Removing old NVIDIA driver installers..."
     find "$NVIDIA_DATA_DIR" -type f -name "nvidia-*.run" -exec rm -f {} +
     find "$NVIDIA_DATA_DIR" -type f -name "nvidia-*.installed" -exec rm -f {} +
 
-    curl -fSL "https://download.nvidia.com/XFree86/Linux-x86_64/${NVIDIA_DRIVER_VERSION}/NVIDIA-Linux-x86_64-${NVIDIA_DRIVER_VERSION}.run" -o "$NVIDIA_INSTALLER"
+    # Select download URL based on driver type
+    if [ "${NVIDIA_DRIVER_TYPE}" = "datacenter" ]; then
+        DOWNLOAD_URL="https://us.download.nvidia.com/tesla/${NVIDIA_DRIVER_VERSION}/NVIDIA-Linux-x86_64-${NVIDIA_DRIVER_VERSION}.run"
+    elif [ "${NVIDIA_DRIVER_TYPE}" = "display" ]; then
+        DOWNLOAD_URL="https://download.nvidia.com/XFree86/Linux-x86_64/${NVIDIA_DRIVER_VERSION}/NVIDIA-Linux-x86_64-${NVIDIA_DRIVER_VERSION}.run"
+    fi
+
+    curl -fSL "$DOWNLOAD_URL" -o "$NVIDIA_INSTALLER"
     chmod +x "$NVIDIA_INSTALLER"
 
     echo "Downloaded $NVIDIA_INSTALLER"

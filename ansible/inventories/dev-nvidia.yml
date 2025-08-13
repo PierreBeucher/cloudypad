@@ -1,14 +1,25 @@
 all:
   hosts:
-    "IP":
+    "dev-nvidia":
+      ansible_host: xxx
       ansible_user: ubuntu
+      ansible_ssh_common_args: '-o StrictHostKeyChecking=no'
+
+      cloudypad_provider: scaleway
 
       sunshine_server_name: dev-nvidia
       sunshine_nvidia_enable: true
       sunshine_compose_pull_images: always
-      sunshine_image_tag: dev
+      sunshine_image_tag: nvidia-driver
 
       sunshine_keyboard_layout: fr
       sunshine_keyboard_variant: azerty
       sunshine_keyboard_model: pc104
       sunshine_keyboard_options: terminate:ctrl_alt_bksp
+
+      # sunshine_web_username: sunshine
+      # sunshine_web_password_base64: U3Vuc2hpbmUh
+
+      autostop_enable: true
+      autostop_timeout_seconds: 900
+      cloudypad_data_disk_enabled: false
