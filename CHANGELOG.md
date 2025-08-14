@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.36.0](https://github.com/PierreBeucher/cloudypad/compare/v0.35.0...v0.36.0) (2025-08-14)
+
+
+### Features
+
+* list NC Azure GPU in CLI now datacenter drivers are used ([ba0f57f](https://github.com/PierreBeucher/cloudypad/commit/ba0f57f87630a9fa304992499d67d32dbed96e2f))
+* use GCP standard network tier by default to avoid overcost ([859f339](https://github.com/PierreBeucher/cloudypad/commit/859f3393c4c03dc1808558687f549bd594e0d57c))
+* use NVIDIA Datacenter drivers to support L40S, H100 and other GPUs ([c344a4d](https://github.com/PierreBeucher/cloudypad/commit/c344a4d3a1cb4d69767ae2919dcdfeb1dfef9cbd))
+
 ## [0.35.0](https://github.com/PierreBeucher/cloudypad/compare/v0.34.0...v0.35.0) (2025-08-11)
 
 
