@@ -1,0 +1,38 @@
+# Install display driver only if not already installed
+# Designed to be imported by driver.yml
+- name: Download NVIDIA driver installer
+  when: nvidia_driver_version != nvidia_driver_display_dotrun_install_version
+  get_url:
+    url: https://download.nvidia.com/XFree86/Linux-x86_64/{{ nvidia_driver_display_dotrun_install_version }}/NVIDIA-Linux-x86_64-{{ nvidia_driver_display_dotrun_install_version }}.run
+    dest: /tmp/NVIDIA-Linux-x86_64-{{ nvidia_driver_display_dotrun_install_version }}.run
+    mode: '0755'
+  retries: 3
+  delay: 10
+  register: nvidia_driver_download
+
+- name: Download NVIDIA driver SHA256 checksum
+  when: nvidia_driver_version != nvidia_driver_display_dotrun_install_version
+  get_url:
+    url: https://download.nvidia.com/XFree86/Linux-x86_64/{{ nvidia_driver_display_dotrun_install_version }}/NVIDIA-Linux-x86_64-{{ nvidia_driver_display_dotrun_install_version }}.run.sha256sum
+    dest: /tmp/NVIDIA-Linux-x86_64-{{ nvidia_driver_display_dotrun_install_version }}.run.sha256sum
+  retries: 3
+  delay: 10
+  register: nvidia_checksum_download
+
+- name: Verify SHA256 checksum
+  when: nvidia_driver_version != nvidia_driver_display_dotrun_install_version
+  command:
+    chdir: /tmp
+    cmd: "sha256sum -c /tmp/NVIDIA-Linux-x86_64-{{ nvidia_driver_display_dotrun_install_version }}.run.sha256sum"
+  register: sha256_check
+  failed_when: sha256_check.rc != 0
+
+# Use dkms to ensure kernel modules are updated when kernel is updated
+- name: Install NVIDIA driver
+  when: nvidia_driver_version != nvidia_driver_display_dotrun_install_version
+  command: /tmp/NVIDIA-Linux-x86_64-{{ nvidia_driver_display_dotrun_install_version }}.run --no-questions --ui=none --dkms
+
+- name: Reboot after dotrun driver install
+  when: nvidia_driver_version != nvidia_driver_display_dotrun_install_version and not nvidia_driver_skip_reboot
+  reboot:
+    post_reboot_delay: 10

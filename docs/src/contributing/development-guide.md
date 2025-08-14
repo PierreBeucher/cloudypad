@@ -188,9 +188,12 @@ pulumi destroy -s <organization/CloudyPad-XXX/STACK>
   ```
   npm update
   ```
-- [ ] NVIDIA driver version 
-  - Take latest Production Linux x86_64 version at [NVIDIA Unix Driver archive page](https://www.nvidia.com/en-us/drivers/unix/)
-  - Update in `ansible/roles/nvidia-driver/defaults/main.yml` `nvidia_driver_dotrun_install_version`
+- [ ] NVIDIA Display driver version 
+  - Take latest Display Production Linux x86_64 version at [NVIDIA Unix Driver archive page](https://www.nvidia.com/en-us/drivers/unix/)
+  - Update in `ansible/roles/nvidia-driver/defaults/main.yml` `nvidia_driver_display_dotrun_install_version`
+- [ ] NVIDIA Datacenter driver version 
+  - Take latest Datacenter Linux x86_64 version at [NVIDIA Unix Driver archive page](https://developer.nvidia.com/datacenter-driver-archive)
+  - Update in `ansible/roles/nvidia-driver/defaults/main.yml` `nvidia_driver_datacenter_dotrun_install_version`
 - [ ] Wolf version and config
   - [ ] Run `hack/update-wolf-images.sh` to update default images in Ansible role
   - [ ] Update Wolf config template in `ansible/roles/wolf/templates/wolf-config.toml` using default config

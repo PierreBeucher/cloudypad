@@ -79,6 +79,24 @@
     link: /usr/bin/cc
     path: /usr/bin/gcc
 
+- name: copy NVIDIA required driver type detection script
+  copy:
+    src: detect-required-driver-type.sh
+    dest: /usr/local/bin/nvidia-detect-required-driver-type.sh
+    mode: '0755'
+
+- name: Fetch NVIDIA required driver type
+  command: >-
+    /usr/local/bin/nvidia-detect-required-driver-type.sh
+  register: nvidia_required_driver_type_command
+  changed_when: false
+
+- set_fact:
+    nvidia_required_driver_type: "{{ nvidia_required_driver_type_command.stdout }}"
+
+- debug:
+    msg: "Found NVIDIA required driver type: '{{ nvidia_required_driver_type }}'"
+
 - name: Get current NVIDIA driver version (error expected and ignored if driver not installed yet)
   slurp:
     src: /sys/module/nvidia/version
@@ -99,41 +117,12 @@
   ansible.builtin.debug:
     msg: "Current NVIDIA driver version: {{ nvidia_driver_version }}"
 
-# Install driver only if version do not match
-# .run file should uninstall any existing version
-- name: Download NVIDIA driver installer
-  when: nvidia_driver_version != nvidia_driver_dotrun_install_version
-  get_url:
-    url: https://download.nvidia.com/XFree86/Linux-x86_64/{{ nvidia_driver_dotrun_install_version }}/NVIDIA-Linux-x86_64-{{ nvidia_driver_dotrun_install_version }}.run
-    dest: /tmp/NVIDIA-Linux-x86_64-{{ nvidia_driver_dotrun_install_version }}.run
-    mode: '0755'
-  retries: 3
-  delay: 10
-  register: nvidia_driver_download
+- name: Include display driver install tasks
+  when: nvidia_required_driver_type == "display"
+  ansible.builtin.include_tasks:
+    file: driver-display.yml
 
-- name: Download NVIDIA driver SHA256 checksum
-  when: nvidia_driver_version != nvidia_driver_dotrun_install_version
-  get_url:
-    url: https://download.nvidia.com/XFree86/Linux-x86_64/{{ nvidia_driver_dotrun_install_version }}/NVIDIA-Linux-x86_64-{{ nvidia_driver_dotrun_install_version }}.run.sha256sum
-    dest: /tmp/NVIDIA-Linux-x86_64-{{ nvidia_driver_dotrun_install_version }}.run.sha256sum
-  retries: 3
-  delay: 10
-  register: nvidia_checksum_download
-
-- name: Verify SHA256 checksum
-  when: nvidia_driver_version != nvidia_driver_dotrun_install_version
-  command:
-    chdir: /tmp
-    cmd: "sha256sum -c /tmp/NVIDIA-Linux-x86_64-{{ nvidia_driver_dotrun_install_version }}.run.sha256sum"
-  register: sha256_check
-  failed_when: sha256_check.rc != 0
-
-# Use dkms to ensure kernel modules are updated when kernel is updated
-- name: Install NVIDIA driver
-  when: nvidia_driver_version != nvidia_driver_dotrun_install_version
-  command: /tmp/NVIDIA-Linux-x86_64-{{ nvidia_driver_dotrun_install_version }}.run --no-questions --ui=none --dkms
-
-- name: Reboot after dotrun driver install
-  when: nvidia_driver_version != nvidia_driver_dotrun_install_version and not nvidia_driver_skip_reboot
-  reboot:
-    post_reboot_delay: 10
+- name: Include datacenter driver install tasks
+  when: nvidia_required_driver_type == "datacenter"
+  ansible.builtin.include_tasks:
+    file: driver-datacenter.yml

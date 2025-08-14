@@ -76,7 +76,7 @@ describe('Scaleway lifecycle', () => {
         await instanceUpdater.updateStateOnly({
             instanceName: instanceName,
             provisionInputs: {
-                instanceType: "GPU-3070-S",
+                instanceType: "L40S-1-48G",
             }, 
         })
 
@@ -90,7 +90,7 @@ describe('Scaleway lifecycle', () => {
         currentInstanceServerId = state.provision.output.instanceServerId
 
         const serverData = await scalewayClient.getRawServerData(currentInstanceServerId)
-        assert.strictEqual(serverData?.commercialType, "GPU-3070-S")
+        assert.strictEqual(serverData?.commercialType, "L40S-1-48G")
 
     }).timeout(20*60*1000) // 20 minutes timeout
 

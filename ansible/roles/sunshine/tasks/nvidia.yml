@@ -57,3 +57,14 @@
 
 - debug:
     msg: "NVIDIA GPU model: '{{ nvidia_gpu_model }}'"
+
+# required driver script is installed by nvidia-driver role
+# duplicate the fetch here as Sunshine role is often run independently in a play
+- name: Fetch NVIDIA required driver type
+  command: >-
+    /usr/local/bin/nvidia-detect-required-driver-type.sh
+  register: nvidia_required_driver_type_command
+  changed_when: false
+
+- set_fact:
+    nvidia_required_driver_type: "{{ nvidia_required_driver_type_command.stdout }}"

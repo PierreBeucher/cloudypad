@@ -1,4 +1,13 @@
 ---
+# Some Cloud providers are missing important modules (like drm) on their kernels
+# (as headless servers normally don't need them)
+# Installing them to avoid driver install issue
+- name: Install linux-modules-extra package
+  become: true
+  apt:
+    name: "linux-modules-extra-{{ ansible_kernel }}"
+    state: present
+
 - name: unload nouveau
   modprobe:
     name: nouveau
