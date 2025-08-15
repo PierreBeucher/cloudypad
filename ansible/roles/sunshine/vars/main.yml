@@ -49,4 +49,5 @@ nvidia_datacenter_gpu_models:
   - NVIDIA H200
   - NVIDIA H800
   - NVIDIA L40
+  - NVIDIA L40S
   - NVIDIA L4
