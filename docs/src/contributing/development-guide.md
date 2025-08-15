@@ -148,7 +148,8 @@ $ cd /vagrant
 During Sunshine container development, it's possible to use a Vagrant-specific Docker Compose which will mount folders selectively to test local Git changes directly in container:
 
 ```sh
-docker compose -f /vagrant/test/resources/docker-compose.vagrant.yml -p sunshine up -d --force-recreate
+vagrant ssh
+$ docker compose -f /vagrant/test/resources/docker-compose.vagrant.yml -p sunshine up -d --force-recreate
 ```
 
 For example, while working on scripts in `/cloudy/bin`, use a bind mount such as:
