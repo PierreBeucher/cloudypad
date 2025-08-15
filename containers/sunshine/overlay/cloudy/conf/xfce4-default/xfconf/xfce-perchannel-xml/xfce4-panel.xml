@@ -33,6 +33,12 @@
         <!-- Steam -->
         <value type="int" value="9"/>
 
+        <!-- Epic -->
+        <value type="int" value="13"/>
+
+        <!-- GOG -->
+        <value type="int" value="14"/>
+
         <!-- Heroic -->
         <value type="int" value="11"/>
 
@@ -89,6 +95,18 @@
     <property name="plugin-12" type="string" value="launcher">
       <property name="items" type="array">
         <value type="string" value="lutris.desktop"/>
+      </property>
+    </property>
+
+    <property name="plugin-13" type="string" value="launcher">
+      <property name="items" type="array">
+        <value type="string" value="epic.desktop"/>
+      </property>
+    </property>
+
+    <property name="plugin-14" type="string" value="launcher">
+      <property name="items" type="array">
+        <value type="string" value="gog.desktop"/>
       </property>
     </property>
 
