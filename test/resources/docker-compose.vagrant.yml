@@ -43,6 +43,8 @@ services:
     # Local overlay debug
     - "/vagrant/containers/sunshine/overlay/cloudy/bin:/cloudy/bin"
     - "/vagrant/containers/sunshine/overlay/cloudy/conf/cloudypad:/cloudy/conf/cloudypad"
+    - "/vagrant/containers/sunshine/overlay/cloudy/conf/xfce4-default:/cloudy/conf/xfce4-default"
+    
     # - "/vagrant/containers/sunshine/overlay/cloudy/conf/heroic-default:/cloudy/conf/heroic-default"
     # - "/vagrant/containers/sunshine/overlay/cloudy/conf/xfce4-default:/cloudy/conf/xfce4-default"
     # - "/vagrant/containers/sunshine/overlay/cloudy/conf/sunshine/apps.json:/cloudy/conf/sunshine/apps.json"

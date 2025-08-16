@@ -1,8 +1,8 @@
 [Desktop Entry]
 Name=Heroic
-Comment=Managing and play games on Heroic Games Launcher
+Comment=Manage and play Epic games via Heroic Games Launcher
 Exec=heroic-start.sh
-Icon=heroic
+Icon=/cloudy/conf/cloudypad/icons/epic.png
 Terminal=false
 Type=Application
 Categories=Network;FileTransfer;Game;
