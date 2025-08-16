@@ -282,4 +282,4 @@ ENV PATH=$PATH:/cloudy/bin
 
 RUN chown -R cloudy:cloudy /cloudy
 
-ENTRYPOINT [ "/cloudy/entrypoint.sh" ]
+ENTRYPOINT [ ""/cloudy/entrypoint.sh"" ]

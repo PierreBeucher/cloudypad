@@ -1,0 +1,42 @@
+# ---
+- name: Ensure Selkies project directory exists
+  file:
+    path: "{{ selkies_project_dir }}"
+    state: directory
+    mode: '0750'
+
+- name: Ensure Selkies data directory exists
+  become: true # required since container user may not match host user. TODO fix this
+  file:
+    path: "{{ selkies_data_dir }}"
+    state: directory
+    mode: '0750'
+
+- name: Ensure Selkies persistent config directory exists
+  become: true # required since container user may not match host user. TODO fix this
+  file:
+    path: "{{ selkies_persistent_config_dir }}"
+    state: directory
+    mode: '0750'
+
+- name: import Nvidia tasks
+  import_tasks: nvidia.yml
+  when: selkies_nvidia_enable
+  tags: [ nvidia ]
+
+
+- name: Copy Docker Compose files
+  tags: [ selkies-docker ]
+  ansible.builtin.template:
+    src: "docker-compose.yml"
+    dest: "{{ selkies_project_dir }}/docker-compose.yml"
+    mode: '0644'  
+
+- name: Deploy Selkies container
+  tags: [ selkies-docker ]
+  community.docker.docker_compose_v2:
+    project_src: "{{ selkies_project_dir }}"
+    build: always
+    state: present
+    files: "{{ selkies_project_dir }}/docker-compose.yml"
+    pull: "{{ selkies_compose_pull_images }}"

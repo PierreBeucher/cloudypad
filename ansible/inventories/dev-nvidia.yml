@@ -1,7 +1,7 @@
 all:
   hosts:
     "dev-nvidia":
-      ansible_host: xxx
+      ansible_host: 51.159.178.239
       ansible_user: ubuntu
       ansible_ssh_common_args: '-o StrictHostKeyChecking=no'
 

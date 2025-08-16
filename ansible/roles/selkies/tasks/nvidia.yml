@@ -1,0 +1,70 @@
+- name: Get current NVIDIA driver version
+  slurp:
+    src: /sys/module/nvidia/version
+  register: selkies_nvidia_driver_version_file
+  ignore_errors: true # expected that version file may not yet exist if driver not installed
+
+- name: Set NVIDIA driver version var
+  when: selkies_nvidia_driver_version_file is success
+  set_fact:
+    selkies_nvidia_driver_version: "{{ selkies_nvidia_driver_version_file.content | b64decode | trim }}"
+
+- name: Fail if Nvidia driver version can't be found
+  when: selkies_nvidia_driver_version_file is not success
+  fail: 
+    msg: Couldn't infer Nvidia driver version from host /sys/module/nvidia/version. Is Nvidia driver installed and loaded ?
+
+- name: Show NVIDIA driver version
+  ansible.builtin.debug:
+    msg: "Found NVIDIA driver version: {{ selkies_nvidia_driver_version }}"
+
+- name: Fetch NVIDIA GPU device
+  command: >-
+    nvidia-smi --query-gpu=gpu_bus_id --format=csv,noheader
+  register: nvidia_smi_gpu_bus_id_output
+  changed_when: false
+
+- set_fact:
+    nvidia_pci_bus_id_raw: "{{ nvidia_smi_gpu_bus_id_output.stdout_lines[0] }}"
+
+- debug:
+    msg: "Raw NVIDIA PCI BUS ID: {{ nvidia_pci_bus_id_raw }}"
+
+# nvidia_pci_bus_id_raw looks like "0001:00:00.0" in format "domain:bus:device.function" with base 16 (hexadecimal) numbers
+# nvidia_pci_bus_id is suitable X Server config which needs format "PCI:bus@domain:device:function" with base 10 (decimal) numbers
+# See https://www.x.org/releases/X11R7.7/doc/man/man5/xorg.conf.5.xhtml and https://unix.stackexchange.com/a/633709
+- name: Extract and transform PCI details
+  set_fact:
+    nvidia_pci_domain: "{{ nvidia_pci_bus_id_raw.split(':')[0] | int(base=16) | string }}"
+    nvidia_pci_bus: "{{ nvidia_pci_bus_id_raw.split(':')[1] | int(base=16) | string }}"
+    nvidia_pci_device: "{{ nvidia_pci_bus_id_raw.split(':')[2].split('.')[0] | int(base=16) | string }}"
+    nvidia_pci_function: "{{ nvidia_pci_bus_id_raw.split(':')[2].split('.')[1] | int(base=16) | string }}"
+
+- set_fact:
+    nvidia_pci_bus_id: "{{ nvidia_pci_bus + '@' + nvidia_pci_domain + ':' + nvidia_pci_device + ':' + nvidia_pci_function }}"
+
+- debug:
+    msg: "Found NVIDIA PCI BUS ID: {{ nvidia_pci_bus_id }}"
+
+- name: Fetch NVIDIA GPU model
+  command: >-
+    nvidia-smi --query-gpu=gpu_name --format=csv,noheader
+  register: nvidia_smi_gpu_name_output
+  changed_when: false
+
+- set_fact:
+    nvidia_gpu_model: "{{ nvidia_smi_gpu_name_output.stdout_lines[0] }}"
+
+- debug:
+    msg: "NVIDIA GPU model: '{{ nvidia_gpu_model }}'"
+
+# required driver script is installed by nvidia-driver role
+# duplicate the fetch here as Selkies role is often run independently in a play
+- name: Fetch NVIDIA required driver type
+  command: >-
+    /usr/local/bin/nvidia-detect-required-driver-type.sh
+  register: nvidia_required_driver_type_command
+  changed_when: false
+
+- set_fact:
+    nvidia_required_driver_type: "{{ nvidia_required_driver_type_command.stdout }}"

@@ -1,0 +1,51 @@
+# Whether to enable Nvidia
+# Assumes Nvidia drivers are installed
+selkies_nvidia_enable: true
+
+selkies_server_name: Selkies
+
+# Directory where Selkies Docker Compose files and other configuration are copied
+selkies_project_dir: "{{ ansible_user_dir }}/selkies"
+
+# Directory where Selkies and other data (eg. Steam game files) are persisted
+# Bind mounted in Selkies container for persistence
+# Changing this value will cause to lose track of existing data unless they are moved as well
+selkies_data_dir: "/var/lib/cloudypad/selkies/data"
+
+# Directory where persistent Selkies container configuration is stored
+# Bind mounted in Selkies container for persistence
+selkies_persistent_config_dir: "/var/lib/cloudypad/selkies/conf"
+
+# Directory where user's home directory from container is persisted
+selkies_persistent_home_dir: "/var/lib/cloudypad/selkies/home"
+
+# Legacy Selkies data directory
+# If data is found in this directory it will be moved to selkies_data_dir
+selkies_legacy_data_dir: "{{ selkies_project_dir }}/data"
+
+# Selkies Web UI username and password (base64 encoded)
+# If unset password will have to be set via Selkies web UI
+selkies_web_username: ""
+selkies_web_password_base64: "" # Password encoded in base64, eg echo -n "<password>" | base64
+
+# Selkies container image to use 
+selkies_image_tag: "dev"
+selkies_image_repo: "ghcr.io/pierrebeucher/cloudypad/selkies"
+
+# Whether to force pull images when deploying Docker Compose Selkies containers
+selkies_compose_pull_images: always
+
+# Keyboard settings
+# see docker-compose.yml for more details
+selkies_keyboard_layout: en
+selkies_keyboard_model: ""
+selkies_keyboard_variant: "qwerty"
+selkies_keyboard_options: ""
+
+# Desired locale
+selkies_locale: en_US.UTF-8
+
+# Optional additional Selkies config
+# Use "\n" for multiple lines
+# eg. "capture = x11\nfoo = bar"
+selkies_additional_config: ""

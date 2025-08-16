@@ -1,0 +1,58 @@
+# Deploy Sunshine in container
+# Use with -e sunshine_nvidia_enable=true for Nvidia GPU
+---
+- name: "Wait for machine to be reachable (timeout: 5min)"
+  hosts: all
+  gather_facts: false
+  tags: [ always ] # always run this task to wait for SSH
+  tasks:
+    - wait_for_connection:
+        timeout: 300
+        sleep: 5
+
+- name: Sunshine container
+  hosts: all
+  pre_tasks:
+    
+    - name: Check if provider specific vars file exists
+      set_fact:
+        provider_vars_exists: "{{ lookup('file', 'providers/' + cloudypad_provider + '/vars.yml', errors='ignore') is not none }}"
+
+    - name: Load provider specific vars
+      include_vars: "providers/{{ cloudypad_provider }}/vars.yml"
+      when: provider_vars_exists
+
+  roles:
+    - role: roles/prepare-install
+      tags: [ prepare-install ]
+
+    - role: roles/data-disk
+      become: true
+      tags: [ data-disk ]
+      when: cloudypad_data_disk_id is defined
+
+    - role: geerlingguy.docker
+      tags: [ docker ]
+      become: true
+      docker_users:
+      - "{{ ansible_user_id }}"
+      vars:
+        # Do not add Docker repository on Scaleway as it's already set and keyrings would conflict otherwise
+        docker_add_repo: "{{ cloudypad_provider != 'scaleway' }}"
+    
+    - role: roles/nvidia-driver
+      tags: [ nvidia ]
+      become: true
+      when: sunshine_nvidia_enable
+      vars:
+        nvidia_driver_module_params: |
+          # nvidia-drm module is required by Wolf
+          options nvidia-drm modeset=1
+    
+    - role: roles/selkies
+      tags: [ selkies ]
+    
+    # Install autostop last to avoid shutdown during installation process
+    - role: roles/autostop
+      become: true
+      tags: [ autostop ]

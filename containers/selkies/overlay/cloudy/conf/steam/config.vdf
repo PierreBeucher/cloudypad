@@ -1,0 +1,26 @@
+"InstallConfigStore"
+{
+	"Software"
+	{
+		"Valve"
+		{
+			"Steam"
+			{
+				"CompatToolMapping"
+				{
+					"0"
+					{
+						"name"		"proton_9"
+						"config"		""
+						"priority"		"75"
+					}
+				}
+				"ShaderCacheManager"
+				{
+					"DisableShaderCache"		"1"
+				}
+
+			}
+		}
+	}
+}

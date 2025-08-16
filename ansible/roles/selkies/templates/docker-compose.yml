@@ -1,0 +1,151 @@
+services:
+  cloudy:
+    image: {{ selkies_image_repo }}:{{ selkies_image_tag }}
+    # This container name is used by various scripts and functions to identify the container
+    # Don't change it
+    container_name: cloudy
+    # Need generous shared memory size as some services (eg. Steam) require a lot
+    # Half available memory (as is the case for most Linux distros)
+    shm_size: "{{ (ansible_memtotal_mb / 2) | int }}M"
+    # Privileged required to run Steam with bwrap (sandboxing)
+    privileged: true
+    # Always start container on machine startup unless specifically stopped
+    restart: unless-stopped
+    # uinput is used by Susnhine to emulate input devices (keyboard, mouse, etc.)
+    devices:
+    - /dev/uinput
+    
+    deploy:
+      resources:
+        reservations:
+          # Enable GPU in container
+          # See https://docs.docker.com/compose/how-tos/gpu-support/#enabling-gpu-access-to-service-containers
+          devices:
+            - capabilities: [gpu]
+    volumes:
+    # Allow input access from container (keyboard, mouse, etc
+    # TODO maybe not required from fully headless setup
+    - /dev/input:/dev/input
+    
+    # Cloudy Pad data and XDG_DATA_HOME where data should be persisted (game files, Selkies state, etc.)
+    - "{{ selkies_data_dir }}:/cloudy/data"
+
+    # Keep xfce4 config on host as user may customize it (eg. keyboard layout)
+    - "{{ selkies_persistent_config_dir }}/xfce4:/cloudy/conf/xfce4"
+
+    # Keep Heroic config and data
+    - "{{ selkies_persistent_config_dir }}/heroic:/cloudy/conf/heroic"
+
+    # Keep user's home directory
+    # Some important data are stored in $HOME by numerous apps (like Heroic or Lutris)
+    # persisting this folder makes sense to keep user's data across container recreation
+    - "{{ selkies_persistent_home_dir }}:/home/cloudy"
+
+    # Allow container to read/write/manage attributes on character device 13
+    # 13 matches /dev/input mouse, keyboard, etc. devices
+    # thus allowing process in container to manage input which we need for Selkies
+    # device_cgroup_rules:
+    #   - 'c 13:* rmw'
+    ports:
+      - "8080:8080"
+    environment:
+      # Desired keyboard layout
+      # See available layouts: https://man.archlinux.org/man/xkeyboard-config.7#LAYOUTS
+      # Passed to Xorg config as per https://wiki.archlinux.org/title/Xorg/Keyboard_configuration#Using_X_configuration_files
+      #
+      # Variables are passed to template overlay/cloudy/conf/x11/templates/00-keyboard.conf
+      CLOUDYPAD_KEYBOARD_LAYOUT: {{ selkies_keyboard_layout }}
+      CLOUDYPAD_KEYBOARD_MODEL: {{ selkies_keyboard_model }}
+      CLOUDYPAD_KEYBOARD_VARIANT: {{ selkies_keyboard_variant }}
+      CLOUDYPAD_KEYBOARD_OPTIONS: {{ selkies_keyboard_options }}
+
+      # Desired locale
+      CLOUDYPAD_LOCALE: {{ selkies_locale }}
+
+      # Selkies Web UI password
+      # If unset or empty, can be set via Web UI directly
+      SELKIES_WEB_PASSWORD_BASE64: "{{ selkies_web_password_base64 }}"
+      SELKIES_WEB_USERNAME: "{{ selkies_web_username }}"
+      SELKIES_SERVER_NAME: >-
+        {{ selkies_server_name | to_yaml | indent(8) }}
+
+      # Optional additional Selkies config
+      # Use "\n" for multiple lines
+      # eg. "capture = x11\nfoo = bar"
+      CLOUDYPAD_selkies_ADDITIONAL_CONFIG: "{{ selkies_additional_config }}"
+
+      TZ: UTC
+      DISPLAY_SIZEW: 1920
+      DISPLAY_SIZEH: 1080
+      DISPLAY_REFRESH: 60
+      DISPLAY_DPI: 96
+      DISPLAY_CDEPTH: 24
+      # With driver versions lower than 550, change to `DP-0` or any other `DP-*` port for larger resolution support if NOT using datacenter GPUs
+      VIDEO_PORT: DFP
+      # User password of container
+      PASSWD: mypasswd
+      # Uncomment to enable KasmVNC instead of Selkies, `SELKIES_BASIC_AUTH_PASSWORD` is used for authentication with KasmVNC, defaulting to `PASSWD` if not provided
+      # Uses: `SELKIES_ENABLE_BASIC_AUTH`, `SELKIES_BASIC_AUTH_USER`, `SELKIES_BASIC_AUTH_PASSWORD`, `SELKIES_ENABLE_RESIZE`, `SELKIES_ENABLE_HTTPS`, `SELKIES_HTTPS_CERT`, `SELKIES_HTTPS_KEY`
+#      KASMVNC_ENABLE: true
+      # Number of threads for encoding frames with KasmVNC, default value is all threads
+#      KASMVNC_THREADS: 0
+      ###
+      # Selkies parameters, for additional configurations see `selkies-gstreamer --help`
+      ###
+      # Change `SELKIES_ENCODER` to `x264enc`, `vp8enc`, or `vp9enc` if using software fallback without allocated GPUs or your GPU does not support `H.264 (AVCHD)` under the `NVENC - Encoding` section in https://developer.nvidia.com/video-encode-and-decode-gpu-support-matrix-new
+      SELKIES_ENCODER: nvh264enc
+      SELKIES_ENABLE_RESIZE: false
+      # Initial video bitrate in kilobits per second, may be changed later within web interface
+      SELKIES_VIDEO_BITRATE: 8000
+      # Initial frames per second, may be changed later within web interface
+      SELKIES_FRAMERATE: 60
+      # Initial audio bitrate in bits per second, may be changed later within web interface
+      SELKIES_AUDIO_BITRATE: 128000
+      # Uncomment if network conditions rapidly fluctuate
+#      SELKIES_CONGESTION_CONTROL: true
+      # Enable Basic Authentication from the web interface
+      SELKIES_ENABLE_BASIC_AUTH: true
+      # Defaults to `PASSWD` if unspecified
+#      SELKIES_BASIC_AUTH_PASSWORD: mypasswd
+      # Enable HTTPS web interface from inside the container
+      SELKIES_ENABLE_HTTPS: false
+    # Volume mount trusted HTTPS certificate to new path for no web browser warnings
+#    - SELKIES_HTTPS_CERT=/etc/ssl/certs/ssl-cert-snakeoil.pem
+#    - SELKIES_HTTPS_KEY=/etc/ssl/private/ssl-cert-snakeoil.key
+    ###
+    # Uncomment and configure below to use a TURN server for improved network compatibility
+    ###
+#    - SELKIES_TURN_HOST=turn.example.com
+#    - SELKIES_TURN_PORT=3478
+    # Change to `tcp` if the UDP protocol is throttled or blocked in your client network, or when the TURN server does not support UDP
+#    - SELKIES_TURN_PROTOCOL=udp
+    # You need a valid hostname and a certificate from authorities such as ZeroSSL or Let's Encrypt with your TURN server to enable TURN over TLS
+#    - SELKIES_TURN_TLS=false
+    # Internal TURN server settings, do not uncomment other TURN server settings below this when using an internal TURN server
+#    - TURN_MIN_PORT=65534
+#    - TURN_MAX_PORT=65535
+    # Provide only `SELKIES_TURN_SHARED_SECRET` for time-limited shared secret authentication or both `SELKIES_TURN_USERNAME` and `SELKIES_TURN_PASSWORD` for legacy long-term authentication, but do not provide both authentication methods at the same time
+#    - SELKIES_TURN_SHARED_SECRET=n0TaRealCoTURNAuthSecretThatIsSixtyFourLengthsLongPlaceholdPlace
+#    - SELKIES_TURN_USERNAME=username
+#    - SELKIES_TURN_PASSWORD=mypasswd
+    # TURN REST URI authentication, all TURN server settings above are ignored if enabled
+#    - 'SELKIES_TURN_REST_URI=http://localhost:8008'
+
+      # Enable Nvidia to trigger specific behaviors in container
+      NVIDIA_ENABLE: true
+
+      # Nvidia driver version and type to install in container
+      # It must exactly match host driver version and type
+      NVIDIA_DRIVER_VERSION: "{{ selkies_nvidia_driver_version }}"
+      NVIDIA_DRIVER_TYPE: "{{ nvidia_required_driver_type }}"
+
+      # Nvidia PCI bus ID suitable for X server config
+      # Must be in format "bus@domain:device.function"
+      # Use lspci to show available GPUs
+      # We need to enforce it here as X may fail to auto-detect proper PCI in some environments (eg. Azure)
+      NVIDIA_PCI_BUS_ID: "{{ nvidia_pci_bus_id }}"
+
+      # Nvidia driver capabilities required to run games
+      # Set all capabilities to enable all features, including graphics, video and display
+      # See https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/docker-specialized.html
+      NVIDIA_DRIVER_CAPABILITIES: all
