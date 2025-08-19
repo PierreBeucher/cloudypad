@@ -16,8 +16,6 @@ You can choose between them when creating your instance on prompt or by passing 
 
 [Sunshine](https://github.com/LizardByte/Sunshine) is a modern streaming server that supports a wide range of games and is known to be very stable. It provides a web interface to manage configuration.
 
-_Note: Sunshine support is still experimental and only Steam is available for now._
-
 ### Accessing web interface and configuration
 
 For security reasons Sunshine interface is not exposed on the internet. You must run an SSH tunnel to access it:

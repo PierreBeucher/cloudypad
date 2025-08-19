@@ -1,7 +1,5 @@
 # `cloudypad` CLI usage
 
-_🧪 `cloudypad` CLI interface is still experimental and may change in the future_
-
 - [Create instances](#create-instances)
 - [Manage instances](#manage-instances)
 - [Instance deployment lifecycle](#instance-deployment-lifecycle)
