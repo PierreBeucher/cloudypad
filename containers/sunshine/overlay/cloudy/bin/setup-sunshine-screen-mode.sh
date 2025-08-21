@@ -155,3 +155,15 @@ if [ $? -eq 0 ]; then
 else
   echo "Failed to apply mode '$MODE_NAME' to $SCREEN_NAME."
 fi
+
+# Apply NVIDIA ForceFullCompositionPipeline if NVIDIA is enabled
+# ForceFullCompositionPipeline allow smoother images in games where image may tear otherwise
+if [ "$NVIDIA_ENABLE" = "true" ]; then
+  echo "NVIDIA enabled, applying ForceFullCompositionPipeline for $SCREEN_NAME..."
+  nvidia-settings --assign "CurrentMetaMode=$SCREEN_NAME: $MODE_NAME +0+0 { ForceFullCompositionPipeline = On }"
+  if [ $? -eq 0 ]; then
+    echo "Successfully enabled ForceFullCompositionPipeline for $SCREEN_NAME."
+  else
+    echo "Warning: Failed to enable ForceFullCompositionPipeline for $SCREEN_NAME. This may be expected in some environments."
+  fi
+fi
