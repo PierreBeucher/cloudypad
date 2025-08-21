@@ -52,7 +52,11 @@
         <value type="int" value="1"/>
         <value type="int" value="2"/>
 
+        <!-- Separator -->
         <value type="int" value="99"/>
+
+        <!-- Firefox -->
+        <value type="int" value="15"/>
 
         <!-- Help and Exit session -->
         <value type="int" value="6"/>
@@ -101,6 +105,12 @@
     <property name="plugin-13" type="string" value="launcher">
       <property name="items" type="array">
         <value type="string" value="epic.desktop"/>
+      </property>
+    </property>
+
+    <property name="plugin-15" type="string" value="launcher">
+      <property name="items" type="array">
+        <value type="string" value="firefox.desktop"/>
       </property>
     </property>
 

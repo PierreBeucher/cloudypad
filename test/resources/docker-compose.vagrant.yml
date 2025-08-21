@@ -43,12 +43,14 @@ services:
     # Local overlay debug
     - "/vagrant/containers/sunshine/overlay/cloudy/bin:/cloudy/bin"
     - "/vagrant/containers/sunshine/overlay/cloudy/conf/cloudypad:/cloudy/conf/cloudypad"
+    
     - "/vagrant/containers/sunshine/overlay/cloudy/conf/xfce4-default:/cloudy/conf/xfce4-default"
     
     # - "/vagrant/containers/sunshine/overlay/cloudy/conf/heroic-default:/cloudy/conf/heroic-default"
-    # - "/vagrant/containers/sunshine/overlay/cloudy/conf/xfce4-default:/cloudy/conf/xfce4-default"
-    # - "/vagrant/containers/sunshine/overlay/cloudy/conf/sunshine/apps.json:/cloudy/conf/sunshine/apps.json"
-    # - "/vagrant/containers/sunshine/overlay/cloudy/conf/sunshine/assets:/cloudy/conf/sunshine/assets"
+
+    - "/vagrant/containers/sunshine/overlay/cloudy/conf/sunshine/apps.json:/cloudy/conf/sunshine/apps.json"
+    - "/vagrant/containers/sunshine/overlay/cloudy/conf/sunshine/assets:/cloudy/conf/sunshine/assets"
+    
     # - "/vagrant/containers/sunshine/overlay/cloudy/conf/supervisor:/cloudy/conf/supervisor"
     
     # Allow container to read/write/manage attributes on character device 13
@@ -80,9 +82,9 @@ services:
       # Desired locale
       CLOUDYPAD_LOCALE: fr_FR.UTF-8
 
-      # Sunshine Web UI password
+      # Sunshine Web UI password "sunshine"
       # If unset or empty, can be set via Web UI directly
-      SUNSHINE_WEB_PASSWORD_BASE64: "QCEvOiw/ISojJ+KCrGBfXMK1JD0iZm9v"
+      SUNSHINE_WEB_PASSWORD_BASE64: "c3Vuc2hpbmU="
       SUNSHINE_WEB_USERNAME: "sunshine"
       SUNSHINE_SERVER_NAME: >-
         dev-vagrant
