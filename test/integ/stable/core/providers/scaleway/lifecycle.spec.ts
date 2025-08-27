@@ -52,7 +52,8 @@ describe('Scaleway lifecycle', () => {
                 sunshine: {
                     enable: true,
                     username: "sunshine",
-                    passwordBase64: Buffer.from("Sunshine!").toString('base64')
+                    passwordBase64: Buffer.from("Sunshine!").toString('base64'),
+                    imageTag: "dev"
                 }, 
             })
     })
