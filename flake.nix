@@ -60,7 +60,7 @@
               vagrant
               scaleway-cli
               bc
-
+              linode-cli
               google-cloud-sdk
             ];
             

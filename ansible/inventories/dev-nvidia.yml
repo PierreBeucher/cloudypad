@@ -1,11 +1,11 @@
 all:
   hosts:
     "dev-nvidia":
-      ansible_host: xxx
-      ansible_user: ubuntu
+      ansible_host: 172.232.41.89
+      ansible_user: root
       ansible_ssh_common_args: '-o StrictHostKeyChecking=no'
 
-      cloudypad_provider: scaleway
+      cloudypad_provider: linode
 
       sunshine_server_name: dev-nvidia
       sunshine_nvidia_enable: true
