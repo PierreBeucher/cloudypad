@@ -1,5 +1,22 @@
 # Changelog
 
+## [0.37.0](https://github.com/PierreBeucher/cloudypad/compare/v0.36.0...v0.37.0) (2025-08-27)
+
+
+### Features
+
+* enable NVIDIA ForceFullCompositionPipeline by default ([89ec773](https://github.com/PierreBeucher/cloudypad/commit/89ec7738cbd45589f0a13a141ff6005c14e307a5))
+* **sunshine:** add Epic and GOG icons (using Heroic Games Launcher) ([8f40cd1](https://github.com/PierreBeucher/cloudypad/commit/8f40cd18d1b008a7cb5a00aedc47b137f899d664))
+* **sunshine:** add unzip ([a9462e8](https://github.com/PierreBeucher/cloudypad/commit/a9462e8df1f713aa8d32d058863dca549562b173))
+* **sunshine:** add unzip ([075f14d](https://github.com/PierreBeucher/cloudypad/commit/075f14d017104e39536f3f261b9bc2d16603a842))
+* web browser (Firefox) desktop shortcut and Sunshine app ([0965682](https://github.com/PierreBeucher/cloudypad/commit/0965682af0ed493528fa8c8eec4a8f395cea9460))
+
+
+### Bug Fixes
+
+* add missing L40S to known GPU names for screen res ([515f97c](https://github.com/PierreBeucher/cloudypad/commit/515f97c2740b771573d44b37263418aa1c2dad30))
+* add missing L40S to known GPU names for screen res ([d578d48](https://github.com/PierreBeucher/cloudypad/commit/d578d48b5d5e0ca29b2c640a95cf14cefdec3e4d))
+
 ## [0.36.0](https://github.com/PierreBeucher/cloudypad/compare/v0.35.0...v0.36.0) (2025-08-14)
 
 
