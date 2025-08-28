@@ -88,12 +88,16 @@ export class LinodeProvisioner extends AbstractInstanceProvisioner<LinodeProvisi
             publicKeyContent: sshPublicKeyContent,
             noInstanceServer: args?.noInstanceServer,
             apiToken: apiToken,
+            dns: this.args.provisionInput.dns ? {
+                domainName: this.args.provisionInput.dns.domainName,
+                record: this.args.provisionInput.dns.record,
+            } : undefined,
         }
     }
 
     private pulumiOutputsToProvisionOutput(pulumiOutputs: LinodePulumiOutput): LinodeProvisionOutputV1 {
         return {
-            host: pulumiOutputs.publicIp ?? "unknown", // TODO use DNS record
+            host: pulumiOutputs.instanceHostname ?? "unknown",
             instanceServerName: pulumiOutputs.instanceServerName ?? undefined,
             instanceServerId: pulumiOutputs.instanceServerId ?? undefined,
             dataDiskId: pulumiOutputs.dataDiskId

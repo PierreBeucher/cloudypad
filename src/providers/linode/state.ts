@@ -16,6 +16,10 @@ const LinodeProvisionInputV1Schema = CommonProvisionInputV1Schema.extend({
     imageId: z.string().optional().describe("Existing image ID for instance server. If set, disk size must be equal or greater than image size"),
     rootDiskSizeGb: z.number().describe("Root (OS) disk size in GB"),
     dataDiskSizeGb: z.number().default(0).describe("Data disk size in GB. If non-0, a disk dedicated for instance data (such as games data) will be created"),
+    dns: z.object({
+        domainName: z.string().describe("Linode domain ID"),
+        record: z.string().optional().describe("Linode DNS record name. Set auto generated value if not set."),
+    }).describe("Optional DNS configuration to create DNS record pointing to the instance's public IP and set as instance hostname. If not set, instance public IP is used as hostname.").optional(),
 })
 
 const LinodeInstanceStateV1Schema = InstanceStateV1Schema.extend({

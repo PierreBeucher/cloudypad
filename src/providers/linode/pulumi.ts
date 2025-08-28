@@ -1,4 +1,5 @@
 import * as pulumi from "@pulumi/pulumi"
+import * as random from "@pulumi/random"
 import * as linode from "@pulumi/linode"
 import { LocalWorkspaceOptions, OutputMap } from "@pulumi/pulumi/automation"
 import { InstancePulumiClient } from "../../tools/pulumi/client"
@@ -50,6 +51,22 @@ interface LinodeInstanceArgs {
      * Data disk is persisted.
      */
     noInstanceServer?: boolean
+
+    /**
+     * Optional DNS configuration to create an A record pointing to the instance's public IP.
+     * If provided, will create a DNS A record and return the FQDN as hostname.
+     * If not provided, will return the plain IP address as hostname.
+     */
+    dns?: {
+
+        /**
+         * Domain under which to create the DNS record.
+         * Linode accept domain ID as number. Passing a string is also possible
+         * but it must be a valid domain ID.
+         */
+        domainName: string
+        record?: string
+    }
 }
 
 class CloudyPadLinodeInstance extends pulumi.ComponentResource {
@@ -58,6 +75,7 @@ class CloudyPadLinodeInstance extends pulumi.ComponentResource {
     public readonly instanceServerName: pulumi.Output<string | undefined>
     public readonly instanceServerId: pulumi.Output<string | undefined>
     public readonly instanceServerURN: pulumi.Output<string | undefined>
+    public readonly instanceHostname: pulumi.Output<string | undefined>
 
     public readonly dataDiskId: pulumi.Output<string>
     
@@ -70,6 +88,7 @@ class CloudyPadLinodeInstance extends pulumi.ComponentResource {
             this.instanceServerId = pulumi.output(undefined)
             this.publicIp = pulumi.output(undefined)
             this.instanceServerURN = pulumi.output(undefined)
+            this.instanceHostname = pulumi.output(undefined)
         } else {
 
             instanceServer = new linode.Instance(`${name}-instance`, {
@@ -82,14 +101,61 @@ class CloudyPadLinodeInstance extends pulumi.ComponentResource {
                 // rootPass: pulumi.secret(args.rootPassword),
                 privateIp: true,
                 booted: true,
+                // watchdog would start instance if stopped "unexpectedly"
+                // which would cause instance to restart after being stopped by auto-stop service for idleness
+                watchdogEnabled: false
             }, { 
                 parent: this,
             })
+
+            const instanceServerIp = instanceServer.ipv4s[0]
 
             this.instanceServerName = instanceServer.label
             this.instanceServerId = instanceServer.id
             this.publicIp = instanceServer.ipv4s[0]
             this.instanceServerURN = instanceServer.urn
+
+            // create DNS A record if provided and use as instance hostname
+            // otherwise use IP address as instance hostname
+            if (args.dns) {
+
+                // generate a random record name desired record name is not provided
+                let recordNameSuffix = args.dns.record ? 
+                    pulumi.output(args.dns.record)
+                : 
+                    new random.RandomString("record-name", {
+                        length: 20,
+                        lower: true,
+                        special: false,
+                        upper: false,
+                        numeric: false,
+                    }).result
+
+                const recordName = pulumi.interpolate`${name}-${recordNameSuffix}`
+
+                // fetch defined domain and create DNS record
+                const dnsRecord = linode.getDomainOutput({ domain: args.dns.domainName }).apply(domain => {
+
+                    if(!domain.id) {
+                        throw new Error(`Domain for '${args.dns?.domainName}' not found`)
+                    }
+
+                    return new linode.DomainRecord(`${name}-dns-record`, {
+                        domainId: domain.id,
+                        name: recordName,
+                        recordType: "A",
+                        target: instanceServerIp,
+                        ttlSec: 30,
+                    }, {
+                        parent: this,
+                    })
+                })
+
+                // FQDN like my-instance.my-domain.cloudypad.gg
+                this.instanceHostname = pulumi.interpolate`${dnsRecord.name}.${args.dns.domainName}`
+            } else {
+                this.instanceHostname = instanceServerIp
+            }
         }
 
         const dataVolume = new linode.Volume(`${name}-data-disk`, {
@@ -114,6 +180,7 @@ async function linodePulumiProgram(): Promise<Record<string, any> | void> {
     const dataDisk = config.requireObject<LinodeInstanceArgs["dataVolume"]>("dataDisk")
     const imageId = config.get("imageId")
     const noInstanceServer = config.getBoolean("noInstanceServer")
+    const dns = config.getObject<LinodeInstanceArgs["dns"]>("dns")
 
     const stackName = pulumi.getStack()
 
@@ -127,19 +194,20 @@ async function linodePulumiProgram(): Promise<Record<string, any> | void> {
         },
         dataVolume: dataDisk,
         imageId: imageId,
-        noInstanceServer: noInstanceServer
+        noInstanceServer: noInstanceServer,
+        dns: dns
     })
 
     return pulumi.all([
         instance.instanceServerName, 
-        instance.publicIp, 
+        instance.instanceHostname, 
         instance.instanceServerId, 
         instance.dataDiskId, 
         instance.instanceServerURN
-    ]).apply(([instanceServerName, publicIp, instanceServerId, dataDiskId, instanceServerUrn]) => {
+    ]).apply(([instanceServerName, instanceHostname, instanceServerId, dataDiskId, instanceServerUrn]) => {
         const result: LinodePulumiOutput = {
             instanceServerName: instanceServerName,
-            publicIp: publicIp,
+            instanceHostname: instanceHostname,
             instanceServerId: instanceServerId,
             dataDiskId: dataDiskId,
             instanceServerUrn: instanceServerUrn
@@ -162,6 +230,10 @@ export interface PulumiStackConfigLinode {
     dataDisk?: {
         sizeGb: number
     }
+    dns?: {
+        domainName: string
+        record?: string
+    }
 }
 
 /**
@@ -180,7 +252,7 @@ export interface LinodePulumiOutput {
     /**
      * Public IP address of the instance
      */
-    publicIp?: string
+    instanceHostname?: string
 
     /**
      * Pulumi URN of the root OS disk
@@ -228,6 +300,8 @@ export class LinodePulumiClient extends InstancePulumiClient<PulumiStackConfigLi
         await stack.setConfig("authorizedKeys", { value: JSON.stringify([config.publicKeyContent])})
         await stack.setConfig("securityGroupPorts", { value: JSON.stringify(config.securityGroupPorts)})
 
+        if(config.dns) await stack.setConfig("dns", { value: JSON.stringify(config.dns)})
+
         const allConfs = await stack.getAllConfig()
         this.logger.debug(`Linode stack config after update: ${JSON.stringify(allConfs)}`)
     }
@@ -235,7 +309,7 @@ export class LinodePulumiClient extends InstancePulumiClient<PulumiStackConfigLi
     protected async buildTypedOutput(outputs: OutputMap) : Promise<LinodePulumiOutput>{
         return {
             instanceServerName: outputs["instanceServerName"]?.value as string | undefined,
-            publicIp: outputs["publicIp"].value as string | undefined,
+            instanceHostname: outputs["instanceHostname"].value as string | undefined,
             instanceServerId: outputs["instanceServerId"]?.value as string | undefined,
             instanceServerUrn: outputs["instanceServerUrn"]?.value as string | undefined,
             dataDiskId: outputs["dataDiskId"].value as string

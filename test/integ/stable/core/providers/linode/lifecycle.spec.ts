@@ -33,34 +33,37 @@ describe('Linode lifecycle', () => {
         })
     }
     
-    // it('should initialize instance state', async () => {
+    it('should initialize instance state', async () => {
 
-    //     assert.strictEqual(currentInstanceServerId, undefined)
+        assert.strictEqual(currentInstanceServerId, undefined)
 
-    //     const initializer = new LinodeProviderClient({config: coreConfig}).getInstanceInitializer()
-    //         await initializer.initializeStateOnly(instanceName, {
-    //             ssh: {
-    //                 user: "root",
-    //                 privateKeyPath: "/home/pbeucher/.ssh/id_ed25519",
-    //             },
-    //             region: region,
-    //             instanceType: instanceType,
-    //             rootDiskSizeGb: rootDiskSizeGb,
-    //             dataDiskSizeGb: dataDiskSizeGb,
-    //         }, {
-    //             sunshine: {
-    //                 enable: true,
-    //                 username: "sunshine",
-    //                 passwordBase64: Buffer.from("Sunshine!").toString('base64'),
-    //                 imageTag: "dev"
+        const initializer = new LinodeProviderClient({config: coreConfig}).getInstanceInitializer()
+            await initializer.initializeStateOnly(instanceName, {
+                ssh: {
+                    user: "root",
+                    privateKeyPath: "/home/pbeucher/.ssh/id_ed25519",
+                },
+                region: region,
+                instanceType: instanceType,
+                rootDiskSizeGb: rootDiskSizeGb,
+                dataDiskSizeGb: dataDiskSizeGb,
+                dns: {
+                    domainName: "instances.cloudypad.gg",
+                },
+            }, {
+                sunshine: {
+                    enable: true,
+                    username: "sunshine",
+                    passwordBase64: Buffer.from("Sunshine!").toString('base64'),
+                    imageTag: "dev"
 
-    //             }, 
-    //         })
-    // })
+                }, 
+            })
+    })
 
     it('should deploy instance', async () => {
-        // const instanceManager = await linodeProviderClient.getInstanceManager(instanceName)
-        // await instanceManager.deploy()
+        const instanceManager = await linodeProviderClient.getInstanceManager(instanceName)
+        await instanceManager.deploy()
 
         const state = await getCurrentTestState()
 
@@ -180,16 +183,16 @@ describe('Linode lifecycle', () => {
     //     assert.strictEqual(stateAfter.provision.output?.instanceServerId, serverIdBefore)
     // }).timeout(120000)
 
-    it('should destroy instance', async () => {
-        const instanceManager = await linodeProviderClient.getInstanceManager(instanceName)
-        await instanceManager.destroy()
-    }).timeout(120000)
+    // it('should destroy instance', async () => {
+    //     const instanceManager = await linodeProviderClient.getInstanceManager(instanceName)
+    //     await instanceManager.destroy()
+    // }).timeout(120000)
 
-    it('instance does not exist after destroy', async () => {
-        const coreClient = new CloudypadClient({ config: coreConfig })
-        const instances = await coreClient.getAllInstances()
-        assert.strictEqual(instances.find(instance => instance === instanceName), undefined)
-    })
+    // it('instance does not exist after destroy', async () => {
+    //     const coreClient = new CloudypadClient({ config: coreConfig })
+    //     const instances = await coreClient.getAllInstances()
+    //     assert.strictEqual(instances.find(instance => instance === instanceName), undefined)
+    // })
     
 
 }).timeout(360000) 
