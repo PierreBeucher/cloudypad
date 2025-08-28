@@ -2,16 +2,16 @@
 
 Deploy a Cloud gaming instance using your own servers or directly on a Cloud provider like AWS, Azure or Google Cloud
 
-- 💰 While Cloudy Pad itself is free and open-source, charges may be incurred for Cloud provider usage. Make sure you [understand the costs](cost.md)
-- Cloudy Pad is Linux-based. Using Steam requires [Proton](https://github.com/ValveSoftware/Proton). You can check your game compatibility on [ProtonDB website](https://www.protondb.com/) or see [how to play games on Steam](#how-to-play-game-on-steam--why-does-my-steam-game-doesnt-launch-).
+- 💰 While Cloudy Pad itself is free and open-source, charges may be incurred for Cloud provider usage. Make sure you [understand the costs](cost/index.md)
+- Cloudy Pad is Linux-based. Using Steam requires [Proton](https://github.com/ValveSoftware/Proton). You can check your game compatibility on [ProtonDB website](https://www.protondb.com/).
 
 **Cloudy Pad App**
 
 Instructions below are aimed for **tech-savvy users who are familiar with terms such as "server", "ssh" and "NVIDIA drivers".**
 
-If that's not your cup of tea, **you might prefer to use [Cloudy Pad App](https://app.cloudypad.gg/)** instead: a simple, intuitive web platform to deploy your gaming instance in a few minutes.
+If that's not your cup of tea, **you might prefer to use [Cloudy Pad App](https://app.cloudypad.gg/sign-in)** instead: a simple, intuitive web platform to deploy your gaming instance in a few minutes.
 
-[🎮 Join Cloudy Pad App](https://app.cloudypad.gg/)
+[🎮 Join Cloudy Pad App](https://app.cloudypad.gg/sign-in)
 
 ---
 
@@ -46,20 +46,20 @@ Install latest version of `cloudypad` CLI:
 curl -fsSL https://raw.githubusercontent.com/PierreBeucher/cloudypad/master/install.sh | bash
 ```
 
-[➡️ See Installation page](./installation.md) for more installation methods on Linux, Mac and Windows.
+[➡️ See Installation page](./usage/installation.md) for more installation methods on Linux, Mac and Windows.
 
 ## Choose your Provider
 
 Choose a provider:
 
-- [SSH](./cloud-provider-setup/ssh) - Deploy on your own server or machine directly via SSH
+- [SSH](./cloud-provider-setup/ssh.md) - Deploy on your own server or machine directly via SSH
 - [AWS](./cloud-provider-setup/aws.md) - Create an instance directly on AWS
 - [Azure](./cloud-provider-setup/azure.md) - Create an instance directly on Microsoft Azure
 - [Google Cloud](./cloud-provider-setup/gcp.md) - Create an instance directly on Google Cloud
 - [Scaleway](./cloud-provider-setup/scaleway.md) - Create an instance directly on Scaleway
 - [Paperspace](./cloud-provider-setup/paperspace.md) - Create an instance directly on Paperspace
 
-[➡️ Check out per-Cloud provider setup specificities](./cloud-provider-setup).
+[➡️ Check out per-Cloud provider setup specificities](./cloud-provider-setup/index.md).
 
 ## Deploy your instance
 
@@ -85,7 +85,7 @@ Cloudy Pad will do everything for you automatically:
 
 Once the installation is complete, run Moonlight, connect and start playing ! 🎮
 
-[➡️ Steam Sign-in guide](./help/steam.md)
+[➡️ Steam Sign-in guide](./game-launchers/steam.md)
 
 [➡️ Moonlight usage and optimization guide](./help/moonlight-usage.md)
 

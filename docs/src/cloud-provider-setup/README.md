@@ -4,12 +4,12 @@ Providers are methods used by Cloudy Pad to deploy gaming instances.
 
 Supported providers:
 
-- [SSH](./ssh) - Deploy on your own server or machine directly via SSH
-- [AWS](./aws.md) - Create an instance directly on AWS
-- [Azure](./azure.md) - Create an instance directly on Microsoft Azure
-- [Google Cloud](./gcp.md) - Create an instance directly on Google Cloud
-- [Scaleway](./scaleway.md) - Create an instance directly on Scaleway
-- [Paperspace](./paperspace.md) - Create an instance directly on Paperspace
+- [SSH](ssh.md) - Deploy on your own server or machine directly via SSH
+- [AWS](aws.md) - Create an instance directly on AWS
+- [Azure](azure.md) - Create an instance directly on Microsoft Azure
+- [Google Cloud](gcp.md) - Create an instance directly on Google Cloud
+- [Scaleway](scaleway.md) - Create an instance directly on Scaleway
+- [Paperspace](paperspace.md) - Create an instance directly on Paperspace
 
 Typical needs for Cloud providers (all but SSH):
 

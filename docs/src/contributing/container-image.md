@@ -49,6 +49,6 @@ This will update your instance to use your custom image without having to run en
 
 ## Wolf
 
-Wolf Docker images are based on [GoW images](https://github.com/games-on-whales/gow). They are not maintained by Cloudy Pad but instruction can be found [here](https://github.com/games-on-whales/gow/blob/main/docs/docker.md) to create custom images. You can then update configuration directly in your instance at ` /etc/wolf/cfg` following [Wolf configuration instructions](https://games-on-whales.github.io/wolf/stable/user/configuration.html)
+Wolf Docker images are based on [GoW images](https://github.com/games-on-whales/gow). They are not maintained by Cloudy Pad but instruction can be found [here](https://games-on-whales.github.io/wolf/stable/apps/index.html#_build_your_own) to create custom images. You can then update configuration directly in your instance at ` /etc/wolf/cfg` following [Wolf configuration instructions](https://games-on-whales.github.io/wolf/stable/user/configuration.html)
 
 _Note: Wolf custom image is not fully supported yet. On next Cloudy Pad update or `cloudypad configure` run your Wolf config will be overwritten with a custom template. Use this only for development or experimental purposes._

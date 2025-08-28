@@ -6,7 +6,7 @@ Next big features and improvements
 
 Cloudy Pad App will provide a way to deploy and manage gaming instances using a non-technical user friendly platform. 
 
-Start playing now on [Cloudy Pad App](https://app.cloudypad.gg) !
+Start playing now on [Cloudy Pad App](https://app.cloudypad.gg/sign-in) !
 
 ## Cost reduction: OS Disk snapshot
 

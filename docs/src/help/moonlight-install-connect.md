@@ -19,7 +19,7 @@ See [Official Moonlight website](https://moonlight-stream.org/#) for more inform
 
 ### Cloudy Pad Platform
 
-[Cloudy Pad platform](https://app.cloudypad.gg) lets you create instances via a web interface.
+[Cloudy Pad platform](https://app.cloudypad.gg/sign-in) lets you create instances via a web interface.
 
 After creating your instance, to go _My Instances_, click on _Connect_ and follow instructions on screen
 

@@ -201,3 +201,21 @@ jobs:
 
       # Disable this for now as latets version does not respect no-tty properly      
       # - run: CLOUDYPAD_CONTAINER_NO_TTY=true nix run .# -- --version
+
+  test-doc-links:
+    name: Test documentation links
+    runs-on: ubuntu-24.04
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      - uses: nixbuild/nix-quick-install-action@v30
+
+      - uses: nix-community/cache-nix-action@v6
+        with:
+          primary-key: nix-${{ runner.os }}
+          restore-prefixes-first-match: nix-${{ runner.os }}
+
+      - name: Run documentation link check test
+        run: nix develop -c task test-doc-links
