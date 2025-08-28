@@ -71,8 +71,6 @@ cloudypad create aws \
 
 Use `cloudypad create <provider> --help` for available flags.
 
-Alternatively, see [CLI integration tests](https://github.com/PierreBeucher/cloudypad/blob/master/test/integ/cli-full-lifecycle) for available flags
-
 ## Manage instances
 
 List existing instances:
@@ -165,7 +163,7 @@ CLOUDYPAD_IMAGE="crafteo/cloudypad:$CLOUDYPAD_VERSION"
 
 Cloudy Pad relies on external tools and libraries like AWS library and Ansible to manage your instances. Some variables can set to alter behavior.
 
-See [`env_vars` variable in launcher script](https://github.com/PierreBeucher/cloudypad/blob/master/cloudypad.sh#L117C11-L117C19) for details. 
+See [`env_vars` variable in launcher script](https://github.com/PierreBeucher/cloudypad/blob/master/cloudypad.sh) for details. 
 
 ## Global configuration
 

@@ -66,4 +66,4 @@ MacOS keyboard:
 ## See also
 
 - [Moonlight: install and connect](./moonlight-install-connect.md)
-- [Official Moonlight troubleshooting]([./moonlight-troubleshooting.md](https://github.com/moonlight-stream/moonlight-docs/wiki/Troubleshooting))
+- [Official Moonlight troubleshooting](https://github.com/moonlight-stream/moonlight-docs/wiki/Troubleshooting)

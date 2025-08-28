@@ -51,7 +51,7 @@ Note: If you are using SSH keys mounted from Windows host, make sure they have p
 
 ### Nix / NixOS
 
-Cloudy Pad is packaged as a [Nix Flake](https://nixos.wiki/wiki/flakes), see [`flake.nix`](./flake.nix)
+Cloudy Pad is packaged as a [Nix Flake](https://nixos.wiki/wiki/flakes), see [`flake.nix`](https://github.com/PierreBeucher/cloudypad/blob/master/flake.nix)
 
 You can include it in your NixOS config or run directly with `nix run`:
 

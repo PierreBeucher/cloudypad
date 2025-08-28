@@ -27,7 +27,7 @@ Cloudy Pad lets you **deploy a Cloud gaming instance on your own servers, machin
 - Deploy a [Sunshine](https://app.lizardbyte.dev/Sunshine/) or [Wolf](https://games-on-whales.github.io/wolf/stable/) video-game streaming server
 - Stream with [Moonlight](https://moonlight-stream.org/) client
 
-**Not familiar with Cloud Gaming ?** See [What's Cloud Gaming and how is Cloudy Pad useful ?](./docs/what-is-cloudy-pad.md)
+**Not familiar with Cloud Gaming ?** See [What's Cloud Gaming and how is Cloudy Pad useful ?](./what-is-cloud-gaming.md)
 
 [![Discord](https://img.shields.io/discord/856434175455133727?style=for-the-badge&logo=discord&logoColor=ffffff&label=Discord&labelColor=6A7EC2&color=7389D8)](https://discord.gg/QATA3b9TTa)
 
@@ -38,7 +38,7 @@ Cloudy Pad lets you **deploy a Cloud gaming instance on your own servers, machin
 ## Getting started
 
 - 🚀 [Follow Getting started guide](./getting-started.md) to deploy your Cloudy Pad instance
-- 💰 [Understand Cloud provider costs](./cost) - Cloudy Pad itself is free, but Cloud provider usage is not. Make sure you understand Cloud costs before deploying your instance 😉
+- 💰 [Understand Cloud provider costs](./cost/index.md) - Cloudy Pad itself is free, but Cloud provider usage is not. Make sure you understand Cloud costs before deploying your instance 😉
 - Need help ? A question ? [Come chat with us on Discord](https://discord.com/invite/QATA3b9TTa)
 - 🐛 Found a bug ? Have an issue ? [Create an issue on GitHub](https://github.com/PierreBeucher/cloudypad)
 
