@@ -23,6 +23,7 @@ export class DummyProvisioner extends AbstractInstanceProvisioner<DummyProvision
 
         return {
             host: `dummy-${this.args.instanceName}`,
+            publicIPv4: `127.0.0.1`,
             instanceId: `dummy-id-${this.args.instanceName}`,
             provisionedAt: Date.now(),
         }
@@ -64,6 +65,7 @@ export class DummyProvisioner extends AbstractInstanceProvisioner<DummyProvision
 
         return {
             host: `dummy-${this.args.instanceName}`,
+            publicIPv4: `127.0.0.1`,
             instanceId: `dummy-id-${this.args.instanceName}`,
             provisionedAt: Date.now(),
         }

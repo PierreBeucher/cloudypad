@@ -50,7 +50,8 @@ export class GcpProvisioner extends AbstractInstanceProvisioner<GcpProvisionInpu
 
         return {
             instanceName: pulumiOutputs.instanceName,
-            host: pulumiOutputs.publicIp
+            host: pulumiOutputs.publicIp,
+            publicIPv4: pulumiOutputs.publicIp,
         }
 
     }

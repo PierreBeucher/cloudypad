@@ -203,8 +203,7 @@ export class LinodeClient {
             const linode = await getLinode(parseInt(instanceId))
             return linode.status
         } catch (error) {
-            this.logger.error(`Failed to get Linode instance status: ${instanceId}`, error)
-            return undefined
+            throw new Error(`Failed to get Linode instance status: ${instanceId}`, { cause: error })
         }
     }
 

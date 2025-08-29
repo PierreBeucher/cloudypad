@@ -41,7 +41,8 @@ export class AwsProvisioner extends AbstractInstanceProvisioner<AwsProvisionInpu
 
         return {
             host: pulumiOutputs.publicIp,
-            instanceId: pulumiOutputs.instanceId
+            publicIPv4: pulumiOutputs.publicIp,
+            instanceId: pulumiOutputs.instanceId,
         }
 
     }

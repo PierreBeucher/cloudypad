@@ -28,6 +28,7 @@ describe('InstanceRunner', () => {
                 provisionInput: dummyState.provision.input,
                 provisionOutput: {
                     ...dummyState.provision.output,
+                    publicIPv4: "127.0.0.1",
                     host: "127.0.0.1",
                     instanceId: "instance-id",
                     provisionedAt: Date.now(),

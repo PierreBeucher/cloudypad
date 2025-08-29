@@ -46,7 +46,7 @@ describe('Linode lifecycle', () => {
                 region: region,
                 instanceType: instanceType,
                 rootDiskSizeGb: rootDiskSizeGb,
-                dataDiskSizeGb: dataDiskSizeGb,
+                dataDiskSizeGb: dataDiskSizeGb,                
                 dns: {
                     domainName: "instances.cloudypad.gg",
                 },

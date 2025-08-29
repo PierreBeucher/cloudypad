@@ -69,6 +69,14 @@ export class LinodeProviderClient extends AbstractProviderClient<LinodeInstanceS
             runnerFactory: new LinodeRunnerFactory(this.coreConfig),
             configuratorFactory: new AnsibleConfiguratorFactory(),
             stateWriter: this.getStateWriter(),
+            options: {
+                // always delete instance server on stop for Linode
+                // server would continue to be billed even if instance is stopped
+                deleteInstanceServerOnStop: {
+                    enabled: true,
+                    postStartReconfigurationAnsibleAdditionalArgs: [ "-t", "data-disk,sunshine"]
+                }
+            }
         })
     }
 
