@@ -87,6 +87,7 @@ export class LinodeProvisioner extends AbstractInstanceProvisioner<LinodeProvisi
             securityGroupPorts: this.getStreamingServerPorts(),
             publicKeyContent: sshPublicKeyContent,
             noInstanceServer: args?.noInstanceServer,
+            watchdogEnabled: this.args.provisionInput.watchdogEnabled,
             apiToken: apiToken,
             dns: this.args.provisionInput.dns ? {
                 domainName: this.args.provisionInput.dns.domainName,

@@ -13,7 +13,7 @@ describe('Linode lifecycle', () => {
     const logger = getLogger("test-linode-lifecycle")
     const coreConfig = getIntegTestCoreConfig()
     const linodeProviderClient = new LinodeProviderClient({ config: coreConfig })
-    const instanceName = 'test-instance-linode-lifecycle'
+    const instanceName = 'test-instance-linode-lifecycle-from-image'
 
     // Linode test configuration
     const region = "fr-par"
@@ -46,7 +46,9 @@ describe('Linode lifecycle', () => {
                 region: region,
                 instanceType: instanceType,
                 rootDiskSizeGb: rootDiskSizeGb,
-                dataDiskSizeGb: dataDiskSizeGb,                
+                dataDiskSizeGb: dataDiskSizeGb,
+                imageId: "private/33927621",
+                watchdogEnabled: true, // need to have watchdog otherwise Ansible reboot during config will effectively shutdown instance
                 dns: {
                     domainName: "instances.cloudypad.gg",
                 },
@@ -56,8 +58,10 @@ describe('Linode lifecycle', () => {
                     username: "sunshine",
                     passwordBase64: Buffer.from("Sunshine!").toString('base64'),
                     imageTag: "dev"
-
                 }, 
+                ansible: {
+                    additionalArgs: "-t data-disk,sunshine"
+                }
             })
     })
 
@@ -73,7 +77,7 @@ describe('Linode lifecycle', () => {
         // Verify the instance was created with correct specifications
         const linodeClient = getLinodeClient()
         await linodeClient.checkAuth()
-        const instanceDetails = await linodeClient.getInstanceDetails(currentInstanceServerId)
+        const instanceDetails = await linodeClient.getLinode(currentInstanceServerId)
         assert.ok(instanceDetails, 'Instance details should be available')
         assert.strictEqual(instanceDetails.type, instanceType)
     }).timeout(20*60*1000) // 20 minutes timeout

@@ -7,8 +7,10 @@ import {
     linodeReboot,
     getRegions,
     getLinodeTypes,
+    createLinode,
+    deleteLinode,
 } from '@linode/api-v4'
-import type { LinodeStatus } from '@linode/api-v4'
+import type { Linode, LinodeStatus } from '@linode/api-v4'
 import { getAccountInfo } from '@linode/api-v4/lib/account'
 import { setToken as internalSetToken } from '@linode/api-v4'
 
@@ -110,6 +112,9 @@ export class LinodeClient {
         LinodeClient.checkAndSetupToken()
     }
 
+    /**
+     * Check if Linode authentication is valid.
+     */
     async checkAuth(): Promise<void> {
         this.logger.debug(`Checking Linode authentication...`)
         this.logger.debug(`Token: ${LinodeClient.token}`)
@@ -228,26 +233,6 @@ export class LinodeClient {
     }
 
     /**
-     * List available instance types with GPU support
-     */
-    async listGpuInstanceTypes(gpuCount?: number): Promise<LinodeInstanceType[]> {
-        // TODO: Implement with actual Linode SDK - would need getLinodeTypes from '@linode/api-v4'
-        // For now return empty array as skeleton
-        this.logger.debug("LinodeClient.listGpuInstanceTypes not fully implemented yet")
-        return []
-    }
-
-    /**
-     * List available disk images
-     */
-    async listInstanceImages(): Promise<{ label: string, id: string }[]> {
-        // TODO: Implement with actual Linode SDK - would need getImages from '@linode/api-v4'
-        // For now return empty array as skeleton
-        this.logger.debug("LinodeClient.listInstanceImages not fully implemented yet")
-        return []
-    }
-
-    /**
      * List available instance types
      */
     async listInstanceTypes(): Promise<LinodeInstanceType[]> {
@@ -266,24 +251,37 @@ export class LinodeClient {
         }
     }
 
+    async createInstance(args: { region: string, type: string, image: string, label: string }): Promise<Linode> {
+        try {
+            return createLinode({
+                label: args.label,
+                region: args.region,
+                type: args.type,
+                image: args.image,
+            })
+        } catch (error) {
+            throw new Error(`Failed to create Linode instance`, { cause: error })
+        }
+    }
+
+    async deleteInstance(instanceId: number): Promise<void> {
+        try {
+            await deleteLinode(instanceId)
+        } catch (error) {
+            throw new Error(`Failed to delete Linode instance`, { cause: error })
+        }
+    }
+
     /**
      * Get details for a specific Linode instance
      */
-    async getInstanceDetails(instanceId: string): Promise<LinodeVMDetails | undefined> {
+    async getLinode(instanceId: number | string): Promise<Linode | undefined> {
 
-        const instanceIdInt = parseInt(instanceId)
-
-        this.logger.debug(`Getting Linode instance details: ${instanceIdInt}`)
+        this.logger.debug(`Getting Linode instance details: ${instanceId}`)
 
         try {
-            const linode = await getLinode(instanceIdInt)
-            return {
-                type: linode.type || 'unknown', // Handle nullable type
-                label: linode.label || `linode-${linode.id}`, // Use fallback if label is null
-                status: linode.status,
-                tags: linode.tags || [], // Handle nullable tags
-                id: linode.id
-            }
+            const linode = await getLinode(Number(instanceId))
+            return linode
         } catch (error) {
             throw new Error(`Failed to get Linode instance details: ${instanceId}`, { cause: error })
         }

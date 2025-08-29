@@ -53,6 +53,12 @@ interface LinodeInstanceArgs {
     noInstanceServer?: boolean
 
     /**
+     * Enable or disable Linode Watchdog. When enabled, automatically restarts instance on shutdown.
+     * Should be true during configuration and false during normal usage.
+     */
+    watchdogEnabled?: boolean
+
+    /**
      * Optional DNS configuration to create an A record pointing to the instance's public IP.
      * If provided, will create a DNS A record and return the FQDN as hostname.
      * If not provided, will return the plain IP address as hostname.
@@ -95,17 +101,21 @@ class CloudyPadLinodeInstance extends pulumi.ComponentResource {
         super("crafteo:cloudypad:linode:instance", name, {}, opts)
 
         let instanceServer: linode.Instance | undefined
+        let desiredInstanceConfig: pulumi.Output<linode.InstanceConfig> | undefined
         if(args.noInstanceServer) {
             this.instanceServerName = pulumi.output(undefined)
             this.instanceServerId = pulumi.output(undefined)
 
-            // use dummy IP 192.0.2.1 as public IPif server id disabled
+            // use dummy IP 192.0.2.1 as public IP when instance server disabled
+            // this ensure DNS record keeps existing with short TTL
             // 192.0.2.1 is in TEST-NET-1 and should not be routed
             this.publicIp = pulumi.output("192.0.2.1")
 
             this.instanceServerURN = pulumi.output(undefined)
             this.instanceHostname = pulumi.output(undefined)
         } else {
+
+            const intanceConfigLabel = `${name}-custom-config`
 
             instanceServer = new linode.Instance(`${name}-instance`, {
                 label: `${name}-server`,
@@ -115,15 +125,68 @@ class CloudyPadLinodeInstance extends pulumi.ComponentResource {
                 authorizedKeys: args.authorizedKeys,
                 diskEncryption: "enabled",
                 privateIp: true,
-                booted: true,
-
+                booted: false, // don't boot instance here as config will be applied later
                 // Linode Watchdog restart instance regardless of using a 'reboot' or 'shutdown'
                 // Set it to false by default. On initial instance config this must be set to true
                 // as instance is expected to reboot during configuration
                 // but should be false during normal usage to avoid instance being rebooted if stopped by auto-stop after idleness
-                watchdogEnabled: false
+                watchdogEnabled: args.watchdogEnabled ?? false,
             }, { 
                 parent: this,
+            })
+
+            const instanceServerIdInt = instanceServer.id.apply((id: string) => Number.parseInt(id))
+
+            // fetch the default instance config set on provision from which we'll create custom config
+            // we don't want this configuration but a custom configuration (see comments on InstanceConfig below)
+            const defaultInstanceConfig = instanceServer.configs.apply(configs => {
+                pulumi.log.info(`Instance server configs: ${JSON.stringify(configs)}`)
+
+                const defaultConfig = configs.find(config => config.label !== intanceConfigLabel)
+
+                if(!defaultConfig) {
+                    throw new Error(`Default config not found for instance server ${name}`)
+                }
+
+                return linode.InstanceConfig.get(`${name}-instance-config`, defaultConfig.id.toString(), {
+                    linodeId: instanceServerIdInt
+                })
+            })
+
+
+            defaultInstanceConfig.kernel?.apply((kernel: string | undefined) => {
+                pulumi.log.info(`Current instance config kernel: ${kernel}`)
+            })
+
+            desiredInstanceConfig = pulumi.all([
+                defaultInstanceConfig.device,
+                defaultInstanceConfig.helpers,
+                defaultInstanceConfig.interfaces,
+                defaultInstanceConfig.memoryLimit,
+                defaultInstanceConfig.runLevel,
+                defaultInstanceConfig.virtMode,
+                defaultInstanceConfig.rootDevice,
+            ]).apply(([device, helpers, interfaces, memoryLimit, runLevel, virtMode, rootDevice]) => {
+
+                // Force use grub2 to ensure base image is used with NVIDIA drivers
+                // Clone other configs from default instanceConfig
+                // Default instance config prevents NVIDIA driver configured on base image to work                
+                // See https://www.linode.com/community/questions/24188/is-it-possible-to-create-an-image-that-has-the-nvidia-driver-pre-installed
+                return new linode.InstanceConfig(`${name}-instance-config`, {
+                    linodeId: instanceServerIdInt,
+                    label: `${name}-config`,
+                    kernel: "linode/grub2", 
+                    booted: true,
+                    device: device,
+                    helpers: helpers,
+                    interfaces: interfaces,
+                    memoryLimit: memoryLimit,
+                    rootDevice: rootDevice,
+                    runLevel: runLevel,
+                    virtMode: virtMode
+                }, {
+                    parent: this,
+                })
             })
 
             this.instanceServerName = instanceServer.label
@@ -183,7 +246,10 @@ class CloudyPadLinodeInstance extends pulumi.ComponentResource {
             size: args.dataVolume.sizeGb,
             region: args.region,
             linodeId: instanceServer ? instanceServer.id.apply((id: string) => Number.parseInt(id)) : undefined,
-        }, { parent: this })
+        }, { 
+            parent: this,
+            dependsOn: desiredInstanceConfig ? [desiredInstanceConfig] : undefined
+        })
 
         this.dataDiskId = dataVolume.filesystemPath.apply(p => path.basename(p))
     }
@@ -200,6 +266,7 @@ async function linodePulumiProgram(): Promise<Record<string, any> | void> {
     const dataDisk = config.requireObject<LinodeInstanceArgs["dataVolume"]>("dataDisk")
     const imageId = config.get("imageId")
     const noInstanceServer = config.getBoolean("noInstanceServer")
+    const watchdogEnabled = config.getBoolean("watchdogEnabled")
     const dns = config.getObject<LinodeInstanceArgs["dns"]>("dns")
 
     const stackName = pulumi.getStack()
@@ -215,6 +282,7 @@ async function linodePulumiProgram(): Promise<Record<string, any> | void> {
         dataVolume: dataDisk,
         imageId: imageId,
         noInstanceServer: noInstanceServer,
+        watchdogEnabled: watchdogEnabled,
         dns: dns
     })
 
@@ -252,6 +320,7 @@ export interface PulumiStackConfigLinode {
     dataDisk?: {
         sizeGb: number
     }
+    watchdogEnabled?: boolean
     dns?: {
         domainName: string
         record?: string
@@ -322,6 +391,7 @@ export class LinodePulumiClient extends InstancePulumiClient<PulumiStackConfigLi
 
         if(config.imageId) await stack.setConfig("imageId", { value: config.imageId})
         if(config.dataDisk) await stack.setConfig("dataDisk", { value: JSON.stringify(config.dataDisk)})
+        if(config.watchdogEnabled !== undefined) await stack.setConfig("watchdogEnabled", { value: config.watchdogEnabled.toString()})
 
         await stack.setConfig("rootDiskSizeGB", { value: config.rootDisk.sizeGb.toString()})
         await stack.setConfig("authorizedKeys", { value: JSON.stringify([config.publicKeyContent])})
