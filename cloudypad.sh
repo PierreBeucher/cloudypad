@@ -161,7 +161,7 @@ run_cloudypad_docker() {
 
     # Add SSH agent volume and env var if it's available locally
     if [ -n "$SSH_AUTH_SOCK" ]; then
-        cmd+=" -v $SSH_AUTH_SOCK:/ssh-agent -e SSH_AUTH_SOCK=/ssh-agent"
+        cmd+=(-v "$SSH_AUTH_SOCK:/ssh-agent" -e SSH_AUTH_SOCK=/ssh-agent)
     fi
 
     # If first arg is "debug-container" run a bash as entrypoint
