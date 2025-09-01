@@ -1,6 +1,6 @@
 {
   inputs = {
-    nixpkgs.url = "github:nixos/nixpkgs/nixos-24.11";
+    nixpkgs.url = "github:nixos/nixpkgs/nixos-25.05";
     flake-utils.url = "github:numtide/flake-utils";
   };
 
@@ -40,7 +40,7 @@
             packages = with pkgs; [
               gnumake
               pulumi-bin
-              pulumiPackages.pulumi-language-nodejs
+              pulumiPackages.pulumi-nodejs
               nodejs_22
               go-task
               gettext
@@ -60,7 +60,7 @@
               vagrant
               scaleway-cli
               bc
-
+              linode-cli
               google-cloud-sdk
             ];
             
