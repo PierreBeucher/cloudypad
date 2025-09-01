@@ -89,6 +89,7 @@ tasks:
     - task: test-integ-provider-azure
     - task: test-integ-provider-gcp
     - task: test-integ-provider-paperspace
+    - task: test-integ-provider-linode
 
   # Setup containers for integration tests
   test-integ-containers-setup:
@@ -128,6 +129,11 @@ tasks:
   test-integ-provider-dummy:
     cmds:
     - npx mocha --config test/integ/.mocharc.json ./test/integ/stable/core/providers/dummy/lifecycle.spec.ts 
+
+  test-integ-provider-linode:
+    cmds:
+    - npx mocha --config test/integ/.mocharc.json ./test/integ/stable/core/providers/linode/client.spec.ts
+    - npx mocha --config test/integ/.mocharc.json ./test/integ/stable/core/providers/linode/lifecycle.spec.ts 
 
   test-integ-full-lifecycle-all:
     cmds:
