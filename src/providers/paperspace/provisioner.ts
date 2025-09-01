@@ -63,6 +63,7 @@ export class PaperspaceProvisioner extends AbstractInstanceProvisioner<Paperspac
 
         return {
             host: createdMachine.publicIp,
+            publicIPv4: createdMachine.publicIp,
             machineId: createdMachine.id
         }
 

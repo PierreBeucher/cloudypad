@@ -180,6 +180,7 @@ describe('StateWriter', function () {
 
         const expectedOutput: DummyInstanceStateV1['provision']['output'] = {
             host: "1.2.3.4",
+            publicIPv4: "1.2.3.4",
             instanceId: "i-123456758",
             provisionedAt: new Date("2025-01-01T01:00:00Z").getTime(),
             dataDiskId: "ssd-123456758",
@@ -324,6 +325,7 @@ describe('StateWriter', function () {
         // Set provision output and check metadata
         const provisionOutput: DummyInstanceStateV1['provision']['output'] = {
             host: "1.2.3.4",
+            publicIPv4: "1.2.3.4",
             instanceId: "i-123456758",
             provisionedAt: new Date("2025-01-01T01:00:00Z").getTime(),
             dataDiskId: "ssd-123456758",

@@ -91,6 +91,7 @@ describe('Instance initializer', () => {
                 input: TEST_INPUT.provision,
                 output: {
                     host: "127.0.0.1",
+                    publicIPv4: "127.0.0.1",
                     instanceId: "dummy-instance-id",
                     provisionedAt: 1234567890,
                 }

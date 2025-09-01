@@ -100,7 +100,9 @@ export class AnsibleConfigurator<ST extends InstanceStateV1> extends AbstractIns
             all: {
                 hosts: {
                     [this.args.instanceName]: {
-                        ansible_host: this.args.provisionOutput.host,
+                        // prefer using IPv4 directly as host maybe a DNS record which is not propagated yet
+                        // fallback to hostname if IPv4 is not available
+                        ansible_host: this.args.provisionOutput.publicIPv4 ?? this.args.provisionOutput.host,
                         ansible_user: this.args.provisionInput.ssh.user,
                         ansible_ssh_private_key_file: sshAuth.privateKeyPath,
                         ansible_password: sshAuth.password,

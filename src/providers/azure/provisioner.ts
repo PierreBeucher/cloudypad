@@ -41,6 +41,7 @@ export class AzureProvisioner extends AbstractInstanceProvisioner<AzureProvision
 
         return {
             host: pulumiOutputs.publicIp,
+            publicIPv4: pulumiOutputs.publicIp,
             resourceGroupName: pulumiOutputs.resourceGroupName,
             vmName: pulumiOutputs.vmName,
         }

@@ -16,6 +16,7 @@ describe('Ansible configurator', function () {
             configurationInput: DEFAULT_COMMON_INPUT.configuration,
             provisionOutput: {
                 host: "test-ansible-configurator-host",
+                publicIPv4: "127.0.0.1",
                 dataDiskId: "test-ansible-configurator-data-disk-id"   
             }
         })
@@ -75,6 +76,7 @@ describe('Ansible configurator', function () {
             configurationInput: {},
             provisionOutput: {
                 host: "test-ansible-configurator-host-default",
+                publicIPv4: "127.0.0.1",
             }
         })
 
