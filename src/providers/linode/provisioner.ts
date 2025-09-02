@@ -100,9 +100,10 @@ export class LinodeProvisioner extends AbstractInstanceProvisioner<LinodeProvisi
         return {
             host: pulumiOutputs.instanceHostname ?? "unknown",
             publicIPv4: pulumiOutputs.instanceIPv4,
-            instanceServerName: pulumiOutputs.instanceServerName ?? undefined,
-            instanceServerId: pulumiOutputs.instanceServerId ?? undefined,
-            dataDiskId: pulumiOutputs.dataDiskId
+            instanceServerName: pulumiOutputs.instanceServerName,
+            instanceServerId: pulumiOutputs.instanceServerId,
+            dataDiskId: pulumiOutputs.dataDiskId,
+            rootDiskId: pulumiOutputs.rootDiskId
         }
     }
 

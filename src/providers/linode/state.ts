@@ -6,6 +6,7 @@ import { GenericStateParser } from "../../core/state/parser"
 const LinodeProvisionOutputV1Schema = CommonProvisionOutputV1Schema.extend({
     instanceServerName: z.string().describe("Linode instance server name").optional(),
     instanceServerId: z.string().describe("Linode instance server ID").optional(),
+    rootDiskId: z.string().describe("Linode root disk ID").optional(),
     dataDiskId: z.string().describe("Linode data disk ID"),
 })
 

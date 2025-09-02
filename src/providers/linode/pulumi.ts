@@ -100,6 +100,7 @@ class CloudyPadLinodeInstance extends pulumi.ComponentResource {
     public readonly instanceServerURN: pulumi.Output<string | undefined>
     public readonly instanceHostname: pulumi.Output<string | undefined>
 
+    public readonly rootDiskId: pulumi.Output<string | undefined>
     public readonly dataDiskId: pulumi.Output<string>
     
     constructor(name: string, args: LinodeInstanceArgs, opts?: pulumi.ComponentResourceOptions) {
@@ -118,6 +119,7 @@ class CloudyPadLinodeInstance extends pulumi.ComponentResource {
 
             this.instanceServerURN = pulumi.output(undefined)
             this.instanceHostname = pulumi.output(undefined)
+            this.rootDiskId = pulumi.output(undefined)
         } else {
 
             const intanceConfigLabel = `${name}-custom-config`
@@ -138,6 +140,7 @@ class CloudyPadLinodeInstance extends pulumi.ComponentResource {
                 watchdogEnabled: args.watchdogEnabled ?? false,
             }, { 
                 parent: this,
+                ignoreChanges: ["booted"], // ignored booted changes as it will always be booted with InstanceConfig
             })
 
             const instanceServerIdInt = instanceServer.id.apply((id: string) => Number.parseInt(id))
@@ -194,6 +197,35 @@ class CloudyPadLinodeInstance extends pulumi.ComponentResource {
                 })
             })
 
+            // fetch root disk ID
+            // can't rely on instance.disks as it's deprecated and buggy (sometime an Object like 
+            // { xxx: xxx, value: linode.types.output.InstanceDisk[] } 
+            // is returned rather than linode.types.output.InstanceDisk[])
+            const linodeFetchResult = linode.getInstancesOutput({ 
+                filters: [{ "name": "id", "values": [instanceServer.id] }]
+            })
+
+            const rootDiskId = linodeFetchResult.instances.apply(instances => {
+                pulumi.log.info(`Linode fetch result: ${JSON.stringify(instances)}`)
+
+                if(instances.length !== 1) {
+                    throw new Error(`Expected 1 instance server, got ${instances.length}: ${JSON.stringify(instances)}`)
+                }
+
+                const instance = instances[0]
+
+                const rootDisk = instance.disks.find(disk => disk.filesystem === "ext4")
+
+                if(!rootDisk) {
+                    throw new Error(`Root disk not found for instance server ${name}. Got disks: ${JSON.stringify(instance.disks)}`)
+                }
+
+                pulumi.log.info(`Found root disk: ${JSON.stringify(rootDisk)}`)
+
+                return rootDisk.id.toString()
+            })
+
+            this.rootDiskId = rootDiskId
             this.instanceServerName = instanceServer.label
             this.instanceServerId = instanceServer.id
             this.publicIp = instanceServer.ipv4s[0]
@@ -319,15 +351,17 @@ async function linodePulumiProgram(): Promise<Record<string, any> | void> {
         instance.instanceServerId, 
         instance.dataDiskId, 
         instance.instanceServerURN,
-        instance.publicIp
-    ]).apply(([instanceServerName, instanceHostname, instanceServerId, dataDiskId, instanceServerUrn, publicIp]) => {
+        instance.publicIp,
+        instance.rootDiskId
+    ]).apply(([instanceServerName, instanceHostname, instanceServerId, dataDiskId, instanceServerUrn, publicIp, rootDiskId]) => {
         const result: LinodePulumiOutput = {
             instanceServerName: instanceServerName,
             instanceHostname: instanceHostname,
             instanceIPv4: publicIp,
             instanceServerId: instanceServerId,
             dataDiskId: dataDiskId,
-            instanceServerUrn: instanceServerUrn
+            instanceServerUrn: instanceServerUrn,
+            rootDiskId: rootDiskId
         }
         return result
     })
@@ -386,6 +420,11 @@ export interface LinodePulumiOutput {
      * ID of the data disk
      */
     dataDiskId: string
+
+    /**
+     * ID of instance root disk
+     */
+    rootDiskId?: string
 }
 
 export interface LinodePulumiClientArgs {
@@ -437,7 +476,8 @@ export class LinodePulumiClient extends InstancePulumiClient<PulumiStackConfigLi
             instanceHostname: outputs["instanceHostname"].value as string | undefined,
             instanceServerId: outputs["instanceServerId"]?.value as string | undefined,
             instanceServerUrn: outputs["instanceServerUrn"]?.value as string | undefined,
-            dataDiskId: outputs["dataDiskId"].value as string
+            dataDiskId: outputs["dataDiskId"].value as string,
+            rootDiskId: outputs["rootDiskId"]?.value as string | undefined
         }   
     }
 } 

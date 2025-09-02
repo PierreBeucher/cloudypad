@@ -32,22 +32,6 @@ const DEFAULT_START_STOP_OPTION_WAIT_TIMEOUT = 60
 
 export type LinodeInstanceStatus = LinodeStatus
 
-export enum LinodeInstanceStatusEnum {
-    Running = 'running',
-    Stopped = 'stopped',
-    Rebooting = 'rebooting',
-    Booting = 'booting',
-    Stopping = 'stopping',
-    Offline = 'offline',
-    Provisioning = 'provisioning',
-    Deleting = 'deleting',
-    Migrating = 'migrating',
-    Rebuilding = 'rebuilding',
-    Cloning = 'cloning',
-    Restoring = 'restoring',
-    ResizingDisk = 'resizing'
-}
-
 export interface LinodeClientArgs {
     region?: string,
 }
@@ -139,18 +123,20 @@ export class LinodeClient {
     /**
      * Start a Linode instance
      */
-    async startInstance(instanceId: number, opts?: StartStopActionOpts): Promise<void> {
+    async startInstance(instanceId: string | number, opts?: StartStopActionOpts): Promise<void> {
         const wait = opts?.wait ?? DEFAULT_START_STOP_OPTION_WAIT
         const waitTimeout = opts?.waitTimeoutSeconds ?? DEFAULT_START_STOP_OPTION_WAIT_TIMEOUT
+        
+        const safeId = await this.instanceIdStringNumberToNumber(instanceId)
 
         this.logger.debug(`Starting Linode instance: ${instanceId}`)
         
         try {
-            await linodeBoot(instanceId)
+            await linodeBoot(safeId)
             
             if (wait) {
                 this.logger.debug(`Waiting for Linode instance ${instanceId} to start`)
-                await this.withTimeout(this.waitForStatus(instanceId, 'running'), waitTimeout * 1000)
+                await this.withTimeout(this.waitForStatus(safeId, 'running'), waitTimeout * 1000)
             }
         } catch (error) {
             throw new Error(`Failed to start Linode instance ${instanceId}`, { cause: error })
@@ -160,18 +146,19 @@ export class LinodeClient {
     /**
      * Stop a Linode instance
      */
-    async stopInstance(instanceId: number, opts?: StartStopActionOpts): Promise<void> {
+    async stopInstance(instanceId: string | number, opts?: StartStopActionOpts): Promise<void> {
         const wait = opts?.wait ?? DEFAULT_START_STOP_OPTION_WAIT
         const waitTimeout = opts?.waitTimeoutSeconds ?? DEFAULT_START_STOP_OPTION_WAIT_TIMEOUT
+        const safeId = await this.instanceIdStringNumberToNumber(instanceId)
 
         this.logger.debug(`Stopping Linode instance: ${instanceId}`)
         
         try {
-            await linodeShutdown(instanceId)
+            await linodeShutdown(safeId)
             
             if (wait) {
                 this.logger.debug(`Waiting for Linode instance ${instanceId} to stop`)
-                await this.withTimeout(this.waitForStatus(instanceId, 'stopped'), waitTimeout * 1000)
+                await this.withTimeout(this.waitForStatus(safeId, 'stopped'), waitTimeout * 1000)
             }
         } catch (error) {
             throw new Error(`Failed to stop Linode instance ${instanceId}`, { cause: error })
@@ -181,18 +168,19 @@ export class LinodeClient {
     /**
      * Restart a Linode instance
      */
-    async restartInstance(instanceId: number, opts?: StartStopActionOpts): Promise<void> {
+    async restartInstance(instanceId: string | number, opts?: StartStopActionOpts): Promise<void> {
         const wait = opts?.wait ?? DEFAULT_START_STOP_OPTION_WAIT
         const waitTimeout = opts?.waitTimeoutSeconds ?? DEFAULT_START_STOP_OPTION_WAIT_TIMEOUT
+        const safeId = await this.instanceIdStringNumberToNumber(instanceId)
 
         this.logger.debug(`Restarting Linode instance: ${instanceId}`)
         
         try {
-            await linodeReboot(instanceId)
+            await linodeReboot(safeId)
             
             if (wait) {
-                this.logger.debug(`Waiting for Linode instance ${instanceId} to restart`)
-                await this.withTimeout(this.waitForStatus(instanceId, 'running'), waitTimeout * 1000)
+                this.logger.debug(`Waiting for Li   node instance ${instanceId} to restart`)
+                await this.withTimeout(this.waitForStatus(safeId, 'running'), waitTimeout * 1000)
             }
         } catch (error) {
             throw new Error(`Failed to restart Linode instance ${instanceId}`, { cause: error })
@@ -202,10 +190,11 @@ export class LinodeClient {
     /**
      * Get current status of a Linode instance
      */
-    async getInstanceStatus(instanceId: string): Promise<LinodeInstanceStatus | undefined> {
+    async getInstanceStatus(instanceId: string | number): Promise<LinodeInstanceStatus | undefined> {
         this.logger.debug(`Getting Linode instance status: ${instanceId}`)
         try {
-            const linode = await getLinode(parseInt(instanceId))
+            const safeId = await this.instanceIdStringNumberToNumber(instanceId)
+            const linode = await getLinode(safeId)
             return linode.status
         } catch (error) {
             throw new Error(`Failed to get Linode instance status: ${instanceId}`, { cause: error })
@@ -265,9 +254,10 @@ export class LinodeClient {
         }
     }
 
-    async deleteInstance(instanceId: number): Promise<void> {
+    async deleteInstance(instanceId: string | number): Promise<void> {
         try {
-            await deleteLinode(instanceId)
+            const safeId = await this.instanceIdStringNumberToNumber(instanceId)
+            await deleteLinode(safeId)
         } catch (error) {
             throw new Error(`Failed to delete Linode instance`, { cause: error })
         }
@@ -276,12 +266,13 @@ export class LinodeClient {
     /**
      * Get details for a specific Linode instance
      */
-    async getLinode(instanceId: number | string): Promise<Linode | undefined> {
+    async getLinode(instanceId: string | number): Promise<Linode | undefined> {
 
         this.logger.debug(`Getting Linode instance details: ${instanceId}`)
 
         try {
-            const linode = await getLinode(Number(instanceId))
+            const safeId = await this.instanceIdStringNumberToNumber(instanceId)
+            const linode = await getLinode(safeId)
             return linode
         } catch (error) {
             throw new Error(`Failed to get Linode instance details: ${instanceId}`, { cause: error })
@@ -290,11 +281,27 @@ export class LinodeClient {
 
     private async waitForStatus(instanceId: number, status: LinodeInstanceStatus): Promise<void> {
         while (true) {
-            const currentStatus = await this.getInstanceStatus(instanceId.toString()) // Pass string ID
+            const currentStatus = await this.getInstanceStatus(instanceId)
             if (currentStatus === status) {
                 return
             }
             await new Promise(resolve => setTimeout(resolve, 5000))
+        }
+    }
+
+    /**
+     * Safely convert string to number. As Linode instance ID may be provided as string or number,
+     * this method ensures a proper number is returned or throws.
+     */
+    private async instanceIdStringNumberToNumber(instanceId: string | number): Promise<number> {
+        if(typeof instanceId === 'number') {
+            return instanceId
+        } else {
+            const result = Number(instanceId)
+            if(isNaN(result)) {
+                throw new Error(`Instance ID is not a number: ${instanceId}`)
+            }
+            return result
         }
     }
 
