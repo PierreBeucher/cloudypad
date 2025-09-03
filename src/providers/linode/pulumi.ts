@@ -305,6 +305,23 @@ class CloudyPadLinodeInstance extends pulumi.ComponentResource {
             dependsOn: desiredInstanceConfig ? [desiredInstanceConfig] : undefined
         })
 
+        const firewall = new linode.Firewall(`${name}-firewall`, {
+            label: this.linodeLabel(name, "-fw"),
+            inbounds: args.networkSecurityGroupPorts.map(port => ({
+                label: `allow-${port.protocol.toLowerCase()}-${port.port}`,
+                action: "ACCEPT",
+                protocol: port.protocol.toUpperCase(),
+                ports: port.port.toString(),
+                ipv4s: ["0.0.0.0/0"],
+                ipv6s: ["::/0"],
+            })),
+            inboundPolicy: "DROP",
+            outboundPolicy: "ACCEPT",
+            linodes: instanceServer ? [instanceServer.id.apply((id: string) => Number(id))] : [],
+        }, { 
+            parent: this,
+        })
+
         // path is like /dev/disk/by-id/scsi-0Linode_Volume_my-instance-vol
         // we want to extract the volume name
         this.dataDiskId = dataVolume.filesystemPath.apply(p => path.basename(p))
