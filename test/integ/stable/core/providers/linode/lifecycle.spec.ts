@@ -1,5 +1,5 @@
 import * as assert from 'assert'
-import { LinodeClient, LinodeInstanceStatusEnum } from '../../../../../../src/providers/linode/sdk-client'
+import { LinodeClient } from '../../../../../../src/providers/linode/sdk-client'
 import { LinodeInstanceStateV1 } from '../../../../../../src/providers/linode/state'
 import { getIntegTestCoreConfig } from '../../../../utils'
 import { LinodeProviderClient } from '../../../../../../src/providers/linode/provider'
@@ -116,7 +116,7 @@ describe('Linode lifecycle', () => {
         
         const serverStatus = await linodeClient.getInstanceStatus(currentInstanceServerId)
         // Instance should be in a valid state (running, stopped, etc.)
-        assert.ok(Object.values(LinodeInstanceStatusEnum).includes(serverStatus as LinodeInstanceStatusEnum))
+        assert.equal(serverStatus, 'running')
     }).timeout(10000)
 
     // run twice for idempotency

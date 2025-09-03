@@ -69,10 +69,16 @@ export class LinodeClient {
     }
 
     /**
-     * Check if token is set and setup from environment variable if not.
-     * This ensure the Linode library as a proper token set.
+     * Check if Linode client is properly setup by:
+     * - Checking if token has been set with setToken()
+     * - Otherwise, try to set token from environment variable `LINODE_TOKEN`
+     *  
+     * Throws an error if token is not set and no environment variable `LINODE_TOKEN` is set.
+     * This ensure the Linode library has a proper token set.
+     * 
+     * This is a global method setting auth tokan globally -as official Linode client only support a global token.
      */
-    private static checkAndSetupToken() {
+    static checkAndSetupToken() {
 
         // set token from evn var if not already set and env var exists
         if(!LinodeClient.token && process.env.LINODE_TOKEN) {
@@ -216,8 +222,7 @@ export class LinodeClient {
                 id: linode.id
             }))
         } catch (error) {
-            this.logger.error("Failed to list Linode instances", error)
-            return []
+            throw new Error(`Failed to list Linode instances`, { cause: error })
         }
     }
 

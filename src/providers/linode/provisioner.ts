@@ -110,10 +110,8 @@ export class LinodeProvisioner extends AbstractInstanceProvisioner<LinodeProvisi
     async doVerifyConfig(){
         this.logger.debug(`Verifying Linode configuration for ${this.args.instanceName}`)
 
-        const linodeClient = new LinodeClient()
-
-        // We could add more validation here, such as testing the token
-        this.logger.debug('Linode configuration verified')
+        // throws on error
+        LinodeClient.checkAndSetupToken()
     }
 
 } 

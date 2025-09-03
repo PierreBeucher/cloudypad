@@ -77,26 +77,19 @@ export class LinodeInstanceRunner extends AbstractInstanceRunner<LinodeProvision
         const status = await this.client.getInstanceStatus(instanceServerId)
 
         switch(status) {
-            case 'running':
-                return ServerRunningStatus.Running
-            case 'stopped':
-                return ServerRunningStatus.Stopped
             case 'booting':
-                return ServerRunningStatus.Starting
-            case 'shutting_down':
-                return ServerRunningStatus.Stopping
-            case 'rebooting':
-                return ServerRunningStatus.Starting
-            case 'offline':
-                return ServerRunningStatus.Stopped
             case 'provisioning':
                 return ServerRunningStatus.Starting
-            case 'migrating':
-            case 'cloning':
+            case 'running':
+                return ServerRunningStatus.Running
+            case 'shutting_down':
             case 'deleting':
-            case 'rebuilding':
-            case 'restoring':
-                return ServerRunningStatus.Unknown
+                return ServerRunningStatus.Stopping
+            case 'stopped':
+            case 'offline':
+                return ServerRunningStatus.Stopped
+            case 'rebooting':
+                return ServerRunningStatus.Restarting
             default:
                 return ServerRunningStatus.Unknown
         }

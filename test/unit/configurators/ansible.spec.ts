@@ -27,7 +27,7 @@ describe('Ansible configurator', function () {
             all: {
                 hosts: {
                     "test-ansible-configurator-instance": {
-                        ansible_host: "test-ansible-configurator-host",
+                        ansible_host: "127.0.0.1",
                         ansible_user: DEFAULT_COMMON_INPUT.provision.ssh.user,
                         ansible_password: undefined,
                         ansible_ssh_private_key_file: DEFAULT_COMMON_INPUT.provision.ssh.privateKeyPath,

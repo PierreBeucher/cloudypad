@@ -108,6 +108,11 @@ class CloudyPadLinodeInstance extends pulumi.ComponentResource {
 
         let instanceServer: linode.Instance | undefined
         let desiredInstanceConfig: pulumi.Output<linode.InstanceConfig> | undefined
+
+        // label affacted to data disk volume
+        // set early as it's required on instance creation/update to discrimiate with root disk
+        const dataDiskLabel = this.linodeLabel(name, "-vol")
+
         if(args.noInstanceServer) {
             this.instanceServerName = pulumi.output(undefined)
             this.instanceServerId = pulumi.output(undefined)
@@ -143,7 +148,8 @@ class CloudyPadLinodeInstance extends pulumi.ComponentResource {
                 ignoreChanges: ["booted"], // ignored booted changes as it will always be booted with InstanceConfig
             })
 
-            const instanceServerIdInt = instanceServer.id.apply((id: string) => Number.parseInt(id))
+            // ID is outputted as string but Pulumi Linode interface requires it as number
+            const instanceServerIdInt = instanceServer.id.apply((id: string) => Number(id))
 
             // fetch the default instance config set on provision from which we'll create custom config
             // we don't want this configuration but a custom configuration (see comments on InstanceConfig below)
@@ -214,7 +220,9 @@ class CloudyPadLinodeInstance extends pulumi.ComponentResource {
 
                 const instance = instances[0]
 
-                const rootDisk = instance.disks.find(disk => disk.filesystem === "ext4")
+                // not perfect way to find the default disk attached to instance
+                // root disk should be ext4 and NOT the data disk (as per label)
+                const rootDisk = instance.disks.find(disk => disk.filesystem === "ext4" && !disk.label.includes(dataDiskLabel))
 
                 if(!rootDisk) {
                     throw new Error(`Root disk not found for instance server ${name}. Got disks: ${JSON.stringify(instance.disks)}`)
@@ -274,7 +282,7 @@ class CloudyPadLinodeInstance extends pulumi.ComponentResource {
                     name: recordName,
                     recordType: "A",
                     target: this.publicIp,
-                    ttlSec: 30,
+                    ttlSec: 30, // voluntary short TTL as instance IP will change each boot
                 }, {
                     parent: this,
                 })
@@ -291,12 +299,14 @@ class CloudyPadLinodeInstance extends pulumi.ComponentResource {
             label: this.linodeLabel(name, "-vol"),
             size: args.dataVolume.sizeGb,
             region: args.region,
-            linodeId: instanceServer ? instanceServer.id.apply((id: string) => Number.parseInt(id)) : undefined,
+            linodeId: instanceServer ? instanceServer.id.apply((id: string) => Number(id)) : undefined,
         }, { 
             parent: this,
             dependsOn: desiredInstanceConfig ? [desiredInstanceConfig] : undefined
         })
 
+        // path is like /dev/disk/by-id/scsi-0Linode_Volume_my-instance-vol
+        // we want to extract the volume name
         this.dataDiskId = dataVolume.filesystemPath.apply(p => path.basename(p))
     }
 
