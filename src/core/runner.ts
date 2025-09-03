@@ -214,7 +214,8 @@ export abstract class AbstractInstanceRunner<C extends CommonProvisionInputV1, O
 
         return {
             clientName: this.args.instanceName,
-            host: this.args.provisionOutput.host,
+            // prefer using public IPv4 address if available as hostname may be a DNS record which is no propagated yet
+            host: this.args.provisionOutput.publicIPv4 ?? this.args.provisionOutput.host,
             port: 22,
             user: this.args.provisionInput.ssh.user,
             privateKeyPath: sshAuth.privateKeyPath,
