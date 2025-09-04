@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.38.0](https://github.com/PierreBeucher/cloudypad/compare/v0.37.0...v0.38.0) (2025-09-04)
+
+
+### Features
+
+* Linode provider (experimental, internal only) ([8005036](https://github.com/PierreBeucher/cloudypad/commit/8005036a45acf6d28b3789cbc1b42476b9a44a63))
+* **Linode:** add Firewall config for better security ([189c103](https://github.com/PierreBeucher/cloudypad/commit/189c103da6b00f8596f8cb8b585acc707d3dbb33))
+* rate limit option to limit upload speed (limit egress charges with some providers) ([bc7e411](https://github.com/PierreBeucher/cloudypad/commit/bc7e411ba65c0db59b9c7d1711b6baee7b8b3904))
+
 ## [0.37.0](https://github.com/PierreBeucher/cloudypad/compare/v0.36.0...v0.37.0) (2025-08-27)
 
 
