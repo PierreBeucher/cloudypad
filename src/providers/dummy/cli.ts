@@ -3,7 +3,7 @@ import { CommonConfigurationInputV1, CommonInstanceInput } from "../../core/stat
 import { select } from '@inquirer/prompts';
 import { AbstractInputPrompter, PromptOptions } from "../../cli/prompter";
 import lodash from 'lodash'
-import { CliCommandGenerator, CreateCliArgs, UpdateCliArgs, CLI_OPTION_STREAMING_SERVER, CLI_OPTION_SUNSHINE_PASSWORD, CLI_OPTION_SUNSHINE_USERNAME, CLI_OPTION_SUNSHINE_IMAGE_REGISTRY, CLI_OPTION_SUNSHINE_IMAGE_TAG, CLI_OPTION_AUTO_STOP_TIMEOUT, CLI_OPTION_AUTO_STOP_ENABLE, CLI_OPTION_USE_LOCALE, CLI_OPTION_KEYBOARD_LAYOUT, CLI_OPTION_KEYBOARD_MODEL, CLI_OPTION_KEYBOARD_VARIANT, CLI_OPTION_KEYBOARD_OPTIONS, BuildCreateCommandArgs, BuildUpdateCommandArgs } from "../../cli/command";
+import { CliCommandGenerator, CreateCliArgs, UpdateCliArgs, CLI_OPTION_STREAMING_SERVER, CLI_OPTION_SUNSHINE_PASSWORD, CLI_OPTION_SUNSHINE_USERNAME, CLI_OPTION_SUNSHINE_IMAGE_REGISTRY, CLI_OPTION_SUNSHINE_IMAGE_TAG, CLI_OPTION_AUTO_STOP_TIMEOUT, CLI_OPTION_AUTO_STOP_ENABLE, CLI_OPTION_USE_LOCALE, CLI_OPTION_KEYBOARD_LAYOUT, CLI_OPTION_KEYBOARD_MODEL, CLI_OPTION_KEYBOARD_VARIANT, CLI_OPTION_KEYBOARD_OPTIONS, BuildCreateCommandArgs, BuildUpdateCommandArgs, CLI_OPTION_RATE_LIMIT_MAX_MBPS } from "../../cli/command";
 import { CLOUDYPAD_PROVIDER_DUMMY } from "../../core/const";
 import { InteractiveInstanceInitializer } from "../../cli/initializer";
 import { PartialDeep } from "type-fest";
@@ -105,6 +105,7 @@ export class DummyCliCommandGenerator extends CliCommandGenerator {
             .addOption(CLI_OPTION_KEYBOARD_MODEL)
             .addOption(CLI_OPTION_KEYBOARD_VARIANT)
             .addOption(CLI_OPTION_KEYBOARD_OPTIONS)
+            .addOption(CLI_OPTION_RATE_LIMIT_MAX_MBPS)
             .option('--instance-type <type>', 'EC2 instance type')
             .action(async (cliArgs: DummyCreateCliArgs) => {
                 
@@ -145,6 +146,7 @@ export class DummyCliCommandGenerator extends CliCommandGenerator {
             .addOption(CLI_OPTION_KEYBOARD_MODEL)
             .addOption(CLI_OPTION_KEYBOARD_VARIANT)
             .addOption(CLI_OPTION_KEYBOARD_OPTIONS)
+            .addOption(CLI_OPTION_RATE_LIMIT_MAX_MBPS)
             .option('--instance-type <type>', 'EC2 instance type')
             .action(async (cliArgs: DummyUpdateCliArgs) => {
                 

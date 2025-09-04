@@ -1,0 +1,5 @@
+# whether to enable rate limiting
+ratelimit_enable: false
+
+# maximum rate limit in Mbps
+ratelimit_max_mbps: 50

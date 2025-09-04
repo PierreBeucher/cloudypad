@@ -81,6 +81,7 @@ export class ScalewayProvisioner extends AbstractInstanceProvisioner<ScalewayPro
     private pulumiOutputsToProvisionOutput(pulumiOutputs: ScalewayPulumiOutput): ScalewayProvisionOutputV1 {
         return {
             host: pulumiOutputs.publicIp,
+            publicIPv4: pulumiOutputs.publicIp,
             instanceServerName: pulumiOutputs.instanceServerName ?? undefined,
             instanceServerId: pulumiOutputs.instanceServerId ?? undefined,
             dataDiskId: pulumiOutputs.dataDiskId ?? undefined,

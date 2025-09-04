@@ -33,6 +33,10 @@
           options nvidia-drm modeset=1
       become: true
     
+    - role: roles/rate-limit
+      tags: [ rate-limit ]
+      become: true
+
     - role: roles/wolf
       tags: [ wolf ]
     

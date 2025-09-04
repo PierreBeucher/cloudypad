@@ -31,6 +31,7 @@ export interface CreateCliArgs {
     ansibleAdditionalArgs?: string
     retries?: number
     retryDelay?: number
+    ratelimitMaxMbps?: number
 }
 
 /**
@@ -108,6 +109,8 @@ export const CLI_OPTION_RETRIES = new Option('--retries <number>', 'Number of re
 export const CLI_OPTION_RETRY_DELAY = new Option('--retry-delay <seconds>', 'Retry delay in seconds when deploying, configuring, starting, stopping or destroying instance')
     .argParser(parseInt)
 
+export const CLI_OPTION_RATE_LIMIT_MAX_MBPS = new Option('--ratelimit-max-mbps <mbps>', 'Rate limit egress bandwidth in Mbps. Can be used to limit egress cost. 0 to disable rate limiting.')
+    .argParser(parseInt)
 
 function parseFalseOrDisable(value: string){
     return value === "disable" || value === "no" || value === "false" || value === "0" ? false : true

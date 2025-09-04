@@ -16,6 +16,7 @@ describe('Ansible configurator', function () {
             configurationInput: DEFAULT_COMMON_INPUT.configuration,
             provisionOutput: {
                 host: "test-ansible-configurator-host",
+                publicIPv4: "127.0.0.1",
                 dataDiskId: "test-ansible-configurator-data-disk-id"   
             }
         })
@@ -26,7 +27,7 @@ describe('Ansible configurator', function () {
             all: {
                 hosts: {
                     "test-ansible-configurator-instance": {
-                        ansible_host: "test-ansible-configurator-host",
+                        ansible_host: "127.0.0.1",
                         ansible_user: DEFAULT_COMMON_INPUT.provision.ssh.user,
                         ansible_password: undefined,
                         ansible_ssh_private_key_file: DEFAULT_COMMON_INPUT.provision.ssh.privateKeyPath,
@@ -54,6 +55,9 @@ describe('Ansible configurator', function () {
 
                         cloudypad_data_disk_enabled: "test-ansible-configurator-data-disk-id" !== undefined,
                         cloudypad_data_disk_id: "test-ansible-configurator-data-disk-id",
+
+                        ratelimit_enable: true,
+                        ratelimit_max_mbps: DEFAULT_COMMON_INPUT.configuration.ratelimit?.maxMbps,
                     },
                 },
             },
@@ -75,6 +79,7 @@ describe('Ansible configurator', function () {
             configurationInput: {},
             provisionOutput: {
                 host: "test-ansible-configurator-host-default",
+                publicIPv4: "127.0.0.1",
             }
         })
 

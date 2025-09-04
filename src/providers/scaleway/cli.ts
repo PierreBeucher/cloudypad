@@ -5,7 +5,7 @@ import { AbstractInputPrompter, PromptOptions } from "../../cli/prompter";
 import { ScalewayClient } from "./sdk-client";
 import { CLOUDYPAD_PROVIDER_SCALEWAY } from "../../core/const";
 import { PartialDeep } from "type-fest";
-import { CLI_OPTION_AUTO_STOP_TIMEOUT, CLI_OPTION_AUTO_STOP_ENABLE, CLI_OPTION_STREAMING_SERVER, CLI_OPTION_SUNSHINE_IMAGE_REGISTRY, CLI_OPTION_SUNSHINE_IMAGE_TAG, CLI_OPTION_SUNSHINE_PASSWORD, CLI_OPTION_SUNSHINE_USERNAME, CliCommandGenerator, CreateCliArgs, UpdateCliArgs, CLI_OPTION_DISK_SIZE, CLI_OPTION_USE_LOCALE, CLI_OPTION_KEYBOARD_LAYOUT, CLI_OPTION_KEYBOARD_MODEL, CLI_OPTION_KEYBOARD_VARIANT, CLI_OPTION_KEYBOARD_OPTIONS, CLI_OPTION_DATA_DISK_SIZE, CLI_OPTION_ROOT_DISK_SIZE, BuildCreateCommandArgs, BuildUpdateCommandArgs, CLI_OPTION_DELETE_INSTANCE_SERVER_ON_STOP } from "../../cli/command";
+import { CLI_OPTION_AUTO_STOP_TIMEOUT, CLI_OPTION_AUTO_STOP_ENABLE, CLI_OPTION_STREAMING_SERVER, CLI_OPTION_SUNSHINE_IMAGE_REGISTRY, CLI_OPTION_SUNSHINE_IMAGE_TAG, CLI_OPTION_SUNSHINE_PASSWORD, CLI_OPTION_SUNSHINE_USERNAME, CliCommandGenerator, CreateCliArgs, UpdateCliArgs, CLI_OPTION_DISK_SIZE, CLI_OPTION_USE_LOCALE, CLI_OPTION_KEYBOARD_LAYOUT, CLI_OPTION_KEYBOARD_MODEL, CLI_OPTION_KEYBOARD_VARIANT, CLI_OPTION_KEYBOARD_OPTIONS, CLI_OPTION_DATA_DISK_SIZE, CLI_OPTION_ROOT_DISK_SIZE, BuildCreateCommandArgs, BuildUpdateCommandArgs, CLI_OPTION_DELETE_INSTANCE_SERVER_ON_STOP, CLI_OPTION_RATE_LIMIT_MAX_MBPS } from "../../cli/command";
 import { InteractiveInstanceInitializer } from "../../cli/initializer";
 import { RUN_COMMAND_CREATE, RUN_COMMAND_UPDATE } from "../../tools/analytics/events";
 import { InteractiveInstanceUpdater } from "../../cli/updater";
@@ -224,6 +224,7 @@ export class ScalewayCliCommandGenerator extends CliCommandGenerator {
             .addOption(CLI_OPTION_KEYBOARD_MODEL)
             .addOption(CLI_OPTION_KEYBOARD_VARIANT)
             .addOption(CLI_OPTION_KEYBOARD_OPTIONS)
+            .addOption(CLI_OPTION_RATE_LIMIT_MAX_MBPS)
             .addOption(CLI_OPTION_DELETE_INSTANCE_SERVER_ON_STOP)
             .option('--region <region>', 'Region in which to deploy instance')
             .option('--zone <zone>', 'Zone in which to deploy instance')
@@ -265,6 +266,7 @@ export class ScalewayCliCommandGenerator extends CliCommandGenerator {
             .addOption(CLI_OPTION_KEYBOARD_MODEL)
             .addOption(CLI_OPTION_KEYBOARD_VARIANT)
             .addOption(CLI_OPTION_KEYBOARD_OPTIONS)
+            .addOption(CLI_OPTION_RATE_LIMIT_MAX_MBPS)
             .addOption(CLI_OPTION_DELETE_INSTANCE_SERVER_ON_STOP)
             .option('--instance-type <instance-type>', 'Instance type')
             .option('--image-id <image-id>', 'Existing image ID for instance server. Disk size must be equal or greater than image size.')

@@ -51,9 +51,33 @@ To have a better understand about spot instances, [see this article](https://www
 
 ### Egress (sending data out to Internet from Cloud provider network)
 
-Most clouders (including AWS, Azure and GCP) will bill Egress traffic (outgoing traffic from their network to the internet) past a certain threshold. Cloudy Pad incurs egress traffic as video stream will be sent from Clouder network to internet on your machine.
+Most clouders (including AWS, Azure and GCP) will charge for Egress traffic (outgoing traffic from their network to the internet) past a certain threshold. Cloudy Pad incurs egress traffic as video stream will be sent from Clouder network to internet on your machine.
 
 **Egress charges may apply typically after 50 hours / month with a 1080p 60FPS streaming setup** - time varies depending on your setup and Cloud provider used.  See Clouder cost recommandations for details. 
+
+You can limit your instance network speed with options `--ratelimit-max-mbps` available on `cloudypad create` or `cloudypad update`. It sets a network speed limit in megabit per seconds, for example:
+
+```sh
+# Example create
+cloudypad create aws --name my-instance \
+  --ratelimit-max-mbps 20
+  # ...
+
+# Example update
+cloudypad update aws --name my-instance \
+  --ratelimit-max-mbps 20
+```
+
+This may impact performance. Recommended rate limit for streaming performances:
+
+| Rate limit        | Resolution | Frame Rate |
+|:-----------------:|:----------:|:----------:|
+|     10 Mbps       |    720p    |   30 FPS   |
+|     20 Mbps       |   1080p    |   60 FPS   |
+|     40 Mbps       |   1440p    |  100 FPS   |
+|     80 Mbps       |     4K     |  120 FPS   |
+
+Read this table as: 20 Mbps rate limit will let you have good performances with 1080p / 60 FPS, but may not work well with higher specs. 
 
 ### Instance setup and specs recommandations 
 

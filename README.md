@@ -39,6 +39,7 @@ Cloudy Pad lets you **deploy a Cloud gaming instance on your own servers, machin
   - Setup automated **Cost alerts** to avoid overspending 💸
   - Use **Spot instances** for up to **90% cheaper** instances
   - Play **30 hours per month** for **~15$ / month or less**
+  - Control network speed to limit egress cost on providers charging outbound transfer
 - **Pay by the hour, no subscription** required
 - Deploy a [Sunshine](https://app.lizardbyte.dev/Sunshine/) or [Wolf](https://games-on-whales.github.io/wolf/stable/) video-game streaming server
 - Stream with [Moonlight](https://moonlight-stream.org/) client

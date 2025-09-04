@@ -58,7 +58,8 @@ describe('Instance initializer', () => {
         keyboardOptions: TEST_INPUT.configuration.keyboard?.options as string,
         instanceType: TEST_INPUT.provision.instanceType,
         startDelaySeconds: TEST_INPUT.provision.startDelaySeconds,
-        stopDelaySeconds: TEST_INPUT.provision.stopDelaySeconds
+        stopDelaySeconds: TEST_INPUT.provision.stopDelaySeconds,
+        ratelimitMaxMbps: TEST_INPUT.configuration.ratelimit?.maxMbps,
     }
 
     const TEST_CLI_ARGS_ALREADY_EXISTING: DummyCreateCliArgs = {
@@ -91,6 +92,7 @@ describe('Instance initializer', () => {
                 input: TEST_INPUT.provision,
                 output: {
                     host: "127.0.0.1",
+                    publicIPv4: "127.0.0.1",
                     instanceId: "dummy-instance-id",
                     provisionedAt: 1234567890,
                 }
@@ -98,6 +100,9 @@ describe('Instance initializer', () => {
             configuration: {
                 configurator: CLOUDYPAD_CONFIGURATOR_ANSIBLE,
                 input: {
+                    ratelimit: {
+                        maxMbps: TEST_INPUT.configuration.ratelimit?.maxMbps,
+                    },
                     sunshine: {
                         enable: DEFAULT_COMMON_INPUT.configuration.sunshine?.enable ?? false,
                         username: DEFAULT_COMMON_INPUT.configuration.sunshine?.username ?? "",
