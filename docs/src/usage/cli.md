@@ -66,6 +66,7 @@ cloudypad create aws \
   --cost-alert [disable|no|false|0] \
   --cost-limit 40 \
   --cost-notification-email me@example.com \
+  --ratelimit-max-mbps 40 \
   --yes --overwrite-existing
 ```
 
