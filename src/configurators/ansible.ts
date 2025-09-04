@@ -132,6 +132,10 @@ export class AnsibleConfigurator<ST extends InstanceStateV1> extends AbstractIns
 
                         cloudypad_data_disk_enabled: this.args.provisionOutput.dataDiskId !== undefined,
                         cloudypad_data_disk_id: this.args.provisionOutput.dataDiskId,
+
+                        ratelimit_enable: this.args.configurationInput.ratelimit?.maxMbps !== undefined && 
+                            this.args.configurationInput.ratelimit.maxMbps > 0,
+                        ratelimit_max_mbps: this.args.configurationInput.ratelimit?.maxMbps,
                     },
                 },
             },

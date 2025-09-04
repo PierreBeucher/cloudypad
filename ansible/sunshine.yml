@@ -49,6 +49,10 @@
           # nvidia-drm module is required by Wolf
           options nvidia-drm modeset=1
     
+    - role: roles/rate-limit
+      tags: [ rate-limit, ratelimit ]
+      become: true
+
     - role: roles/sunshine
       tags: [ sunshine ]
     

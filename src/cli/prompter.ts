@@ -132,6 +132,9 @@ export abstract class AbstractInputPrompter<
             configuration: {
                 sunshine: sunshineConfig,
                 wolf: wolfConfig,
+                ratelimit: partialInput.configuration?.ratelimit?.maxMbps ? {
+                    maxMbps: partialInput.configuration?.ratelimit?.maxMbps,
+                } : undefined,
                 autostop: {
                     enable: autoStop.autoStopEnable,
                     timeoutSeconds: autoStop.autoStopTimeout,
@@ -184,6 +187,9 @@ export abstract class AbstractInputPrompter<
                 autostop: cliArgs.autostop !== undefined ? {
                     enable: cliArgs.autostop,
                     timeoutSeconds: cliArgs.autostopTimeout,
+                } : undefined,
+                ratelimit: cliArgs.ratelimitMaxMbps ? {
+                    maxMbps: cliArgs.ratelimitMaxMbps,
                 } : undefined,
                 // only set streaming server if provided
                 // if undefined, no specific CLI args was passed, leave undefined

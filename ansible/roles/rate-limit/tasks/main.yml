@@ -1,0 +1,44 @@
+# Ignore known non-internet interfaces (like local, docker, veth...)
+# And only select known internet and egress interfaces (like eth_, ens_, enp_, eno_, wlan_, wlp_)
+- name: identify network interface devices on which to apply ratelimit
+  set_fact:
+    ratelimit_network_infs: >-
+      {{
+        ansible_interfaces 
+        | reject('match', '^lo$')
+        | reject('match', '^docker.*')
+        | reject('match', '^br-.*')
+        | reject('match', '^veth.*')
+        | select('match', '^(eth|ens|enp|eno|wlan|wlp).*')
+        | list
+      }}
+
+- name: Show identified network interfaces for rate limiting
+  debug:
+    msg: "Found network interfaces: {{ ratelimit_network_infs }} (rate limiting enabled: {{ ratelimit_enable }})"
+
+- name: Apply network rate limit 
+  command: >-
+    tc qdisc replace dev {{ item }} root tbf rate {{ ratelimit_max_mbps }}mbit burst 128k latency 10ms
+  loop: "{{ ratelimit_network_infs }}"
+  when: 
+    - ratelimit_enable | bool
+
+- name: Remove network rate limit when disabled (check and remove in one command)
+  shell: >-
+    if tc qdisc show dev {{ item }} | grep -q 'tbf'; then
+      echo "Removing tbf rule from {{ item }}" && tc qdisc del dev {{ item }} root;
+    else
+      echo "No tbf rule found on {{ item }}";
+    fi
+  loop: "{{ ratelimit_network_infs }}"
+  register: tc_remove_result
+  when: 
+    - not (ratelimit_enable | bool)
+
+- name: Show tc rule removal results
+  debug:
+    msg: "{{ item.stdout }}"
+  loop: "{{ tc_remove_result.results }}"
+  when: 
+    - not (ratelimit_enable | bool)

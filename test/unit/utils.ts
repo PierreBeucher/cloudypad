@@ -34,6 +34,9 @@ export const DEFAULT_COMMON_INPUT: CommonInstanceInput = {
         }
     },
     configuration: {
+        ratelimit: {
+            maxMbps: 50,
+        },
         sunshine: {
             enable: true,
             username: "sunshine",
@@ -78,6 +81,7 @@ export const DEFAULT_COMMON_CLI_ARGS: CreateCliArgs = {
     keyboardModel: DEFAULT_COMMON_INPUT.configuration.keyboard?.model,
     keyboardOptions: DEFAULT_COMMON_INPUT.configuration.keyboard?.options,
     ansibleAdditionalArgs: DEFAULT_COMMON_INPUT.configuration.ansible?.additionalArgs,
+    ratelimitMaxMbps: DEFAULT_COMMON_INPUT.configuration.ratelimit?.maxMbps,
 }
 
 export const DUMMY_SSH_KEY_PATH = path.resolve(__dirname, '..', 'resources', 'ssh-key')

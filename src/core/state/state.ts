@@ -36,6 +36,9 @@ const CommonConfigurationInputV1Schema = z.object({
         enable: z.boolean().describe("Whether Auto Stop is enabled"),
         timeoutSeconds: z.number().describe("Auto Stop timeout in seconds").optional(),
     }).optional(),
+    ratelimit: z.object({
+        maxMbps: z.number().describe("Maximum rate limit in Mbps. 0 to disable rate limiting.").optional(),
+    }).optional().describe("Rate limit egress bandwidth (eg. to limit egress cost with some providers)"),
     // Set both sunshine and wolf nullish as enabling one should enforce disabling the other.
     // As optional (~= undefined) could cause a race condition where both are enabled
     // (eg. merging a state with Sunshine enabled but "undefined" in memory would keep it enabled

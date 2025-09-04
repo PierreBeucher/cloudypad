@@ -55,6 +55,9 @@ describe('Ansible configurator', function () {
 
                         cloudypad_data_disk_enabled: "test-ansible-configurator-data-disk-id" !== undefined,
                         cloudypad_data_disk_id: "test-ansible-configurator-data-disk-id",
+
+                        ratelimit_enable: true,
+                        ratelimit_max_mbps: DEFAULT_COMMON_INPUT.configuration.ratelimit?.maxMbps,
                     },
                 },
             },
