@@ -46,6 +46,12 @@ jobs:
     
     steps:
 
+      # Docker image + Nix cache tends to be big, this avoids out of space issue
+      - name: Free Disk Space
+        uses: jlumbroso/free-disk-space@main
+        with:
+          tool-cache: false
+
       - name: Checkout repository
         uses: actions/checkout@v4
 
@@ -82,6 +88,12 @@ jobs:
     name: Build Sunshine container image
     runs-on: ubuntu-24.04
     steps:
+
+      # Docker image + Nix cache tends to be big, this avoids out of space issue
+      - name: Free Disk Space
+        uses: jlumbroso/free-disk-space@main
+        with:
+          tool-cache: false
 
       - name: Checkout repository
         uses: actions/checkout@v4
