@@ -37,6 +37,7 @@ If that's not your cup of tea, **you might prefer to use [Cloudy Pad App](https:
 - [Docker](https://docs.docker.com/engine/install/) client
   - Rootless Docker is not supported yet
   - For MacOS, [OrbStack](https://orbstack.dev/) is recommended over Docker Desktop
+- A stable internet connection with at least 20 Mbps download speed
 
 ## Installation 
 

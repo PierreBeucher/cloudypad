@@ -29,3 +29,11 @@ Heroic Games Launcher is pre-configured on Cloudy Pad with [GE-Proton](https://g
 
 You can find additional Heroic documentation, help and setup guide on [Heroic Wiki](https://github.com/Heroic-Games-Launcher/HeroicGamesLauncher/wiki)
 
+## Local data path
+
+Heroic data are stored under
+
+- `/cloudy/conf/heroic`
+- `/cloudy/data/heroic`
+
+If you're connected directly on host via SSH, see under `/var/lib/cloudypad/sunshine/`.

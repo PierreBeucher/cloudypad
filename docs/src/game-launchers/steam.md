@@ -5,6 +5,10 @@
   - [(Recommended) Mobile app with Steam Guard](#recommended-mobile-app-with-steam-guard)
   - [Password authentication](#password-authentication)
   - [I forgot my Steam username and/or password](#i-forgot-my-steam-username-andor-password)
+- [Advanced configuration](#advanced-configuration)
+  - [Steam data path](#steam-data-path)
+  - [Configuring Mods](#configuring-mods)
+  - [Change Proton version](#change-proton-version)
 
 ## Run Steam
 
@@ -41,3 +45,26 @@ On your phone or tablet download Steam application and:
 - Select _"I forgot my Steam account name or password"_
 - Enter your email address or phone number and click on _"Continue"_
 - Follow instructions to reset your password
+
+
+## Advanced configuration
+
+### Steam data path
+
+From within Cloudy Pad, Steam data are located under:
+
+- `/cloudy/data/Steam`
+- `/cloudy/conf/steam`
+- `$HOME/.steam`
+
+If you're connected directly on host via SSH, see under `/var/lib/cloudypad/sunshine/`.
+
+### Configuring Mods
+
+Configuring Steam mods vary with games. If you need to install files locally, look under `/cloudy/data/Steam/steamapps/common/`
+
+### Change Proton version
+
+Proton provide compatibility with Windows games. Sometime using a different Proton version may help run a game or fix bugs. 
+
+Go to _Steam > Settings > Compatibility > Default compatibility tools_ and chose a more recent (higher number) Proton version, or Proton Experimental for latest experimental version.

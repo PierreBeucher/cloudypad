@@ -38,6 +38,7 @@
 - [Moonlight: install and connect/pair](./help/moonlight-install-connect.md)
 - [Moonlight usage: screen size, latency, keyboard shortcuts, etc.](./help/moonlight-usage.md)
 - [Keyboard and Mouse configuration](./help/keyboard-mouse-config.md)
+- [Performance and setup tips](./help/performance.md)
 - [Running sudo and root commands](./help/sudo.md)
 - [Talk to a human](./help/community.md)
 - [General FAQ](./help/faq.md)
