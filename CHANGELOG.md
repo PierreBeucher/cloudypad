@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.38.1](https://github.com/PierreBeucher/cloudypad/compare/v0.38.0...v0.38.1) (2025-09-09)
+
+
+### Bug Fixes
+
+* apply rate limit on instance with server deletion enabled restart ([a64d1ec](https://github.com/PierreBeucher/cloudypad/commit/a64d1ecb76eb62519f239f8063f9653bf43e6296))
+* apply rate limit on instance with server deletion enabled restart ([3c0aa35](https://github.com/PierreBeucher/cloudypad/commit/3c0aa354227a42585a68e25acbd4bda3f5d7efe8))
+
 ## [0.38.0](https://github.com/PierreBeucher/cloudypad/compare/v0.37.0...v0.38.0) (2025-09-04)
 
 
