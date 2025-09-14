@@ -1,0 +1,4 @@
+---
+- name: reload apparmor bwrap rules
+  command: apparmor_parser -r /etc/apparmor.d/bwrap
+  become: yes 
