@@ -33,7 +33,8 @@ You can find additional Heroic documentation, help and setup guide on [Heroic Wi
 
 Heroic data are stored under
 
-- `/cloudy/conf/heroic`
+- `/cloudy/conf/heroic` - Heroic configurations
 - `/cloudy/data/heroic`
+- `~/.local/state/Heroic/` - Game logs 
 
 If you're connected directly on host via SSH, see under `/var/lib/cloudypad/sunshine/`.

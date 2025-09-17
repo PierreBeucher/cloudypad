@@ -1,0 +1,25 @@
+# Install custom AppArmor profile for bwrap as some games require bwrap with user namespaces access
+# See https://github.com/PierreBeucher/cloudypad/issues/290
+- name: Check if AppArmor is installed
+  stat:
+    path: /etc/apparmor.d
+  register: apparmor_check
+
+- name: Create AppArmor profile for bwrap
+  copy:
+    dest: /etc/apparmor.d/bwrap
+    content: |
+      abi <abi/4.0>,
+      include <tunables/global>
+
+      profile bwrap /usr/bin/bwrap flags=(unconfined) {
+        userns,
+
+        # Site-specific additions and overrides. See local/README for details.
+        include if exists <local/bwrap>
+      }
+    owner: root
+    group: root
+    mode: '0644'
+  when: apparmor_check.stat.exists and apparmor_check.stat.isdir
+  notify: reload apparmor bwrap rules

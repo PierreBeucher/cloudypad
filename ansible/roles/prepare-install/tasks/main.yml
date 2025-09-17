@@ -9,3 +9,7 @@
 - name: import Local tasks
   import_tasks: ssh.yml
   when: cloudypad_provider is defined and cloudypad_provider == "ssh"
+
+- name: setup AppArmor profile for bwrap
+  import_tasks: apparmor-bwrap.yml
+  tags: [ apparmor-bwrap ]
