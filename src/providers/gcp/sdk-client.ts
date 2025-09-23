@@ -1,4 +1,4 @@
-import { InstancesClient, protos, RegionsClient, MachineTypesClient, AcceleratorTypesClient, ZoneOperationsClient } from '@google-cloud/compute'
+import { InstancesClient, protos, RegionsClient, MachineTypesClient, AcceleratorTypesClient, ZoneOperationsClient, DiskTypesClient } from '@google-cloud/compute'
 import { GoogleAuth } from 'google-auth-library'
 import { getLogger, Logger } from '../../log/utils'
 import { ProjectsClient, protos as rmprotos  } from '@google-cloud/resource-manager'
@@ -52,6 +52,7 @@ export class GcpClient {
     private readonly regions: RegionsClient
     private readonly machines: MachineTypesClient
     private readonly accelerators: AcceleratorTypesClient
+    private readonly diskTypes: DiskTypesClient
 
     constructor(name: string, projectId: string){
         this.logger = getLogger(name)
@@ -60,7 +61,27 @@ export class GcpClient {
         this.auth = new GoogleAuth()
         this.machines = new MachineTypesClient()
         this.accelerators = new AcceleratorTypesClient()
+        this.diskTypes = new DiskTypesClient()
         this.projectId = projectId
+    }
+
+    /**
+     * List available disk types in a given zone
+     * @param zone GCP zone (e.g. europe-west1-b)
+     * @returns Array of disk type names (e.g. ["pd-standard", "pd-balanced", "pd-ssd"])
+     */
+    async listDiskTypes(zone: string): Promise<string[]> {
+        this.logger.debug(`Listing Google Cloud disk types in zone ${zone}`)
+        try {
+            const [diskTypes] = await this.diskTypes.list({ project: this.projectId, zone })
+            this.logger.debug(`List disk types response: ${JSON.stringify(diskTypes)}`)
+            // Only return disk type names
+            return (diskTypes || [])
+                .map(dt => dt.name?.trim())
+            throw new Error(`Failed to list Google Cloud disk types in zone ${zone} for project ${this.projectId}`, { cause: error })
+        } catch (error) {
+            throw new Error(`Failed to list Google Cloud disk types in zone ${zone}`, { cause: error })
+        }
     }
 
     async checkAuth() {

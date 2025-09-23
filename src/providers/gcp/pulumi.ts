@@ -19,7 +19,11 @@ interface CloudyPadGCEInstanceArgs {
     acceleratorType: pulumi.Input<string>
     bootDisk?: {
         sizeGb?: pulumi.Input<number>
+        type?: pulumi.Input<string>
     }
+    diskType?: pulumi.Input<string>
+    networkTier?: pulumi.Input<string>
+    nicType?: pulumi.Input<string>
     useSpot?: pulumi.Input<boolean>
     projectId: pulumi.Input<string>
     costAlert?: {
@@ -82,15 +86,16 @@ class CloudyPadGCEInstance extends pulumi.ComponentResource {
                 initializeParams: {
                     image: "ubuntu-2204-jammy-v20241119",
                     size: args.bootDisk?.sizeGb || 50,
-                    type: "pd-balanced"
+                    type: args.bootDisk?.type || args.diskType || "pd-balanced"
                 }
             },
             networkInterfaces: [{
                 network: network.id,
                 subnetwork: subnet.id,
+                nicType: args.nicType && args.nicType !== "auto" ? args.nicType : undefined,
                 accessConfigs: [{ 
                     natIp: publicIp ? publicIp.address : undefined,
-                    networkTier: "STANDARD",
+                    networkTier: args.networkTier || "STANDARD",
                 }],
             }],
             allowStoppingForUpdate: true,
@@ -329,6 +334,9 @@ export class GcpPulumiClient extends InstancePulumiClient<PulumiStackConfigGcp, 
         await stack.setConfig("publicIpType", { value: config.publicIpType })
         await stack.setConfig("useSpot", { value: config.useSpot.toString() })
         await stack.setConfig("firewallAllowPorts", { value: JSON.stringify(config.firewallAllowPorts)})
+        if (config.diskType) await stack.setConfig("diskType", { value: config.diskType })
+        if (config.networkTier) await stack.setConfig("networkTier", { value: config.networkTier })
+        if (config.nicType) await stack.setConfig("nicType", { value: config.nicType })
 
         if(config.costAlert){
             await stack.setConfig("costAlert", { value: JSON.stringify(config.costAlert)})
@@ -336,7 +344,6 @@ export class GcpPulumiClient extends InstancePulumiClient<PulumiStackConfigGcp, 
 
         const allConfs = await stack.getAllConfig()
         this.logger.debug(`Config after update: ${JSON.stringify(allConfs)}`)
-
     }
 
     protected async buildTypedOutput(outputs: OutputMap): Promise<GcpPulumiOutput>{
