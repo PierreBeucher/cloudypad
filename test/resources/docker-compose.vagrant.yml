@@ -1,6 +1,7 @@
 # Debug in Vagrant VM Compose file. 
 # Run from Vagrant VM with:
 #
+#   vagrant ssh
 #   docker compose -f /vagrant/test/resources/docker-compose.vagrant.yml -p sunshine up -d --force-recreate
 #
 # To update, run Ansible configuration on VM and copy resulting compose file here.
@@ -40,16 +41,20 @@ services:
     # persisting this folder makes sense to keep user's data across container recreation
     - "/var/lib/cloudypad/sunshine/home:/home/cloudy"
     
+    #
     # Local overlay debug
-    - "/vagrant/containers/sunshine/overlay/cloudy/bin:/cloudy/bin"
-    - "/vagrant/containers/sunshine/overlay/cloudy/conf/cloudypad:/cloudy/conf/cloudypad"
+    #
+
+    # - "/vagrant/containers/sunshine/overlay/cloudy/bin:/cloudy/bin"
+    # - "/vagrant/containers/sunshine/overlay/cloudy/conf/cloudypad:/cloudy/conf/cloudypad"
     
-    - "/vagrant/containers/sunshine/overlay/cloudy/conf/xfce4-default:/cloudy/conf/xfce4-default"
+    # - "/vagrant/containers/sunshine/overlay/cloudy/conf/xfce4-default:/cloudy/conf/xfce4-default"
     
     # - "/vagrant/containers/sunshine/overlay/cloudy/conf/heroic-default:/cloudy/conf/heroic-default"
 
-    - "/vagrant/containers/sunshine/overlay/cloudy/conf/sunshine/apps.json:/cloudy/conf/sunshine/apps.json"
-    - "/vagrant/containers/sunshine/overlay/cloudy/conf/sunshine/assets:/cloudy/conf/sunshine/assets"
+    - "/vagrant/containers/sunshine/overlay/cloudy/conf/sunshine/sunshine.conf.template:/cloudy/conf/sunshine/sunshine.conf.template"
+    # - "/vagrant/containers/sunshine/overlay/cloudy/conf/sunshine/apps.json:/cloudy/conf/sunshine/apps.json"
+    # - "/vagrant/containers/sunshine/overlay/cloudy/conf/sunshine/assets:/cloudy/conf/sunshine/assets"
     
     # - "/vagrant/containers/sunshine/overlay/cloudy/conf/supervisor:/cloudy/conf/supervisor"
     
@@ -94,3 +99,4 @@ services:
       # Use "\n" for multiple lines
       # eg. "capture = x11\nfoo = bar"
       CLOUDYPAD_SUNSHINE_ADDITIONAL_CONFIG: "capture = x11"
+      CLOUDYPAD_SUNSHINE_MAX_BITRATE: "20000"
