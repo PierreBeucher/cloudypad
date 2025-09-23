@@ -2,7 +2,7 @@
 # vi: set ft=ruby :
 
 Vagrant.configure("2") do |config|
-    config.vm.box = "ubuntu/jammy64"  # Ubuntu 22.04 LTS (Jammy)
+    config.vm.box = "bento/ubuntu-24.04"
     config.vm.hostname = "cloudypad-dev"
   
     config.vm.network "private_network", ip: "192.168.56.43"
