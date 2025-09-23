@@ -43,6 +43,7 @@ all:
       # use of DRI. This somehow crash the X11 and desktop process for unknown reason.
       # Forcing to use X11 capture workaround the issue.
       sunshine_additional_config: "capture = x11"
-      
+      sunshine_max_bitrate_kbps: "5000"
+
       cloudypad_provider: "vagrant"
       

@@ -21,6 +21,7 @@ export interface CreateCliArgs {
     sunshinePassword?: string
     sunshineImageTag?: string
     sunshineImageRegistry?: string
+    sunshineMaxBitrateKbps?: number
     autostop?: boolean
     autostopTimeout?: number
     useLocale?: string | null
@@ -96,6 +97,9 @@ export const CLI_OPTION_SUNSHINE_USERNAME = new Option('--sunshine-user <name>',
 export const CLI_OPTION_SUNSHINE_PASSWORD = new Option('--sunshine-password <password>', 'Sunshine password (ignored if streaming server is not sunshine)')
 export const CLI_OPTION_SUNSHINE_IMAGE_TAG = new Option('--sunshine-image-tag <tag>', 'Sunshine container image tag (ignored if streaming server is not sunshine)')
 export const CLI_OPTION_SUNSHINE_IMAGE_REGISTRY = new Option('--sunshine-image-registry <registry>', 'Sunshine container image registry (ignored if streaming server is not sunshine)')
+export const CLI_OPTION_SUNSHINE_MAX_BITRATE_KBPS = new Option('--sunshine-max-bitrate-kbps <kbps>', 'Sunshine maximum bitrate in Kbps. If set, Sunshine server max bitrate will not exceed this bitrate regardless of client settings. ' +
+    '(ignored if streaming server is not sunshine)')
+    .argParser(parseInt)
 
 export const CLI_OPTION_AUTO_STOP_ENABLE = new Option('--autostop [disable|no|false|0]', 'Enable Auto Stop to shutdown the instance automatically when inactivity is detected')
     .argParser(parseFalseOrDisable)

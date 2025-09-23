@@ -50,6 +50,7 @@ const CommonConfigurationInputV1Schema = z.object({
         imageTag: z.string().optional().describe("Sunshine container image tag. Default to current Cloudy Pad version"),
         imageRegistry: z.string().optional().describe("Sunshine container image registry. Default to Cloudy Pad registry"),
         serverName: z.string().optional().describe("Sunshine server name that will appear in Moonlight. Default to instance name."),
+        maxBitrateKbps: z.number().optional().describe("Maximum bitrate in Kbps for Sunshine streaming. Passed as Sunshine config max_bitrate. Default: 0"),
     })
     .nullish(),
     keyboard: z.object({

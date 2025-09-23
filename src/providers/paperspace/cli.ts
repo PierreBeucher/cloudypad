@@ -6,7 +6,7 @@ import { fetchApiKeyFromEnvironment } from './client/client';
 import lodash from 'lodash'
 import { PartialDeep } from "type-fest";
 import { CLOUDYPAD_PROVIDER_PAPERSPACE, PUBLIC_IP_TYPE } from "../../core/const";
-import { CLI_OPTION_AUTO_STOP_TIMEOUT, CLI_OPTION_AUTO_STOP_ENABLE, CLI_OPTION_DISK_SIZE, CLI_OPTION_PUBLIC_IP_TYPE, CLI_OPTION_SPOT, CLI_OPTION_STREAMING_SERVER, CLI_OPTION_SUNSHINE_IMAGE_REGISTRY, CLI_OPTION_SUNSHINE_IMAGE_TAG, CLI_OPTION_SUNSHINE_PASSWORD, CLI_OPTION_SUNSHINE_USERNAME, CliCommandGenerator, CreateCliArgs, UpdateCliArgs, CLI_OPTION_USE_LOCALE, CLI_OPTION_KEYBOARD_LAYOUT, CLI_OPTION_KEYBOARD_MODEL, CLI_OPTION_KEYBOARD_VARIANT, CLI_OPTION_KEYBOARD_OPTIONS, BuildCreateCommandArgs, BuildUpdateCommandArgs } from "../../cli/command";
+import { CLI_OPTION_AUTO_STOP_TIMEOUT, CLI_OPTION_AUTO_STOP_ENABLE, CLI_OPTION_DISK_SIZE, CLI_OPTION_PUBLIC_IP_TYPE, CLI_OPTION_SPOT, CLI_OPTION_STREAMING_SERVER, CLI_OPTION_SUNSHINE_IMAGE_REGISTRY, CLI_OPTION_SUNSHINE_IMAGE_TAG, CLI_OPTION_SUNSHINE_PASSWORD, CLI_OPTION_SUNSHINE_USERNAME, CliCommandGenerator, CreateCliArgs, UpdateCliArgs, CLI_OPTION_USE_LOCALE, CLI_OPTION_KEYBOARD_LAYOUT, CLI_OPTION_KEYBOARD_MODEL, CLI_OPTION_KEYBOARD_VARIANT, CLI_OPTION_KEYBOARD_OPTIONS, BuildCreateCommandArgs, BuildUpdateCommandArgs, CLI_OPTION_SUNSHINE_MAX_BITRATE_KBPS } from "../../cli/command";
 import { InteractiveInstanceInitializer } from "../../cli/initializer";
 import { RUN_COMMAND_CREATE, RUN_COMMAND_UPDATE } from "../../tools/analytics/events";
 import { InteractiveInstanceUpdater } from "../../cli/updater";
@@ -216,6 +216,7 @@ export class PaperspaceCliCommandGenerator extends CliCommandGenerator {
             .addOption(CLI_OPTION_SUNSHINE_PASSWORD)
             .addOption(CLI_OPTION_SUNSHINE_IMAGE_TAG)
             .addOption(CLI_OPTION_SUNSHINE_IMAGE_REGISTRY)
+            .addOption(CLI_OPTION_SUNSHINE_MAX_BITRATE_KBPS)
             .addOption(CLI_OPTION_AUTO_STOP_ENABLE)
             .addOption(CLI_OPTION_AUTO_STOP_TIMEOUT)
             .addOption(CLI_OPTION_USE_LOCALE)
@@ -250,6 +251,7 @@ export class PaperspaceCliCommandGenerator extends CliCommandGenerator {
             .addOption(CLI_OPTION_SUNSHINE_PASSWORD)
             .addOption(CLI_OPTION_SUNSHINE_IMAGE_TAG)
             .addOption(CLI_OPTION_SUNSHINE_IMAGE_REGISTRY)
+            .addOption(CLI_OPTION_SUNSHINE_MAX_BITRATE_KBPS)
             .addOption(CLI_OPTION_AUTO_STOP_ENABLE)
             .addOption(CLI_OPTION_AUTO_STOP_TIMEOUT)
             .option('--api-key-file <apikeyfile>', 'Path to Paperspace API key file')

@@ -15,5 +15,8 @@ file_state = /cloudy/data/sunshine/sunshine_state.json
 pkey = /cloudy/data/sunshine/pkey.pem
 cert = /cloudy/data/sunshine/cert.pem
 
+# Maximum bitrate in Kbps
+max_bitrate = $CLOUDYPAD_SUNSHINE_MAX_BITRATE
+
 # Additional configs
 $CLOUDYPAD_SUNSHINE_ADDITIONAL_CONFIG

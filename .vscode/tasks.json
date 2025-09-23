@@ -52,13 +52,24 @@
             }
         },
         {
+            "label": "test-integ-provider-linode",
+            "type": "shell",
+            "command": "nix develop -c -- task test-integ-provider-linode",
+            "group": "none",
+            "presentation": {
+                "reveal": "always",
+                "panel": "dedicated"
+            }
+        },
+        {
             "label": "test-integ-provider-all",
             "dependsOn": [
                 "test-integ-provider-aws",
                 "test-integ-provider-azure",
                 "test-integ-provider-gcp",
                 "test-integ-provider-paperspace",
-                "test-integ-provider-scaleway"
+                "test-integ-provider-scaleway",
+                "test-integ-provider-linode"
             ],
             "group": "none",
             "presentation": {

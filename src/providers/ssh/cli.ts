@@ -3,7 +3,7 @@ import { CommonConfigurationInputV1, CommonInstanceInput } from "../../core/stat
 import { select, input, confirm, password } from '@inquirer/prompts';
 import { AbstractInputPrompter, PromptOptions } from "../../cli/prompter";
 import lodash from 'lodash'
-import { CliCommandGenerator, CreateCliArgs, UpdateCliArgs, CLI_OPTION_STREAMING_SERVER, CLI_OPTION_SUNSHINE_PASSWORD, CLI_OPTION_SUNSHINE_USERNAME, CLI_OPTION_SUNSHINE_IMAGE_REGISTRY, CLI_OPTION_SUNSHINE_IMAGE_TAG, CLI_OPTION_AUTO_STOP_TIMEOUT, CLI_OPTION_AUTO_STOP_ENABLE, CLI_OPTION_USE_LOCALE, CLI_OPTION_KEYBOARD_LAYOUT, CLI_OPTION_KEYBOARD_MODEL, CLI_OPTION_KEYBOARD_VARIANT, CLI_OPTION_KEYBOARD_OPTIONS, BuildCreateCommandArgs, BuildUpdateCommandArgs, CLI_OPTION_RATE_LIMIT_MAX_MBPS } from "../../cli/command";
+import { CliCommandGenerator, CreateCliArgs, UpdateCliArgs, CLI_OPTION_STREAMING_SERVER, CLI_OPTION_SUNSHINE_PASSWORD, CLI_OPTION_SUNSHINE_USERNAME, CLI_OPTION_SUNSHINE_IMAGE_REGISTRY, CLI_OPTION_SUNSHINE_IMAGE_TAG, CLI_OPTION_AUTO_STOP_TIMEOUT, CLI_OPTION_AUTO_STOP_ENABLE, CLI_OPTION_USE_LOCALE, CLI_OPTION_KEYBOARD_LAYOUT, CLI_OPTION_KEYBOARD_MODEL, CLI_OPTION_KEYBOARD_VARIANT, CLI_OPTION_KEYBOARD_OPTIONS, BuildCreateCommandArgs, BuildUpdateCommandArgs, CLI_OPTION_RATE_LIMIT_MAX_MBPS, CLI_OPTION_SUNSHINE_MAX_BITRATE_KBPS } from "../../cli/command";
 import { CLOUDYPAD_PROVIDER_SSH } from "../../core/const";
 import { InteractiveInstanceInitializer } from "../../cli/initializer";
 import { PartialDeep } from "type-fest";
@@ -177,6 +177,7 @@ export class SshCliCommandGenerator extends CliCommandGenerator {
             .addOption(CLI_OPTION_SUNSHINE_PASSWORD)
             .addOption(CLI_OPTION_SUNSHINE_IMAGE_TAG)
             .addOption(CLI_OPTION_SUNSHINE_IMAGE_REGISTRY)
+            .addOption(CLI_OPTION_SUNSHINE_MAX_BITRATE_KBPS)
             .addOption(CLI_OPTION_AUTO_STOP_ENABLE)
             .addOption(CLI_OPTION_AUTO_STOP_TIMEOUT)
             .addOption(CLI_OPTION_USE_LOCALE)
@@ -220,6 +221,7 @@ export class SshCliCommandGenerator extends CliCommandGenerator {
             .addOption(CLI_OPTION_SUNSHINE_PASSWORD)
             .addOption(CLI_OPTION_SUNSHINE_IMAGE_TAG)
             .addOption(CLI_OPTION_SUNSHINE_IMAGE_REGISTRY)
+            .addOption(CLI_OPTION_SUNSHINE_MAX_BITRATE_KBPS)
             .addOption(CLI_OPTION_AUTO_STOP_ENABLE)
             .addOption(CLI_OPTION_AUTO_STOP_TIMEOUT)
             .addOption(CLI_OPTION_USE_LOCALE)

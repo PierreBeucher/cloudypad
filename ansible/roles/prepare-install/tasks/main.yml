@@ -10,6 +10,10 @@
   import_tasks: ssh.yml
   when: cloudypad_provider is defined and cloudypad_provider == "ssh"
 
-- name: setup AppArmor profile for bwrap
+- name: setup AppArmor profile for bwrap on Ubuntu 24
   import_tasks: apparmor-bwrap.yml
   tags: [ apparmor-bwrap ]
+  when: ansible_distribution == "Ubuntu" and ansible_distribution_major_version == "24"
+
+- debug:
+    msg: "Ansible distribution version: {{ ansible_distribution_major_version }}, Ubuntu: {{ ansible_distribution }}"

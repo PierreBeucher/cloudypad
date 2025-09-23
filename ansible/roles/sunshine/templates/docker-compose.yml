@@ -74,3 +74,7 @@ services:
       # Use "\n" for multiple lines
       # eg. "capture = x11\nfoo = bar"
       CLOUDYPAD_SUNSHINE_ADDITIONAL_CONFIG: "{{ sunshine_additional_config }}"
+
+      # Sunshine maximum bitrate in Kbps
+      # If unset, Sunshine will use its default bitrate settings
+      CLOUDYPAD_SUNSHINE_MAX_BITRATE: "{{ sunshine_max_bitrate_kbps }}"

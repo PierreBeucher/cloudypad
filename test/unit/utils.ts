@@ -43,6 +43,7 @@ export const DEFAULT_COMMON_INPUT: CommonInstanceInput = {
             passwordBase64: "c3Vuc2hpbmVQYXNzd29yZA==", // 'sunshinePassword' in base64,
             imageTag: "local",
             imageRegistry: "dummy.registry.example.co",
+            maxBitrateKbps: 5000,
         },
         wolf: undefined,
         autostop: {
@@ -82,6 +83,7 @@ export const DEFAULT_COMMON_CLI_ARGS: CreateCliArgs = {
     keyboardOptions: DEFAULT_COMMON_INPUT.configuration.keyboard?.options,
     ansibleAdditionalArgs: DEFAULT_COMMON_INPUT.configuration.ansible?.additionalArgs,
     ratelimitMaxMbps: DEFAULT_COMMON_INPUT.configuration.ratelimit?.maxMbps,
+    sunshineMaxBitrateKbps: DEFAULT_COMMON_INPUT.configuration.sunshine?.maxBitrateKbps,
 }
 
 export const DUMMY_SSH_KEY_PATH = path.resolve(__dirname, '..', 'resources', 'ssh-key')
