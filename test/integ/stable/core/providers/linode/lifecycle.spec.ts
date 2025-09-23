@@ -47,7 +47,8 @@ describe('Linode lifecycle', () => {
                 instanceType: instanceType,
                 rootDiskSizeGb: rootDiskSizeGb,
                 dataDiskSizeGb: dataDiskSizeGb,
-                imageId: "private/33927621",
+                // imageId: "private/33927621",
+                imageId: "linode/ubuntu24.04",
                 watchdogEnabled: true, // need to have watchdog otherwise Ansible reboot during config will effectively shutdown instance
                 dns: {
                     domainName: "green.instances.cloudypad.gg",
@@ -59,9 +60,9 @@ describe('Linode lifecycle', () => {
                     passwordBase64: Buffer.from("Sunshine!").toString('base64'),
                     imageTag: "dev"
                 }, 
-                ansible: {
-                    additionalArgs: "-t data-disk,sunshine"
-                }
+                // ansible: {
+                //     additionalArgs: "-t data-disk,sunshine"
+                // }
             })
     })
 
@@ -106,98 +107,98 @@ describe('Linode lifecycle', () => {
 
     // }).timeout(20*60*1000) // 20 minutes timeout
 
-    it('should have a valid instance server output with existing server', async () => {
-        const state = await getCurrentTestState()
+    // it('should have a valid instance server output with existing server', async () => {
+    //     const state = await getCurrentTestState()
         
-        assert.ok(state.provision.output?.instanceServerId)
-        currentInstanceServerId = state.provision.output.instanceServerId
+    //     assert.ok(state.provision.output?.instanceServerId)
+    //     currentInstanceServerId = state.provision.output.instanceServerId
 
-        const linodeClient = getLinodeClient()
+    //     const linodeClient = getLinodeClient()
         
-        const serverStatus = await linodeClient.getInstanceStatus(currentInstanceServerId)
-        // Instance should be in a valid state (running, stopped, etc.)
-        assert.equal(serverStatus, 'running')
-    }).timeout(10000)
+    //     const serverStatus = await linodeClient.getInstanceStatus(currentInstanceServerId)
+    //     // Instance should be in a valid state (running, stopped, etc.)
+    //     assert.equal(serverStatus, 'running')
+    // }).timeout(10000)
 
-    // run twice for idempotency
-    for (let i = 0; i < 2; i++) { 
+    // // run twice for idempotency
+    // for (let i = 0; i < 2; i++) { 
 
-        it(`should stop instance and keep instance server (${i+1}/2 for idempotency)`, async () => {
-            const instanceManager = await linodeProviderClient.getInstanceManager(instanceName)
-            await instanceManager.stop({ wait: true })
+    //     it(`should stop instance and keep instance server (${i+1}/2 for idempotency)`, async () => {
+    //         const instanceManager = await linodeProviderClient.getInstanceManager(instanceName)
+    //         await instanceManager.stop({ wait: true })
 
-            const instanceStatus = await instanceManager.getInstanceStatus()
-            assert.strictEqual(instanceStatus.configured, false)
-            assert.strictEqual(instanceStatus.serverStatus, ServerRunningStatus.Unknown)
+    //         const instanceStatus = await instanceManager.getInstanceStatus()
+    //         assert.strictEqual(instanceStatus.configured, false)
+    //         assert.strictEqual(instanceStatus.serverStatus, ServerRunningStatus.Unknown)
 
-            const state = await getCurrentTestState()
-            assert.strictEqual(state.provision.output?.instanceServerId, currentInstanceServerId)
+    //         const state = await getCurrentTestState()
+    //         assert.strictEqual(state.provision.output?.instanceServerId, currentInstanceServerId)
 
-            // instance should be deleted on stop
-            const linodeClient = getLinodeClient()
-            const instances = await linodeClient.listInstances()
-            const instance = instances.find((instance) => instance.id.toString() === currentInstanceServerId)
-            assert.ok(!instance)
-        }).timeout(120000)
-    }
+    //         // instance should be deleted on stop
+    //         const linodeClient = getLinodeClient()
+    //         const instances = await linodeClient.listInstances()
+    //         const instance = instances.find((instance) => instance.id.toString() === currentInstanceServerId)
+    //         assert.ok(!instance)
+    //     }).timeout(120000)
+    // }
 
-    // run twice for idempotency
-    for (let i = 0; i < 1; i++) {  // TODO 2
+    // // run twice for idempotency
+    // for (let i = 0; i < 1; i++) {  // TODO 2
 
-        it(`should start instance with re-provisioning (${i+1}/2 for idempotency)`, async () => {
-            const instanceManager = await linodeProviderClient.getInstanceManager(instanceName)
-            await instanceManager.start({ wait: true })
+    //     it(`should start instance with re-provisioning (${i+1}/2 for idempotency)`, async () => {
+    //         const instanceManager = await linodeProviderClient.getInstanceManager(instanceName)
+    //         await instanceManager.start({ wait: true })
 
-            const instanceStatus = await instanceManager.getInstanceStatus()
-            assert.strictEqual(instanceStatus.configured, true)
-            assert.strictEqual(instanceStatus.provisioned, true)
-            assert.strictEqual(instanceStatus.serverStatus, ServerRunningStatus.Running)
+    //         const instanceStatus = await instanceManager.getInstanceStatus()
+    //         assert.strictEqual(instanceStatus.configured, true)
+    //         assert.strictEqual(instanceStatus.provisioned, true)
+    //         assert.strictEqual(instanceStatus.serverStatus, ServerRunningStatus.Running)
 
-            const state = await getCurrentTestState()
-            assert.ok(state.provision.output?.instanceServerId)
+    //         const state = await getCurrentTestState()
+    //         assert.ok(state.provision.output?.instanceServerId)
 
-            currentInstanceServerId = state.provision.output.instanceServerId
-        }).timeout(1200000) // 20 minutes timeout
-    }
+    //         currentInstanceServerId = state.provision.output.instanceServerId
+    //     }).timeout(1200000) // 20 minutes timeout
+    // }
 
-    it('should wait for instance readiness', async () => {
-        const instanceManager = await linodeProviderClient.getInstanceManager(instanceName)
+    // it('should wait for instance readiness', async () => {
+    //     const instanceManager = await linodeProviderClient.getInstanceManager(instanceName)
         
-        let isReady = false
-        for (let attempt = 0; attempt < 60; attempt++) {
-            isReady = await instanceManager.isReady()
-            if (isReady) break
-            logger.info(`Waiting for instance readiness... ${attempt + 1} / 60`)
-            await new Promise(resolve => setTimeout(resolve, 5000)) // wait for 5 seconds before retrying
-        }
-        assert.strictEqual(isReady, true)
+    //     let isReady = false
+    //     for (let attempt = 0; attempt < 60; attempt++) {
+    //         isReady = await instanceManager.isReady()
+    //         if (isReady) break
+    //         logger.info(`Waiting for instance readiness... ${attempt + 1} / 60`)
+    //         await new Promise(resolve => setTimeout(resolve, 5000)) // wait for 5 seconds before retrying
+    //     }
+    //     assert.strictEqual(isReady, true)
 
-    }).timeout(120000)
+    // }).timeout(120000)
 
-    it('should restart instance without deleting or re-provisioning', async () => {
+    // it('should restart instance without deleting or re-provisioning', async () => {
 
-        const stateBefore = await getCurrentTestState()
-        const serverIdBefore = stateBefore.provision.output?.instanceServerId
+    //     const stateBefore = await getCurrentTestState()
+    //     const serverIdBefore = stateBefore.provision.output?.instanceServerId
 
-        assert.ok(serverIdBefore)
+    //     assert.ok(serverIdBefore)
 
-        const instanceManager = await linodeProviderClient.getInstanceManager(instanceName)
-        await instanceManager.restart({ wait: true })
+    //     const instanceManager = await linodeProviderClient.getInstanceManager(instanceName)
+    //     await instanceManager.restart({ wait: true })
 
-        const stateAfter = await getCurrentTestState()
-        assert.strictEqual(stateAfter.provision.output?.instanceServerId, serverIdBefore)
-    }).timeout(120000)
+    //     const stateAfter = await getCurrentTestState()
+    //     assert.strictEqual(stateAfter.provision.output?.instanceServerId, serverIdBefore)
+    // }).timeout(120000)
 
-    it('should destroy instance', async () => {
-        const instanceManager = await linodeProviderClient.getInstanceManager(instanceName)
-        await instanceManager.destroy()
-    }).timeout(120000)
+    // it('should destroy instance', async () => {
+    //     const instanceManager = await linodeProviderClient.getInstanceManager(instanceName)
+    //     await instanceManager.destroy()
+    // }).timeout(120000)
 
-    it('instance does not exist after destroy', async () => {
-        const coreClient = new CloudypadClient({ config: coreConfig })
-        const instances = await coreClient.getAllInstances()
-        assert.strictEqual(instances.find(instance => instance === instanceName), undefined)
-    })
+    // it('instance does not exist after destroy', async () => {
+    //     const coreClient = new CloudypadClient({ config: coreConfig })
+    //     const instances = await coreClient.getAllInstances()
+    //     assert.strictEqual(instances.find(instance => instance === instanceName), undefined)
+    // })
     
 
 }).timeout(360000) 

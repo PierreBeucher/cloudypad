@@ -113,6 +113,7 @@ export abstract class AbstractInputPrompter<
             passwordBase64: await this.promptSunshinePasswordBase64(partialInput.configuration?.sunshine?.passwordBase64),
             imageRegistry: partialInput.configuration?.sunshine?.imageRegistry,
             imageTag: partialInput.configuration?.sunshine?.imageTag,
+            maxBitrateKbps: partialInput.configuration?.sunshine?.maxBitrateKbps,
         } : null
 
         let wolfConfig = streamingServer.wolfEnabled ? {
@@ -200,6 +201,7 @@ export abstract class AbstractInputPrompter<
                     passwordBase64: cliArgs.sunshinePassword ? Buffer.from(cliArgs.sunshinePassword).toString('base64') : undefined,
                     imageRegistry: cliArgs.sunshineImageRegistry,
                     imageTag: cliArgs.sunshineImageTag,
+                    maxBitrateKbps: cliArgs.sunshineMaxBitrateKbps,
                 } : undefined,
                 wolf: cliArgs.streamingServer == STREAMING_SERVER_WOLF ? {
                     enable: true,

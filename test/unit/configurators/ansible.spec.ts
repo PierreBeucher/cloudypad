@@ -13,7 +13,13 @@ describe('Ansible configurator', function () {
             instanceName: "test-ansible-configurator-instance",
             provider: "test-ansible-configurator-provider",
             provisionInput: DEFAULT_COMMON_INPUT.provision,
-            configurationInput: DEFAULT_COMMON_INPUT.configuration,
+            configurationInput: {
+                ...DEFAULT_COMMON_INPUT.configuration,
+                sunshine: {
+                    ...DEFAULT_COMMON_INPUT.configuration.sunshine!,
+                    maxBitrateKbps: 5000,
+                }
+            },
             provisionOutput: {
                 host: "test-ansible-configurator-host",
                 publicIPv4: "127.0.0.1",
@@ -47,6 +53,8 @@ describe('Ansible configurator', function () {
                         sunshine_keyboard_variant: DEFAULT_COMMON_INPUT.configuration.keyboard?.variant,
                         sunshine_keyboard_model: DEFAULT_COMMON_INPUT.configuration.keyboard?.model,
                         sunshine_keyboard_options: DEFAULT_COMMON_INPUT.configuration.keyboard?.options,
+
+                        sunshine_max_bitrate_kbps: 5000,
 
                         sunshine_locale: DEFAULT_COMMON_INPUT.configuration.locale,
                         
