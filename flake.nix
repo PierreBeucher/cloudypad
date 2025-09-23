@@ -65,8 +65,11 @@
             ];
             
             shellHook = ''
-              export PULUMI_BACKEND_URL="file://$HOME/.cloudypad/pulumi-backend"
+              # Set Pulumi backend and Cloudy Pad to integration test
+              export PULUMI_BACKEND_URL="file://$PWD/test/integ/.data-root-dir/pulumi"
               export PULUMI_CONFIG_PASSPHRASE=""
+
+              export CLOUDYPAD_HOME="$PWD/test/integ/.data-root-dir"
 
               export PAPERSPACE_API_KEY=$(cat $PWD/tmp/paperspace_api_key)
 
