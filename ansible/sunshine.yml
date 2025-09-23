@@ -24,6 +24,7 @@
 
   roles:
     - role: roles/prepare-install
+      become: true
       tags: [ prepare-install ]
 
     - role: roles/data-disk

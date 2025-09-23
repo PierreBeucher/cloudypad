@@ -2,7 +2,6 @@
 # causing subsequent failure on apt cache update
 # removing it here to avoid issues
 - name: Paperspace - remove unwanted apt sources (if any)
-  become: true
   file:
     state: absent
     path: "{{ item }}"
