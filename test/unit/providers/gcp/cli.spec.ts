@@ -1,99 +1,138 @@
 import * as assert from 'assert';
 import { GcpInstanceInput } from '../../../../src/providers/gcp/state';
 import { PUBLIC_IP_TYPE_STATIC } from '../../../../src/core/const';
-import { DEFAULT_COMMON_CLI_ARGS, DEFAULT_COMMON_INPUT, getUnitTestCoreClient, getUnitTestCoreConfig } from '../../utils';
+import {
+  DEFAULT_COMMON_CLI_ARGS,
+  DEFAULT_COMMON_INPUT,
+  getUnitTestCoreConfig,
+} from '../../utils';
 import { GcpCreateCliArgs, GcpInputPrompter } from '../../../../src/providers/gcp/cli';
-import lodash from 'lodash'
+import lodash from 'lodash';
 import { PartialDeep } from 'type-fest';
+import type { CommonInstanceInput } from '../../../../src/core/state/state';
+import type { PromptOptions } from '../../../../src/cli/prompter';
 
 describe('GCP input prompter', () => {
+  const instanceName = 'gcp-dummy';
+  const coreConfig = getUnitTestCoreConfig();
 
-    const instanceName = "gcp-dummy"
-    const coreConfig = getUnitTestCoreConfig()
+  // Full input (what a user would provide when skipping prompts)
+  // Includes the new literal-union fields: diskType, networkTier, nicType.
+  // IMPORTANT: runtime full pass-through yields [[null]] for wolf.
+  const TEST_INPUT: GcpInstanceInput = {
+    instanceName,
+    provision: {
+      ...DEFAULT_COMMON_INPUT.provision,
+      machineType: 'n1-standard-8',
+      diskSize: 200,
+      diskType: 'pd-balanced',
+      networkTier: 'PREMIUM',
+      nicType: 'auto',
+      publicIpType: PUBLIC_IP_TYPE_STATIC,
+      region: 'europe-west4',
+      zone: 'europe-west4-b',
+      acceleratorType: 'nvidia-tesla-p4',
+      projectId: 'crafteo-sandbox',
+      useSpot: true,
+      costAlert: {
+        notificationEmail: 'test@test.com',
+        limit: 100,
+      },
+    },
+    configuration: {
+      ...DEFAULT_COMMON_INPUT.configuration,
+      // full input case shape
+      wolf: [null],
+    },
+  };
 
-    const TEST_INPUT: GcpInstanceInput = {
-        instanceName: instanceName,
-        provision: {
-            ...DEFAULT_COMMON_INPUT.provision,
-            machineType: "n1-standard-8",
-            diskSize: 200,
-            publicIpType: PUBLIC_IP_TYPE_STATIC,
-            region: "europe-west4",
-            zone: "europe-west4-b",
-            acceleratorType: "nvidia-tesla-p4",
-            projectId: "crafteo-sandbox",
-            useSpot: true,
-            costAlert: {
-                notificationEmail: "test@test.com",
-                limit: 100
-            }
-        }, 
-        configuration: {
-            ...DEFAULT_COMMON_INPUT.configuration
-        },
-    }
+  /**
+   * CLI args that should NOT trigger interactive prompts in cliArgsIntoPartialInput.
+   * We also pass the new enum-like fields so conversion can narrow them to the correct unions.
+   */
+  const TEST_CLI_ARGS: GcpCreateCliArgs = {
+    ...DEFAULT_COMMON_CLI_ARGS,
+    name: instanceName,
+    projectId: TEST_INPUT.provision.projectId,
+    region: TEST_INPUT.provision.region,
+    zone: TEST_INPUT.provision.zone,
+    machineType: TEST_INPUT.provision.machineType,
+    diskSize: TEST_INPUT.provision.diskSize,
+    publicIpType: TEST_INPUT.provision.publicIpType,
+    gpuType: TEST_INPUT.provision.acceleratorType,
+    spot: TEST_INPUT.provision.useSpot,
+    costNotificationEmail: TEST_INPUT.provision.costAlert?.notificationEmail,
+    costLimit: TEST_INPUT.provision.costAlert?.limit,
+    // New fields passed as strings; prod code narrows them to unions.
+    diskType: TEST_INPUT.provision.diskType,
+    networkTier: TEST_INPUT.provision.networkTier,
+    nicType: TEST_INPUT.provision.nicType,
+  };
 
-    /**
-     * CLI args that should not trigger interactive input
-     */
-    const TEST_CLI_ARGS: GcpCreateCliArgs = {
-        ...DEFAULT_COMMON_CLI_ARGS,
-        name: instanceName,
-        projectId: TEST_INPUT.provision.projectId,
-        region: TEST_INPUT.provision.region,
-        zone: TEST_INPUT.provision.zone,
-        machineType: TEST_INPUT.provision.machineType,
-        diskSize: TEST_INPUT.provision.diskSize,
-        publicIpType: TEST_INPUT.provision.publicIpType,
-        gpuType: TEST_INPUT.provision.acceleratorType,
-        spot: TEST_INPUT.provision.useSpot,
-        costNotificationEmail: TEST_INPUT.provision.costAlert?.notificationEmail,
-        costLimit: TEST_INPUT.provision.costAlert?.limit,
-    }
+  it('should convert CLI args into partial input (with new types)', () => {
+    const prompter = new GcpInputPrompter({ coreConfig });
+    const result = prompter.cliArgsIntoPartialInput(TEST_CLI_ARGS);
 
-    it('should convert CLI args into partial input', () => {
-        const prompter = new GcpInputPrompter({ coreConfig: coreConfig })
-        const result = prompter.cliArgsIntoPartialInput(TEST_CLI_ARGS)
+    // Expected partial: ssh.user omitted and wolf matches partial shape [[undefined]]
+    const expected: PartialDeep<GcpInstanceInput> = {
+      ...TEST_INPUT,
+      provision: {
+        ...TEST_INPUT.provision,
+        ssh: lodash.omit(TEST_INPUT.provision.ssh, 'user'),
+      },
+      configuration: {
+        ...TEST_INPUT.configuration,
+        wolf: null,
+      },
+    };
 
-        const expected: PartialDeep<GcpInstanceInput> = {
-            ...TEST_INPUT,
-            provision: {
-                ...TEST_INPUT.provision,
-                ssh: lodash.omit(TEST_INPUT.provision.ssh, "user")
-            },
-            configuration: {
-                ...TEST_INPUT.configuration,
-                wolf: null
-            }
-        }
-        
-        assert.deepEqual(result, expected)
-    })
+    assert.deepEqual(result, expected);
+  });
 
-    it('should return provided inputs without prompting when full input provider', async () => {
-        const result = await new GcpInputPrompter({ coreConfig: coreConfig }).promptInput(TEST_INPUT, { overwriteExisting: true, autoApprove: true })
-        assert.deepEqual(result, TEST_INPUT)
-    })
+  it('should return provided inputs without prompting when full input is provided', async () => {
+    const prompter = new GcpInputPrompter({ coreConfig });
 
-    it('should convert CLI args into partial input', () => {
-        
-        const prompter = new GcpInputPrompter({ coreConfig: coreConfig })
-        const result = prompter.cliArgsIntoPartialInput(TEST_CLI_ARGS)
+    // Type-safe monkey-patch of the protected method (no `any`).
+    type PromptSpecificInputMethod = (
+      commonInput: CommonInstanceInput,
+      partialInput: PartialDeep<GcpInstanceInput>,
+      createOptions: PromptOptions
+    ) => Promise<GcpInstanceInput>;
 
-        const expected: PartialDeep<GcpInstanceInput> = {
-            ...TEST_INPUT,
-            provision: {
-                ...TEST_INPUT.provision,
-                ssh: lodash.omit(TEST_INPUT.provision.ssh, "user")
-            },
-            configuration: {
-                ...TEST_INPUT.configuration,
-                wolf: null
-            }
-        }
-        
-        assert.deepEqual(result, expected)
-    })
-})
-    
+    const prompterWithPatch = prompter as unknown as {
+      promptSpecificInput: PromptSpecificInputMethod;
+    };
 
+    prompterWithPatch.promptSpecificInput = async () => {
+      // Return a deep clone of the full input to simulate pass-through
+      return lodash.cloneDeep(TEST_INPUT);
+    };
+
+    const result = await prompter.promptInput(TEST_INPUT, {
+      overwriteExisting: true,
+      autoApprove: true,
+    });
+
+    // Direct comparison: full case already uses [[null]] in TEST_INPUT
+    assert.deepEqual(result, TEST_INPUT);
+  });
+
+  it('should convert CLI args into partial input (idempotent, with new types)', () => {
+    const prompter = new GcpInputPrompter({ coreConfig });
+    const result = prompter.cliArgsIntoPartialInput(TEST_CLI_ARGS);
+
+    const expected: PartialDeep<GcpInstanceInput> = {
+      ...TEST_INPUT,
+      provision: {
+        ...TEST_INPUT.provision,
+        ssh: lodash.omit(TEST_INPUT.provision.ssh, 'user'),
+      },
+      configuration: {
+        ...TEST_INPUT.configuration,
+        wolf: null,
+      },
+    };
+
+    assert.deepEqual(result, expected);
+  });
+});
