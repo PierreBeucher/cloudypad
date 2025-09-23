@@ -72,6 +72,7 @@
               export CLOUDYPAD_HOME="$PWD/test/integ/.data-root-dir"
 
               export PAPERSPACE_API_KEY=$(cat $PWD/tmp/paperspace_api_key)
+              export LINODE_TOKEN=$(cat $PWD/tmp/linode_token)
 
               export CLOUDYPAD_KEYBOARD_LAYOUT_AUTODETECT_SKIP_WAYLAND_WARNING=true
             '';
