@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.39.0](https://github.com/PierreBeucher/cloudypad/compare/v0.38.1...v0.39.0) (2025-09-23)
+
+
+### Features
+
+* CLI args Sunshine max bitrate ([747181f](https://github.com/PierreBeucher/cloudypad/commit/747181f5168e584fd227ef91f7c5796487745d4e))
+* limit Sunshine max bitrate on server side ([04b12dc](https://github.com/PierreBeucher/cloudypad/commit/04b12dcb572fd3809cbf72922f29b9e8f80c38d5))
+
+
+### Bug Fixes
+
+* Epic / GOG games launch failure on Ubuntu 24 with AppArmor bwrap profile ([d72101b](https://github.com/PierreBeucher/cloudypad/commit/d72101b7f050b32ff8826ff37dacd8f9f2c62bc6))
+
 ## [0.38.1](https://github.com/PierreBeucher/cloudypad/compare/v0.38.0...v0.38.1) (2025-09-09)
 
 
