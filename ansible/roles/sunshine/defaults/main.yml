@@ -49,3 +49,6 @@ sunshine_locale: en_US.UTF-8
 # Use "\n" for multiple lines
 # eg. "capture = x11\nfoo = bar"
 sunshine_additional_config: ""
+
+# Maximum bitrate in Kbps for Sunshine streaming (max_bitrate config)
+sunshine_max_bitrate_kbps: "0"
