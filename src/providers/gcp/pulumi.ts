@@ -296,6 +296,9 @@ export interface PulumiStackConfigGcp {
     useSpot: boolean
     costAlert?: CostAlertOptions
     firewallAllowPorts: SimplePortDefinition[]
+    diskType?: "pd-standard" | "pd-balanced" | "pd-ssd"
+    networkTier?: "STANDARD" | "PREMIUM"
+    nicType?: "GVNIC" | "VIRTIO_NET" | "auto"
 }
 
 export interface GcpPulumiOutput {

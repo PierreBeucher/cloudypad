@@ -75,12 +75,11 @@ export class GcpClient {
         try {
             const [diskTypes] = await this.diskTypes.list({ project: this.projectId, zone })
             this.logger.debug(`List disk types response: ${JSON.stringify(diskTypes)}`)
-            // Only return disk type names
             return (diskTypes || [])
                 .map(dt => dt.name?.trim())
-            throw new Error(`Failed to list Google Cloud disk types in zone ${zone} for project ${this.projectId}`, { cause: error })
-        } catch (error) {
-            throw new Error(`Failed to list Google Cloud disk types in zone ${zone}`, { cause: error })
+                .filter((s): s is string => !!s)
+        } catch (e) {
+            throw new Error(`Failed to list Google Cloud disk types in zone ${zone} for project ${this.projectId}`, { cause: e })
         }
     }
 
