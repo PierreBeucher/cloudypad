@@ -1,4 +1,5 @@
 import { z } from "zod"
+import { DISK_TYPES, NETWORK_TIERS, NIC_TYPES } from "./const"
 import { CommonProvisionOutputV1Schema, CommonProvisionInputV1Schema, InstanceStateV1Schema, InstanceInputs, CostAlertSchema } from "../../core/state/state"
 import { CLOUDYPAD_PROVIDER_GCP, PUBLIC_IP_TYPE_DYNAMIC, PUBLIC_IP_TYPE_STATIC } from "../../core/const"
 import { GenericStateParser } from "../../core/state/parser"
@@ -12,10 +13,10 @@ const GcpProvisionInputV1Schema = CommonProvisionInputV1Schema.extend({
     machineType: z.string().describe("GCP Machine Type"),
     acceleratorType: z.string().describe("GCP Accelerator Type"),
     diskSize: z.number().describe("Disk size in GB"),
-    diskType: z.enum(["pd-standard", "pd-balanced", "pd-ssd"]).default("pd-balanced").describe("GCP Disk Type (pd-standard, pd-balanced, pd-ssd)"),
+    diskType: z.enum([...DISK_TYPES]).default("pd-balanced").describe(`GCP Disk Type (${DISK_TYPES.join(", ")})`),
     publicIpType: z.enum([PUBLIC_IP_TYPE_STATIC, PUBLIC_IP_TYPE_DYNAMIC]).describe("Type of public IP address"),
-    networkTier: z.enum(["STANDARD", "PREMIUM"]).default("STANDARD").describe("GCP Network Tier (STANDARD, PREMIUM)"),
-    nicType: z.enum(["GVNIC", "VIRTIO_NET", "auto"]).default("auto").describe("GCP NIC Type (GVNIC, VIRTIO_NET, auto)"),
+    networkTier: z.enum([...NETWORK_TIERS]).default("STANDARD").describe(`GCP Network Tier (${NETWORK_TIERS.join(", ")})`),
+    nicType: z.enum([...NIC_TYPES]).default("auto").describe(`GCP NIC Type (${NIC_TYPES.join(", ")})`),
     region: z.string().describe("GCP region"),
     zone: z.string().describe("GCP zone"),
     useSpot: z.boolean().describe("Whether to use spot instances"),
