@@ -1,14 +1,6 @@
 // Machine families to show in the machine type prompt (gaming-oriented)
 export const MACHINE_TYPE_FAMILIES_GAMING = ["n1", "g2"] as const;
 
-/** Returns true if the machine type matches gaming criteria (family, CPU, RAM). */
-export function isGamingMachineType(t: { name?: string | null, guestCpus?: number | null, memoryMb?: number | null }): boolean {
-  const isGamingType = t.name && (MACHINE_TYPE_FAMILIES_GAMING as readonly string[]).some(fam => t.name!.startsWith(fam));
-  const enoughCpu = t.guestCpus != null && t.guestCpus >= 2 && t.guestCpus <= 16;
-  const enoughRam = t.memoryMb != null && t.memoryMb >= 1000 && t.memoryMb <= 100000;
-  return Boolean(isGamingType && enoughCpu && enoughRam);
-}
-
 // User-facing descriptions for GCP machine type families
 export const MACHINE_TYPE_FAMILY_DESCRIPTIONS: Record<string, string> = {
   n1: 'N1: General purpose, good price/performance for most workloads (supports T4, P4, P100, V100 GPUs)',
