@@ -1,3 +1,6 @@
+import { MACHINE_GPU_COMPAT, DISK_TYPE_DESCRIPTIONS, NETWORK_TIER_DESCRIPTIONS, NIC_TYPE_DESCRIPTIONS, DEFAULT_DISK_TYPE, DEFAULT_NETWORK_TIER, DEFAULT_NIC_TYPE, MACHINE_TYPE_FAMILY_DESCRIPTIONS, MACHINE_TYPE_FAMILIES_GAMING } from "./const";
+import { isGamingMachineType } from "./filtering";
+import { GPU_DESCRIPTIONS } from "./const";
 import { GcpInstanceInput, GcpInstanceStateV1, GcpProvisionInputV1, GcpProvisionInputV1Schema } from "./state"
 import { CommonConfigurationInputV1, CommonInstanceInput } from "../../core/state/state"
 import { input, select } from '@inquirer/prompts';
@@ -11,89 +14,7 @@ import { CLI_OPTION_AUTO_STOP_TIMEOUT, CLI_OPTION_AUTO_STOP_ENABLE, CLI_OPTION_C
 import { RUN_COMMAND_CREATE, RUN_COMMAND_UPDATE } from "../../tools/analytics/events";
 import { InteractiveInstanceUpdater } from "../../cli/updater";
 import { GcpProviderClient } from "./provider";
-import { z } from "zod";
-
-// ---------- Typed helpers (no .unwrap(), no any) ----------
-
-/**
- * Type guard: returns true if `x` is a ZodEnum<[string, ...string[]]>.
- * Using `instanceof z.ZodEnum` avoids any/unknown and lets TS narrow types safely.
- */
-function isZodEnum(x: unknown): x is z.ZodEnum<[string, ...string[]]> {
-  return x instanceof z.ZodEnum;
-}
-
-/**
- * Type guard: returns true if `x` is a ZodDefault wrapping a ZodEnum.
- * Some schemas are declared as z.enum([...]).default(...), i.e. ZodDefault<ZodEnum>.
- * We detect that case and later read the inner enum via `_def.innerType`.
- * Note: we purposely use ZodTypeAny (not unknown) to satisfy TS generic constraints.
- */
-function isZodDefaultEnum(x: unknown): x is z.ZodDefault<z.ZodEnum<[string, ...string[]]>> {
-  return x instanceof z.ZodDefault
-    && ((x as z.ZodDefault<z.ZodTypeAny>)._def?.innerType instanceof z.ZodEnum);
-}
-
-/**
- * Return the enum literal values from either:
- *  - a plain ZodEnum, or
- *  - a ZodDefault<ZodEnum> (by reading its inner enum).
- *
- * We avoid `.unwrap()` because some Zod versions don’t expose it on ZodDefault.
- * This function gives us a fully-typed readonly tuple of allowed string literals.
- */
-function enumOptions<T extends z.ZodEnum<[string, ...string[]]>>(
-  schema: T | z.ZodDefault<T>
-): Readonly<T["_def"]["values"]> {
-  if (isZodEnum(schema)) {
-    return schema.options as Readonly<T["_def"]["values"]>;
-  }
-  if (isZodDefaultEnum(schema)) {
-    // Access the inner enum safely and return its options (literal tuple)
-    const inner = (schema as z.ZodDefault<T>)._def.innerType as T;
-    return inner.options as Readonly<T["_def"]["values"]>;
-  }
-  // Defensive: enforce correct schema shape at call sites
-  throw new Error("Field is not a ZodEnum or ZodDefault<ZodEnum>.");
-}
-
-/**
- * Narrow a loose `string | undefined` to the exact union of literals defined by the schema.
- * - If `value` is missing or not part of the enum, return `undefined`.
- * - If it matches one of the literals, return it as the precise union type (e.g. "pd-ssd").
- *
- * This removes TS2322 errors when assigning CLI strings to literal-union fields.
- */
-function toEnumFromSchema<T extends z.ZodEnum<[string, ...string[]]>>(
-  schema: T | z.ZodDefault<T>,
-  value?: string
-): T["_def"]["values"][number] | undefined {
-  if (!value) return undefined;
-  const opts = enumOptions(schema) as readonly string[];
-  return opts.includes(value) ? (value as T["_def"]["values"][number]) : undefined;
-}
-
-/**
- * Strict variant of `toEnumFromSchema`:
- * - Returns a valid literal (never undefined), or
- * - Throws an error listing allowed values.
- *
- * Use this when the value MUST be present and valid (e.g., after interactive prompts
- * that always provide a default), to satisfy schemas where the field is non-optional.
- */
-function toEnumFromSchemaOrThrow<T extends z.ZodEnum<[string, ...string[]]>>(
-  schema: T | z.ZodDefault<T>,
-  value: string
-): T["_def"]["values"][number] {
-  const v = toEnumFromSchema(schema, value);
-  if (v === undefined) {
-    const opts = Array.from(enumOptions(schema)).join(", ");
-    throw new Error(`Invalid value "${value}". Allowed: ${opts}`);
-  }
-  return v;
-}
-
-
+import { enumOptions, toEnumFromSchema, toEnumFromSchemaOrThrow } from "../../core/zod-helpers";
 
 export interface GcpCreateCliArgs extends CreateCliArgs {
   projectId?: string
@@ -148,7 +69,7 @@ export class GcpInputPrompter extends AbstractInputPrompter<GcpCreateCliArgs, Gc
     const region = await this.region(client, partialInput.provision?.region)
     const zone = await this.zone(client, region, partialInput.provision?.zone)
     const machineType = await this.machineType(client, zone, partialInput.provision?.machineType)
-    const acceleratorType = await this.acceleratorType(client, zone, partialInput.provision?.acceleratorType)
+    const acceleratorType = await this.acceleratorType(client, zone, partialInput.provision?.acceleratorType, machineType)
     const useSpot = await this.useSpotInstance(partialInput.provision?.useSpot)
     const diskSize = await this.diskSize(partialInput.provision?.diskSize)
     const diskTypeRaw = await this.diskType(partialInput.provision?.diskType, client, zone)
@@ -191,12 +112,6 @@ export class GcpInputPrompter extends AbstractInputPrompter<GcpCreateCliArgs, Gc
     if (!client || !zone) throw new Error("diskType prompt requires GcpClient and zone.");
     const diskTypeEnum = enumOptions(GcpProvisionInputV1Schema.shape.diskType);
 
-    const DiskTypeDescriptions: Record<string, string> = {
-      'pd-standard': 'Standard (cheapest, slowest)',
-      'pd-balanced': 'Balanced (good compromise)',
-      'pd-ssd': 'SSD (best performance, highest cost)',
-    };
-
     let availableDiskTypes: string[] = [];
     try {
       availableDiskTypes = await client.listDiskTypes(zone);
@@ -209,7 +124,7 @@ export class GcpInputPrompter extends AbstractInputPrompter<GcpCreateCliArgs, Gc
     const filtered = availableDiskTypes.filter((v: string) => allowed.has(v));
 
     const choices = filtered.map((v: string) => {
-      const desc = DiskTypeDescriptions[v] || v;
+      const desc = DISK_TYPE_DESCRIPTIONS[v] || v;
       return { name: `${desc} [${v}]`, value: v };
     });
     if (choices.length === 0) {
@@ -219,7 +134,7 @@ export class GcpInputPrompter extends AbstractInputPrompter<GcpCreateCliArgs, Gc
     return await select({
       message: 'Select disk type (affects performance & price):',
       choices,
-      default: filtered.includes('pd-balanced') ? 'pd-balanced' : choices[0].value,
+      default: filtered.includes(DEFAULT_DISK_TYPE) ? DEFAULT_DISK_TYPE : choices[0].value,
     });
   }
 
@@ -227,18 +142,14 @@ export class GcpInputPrompter extends AbstractInputPrompter<GcpCreateCliArgs, Gc
   private async networkTier(networkTier?: string): Promise<string> {
     if (networkTier) return networkTier;
     const networkTierEnum = enumOptions(GcpProvisionInputV1Schema.shape.networkTier);
-    const NetworkTierDescriptions: Record<string, string> = {
-      'STANDARD': 'Standard (higher latency, lower cost, includes 200 GiB/month free)',
-      'PREMIUM': 'Premium (lower latency, more expensive)',
-    };
     const choices = Array.from(networkTierEnum).map((v: string) => {
-      const desc = NetworkTierDescriptions[v] || v;
+      const desc = NETWORK_TIER_DESCRIPTIONS[v] || v;
       return { name: `${desc} [${v}]`, value: v };
     });
     return await select({
       message: 'Select network tier (applies to outgoing internet traffic - affects latency & price):',
       choices,
-      default: 'STANDARD',
+      default: DEFAULT_NETWORK_TIER,
     });
   }
 
@@ -246,36 +157,33 @@ export class GcpInputPrompter extends AbstractInputPrompter<GcpCreateCliArgs, Gc
   private async nicType(nicType?: string): Promise<string> {
     if (nicType) return nicType;
     const nicTypeEnum = enumOptions(GcpProvisionInputV1Schema.shape.nicType);
-    const NicTypeDescriptions: Record<string, string> = {
-      'auto': 'Auto (let GCP choose, recommended)',
-      'GVNIC': 'GVNIC (high throughput / low latency, supported on some VMs)',
-      'VIRTIO_NET': 'Virtio Net (legacy, broad compatibility)',
-    };
     const choices = Array.from(nicTypeEnum).map((v: string) => {
-      const desc = NicTypeDescriptions[v] || v;
+      const desc = NIC_TYPE_DESCRIPTIONS[v] || v;
       return { name: `${desc} [${v}]`, value: v };
     });
     return await select({
       message: 'Select NIC type (affects network performance):',
       choices,
-      default: 'auto',
+      default: DEFAULT_NIC_TYPE,
     });
   }
 
   private async machineType(client: GcpClient, zone: string, machineType?: string): Promise<string> {
     if (machineType) return machineType;
 
-    const machineTypes = await client.listMachineTypes(zone)
+    const machineTypes = await client.listMachineTypes(zone);
+    const acceleratorTypes = await client.listAcceleratorTypes(zone);
 
-    // Include n1 and g2, and filter for specs suitable for gaming
+    // Build a set of available GPU names in this zone
+    const availableGpuNames = new Set(acceleratorTypes.map(a => a.name).filter(Boolean));
+
+    // Filter machine types: must be gaming, and at least one compatible GPU is available in this zone
     const gamingMachineTypes = machineTypes
-      .filter(t => t.name)
+      .filter(t => t.name && isGamingMachineType(t))
       .filter(t => {
-        const isGamingType = t.name && (t.name.startsWith("n1") || t.name.startsWith("g2"));
-        // Gaming criteria: at least 4 CPUs, 15+ GiB RAM, max 128 CPUs, max 512 GiB RAM
-        const enoughCpu = t.guestCpus && t.guestCpus >= 4 && t.guestCpus <= 128;
-        const enoughRam = t.memoryMb && t.memoryMb >= 15000 && t.memoryMb <= 524288;
-        return isGamingType && enoughCpu && enoughRam;
+        const family = t.name!.split('-')[0];
+        const compatGpus = MACHINE_GPU_COMPAT[family] || [];
+        return compatGpus.some(gpu => availableGpuNames.has(gpu));
       })
       .sort((a, b) => {
         if (a.guestCpus === b.guestCpus) {
@@ -283,13 +191,18 @@ export class GcpInputPrompter extends AbstractInputPrompter<GcpCreateCliArgs, Gc
         }
         return a.guestCpus! - b.guestCpus!;
       })
-      .map(t => ({
-        name: `${t.name} (CPUs: ${t.guestCpus}, RAM: ${Math.round(t.memoryMb! / 100) / 10} GiB)`,
-        value: t.name!,
-      }));
+      .map(t => {
+        const family = t.name!.split('-')[0];
+        const familyDesc = MACHINE_TYPE_FAMILY_DESCRIPTIONS[family] ? ` | ${MACHINE_TYPE_FAMILY_DESCRIPTIONS[family]}` : '';
+        return {
+          name: `${t.name} (CPUs: ${t.guestCpus}, RAM: ${Math.round(t.memoryMb! / 100) / 10} GiB)${familyDesc}`,
+          value: t.name!,
+        };
+      });
 
     if (gamingMachineTypes.length === 0) {
-      this.logger.warn("No suitable N1 or G2 machine type available in selected zone. You can still choose your own instance type but setup may not behave as expected.")
+      const fams = (MACHINE_TYPE_FAMILIES_GAMING as readonly string[]).join(', ');
+      this.logger.warn(`No suitable machine type with available GPU in selected zone for families: ${fams}. You can still choose your own instance type but setup may not behave as expected.`)
     }
 
     gamingMachineTypes.push({ name: "Let me type a machine type", value: "_" })
@@ -320,27 +233,127 @@ export class GcpInputPrompter extends AbstractInputPrompter<GcpCreateCliArgs, Gc
   private async region(client: GcpClient, region?: string): Promise<string> {
     if (region) return region;
 
-    const regions = await client.listRegions()
+    // Ask user for continent
+    const continentChoices = [
+      { name: 'Europe', value: 'europe-' },
+      { name: 'United States / Canada', value: 'us-' },
+      { name: 'Asia / Pacific', value: 'asia-' },
+      { name: 'South America', value: 'southamerica-' },
+      { name: 'Middle East', value: 'me-' },
+      { name: 'Africa', value: 'africa-' },
+    ];
+    const userContinentPrefix = await select({
+      message: 'Select your continent for the closest regions:',
+      choices: continentChoices,
+      default: 'europe-',
+    });
+
+    // Only fetch regions matching the selected continent prefix
+    const regions = await client.listRegions(userContinentPrefix);
+
+    // For each region, fetch zones in parallel
+    type RegionZone = { region: typeof regions[number], zones: string[] };
+    const regionZoneMap = (await Promise.all(
+      regions.map(async r => {
+        if (!r.name || !r.id) return null;
+        try {
+          const zones = await client.listRegionZones(r.name);
+          return { region: r, zones };
+        } catch {
+          return null;
+        }
+      })
+    )) as (RegionZone | null)[];
+
+    // For each region, test all zones in parallel and stop at the first valid (gaming+GPU) zone using Promise.any
+    const regionChecks = await Promise.all(
+      regionZoneMap
+        .filter((item): item is RegionZone => !!item)
+        .map(async ({ region: r, zones }) => {
+          try {
+            await Promise.any(
+              zones.map(async (zone) => {
+                const [machineTypes, acceleratorTypes] = await Promise.all([
+                  client.listMachineTypes(zone),
+                  client.listAcceleratorTypes(zone)
+                ]);
+                const availableGpuNames = new Set(acceleratorTypes.map(a => a.name).filter(Boolean));
+                const hasGamingWithGpu = machineTypes.some(t => {
+                  if (!t.name || !isGamingMachineType(t)) return false;
+                  const family = t.name.split('-')[0];
+                  const compatGpus = MACHINE_GPU_COMPAT[family] || [];
+                  return compatGpus.some(gpu => availableGpuNames.has(gpu));
+                });
+                if (hasGamingWithGpu) {
+                  // Found a valid zone, resolve Promise.any
+                  return true;
+                }
+                // Otherwise, throw to continue Promise.any
+                throw new Error('No valid machine+GPU in this zone');
+              })
+            );
+            // If we get here, at least one zone is valid
+            return { name: `${r.name} (${r.description})`, value: r.name };
+          } catch {
+            // No zone in this region has a gaming machine with compatible GPU
+            return null;
+          }
+        })
+    );
+
+    const regionChoices = regionChecks.filter((item): item is { name: string, value: string } => !!item);
+
+    if (regionChoices.length === 0) {
+      const fams = (MACHINE_TYPE_FAMILIES_GAMING as readonly string[]).join(', ');
+      throw new Error(`No region found with available machine types: ${fams}.`);
+    }
     const selected = await select({
-      message: 'Select region to use:',
-      choices: regions
-        .filter(r => r.name && r.id)
-        .map(r => ({ name: `${r.name!} (${r.description})`, value: r.name! }))
-    })
-    return selected.toString()
+      message: `Select region to use (only regions with gaming machine types are shown: ${(MACHINE_TYPE_FAMILIES_GAMING as readonly string[]).join(', ')})`,
+      choices: regionChoices
+    });
+    return selected.toString();
   }
 
   private async zone(client: GcpClient, region: string, zone?: string): Promise<string> {
     if (zone) return zone;
 
-    const zones = await client.listRegionZones(region)
-    if (zones.length == 0) throw new Error(`No zones found in region ${region}`)
+    const zones = await client.listRegionZones(region);
+    if (zones.length === 0) throw new Error(`No zones found in region ${region}`);
+
+    // Test all zones in parallel, add each valid (gaming+GPU) zone to the list
+    const zoneChecks = await Promise.all(zones.map(async z => {
+      try {
+        const [machineTypes, acceleratorTypes] = await Promise.all([
+          client.listMachineTypes(z),
+          client.listAcceleratorTypes(z)
+        ]);
+        const availableGpuNames = new Set(acceleratorTypes.map(a => a.name).filter(Boolean));
+        const hasGamingWithGpu = machineTypes.some(t => {
+          if (!t.name || !isGamingMachineType(t)) return false;
+          const family = t.name.split('-')[0];
+          const compatGpus = MACHINE_GPU_COMPAT[family] || [];
+          return compatGpus.some(gpu => availableGpuNames.has(gpu));
+        });
+        if (hasGamingWithGpu) {
+          return z;
+        }
+      } catch (e) {
+        this.logger.warn(`[zone filter] Failed to list machine types or accelerators for zone ${z}: ${e}`);
+      }
+      return null;
+    }));
+    const gamingZones = zoneChecks.filter((z): z is string => !!z);
+
+    if (gamingZones.length === 0) {
+      const fams = (MACHINE_TYPE_FAMILIES_GAMING as readonly string[]).join(', ');
+      throw new Error(`No zone found in region ${region} with available machine types: ${fams}.`);
+    }
 
     return await select({
-      message: 'Select zone to use:',
-      choices: zones.map(z => ({ name: z, value: z })),
-      default: zones[0]
-    })
+      message: `Select zone to use (zones with gaming machine types: ${(MACHINE_TYPE_FAMILIES_GAMING as readonly string[]).join(', ')})`,
+      choices: gamingZones.map(z => ({ name: z, value: z })),
+      default: gamingZones[0]
+    });
   }
 
   private async project(projectId?: string): Promise<string> {
@@ -355,31 +368,26 @@ export class GcpInputPrompter extends AbstractInputPrompter<GcpCreateCliArgs, Gc
     })
   }
 
-  private async acceleratorType(client: GcpClient, zone: string, acceleratorType?: string): Promise<string> {
+  private async acceleratorType(client: GcpClient, zone: string, acceleratorType?: string, machineType?: string): Promise<string> {
     if (acceleratorType) return acceleratorType;
 
     const acceleratorTypes = await client.listAcceleratorTypes(zone)
 
-    const GpuDescriptions: Record<string, { label: string, type: string }> = {
-      'nvidia-tesla-t4': { label: 'NVIDIA T4 (great for cloud gaming, 16GB VRAM)', type: 'T4' },
-      'nvidia-l4': { label: 'NVIDIA L4 (new generation, 24GB VRAM, very performant for streaming)', type: 'L4' },
-      'nvidia-a10g': { label: 'NVIDIA A10G (high-end, 24GB VRAM, advanced AI and gaming)', type: 'A10G' },
-      'nvidia-p4': { label: 'NVIDIA P4 (entry-level, 8GB VRAM, sufficient for light games)', type: 'P4' },
-      'nvidia-p100': { label: 'NVIDIA P100 (16GB VRAM, compute and advanced gaming)', type: 'P100' },
-      'nvidia-v100': { label: 'NVIDIA V100 (16/32GB VRAM, very performant, overkill for gaming)', type: 'V100' },
-    };
+    // Deduce family from machineType (e.g. 'n1-standard-4' → 'n1')
+    const family = machineType?.split('-')[0] ?? '';
+    const allowedGpus = MACHINE_GPU_COMPAT[family] || [];
 
-    const choices = acceleratorTypes.filter(t => t.name)
-      .filter(t =>
-        t.name && t.name.startsWith("nvidia") && !t.name.includes("vws") &&
-        t.name != "nvidia-h100-80gb" && t.name != "nvidia-h100-mega-80gb"
-      )
+    const choices = acceleratorTypes.filter(t => t.name && allowedGpus.includes(t.name))
       .map(t => {
-        const gpuInfo = GpuDescriptions[t.name!];
+        const gpuInfo = GPU_DESCRIPTIONS[t.name!];
         const desc = gpuInfo ? `${gpuInfo.label} [Type: ${gpuInfo.type}]` : (t.description || t.name!);
         return { name: `${desc} (${t.name})`, value: t.name! };
       })
       .sort((a, b) => a.name.localeCompare(b.name));
+
+    if (choices.length === 0) {
+      choices.push({ name: 'No compatible GPU available for this machine type', value: '' });
+    }
 
     return await select({
       message: 'Select GPU type (accelerator type) to use:',

@@ -168,11 +168,17 @@ export class GcpClient {
         await this.startInstance(zone, instanceName, opts)
     }
 
-    async listRegions(): Promise<protos.google.cloud.compute.v1.IRegion[]> {
-        this.logger.debug(`Listing Google Cloud regions`)
+    /**
+     * List GCP regions, optionally filtering by region name prefix (e.g. 'europe-', 'us-', 'asia-')
+     */
+    async listRegions(continentPrefix?: string): Promise<protos.google.cloud.compute.v1.IRegion[]> {
+        this.logger.debug(`Listing Google Cloud regions${continentPrefix ? ` with prefix ${continentPrefix}` : ''}`)
         try {
             const [regions] = await this.regions.list({ project: this.projectId})
             this.logger.debug(`List regions response: ${JSON.stringify(regions)}`)
+            if (continentPrefix) {
+                return regions.filter(r => r.name && r.name.startsWith(continentPrefix));
+            }
             return regions
         } catch (error) {
             throw new Error(`Failed to list Google Cloud regions`, { cause: error })

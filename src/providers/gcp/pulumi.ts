@@ -1,3 +1,4 @@
+import { DISK_TYPES, NETWORK_TIERS, NIC_TYPES } from "./const";
 import * as gcp from "@pulumi/gcp"
 import * as pulumi from "@pulumi/pulumi"
 import { LocalWorkspaceOptions, OutputMap } from "@pulumi/pulumi/automation"
@@ -93,47 +94,51 @@ class CloudyPadGCEInstance extends pulumi.ComponentResource {
         } else if (args.publicIpType !== PUBLIC_IP_TYPE_DYNAMIC) {
             throw `publicIpType must be either '${PUBLIC_IP_TYPE_STATIC}' or '${PUBLIC_IP_TYPE_DYNAMIC}'`
         }
-        const gceInstance = new gcp.compute.Instance(`${name}-gce-instance`, {
-            name: gcpResourceNamePrefix,
-            machineType: args.machineType,
-            bootDisk: {
-                initializeParams: {
-                    image: "ubuntu-2204-jammy-v20241119",
-                    size: args.bootDisk?.sizeGb || 50,
-                    type: effectiveDiskType
-                }
-            },
-            networkInterfaces: [{
-                network: network.id,
-                subnetwork: subnet.id,
-                nicType: args.nicType && args.nicType !== "auto" ? args.nicType : undefined,
-                accessConfigs: [{ 
-                    natIp: publicIp ? publicIp.address : undefined,
-                    networkTier: effectiveNetworkTier,
+        // Build instance with strict typing, conditionally add networkPerformanceConfig only if enableTier1 is defined
+        const gceInstance = enableTier1.apply(cfg => {
+            const instanceArgs: gcp.compute.InstanceArgs = {
+                name: gcpResourceNamePrefix,
+                machineType: args.machineType,
+                bootDisk: {
+                    initializeParams: {
+                        image: "ubuntu-2204-jammy-v20241119",
+                        size: args.bootDisk?.sizeGb || 50,
+                        type: effectiveDiskType
+                    }
+                },
+                networkInterfaces: [{
+                    network: network.id,
+                    subnetwork: subnet.id,
+                    nicType: args.nicType && args.nicType !== "auto" ? args.nicType : undefined,
+                    accessConfigs: [{ 
+                        natIp: publicIp ? publicIp.address : undefined,
+                        networkTier: effectiveNetworkTier,
+                    }],
                 }],
-            }],
-            networkPerformanceConfig: enableTier1,
-            allowStoppingForUpdate: true,
-            metadata: {
-                "ssh-keys": `ubuntu:${args.publicKeyContent}`
-            },
-            guestAccelerators: [{
-                type: args.acceleratorType,
-                count: 1,
-            }],
-            scheduling: {
-                automaticRestart: args.useSpot ? false : true, // Must be false for spot
-                onHostMaintenance: "TERMINATE",
-                provisioningModel: args.useSpot ? "SPOT" : "STANDARD",
-                instanceTerminationAction: args.useSpot ? "STOP" : undefined, // instanceTerminationAction is only allowed for spot instances
-                preemptible: args.useSpot ?? false
-            },
-        }, {
-            ...commonPulumiOpts,
-            // Ignore bootDisk changes to avoid machine replacement on change (user's data loss)
-            // TODO support such change while keeping user's data
-            ignoreChanges: [ "bootDisk.initializeParams" ]
-        })
+                allowStoppingForUpdate: true,
+                metadata: {
+                    "ssh-keys": `ubuntu:${args.publicKeyContent}`
+                },
+                guestAccelerators: [{
+                    type: args.acceleratorType,
+                    count: 1,
+                }],
+                scheduling: {
+                    automaticRestart: args.useSpot ? false : true, // Must be false for spot
+                    onHostMaintenance: "TERMINATE",
+                    provisioningModel: args.useSpot ? "SPOT" : "STANDARD",
+                    instanceTerminationAction: args.useSpot ? "STOP" : undefined, // instanceTerminationAction is only allowed for spot instances
+                    preemptible: args.useSpot ?? false
+                },
+            };
+            if (cfg) instanceArgs.networkPerformanceConfig = cfg;
+            return new gcp.compute.Instance(`${name}-gce-instance`, instanceArgs, {
+                ...commonPulumiOpts,
+                // Ignore bootDisk changes to avoid machine replacement on change (user's data loss)
+                // TODO support such change while keeping user's data
+                ignoreChanges: [ "bootDisk.initializeParams" ]
+            });
+        });
 
         this.instanceName = gceInstance.name
 
@@ -248,12 +253,13 @@ class CloudyPadGCEInstance extends pulumi.ComponentResource {
     }
 }
 
+import { TIER1_FAMILIES, TIER1_NIC } from "./const";
+
 function supportsTier1(machineType?: string, nicType?: string): boolean {
-  if (!machineType) return false;
-  const family = machineType.split("-")[0].toLowerCase();
-  const tier1Families = new Set(["c3", "c3d", "a3", "h3"]);
-  const nicOk = !nicType || nicType.toUpperCase() === "GVNIC";
-  return tier1Families.has(family) && nicOk;
+    if (!machineType) return false;
+    const family = machineType.split("-")[0].toLowerCase();
+    const nicOk = !nicType || nicType.toUpperCase() === TIER1_NIC;
+    return (TIER1_FAMILIES as readonly string[]).includes(family) && nicOk;
 }
 
 /* eslint-disable  @typescript-eslint/no-explicit-any */
@@ -273,9 +279,9 @@ async function gcpPulumiProgram(): Promise<Record<string, any> | void> {
     const costAlert = config.getObject<CostAlertOptions>("costAlert");
     const firewallAllowPorts = config.requireObject<SimplePortDefinition[]>("firewallAllowPorts")
 
-    const diskType = config.get("diskType") as ("pd-standard" | "pd-balanced" | "pd-ssd") | undefined;
-    const networkTier = config.get("networkTier") as ("STANDARD" | "PREMIUM") | undefined;
-    const nicType = config.get("nicType") as ("GVNIC" | "VIRTIO_NET" | "auto") | undefined;
+    const diskType = config.get("diskType") as (typeof DISK_TYPES[number]) | undefined;
+    const networkTier = config.get("networkTier") as (typeof NETWORK_TIERS[number]) | undefined;
+    const nicType = config.get("nicType") as (typeof NIC_TYPES[number]) | undefined;
 
     const bootDiskTypeUrl = diskType
         ? pulumi.interpolate`zones/${zone}/diskTypes/${diskType}`
