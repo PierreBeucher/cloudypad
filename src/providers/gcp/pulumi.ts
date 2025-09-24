@@ -50,6 +50,21 @@ class CloudyPadGCEInstance extends pulumi.ComponentResource {
             parent: this
         }
 
+        const effectiveDiskType: pulumi.Output<string> = pulumi
+            .all([
+                args.bootDisk?.type ?? pulumi.output<string | undefined>(undefined),
+                args.diskType ?? pulumi.output<string | undefined>(undefined),
+            ])
+            .apply(([bootType, shortType]) => (bootType ?? shortType ?? "pd-balanced"));
+       
+        const effectiveNetworkTier: pulumi.Output<string> = pulumi
+            .output(args.networkTier)
+            .apply((t) => t ?? "STANDARD");
+
+        const enableTier1 = pulumi
+            .all([args.machineType, args.nicType])
+            .apply(([mt, nic]) => supportsTier1(mt, nic) ? { totalEgressBandwidthTier: "TIER_1" } : undefined);
+
         const network = new gcp.compute.Network(`${name}-network`, {
             name: `${name}-network`.toLowerCase(),
             autoCreateSubnetworks: false,
@@ -73,12 +88,11 @@ class CloudyPadGCEInstance extends pulumi.ComponentResource {
         if (args.publicIpType === PUBLIC_IP_TYPE_STATIC) {
             publicIp = new gcp.compute.Address(`${name}-eip`, {
                 name: gcpResourceNamePrefix,
-                networkTier: "STANDARD",
+                networkTier: effectiveNetworkTier,
             }, commonPulumiOpts)
         } else if (args.publicIpType !== PUBLIC_IP_TYPE_DYNAMIC) {
             throw `publicIpType must be either '${PUBLIC_IP_TYPE_STATIC}' or '${PUBLIC_IP_TYPE_DYNAMIC}'`
         }
-
         const gceInstance = new gcp.compute.Instance(`${name}-gce-instance`, {
             name: gcpResourceNamePrefix,
             machineType: args.machineType,
@@ -86,7 +100,7 @@ class CloudyPadGCEInstance extends pulumi.ComponentResource {
                 initializeParams: {
                     image: "ubuntu-2204-jammy-v20241119",
                     size: args.bootDisk?.sizeGb || 50,
-                    type: args.bootDisk?.type || args.diskType || "pd-balanced"
+                    type: effectiveDiskType
                 }
             },
             networkInterfaces: [{
@@ -95,9 +109,10 @@ class CloudyPadGCEInstance extends pulumi.ComponentResource {
                 nicType: args.nicType && args.nicType !== "auto" ? args.nicType : undefined,
                 accessConfigs: [{ 
                     natIp: publicIp ? publicIp.address : undefined,
-                    networkTier: args.networkTier || "STANDARD",
+                    networkTier: effectiveNetworkTier,
                 }],
             }],
+            networkPerformanceConfig: enableTier1,
             allowStoppingForUpdate: true,
             metadata: {
                 "ssh-keys": `ubuntu:${args.publicKeyContent}`
@@ -233,23 +248,40 @@ class CloudyPadGCEInstance extends pulumi.ComponentResource {
     }
 }
 
+function supportsTier1(machineType?: string, nicType?: string): boolean {
+  if (!machineType) return false;
+  const family = machineType.split("-")[0].toLowerCase();
+  const tier1Families = new Set(["c3", "c3d", "a3", "h3"]);
+  const nicOk = !nicType || nicType.toUpperCase() === "GVNIC";
+  return tier1Families.has(family) && nicOk;
+}
+
 /* eslint-disable  @typescript-eslint/no-explicit-any */
 async function gcpPulumiProgram(): Promise<Record<string, any> | void> {
 
-    const gcpConfig = new pulumi.Config("gcp")
-    const projectId = gcpConfig.require("project")
+    const gcpConfig = new pulumi.Config("gcp");
+    const projectId = gcpConfig.require("project");
+    const zone = gcpConfig.require("zone");
 
-    const config = new pulumi.Config()
-    const machineType = config.require("machineType")
-    const acceleratorType = config.require("acceleratorType")
-    const bootDiskSizeGB = config.requireNumber("bootDiskSizeGB")
-    const publicIpType = config.require("publicIpType")
-    const publicKeyContent = config.require("publicSshKeyContent")
-    const useSpot = config.requireBoolean("useSpot")
-    const costAlert = config.getObject<CostAlertOptions>("costAlert")
+    const config = new pulumi.Config();
+    const machineType = config.require("machineType");
+    const acceleratorType = config.require("acceleratorType");
+    const bootDiskSizeGB = config.requireNumber("bootDiskSizeGB");
+    const publicIpType = config.require("publicIpType");
+    const publicKeyContent = config.require("publicSshKeyContent");
+    const useSpot = config.requireBoolean("useSpot");
+    const costAlert = config.getObject<CostAlertOptions>("costAlert");
     const firewallAllowPorts = config.requireObject<SimplePortDefinition[]>("firewallAllowPorts")
 
-    const instanceName = pulumi.getStack()
+    const diskType = config.get("diskType") as ("pd-standard" | "pd-balanced" | "pd-ssd") | undefined;
+    const networkTier = config.get("networkTier") as ("STANDARD" | "PREMIUM") | undefined;
+    const nicType = config.get("nicType") as ("GVNIC" | "VIRTIO_NET" | "auto") | undefined;
+
+    const bootDiskTypeUrl = diskType
+        ? pulumi.interpolate`zones/${zone}/diskTypes/${diskType}`
+        : undefined;
+
+    const instanceName = pulumi.getStack();
 
     const instance = new CloudyPadGCEInstance(instanceName, {
         projectId: projectId,
@@ -257,8 +289,12 @@ async function gcpPulumiProgram(): Promise<Record<string, any> | void> {
         acceleratorType: acceleratorType, 
         publicKeyContent: publicKeyContent,
         bootDisk: {
-            sizeGb: bootDiskSizeGB
+            sizeGb: bootDiskSizeGB,
+            type: bootDiskTypeUrl, // e.g. zones/europe-west4-b/diskTypes/pd-ssd
         },
+        diskType: diskType,  // "pd-ssd" | "pd-balanced" | "pd-standard" | undefined
+        networkTier: networkTier,  // "STANDARD" | "PREMIUM" | undefined
+        nicType: nicType, // "GVNIC" | "VIRTIO_NET" | "auto" | undefined
         publicIpType: publicIpType,
         ingressPorts: [ 
             { from: 22, protocol: "tcp" }, 
@@ -275,13 +311,12 @@ async function gcpPulumiProgram(): Promise<Record<string, any> | void> {
             ports: [p.port.toString()],
             protocol: p.protocol,
         })),
-    })
+    });
 
     return {
         instanceName: instance.instanceName,
         publicIp: instance.publicIp
-    }
-
+    };
 }
 
 export interface PulumiStackConfigGcp {

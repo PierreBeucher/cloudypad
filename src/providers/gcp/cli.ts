@@ -228,7 +228,7 @@ export class GcpInputPrompter extends AbstractInputPrompter<GcpCreateCliArgs, Gc
     if (networkTier) return networkTier;
     const networkTierEnum = enumOptions(GcpProvisionInputV1Schema.shape.networkTier);
     const NetworkTierDescriptions: Record<string, string> = {
-      'STANDARD': 'Standard (higher latency, cheaper)',
+      'STANDARD': 'Standard (higher latency, lower cost, includes 200 GiB/month free)',
       'PREMIUM': 'Premium (lower latency, more expensive)',
     };
     const choices = Array.from(networkTierEnum).map((v: string) => {
@@ -236,7 +236,7 @@ export class GcpInputPrompter extends AbstractInputPrompter<GcpCreateCliArgs, Gc
       return { name: `${desc} [${v}]`, value: v };
     });
     return await select({
-      message: 'Select network tier (affects latency & price):',
+      message: 'Select network tier (applies to outgoing internet traffic - affects latency & price):',
       choices,
       default: 'STANDARD',
     });
