@@ -135,4 +135,32 @@ describe('GCP input prompter', () => {
 
     assert.deepEqual(result, expected);
   });
+
+  it('diskType prompt should early-return when diskType already provided', async () => {
+    const prompter = new GcpInputPrompter({ coreConfig }) as unknown as {
+      // expose private for test via casting
+      diskType: (diskType?: string) => Promise<string>
+    };
+
+    // We pass a value and expect no interactive select attempt. Since the method immediately returns
+    // when diskType is truthy, we just verify the resolved value matches input.
+    const value = await prompter.diskType('pd-ssd');
+    assert.strictEqual(value, 'pd-ssd');
+  });
+
+  it('networkTier prompt should early-return when networkTier already provided', async () => {
+    const prompter = new GcpInputPrompter({ coreConfig }) as unknown as {
+      networkTier: (networkTier?: string) => Promise<string>
+    };
+    const value = await prompter.networkTier('STANDARD');
+    assert.strictEqual(value, 'STANDARD');
+  });
+
+  it('nicType prompt should early-return when nicType already provided', async () => {
+    const prompter = new GcpInputPrompter({ coreConfig }) as unknown as {
+      nicType: (nicType?: string) => Promise<string>
+    };
+    const value = await prompter.nicType('GVNIC');
+    assert.strictEqual(value, 'GVNIC');
+  });
 });
