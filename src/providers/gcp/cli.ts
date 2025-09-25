@@ -38,6 +38,12 @@ export type GcpUpdateCliArgs = UpdateCliArgs & Omit<GcpCreateCliArgs, "projectId
 
 export class GcpInputPrompter extends AbstractInputPrompter<GcpCreateCliArgs, GcpProvisionInputV1, CommonConfigurationInputV1> {
 
+  /**
+   * Wrapper around the inquirer select function to allow stubbing/mocking in unit tests
+   * without relying on module-level captured references (destructured import).
+   */
+  protected getSelect() { return select }
+
   /** Build the initial partial input from CLI args (strings are narrowed to enum literal unions). */
   protected buildProvisionerInputFromCliArgs(cliArgs: GcpCreateCliArgs): PartialDeep<GcpInstanceInput> {
     return {
@@ -131,7 +137,7 @@ export class GcpInputPrompter extends AbstractInputPrompter<GcpCreateCliArgs, Gc
       throw new Error(`No supported disk types available in zone ${zone}.`);
     }
 
-    return await select({
+    return await this.getSelect()({
       message: 'Select disk type (affects performance & price):',
       choices,
       default: filtered.includes(DEFAULT_DISK_TYPE) ? DEFAULT_DISK_TYPE : choices[0].value,
@@ -146,7 +152,7 @@ export class GcpInputPrompter extends AbstractInputPrompter<GcpCreateCliArgs, Gc
       const desc = NETWORK_TIER_DESCRIPTIONS[v] || v;
       return { name: `${desc} [${v}]`, value: v };
     });
-    return await select({
+    return await this.getSelect()({
       message: 'Select network tier (applies to outgoing internet traffic - affects latency & price):',
       choices,
       default: DEFAULT_NETWORK_TIER,
@@ -161,7 +167,7 @@ export class GcpInputPrompter extends AbstractInputPrompter<GcpCreateCliArgs, Gc
       const desc = NIC_TYPE_DESCRIPTIONS[v] || v;
       return { name: `${desc} [${v}]`, value: v };
     });
-    return await select({
+    return await this.getSelect()({
       message: 'Select NIC type (affects network performance):',
       choices,
       default: DEFAULT_NIC_TYPE,
@@ -207,7 +213,7 @@ export class GcpInputPrompter extends AbstractInputPrompter<GcpCreateCliArgs, Gc
 
     gamingMachineTypes.push({ name: "Let me type a machine type", value: "_" })
 
-    const selectedMachineType = await select({
+    const selectedMachineType = await this.getSelect()({
       message: 'Choose a machine type:',
       choices: gamingMachineTypes,
       loop: false,
@@ -242,11 +248,14 @@ export class GcpInputPrompter extends AbstractInputPrompter<GcpCreateCliArgs, Gc
       { name: 'Middle East', value: 'me-' },
       { name: 'Africa', value: 'africa-' },
     ];
-    const userContinentPrefix = await select({
+    const userContinentPrefix = await this.getSelect()({
       message: 'Select your continent for the closest regions:',
       choices: continentChoices,
       default: 'europe-',
     });
+
+    // Inform user that region discovery may take a little time as several API calls are performed
+    console.info('\nListing available GCP regions with compatible gaming machine types and GPUs... (this can take ~10-30s)')
 
     // Only fetch regions matching the selected continent prefix
     const regions = await client.listRegions(userContinentPrefix);
@@ -307,7 +316,7 @@ export class GcpInputPrompter extends AbstractInputPrompter<GcpCreateCliArgs, Gc
       const fams = (MACHINE_TYPE_FAMILIES_GAMING as readonly string[]).join(', ');
       throw new Error(`No region found with available machine types: ${fams}.`);
     }
-    const selected = await select({
+    const selected = await this.getSelect()({
       message: `Select region to use (only regions with gaming machine types are shown: ${(MACHINE_TYPE_FAMILIES_GAMING as readonly string[]).join(', ')})`,
       choices: regionChoices
     });
@@ -316,6 +325,9 @@ export class GcpInputPrompter extends AbstractInputPrompter<GcpCreateCliArgs, Gc
 
   private async zone(client: GcpClient, region: string, zone?: string): Promise<string> {
     if (zone) return zone;
+
+    // Inform user about zone filtering duration
+    console.info(`\nListing zones in region ${region} with compatible gaming machine types and GPUs... (this can take ~5-20s)`)    
 
     const zones = await client.listRegionZones(region);
     if (zones.length === 0) throw new Error(`No zones found in region ${region}`);
@@ -349,7 +361,7 @@ export class GcpInputPrompter extends AbstractInputPrompter<GcpCreateCliArgs, Gc
       throw new Error(`No zone found in region ${region} with available machine types: ${fams}.`);
     }
 
-    return await select({
+    return await this.getSelect()({
       message: `Select zone to use (zones with gaming machine types: ${(MACHINE_TYPE_FAMILIES_GAMING as readonly string[]).join(', ')})`,
       choices: gamingZones.map(z => ({ name: z, value: z })),
       default: gamingZones[0]
@@ -360,7 +372,7 @@ export class GcpInputPrompter extends AbstractInputPrompter<GcpCreateCliArgs, Gc
     if (projectId) return projectId;
 
     const projects = await GcpClient.listProjects()
-    return await select({
+    return await this.getSelect()({
       message: 'Select a project to use:',
       choices: projects
         .filter(p => p.projectId)
@@ -389,7 +401,7 @@ export class GcpInputPrompter extends AbstractInputPrompter<GcpCreateCliArgs, Gc
       choices.push({ name: 'No compatible GPU available for this machine type', value: '' });
     }
 
-    return await select({
+    return await this.getSelect()({
       message: 'Select GPU type (accelerator type) to use:',
       choices,
       loop: false
