@@ -348,8 +348,6 @@ export class GcpCliCommandGenerator extends CliCommandGenerator {
               console.info(`Disk size unchanged (${requested}GB).`)
             } else if (outcome === 'resize') {
               console.info(`Resizing disk from ${previous}GB to ${requested}GB...`)
-            } else if (outcome === 'unchanged') {
-              console.info(`Disk size unchanged (${requested}GB).`)
             }
           }
                     await new InteractiveInstanceUpdater<GcpInstanceStateV1, GcpUpdateCliArgs>({
