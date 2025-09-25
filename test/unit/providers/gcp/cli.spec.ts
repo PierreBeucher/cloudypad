@@ -163,4 +163,42 @@ describe('GCP input prompter', () => {
     const value = await prompter.nicType('GVNIC');
     assert.strictEqual(value, 'GVNIC');
   });
+
+  it('networkTier invalid value should trigger prompt instead of early return', async () => {
+    type PrivatePrompter = GcpInputPrompter & { getSelect: () => (o: { message: string, choices: ReadonlyArray<unknown>, default?: string }) => Promise<string> };
+    const prompter = new GcpInputPrompter({ coreConfig }) as PrivatePrompter & { rawNetworkTier?: string };
+    // Simulate CLI providing invalid value that got narrowed to undefined
+    (prompter as { rawNetworkTier?: string }).rawNetworkTier = 'INVALID_TIER';
+    let selectCalled = false;
+    const fakeSelect = async () => { selectCalled = true; return 'STANDARD'; };
+    prompter.getSelect = () => fakeSelect;
+    const value = await (prompter as unknown as { networkTier: (v?: string) => Promise<string> }).networkTier(undefined);
+    assert.strictEqual(value, 'STANDARD');
+    assert.ok(selectCalled, 'Expected select to be called for invalid network tier (narrowed)');
+  });
+
+  it('nicType invalid value should trigger prompt instead of early return', async () => {
+    type PrivatePrompter = GcpInputPrompter & { getSelect: () => (o: { message: string, choices: ReadonlyArray<unknown>, default?: string }) => Promise<string> };
+    const prompter = new GcpInputPrompter({ coreConfig }) as PrivatePrompter & { rawNicType?: string };
+    (prompter as { rawNicType?: string }).rawNicType = 'BAD_NIC';
+    let selectCalled = false;
+    const fakeSelect = async () => { selectCalled = true; return 'auto'; };
+    prompter.getSelect = () => fakeSelect;
+    const value = await (prompter as unknown as { nicType: (v?: string) => Promise<string> }).nicType(undefined);
+    assert.strictEqual(value, 'auto');
+    assert.ok(selectCalled, 'Expected select to be called for invalid nic type (narrowed)');
+  });
+
+  it('diskType invalid value should trigger prompt instead of early return', async () => {
+    type PrivatePrompter = GcpInputPrompter & { getSelect: () => (o: { message: string, choices: ReadonlyArray<unknown>, default?: string }) => Promise<string> };
+    const prompter = new GcpInputPrompter({ coreConfig }) as PrivatePrompter & { rawDiskType?: string };
+    (prompter as { rawDiskType?: string }).rawDiskType = 'BAD_DISK';
+    let selectCalled = false;
+    const fakeSelect = async () => { selectCalled = true; return 'pd-balanced'; };
+    prompter.getSelect = () => fakeSelect;
+    const mockClient = { listDiskTypes: async () => ['pd-standard', 'pd-balanced', 'pd-ssd'] } as unknown;
+    const value = await (prompter as unknown as { diskType: (v?: string, c?: unknown, z?: string) => Promise<string> }).diskType(undefined, mockClient, 'europe-west4-b');
+    assert.strictEqual(value, 'pd-balanced');
+    assert.ok(selectCalled, 'Expected select to be called for invalid disk type (narrowed)');
+  });
 });
