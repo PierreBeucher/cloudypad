@@ -115,6 +115,7 @@ export class GcpInputPrompter extends AbstractInputPrompter<GcpCreateCliArgs, Gc
 
   /** Prompt for disk type using intersection of schema enum and available API values. */
   private async diskType(diskType?: string, client?: GcpClient, zone?: string): Promise<string> {
+    if (diskType) return diskType;
     if (!client || !zone) throw new Error("diskType prompt requires GcpClient and zone.");
     const diskTypeEnum = enumOptions(GcpProvisionInputV1Schema.shape.diskType);
 
