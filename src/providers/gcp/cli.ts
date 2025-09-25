@@ -11,6 +11,7 @@ import { CLI_OPTION_AUTO_STOP_TIMEOUT, CLI_OPTION_AUTO_STOP_ENABLE, CLI_OPTION_C
 import { RUN_COMMAND_CREATE, RUN_COMMAND_UPDATE } from "../../tools/analytics/events";
 import { InteractiveInstanceUpdater } from "../../cli/updater";
 import { GcpProviderClient } from "./provider";
+import { validateGcpDiskResize } from "./validation";
 
 export interface GcpCreateCliArgs extends CreateCliArgs {
     projectId?: string
@@ -290,6 +291,22 @@ export class GcpCliCommandGenerator extends CliCommandGenerator {
             .action(async (cliArgs: GcpUpdateCliArgs) => {
                 this.analytics.sendEvent(RUN_COMMAND_UPDATE, { provider: CLOUDYPAD_PROVIDER_GCP })
                 try {
+          // If user wants to update disk size, validate it against current state (no shrink allowed on GCP persistent disks).
+          if (cliArgs.diskSize !== undefined) {
+            const providerClient = new GcpProviderClient({ config: args.coreConfig })
+            let currentState: GcpInstanceStateV1
+            try {
+              currentState = await providerClient.getInstanceState(cliArgs.name)
+            } catch (e) {
+              throw new Error(`Failed to retrieve current state to validate disk size: ${(e as Error).message}`)
+            }
+            const outcome = validateGcpDiskResize(currentState.provision.input.diskSize, cliArgs.diskSize)
+            if (outcome === 'unchanged') {
+              console.info(`Disk size unchanged (${cliArgs.diskSize}GB). No resize operation will be performed.`)
+            } else if (outcome === 'resize') {
+              console.info(`Resizing disk from ${currentState.provision.input.diskSize}GB to ${cliArgs.diskSize}GB...`)
+            }
+          }
                     await new InteractiveInstanceUpdater<GcpInstanceStateV1, GcpUpdateCliArgs>({
                         providerClient: new GcpProviderClient({ config: args.coreConfig }),
                         inputPrompter: new GcpInputPrompter({ coreConfig: args.coreConfig }),
