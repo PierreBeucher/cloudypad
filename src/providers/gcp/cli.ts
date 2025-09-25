@@ -38,6 +38,13 @@ export type GcpUpdateCliArgs = UpdateCliArgs & Omit<GcpCreateCliArgs, "projectId
 
 export class GcpInputPrompter extends AbstractInputPrompter<GcpCreateCliArgs, GcpProvisionInputV1, CommonConfigurationInputV1> {
 
+  // Preserve raw CLI values for enum-like fields so we can surface informative logs
+  // in case they were invalid and got dropped during early narrowing in
+  // buildProvisionerInputFromCliArgs.
+  private rawDiskType?: string;
+  private rawNetworkTier?: string;
+  private rawNicType?: string;
+
   /**
    * Wrapper around the inquirer select function to allow stubbing/mocking in unit tests
    * without relying on module-level captured references (destructured import).
@@ -46,6 +53,10 @@ export class GcpInputPrompter extends AbstractInputPrompter<GcpCreateCliArgs, Gc
 
   /** Build the initial partial input from CLI args (strings are narrowed to enum literal unions). */
   protected buildProvisionerInputFromCliArgs(cliArgs: GcpCreateCliArgs): PartialDeep<GcpInstanceInput> {
+    // Capture raw values before narrowing so we can later display validation messages.
+    this.rawDiskType = cliArgs.diskType;
+    this.rawNetworkTier = cliArgs.networkTier;
+    this.rawNicType = cliArgs.nicType;
     return {
       provision: {
         machineType: cliArgs.machineType,
@@ -115,10 +126,19 @@ export class GcpInputPrompter extends AbstractInputPrompter<GcpCreateCliArgs, Gc
 
   /** Prompt for disk type using intersection of schema enum and available API values. */
   private async diskType(diskType?: string, client?: GcpClient, zone?: string): Promise<string> {
-    if (diskType) return diskType;
-    if (!client || !zone) throw new Error("diskType prompt requires GcpClient and zone.");
-    const diskTypeEnum = enumOptions(GcpProvisionInputV1Schema.shape.diskType);
-
+    if (diskType) return diskType; // already narrowed & valid
+    
+     if (!client || !zone) throw new Error("diskType prompt requires GcpClient and zone.");
+    const diskTypeEnum = enumOptions(GcpProvisionInputV1Schema.shape.diskType) as readonly string[];
+    
+    // If narrowed value disappeared (undefined) but a raw CLI value existed and was invalid, log it.
+    if (!diskType && this.rawDiskType) {
+      // At this point the raw value was dropped by narrowing so it's necessarily invalid – log once.
+      console.info(`Provided disk type '${this.rawDiskType}' is not valid. Allowed values: ${Array.from(diskTypeEnum).join(', ')}. You'll be prompted to choose a valid one.`)
+      // Prevent double logging if method called again.
+      this.rawDiskType = undefined;
+    }
+   
     let availableDiskTypes: string[] = [];
     try {
       availableDiskTypes = await client.listDiskTypes(zone);
@@ -147,8 +167,13 @@ export class GcpInputPrompter extends AbstractInputPrompter<GcpCreateCliArgs, Gc
 
   /** Prompt for network tier with simple explanations. */
   private async networkTier(networkTier?: string): Promise<string> {
-    if (networkTier) return networkTier;
-    const networkTierEnum = enumOptions(GcpProvisionInputV1Schema.shape.networkTier);
+    if (networkTier) return networkTier; // already narrowed & valid
+
+    const networkTierEnum = enumOptions(GcpProvisionInputV1Schema.shape.networkTier) as readonly string[];
+    if (!networkTier && this.rawNetworkTier) {
+      console.info(`Provided network tier '${this.rawNetworkTier}' is not valid. Allowed values: ${Array.from(networkTierEnum).join(', ')}. You'll be prompted to choose a valid one.`)
+      this.rawNetworkTier = undefined;
+    }
     const choices = Array.from(networkTierEnum).map((v: string) => {
       const desc = NETWORK_TIER_DESCRIPTIONS[v] || v;
       return { name: `${desc} [${v}]`, value: v };
@@ -162,8 +187,13 @@ export class GcpInputPrompter extends AbstractInputPrompter<GcpCreateCliArgs, Gc
 
   /** Prompt for NIC type with simple explanations. */
   private async nicType(nicType?: string): Promise<string> {
-    if (nicType) return nicType;
-    const nicTypeEnum = enumOptions(GcpProvisionInputV1Schema.shape.nicType);
+    if (nicType) return nicType; // already narrowed & valid
+
+    const nicTypeEnum = enumOptions(GcpProvisionInputV1Schema.shape.nicType) as readonly string[];
+    if (!nicType && this.rawNicType) {
+      console.info(`Provided NIC type '${this.rawNicType}' is not valid. Allowed values: ${Array.from(nicTypeEnum).join(', ')}. You'll be prompted to choose a valid one.`)
+      this.rawNicType = undefined;
+    }
     const choices = Array.from(nicTypeEnum).map((v: string) => {
       const desc = NIC_TYPE_DESCRIPTIONS[v] || v;
       return { name: `${desc} [${v}]`, value: v };
