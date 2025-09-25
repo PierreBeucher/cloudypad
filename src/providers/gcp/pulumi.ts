@@ -17,6 +17,8 @@ interface CloudyPadGCEInstanceArgs {
     machineType: pulumi.Input<string>
     publicIpType: pulumi.Input<string>
     acceleratorType: pulumi.Input<string>
+    /** GCP zone (needed for disk import detection) */
+    zone: pulumi.Input<string>
     bootDisk?: {
         sizeGb?: pulumi.Input<number>
     }
@@ -251,6 +253,7 @@ async function gcpPulumiProgram(): Promise<Record<string, any> | void> {
         machineType: machineType,
         acceleratorType: acceleratorType, 
         publicKeyContent: publicKeyContent,
+        zone: zone,
         bootDisk: {
             sizeGb: bootDiskSizeGB
         },

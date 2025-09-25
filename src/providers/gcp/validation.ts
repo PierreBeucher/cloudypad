@@ -17,6 +17,5 @@ export function validateGcpDiskResize(current: number, requested: number | undef
   if (requested < current) {
     throw new Error(`New disk size (${requested}GB) is smaller than current size (${current}GB). Shrinking is not supported on GCP.`)
   }
-  if (requested === current) return 'unchanged'
   return 'resize'
 }

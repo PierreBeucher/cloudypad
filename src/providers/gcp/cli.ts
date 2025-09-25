@@ -12,6 +12,8 @@ import { RUN_COMMAND_CREATE, RUN_COMMAND_UPDATE } from "../../tools/analytics/ev
 import { InteractiveInstanceUpdater } from "../../cli/updater";
 import { GcpProviderClient } from "./provider";
 import { validateGcpDiskResize } from "./validation";
+import { spawn } from 'node:child_process'
+import { execSync } from 'node:child_process'
 
 export interface GcpCreateCliArgs extends CreateCliArgs {
     projectId?: string
@@ -292,19 +294,62 @@ export class GcpCliCommandGenerator extends CliCommandGenerator {
                 this.analytics.sendEvent(RUN_COMMAND_UPDATE, { provider: CLOUDYPAD_PROVIDER_GCP })
                 try {
           // If user wants to update disk size, validate it against current state (no shrink allowed on GCP persistent disks).
-          if (cliArgs.diskSize !== undefined) {
-            const providerClient = new GcpProviderClient({ config: args.coreConfig })
-            let currentState: GcpInstanceStateV1
-            try {
-              currentState = await providerClient.getInstanceState(cliArgs.name)
-            } catch (e) {
-              throw new Error(`Failed to retrieve current state to validate disk size: ${(e as Error).message}`)
+          const providerClient = new GcpProviderClient({ config: args.coreConfig })
+          let currentState: GcpInstanceStateV1 | undefined
+          try {
+            currentState = await providerClient.getInstanceState(cliArgs.name)
+          } catch (e) {
+            console.warn(`Could not load current state prior to update (continuing): ${(e as Error).message}`)
+          }
+
+          // --- Diagnostic: print current boot disk info (if we can discover it) ---
+          try {
+            if (currentState) {
+              const { projectId, zone } = currentState.provision.input
+              const diskName = `cloudypad-${cliArgs.name}`.toLowerCase()
+              let info: { name?: string; sizeGb?: string | number; type?: string; status?: string } | undefined
+              try {
+                const json = execSync(`gcloud compute disks describe ${diskName} --zone ${zone} --project ${projectId} --format=json(name,sizeGb,type,status)`, { stdio: ['ignore','pipe','ignore'] }).toString()
+                info = JSON.parse(json)
+              } catch {
+                // gcloud failed: try REST API with ADC token
+                try {
+                  const token = execSync('gcloud auth print-access-token', { stdio: ['ignore','pipe','ignore'] }).toString().trim()
+                  const apiUrl = `https://compute.googleapis.com/compute/v1/projects/${projectId}/zones/${zone}/disks/${diskName}`
+                  const curlJson = execSync(`curl -sf -H "Authorization: Bearer ${token}" -H 'Accept: application/json' ${apiUrl}`, { stdio: ['ignore','pipe','ignore'] }).toString()
+                  const parsed = JSON.parse(curlJson)
+                  info = { name: parsed.name, sizeGb: parsed.sizeGb, type: parsed.type, status: parsed.status }
+                  // If we found the disk and import env not yet set, set it now (pre-adoption) so Pulumi imports.
+                  if (!process.env.CLOUDYPAD_IMPORT_BOOT_DISK) {
+                    process.env.CLOUDYPAD_IMPORT_BOOT_DISK = `projects/${projectId}/zones/${zone}/disks/${diskName}`
+                    console.info(`Preflight (REST fallback): adopting existing boot disk ${process.env.CLOUDYPAD_IMPORT_BOOT_DISK}`)
+                  }
+                } catch { /* ignore fallback failure */ }
+              }
+              if (info) {
+                console.info(`[disk] name=${info.name ?? diskName} sizeGb=${info.sizeGb} type=${info.type?.split('/').pop()} status=${info.status} importEnv=${process.env.CLOUDYPAD_IMPORT_BOOT_DISK ? 'set' : 'unset'}`)
+              } else {
+                console.info(`[disk] probe: not found (disk may not exist yet)`)
+              }
+            } else {
+              console.info(`[disk] state unavailable; skipping disk info probe`)
             }
-            const outcome = validateGcpDiskResize(currentState.provision.input.diskSize, cliArgs.diskSize)
-            if (outcome === 'unchanged') {
-              console.info(`Disk size unchanged (${cliArgs.diskSize}GB). No resize operation will be performed.`)
+          } catch (diskInfoErr) {
+            console.info(`[disk] probe failed: ${(diskInfoErr as Error).message}`)
+          }
+          // --- End diagnostic block ---
+
+          if (cliArgs.diskSize !== undefined && currentState) {
+            const requested = cliArgs.diskSize
+            const previous = currentState.provision.input.diskSize
+            const outcome = validateGcpDiskResize(previous, requested)
+            if (requested === previous) {
+              // Equal short-circuit (even if validation returned resize due to a logic bug elsewhere)
+              console.info(`Disk size unchanged (${requested}GB).`)
             } else if (outcome === 'resize') {
-              console.info(`Resizing disk from ${currentState.provision.input.diskSize}GB to ${cliArgs.diskSize}GB...`)
+              console.info(`Resizing disk from ${previous}GB to ${requested}GB...`)
+            } else if (outcome === 'unchanged') {
+              console.info(`Disk size unchanged (${requested}GB).`)
             }
           }
                     await new InteractiveInstanceUpdater<GcpInstanceStateV1, GcpUpdateCliArgs>({
