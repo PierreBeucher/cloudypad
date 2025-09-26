@@ -12,8 +12,7 @@ import { RUN_COMMAND_CREATE, RUN_COMMAND_UPDATE } from "../../tools/analytics/ev
 import { InteractiveInstanceUpdater } from "../../cli/updater";
 import { GcpProviderClient } from "./provider";
 import { validateGcpDiskResize } from "./validation";
-import { spawn } from 'node:child_process'
-import { execSync } from 'node:child_process'
+// no child process usage here; removed legacy pulumi import fallback
 
 export interface GcpCreateCliArgs extends CreateCliArgs {
     projectId?: string
@@ -302,49 +301,25 @@ export class GcpCliCommandGenerator extends CliCommandGenerator {
             console.warn(`Could not load current state prior to update (continuing): ${(e as Error).message}`)
           }
 
-          // --- Diagnostic: print current boot disk info (if we can discover it) ---
-          try {
-            if (currentState) {
-              const { projectId, zone } = currentState.provision.input
-              const diskName = `cloudypad-${cliArgs.name}`.toLowerCase()
-              let info: { name?: string; sizeGb?: string | number; type?: string; status?: string } | undefined
-              try {
-                const json = execSync(`gcloud compute disks describe ${diskName} --zone ${zone} --project ${projectId} --format=json(name,sizeGb,type,status)`, { stdio: ['ignore','pipe','ignore'] }).toString()
-                info = JSON.parse(json)
-              } catch {
-                // gcloud failed: try REST API with ADC token
-                try {
-                  const token = execSync('gcloud auth print-access-token', { stdio: ['ignore','pipe','ignore'] }).toString().trim()
-                  const apiUrl = `https://compute.googleapis.com/compute/v1/projects/${projectId}/zones/${zone}/disks/${diskName}`
-                  const curlJson = execSync(`curl -sf -H "Authorization: Bearer ${token}" -H 'Accept: application/json' ${apiUrl}`, { stdio: ['ignore','pipe','ignore'] }).toString()
-                  const parsed = JSON.parse(curlJson)
-                  info = { name: parsed.name, sizeGb: parsed.sizeGb, type: parsed.type, status: parsed.status }
-                  // If we found the disk and import env not yet set, set it now (pre-adoption) so Pulumi imports.
-                  if (!process.env.CLOUDYPAD_IMPORT_BOOT_DISK) {
-                    process.env.CLOUDYPAD_IMPORT_BOOT_DISK = `projects/${projectId}/zones/${zone}/disks/${diskName}`
-                    console.info(`Preflight (REST fallback): adopting existing boot disk ${process.env.CLOUDYPAD_IMPORT_BOOT_DISK}`)
-                  }
-                } catch { /* ignore fallback failure */ }
-              }
-              if (info) {
-                console.info(`[disk] name=${info.name ?? diskName} sizeGb=${info.sizeGb} type=${info.type?.split('/').pop()} status=${info.status} importEnv=${process.env.CLOUDYPAD_IMPORT_BOOT_DISK ? 'set' : 'unset'}`)
-              } else {
-                console.info(`[disk] probe: not found (disk may not exist yet)`)
-              }
-            } else {
-              console.info(`[disk] state unavailable; skipping disk info probe`)
-            }
-          } catch (diskInfoErr) {
-            console.info(`[disk] probe failed: ${(diskInfoErr as Error).message}`)
-          }
-          // --- End diagnostic block ---
-
           if (cliArgs.diskSize !== undefined && currentState) {
             const requested = cliArgs.diskSize
-            const previous = currentState.provision.input.diskSize
+            const zone = currentState.provision.input.zone
+            const projectId = currentState.provision.input.projectId
+            const inferredDiskName = `cloudypad-${cliArgs.name}`.toLowerCase()
+            let actual: number | undefined
+            try {
+              if (zone && projectId) {
+                const client = new GcpClient(GcpCliCommandGenerator.name, projectId)
+                actual = await client.getDiskSizeGb(zone, inferredDiskName)
+              }
+            } catch (e) {
+              console.warn(`Could not fetch live disk size for '${inferredDiskName}' in ${zone}/${projectId}; falling back to state. ${(e as Error).message}`)
+            }
+
+            // Fallback to previous declared state if live query unavailable
+            const previous = actual ?? currentState.provision.input.diskSize
             const outcome = validateGcpDiskResize(previous, requested)
             if (requested === previous) {
-              // Equal short-circuit (even if validation returned resize due to a logic bug elsewhere)
               console.info(`Disk size unchanged (${requested}GB).`)
             } else if (outcome === 'resize') {
               console.info(`Resizing disk from ${previous}GB to ${requested}GB...`)
