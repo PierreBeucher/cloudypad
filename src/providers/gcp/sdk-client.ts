@@ -62,6 +62,46 @@ export class GcpClient {
         this.accelerators = new AcceleratorTypesClient()
         this.projectId = projectId
     }
+    /**
+     * Get the current size (GB) of a persistent disk. Returns undefined if the disk doesn't exist.
+     */
+    async getDiskSizeGb(zone: string, diskName: string): Promise<number | undefined> {
+        this.logger.debug(`Fetching size for disk ${diskName} in zone ${zone}`)
+        try {
+            const [disk] = await this.disks.get({ project: this.projectId, zone, disk: diskName })
+            // sizeGb is a string in the API; coerce to number
+            const raw = (disk as unknown as { sizeGb?: string | number }).sizeGb
+            if (raw === undefined || raw === null) return undefined
+            const n = typeof raw === 'number' ? raw : Number.parseInt(raw, 10)
+            return Number.isFinite(n) ? n : undefined
+        } catch (e: unknown) {
+            const err = e as { code?: number; message?: string }
+            const code = typeof err?.code === 'number' ? err.code : undefined
+            const msg = String(err?.message ?? e)
+            if (code === 404 || /not found/i.test(msg) || /was not found/i.test(msg)) {
+                return undefined
+            }
+            throw new Error(`Failed to get disk size for ${diskName} in ${zone}`, { cause: e })
+        }
+    }
+
+    /** Resize a persistent disk to the given size in GB. Only enlargement is permitted by GCP. */
+    async resizeDisk(zone: string, diskName: string, newSizeGb: number): Promise<void> {
+        this.logger.debug(`Resizing disk ${diskName} in zone ${zone} to ${newSizeGb}GB`)
+        try {
+            const [op] = await this.disks.resize({
+                project: this.projectId,
+                zone,
+                disk: diskName,
+                disksResizeRequestResource: { sizeGb: newSizeGb }
+            })
+            // Wait for the operation to complete
+            await this.waitOperation(op.latestResponse.name, zone, 600)
+            this.logger.debug(`Resized disk ${diskName} to ${newSizeGb}GB`)
+        } catch (e) {
+            throw new Error(`Failed to resize disk ${diskName} in ${zone} to ${newSizeGb}GB`, { cause: e as Error })
+        }
+    }
 
     async checkAuth() {
         this.logger.debug("Checking Google Cloud authentication")
