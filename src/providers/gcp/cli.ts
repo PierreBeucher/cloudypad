@@ -1,6 +1,6 @@
 import { MACHINE_GPU_COMPAT, DISK_TYPE_DESCRIPTIONS, NETWORK_TIER_DESCRIPTIONS, NIC_TYPE_DESCRIPTIONS, DEFAULT_DISK_TYPE, DEFAULT_NETWORK_TIER, DEFAULT_NIC_TYPE, MACHINE_TYPE_FAMILY_DESCRIPTIONS, MACHINE_TYPE_FAMILIES_GAMING } from "./const";
 import { isGamingMachineType } from "./filtering";
-import { GPU_DESCRIPTIONS, REGION_PREFIX_LABELS } from "./const";
+import { GPU_DESCRIPTIONS, REGION_PREFIX_LABELS, REGION_COUNTRY_BY_REGION } from "./const";
 import { GcpInstanceInput, GcpInstanceStateV1, GcpProvisionInputV1, GcpProvisionInputV1Schema } from "./state"
 import { CommonConfigurationInputV1, CommonInstanceInput } from "../../core/state/state"
 import { input, select } from '@inquirer/prompts';
@@ -357,7 +357,9 @@ export class GcpInputPrompter extends AbstractInputPrompter<GcpCreateCliArgs, Gc
               })
             );
             // If we get here, at least one zone is valid
-            return { name: `${r.name} (${r.description})`, value: r.name };
+            const country = REGION_COUNTRY_BY_REGION[(r.name ?? '')];
+            const label = country ? `${r.name} (${country})` : `${r.name}`;
+            return { name: label, value: r.name };
           } catch {
             // No zone in this region has a gaming machine with compatible GPU
             return null;

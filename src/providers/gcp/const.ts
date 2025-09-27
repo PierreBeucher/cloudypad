@@ -94,3 +94,57 @@ export const REGION_PREFIX_LABELS: Record<string, string> = {
   'australia-': 'Australia',
   'northamerica-': 'North America',
 };
+
+// Region name -> Country/Location label for display in region selection.
+// Best-effort mapping based on public GCP region locations. Not exhaustive.
+// If a region is not listed here, we won't display a country label for it.
+export const REGION_COUNTRY_BY_REGION: Record<string, string> = {
+  // Europe
+  'europe-west1': 'Belgium',
+  'europe-west2': 'London, United Kingdom',
+  'europe-west3': 'Frankfurt, Germany',
+  'europe-west4': 'Netherlands',
+  'europe-west6': 'Zurich, Switzerland',
+  'europe-west8': 'Milan, Italy',
+  'europe-west9': 'Paris, France',
+  'europe-west10': 'Berlin, Germany',
+  'europe-west12': 'Turin, Italy',
+  'europe-north1': 'Finland',
+  'europe-central2': 'Warsaw, Poland',
+
+  // North America
+  'us-central1': 'Iowa, USA',
+  'us-east1': 'South Carolina, USA',
+  'us-east4': 'Northern Virginia, USA',
+  'us-west1': 'Oregon, USA',
+  'us-west2': 'Los Angeles, USA',
+  'us-west3': 'Salt Lake City, USA',
+  'us-west4': 'Las Vegas, USA',
+  'northamerica-northeast1': 'Montréal, Canada',
+  'northamerica-northeast2': 'Toronto, Canada',
+
+  // Asia / Pacific
+  'asia-east1': 'Taiwan',
+  'asia-northeast1': 'Tokyo, Japan',
+  'asia-northeast2': 'Osaka, Japan',
+  'asia-northeast3': 'Seoul, South Korea',
+  'asia-southeast1': 'Singapore',
+  'asia-southeast2': 'Jakarta, Indonesia',
+  'asia-south1': 'Mumbai, India',
+  'asia-south2': 'Delhi, India',
+  'asia-east2': 'Hong Kong',
+
+  // Australia
+  'australia-southeast1': 'Sydney, Australia',
+  'australia-southeast2': 'Melbourne, Australia',
+
+  // South America
+  'southamerica-east1': 'São Paulo, Brazil',
+
+  // Middle East
+  'me-west1': 'Tel Aviv, Israel',
+  'me-central1': 'Doha, Qatar',
+
+  // Africa
+  'africa-south1': 'Johannesburg, South Africa',
+};
