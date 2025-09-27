@@ -10,6 +10,15 @@
 
 - name: Install Docker, NVIDIA drivers and Wolf
   hosts: all
+  pre_tasks:
+    - name: Check if provider specific vars file exists
+      set_fact:
+        provider_vars_exists: "{{ lookup('file', 'providers/' + cloudypad_provider + '/vars.yml', errors='ignore') is not none }}"
+
+    - name: Load provider specific vars
+      include_vars: "providers/{{ cloudypad_provider }}/vars.yml"
+      when: provider_vars_exists
+
   roles:
     - role: roles/prepare-install
       become: true
