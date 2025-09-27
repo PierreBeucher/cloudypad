@@ -1,14 +1,11 @@
 import * as assert from 'assert';
 import * as lodash from 'lodash';
 import * as sshpk from 'sshpk';
-import { GcpInstanceInput, GcpInstanceStateV1, GcpProvisionInputV1 } from '../../../src/providers/gcp/state';
-import { CLOUDYPAD_CONFIGURATOR_ANSIBLE, CLOUDYPAD_PROVIDER_GCP, PUBLIC_IP_TYPE_STATIC, CLOUDYPAD_PROVIDER_DUMMY } from '../../../src/core/const';
-import { DEFAULT_COMMON_INPUT, getUnitTestCoreClient, getUnitTestDummyProviderClient } from '../utils';
+import { CLOUDYPAD_CONFIGURATOR_ANSIBLE, PUBLIC_IP_TYPE_STATIC, CLOUDYPAD_PROVIDER_DUMMY } from '../../../src/core/const';
+import { DEFAULT_COMMON_INPUT, getUnitTestDummyProviderClient } from '../utils';
 import { fromBase64 } from '../../../src/tools/base64';
 import { InstanceInitializer } from '../../../src/core/initializer';
-import { CommonConfigurationInputV1 } from '../../../src/core/state/state';
-import { DummyInstanceInput, DummyInstanceStateV1, DummyProvisionInputV1 } from '../../../src/providers/dummy/state';
-import { GenericStateParser } from '../../../src/core/state/parser';
+import { DummyInstanceInput, DummyInstanceStateV1 } from '../../../src/providers/dummy/state';
 
 describe('Instance initializer', () => {
 
