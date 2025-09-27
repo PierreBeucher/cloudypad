@@ -80,3 +80,17 @@ export const NIC_TYPE_DESCRIPTIONS: Record<string, string> = {
   [NIC_TYPES[1]]: 'GVNIC (high throughput / low latency, supported on some VMs)',
   [NIC_TYPES[2]]: 'Virtio Net (legacy, broad compatibility)',
 };
+
+// Region prefix -> user-friendly label used in the continent/group prompt
+// Note: Prefixes are derived from region names (e.g. "europe-west4" -> "europe-").
+// If a prefix is not known here, the UI will show "<UNKNOWN>".
+export const REGION_PREFIX_LABELS: Record<string, string> = {
+  'europe-': 'Europe',
+  'us-': 'United States / Canada',
+  'asia-': 'Asia / Pacific',
+  'southamerica-': 'South America',
+  'me-': 'Middle East',
+  'africa-': 'Africa',
+  'australia-': 'Australia',
+  'northamerica-': 'North America',
+};

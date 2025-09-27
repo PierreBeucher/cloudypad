@@ -9,7 +9,7 @@ type MachineType = { name?: string | null; guestCpus?: number | null; memoryMb?:
 type AcceleratorType = { name?: string | null };
 
 type RegionClient = {
-	listRegions: (prefix?: string) => Promise<Region[]>;
+	listRegions: () => Promise<Region[]>;
 	listRegionZones: (regionName: string) => Promise<string[]>;
 	listMachineTypes: (zone: string) => Promise<MachineType[]>;
 	listAcceleratorTypes: (zone: string) => Promise<AcceleratorType[]>;
@@ -30,6 +30,10 @@ type SelectFn = (opts: { message: string; choices: unknown; default?: unknown })
 
 describe('GCP CLI region/zone selection (cli-region-zone)', () => {
 	before(function(){ this.timeout(5000); });
+	let infoSpy: sinon.SinonSpy | undefined;
+	afterEach(() => {
+		if (infoSpy) { infoSpy.restore(); infoSpy = undefined; }
+	});
 	const coreConfig = getUnitTestCoreConfig();
 
 	function makePrompter(): GcpPrompterPrivate {
@@ -40,15 +44,14 @@ describe('GCP CLI region/zone selection (cli-region-zone)', () => {
 		this.timeout(5000);
 		const prompter = makePrompter();
 		const fakeSelect = sinon.stub();
-		fakeSelect.onCall(0).resolves('europe-');
+		fakeSelect.onCall(0).resolves('Europe');
 		fakeSelect.onCall(1).resolves('europe-west4');
 		sinon.stub(prompter as GcpPrompterPrivate & { getSelect: () => SelectFn }, 'getSelect').returns(fakeSelect as unknown as SelectFn);
 
-		const infoSpy = sinon.spy(console, 'info');
+	infoSpy = sinon.spy(console, 'info');
 
 		const client: RegionClient = {
-			listRegions: async (prefix?: string): Promise<Region[]> => {
-				assert.strictEqual(prefix, 'europe-');
+			listRegions: async (): Promise<Region[]> => {
 				return [
 					{ name: 'europe-west4', description: 'Europe West 4', id: '1' },
 					{ name: 'europe-west1', description: 'Europe West 1', id: '2' },
@@ -74,14 +77,14 @@ describe('GCP CLI region/zone selection (cli-region-zone)', () => {
 		assert.strictEqual(fakeSelect.callCount, 2);
 		assert.ok(infoSpy.called, 'Expected console.info to be called for waiting message');
 		assert.ok(infoSpy.args.some(a => /Listing available GCP regions/i.test(a.join(' '))));
-		infoSpy.restore();
+	// restored in afterEach
 	});
 
 	it('region(): throws when no eligible region is available', async function () {
 		this.timeout(5000);
 		const prompter = makePrompter();
 		const fakeSelect = sinon.stub();
-		fakeSelect.onCall(0).resolves('europe-');
+		fakeSelect.onCall(0).resolves('Europe');
 		sinon.stub(prompter as GcpPrompterPrivate & { getSelect: () => SelectFn }, 'getSelect').returns(fakeSelect as unknown as SelectFn);
 
 		const client: RegionClient = {
@@ -101,7 +104,7 @@ describe('GCP CLI region/zone selection (cli-region-zone)', () => {
 		const fakeSelect = sinon.stub();
 		fakeSelect.onCall(0).resolves('europe-west4-b');
 		sinon.stub(prompter as GcpPrompterPrivate & { getSelect: () => SelectFn }, 'getSelect').returns(fakeSelect as unknown as SelectFn);
-		const infoSpy = sinon.spy(console, 'info');
+	infoSpy = sinon.spy(console, 'info');
 
 		const client: ZoneClient = {
 			listRegionZones: async (regionName: string): Promise<string[]> => {
@@ -123,7 +126,7 @@ describe('GCP CLI region/zone selection (cli-region-zone)', () => {
 		assert.strictEqual(fakeSelect.callCount, 1);
 		assert.ok(infoSpy.called, 'Expected console.info to be called for waiting message');
 		assert.ok(infoSpy.args.some(a => /Listing zones in region europe-west4/i.test(a.join(' '))));
-		infoSpy.restore();
+	// restored in afterEach
 	});
 
 	it('zone(): throws when region has no eligible zones', async function () {
