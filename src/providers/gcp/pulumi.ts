@@ -1,6 +1,7 @@
 import * as gcp from "@pulumi/gcp"
 import * as pulumi from "@pulumi/pulumi"
 import { LocalWorkspaceOptions, OutputMap } from "@pulumi/pulumi/automation"
+import { DiskResizer } from "./dynamic/disk-resizer"
 import { InstancePulumiClient } from "../../tools/pulumi/client"
 import { PUBLIC_IP_TYPE_DYNAMIC, PUBLIC_IP_TYPE_STATIC, SimplePortDefinition } from "../../core/const"
 import { CostAlertOptions } from "../../core/provisioner"
@@ -130,6 +131,20 @@ class CloudyPadGCEInstance extends pulumi.ComponentResource {
 
             return ni[0].accessConfigs[0].natIp
         })
+
+        // Ensure boot disk size via dynamic resource (no shrink; idempotent)
+        // Derive the created disk name from the bootDisk.source URL
+        const diskName = gceInstance.bootDisk.apply(bd => {
+            const src = (bd as unknown as { source?: string })?.source;
+            const match = typeof src === 'string' ? src.match(/\/disks\/([^/]+)$/) : null;
+            return match?.[1] ?? gcpResourceNamePrefix;
+        });
+        new DiskResizer(`${name}-bootdisk-resizer`, {
+            projectId: args.projectId,
+            zone: args.zone,
+            diskName: diskName,
+            sizeGb: pulumi.output(args.bootDisk?.sizeGb ?? 50),
+        }, { ...commonPulumiOpts, dependsOn: [gceInstance] });
 
         if(args.costAlert){ 
             const budgetEmailNotifChannel = new gcp.monitoring.NotificationChannel(`${name}-budget-email-notif-channel`, {
