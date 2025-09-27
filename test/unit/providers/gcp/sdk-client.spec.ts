@@ -2,9 +2,9 @@ import * as assert from 'assert';
 import { GcpClient } from '../../../../src/providers/gcp/sdk-client';
 
 describe('GcpClient.listRegions', function () {
-  it('should filter regions by continent prefix', async function () {
-    // Mocked regions list
-    const mockRegions = [
+  it('should list all regions (no SDK-side filtering)', async function () {
+    type Region = { name?: string };
+    const mockRegions: Region[] = [
       { name: 'europe-west1' },
       { name: 'europe-west2' },
       { name: 'us-central1' },
@@ -13,27 +13,14 @@ describe('GcpClient.listRegions', function () {
       { name: 'us-west1' },
       { name: 'africa-south1' },
     ];
-    // Mock GcpClient
-    const client = new GcpClient('test', 'fake-project');
 
-    client.regions = {
-      list: async () => [mockRegions],
-    } as { list: () => Promise<{ name: string }[][]> };
+    class TestClient extends GcpClient {
+      public override regions!: { list: () => Promise<Region[][]> };
+    }
 
-    const europe = await client.listRegions('europe-');
-    assert.deepStrictEqual(europe.map(r => r.name), [
-      'europe-west1', 'europe-west2', 'europe-north1',
-    ]);
-
-    const us = await client.listRegions('us-');
-    assert.deepStrictEqual(us.map(r => r.name), [
-      'us-central1', 'us-west1',
-    ]);
-
-    const asia = await client.listRegions('asia-');
-    assert.deepStrictEqual(asia.map(r => r.name), ['asia-east1']);
-
-    const africa = await client.listRegions('africa-');
-    assert.deepStrictEqual(africa.map(r => r.name), ['africa-south1']);
+    const client = new TestClient('test', 'fake-project');
+    client.regions = { list: async () => [mockRegions] };
+    const all = await client.listRegions();
+    assert.deepStrictEqual(all.map(r => r.name), mockRegions.map(r => r.name));
   });
 });

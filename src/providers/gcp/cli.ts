@@ -1,6 +1,6 @@
 import { MACHINE_GPU_COMPAT, DISK_TYPE_DESCRIPTIONS, NETWORK_TIER_DESCRIPTIONS, NIC_TYPE_DESCRIPTIONS, DEFAULT_DISK_TYPE, DEFAULT_NETWORK_TIER, DEFAULT_NIC_TYPE, MACHINE_TYPE_FAMILY_DESCRIPTIONS, MACHINE_TYPE_FAMILIES_GAMING } from "./const";
 import { isGamingMachineType } from "./filtering";
-import { GPU_DESCRIPTIONS } from "./const";
+import { GPU_DESCRIPTIONS, REGION_PREFIX_LABELS } from "./const";
 import { GcpInstanceInput, GcpInstanceStateV1, GcpProvisionInputV1, GcpProvisionInputV1Schema } from "./state"
 import { CommonConfigurationInputV1, CommonInstanceInput } from "../../core/state/state"
 import { input, select } from '@inquirer/prompts';
@@ -270,26 +270,50 @@ export class GcpInputPrompter extends AbstractInputPrompter<GcpCreateCliArgs, Gc
   private async region(client: GcpClient, region?: string): Promise<string> {
     if (region) return region;
 
-    // Ask user for continent
-    const continentChoices = [
-      { name: 'Europe', value: 'europe-' },
-      { name: 'United States / Canada', value: 'us-' },
-      { name: 'Asia / Pacific', value: 'asia-' },
-      { name: 'South America', value: 'southamerica-' },
-      { name: 'Middle East', value: 'me-' },
-      { name: 'Africa', value: 'africa-' },
-    ];
-    const userContinentPrefix = await this.getSelect()({
+    // Build continent choices dynamically from available region names.
+    // We derive a prefix by taking the first segment followed by a dash (e.g., "europe-west4" -> "europe-").
+    const allRegions = await client.listRegions();
+    // Normalize region names (trim/lowercase) and build a unique, sorted set of prefixes like "europe-", "us-".
+    const prefixSet = new Set<string>();
+    for (const r of allRegions) {
+      const name = (r?.name ?? '').trim().toLowerCase();
+      if (!name) continue;
+      const dashIdx = name.indexOf('-');
+      if (dashIdx <= 0) continue; // unexpected, but skip if no dash
+      const prefix = name.slice(0, dashIdx + 1); // include trailing '-'
+      prefixSet.add(prefix);
+    }
+    const sortedPrefixes = Array.from(prefixSet).sort();
+
+    // Group prefixes by display label to avoid duplicate continent entries
+    const labelToPrefixes = new Map<string, string[]>();
+    for (const prefix of sortedPrefixes) {
+      const base = prefix.replace(/-$/, '');
+      const fallback = base ? base.charAt(0).toUpperCase() + base.slice(1) : '<UNKNOWN>';
+      const map = REGION_PREFIX_LABELS;
+      const label = (Object.prototype.hasOwnProperty.call(map, prefix)
+        ? map[prefix as keyof typeof map]
+        : fallback);
+      const list = labelToPrefixes.get(label) ?? [];
+      list.push(prefix);
+      labelToPrefixes.set(label, list);
+    }
+    const continentChoices = Array.from(labelToPrefixes.keys())
+      .sort()
+      .map(label => ({ name: label, value: label }));
+
+    const userContinentLabel = await this.getSelect()({
       message: 'Select your continent for the closest regions:',
-      choices: continentChoices,
-      default: 'europe-',
+      choices: continentChoices.length > 0 ? continentChoices : [ { name: '<UNKNOWN>', value: '' } ],
+      default: continentChoices.find(c => c.value === 'Europe') ? 'Europe' : (continentChoices[0]?.value ?? ''),
     });
 
     // Inform user that region discovery may take a little time as several API calls are performed
     console.info('\nListing available GCP regions with compatible gaming machine types and GPUs... (this can take ~10-30s)')
 
-    // Only fetch regions matching the selected continent prefix
-    const regions = await client.listRegions(userContinentPrefix);
+  // Only keep regions matching any prefix of the selected continent label (reuse already fetched list)
+  const selectedPrefixes = labelToPrefixes.get(userContinentLabel) ?? [];
+  const regions = allRegions.filter(r => selectedPrefixes.some(p => (r.name ?? '').startsWith(p)));
 
     // For each region, fetch zones in parallel
     type RegionZone = { region: typeof regions[number], zones: string[] };
