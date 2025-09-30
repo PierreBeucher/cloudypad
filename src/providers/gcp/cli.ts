@@ -11,8 +11,6 @@ import { CLI_OPTION_AUTO_STOP_TIMEOUT, CLI_OPTION_AUTO_STOP_ENABLE, CLI_OPTION_C
 import { RUN_COMMAND_CREATE, RUN_COMMAND_UPDATE } from "../../tools/analytics/events";
 import { InteractiveInstanceUpdater } from "../../cli/updater";
 import { GcpProviderClient } from "./provider";
-import { validateGcpDiskResize } from "./validation";
-// no child process usage here; removed legacy pulumi import fallback
 
 export interface GcpCreateCliArgs extends CreateCliArgs {
     projectId?: string
@@ -292,39 +290,6 @@ export class GcpCliCommandGenerator extends CliCommandGenerator {
             .action(async (cliArgs: GcpUpdateCliArgs) => {
                 this.analytics.sendEvent(RUN_COMMAND_UPDATE, { provider: CLOUDYPAD_PROVIDER_GCP })
                 try {
-          // If user wants to update disk size, validate it against current state (no shrink allowed on GCP persistent disks).
-          const providerClient = new GcpProviderClient({ config: args.coreConfig })
-          let currentState: GcpInstanceStateV1 | undefined
-          try {
-            currentState = await providerClient.getInstanceState(cliArgs.name)
-          } catch (e) {
-            console.warn(`Could not load current state prior to update (continuing): ${(e as Error).message}`)
-          }
-
-          if (cliArgs.diskSize !== undefined && currentState) {
-            const requested = cliArgs.diskSize
-            const zone = currentState.provision.input.zone
-            const projectId = currentState.provision.input.projectId
-            const inferredDiskName = `cloudypad-${cliArgs.name}`.toLowerCase()
-            let actual: number | undefined
-            try {
-              if (zone && projectId) {
-                const client = new GcpClient(GcpCliCommandGenerator.name, projectId)
-                actual = await client.getDiskSizeGb(zone, inferredDiskName)
-              }
-            } catch (e) {
-              console.warn(`Could not fetch live disk size for '${inferredDiskName}' in ${zone}/${projectId}; falling back to state. ${(e as Error).message}`)
-            }
-
-            // Fallback to previous declared state if live query unavailable
-            const previous = actual ?? currentState.provision.input.diskSize
-            const outcome = validateGcpDiskResize(previous, requested)
-            if (requested === previous) {
-              console.info(`Disk size unchanged (${requested}GB).`)
-            } else if (outcome === 'resize') {
-              console.info(`Resizing disk from ${previous}GB to ${requested}GB...`)
-            }
-          }
                     await new InteractiveInstanceUpdater<GcpInstanceStateV1, GcpUpdateCliArgs>({
                         providerClient: new GcpProviderClient({ config: args.coreConfig }),
                         inputPrompter: new GcpInputPrompter({ coreConfig: args.coreConfig }),

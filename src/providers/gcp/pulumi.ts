@@ -81,6 +81,8 @@ class CloudyPadGCEInstance extends pulumi.ComponentResource {
         const gceInstance = new gcp.compute.Instance(`${name}-gce-instance`, {
             name: gcpResourceNamePrefix,
             machineType: args.machineType,
+            // Explicitly set zone to align with the disk and provider configuration
+            zone: args.zone,
             bootDisk: {
                 initializeParams: {
                     image: "ubuntu-2204-jammy-v20241119",
@@ -250,6 +252,7 @@ async function gcpPulumiProgram(): Promise<Record<string, any> | void> {
 
     const gcpConfig = new pulumi.Config("gcp")
     const projectId = gcpConfig.require("project")
+    const zone = gcpConfig.require("zone");
 
     const config = new pulumi.Config()
     const machineType = config.require("machineType")
