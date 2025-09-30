@@ -1,4 +1,4 @@
-import { InstancesClient, protos, RegionsClient, MachineTypesClient, AcceleratorTypesClient, ZoneOperationsClient } from '@google-cloud/compute'
+import { InstancesClient, protos, RegionsClient, MachineTypesClient, AcceleratorTypesClient, ZoneOperationsClient, DisksClient } from '@google-cloud/compute'
 import { GoogleAuth } from 'google-auth-library'
 import { getLogger, Logger } from '../../log/utils'
 import { ProjectsClient, protos as rmprotos  } from '@google-cloud/resource-manager'
@@ -52,6 +52,7 @@ export class GcpClient {
     private readonly regions: RegionsClient
     private readonly machines: MachineTypesClient
     private readonly accelerators: AcceleratorTypesClient
+    private readonly disks: DisksClient
 
     constructor(name: string, projectId: string){
         this.logger = getLogger(name)
@@ -60,6 +61,7 @@ export class GcpClient {
         this.auth = new GoogleAuth()
         this.machines = new MachineTypesClient()
         this.accelerators = new AcceleratorTypesClient()
+        this.disks = new DisksClient()
         this.projectId = projectId
     }
     /**
