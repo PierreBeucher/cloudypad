@@ -58,13 +58,17 @@ export class DiskResizerProvider implements pulumi.dynamic.ResourceProvider {
         if (actual === undefined) {
             throw new Error(`Boot disk '${diskName}' not found in ${zone}/${projectId}.`);
         }
+        pulumi.log.info(`Disk '${diskName}' in ${zone}/${projectId}: current ${actual} GiB, requested ${sizeGb} GiB`);
         if (sizeGb < actual) {
             throw new Error(`GCP persistent disks cannot shrink (current: ${actual}GB, requested: ${sizeGb}GB).`);
         }
         if (sizeGb === actual) {
+            pulumi.log.info(`No resize needed for disk '${diskName}' (already ${actual} GiB).`);
             return actual;
         }
+        pulumi.log.info(`Resizing disk '${diskName}' from ${actual} → ${sizeGb} GiB...`);
         await client.resizeDisk(zone, diskName, sizeGb);
+        pulumi.log.info(`Resized disk '${diskName}' to ${sizeGb} GiB.`);
         return sizeGb;
     }
 }

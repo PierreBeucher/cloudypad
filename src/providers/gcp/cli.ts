@@ -1,4 +1,4 @@
-import { GcpInstanceInput, GcpInstanceStateV1, GcpProvisionInputV1, GcpStateParser } from "./state"
+import { GcpInstanceInput, GcpInstanceStateV1, GcpProvisionInputV1 } from "./state"
 import { CommonConfigurationInputV1, CommonInstanceInput } from "../../core/state/state"
 import { input, select } from '@inquirer/prompts';
 import { AbstractInputPrompter, costAlertCliArgsIntoConfig, PromptOptions } from "../../cli/prompter";
