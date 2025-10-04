@@ -129,15 +129,7 @@ export class GcpInputPrompter extends AbstractInputPrompter<GcpCreateCliArgs, Gc
     if (diskType) return diskType; // already narrowed & valid
     
      if (!client || !zone) throw new Error("diskType prompt requires GcpClient and zone.");
-    const diskTypeEnum = enumOptions(GcpProvisionInputV1Schema.shape.diskType) as readonly string[];
-    
-    // If narrowed value disappeared (undefined) but a raw CLI value existed and was invalid, log it.
-    if (!diskType && this.rawDiskType) {
-      // At this point the raw value was dropped by narrowing so it's necessarily invalid – log once.
-      console.info(`Provided disk type '${this.rawDiskType}' is not valid. Allowed values: ${Array.from(diskTypeEnum).join(', ')}. You'll be prompted to choose a valid one.`)
-      // Prevent double logging if method called again.
-      this.rawDiskType = undefined;
-    }
+    const diskTypeEnum = enumOptions(GcpProvisionInputV1Schema.shape.diskType);
    
     let availableDiskTypes: string[] = [];
     try {
