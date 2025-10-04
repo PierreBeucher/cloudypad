@@ -9,14 +9,8 @@ import type { PartialDeep } from 'type-fest';
 import { getUnitTestCoreConfig } from '../../utils';
 
 import type { select as InquirerSelect } from '@inquirer/prompts';
-
-type SelectParam = Parameters<typeof InquirerSelect>[0];
-type SelectLike = typeof InquirerSelect & { cancel?: (opts: SelectParam) => Promise<unknown> };
-function mkSelectFromStub(stub: sinon.SinonStub): typeof InquirerSelect {
-  const selectLike: SelectLike = ((opts: SelectParam) => stub(opts)) as SelectLike;
-  selectLike.cancel = (opts: SelectParam) => stub(opts);
-  return selectLike;
-}
+import { mkSelect, toInquirerSelect } from '../../helpers/typed-select-helpers';
+const mkSelectFromStub = (stub: sinon.SinonStub): typeof InquirerSelect => toInquirerSelect(mkSelect('IGNORED', () => { stub(); }));
 
 // Testable prompter exposing a wrapper to call the protected prompt flow and overriding getSelect
 class TestPrompter extends GcpInputPrompter {

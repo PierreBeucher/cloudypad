@@ -10,24 +10,12 @@ import { GcpCreateCliArgs, GcpInputPrompter, type GcpApi } from '../../../../src
 import lodash from 'lodash';
 import { PartialDeep } from 'type-fest';
 import type { CommonInstanceInput } from '../../../../src/core/state/state';
-import type { select as InquirerSelect } from '@inquirer/prompts';
+// inquirer select type not needed directly; our helpers use a structural adapter
+import { mkSelect, toInquirerSelect, type SelectParam } from '../../helpers/typed-select-helpers';
 
 describe('GCP input prompter', () => {
-  // Helper to build a typed select adapter compatible with @inquirer/prompts.select
-  type SelectParam = Parameters<typeof InquirerSelect>[0];
-  type SelectLike = typeof InquirerSelect & { cancel?: (opts: SelectParam) => Promise<unknown> };
-  function mkSelect<T>(value: T, onCall?: (opts: SelectParam) => void): typeof InquirerSelect {
-    const selectLike: SelectLike = ((opts: SelectParam) => {
-      onCall?.(opts);
-      return Promise.resolve(value);
-    }) as SelectLike;
-    // Some versions expose a cancel helper; provide a no-op that matches the shape
-    selectLike.cancel = (opts: SelectParam) => {
-      onCall?.(opts);
-      return Promise.resolve(value);
-    };
-    return selectLike;
-  }
+  // Local adapter that wraps SelectLike into typeof InquirerSelect
+  const mkSelectAdapter = <T>(value: T, onCall?: (opts: SelectParam<T>) => void) => toInquirerSelect(mkSelect(value, onCall));
 
   // Minimal test prompter to access the protected provider-specific flow without exposing privates
   class TestPrompter extends GcpInputPrompter {
@@ -110,7 +98,7 @@ describe('GCP input prompter', () => {
 
   it('should return provided inputs without prompting when full input is provided', async () => {
     let selectCalls = 0;
-    const selectFn = mkSelect('ignored' as const, () => { selectCalls++; });
+  const selectFn = mkSelectAdapter('ignored', () => { selectCalls++; });
     const prompter = new GcpInputPrompter({ coreConfig, selectFn });
 
     // Provide a truly "full" input to bypass both common and provider-specific prompts
@@ -158,7 +146,7 @@ describe('GCP input prompter', () => {
 
   it('diskType prompt should early-return when diskType already provided', async () => {
     let selectCalled = 0;
-    const selectFn = mkSelect('ignored' as const, () => { selectCalled++; });
+  const selectFn = mkSelectAdapter('ignored', () => { selectCalled++; });
     const prompter = new TestPrompter({ coreConfig, selectFn });
     const common: CommonInstanceInput = {
       instanceName,
@@ -183,7 +171,7 @@ describe('GCP input prompter', () => {
 
   it('networkTier prompt should early-return when networkTier already provided', async () => {
     let selectCalled = 0;
-    const selectFn = mkSelect('ignored' as const, () => { selectCalled++; });
+  const selectFn = mkSelectAdapter('ignored', () => { selectCalled++; });
     const prompter = new TestPrompter({ coreConfig, selectFn });
     const common: CommonInstanceInput = {
       instanceName,
@@ -209,7 +197,7 @@ describe('GCP input prompter', () => {
 
   it('nicType prompt should early-return when nicType already provided', async () => {
     let selectCalled = 0;
-    const selectFn = mkSelect('ignored' as const, () => { selectCalled++; });
+  const selectFn = mkSelectAdapter('ignored', () => { selectCalled++; });
     const prompter = new TestPrompter({ coreConfig, selectFn });
     const common: CommonInstanceInput = {
       instanceName,
@@ -234,8 +222,8 @@ describe('GCP input prompter', () => {
   });
 
   it('networkTier invalid value should trigger prompt instead of early return', async () => {
-    let selectCalled = 0;
-    const selectFn = mkSelect('STANDARD' as const, () => { selectCalled++; });
+  let selectCalled = 0;
+  const selectFn = mkSelectAdapter('STANDARD', () => { selectCalled++; });
     const prompter = new TestPrompter({ coreConfig, selectFn });
     // Capture raw invalid value through the CLI narrowing path
     const partial = prompter["buildProvisionerInputFromCliArgs"]({
@@ -249,12 +237,30 @@ describe('GCP input prompter', () => {
     };
     const result = await prompter.run(common, partial);
     assert.strictEqual(result.provision.networkTier, 'STANDARD');
-    assert.ok(selectCalled > 0, 'Expected select to be called for invalid network tier (narrowed)');
+  assert.strictEqual(selectCalled, 1, 'Expected select to be called exactly once for invalid network tier');
+  });
+
+  it('networkTier valid value from CLI should not trigger prompt', async () => {
+  let selectCalled = 0;
+  const selectFn = mkSelectAdapter('IGNORED', () => { selectCalled++; });
+    const prompter = new TestPrompter({ coreConfig, selectFn });
+    const partial = prompter["buildProvisionerInputFromCliArgs"]({
+      ...TEST_CLI_ARGS,
+      networkTier: 'PREMIUM',
+    } as GcpCreateCliArgs) as PartialDeep<GcpInstanceInput>;
+    const common: CommonInstanceInput = {
+      instanceName,
+      provision: { ssh: { user: 'ubuntu', privateKeyPath: '/tmp/key' } },
+      configuration: {},
+    };
+    const result = await prompter.run(common, partial);
+    assert.strictEqual(result.provision.networkTier, 'PREMIUM');
+    assert.strictEqual(selectCalled, 0, 'Expected select not to be called for valid network tier');
   });
 
   it('nicType invalid value should trigger prompt instead of early return', async () => {
-    let selectCalled = 0;
-    const selectFn = mkSelect('auto' as const, () => { selectCalled++; });
+  let selectCalled = 0;
+  const selectFn = mkSelectAdapter('auto', () => { selectCalled++; });
     const prompter = new TestPrompter({ coreConfig, selectFn });
     const partial = prompter["buildProvisionerInputFromCliArgs"]({
       ...TEST_CLI_ARGS,
@@ -271,8 +277,8 @@ describe('GCP input prompter', () => {
   });
 
   it('diskType invalid value should trigger prompt instead of early return', async () => {
-    let selectCalled = 0;
-    const selectFn = mkSelect('pd-balanced' as const, () => { selectCalled++; });
+  let selectCalled = 0;
+  const selectFn = mkSelectAdapter('pd-balanced', () => { selectCalled++; });
     const client: GcpApi = {
       listRegions: async () => [],
       listRegionZones: async () => [],
