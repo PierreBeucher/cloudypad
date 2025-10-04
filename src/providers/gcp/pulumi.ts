@@ -94,8 +94,8 @@ class CloudyPadGCEInstance extends pulumi.ComponentResource {
         } else if (args.publicIpType !== PUBLIC_IP_TYPE_DYNAMIC) {
             throw `publicIpType must be either '${PUBLIC_IP_TYPE_STATIC}' or '${PUBLIC_IP_TYPE_DYNAMIC}'`
         }
-        // Build instance with strict typing, conditionally add networkPerformanceConfig only if enableTier1 is defined
-        const gceInstance = enableTier1.apply(cfg => {
+        // Build instance with strict typing, conditionally add networkPerformanceConfig inline based on enableTier1
+        const gceInstance = enableTier1.apply(enableTier1Result => {
             const instanceArgs: gcp.compute.InstanceArgs = {
                 name: gcpResourceNamePrefix,
                 machineType: args.machineType,
@@ -115,6 +115,9 @@ class CloudyPadGCEInstance extends pulumi.ComponentResource {
                         networkTier: effectiveNetworkTier,
                     }],
                 }],
+                networkPerformanceConfig: enableTier1Result
+                    ? { totalEgressBandwidthTier: enableTier1Result.totalEgressBandwidthTier }
+                    : undefined,
                 allowStoppingForUpdate: true,
                 metadata: {
                     "ssh-keys": `ubuntu:${args.publicKeyContent}`
@@ -131,7 +134,6 @@ class CloudyPadGCEInstance extends pulumi.ComponentResource {
                     preemptible: args.useSpot ?? false
                 },
             };
-            if (cfg) instanceArgs.networkPerformanceConfig = cfg;
             return new gcp.compute.Instance(`${name}-gce-instance`, instanceArgs, {
                 ...commonPulumiOpts,
                 // Ignore bootDisk changes to avoid machine replacement on change (user's data loss)
