@@ -10,7 +10,6 @@ import { GcpCreateCliArgs, GcpInputPrompter, type GcpApi } from '../../../../src
 import lodash from 'lodash';
 import { PartialDeep } from 'type-fest';
 import type { CommonInstanceInput } from '../../../../src/core/state/state';
-import type { PromptOptions } from '../../../../src/cli/prompter';
 
 describe('GCP input prompter', () => {
   // Minimal test prompter to access the protected provider-specific flow without exposing privates
@@ -93,31 +92,32 @@ describe('GCP input prompter', () => {
   });
 
   it('should return provided inputs without prompting when full input is provided', async () => {
-    const prompter = new GcpInputPrompter({ coreConfig });
+    let selectCalls = 0;
+    const selectFn = async () => { selectCalls++; return 'ignored'; };
+    const prompter = new GcpInputPrompter({ coreConfig, selectFn });
 
-    // Type-safe monkey-patch of the protected method (no `any`).
-    type PromptSpecificInputMethod = (
-      commonInput: CommonInstanceInput,
-      partialInput: PartialDeep<GcpInstanceInput>,
-      createOptions: PromptOptions
-    ) => Promise<GcpInstanceInput>;
+    // Provide a truly "full" input to bypass both common and provider-specific prompts
+    const fullInput: GcpInstanceInput = lodash.cloneDeep({
+      ...TEST_INPUT,
+      configuration: {
+        ...TEST_INPUT.configuration,
+        // Ensure only one streaming server is enabled to avoid conflict
+        sunshine: null,
+        // Ensure streaming server is already chosen so no select occurs in common flow
+        wolf: { enable: true },
+        // Ensure autostop choices are present to avoid prompts
+        autostop: { enable: true, timeoutSeconds: 900 },
+      },
+    });
 
-    const prompterWithPatch = prompter as unknown as {
-      promptSpecificInput: PromptSpecificInputMethod;
-    };
-
-    prompterWithPatch.promptSpecificInput = async () => {
-      // Return a deep clone of the full input to simulate pass-through
-      return lodash.cloneDeep(TEST_INPUT);
-    };
-
-    const result = await prompter.promptInput(TEST_INPUT, {
+    const result = await prompter.promptInput(fullInput, {
       overwriteExisting: true,
       autoApprove: true,
     });
 
-    // Direct comparison: full case already uses null in TEST_INPUT
-    assert.deepEqual(result, TEST_INPUT);
+    assert.deepEqual(result, fullInput);
+    // Provider-specific selects should not be called since all provider fields are present
+    assert.strictEqual(selectCalls, 0, 'Expected no provider-specific select prompts');
   });
 
   it('should convert CLI args into partial input (idempotent, with new types)', () => {
