@@ -4,7 +4,7 @@ import { GPU_DESCRIPTIONS, REGION_PREFIX_LABELS, REGION_COUNTRY_BY_REGION } from
 import { GcpInstanceInput, GcpInstanceStateV1, GcpProvisionInputV1, GcpProvisionInputV1Schema } from "./state"
 import { CommonConfigurationInputV1, CommonInstanceInput } from "../../core/state/state"
 import { input, select } from '@inquirer/prompts';
-import { AbstractInputPrompter, costAlertCliArgsIntoConfig, PromptOptions } from "../../cli/prompter";
+import { AbstractInputPrompter, costAlertCliArgsIntoConfig, PromptOptions, AbstractInputPrompterArgs } from "../../cli/prompter";
 import { GcpClient } from "./sdk-client";
 import lodash from 'lodash'
 import { CLOUDYPAD_PROVIDER_GCP, PUBLIC_IP_TYPE } from "../../core/const";
@@ -36,7 +36,32 @@ export interface GcpCreateCliArgs extends CreateCliArgs {
 /** Possible update arguments for GCP update. */
 export type GcpUpdateCliArgs = UpdateCliArgs & Omit<GcpCreateCliArgs, "projectId" | "region" | "zone">
 
+// Narrow API surface needed by the prompter for dependency injection and testing
+export type GcpApi = Pick<GcpClient,
+  | "listRegions"
+  | "listRegionZones"
+  | "listMachineTypes"
+  | "listAcceleratorTypes"
+  | "listDiskTypes"
+>;
+
+export interface GcpInputPrompterArgs extends AbstractInputPrompterArgs {
+  /** Optional factory to create a GCP API client; useful for tests. */
+  clientFactory?: (name: string, projectId: string) => GcpApi;
+  /** Optional inquirer select function injection; useful for tests. */
+  selectFn?: typeof select;
+}
+
 export class GcpInputPrompter extends AbstractInputPrompter<GcpCreateCliArgs, GcpProvisionInputV1, CommonConfigurationInputV1> {
+
+  private readonly clientFactory?: (name: string, projectId: string) => GcpApi;
+  private readonly selectFn?: typeof select;
+
+  constructor(args: GcpInputPrompterArgs) {
+    super(args);
+    this.clientFactory = args.clientFactory;
+    this.selectFn = args.selectFn;
+  }
 
   // Preserve raw CLI values for enum-like fields so we can surface informative logs
   // in case they were invalid and got dropped during early narrowing in
@@ -46,10 +71,10 @@ export class GcpInputPrompter extends AbstractInputPrompter<GcpCreateCliArgs, Gc
   private rawNicType?: string;
 
   /**
-   * Wrapper around the inquirer select function to allow stubbing/mocking in unit tests
-   * without relying on module-level captured references (destructured import).
+   * Centralized accessor to the select prompt; primarily here to keep call sites DRY.
+   * Tests should inject a custom function via args.selectFn rather than subclassing.
    */
-  protected getSelect() { return select }
+  private getSelect() { return this.selectFn ?? select }
 
   /** Build the initial partial input from CLI args (strings are narrowed to enum literal unions). */
   protected buildProvisionerInputFromCliArgs(cliArgs: GcpCreateCliArgs): PartialDeep<GcpInstanceInput> {
@@ -82,7 +107,9 @@ export class GcpInputPrompter extends AbstractInputPrompter<GcpCreateCliArgs, Gc
     }
 
     const projectId = await this.project(partialInput.provision?.projectId)
-    const client = new GcpClient(GcpInputPrompter.name, projectId)
+    const client: GcpApi = this.clientFactory
+      ? this.clientFactory(GcpInputPrompter.name, projectId)
+      : new GcpClient(GcpInputPrompter.name, projectId)
     const region = await this.region(client, partialInput.provision?.region)
     const zone = await this.zone(client, region, partialInput.provision?.zone)
     const machineType = await this.machineType(client, zone, partialInput.provision?.machineType)
@@ -125,7 +152,7 @@ export class GcpInputPrompter extends AbstractInputPrompter<GcpCreateCliArgs, Gc
   }
 
   /** Prompt for disk type using intersection of schema enum and available API values. */
-  private async diskType(diskType?: string, client?: GcpClient, zone?: string): Promise<string> {
+  private async diskType(diskType?: string, client?: GcpApi, zone?: string): Promise<string> {
     if (diskType) return diskType; // already narrowed & valid
     
      if (!client || !zone) throw new Error("diskType prompt requires GcpClient and zone.");
@@ -197,7 +224,7 @@ export class GcpInputPrompter extends AbstractInputPrompter<GcpCreateCliArgs, Gc
     });
   }
 
-  private async machineType(client: GcpClient, zone: string, machineType?: string): Promise<string> {
+  private async machineType(client: GcpApi, zone: string, machineType?: string): Promise<string> {
     if (machineType) return machineType;
 
     const machineTypes = await client.listMachineTypes(zone);
@@ -259,7 +286,7 @@ export class GcpInputPrompter extends AbstractInputPrompter<GcpCreateCliArgs, Gc
     return Number.parseInt(selectedDiskSize)
   }
 
-  private async region(client: GcpClient, region?: string): Promise<string> {
+  private async region(client: GcpApi, region?: string): Promise<string> {
     if (region) return region;
 
     // Build continent choices dynamically from available region names.
@@ -311,7 +338,7 @@ export class GcpInputPrompter extends AbstractInputPrompter<GcpCreateCliArgs, Gc
     type RegionZone = { region: typeof regions[number], zones: string[] };
     const regionZoneMap = (await Promise.all(
       regions.map(async r => {
-        if (!r.name || !r.id) return null;
+        if (!r.name) return null;
         try {
           const zones = await client.listRegionZones(r.name);
           return { region: r, zones };
@@ -372,7 +399,7 @@ export class GcpInputPrompter extends AbstractInputPrompter<GcpCreateCliArgs, Gc
     return selected.toString();
   }
 
-  private async zone(client: GcpClient, region: string, zone?: string): Promise<string> {
+  private async zone(client: GcpApi, region: string, zone?: string): Promise<string> {
     if (zone) return zone;
 
     // Inform user about zone filtering duration
@@ -429,7 +456,7 @@ export class GcpInputPrompter extends AbstractInputPrompter<GcpCreateCliArgs, Gc
     })
   }
 
-  private async acceleratorType(client: GcpClient, zone: string, acceleratorType?: string, machineType?: string): Promise<string> {
+  private async acceleratorType(client: GcpApi, zone: string, acceleratorType?: string, machineType?: string): Promise<string> {
     if (acceleratorType) return acceleratorType;
 
     const acceleratorTypes = await client.listAcceleratorTypes(zone)
