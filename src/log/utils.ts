@@ -41,9 +41,9 @@ function makeConsoleLogger(name: string, minLevel: number): Logger {
 function tryMakeTslogLogger(name: string, minLevel: number): Logger | undefined {
     try {
         // Hide require from static analyzers/bundlers (Pulumi closure)
-        const req = (0, eval)("require") as unknown as (id: string) => unknown
+        const req: unknown = (0, eval)("require")
         if (typeof req !== "function") return undefined
-        const mod = req("tslog") as unknown
+        const mod = (req as (id: string) => unknown)("tslog") as unknown
         const maybeLogger = (mod as Record<string, unknown>)["Logger"]
         if (typeof maybeLogger !== "function") return undefined
         type TslogCtor = new (opts: { name: string; minLevel: number }) => {

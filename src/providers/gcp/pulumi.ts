@@ -136,11 +136,9 @@ class CloudyPadGCEInstance extends pulumi.ComponentResource {
 
         // Ensure boot disk size via dynamic resource (no shrink; idempotent)
         // Derive the created disk name from the bootDisk.source URL
-        const diskName = gceInstance.bootDisk.apply(bd => {
-            const src = (bd as unknown as { source?: string })?.source;
-            const match = typeof src === 'string' ? src.match(/\/disks\/([^/]+)$/) : null;
-            return match?.[1] ?? gcpResourceNamePrefix;
-        });
+        // On GCP, when no custom disk name is provided, the boot disk inherits the instance name.
+        // Since we control the instance name, use it deterministically.
+        const diskName = pulumi.output(gcpResourceNamePrefix)
         new DiskResizer(`${name}-bootdisk-resizer`, {
             projectId: args.projectId,
             zone: args.zone,

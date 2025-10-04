@@ -72,7 +72,7 @@ export class GcpClient {
         try {
             const [disk] = await this.disks.get({ project: this.projectId, zone, disk: diskName })
             // sizeGb is a string in the API; coerce to number
-            const raw = (disk as unknown as { sizeGb?: string | number }).sizeGb
+            const raw = (disk && typeof disk === 'object' && 'sizeGb' in disk) ? (disk as { sizeGb?: string | number }).sizeGb : undefined
             if (raw === undefined || raw === null) return undefined
             const n = typeof raw === 'number' ? raw : Number.parseInt(raw, 10)
             return Number.isFinite(n) ? n : undefined
