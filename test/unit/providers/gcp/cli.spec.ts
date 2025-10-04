@@ -223,7 +223,7 @@ describe('GCP input prompter', () => {
     // Capture raw invalid value through the CLI narrowing path
     const partial = prompter["buildProvisionerInputFromCliArgs"]({
       ...TEST_CLI_ARGS,
-      networkTier: 'INVALID_TIER' as unknown as string,
+      networkTier: 'INVALID_TIER',
     } as GcpCreateCliArgs) as PartialDeep<GcpInstanceInput>;
     const common: CommonInstanceInput = {
       instanceName,
@@ -241,7 +241,7 @@ describe('GCP input prompter', () => {
     const prompter = new TestPrompter({ coreConfig, selectFn });
     const partial = prompter["buildProvisionerInputFromCliArgs"]({
       ...TEST_CLI_ARGS,
-      nicType: 'BAD_NIC' as unknown as string,
+      nicType: 'BAD_NIC',
     } as GcpCreateCliArgs) as PartialDeep<GcpInstanceInput>;
     const common: CommonInstanceInput = {
       instanceName,
@@ -266,7 +266,7 @@ describe('GCP input prompter', () => {
     const prompter = new TestPrompter({ coreConfig, selectFn, clientFactory: () => client });
     const partial = prompter["buildProvisionerInputFromCliArgs"]({
       ...TEST_CLI_ARGS,
-      diskType: 'BAD_DISK' as unknown as string,
+      diskType: 'BAD_DISK',
     } as GcpCreateCliArgs) as PartialDeep<GcpInstanceInput>;
     // Ensure region/zone exist for the diskType prompt path to be able to call listDiskTypes
     partial.provision = {
