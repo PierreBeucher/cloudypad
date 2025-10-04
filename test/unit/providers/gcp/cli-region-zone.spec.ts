@@ -8,7 +8,15 @@ import type { GcpInstanceInput } from '../../../../src/providers/gcp/state';
 import type { PartialDeep } from 'type-fest';
 import { getUnitTestCoreConfig } from '../../utils';
 
-type InquirerSelect = typeof import('@inquirer/prompts').select;
+import type { select as InquirerSelect } from '@inquirer/prompts';
+
+type SelectParam = Parameters<typeof InquirerSelect>[0];
+type SelectLike = typeof InquirerSelect & { cancel?: (opts: SelectParam) => Promise<unknown> };
+function mkSelectFromStub(stub: sinon.SinonStub): typeof InquirerSelect {
+  const selectLike: SelectLike = ((opts: SelectParam) => stub(opts)) as SelectLike;
+  selectLike.cancel = (opts: SelectParam) => stub(opts);
+  return selectLike;
+}
 
 // Testable prompter exposing a wrapper to call the protected prompt flow and overriding getSelect
 class TestPrompter extends GcpInputPrompter {
@@ -66,7 +74,7 @@ describe('GCP CLI region/zone selection (cli-region-zone)', () => {
       .onSecondCall().resolves('europe-west4')
       // zone selection
       .onThirdCall().resolves('europe-west4-b');
-  const selectAdapter: InquirerSelect = (opts) => selectStub(opts);
+    const selectAdapter = mkSelectFromStub(selectStub);
     const prompter = new TestPrompter({ coreConfig, clientFactory: () => client, selectFn: selectAdapter });
 
     infoSpy = sinon.spy(console, 'info');
@@ -89,7 +97,7 @@ describe('GCP CLI region/zone selection (cli-region-zone)', () => {
     };
 
     const selectStub = sinon.stub().resolves('Europe');
-  const selectAdapter: InquirerSelect = (opts) => selectStub(opts);
+    const selectAdapter = mkSelectFromStub(selectStub);
     const prompter = new TestPrompter({ coreConfig, clientFactory: () => client, selectFn: selectAdapter });
 
     await assert.rejects(() => prompter.run(baseCommonInput(), basePartial()), /No region found/);
@@ -110,7 +118,7 @@ describe('GCP CLI region/zone selection (cli-region-zone)', () => {
     };
 
     const selectStub = sinon.stub().resolves('europe-west4-b');
-  const selectAdapter: InquirerSelect = (opts) => selectStub(opts);
+    const selectAdapter = mkSelectFromStub(selectStub);
     const prompter = new TestPrompter({ coreConfig, clientFactory: () => client, selectFn: selectAdapter });
 
     infoSpy = sinon.spy(console, 'info');
@@ -141,7 +149,7 @@ describe('GCP CLI region/zone selection (cli-region-zone)', () => {
       listDiskTypes: async () => [],
     };
     const selectStub = sinon.stub().resolves('irrelevant');
-  const selectAdapter: InquirerSelect = (opts) => selectStub(opts);
+    const selectAdapter = mkSelectFromStub(selectStub);
     const prompter = new TestPrompter({ coreConfig, clientFactory: () => client, selectFn: selectAdapter });
     const partial = basePartial();
     const partialWithRegion: PartialDeep<GcpInstanceInput> = {
@@ -165,7 +173,7 @@ describe('GCP CLI region/zone selection (cli-region-zone)', () => {
       listDiskTypes: async () => [],
     };
     const selectStub = sinon.stub().resolves('irrelevant');
-  const selectAdapter: InquirerSelect = (opts) => selectStub(opts);
+    const selectAdapter = mkSelectFromStub(selectStub);
     const prompter = new TestPrompter({ coreConfig, clientFactory: () => client, selectFn: selectAdapter });
     const partial = basePartial();
     const partialWithRegion: PartialDeep<GcpInstanceInput> = {
