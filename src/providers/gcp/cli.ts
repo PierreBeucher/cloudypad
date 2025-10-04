@@ -161,7 +161,7 @@ export class GcpInputPrompter extends AbstractInputPrompter<GcpCreateCliArgs, Gc
   private async networkTier(networkTier?: string): Promise<string> {
     if (networkTier) return networkTier; // already narrowed & valid
 
-    const networkTierEnum = enumOptions(GcpProvisionInputV1Schema.shape.networkTier) as readonly string[];
+    const networkTierEnum = enumOptions(GcpProvisionInputV1Schema.shape.networkTier);
     if (!networkTier && this.rawNetworkTier) {
       console.info(`Provided network tier '${this.rawNetworkTier}' is not valid. Allowed values: ${Array.from(networkTierEnum).join(', ')}. You'll be prompted to choose a valid one.`)
       this.rawNetworkTier = undefined;
@@ -181,7 +181,7 @@ export class GcpInputPrompter extends AbstractInputPrompter<GcpCreateCliArgs, Gc
   private async nicType(nicType?: string): Promise<string> {
     if (nicType) return nicType; // already narrowed & valid
 
-    const nicTypeEnum = enumOptions(GcpProvisionInputV1Schema.shape.nicType) as readonly string[];
+    const nicTypeEnum = enumOptions(GcpProvisionInputV1Schema.shape.nicType);
     if (!nicType && this.rawNicType) {
       console.info(`Provided NIC type '${this.rawNicType}' is not valid. Allowed values: ${Array.from(nicTypeEnum).join(', ')}. You'll be prompted to choose a valid one.`)
       this.rawNicType = undefined;
@@ -230,7 +230,7 @@ export class GcpInputPrompter extends AbstractInputPrompter<GcpCreateCliArgs, Gc
       });
 
     if (gamingMachineTypes.length === 0) {
-      const fams = (MACHINE_TYPE_FAMILIES_GAMING as readonly string[]).join(', ');
+      const fams = MACHINE_TYPE_FAMILIES_GAMING.join(', ');
       this.logger.warn(`No suitable machine type with available GPU in selected zone for families: ${fams}. You can still choose your own instance type but setup may not behave as expected.`)
     }
 
@@ -362,11 +362,11 @@ export class GcpInputPrompter extends AbstractInputPrompter<GcpCreateCliArgs, Gc
     const regionChoices = regionChecks.filter((item): item is { name: string, value: string } => !!item);
 
     if (regionChoices.length === 0) {
-      const fams = (MACHINE_TYPE_FAMILIES_GAMING as readonly string[]).join(', ');
+      const fams = MACHINE_TYPE_FAMILIES_GAMING.join(', ');
       throw new Error(`No region found with available machine types: ${fams}.`);
     }
     const selected = await this.getSelect()({
-      message: `Select region to use (only regions with gaming machine types are shown: ${(MACHINE_TYPE_FAMILIES_GAMING as readonly string[]).join(', ')})`,
+  message: `Select region to use (only regions with gaming machine types are shown: ${MACHINE_TYPE_FAMILIES_GAMING.join(', ')})`,
       choices: regionChoices
     });
     return selected.toString();
@@ -406,12 +406,12 @@ export class GcpInputPrompter extends AbstractInputPrompter<GcpCreateCliArgs, Gc
     const gamingZones = zoneChecks.filter((z): z is string => !!z);
 
     if (gamingZones.length === 0) {
-      const fams = (MACHINE_TYPE_FAMILIES_GAMING as readonly string[]).join(', ');
+      const fams = MACHINE_TYPE_FAMILIES_GAMING.join(', ');
       throw new Error(`No zone found in region ${region} with available machine types: ${fams}.`);
     }
 
     return await this.getSelect()({
-      message: `Select zone to use (zones with gaming machine types: ${(MACHINE_TYPE_FAMILIES_GAMING as readonly string[]).join(', ')})`,
+      message: `Select zone to use (zones with gaming machine types: ${MACHINE_TYPE_FAMILIES_GAMING.join(', ')})`,
       choices: gamingZones.map(z => ({ name: z, value: z })),
       default: gamingZones[0]
     });

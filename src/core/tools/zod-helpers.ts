@@ -41,7 +41,7 @@ export function toEnumFromSchema<T extends z.ZodEnum<[string, ...string[]]>>(
 	value?: string
 ): T["_def"]["values"][number] | undefined {
 	if (!value) return undefined;
-	const opts = enumOptions(schema) as readonly string[];
+	const opts = Array.from(enumOptions(schema));
 	return opts.includes(value) ? (value as T["_def"]["values"][number]) : undefined;
 }
 

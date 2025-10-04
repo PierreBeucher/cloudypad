@@ -259,7 +259,7 @@ function supportsTier1(machineType?: string, nicType?: string): boolean {
     if (!machineType) return false;
     const family = machineType.split("-")[0].toLowerCase();
     const nicOk = !nicType || nicType.toUpperCase() === TIER1_NIC;
-    return (TIER1_FAMILIES as readonly string[]).includes(family) && nicOk;
+    return TIER1_FAMILIES.some(f => f === family) && nicOk;
 }
 
 /* eslint-disable  @typescript-eslint/no-explicit-any */
