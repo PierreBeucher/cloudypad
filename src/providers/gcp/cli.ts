@@ -283,9 +283,9 @@ export class GcpInputPrompter extends AbstractInputPrompter<GcpCreateCliArgs, Gc
       const base = prefix.replace(/-$/, '');
       const fallback = base ? base.charAt(0).toUpperCase() + base.slice(1) : '<UNKNOWN>';
       const map = REGION_PREFIX_LABELS;
-      const label = (Object.prototype.hasOwnProperty.call(map, prefix)
-        ? map[prefix as keyof typeof map]
-        : fallback);
+      const label = Object.prototype.hasOwnProperty.call(map, prefix)
+        ? map[prefix]
+        : fallback;
       const list = labelToPrefixes.get(label) ?? [];
       list.push(prefix);
       labelToPrefixes.set(label, list);
