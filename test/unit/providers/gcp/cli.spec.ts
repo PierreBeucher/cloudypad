@@ -22,9 +22,6 @@ describe('GCP input prompter', () => {
   const instanceName = 'gcp-dummy';
   const coreConfig = getUnitTestCoreConfig();
 
-  // Full input (what a user would provide when skipping prompts)
-  // Includes the new literal-union fields: diskType, networkTier, nicType.
-  // IMPORTANT: runtime full pass-through yields null for wolf.
   const TEST_INPUT: GcpInstanceInput = {
     instanceName,
     provision: {
