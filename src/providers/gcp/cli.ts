@@ -147,7 +147,7 @@ export class GcpInputPrompter extends AbstractInputPrompter<GcpCreateCliArgs, Gc
       availableDiskTypes = Array.from(diskTypeEnum);
     }
 
-    const allowed = new Set<string>(diskTypeEnum as readonly string[]);
+    const allowed = new Set<string>(Array.from(diskTypeEnum));
     const filtered = availableDiskTypes.filter((v: string) => allowed.has(v));
 
     const choices = filtered.map((v: string) => {
