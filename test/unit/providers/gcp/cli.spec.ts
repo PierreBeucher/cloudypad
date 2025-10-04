@@ -6,19 +6,26 @@ import {
   DEFAULT_COMMON_INPUT,
   getUnitTestCoreConfig,
 } from '../../utils';
-import { GcpCreateCliArgs, GcpInputPrompter } from '../../../../src/providers/gcp/cli';
+import { GcpCreateCliArgs, GcpInputPrompter, type GcpApi } from '../../../../src/providers/gcp/cli';
 import lodash from 'lodash';
 import { PartialDeep } from 'type-fest';
 import type { CommonInstanceInput } from '../../../../src/core/state/state';
-import type { PromptOptions } from '../../../../src/cli/prompter';
+// inquirer select type not needed directly; our helpers use a structural adapter
+import { mkSelect, toInquirerSelect, type SelectParam } from '../../helpers/typed-select-helpers';
 
 describe('GCP input prompter', () => {
+  // Local adapter that wraps SelectLike into typeof InquirerSelect
+  const mkSelectAdapter = <T>(value: T, onCall?: (opts: SelectParam<T>) => void) => toInquirerSelect(mkSelect(value, onCall));
+
+  // Minimal test prompter to access the protected provider-specific flow without exposing privates
+  class TestPrompter extends GcpInputPrompter {
+    public async run(commonInput: CommonInstanceInput, partialInput: PartialDeep<GcpInstanceInput>) {
+      return await this["promptSpecificInput"](commonInput, partialInput, { autoApprove: true, skipQuotaWarning: true })
+    }
+  }
   const instanceName = 'gcp-dummy';
   const coreConfig = getUnitTestCoreConfig();
 
-  // Full input (what a user would provide when skipping prompts)
-  // Includes the new literal-union fields: diskType, networkTier, nicType.
-  // IMPORTANT: runtime full pass-through yields [[null]] for wolf.
   const TEST_INPUT: GcpInstanceInput = {
     instanceName,
     provision: {
@@ -42,7 +49,7 @@ describe('GCP input prompter', () => {
     configuration: {
       ...DEFAULT_COMMON_INPUT.configuration,
       // full input case shape
-      wolf: [null],
+      wolf: null,
     },
   };
 
@@ -73,7 +80,7 @@ describe('GCP input prompter', () => {
     const prompter = new GcpInputPrompter({ coreConfig });
     const result = prompter.cliArgsIntoPartialInput(TEST_CLI_ARGS);
 
-    // Expected partial: ssh.user omitted and wolf matches partial shape [[undefined]]
+    // Expected partial: ssh.user omitted and wolf matches partial shape null
     const expected: PartialDeep<GcpInstanceInput> = {
       ...TEST_INPUT,
       provision: {
@@ -90,31 +97,32 @@ describe('GCP input prompter', () => {
   });
 
   it('should return provided inputs without prompting when full input is provided', async () => {
-    const prompter = new GcpInputPrompter({ coreConfig });
+    let selectCalls = 0;
+  const selectFn = mkSelectAdapter('ignored', () => { selectCalls++; });
+    const prompter = new GcpInputPrompter({ coreConfig, selectFn });
 
-    // Type-safe monkey-patch of the protected method (no `any`).
-    type PromptSpecificInputMethod = (
-      commonInput: CommonInstanceInput,
-      partialInput: PartialDeep<GcpInstanceInput>,
-      createOptions: PromptOptions
-    ) => Promise<GcpInstanceInput>;
+    // Provide a truly "full" input to bypass both common and provider-specific prompts
+    const fullInput: GcpInstanceInput = lodash.cloneDeep({
+      ...TEST_INPUT,
+      configuration: {
+        ...TEST_INPUT.configuration,
+        // Ensure only one streaming server is enabled to avoid conflict
+        sunshine: null,
+        // Ensure streaming server is already chosen so no select occurs in common flow
+        wolf: { enable: true },
+        // Ensure autostop choices are present to avoid prompts
+        autostop: { enable: true, timeoutSeconds: 900 },
+      },
+    });
 
-    const prompterWithPatch = prompter as unknown as {
-      promptSpecificInput: PromptSpecificInputMethod;
-    };
-
-    prompterWithPatch.promptSpecificInput = async () => {
-      // Return a deep clone of the full input to simulate pass-through
-      return lodash.cloneDeep(TEST_INPUT);
-    };
-
-    const result = await prompter.promptInput(TEST_INPUT, {
+    const result = await prompter.promptInput(fullInput, {
       overwriteExisting: true,
       autoApprove: true,
     });
 
-    // Direct comparison: full case already uses [[null]] in TEST_INPUT
-    assert.deepEqual(result, TEST_INPUT);
+    assert.deepEqual(result, fullInput);
+    // Provider-specific selects should not be called since all provider fields are present
+    assert.strictEqual(selectCalls, 0, 'Expected no provider-specific select prompts');
   });
 
   it('should convert CLI args into partial input (idempotent, with new types)', () => {
@@ -137,68 +145,169 @@ describe('GCP input prompter', () => {
   });
 
   it('diskType prompt should early-return when diskType already provided', async () => {
-    const prompter = new GcpInputPrompter({ coreConfig }) as unknown as {
-      // expose private for test via casting
-      diskType: (diskType?: string) => Promise<string>
+    let selectCalled = 0;
+  const selectFn = mkSelectAdapter('ignored', () => { selectCalled++; });
+    const prompter = new TestPrompter({ coreConfig, selectFn });
+    const common: CommonInstanceInput = {
+      instanceName,
+      provision: { ssh: { user: 'ubuntu', privateKeyPath: '/tmp/key' } },
+      configuration: {},
     };
-
-    // We pass a value and expect no interactive select attempt. Since the method immediately returns
-    // when diskType is truthy, we just verify the resolved value matches input.
-    const value = await prompter.diskType('pd-ssd');
-    assert.strictEqual(value, 'pd-ssd');
+    const partial: PartialDeep<GcpInstanceInput> = {
+      provision: {
+        projectId: 'p1', region: 'r', zone: 'z',
+        machineType: 'n1-standard-8', acceleratorType: 'nvidia-tesla-t4',
+        diskSize: 100,
+        diskType: 'pd-ssd', // target of this test: should bypass select
+        networkTier: 'PREMIUM', nicType: 'auto',
+        publicIpType: PUBLIC_IP_TYPE_STATIC, useSpot: true,
+        costAlert: { limit: 10, notificationEmail: 'a@b.com' },
+      }
+    };
+    const result = await prompter.run(common, partial);
+    assert.strictEqual(result.provision.diskType, 'pd-ssd');
+    assert.strictEqual(selectCalled, 0, 'select should not be called when diskType is provided');
   });
 
   it('networkTier prompt should early-return when networkTier already provided', async () => {
-    const prompter = new GcpInputPrompter({ coreConfig }) as unknown as {
-      networkTier: (networkTier?: string) => Promise<string>
+    let selectCalled = 0;
+  const selectFn = mkSelectAdapter('ignored', () => { selectCalled++; });
+    const prompter = new TestPrompter({ coreConfig, selectFn });
+    const common: CommonInstanceInput = {
+      instanceName,
+      provision: { ssh: { user: 'ubuntu', privateKeyPath: '/tmp/key' } },
+      configuration: {},
     };
-    const value = await prompter.networkTier('STANDARD');
-    assert.strictEqual(value, 'STANDARD');
+    const partial: PartialDeep<GcpInstanceInput> = {
+      provision: {
+        projectId: 'p1', region: 'r', zone: 'z',
+        machineType: 'n1-standard-8', acceleratorType: 'nvidia-tesla-t4',
+        diskSize: 100,
+        diskType: 'pd-balanced',
+        networkTier: 'STANDARD', // should bypass select
+        nicType: 'auto',
+        publicIpType: PUBLIC_IP_TYPE_STATIC, useSpot: true,
+        costAlert: { limit: 10, notificationEmail: 'a@b.com' },
+      }
+    };
+    const result = await prompter.run(common, partial);
+    assert.strictEqual(result.provision.networkTier, 'STANDARD');
+    assert.strictEqual(selectCalled, 0, 'select should not be called when networkTier is provided');
   });
 
   it('nicType prompt should early-return when nicType already provided', async () => {
-    const prompter = new GcpInputPrompter({ coreConfig }) as unknown as {
-      nicType: (nicType?: string) => Promise<string>
+    let selectCalled = 0;
+  const selectFn = mkSelectAdapter('ignored', () => { selectCalled++; });
+    const prompter = new TestPrompter({ coreConfig, selectFn });
+    const common: CommonInstanceInput = {
+      instanceName,
+      provision: { ssh: { user: 'ubuntu', privateKeyPath: '/tmp/key' } },
+      configuration: {},
     };
-    const value = await prompter.nicType('GVNIC');
-    assert.strictEqual(value, 'GVNIC');
+    const partial: PartialDeep<GcpInstanceInput> = {
+      provision: {
+        projectId: 'p1', region: 'r', zone: 'z',
+        machineType: 'n1-standard-8', acceleratorType: 'nvidia-tesla-t4',
+        diskSize: 100,
+        diskType: 'pd-balanced',
+        networkTier: 'PREMIUM',
+        nicType: 'GVNIC', // should bypass select
+        publicIpType: PUBLIC_IP_TYPE_STATIC, useSpot: true,
+        costAlert: { limit: 10, notificationEmail: 'a@b.com' },
+      }
+    };
+    const result = await prompter.run(common, partial);
+    assert.strictEqual(result.provision.nicType, 'GVNIC');
+    assert.strictEqual(selectCalled, 0, 'select should not be called when nicType is provided');
   });
 
   it('networkTier invalid value should trigger prompt instead of early return', async () => {
-    type PrivatePrompter = GcpInputPrompter & { getSelect: () => (o: { message: string, choices: ReadonlyArray<unknown>, default?: string }) => Promise<string> };
-    const prompter = new GcpInputPrompter({ coreConfig }) as PrivatePrompter & { rawNetworkTier?: string };
-    // Simulate CLI providing invalid value that got narrowed to undefined
-    (prompter as { rawNetworkTier?: string }).rawNetworkTier = 'INVALID_TIER';
-    let selectCalled = false;
-    const fakeSelect = async () => { selectCalled = true; return 'STANDARD'; };
-    prompter.getSelect = () => fakeSelect;
-    const value = await (prompter as unknown as { networkTier: (v?: string) => Promise<string> }).networkTier(undefined);
-    assert.strictEqual(value, 'STANDARD');
-    assert.ok(selectCalled, 'Expected select to be called for invalid network tier (narrowed)');
+  let selectCalled = 0;
+  const selectFn = mkSelectAdapter('STANDARD', () => { selectCalled++; });
+    const prompter = new TestPrompter({ coreConfig, selectFn });
+    // Capture raw invalid value through the CLI narrowing path
+    const partial = prompter["buildProvisionerInputFromCliArgs"]({
+      ...TEST_CLI_ARGS,
+      networkTier: 'INVALID_TIER',
+    } as GcpCreateCliArgs) as PartialDeep<GcpInstanceInput>;
+    const common: CommonInstanceInput = {
+      instanceName,
+      provision: { ssh: { user: 'ubuntu', privateKeyPath: '/tmp/key' } },
+      configuration: {},
+    };
+    const result = await prompter.run(common, partial);
+    assert.strictEqual(result.provision.networkTier, 'STANDARD');
+  assert.strictEqual(selectCalled, 1, 'Expected select to be called exactly once for invalid network tier');
+  });
+
+  it('networkTier valid value from CLI should not trigger prompt', async () => {
+  let selectCalled = 0;
+  const selectFn = mkSelectAdapter('IGNORED', () => { selectCalled++; });
+    const prompter = new TestPrompter({ coreConfig, selectFn });
+    const partial = prompter["buildProvisionerInputFromCliArgs"]({
+      ...TEST_CLI_ARGS,
+      networkTier: 'PREMIUM',
+    } as GcpCreateCliArgs) as PartialDeep<GcpInstanceInput>;
+    const common: CommonInstanceInput = {
+      instanceName,
+      provision: { ssh: { user: 'ubuntu', privateKeyPath: '/tmp/key' } },
+      configuration: {},
+    };
+    const result = await prompter.run(common, partial);
+    assert.strictEqual(result.provision.networkTier, 'PREMIUM');
+    assert.strictEqual(selectCalled, 0, 'Expected select not to be called for valid network tier');
   });
 
   it('nicType invalid value should trigger prompt instead of early return', async () => {
-    type PrivatePrompter = GcpInputPrompter & { getSelect: () => (o: { message: string, choices: ReadonlyArray<unknown>, default?: string }) => Promise<string> };
-    const prompter = new GcpInputPrompter({ coreConfig }) as PrivatePrompter & { rawNicType?: string };
-    (prompter as { rawNicType?: string }).rawNicType = 'BAD_NIC';
-    let selectCalled = false;
-    const fakeSelect = async () => { selectCalled = true; return 'auto'; };
-    prompter.getSelect = () => fakeSelect;
-    const value = await (prompter as unknown as { nicType: (v?: string) => Promise<string> }).nicType(undefined);
-    assert.strictEqual(value, 'auto');
-    assert.ok(selectCalled, 'Expected select to be called for invalid nic type (narrowed)');
+  let selectCalled = 0;
+  const selectFn = mkSelectAdapter('auto', () => { selectCalled++; });
+    const prompter = new TestPrompter({ coreConfig, selectFn });
+    const partial = prompter["buildProvisionerInputFromCliArgs"]({
+      ...TEST_CLI_ARGS,
+      nicType: 'BAD_NIC',
+    } as GcpCreateCliArgs) as PartialDeep<GcpInstanceInput>;
+    const common: CommonInstanceInput = {
+      instanceName,
+      provision: { ssh: { user: 'ubuntu', privateKeyPath: '/tmp/key' } },
+      configuration: {},
+    };
+    const result = await prompter.run(common, partial);
+    assert.strictEqual(result.provision.nicType, 'auto');
+    assert.ok(selectCalled > 0, 'Expected select to be called for invalid nic type (narrowed)');
   });
 
   it('diskType invalid value should trigger prompt instead of early return', async () => {
-    type PrivatePrompter = GcpInputPrompter & { getSelect: () => (o: { message: string, choices: ReadonlyArray<unknown>, default?: string }) => Promise<string> };
-    const prompter = new GcpInputPrompter({ coreConfig }) as PrivatePrompter & { rawDiskType?: string };
-    (prompter as { rawDiskType?: string }).rawDiskType = 'BAD_DISK';
-    let selectCalled = false;
-    const fakeSelect = async () => { selectCalled = true; return 'pd-balanced'; };
-    prompter.getSelect = () => fakeSelect;
-    const mockClient = { listDiskTypes: async () => ['pd-standard', 'pd-balanced', 'pd-ssd'] } as unknown;
-    const value = await (prompter as unknown as { diskType: (v?: string, c?: unknown, z?: string) => Promise<string> }).diskType(undefined, mockClient, 'europe-west4-b');
-    assert.strictEqual(value, 'pd-balanced');
-    assert.ok(selectCalled, 'Expected select to be called for invalid disk type (narrowed)');
+  let selectCalled = 0;
+  const selectFn = mkSelectAdapter('pd-balanced', () => { selectCalled++; });
+    const client: GcpApi = {
+      listRegions: async () => [],
+      listRegionZones: async () => [],
+      listMachineTypes: async () => [],
+      listAcceleratorTypes: async () => [],
+      listDiskTypes: async () => ['pd-standard', 'pd-balanced', 'pd-ssd'],
+    };
+    const prompter = new TestPrompter({ coreConfig, selectFn, clientFactory: () => client });
+    const partial = prompter["buildProvisionerInputFromCliArgs"]({
+      ...TEST_CLI_ARGS,
+      diskType: 'BAD_DISK',
+    } as GcpCreateCliArgs) as PartialDeep<GcpInstanceInput>;
+    // Ensure region/zone exist for the diskType prompt path to be able to call listDiskTypes
+    partial.provision = {
+      ...partial.provision,
+      projectId: 'p1', region: 'r', zone: 'z',
+      machineType: 'n1-standard-8', acceleratorType: 'nvidia-tesla-t4',
+      diskSize: 100,
+      networkTier: 'PREMIUM', nicType: 'auto',
+      publicIpType: PUBLIC_IP_TYPE_STATIC, useSpot: true,
+      costAlert: { limit: 10, notificationEmail: 'a@b.com' },
+    } as PartialDeep<GcpInstanceInput>["provision"];
+    const common: CommonInstanceInput = {
+      instanceName,
+      provision: { ssh: { user: 'ubuntu', privateKeyPath: '/tmp/key' } },
+      configuration: {},
+    };
+    const result = await prompter.run(common, partial);
+    assert.strictEqual(result.provision.diskType, 'pd-balanced');
+    assert.ok(selectCalled > 0, 'Expected select to be called for invalid disk type (narrowed)');
   });
 });

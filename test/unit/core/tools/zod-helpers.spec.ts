@@ -1,6 +1,6 @@
 import * as assert from 'assert';
 import { z } from 'zod';
-import { isZodEnum, isZodDefaultEnum, enumOptions, toEnumFromSchema, toEnumFromSchemaOrThrow } from '../../../src/core/zod-helpers';
+import { isZodEnum, isZodDefaultEnum, enumOptions, toEnumFromSchema, toEnumFromSchemaOrThrow } from '../../../../src/core/tools/zod-helpers';
 
 describe('zod-helpers', function () {
   const ColorEnum = z.enum(['red', 'green', 'blue']);

@@ -6,6 +6,16 @@ import lodash from "lodash";
 describe("GcpStateParser", function () {
   const parser = new GcpStateParser();
 
+  function hasProvisionInput(o: unknown): o is {
+    provision: { input: { diskType?: string; networkTier?: string; nicType?: string } }
+  } {
+    if (!o || typeof o !== "object") return false;
+    const prov = (o as { [k: string]: unknown })["provision"];
+    if (!prov || typeof prov !== "object") return false;
+    const input = (prov as { [k: string]: unknown })["input"];
+    return !!input && typeof input === "object";
+  }
+
   it("should parse a valid GCP state", function () {
     const rawState = loadRawDummyStateV1("gcp-dummy");
     const parsedState = parser.parse(rawState);
@@ -15,24 +25,17 @@ describe("GcpStateParser", function () {
     //   diskType: "pd-balanced"
     //   networkTier: "STANDARD"
     //   nicType: "auto"
-    const expected = lodash.cloneDeep(rawState);
-
-    const hasProvisionInput =
-      expected &&
-      expected.provision &&
-      expected.provision.input &&
-      typeof expected.provision.input === "object";
-
-    if (hasProvisionInput) {
-      expected.provision.input.diskType =
-        expected.provision.input.diskType ?? "pd-balanced";
-      expected.provision.input.networkTier =
-        expected.provision.input.networkTier ?? "STANDARD";
-      expected.provision.input.nicType =
-        expected.provision.input.nicType ?? "auto";
+    const expectedClone = lodash.cloneDeep(rawState);
+    if (hasProvisionInput(expectedClone)) {
+      expectedClone.provision.input.diskType =
+        expectedClone.provision.input.diskType ?? "pd-balanced";
+      expectedClone.provision.input.networkTier =
+        expectedClone.provision.input.networkTier ?? "STANDARD";
+      expectedClone.provision.input.nicType =
+        expectedClone.provision.input.nicType ?? "auto";
     }
 
-    assert.deepEqual(parsedState, expected);
+    assert.deepEqual(parsedState, expectedClone);
   });
 
   it("should throw an error for a non-GCP state", function () {

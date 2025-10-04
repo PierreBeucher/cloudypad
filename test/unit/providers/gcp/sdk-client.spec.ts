@@ -15,11 +15,13 @@ describe('GcpClient.listRegions', function () {
     ];
 
     class TestClient extends GcpClient {
-      public override regions!: { list: () => Promise<Region[][]> };
+      // Override the method directly to avoid touching private SDK clients
+      async listRegions(): Promise<Region[]> {
+        return mockRegions;
+      }
     }
 
     const client = new TestClient('test', 'fake-project');
-    client.regions = { list: async () => [mockRegions] };
     const all = await client.listRegions();
     assert.deepStrictEqual(all.map(r => r.name), mockRegions.map(r => r.name));
   });

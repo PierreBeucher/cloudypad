@@ -4,7 +4,7 @@ import { GPU_DESCRIPTIONS, REGION_PREFIX_LABELS, REGION_COUNTRY_BY_REGION } from
 import { GcpInstanceInput, GcpInstanceStateV1, GcpProvisionInputV1, GcpProvisionInputV1Schema } from "./state"
 import { CommonConfigurationInputV1, CommonInstanceInput } from "../../core/state/state"
 import { input, select } from '@inquirer/prompts';
-import { AbstractInputPrompter, costAlertCliArgsIntoConfig, PromptOptions } from "../../cli/prompter";
+import { AbstractInputPrompter, costAlertCliArgsIntoConfig, PromptOptions, AbstractInputPrompterArgs } from "../../cli/prompter";
 import { GcpClient } from "./sdk-client";
 import lodash from 'lodash'
 import { CLOUDYPAD_PROVIDER_GCP, PUBLIC_IP_TYPE } from "../../core/const";
@@ -14,7 +14,7 @@ import { CLI_OPTION_AUTO_STOP_TIMEOUT, CLI_OPTION_AUTO_STOP_ENABLE, CLI_OPTION_C
 import { RUN_COMMAND_CREATE, RUN_COMMAND_UPDATE } from "../../tools/analytics/events";
 import { InteractiveInstanceUpdater } from "../../cli/updater";
 import { GcpProviderClient } from "./provider";
-import { enumOptions, toEnumFromSchema, toEnumFromSchemaOrThrow } from "../../core/zod-helpers";
+import { enumOptions, toEnumFromSchema, toEnumFromSchemaOrThrow } from "../../core/tools/zod-helpers";
 
 export interface GcpCreateCliArgs extends CreateCliArgs {
   projectId?: string
@@ -36,7 +36,32 @@ export interface GcpCreateCliArgs extends CreateCliArgs {
 /** Possible update arguments for GCP update. */
 export type GcpUpdateCliArgs = UpdateCliArgs & Omit<GcpCreateCliArgs, "projectId" | "region" | "zone">
 
+// Narrow API surface needed by the prompter for dependency injection and testing
+export type GcpApi = Pick<GcpClient,
+  | "listRegions"
+  | "listRegionZones"
+  | "listMachineTypes"
+  | "listAcceleratorTypes"
+  | "listDiskTypes"
+>;
+
+export interface GcpInputPrompterArgs extends AbstractInputPrompterArgs {
+  /** Optional factory to create a GCP API client; useful for tests. */
+  clientFactory?: (name: string, projectId: string) => GcpApi;
+  /** Optional inquirer select function injection; useful for tests. */
+  selectFn?: typeof select;
+}
+
 export class GcpInputPrompter extends AbstractInputPrompter<GcpCreateCliArgs, GcpProvisionInputV1, CommonConfigurationInputV1> {
+
+  private readonly clientFactory?: (name: string, projectId: string) => GcpApi;
+  private readonly selectFn?: typeof select;
+
+  constructor(args: GcpInputPrompterArgs) {
+    super(args);
+    this.clientFactory = args.clientFactory;
+    this.selectFn = args.selectFn;
+  }
 
   // Preserve raw CLI values for enum-like fields so we can surface informative logs
   // in case they were invalid and got dropped during early narrowing in
@@ -46,10 +71,10 @@ export class GcpInputPrompter extends AbstractInputPrompter<GcpCreateCliArgs, Gc
   private rawNicType?: string;
 
   /**
-   * Wrapper around the inquirer select function to allow stubbing/mocking in unit tests
-   * without relying on module-level captured references (destructured import).
+   * Centralized accessor to the select prompt; primarily here to keep call sites DRY.
+   * Tests should inject a custom function via args.selectFn rather than subclassing.
    */
-  protected getSelect() { return select }
+  private getSelect() { return this.selectFn ?? select }
 
   /** Build the initial partial input from CLI args (strings are narrowed to enum literal unions). */
   protected buildProvisionerInputFromCliArgs(cliArgs: GcpCreateCliArgs): PartialDeep<GcpInstanceInput> {
@@ -82,7 +107,9 @@ export class GcpInputPrompter extends AbstractInputPrompter<GcpCreateCliArgs, Gc
     }
 
     const projectId = await this.project(partialInput.provision?.projectId)
-    const client = new GcpClient(GcpInputPrompter.name, projectId)
+    const client: GcpApi = this.clientFactory
+      ? this.clientFactory(GcpInputPrompter.name, projectId)
+      : new GcpClient(GcpInputPrompter.name, projectId)
     const region = await this.region(client, partialInput.provision?.region)
     const zone = await this.zone(client, region, partialInput.provision?.zone)
     const machineType = await this.machineType(client, zone, partialInput.provision?.machineType)
@@ -125,19 +152,11 @@ export class GcpInputPrompter extends AbstractInputPrompter<GcpCreateCliArgs, Gc
   }
 
   /** Prompt for disk type using intersection of schema enum and available API values. */
-  private async diskType(diskType?: string, client?: GcpClient, zone?: string): Promise<string> {
+  private async diskType(diskType?: string, client?: GcpApi, zone?: string): Promise<string> {
     if (diskType) return diskType; // already narrowed & valid
     
      if (!client || !zone) throw new Error("diskType prompt requires GcpClient and zone.");
-    const diskTypeEnum = enumOptions(GcpProvisionInputV1Schema.shape.diskType) as readonly string[];
-    
-    // If narrowed value disappeared (undefined) but a raw CLI value existed and was invalid, log it.
-    if (!diskType && this.rawDiskType) {
-      // At this point the raw value was dropped by narrowing so it's necessarily invalid – log once.
-      console.info(`Provided disk type '${this.rawDiskType}' is not valid. Allowed values: ${Array.from(diskTypeEnum).join(', ')}. You'll be prompted to choose a valid one.`)
-      // Prevent double logging if method called again.
-      this.rawDiskType = undefined;
-    }
+    const diskTypeEnum = enumOptions(GcpProvisionInputV1Schema.shape.diskType);
    
     let availableDiskTypes: string[] = [];
     try {
@@ -147,7 +166,7 @@ export class GcpInputPrompter extends AbstractInputPrompter<GcpCreateCliArgs, Gc
       availableDiskTypes = Array.from(diskTypeEnum);
     }
 
-    const allowed = new Set<string>(diskTypeEnum as readonly string[]);
+    const allowed = new Set<string>(Array.from(diskTypeEnum));
     const filtered = availableDiskTypes.filter((v: string) => allowed.has(v));
 
     const choices = filtered.map((v: string) => {
@@ -169,7 +188,7 @@ export class GcpInputPrompter extends AbstractInputPrompter<GcpCreateCliArgs, Gc
   private async networkTier(networkTier?: string): Promise<string> {
     if (networkTier) return networkTier; // already narrowed & valid
 
-    const networkTierEnum = enumOptions(GcpProvisionInputV1Schema.shape.networkTier) as readonly string[];
+    const networkTierEnum = enumOptions(GcpProvisionInputV1Schema.shape.networkTier);
     if (!networkTier && this.rawNetworkTier) {
       console.info(`Provided network tier '${this.rawNetworkTier}' is not valid. Allowed values: ${Array.from(networkTierEnum).join(', ')}. You'll be prompted to choose a valid one.`)
       this.rawNetworkTier = undefined;
@@ -189,7 +208,7 @@ export class GcpInputPrompter extends AbstractInputPrompter<GcpCreateCliArgs, Gc
   private async nicType(nicType?: string): Promise<string> {
     if (nicType) return nicType; // already narrowed & valid
 
-    const nicTypeEnum = enumOptions(GcpProvisionInputV1Schema.shape.nicType) as readonly string[];
+    const nicTypeEnum = enumOptions(GcpProvisionInputV1Schema.shape.nicType);
     if (!nicType && this.rawNicType) {
       console.info(`Provided NIC type '${this.rawNicType}' is not valid. Allowed values: ${Array.from(nicTypeEnum).join(', ')}. You'll be prompted to choose a valid one.`)
       this.rawNicType = undefined;
@@ -205,7 +224,7 @@ export class GcpInputPrompter extends AbstractInputPrompter<GcpCreateCliArgs, Gc
     });
   }
 
-  private async machineType(client: GcpClient, zone: string, machineType?: string): Promise<string> {
+  private async machineType(client: GcpApi, zone: string, machineType?: string): Promise<string> {
     if (machineType) return machineType;
 
     const machineTypes = await client.listMachineTypes(zone);
@@ -238,7 +257,7 @@ export class GcpInputPrompter extends AbstractInputPrompter<GcpCreateCliArgs, Gc
       });
 
     if (gamingMachineTypes.length === 0) {
-      const fams = (MACHINE_TYPE_FAMILIES_GAMING as readonly string[]).join(', ');
+      const fams = MACHINE_TYPE_FAMILIES_GAMING.join(', ');
       this.logger.warn(`No suitable machine type with available GPU in selected zone for families: ${fams}. You can still choose your own instance type but setup may not behave as expected.`)
     }
 
@@ -267,7 +286,7 @@ export class GcpInputPrompter extends AbstractInputPrompter<GcpCreateCliArgs, Gc
     return Number.parseInt(selectedDiskSize)
   }
 
-  private async region(client: GcpClient, region?: string): Promise<string> {
+  private async region(client: GcpApi, region?: string): Promise<string> {
     if (region) return region;
 
     // Build continent choices dynamically from available region names.
@@ -291,9 +310,9 @@ export class GcpInputPrompter extends AbstractInputPrompter<GcpCreateCliArgs, Gc
       const base = prefix.replace(/-$/, '');
       const fallback = base ? base.charAt(0).toUpperCase() + base.slice(1) : '<UNKNOWN>';
       const map = REGION_PREFIX_LABELS;
-      const label = (Object.prototype.hasOwnProperty.call(map, prefix)
-        ? map[prefix as keyof typeof map]
-        : fallback);
+      const label = Object.prototype.hasOwnProperty.call(map, prefix)
+        ? map[prefix]
+        : fallback;
       const list = labelToPrefixes.get(label) ?? [];
       list.push(prefix);
       labelToPrefixes.set(label, list);
@@ -319,7 +338,7 @@ export class GcpInputPrompter extends AbstractInputPrompter<GcpCreateCliArgs, Gc
     type RegionZone = { region: typeof regions[number], zones: string[] };
     const regionZoneMap = (await Promise.all(
       regions.map(async r => {
-        if (!r.name || !r.id) return null;
+        if (!r.name) return null;
         try {
           const zones = await client.listRegionZones(r.name);
           return { region: r, zones };
@@ -370,17 +389,17 @@ export class GcpInputPrompter extends AbstractInputPrompter<GcpCreateCliArgs, Gc
     const regionChoices = regionChecks.filter((item): item is { name: string, value: string } => !!item);
 
     if (regionChoices.length === 0) {
-      const fams = (MACHINE_TYPE_FAMILIES_GAMING as readonly string[]).join(', ');
+      const fams = MACHINE_TYPE_FAMILIES_GAMING.join(', ');
       throw new Error(`No region found with available machine types: ${fams}.`);
     }
     const selected = await this.getSelect()({
-      message: `Select region to use (only regions with gaming machine types are shown: ${(MACHINE_TYPE_FAMILIES_GAMING as readonly string[]).join(', ')})`,
+  message: `Select region to use (only regions with gaming machine types are shown: ${MACHINE_TYPE_FAMILIES_GAMING.join(', ')})`,
       choices: regionChoices
     });
     return selected.toString();
   }
 
-  private async zone(client: GcpClient, region: string, zone?: string): Promise<string> {
+  private async zone(client: GcpApi, region: string, zone?: string): Promise<string> {
     if (zone) return zone;
 
     // Inform user about zone filtering duration
@@ -414,12 +433,12 @@ export class GcpInputPrompter extends AbstractInputPrompter<GcpCreateCliArgs, Gc
     const gamingZones = zoneChecks.filter((z): z is string => !!z);
 
     if (gamingZones.length === 0) {
-      const fams = (MACHINE_TYPE_FAMILIES_GAMING as readonly string[]).join(', ');
+      const fams = MACHINE_TYPE_FAMILIES_GAMING.join(', ');
       throw new Error(`No zone found in region ${region} with available machine types: ${fams}.`);
     }
 
     return await this.getSelect()({
-      message: `Select zone to use (zones with gaming machine types: ${(MACHINE_TYPE_FAMILIES_GAMING as readonly string[]).join(', ')})`,
+      message: `Select zone to use (zones with gaming machine types: ${MACHINE_TYPE_FAMILIES_GAMING.join(', ')})`,
       choices: gamingZones.map(z => ({ name: z, value: z })),
       default: gamingZones[0]
     });
@@ -437,7 +456,7 @@ export class GcpInputPrompter extends AbstractInputPrompter<GcpCreateCliArgs, Gc
     })
   }
 
-  private async acceleratorType(client: GcpClient, zone: string, acceleratorType?: string, machineType?: string): Promise<string> {
+  private async acceleratorType(client: GcpApi, zone: string, acceleratorType?: string, machineType?: string): Promise<string> {
     if (acceleratorType) return acceleratorType;
 
     const acceleratorTypes = await client.listAcceleratorTypes(zone)
