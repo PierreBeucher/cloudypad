@@ -14,7 +14,7 @@ import { CLI_OPTION_AUTO_STOP_TIMEOUT, CLI_OPTION_AUTO_STOP_ENABLE, CLI_OPTION_C
 import { RUN_COMMAND_CREATE, RUN_COMMAND_UPDATE } from "../../tools/analytics/events";
 import { InteractiveInstanceUpdater } from "../../cli/updater";
 import { GcpProviderClient } from "./provider";
-import { enumOptions, toEnumFromSchema, toEnumFromSchemaOrThrow } from "../../core/zod-helpers";
+import { enumOptions, toEnumFromSchema, toEnumFromSchemaOrThrow } from "../../core/tools/zod-helpers";
 
 export interface GcpCreateCliArgs extends CreateCliArgs {
   projectId?: string
