@@ -1,5 +1,5 @@
 import * as assert from 'assert'
-import { Retrier } from '../../../src/tools/retrier'
+import { ActionRetrier } from '../../../src/tools/retrier'
 
 describe('Retrier', () => {
     it('should execute action once when retries is 0', async () => {
@@ -9,7 +9,7 @@ describe('Retrier', () => {
             return 'success'
         }
 
-        const retrier = new Retrier({
+        const retrier = new ActionRetrier({
             actionFn,
             actionName: 'test-action-success',
             retries: 0,
@@ -33,7 +33,7 @@ describe('Retrier', () => {
             return 'success'
         }
 
-        const retrier = new Retrier({
+        const retrier = new ActionRetrier({
             actionFn,
             actionName: 'test-action-success-after-3-attempts)',
             retries: 3,
@@ -54,7 +54,7 @@ describe('Retrier', () => {
             throw new Error('persistent failure')
         }
 
-        const retrier = new Retrier({
+        const retrier = new ActionRetrier({
             actionFn,
             actionName: 'test-action-fail',
             retries: 2,

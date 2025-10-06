@@ -8,7 +8,7 @@ import { ConfiguratorFactory } from './submanager-factory';
 import { ProvisionerFactory } from './submanager-factory';
 import { RunnerFactory } from './submanager-factory';
 import { AnsibleConfiguratorOptions } from '../configurators/ansible';
-import { Retrier } from '../tools/retrier';
+import { ActionRetrier } from '../tools/retrier';
 
 const DEFAULT_RETRIES = 1
 const DEFAULT_RETRY_DELAY_SECONDS = 10
@@ -491,7 +491,7 @@ export class GenericInstanceManager<ST extends InstanceStateV1> implements Insta
      * @param retryOptions Number of retries and delay between retries.
      */
     private async doWithRetry<R>(actionFn: () => Promise<R>, actionName: string, retryOptions?: { retries?: number, retryDelaySeconds?: number }): Promise<R> {
-        const retrier = new Retrier({
+        const retrier = new ActionRetrier({
             actionFn: actionFn,
             actionName: actionName,
             retries: retryOptions?.retries ?? DEFAULT_RETRIES,
