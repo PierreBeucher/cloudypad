@@ -1,12 +1,17 @@
 # `cloudypad` CLI usage
 
-- [Create instances](#create-instances)
-- [Manage instances](#manage-instances)
+- [Global usage](#global-usage)
+  - [Create instances](#create-instances)
+  - [Use instances: start, stop, list, get](#use-instances-start-stop-list-get)
+  - [Update instances](#update-instances)
+  - [Destroy instances](#destroy-instances)
 - [Instance deployment lifecycle](#instance-deployment-lifecycle)
 - [Environment variables](#environment-variables)
   - [Cloudy Pad built-in environment variables](#cloudy-pad-built-in-environment-variables)
   - [Other environment variables](#other-environment-variables)
 - [Global configuration](#global-configuration)
+
+## Global usage
 
 Available commands:
 
@@ -18,26 +23,28 @@ Usage: cloudypad [options] [command]
 Cloudy Pad CLI to manage your own gaming instance in the Cloud.
 
 Options:
-  --verbose, -v               Verbosity level (0: silly, 1: trace, 2: debug, 3: info, 4: warn, 5: error, 6: fatal)
-                              Alternatively, use CLOUDYPAD_LOG_LEVEL environment variable.
+  -v, --verbose               Verbosity level (0: silly, 1: trace, 2: debug, 3: info, 4: warn, 5: error, 6: fatal). Alternatively, use
+                              CLOUDYPAD_LOG_LEVEL environment variable.
   -V, --version               output the version number
   -h, --help                  display help for command
 
 Commands:
-  create                      Create a new instance, prompting for details. Use `create <provider> for provider-specific creation commands.`
+  create                      Create a new instance. See subcommands for each provider options.
+  update                      Update an existing instance. See subcommands for each provider options.
   list [options]              List all instances
-  start <name>                Start an instance
-  stop <name>                 Stop an instance
-  restart <name>              Restart an instance
-  get <name>                  Get details of an instance
+  start [options] <name>      Start an instance
+  stop [options] <name>       Stop an instance
+  restart [options] <name>    Restart an instance. Depending on provider this operation may be synchronous.
+  get <name>                  Get current state of an instance and its status (running, provisioned, configured, ready)
   provision [options] <name>  Provision an instance (deploy or update Cloud resources)
-  configure <name>            Configure an instance (connect to instance and install drivers, packages, etc.)
-  destroy <name>              Destroy an instance
+  configure [options] <name>  Configure an instance (connect to instance and install drivers, packages, etc.)
+  deploy [options] <name>     Deploy an instance: provision and configure it. Equivalent to running provision and configure commands sequentially.
+  destroy [options] <name>    Destroy an instance
   pair <name>                 Pair an instance with Moonlight
   help [command]              display help for command
 ```
 
-## Create instances
+### Create instances
 
 Use `cloudypad create`. It will prompt for required parameters depending on your Cloud Provider.
 
@@ -72,7 +79,7 @@ cloudypad create aws \
 
 Use `cloudypad create <provider> --help` for available flags.
 
-## Manage instances
+### Use instances: start, stop, list, get
 
 List existing instances:
 
@@ -100,10 +107,31 @@ By default instance stop/start/restart triggers the action without waiting. Wait
 cloudypad [start|top|restart] mypad --wait --timeout 180
 ```
 
+### Update instances
+
+To update your instance to latest version:
+
+- Upgrade your Cloudy Pad installation - see [CLI Installation and Upgrade](./installation.md)
+- Then update your instance with:
+
+```sh
+cloudypad deploy my-instance
+```
+
+`deploy` will provision and configure your instance with latest Cloudy Pad version.
+
+### Destroy instances
+
 Destroy instance:
 
 ```sh
-cloudypad destroy mypad [--yes]
+cloudypad destroy mypad
+```
+
+A confirmation prompt will appear by default, you can skip with:
+
+```sh
+cloudypad destroy mypad --yes
 ```
 
 ## Instance deployment lifecycle
