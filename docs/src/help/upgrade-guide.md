@@ -10,7 +10,7 @@ This version introduces several changes for Scaleway
 
 ### Scaleway legacy volume deprecation
 
-[Scaleway is deprecating `b_ssd` volumes support](https://www.scaleway.com/en/docs/instances/how-to/migrate-volumes-snapshots-to-sbs/) and you won't be able to `cloudypad provision` existing Scaleway instances unless you upgrade your instance's volume following [Scaleway migration guide](https://www.scaleway.com/en/docs/instances/how-to/migrate-volumes-snapshots-to-sbs/#migrating-using-the-instance-apicli-migration-endpoint-plan-and-apply).
+Scaleway is deprecating `b_ssd` volumes support and you won't be able to `cloudypad provision` existing Scaleway instances unless you upgrade your instance's volume following [Scaleway migration guide (Internet Archive link since original link is not available anymore)](https://web.archive.org/web/20250805052923/https://www.scaleway.com/en/docs/instances/how-to/migrate-volumes-snapshots-to-sbs/#migrating-using-the-instance-apicli-migration-endpoint-plan-and-apply).
 
 Alternatively:
 - Use `cloudypad configure` instead of `cloudypad provision` or `cloudypad update` - Note that it will not fully update your instance since provision will be skipped, but it should work nonetheless
@@ -22,7 +22,7 @@ Dedicated data disk is a feature splitting OS (system) disk and data disk to imp
 
 Older instances won't enable dedicated data disk by default to keep retrocompatibility. To enable Scaleway dedicated Data disk:
 
-- Migrate legacy root volume to new volume type following [Scaleway migration guide](https://www.scaleway.com/en/docs/instances/how-to/migrate-volumes-snapshots-to-sbs/#migrating-using-the-instance-apicli-migration-endpoint-plan-and-apply)
+- Migrate legacy root volume to new volume type (see above)
 - Perform upgrade and update with `cloudypad configure` - choose a 0 GB data disk size for now
 - SSH into your instance and move (not copy) folder `mv /var/lib/cloudypad/data /var/lib/cloudypad/data-backup`
 - Run `cloudypad update scaleway --name my-instance --data-disk-size <size-gb>` with your desired data disk size
