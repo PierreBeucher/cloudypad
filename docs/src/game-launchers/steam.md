@@ -16,15 +16,15 @@ Launch your instance and connect using Moonlight. Click _Steam_ icon in Moonligh
 
 ## Sign in to Steam
 
-Steam is automatically installed by Cloudy Pad and starts automatically.
-
 Steam welcome screen shows a login with a QR code and a login/password prompt. 
 
 ![](../assets/steam-login.png)
 
 ### (Recommended) Mobile app with Steam Guard
 
-Use your phone or tablet to:
+See [Steam Guard Mobile Authenticator](https://help.steampowered.com/en/faqs/view/7EFD-3CAE-64D3-1C31) to setup Steam guard for your account
+
+Then use your phone or tablet to:
 - Download Steam application and sign in to the app
 - Tap on the shield 🛡️ button at the bottom of the screen
 - Scan the QR code shown by Steam on Moonlight
@@ -32,6 +32,8 @@ Use your phone or tablet to:
 ![](../assets/steam-app.jpg)
 
 ### Password authentication
+
+_Note: password authentication may fail as Steam does not recognize your server location. It's recommended to use [Mobile app with Steam guard](#recommended-mobile-app-with-steam-guard)._
 
 You can enter your Steam login and password directly
 
