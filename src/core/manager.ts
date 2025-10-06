@@ -445,11 +445,18 @@ export class GenericInstanceManager<ST extends InstanceStateV1> implements Insta
         // skip if server is unknown or can't be found (may happen if previous stop failed or was interrupted)
         // but do call destroyInstanceServer() to ensure instance server and related resources (disks, etc.) are properly deleted or updated
         //
+        // if server deletion fails, log error but continue with stop
+        //
         // otherwise, stop instance normally
         if(this.args.options?.deleteInstanceServerOnStop?.enabled){
             const serverStatus = await runner.serverStatus()
             if(serverStatus !== ServerRunningStatus.Unknown){
-                await runner.stop(opts)
+
+                try {
+                    await runner.stop(opts)
+                } catch (error) {
+                    this.logger.warn(`Failed to stop instance ${this.name()}, continuing with server deletion to finalize stop.`, error)
+                }
             } else {
                 this.logger.info(`Instance ${this.name()} does not have a server (or server in unknown state). ` + 
                     `Skipping provider API stop and continue with server deletion to finalize stop.`)
