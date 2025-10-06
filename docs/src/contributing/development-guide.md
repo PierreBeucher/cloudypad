@@ -185,10 +185,12 @@ pulumi destroy -s <organization/CloudyPad-XXX/STACK>
 
 ## Regular updates
 
-- [ ] Node deps
-  ```
-  npm update
-  ```
+First:
+- [ ] Nix flake update `nix flake update`
+- [ ] Also bump version to latest stable if possible
+
+Then:
+- [ ] Node dependencies `npm update`
 - [ ] NVIDIA Display driver version 
   - Take latest Display Production Linux x86_64 version at [NVIDIA Unix Driver archive page](https://www.nvidia.com/en-us/drivers/unix/)
   - Update in `ansible/roles/nvidia-driver/defaults/main.yml` `nvidia_driver_display_dotrun_install_version`

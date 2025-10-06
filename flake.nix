@@ -1,6 +1,6 @@
 {
   inputs = {
-    nixpkgs.url = "github:nixos/nixpkgs/nixos-25.05";
+    nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
     flake-utils.url = "github:numtide/flake-utils";
   };
 
@@ -75,6 +75,10 @@
               export LINODE_TOKEN=$(cat $PWD/tmp/linode_token)
 
               export CLOUDYPAD_KEYBOARD_LAYOUT_AUTODETECT_SKIP_WAYLAND_WARNING=true
+
+              # Force NODE_ENV as Cursor seems to set it to production
+              # See https://forum.cursor.com/t/agent-shell-set-node-env-to-production/134489
+              export NODE_ENV=development
             '';
           };
         };
