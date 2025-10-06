@@ -12,13 +12,16 @@ export interface RetrierArgs<R> {
     onRetryLogBehavior?: "error" | "warning" | "info" | "debug" | "silent"
 }
 
-export class Retrier<R> {
+/**
+ * Perform actions with retry logic.
+ */
+export class ActionRetrier<R> {
     private readonly logger: Logger
     private readonly args: RetrierArgs<R>
 
     constructor(args: RetrierArgs<R>) {
         this.args = args
-        this.logger = getLogger(`Retrier-${args.actionName}`)
+        this.logger = getLogger(`ActionRetrier-${args.actionName}`)
     }
 
     /**
@@ -47,7 +50,7 @@ export class Retrier<R> {
                 
                 if (attempt < retries) {
                     const logMessage = `${this.args.actionName} attempt ${attempt + 1}/${retries + 1} failed, retrying in ${retryDelaySeconds} seconds.`
-                    switch (this.args.onRetryLogBehavior ?? Retrier.getDefaultRetryLogBehavior()) {
+                    switch (this.args.onRetryLogBehavior ?? ActionRetrier.getDefaultRetryLogBehavior()) {
                         case "error":
                             this.logger.error(logMessage, lastError)
                             break

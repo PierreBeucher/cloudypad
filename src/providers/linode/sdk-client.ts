@@ -28,7 +28,7 @@ export interface LinodeVMDetails {
 }
 
 const DEFAULT_START_STOP_OPTION_WAIT = false
-const DEFAULT_START_STOP_OPTION_WAIT_TIMEOUT = 60
+const DEFAULT_START_STOP_OPTION_WAIT_TIMEOUT = 60 * 10 // 10 minutes, Linode instances are slow to start/stop
 
 export type LinodeInstanceStatus = LinodeStatus
 

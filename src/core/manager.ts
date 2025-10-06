@@ -8,7 +8,7 @@ import { ConfiguratorFactory } from './submanager-factory';
 import { ProvisionerFactory } from './submanager-factory';
 import { RunnerFactory } from './submanager-factory';
 import { AnsibleConfiguratorOptions } from '../configurators/ansible';
-import { Retrier } from '../tools/retrier';
+import { ActionRetrier } from '../tools/retrier';
 
 const DEFAULT_RETRIES = 1
 const DEFAULT_RETRY_DELAY_SECONDS = 10
@@ -441,23 +441,31 @@ export class GenericInstanceManager<ST extends InstanceStateV1> implements Insta
     async doStop(opts?: StopOptions): Promise<void> {
         const runner = await this.buildRunner()
         
-        // if instance server is deleted on stop, check server status first as it may not exist
-        if(this.args.options?.deleteInstanceServerOnStop){
-            const serverStatus = await runner.serverStatus()
-            if(serverStatus === ServerRunningStatus.Unknown){
-                this.logger.info(`Instance ${this.name()} does not have a server. No need to stop.`)
-                return
-            }
-        }
-
-        // always cleanly stop instance to avoid data inconsistency 
-        // as instance server may be deleted on stop and deleting without stopping may cause data inconsistency
-        // and stopOptions logic is ported by runner
-        await runner.stop(opts)
-
-        // destroy instance server if deleteInstanceServerOnStop is enabled
+        // if instance server is deleted on stop, check server status first to try and stop it cleanly before deletion
+        // skip if server is unknown or can't be found (may happen if previous stop failed or was interrupted)
+        // but do call destroyInstanceServer() to ensure instance server and related resources (disks, etc.) are properly deleted or updated
+        //
+        // if server deletion fails, log error but continue with stop
+        //
+        // otherwise, stop instance normally
         if(this.args.options?.deleteInstanceServerOnStop?.enabled){
+            const serverStatus = await runner.serverStatus()
+            if(serverStatus !== ServerRunningStatus.Unknown){
+
+                try {
+                    await runner.stop(opts)
+                } catch (error) {
+                    this.logger.warn(`Failed to stop instance ${this.name()}, continuing with server deletion to finalize stop.`, error)
+                }
+            } else {
+                this.logger.info(`Instance ${this.name()} does not have a server (or server in unknown state). ` + 
+                    `Skipping provider API stop and continue with server deletion to finalize stop.`)
+            }
+
             await this.doDestroyInstanceServer()
+        } else {
+            // don't check server status if no deletion happen on stop as it shouldn't be deleted
+            await runner.stop(opts)
         }
     }
 
@@ -483,7 +491,7 @@ export class GenericInstanceManager<ST extends InstanceStateV1> implements Insta
      * @param retryOptions Number of retries and delay between retries.
      */
     private async doWithRetry<R>(actionFn: () => Promise<R>, actionName: string, retryOptions?: { retries?: number, retryDelaySeconds?: number }): Promise<R> {
-        const retrier = new Retrier({
+        const retrier = new ActionRetrier({
             actionFn: actionFn,
             actionName: actionName,
             retries: retryOptions?.retries ?? DEFAULT_RETRIES,

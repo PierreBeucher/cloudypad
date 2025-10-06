@@ -6,6 +6,7 @@ import { ServerRunningStatus } from '../../../src/core/runner';
 import { getLogger } from '../../../src/log/utils';
 import { CloudypadClient } from '../../../src/core/client';
 import * as sinon from 'sinon';
+import { DummyInstanceInfraManager } from '../../../src/providers/dummy/infra';
 
 describe('Instance manager', () => {
 
@@ -251,5 +252,64 @@ describe('Instance manager', () => {
             await action.action()
             assert.strictEqual(stubFn.callCount, 3)
         }
+    })
+
+    it(`should delete instance server on stop when deleteInstanceServerOnStop is enabled`, async () => {
+        const instanceName = `dummy-test-core-manager-delete-instance-server-on-stop`
+        await initializeDummyInstanceState(instanceName, {
+            provision: {
+                input: {
+                    deleteInstanceServerOnStop: true,
+                    startDelaySeconds: 0,
+                    stopDelaySeconds: 0,
+                    configurationDelaySeconds: 0,
+                    provisioningDelaySeconds: 0,
+                    readinessAfterStartDelaySeconds: 0,
+                }
+            }
+        })
+        const dummyProviderClient = getUnitTestDummyProviderClient()
+        const manager = await dummyProviderClient.getInstanceManager(instanceName)
+
+        await manager.provision()
+        await manager.configure()
+
+        await manager.start()
+        const instanceStatus = await manager.getInstanceStatus()
+        assert.strictEqual(instanceStatus.serverStatus, ServerRunningStatus.Running)
+
+        await manager.stop()
+        const instanceStatusAfterStop = await manager.getInstanceStatus()
+        assert.strictEqual(instanceStatusAfterStop.serverStatus, ServerRunningStatus.Unknown)
+    })
+
+
+    it(`should keep instance server on stop when deleteInstanceServerOnStop is disabled`, async () => {
+        const instanceName = `dummy-test-core-manager-keep-instance-server-on-stop`
+        await initializeDummyInstanceState(instanceName, {
+            provision: {
+                input: {
+                    deleteInstanceServerOnStop: false,
+                    startDelaySeconds: 0,
+                    stopDelaySeconds: 0,
+                    configurationDelaySeconds: 0,
+                    provisioningDelaySeconds: 0,
+                    readinessAfterStartDelaySeconds: 0,
+                }
+            }
+        })
+        const dummyProviderClient = getUnitTestDummyProviderClient()
+        const manager = await dummyProviderClient.getInstanceManager(instanceName)
+
+        await manager.provision()
+        await manager.configure()
+
+        await manager.start()
+        const instanceStatus = await manager.getInstanceStatus()
+        assert.strictEqual(instanceStatus.serverStatus, ServerRunningStatus.Running)
+
+        await manager.stop()
+        const instanceStatusAfterStop = await manager.getInstanceStatus()
+        assert.strictEqual(instanceStatusAfterStop.serverStatus, ServerRunningStatus.Stopped)
     })
 })
