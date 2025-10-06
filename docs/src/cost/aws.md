@@ -26,13 +26,13 @@ _*Estimations based on [AWS eu-east-1 pricing](https://aws.amazon.com/ec2/spot/p
 
 ## Egress costs - Data transfer out from Amazon to Internet
 
-AWS bills data transfer out to internet past a 100GB free data threshold. As Cloudy Pad streams from AWS to your machine via internet, you may be billed for data transfer past a certain usage. [AWS bills 0.09$ per GB in most regions](https://aws.amazon.com/ec2/pricing/on-demand/#Data_Transfer) up to 10 TB after the free threshold. 
+AWS bills data transfer out to internet past a 100GB free data threshold. As Cloudy Pad streams from AWS to your machine via internet, you may be billed for data transfer past a certain usage. [AWS bills 0.09$ per GB in most regions](https://aws.amazon.com/ec2/pricing/on-demand/#Data_Transfer) after the free threshold. 
 
-**Past 40 or 50 hours per month**, AWS may start billing additional data transfer charges. 
+**Past 20 or 30 hours per month**, AWS may start billing additional data transfer charges. 
 
-Considering a 1080p 60 FPS stream, data transfer would be around 2.25 GB/hr @ 5 Mbps, incuring additional cost depending on time played:
+Considering a 1080p 60 FPS stream at 15 Mbps, data transfer would be around 6.75 GB/hr, incuring additional cost depending on time played:
 
-| Time played / month (h) |   10  |   20  |   40  |   44  |   50   |   60   |   100  |
-|:-----------------------:|:-----:|:-----:|:-----:|:-----:|:------:|:------:|:------:|
-|   Data transfered (GB)  | 22.50 | 45.00 | 90.00 | 99.00 | 112.50 | 135.00 | 225.00 |
-|        Cost  ($)        | $0.00 | $0.00 | $0.00 | $0.00 |  $1.13 |  $3.15 | $11.25 |
+| Time played / month (h) |   10  |   20   |   40   |   50   |   60   |   100  |
+|:-----------------------:|:-----:|:------:|:------:|:------:|:------:|:------:|
+|   Data transfered (GB)  | 67.50 | 135.00 | 270.00 | 337.50 | 405.00 | 675.00 |
+|        Cost  ($)        | $0.00 |  $3.15 | $15.30 | $21.38 | $27.45 | $51.75 |

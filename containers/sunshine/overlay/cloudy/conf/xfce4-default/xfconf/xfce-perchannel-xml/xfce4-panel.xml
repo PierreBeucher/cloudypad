@@ -58,6 +58,12 @@
         <!-- Firefox -->
         <value type="int" value="15"/>
 
+        <!-- Terminal -->
+        <value type="int" value="16"/>
+
+        <!-- Files -->
+        <value type="int" value="17"/>
+
         <!-- Help and Exit session -->
         <value type="int" value="6"/>
         <value type="int" value="5"/>
@@ -117,6 +123,18 @@
     <property name="plugin-14" type="string" value="launcher">
       <property name="items" type="array">
         <value type="string" value="gog.desktop"/>
+      </property>
+    </property>
+
+    <property name="plugin-16" type="string" value="launcher">
+      <property name="items" type="array">
+        <value type="string" value="terminal.desktop"/>
+      </property>
+    </property>
+
+    <property name="plugin-17" type="string" value="launcher">
+      <property name="items" type="array">
+        <value type="string" value="files.desktop"/>
       </property>
     </property>
 

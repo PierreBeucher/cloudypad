@@ -1,4 +1,4 @@
-# Installation and Upgrade
+# CLI Installation and Upgrade
 
 - [Requirements for all OS](#requirements-for-all-os)
 - [Installation](#installation)

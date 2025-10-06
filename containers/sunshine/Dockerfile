@@ -83,7 +83,8 @@ apt install -y \
     bubblewrap \
     software-properties-common \
     nano \
-    unzip
+    unzip \
+    gedit 
 
 # Vulkan, LibGL and other video related packages
 apt install -y \

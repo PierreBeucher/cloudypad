@@ -7,6 +7,7 @@
     - [Azure](#azure)
     - [Google Cloud](#google-cloud)
     - [Scaleway](#scaleway)
+  - [I can't sign-in to my Steam account](#i-cant-sign-in-to-my-steam-account)
   - [Using Steam, why does my game take forever to "cache Vulkan shader" ?](#using-steam-why-does-my-game-take-forever-to-cache-vulkan-shader-)
   - [I have a black screen when I connect to my instance](#i-have-a-black-screen-when-i-connect-to-my-instance)
   - [I Found an bug or I have a suggestion](#i-found-an-bug-or-i-have-a-suggestion)
@@ -53,6 +54,10 @@ Use N1 Standard instances with 4 to 16 CPUs with T4 or P4 GPUs. They are the che
 Scaleway  `GPU-3070-S` (NVIDIA RTX 3070, 8 CPUs, 16 GB RAM) and `L4-1-24G` (NVIDIA L4 GPU, 8 CPUs, 48 GB RAM) are great for gaming. 
 
 Scaleway also provide instances with multiple GPU or powerful and expensive GPUs like H100 but they may not be the best choice for gaming (expensive and not designed for gaming).
+
+### I can't sign-in to my Steam account
+
+Steam may prevent sign-in as it detect your server location is not your "usual" location. It's recommended to use Steam Guard Mobile Authenticator to approve of your instance location: [Steam sign-in tutorial](../game-launchers/steam.md)
 
 ### Using Steam, why does my game take forever to "cache Vulkan shader" ?
 
