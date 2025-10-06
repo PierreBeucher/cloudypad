@@ -54,38 +54,6 @@ describe('S3StateSideEffect', () => {
         }
     }
 
-    before(async () => {
-
-        // restart the minio container to ensure it's clear of data
-        // (tmpfs are used to store data and is not persisted between runs so restart will clear it)
-        try {
-            logger.info("Clearing data of MinIO container for S3 side effect tests (restarting to reset tmpfs)")
-
-            const docker = new Docker()
-            const container = docker.getContainer('cloudypad-test-minio')
-            await container.restart()
-            
-            logger.info("Waiting for MinIO container to become healthy")
-
-            let inspect = await container.inspect()
-            const startTime = Date.now()
-            const timeout = 30000
-            do {
-                if (Date.now() - startTime > timeout) {
-                    throw new Error('Timeout waiting for container to become healthy')
-                }
-                await new Promise(resolve => setTimeout(resolve, 1000))
-                inspect = await container.inspect()
-            } while (inspect.State.Health?.Status !== 'healthy')
-
-            logger.info("MinIO container is healthy !")
-
-        } catch (error) {
-            throw new Error(`Error restarting MinIO container for S3 side effect tests. `
-                + `Make sure the stack at ${__dirname}/docker-compose.yml is running.`, { cause: error })
-        }
-    }).timeout(35000)
-
     it('should list instances (empty)', async () => {
         const instances = await s3StateSideEffect.listInstances()
         assert.strictEqual(instances.length, 0)
