@@ -4,6 +4,8 @@ services:
     # This container name is used by various scripts and functions to identify the container
     # Don't change it
     container_name: cloudy
+    labels:
+      autoheal: "true"
     # Need generous shared memory size as some services (eg. Steam) require a lot
     # Half available memory (as is the case for most Linux distros)
     shm_size: "{{ (ansible_memtotal_mb / 2) | int }}M"
@@ -78,3 +80,18 @@ services:
       # Sunshine maximum bitrate in Kbps
       # If unset, Sunshine will use its default bitrate settings
       CLOUDYPAD_SUNSHINE_MAX_BITRATE: "{{ sunshine_max_bitrate_kbps }}"
+
+{% if sunshine_autoheal_enable %}
+  autoheal:
+    image: {{ sunshine_autoheal_image }}
+    container_name: cloudy-autoheal
+    restart: always
+    network_mode: none
+    environment:
+      AUTOHEAL_CONTAINER_LABEL: autoheal
+      AUTOHEAL_INTERVAL: 5
+      AUTOHEAL_START_PERIOD: 0
+      AUTOHEAL_DEFAULT_STOP_TIMEOUT: 30
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+{% endif %}

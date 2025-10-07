@@ -276,7 +276,7 @@ RUN useradd -m -d $CLOUDYPAD_USER_HOME -s /bin/bash -u 1001 $CLOUDYPAD_USER
 COPY overlay /
 
 # Run healthcheck using script
-HEALTHCHECK --interval=5s --timeout=5s --start-period=5s --retries=3 \
+HEALTHCHECK --interval=10s --timeout=5s --start-period=5s --retries=3 \
     CMD /cloudy/bin/sunshine-healthcheck.sh
 
 # Allow user "cloudy" to stop container

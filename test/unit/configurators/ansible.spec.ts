@@ -18,6 +18,9 @@ describe('Ansible configurator', function () {
                 sunshine: {
                     ...DEFAULT_COMMON_INPUT.configuration.sunshine!,
                     maxBitrateKbps: 5000,
+                    autoheal: {
+                        enable: true,
+                    },
                 }
             },
             provisionOutput: {
@@ -48,11 +51,13 @@ describe('Ansible configurator', function () {
                         sunshine_nvidia_enable: true,
                         sunshine_image_tag: DEFAULT_COMMON_INPUT.configuration.sunshine?.imageTag,
                         sunshine_image_registry: DEFAULT_COMMON_INPUT.configuration.sunshine?.imageRegistry,
-
+                        
                         sunshine_keyboard_layout: DEFAULT_COMMON_INPUT.configuration.keyboard?.layout,
                         sunshine_keyboard_variant: DEFAULT_COMMON_INPUT.configuration.keyboard?.variant,
                         sunshine_keyboard_model: DEFAULT_COMMON_INPUT.configuration.keyboard?.model,
                         sunshine_keyboard_options: DEFAULT_COMMON_INPUT.configuration.keyboard?.options,
+
+                        sunshine_autoheal_enable: true,
 
                         sunshine_max_bitrate_kbps: 5000,
 
@@ -108,7 +113,7 @@ describe('Ansible configurator', function () {
                         cloudypad_provider: "test-ansible-configurator-provider-default",
                         sunshine_image_registry: CLOUDYPAD_SUNSHINE_IMAGE_REGISTRY,
                         sunshine_image_tag: CLOUDYPAD_VERSION,
-                        sunshine_nvidia_enable: true,
+
                         sunshine_server_name: "test-ansible-configurator-instance-default",
                         wolf_instance_name: "test-ansible-configurator-instance-default",
                     },
