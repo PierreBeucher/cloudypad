@@ -60,3 +60,4 @@
     state: present
     files: "{{ sunshine_compose_files }}"
     pull: "{{ sunshine_compose_pull_images }}"
+    remove_orphans: true

@@ -52,3 +52,9 @@ sunshine_additional_config: ""
 
 # Maximum bitrate in Kbps for Sunshine streaming (max_bitrate config)
 sunshine_max_bitrate_kbps: "0"
+
+# Wheher to enable Sunshine container autoheal
+# If enabled, Sunshine container will be automatically restarted if it becomes unhealthy
+# It may happen the container crashes without exiting (eg. Sunshine server crash), autoheal helps being more resilient
+sunshine_autoheal_enable: true
+sunshine_autoheal_image: "willfarrell/autoheal:1.2.0@sha256:31f580ef0279eaced5b38d631b08c474d70d8403c1c2fdd6ddcf2e879d5f3f7c"
