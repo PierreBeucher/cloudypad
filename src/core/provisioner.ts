@@ -4,6 +4,16 @@ import { CommonProvisionInputV1, CommonProvisionOutputV1, CommonConfigurationInp
 import { CoreConfig } from "./config/interface"
 
 /**
+ * Options for provisioner actions
+ */
+export interface ProvisionerActionOptions {
+    /**
+     * Cancel any stuck Pulumi operations before running the action. Default: false
+     */
+    pulumiCancel?: boolean
+}
+
+/**
  * Provision instances: manage Cloud resources and infrastructure
  */
 export interface InstanceProvisioner  {
@@ -19,18 +29,18 @@ export interface InstanceProvisioner  {
      * @param opts 
      * @returns Outputs after provision
      */
-    provision(): Promise<CommonProvisionOutputV1>
+    provision(opts?: ProvisionerActionOptions): Promise<CommonProvisionOutputV1>
 
     /**
      * Destroy the instance server. Server can be re-created with provision().
      */
-    destroyInstanceServer(): Promise<CommonProvisionOutputV1>
+    destroyInstanceServer(opts?: ProvisionerActionOptions): Promise<CommonProvisionOutputV1>
 
     /**
      * Destroy the instance. Every infrastructure and Cloud resources managed for this instance are destroyed. 
      * @param opts 
      */
-    destroy(): Promise<void>
+    destroy(opts?: ProvisionerActionOptions): Promise<void>
 }
 
 export interface InstanceProvisionerArgs<PC extends CommonProvisionInputV1, PO extends CommonProvisionOutputV1> {
@@ -56,32 +66,32 @@ export abstract class AbstractInstanceProvisioner<PC extends CommonProvisionInpu
         await this.doVerifyConfig();
     }
 
-    async provision(): Promise<PO> {
+    async provision(opts?: ProvisionerActionOptions): Promise<PO> {
         this.logger.info(`Provisioning instance ${this.args.instanceName}`)
-        return await this.doProvision()
+        return await this.doProvision(opts)
     }
 
-    async destroy(): Promise<void> {
+    async destroy(opts?: ProvisionerActionOptions): Promise<void> {
         this.logger.info(`Destroying instance ${this.args.instanceName}...`)
         
-        await this.doDestroy()
+        await this.doDestroy(opts)
 
         this.logger.info(`Destroyed instance ${this.args.instanceName}`)
     }
 
-    async destroyInstanceServer(): Promise<PO> {
+    async destroyInstanceServer(opts?: ProvisionerActionOptions): Promise<PO> {
         this.logger.info(`Destroying instance ${this.args.instanceName} server...`)
-        const outputs = await this.doDestroyInstanceServer()
+        const outputs = await this.doDestroyInstanceServer(opts)
         this.logger.info(`Destroyed instance ${this.args.instanceName} server`)
 
         return outputs
     }
 
     protected abstract doVerifyConfig(): Promise<void>;
-    protected abstract doProvision(): Promise<PO>;
-    protected abstract doDestroy(): Promise<void>;
+    protected abstract doProvision(opts?: ProvisionerActionOptions): Promise<PO>;
+    protected abstract doDestroy(opts?: ProvisionerActionOptions): Promise<void>;
     
-    protected doDestroyInstanceServer(): Promise<PO> {
+    protected doDestroyInstanceServer(opts?: ProvisionerActionOptions): Promise<PO> {
         throw new Error(`Instance ${this.args.instanceName} does not support instance server destruction`)
     }
 

@@ -1,4 +1,4 @@
-import { AbstractInstanceProvisioner, InstanceProvisionerArgs } from '../../core/provisioner';
+import { AbstractInstanceProvisioner, InstanceProvisionerArgs, ProvisionerActionOptions } from '../../core/provisioner';
 import { PaperspaceClient } from './client/client';
 import { MachinesCreateRequest } from './client/generated-api';
 import { PaperspaceProvisionInputV1, PaperspaceProvisionOutputV1 } from './state';

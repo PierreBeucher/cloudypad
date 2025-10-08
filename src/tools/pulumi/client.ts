@@ -2,6 +2,13 @@ import * as fs from 'fs'
 import { ConcurrentUpdateError, InlineProgramArgs, LocalWorkspace, LocalWorkspaceOptions, OutputMap, PulumiFn, Stack } from "@pulumi/pulumi/automation";
 import { getLogger, Logger } from '../../log/utils';
 
+export interface PulumiActionOptions {
+    /**
+     * Cancel any stuck Pulumi operations before running the action
+     */
+    cancel?: boolean
+}
+
 export const DEFAULT_RETRY_DELAY = 10000
 export const DEFAULT_RETRY_MAX_RETRIES = 12
 export const DEFAULT_RETRY_LOG_BEHAVIOR = "warn"
@@ -84,12 +91,22 @@ export abstract class InstancePulumiClient<ConfigType extends Object, OutputType
         return this.buildTypedOutput(outputs)
     }
 
-    async refresh(): Promise<OutputType> {
-        return this._doStackActionRetryOnLocked({ action: () => this._doRefresh() })
+    async refresh(options?: PulumiActionOptions): Promise<OutputType> {
+        return this._doStackActionRetryOnLocked({ action: () => this._doRefresh(options) })
     }
 
-    async _doRefresh(): Promise<OutputType> {
+    async _doRefresh(options?: PulumiActionOptions): Promise<OutputType> {
         const stack = await this.getStack()
+
+        if (options?.cancel) {
+            this.logger.debug(`Cancelling any stuck Pulumi operations for stack: ${stack.name}`)
+            try {
+                await stack.cancel()
+                this.logger.debug(`Successfully cancelled stuck operations for stack: ${stack.name}`)
+            } catch (error) {
+                this.logger.debug(`No operations to cancel for stack: ${stack.name}`, error)
+            }
+        }
 
         this.logger.debug(`Refreshing stack ${this.stackName}`)
 
@@ -138,12 +155,22 @@ export abstract class InstancePulumiClient<ConfigType extends Object, OutputType
         return stack
     }
 
-    async up(): Promise<OutputType> {
-        return this._doStackActionRetryOnLocked({ action: () => this._doUp() })
+    async up(options?: PulumiActionOptions): Promise<OutputType> {
+        return this._doStackActionRetryOnLocked({ action: () => this._doUp(options) })
     }
 
-    async _doUp(): Promise<OutputType> {
+    async _doUp(options?: PulumiActionOptions): Promise<OutputType> {
         const stack = await this.getStack()
+
+        if (options?.cancel) {
+            this.logger.debug(`Cancelling any stuck Pulumi operations for stack: ${stack.name}`)
+            try {
+                await stack.cancel()
+                this.logger.debug(`Successfully cancelled stuck operations for stack: ${stack.name}`)
+            } catch (error) {
+                this.logger.debug(`No operations to cancel for stack: ${stack.name}`, error)
+            }
+        }
 
         this.logger.debug(`Running Pulumi up: ${stack.name}`)
         this.logger.debug(`Config before up: ${JSON.stringify(await stack.getAllConfig())}`)
@@ -176,13 +203,23 @@ export abstract class InstancePulumiClient<ConfigType extends Object, OutputType
         return prevRes
     }
 
-    async destroy() {
-        return this._doStackActionRetryOnLocked({ action: () => this._doDestroy() })
+    async destroy(options?: PulumiActionOptions) {
+        return this._doStackActionRetryOnLocked({ action: () => this._doDestroy(options) })
     }
 
-    async _doDestroy() {
+    async _doDestroy(options?: PulumiActionOptions) {
         this.logger.debug(`Destroying stack`)
         const stack = await this.getStack()
+
+        if (options?.cancel) {
+            this.logger.debug(`Cancelling any stuck Pulumi operations for stack: ${stack.name}`)
+            try {
+                await stack.cancel()
+                this.logger.debug(`Successfully cancelled stuck operations for stack: ${stack.name}`)
+            } catch (error) {
+                this.logger.debug(`No operations to cancel for stack: ${stack.name}`, error)
+            }
+        }
 
         this.logger.debug(`Refreshing stack ${stack.name} before destroy result`)
 

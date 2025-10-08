@@ -1,5 +1,5 @@
 import { SshKeyLoader } from '../../tools/ssh';
-import { AbstractInstanceProvisioner, InstanceProvisionerArgs } from '../../core/provisioner';
+import { AbstractInstanceProvisioner, InstanceProvisionerArgs, ProvisionerActionOptions } from '../../core/provisioner';
 import { GcpPulumiClient, PulumiStackConfigGcp } from './pulumi';
 import { GcpClient } from './sdk-client';
 import { GcpProvisionInputV1, GcpProvisionOutputV1} from './state';
@@ -12,7 +12,7 @@ export class GcpProvisioner extends AbstractInstanceProvisioner<GcpProvisionInpu
         super(args)
     }
 
-    async doProvision() {
+    async doProvision(opts?: ProvisionerActionOptions) {
 
         this.logger.info(`Provisioning Google Cloud instance ${this.args.instanceName}`)
 
@@ -46,7 +46,7 @@ export class GcpProvisioner extends AbstractInstanceProvisioner<GcpProvisionInpu
         }
 
         await pulumiClient.setConfig(pulumiConfig)
-        const pulumiOutputs = await pulumiClient.up()
+        const pulumiOutputs = await pulumiClient.up({ cancel: opts?.pulumiCancel })
 
         return {
             instanceName: pulumiOutputs.instanceName,
@@ -56,12 +56,12 @@ export class GcpProvisioner extends AbstractInstanceProvisioner<GcpProvisionInpu
 
     }
 
-    async doDestroy(){
+    async doDestroy(opts?: ProvisionerActionOptions){
         const pulumiClient = new GcpPulumiClient({
             stackName: this.args.instanceName,
             workspaceOptions: this.args.coreConfig.pulumi?.workspaceOptions
         })
-        await pulumiClient.destroy()
+        await pulumiClient.destroy({ cancel: opts?.pulumiCancel })
 
         this.args.provisionOutput = undefined
     }

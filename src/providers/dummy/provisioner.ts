@@ -1,5 +1,5 @@
 import { SshKeyLoader } from '../../tools/ssh';
-import { AbstractInstanceProvisioner, InstanceProvisionerArgs } from '../../core/provisioner';
+import { AbstractInstanceProvisioner, InstanceProvisionerArgs, ProvisionerActionOptions } from '../../core/provisioner';
 import { DummyProvisionInputV1, DummyProvisionOutputV1 } from './state';
 import { ServerRunningStatus } from '../../core/runner';
 import { DummyInstanceInfraManager } from './infra';
