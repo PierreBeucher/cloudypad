@@ -222,8 +222,11 @@ export function createDummyState(override?: PartialDeep<DummyInstanceStateV1>): 
             input: {
                 ...DEFAULT_COMMON_INPUT.provision,
                 instanceType: "t2.micro",
-                startDelaySeconds: 5,
-                stopDelaySeconds: 5,
+                startDelaySeconds: 0,
+                stopDelaySeconds: 0,
+                configurationDelaySeconds: 0,
+                provisioningDelaySeconds: 0,
+                readinessAfterStartDelaySeconds: 0,
             }
         },
         name: `dummy-instance-${Date.now()}`,
