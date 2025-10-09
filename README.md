@@ -9,8 +9,8 @@ Cloudy Pad lets you **deploy a Cloud gaming instance on your own servers, machin
 - [Features](#features)
 - [Getting started 🚀](#getting-started-)
 - [Have a question ? Found a bug ?](#have-a-question--found-a-bug-)
-- [Contributors](#contributors)
 - [Contributing](#contributing)
+- [Contributors](#contributors)
 - [License](#license)
 
 ---
@@ -57,23 +57,31 @@ Cloudy Pad lets you **deploy a Cloud gaming instance on your own servers, machin
 - See [FAQ and known issues](https://docs.cloudypad.gg/usage/faq.md) or [create an issue](https://github.com/PierreBeucher/cloudypad/issues)
 - Come and chat with us on [Discord](https://discord.gg/QATA3b9TTa) !
 
+## Contributing
+
+A [complete contribution guide](https://docs.cloudypad.gg/contributing/contribution-guide.html) with is available with:
+
+- Development environment setup (fully automated with Nix)
+- Project architecture
+- How and where to write code
+- Testing and debugging
+- Tips and helps
+
+Cloudy Pad involves usage of:
+
+- TypeScript & NodeJS
+- Cloud providers: AWS, Azure, GCP, Scaleway...
+- Ansible
+- Docker
+- Pulumi (an Infrastructure as Code tool like Terraform using real Typescript/NodeJS code)
+
+See [Contribution guide](https://docs.cloudypad.gg/contributing/contribution-guide.html) ([plain markdown version](./docs/src/contributing/contribution-guide.md))
+
 ## Contributors
 
 Thanks to our contributors
 
 [![Code Contributors](https://contrib.rocks/image?repo=PierreBeucher/cloudypad)](https://github.com/PierreBeucher/cloudypad/graphs/contributors)
-
-## Contributing
-
-Wanna contribute ? Play around and learn about:
-
-- Cloud providers: AWS, Azure, GCP...
-- Ansible
-- Docker
-- Pulumi (an Infrastructure as Code tool like Terraform using real Typescript/NodeJS code)
-- Typescript & NodeJS
-
-See [Development Guide](https://docs.cloudypad.gg/development-guide)
 
 ## License
 

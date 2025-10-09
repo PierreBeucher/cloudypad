@@ -1,25 +1,25 @@
----
-description: 
-globs: 
-alwaysApply: true
----
 # Contribution Guide
 
 Thanks for considering contributing to Cloudy Pad! This guide will help you get started contributing to various parts of the project.
 
 Here's a typical workflow outline for contributions:
 
-1. Fork Cloudy Pad
-2. Setup your development environment
-   - Development environment setup is entirely automated! Don't worry about tooling installation and setup
-3. Write code 
-   - Use of AI is encouraged, we provide contextual AI `AGENTS.md`-like files. 
-   - You can also pass this file directly to AI context
-   - Make sure to review and test your code before going forward though.
-4. Run tests and review
-  - A simple `task test-unit` is enough for most situations
-5. Submit Pull Request
+1. Understand [project architecture](#architecture-overview)
+2. [Fork Cloudy Pad on GitHub or clone project locally](https://github.com/PierreBeucher/cloudypad) 
+3. Setup your development environment
+   - Development environment setup is **fully automated!** Don't worry about tooling installation and setup
+4. Write code 
+   - Use of AI is encouraged, we provide contextual AI `AGENTS.md` and Cursor rules files. 
+   - You can also pass this contribution guide directly to AI context
+   - Make sure to review and test your code before going forward though. Unsupervised IA contribution are unlikely to pass review.
+5. Run tests and review
+   - A simple `task test-unit` and human is enough for most situations
+   - Detailed testing and debugging instructions are provided for more complex situation
+6. Submit Pull Request
 
+**Table of Content**
+
+---
 - [Getting started: setup development environment, build and run tests](#getting-started-setup-development-environment-build-and-run-tests)
 - [Architecture Overview](#architecture-overview)
   - [Instance lifecycle and Core components](#instance-lifecycle-and-core-components)
@@ -61,14 +61,11 @@ Start a Nix development shell: it will download packages and setup your developm
 nix develop
 ```
 
-Then run commands:
+You can then run commands:
 
 ```sh
 # Build Node CLI package
 task build-npm
-
-# Build Core container
-task build-core-container-local
 
 # Run unit tests
 task test-unit
@@ -473,7 +470,7 @@ When your changes are ready, you can [create a Pull Request](https://github.com/
 - Follow [conventional commits](https://www.conventionalcommits.org/en/v1.0.0/)
   - Eg. commit messages like `feat: added a nice feature`
   - See Git history as example
-- [Verify your code](#running-tests-and-verifying-your-changes-locally): test, compilation, review, etc. 
+- [Verify your code](#running-tests): test, compilation, review, etc. 
 - Explain your changes 
 
 ### Review process
