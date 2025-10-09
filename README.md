@@ -48,7 +48,7 @@ Cloudy Pad lets you **deploy a Cloud gaming instance on your own servers, machin
 
 [⚒️ Self-deploy your instance via CLI](https://docs.cloudypad.gg/getting-started)
 
-[🪄 Join Cloudy Pad App: deploy your instance in a few clicks and start playing now 🎮](https://app.cloudypad.gg/sign-in)
+[🪄 Cloudy Pad App: deploy your instance in seconds from your browser and start playing 🎮](https://app.cloudypad.gg/sign-in)
 
 [📜 See full documentation](https://docs.cloudypad.gg)
 
