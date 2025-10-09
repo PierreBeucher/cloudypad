@@ -1,6 +1,6 @@
 import { SshKeyLoader } from '../../tools/ssh';
 import { AwsPulumiClient, PulumiStackConfigAws } from './pulumi';
-import { AbstractInstanceProvisioner, InstanceProvisionerArgs } from '../../core/provisioner';
+import { AbstractInstanceProvisioner, InstanceProvisionerArgs, ProvisionerActionOptions } from '../../core/provisioner';
 import { AwsClient } from './sdk-client';
 import { AwsProvisionInputV1, AwsProvisionOutputV1 } from './state';
 
@@ -12,7 +12,7 @@ export class AwsProvisioner extends AbstractInstanceProvisioner<AwsProvisionInpu
         super(args)
     }
 
-    async doProvision() {
+    async doProvision(opts?: ProvisionerActionOptions) {
 
         this.logger.info(`Provisioning AWS instance ${this.args.instanceName}`)
 
@@ -37,7 +37,7 @@ export class AwsProvisioner extends AbstractInstanceProvisioner<AwsProvisionInpu
         }
 
         await pulumiClient.setConfig(pulumiConfig)
-        const pulumiOutputs = await pulumiClient.up()
+        const pulumiOutputs = await pulumiClient.up({ cancel: opts?.pulumiCancel })
 
         return {
             host: pulumiOutputs.publicIp,
@@ -47,13 +47,13 @@ export class AwsProvisioner extends AbstractInstanceProvisioner<AwsProvisionInpu
 
     }
 
-    async doDestroy(){
+    async doDestroy(opts?: ProvisionerActionOptions){
         const pulumiClient = new AwsPulumiClient({
             stackName: this.args.instanceName,
             workspaceOptions: this.args.coreConfig.pulumi?.workspaceOptions
         })
         
-        await pulumiClient.destroy()
+        await pulumiClient.destroy({ cancel: opts?.pulumiCancel })
 
         this.args.provisionOutput = undefined
         this.args.provisionOutput = undefined

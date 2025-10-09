@@ -52,6 +52,11 @@ export class InteractiveInstanceUpdater<ST extends InstanceStateV1, A extends Up
         })
 
         const manager = await this.providerClient.getInstanceManager(instanceName)
+        
+        // ensure instance is started for deployment
+        // as deployment will not necessarily start instance if it's stopped
+        await manager.start()
+
         await manager.deploy()
     }
 

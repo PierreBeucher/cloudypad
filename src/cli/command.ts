@@ -116,6 +116,8 @@ export const CLI_OPTION_RETRY_DELAY = new Option('--retry-delay <seconds>', 'Ret
 export const CLI_OPTION_RATE_LIMIT_MAX_MBPS = new Option('--ratelimit-max-mbps <mbps>', 'Rate limit egress bandwidth in Mbps. Can be used to limit egress cost. 0 to disable rate limiting.')
     .argParser(parseInt)
 
+export const CLI_OPTION_FORCE_PULUMI_CANCEL = new Option('--force-pulumi-cancel', 'Cancel any stuck Pulumi operations before running the command. Only used for providers relying on Pulumi for infrastructure management, ignored otherwise.')
+
 function parseFalseOrDisable(value: string){
     return value === "disable" || value === "no" || value === "false" || value === "0" ? false : true
 }
@@ -150,6 +152,7 @@ export abstract class CliCommandGenerator {
             .addOption(CLI_OPTION_ANSIBLE_ADDITIONAL_ARGS)
             .addOption(CLI_OPTION_RETRIES)
             .addOption(CLI_OPTION_RETRY_DELAY)
+            .addOption(CLI_OPTION_FORCE_PULUMI_CANCEL)
     }
 
     /**
@@ -163,6 +166,7 @@ export abstract class CliCommandGenerator {
             .addOption(CLI_OPTION_ANSIBLE_ADDITIONAL_ARGS)
             .addOption(CLI_OPTION_RETRIES)
             .addOption(CLI_OPTION_RETRY_DELAY)
+            .addOption(CLI_OPTION_FORCE_PULUMI_CANCEL)
     }
 
     /**

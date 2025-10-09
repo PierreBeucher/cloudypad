@@ -26,6 +26,11 @@ export interface ActionOptions {
      * Delay between retries in seconds. Default: 10 seconds
      */
     retryDelaySeconds?: number
+
+    /**
+     * Cancel any stuck Pulumi operations before running the action. Default: false
+     */
+    pulumiCancel?: boolean
 }
 
 export interface DeployOptions extends ActionOptions {
@@ -301,7 +306,7 @@ export class GenericInstanceManager<ST extends InstanceStateV1> implements Insta
 
         await this.addEvent(InstanceEventEnum.ProvisionBegin)
         await this.doWithRetry(async () => {
-            await this.doProvision()
+            await this.doProvision(opts)
         }, 'Provision', opts)
         await this.addEvent(InstanceEventEnum.ProvisionEnd)
     }
@@ -377,9 +382,11 @@ export class GenericInstanceManager<ST extends InstanceStateV1> implements Insta
      * Destroy instance server using provisioner and update state with provision output.
      * Reset configuration output to undefined.
      */
-    async doDestroyInstanceServer(): Promise<void> {
+    async doDestroyInstanceServer(opts?: ActionOptions): Promise<void> {
         const provisioner = await this.buildProvisioner()
-        const newOutputs = await provisioner.destroyInstanceServer()
+        const newOutputs = await provisioner.destroyInstanceServer({
+            pulumiCancel: opts?.pulumiCancel
+        })
         await this.stateWriter.setProvisionOutput(this.instanceName, newOutputs)
         await this.stateWriter.setConfigurationOutput(this.instanceName, undefined)
     }
@@ -405,12 +412,14 @@ export class GenericInstanceManager<ST extends InstanceStateV1> implements Insta
      * Provision instance using provisioner and update state with provision output.
      * Decorellated from main provision() method as it may be run for configuration and as post-start reconfiguration by start().
      */
-    async doProvision(): Promise<void> {
+    async doProvision(opts?: ActionOptions): Promise<void> {
 
         this.logger.debug(`Do provision instance ${this.name()}`)
 
         const provisioner = await this.buildProvisioner()
-        const newOutputs = await provisioner.provision()
+        const newOutputs = await provisioner.provision({
+            pulumiCancel: opts?.pulumiCancel
+        })
 
         this.logger.debug(`Provision output for instance ${this.name()}: ${JSON.stringify(newOutputs)}`)
 
@@ -425,7 +434,7 @@ export class GenericInstanceManager<ST extends InstanceStateV1> implements Insta
         // if deleteInstanceServerOnStop is enabled, instance server may have been deleted on last instance stop
         // so we need to re-provision and re-configure instance using specific Ansible args
         if(this.args.options?.deleteInstanceServerOnStop?.enabled){
-            await this.doProvision()
+            await this.doProvision(opts)
             await this.doConfigure(this.args.options.deleteInstanceServerOnStop.postStartReconfigurationAnsibleAdditionalArgs)
         }
 
@@ -462,7 +471,7 @@ export class GenericInstanceManager<ST extends InstanceStateV1> implements Insta
                     `Skipping provider API stop and continue with server deletion to finalize stop.`)
             }
 
-            await this.doDestroyInstanceServer()
+            await this.doDestroyInstanceServer(opts)
         } else {
             // don't check server status if no deletion happen on stop as it shouldn't be deleted
             await runner.stop(opts)
@@ -479,7 +488,9 @@ export class GenericInstanceManager<ST extends InstanceStateV1> implements Insta
 
     async doDestroy(opts?: DestroyOptions): Promise<void> {
         const provisioner = await this.buildProvisioner()
-        await provisioner.destroy()
+        await provisioner.destroy({
+            pulumiCancel: opts?.pulumiCancel
+        })
         await this.stateWriter.setProvisionOutput(this.instanceName, undefined)
         await this.stateWriter.setConfigurationOutput(this.instanceName, undefined)
     }

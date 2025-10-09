@@ -1,4 +1,4 @@
-import { AbstractInstanceProvisioner, InstanceProvisionerArgs } from '../../core/provisioner'
+import { AbstractInstanceProvisioner, InstanceProvisionerArgs, ProvisionerActionOptions } from '../../core/provisioner'
 import { getLogger } from '../../log/utils'
 import { LinodePulumiClient, PulumiStackConfigLinode, LinodePulumiOutput } from './pulumi'
 import { LinodeProvisionInputV1, LinodeProvisionOutputV1 } from './state'
@@ -17,14 +17,14 @@ export class LinodeProvisioner extends AbstractInstanceProvisioner<LinodeProvisi
      * Destroy the instance server by running Pulumi stack up with specific configs
      * to remove instance server
      */
-    async destroyInstanceServer(): Promise<LinodeProvisionOutputV1> {
+    async destroyInstanceServer(opts?: ProvisionerActionOptions): Promise<LinodeProvisionOutputV1> {
 
         this.logger.info(`Destroying instance server for ${this.args.instanceName}`)
 
         const pulumiClient = this.buildPulumiClient()
         const stackConfig = this.buildPulumiConfig({ noInstanceServer: true })
         await pulumiClient.setConfig(stackConfig)
-        await pulumiClient.up()
+        await pulumiClient.up({ cancel: opts?.pulumiCancel })
 
         const newOutputs = await pulumiClient.getOutputs()
 
@@ -41,7 +41,7 @@ export class LinodeProvisioner extends AbstractInstanceProvisioner<LinodeProvisi
         return pulumiClient
     }
 
-    async doProvision() {
+    async doProvision(opts?: ProvisionerActionOptions) {
 
         this.logger.info(`Provisioning Linode instance ${this.args.instanceName}`)
 
@@ -53,15 +53,15 @@ export class LinodeProvisioner extends AbstractInstanceProvisioner<LinodeProvisi
         this.logger.debug(`Pulumi config: ${JSON.stringify(stackConfig)}`)
 
         await pulumiClient.setConfig(stackConfig)
-        const pulumiOutputs = await pulumiClient.up()
+        const pulumiOutputs = await pulumiClient.up({ cancel: opts?.pulumiCancel })
 
         return this.pulumiOutputsToProvisionOutput(pulumiOutputs)
     }
 
-    async doDestroy(){
+    async doDestroy(opts?: ProvisionerActionOptions){
         const pulumiClient = this.buildPulumiClient()
         
-        await pulumiClient.destroy()
+        await pulumiClient.destroy({ cancel: opts?.pulumiCancel })
 
         this.args.provisionOutput = undefined
     }

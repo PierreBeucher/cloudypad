@@ -41,7 +41,7 @@ FROM $CLOUDYPAD_IMAGE
 # - Delete user matching host's user ID if already exists
 # - Create group if not exists
 # - Create user
-RUN if [ "$(id -u $HOST_UID)" -ne 0 ] >/dev/null 2>&1; then \
+RUN if [ "$HOST_UID" -ne 0 ] >/dev/null 2>&1; then \
         if id -u $HOST_UID >/dev/null 2>&1; then \
             deluser \$(id -un $HOST_UID); \
         fi && \

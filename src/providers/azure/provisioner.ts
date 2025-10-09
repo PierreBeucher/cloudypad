@@ -1,6 +1,6 @@
 import { SshKeyLoader } from '../../tools/ssh'
 import { AzurePulumiClient, PulumiStackConfigAzure } from './pulumi'
-import { AbstractInstanceProvisioner, InstanceProvisionerArgs } from '../../core/provisioner'
+import { AbstractInstanceProvisioner, InstanceProvisionerArgs, ProvisionerActionOptions } from '../../core/provisioner'
 import { AzureClient } from './sdk-client'
 import { AzureProvisionInputV1, AzureProvisionOutputV1 } from './state'
 
@@ -12,7 +12,7 @@ export class AzureProvisioner extends AbstractInstanceProvisioner<AzureProvision
         super(args)
     }
 
-    async doProvision() {
+    async doProvision(opts?: ProvisionerActionOptions) {
 
         this.logger.info(`Provisioning Azure instance ${this.args.instanceName}`)
 
@@ -37,7 +37,7 @@ export class AzureProvisioner extends AbstractInstanceProvisioner<AzureProvision
         }
 
         await pulumiClient.setConfig(pulumiConfig)
-        const pulumiOutputs = await pulumiClient.up()
+        const pulumiOutputs = await pulumiClient.up({ cancel: opts?.pulumiCancel })
 
         return {
             host: pulumiOutputs.publicIp,
@@ -48,13 +48,13 @@ export class AzureProvisioner extends AbstractInstanceProvisioner<AzureProvision
 
     }
 
-    async doDestroy() {
+    async doDestroy(opts?: ProvisionerActionOptions) {
 
         const pulumiClient = new AzurePulumiClient({
             stackName: this.args.instanceName,
             workspaceOptions: this.args.coreConfig.pulumi?.workspaceOptions
         })
-        await pulumiClient.destroy()
+        await pulumiClient.destroy({ cancel: opts?.pulumiCancel })
 
         this.args.provisionOutput = undefined
         this.args.provisionOutput = undefined

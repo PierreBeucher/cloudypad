@@ -1,6 +1,6 @@
 import { SshKeyLoader } from '../../tools/ssh'
 import { ScalewayPulumiClient, PulumiStackConfigScaleway, ScalewayPulumiOutput } from './pulumi'
-import { AbstractInstanceProvisioner, InstanceProvisionerArgs } from '../../core/provisioner'
+import { AbstractInstanceProvisioner, InstanceProvisionerArgs, ProvisionerActionOptions } from '../../core/provisioner'
 import { ScalewayProvisionInputV1, ScalewayProvisionOutputV1 } from './state'
 import { ScalewayClient } from './sdk-client'
 
@@ -24,14 +24,14 @@ export class ScalewayProvisioner extends AbstractInstanceProvisioner<ScalewayPro
      * Destroy the instance server by running Pulumi stack up with specific configs
      * to remove instance server
      */
-    async destroyInstanceServer(): Promise<ScalewayProvisionOutputV1> {
+    async destroyInstanceServer(opts?: ProvisionerActionOptions): Promise<ScalewayProvisionOutputV1> {
 
         this.logger.info(`Destroying instance server for ${this.args.instanceName}`)
 
         const pulumiClient = this.buildPulumiClient()
         const stackConfig = this.buildPulumiConfig({ noInstanceServer: true })
         await pulumiClient.setConfig(stackConfig)
-        await pulumiClient.up()
+        await pulumiClient.up({ cancel: opts?.pulumiCancel })
 
         const newOutputs = await pulumiClient.getOutputs()
 
@@ -40,7 +40,7 @@ export class ScalewayProvisioner extends AbstractInstanceProvisioner<ScalewayPro
         return this.pulumiOutputsToProvisionOutput(newOutputs)
     }
 
-    async doProvision(): Promise<ScalewayProvisionOutputV1> {
+    async doProvision(opts?: ProvisionerActionOptions): Promise<ScalewayProvisionOutputV1> {
 
         this.logger.info(`Provisioning Scaleway instance ${this.args.instanceName}`)
 
@@ -51,7 +51,7 @@ export class ScalewayProvisioner extends AbstractInstanceProvisioner<ScalewayPro
         const stackConfig = this.buildPulumiConfig()
 
         await pulumiClient.setConfig(stackConfig)
-        const pulumiOutputs = await pulumiClient.up()
+        const pulumiOutputs = await pulumiClient.up({ cancel: opts?.pulumiCancel })
 
         return this.pulumiOutputsToProvisionOutput(pulumiOutputs)
 
@@ -89,10 +89,10 @@ export class ScalewayProvisioner extends AbstractInstanceProvisioner<ScalewayPro
         }
     }
 
-    async doDestroy() {
+    async doDestroy(opts?: ProvisionerActionOptions) {
 
         const pulumiClient = this.buildPulumiClient()
-        await pulumiClient.destroy()
+        await pulumiClient.destroy({ cancel: opts?.pulumiCancel })
 
         this.args.provisionOutput = undefined
     }
