@@ -99,13 +99,7 @@ export abstract class InstancePulumiClient<ConfigType extends Object, OutputType
         const stack = await this.getStack()
 
         if (options?.cancel) {
-            this.logger.debug(`Cancelling any stuck Pulumi operations for stack: ${stack.name}`)
-            try {
-                await stack.cancel()
-                this.logger.debug(`Successfully cancelled stuck operations for stack: ${stack.name}`)
-            } catch (error) {
-                this.logger.debug(`No operations to cancel for stack: ${stack.name}`, error)
-            }
+            await this.doCancel(stack)
         }
 
         this.logger.debug(`Refreshing stack ${this.stackName}`)
@@ -163,13 +157,7 @@ export abstract class InstancePulumiClient<ConfigType extends Object, OutputType
         const stack = await this.getStack()
 
         if (options?.cancel) {
-            this.logger.debug(`Cancelling any stuck Pulumi operations for stack: ${stack.name}`)
-            try {
-                await stack.cancel()
-                this.logger.debug(`Successfully cancelled stuck operations for stack: ${stack.name}`)
-            } catch (error) {
-                this.logger.debug(`No operations to cancel for stack: ${stack.name}`, error)
-            }
+            await this.doCancel(stack)
         }
 
         this.logger.debug(`Running Pulumi up: ${stack.name}`)
@@ -212,13 +200,7 @@ export abstract class InstancePulumiClient<ConfigType extends Object, OutputType
         const stack = await this.getStack()
 
         if (options?.cancel) {
-            this.logger.debug(`Cancelling any stuck Pulumi operations for stack: ${stack.name}`)
-            try {
-                await stack.cancel()
-                this.logger.debug(`Successfully cancelled stuck operations for stack: ${stack.name}`)
-            } catch (error) {
-                this.logger.debug(`No operations to cancel for stack: ${stack.name}`, error)
-            }
+            await this.doCancel(stack)
         }
 
         this.logger.debug(`Refreshing stack ${stack.name} before destroy result`)
@@ -228,6 +210,17 @@ export abstract class InstancePulumiClient<ConfigType extends Object, OutputType
 
         const destroyRes = await stack.destroy({ onOutput: this.stackLogOnOutput, color: LOG_ON_OUTPUT_COLOR, remove: true })
         this.logger.trace(`Destroy result: ${JSON.stringify(destroyRes)}`)
+    }
+
+    protected async doCancel(stack: Stack): Promise<void> {
+        this.logger.debug(`Cancelling stack: ${stack.name}`)
+        try {
+            await stack.cancel()
+            this.logger.debug(`Successfully cancelled stack: ${stack.name}`)
+        } catch (error) {
+            this.logger.warn(`Failed to cancel stack: ${stack.name}. This may caused by stack not needing to be cancelled. ` +
+                `Only cancel stack if strictly necessary.`, error)
+        }
     }
 
     /**
