@@ -56,6 +56,6 @@
 
 # Contributing
 
-- [Development guide](./contributing/development-guide.md)
+- [Contribution guide](./contributing/contribution-guide.md)
 - [Extend Docker images](./contributing/container-image.md)
 - [License](./contributing/license.md)
