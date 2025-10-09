@@ -118,7 +118,7 @@ describe('InteractiveInstanceUpdater', () => {
         // check sunshine has not been nullified and both streaming servers match original state
         assert.deepEqual(newState.configuration.input.sunshine, originalState.configuration.input.sunshine)
         assert.deepEqual(newState.configuration.input.wolf, originalState.configuration.input.wolf)
-    }).timeout(10000)
+    })
 })
 
 
