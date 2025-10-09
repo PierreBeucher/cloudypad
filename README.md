@@ -59,10 +59,11 @@ Cloudy Pad lets you **deploy a Cloud gaming instance on your own servers, machin
 
 ## Contributing
 
-A [complete contribution guide](https://docs.cloudypad.gg/contributing/contribution-guide.html) with is available with:
+A [complete contribution guide](https://docs.cloudypad.gg/contributing/contribution-guide.html) is available with:
 
 - Development environment setup (fully automated with Nix)
 - Project architecture
+- Common contribution scenarios
 - How and where to write code
 - Testing and debugging
 - Tips and helps
