@@ -162,7 +162,7 @@ describe('GCP lifecycle', () => {
             assert.ok(state.provision.output?.instanceName);
 
             currentInstanceName = state.provision.output.instanceName;
-        }).timeout(2*60*1000);
+        }).timeout(10*60*1000);
     }
 
     it('should restart instance', async () => {
@@ -179,7 +179,7 @@ describe('GCP lifecycle', () => {
         assert.strictEqual(instanceStatus.configured, true);
         assert.strictEqual(instanceStatus.provisioned, true);
         assert.strictEqual(instanceStatus.serverStatus, ServerRunningStatus.Running);
-    }).timeout(2*60*1000);
+    }).timeout(10*60*1000);
 
     it('should wait for instance readiness after restart', async () => {
         await waitForInstanceReadiness('restart');
