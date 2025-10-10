@@ -75,7 +75,7 @@ describe('AWS lifecycle', () => {
         const instance = instances.find(instance => instance.InstanceId === currentInstanceId);
         assert.ok(instance);
         assert.strictEqual(instance.InstanceType, instanceType);
-    }).timeout(20*60*1000); // 20 minutes timeout as deployment may be long
+    }).timeout(30*60*1000); // 30 minutes timeout as deployment may be long
  
     it('should update instance', async () => {
         const instanceUpdater = awsProviderClient.getInstanceUpdater();
@@ -100,7 +100,7 @@ describe('AWS lifecycle', () => {
         assert.ok(instance);
         assert.strictEqual(instance.InstanceType, "g4dn.2xlarge");
 
-    }).timeout(20*60*1000);
+    }).timeout(30*60*1000);
 
     it('should have a valid instance server output with existing server', async () => {
         const state = await getCurrentTestState();
