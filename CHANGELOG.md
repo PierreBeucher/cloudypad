@@ -1,5 +1,30 @@
 # Changelog
 
+## [0.40.0](https://github.com/PierreBeucher/cloudypad/compare/v0.39.0...v0.40.0) (2025-10-10)
+
+
+### Features
+
+* add --force-pulumi-cancel to cancel Pulumi stack before action ([81ddd1b](https://github.com/PierreBeucher/cloudypad/commit/81ddd1b252408ad989bf53ff242d24428c68eb7f))
+* add Terminal and File Explorer to launcher bar ([501c2bd](https://github.com/PierreBeucher/cloudypad/commit/501c2bdb0c8657f7e4e78c61b4a72a484b5c6354))
+* bump all versions: Sunshine / Wolf server, NVIDIA drivers, etc. ([6ab48f5](https://github.com/PierreBeucher/cloudypad/commit/6ab48f51fbd41088aff46be3c1d24e52e0e175ae))
+* bump all versions: Sunshine, Wolf, NVIDIA drivers, Heroic, Lutris, Proton and internal tooling ([6e0560d](https://github.com/PierreBeucher/cloudypad/commit/6e0560d912b6f708f034301dd3aa1c7d17214eab))
+* dual License AGPLv3 and possible Business oriented license ([6293810](https://github.com/PierreBeucher/cloudypad/commit/62938104015824486e2326e536a3d373086db2c1))
+* **sunshine:** add graphical text editor (gedit) ([c77dfac](https://github.com/PierreBeucher/cloudypad/commit/c77dfacbfc942ef209a29606f6aec3ec6db8a530))
+* **sunshine:** autoheal Sunshine container if healthcheck fails ([418530c](https://github.com/PierreBeucher/cloudypad/commit/418530ca96c91f785357a8182b03f454d70a6a55))
+* **sunshine:** autoheal Sunshine container if healthcheck fails ([2997e0d](https://github.com/PierreBeucher/cloudypad/commit/2997e0d31cec33f06ba5837698ae6bd8d936996a))
+
+
+### Bug Fixes
+
+* cloudypad.sh script not expanding UID properly on MacOS ([40e17d9](https://github.com/PierreBeucher/cloudypad/commit/40e17d9d3a4496863b93341f444b5810ad9d1336))
+* continue instance stop with server deletion when Provider API stop fails ([f295a1b](https://github.com/PierreBeucher/cloudypad/commit/f295a1bc4a59f6460627717802514e3447e6ea08))
+* ensure instance is started for update ([d0199c0](https://github.com/PierreBeucher/cloudypad/commit/d0199c04d9615a516f6095c47b2e2d6eb2606f18))
+* longer Linode timeout on start/Stop operation to better reflect reality ([cf6f3a7](https://github.com/PierreBeucher/cloudypad/commit/cf6f3a7063ff6d2ceed3e65e4bafb34fe972bd73))
+* on stop, do delete server even if already detected as stopped to avoid inconsistent infra state ([90c0488](https://github.com/PierreBeucher/cloudypad/commit/90c0488639fc0126d089323e030a3644208d79a1))
+* Wolf does not include custom per-provider variables ([6552213](https://github.com/PierreBeucher/cloudypad/commit/655221336a34d4532cf5cd68390697347e6dc5ff))
+* Wolf does not include custom per-provider variables ([aa52460](https://github.com/PierreBeucher/cloudypad/commit/aa524605605cde8393c169ac6567b5bc199f6636))
+
 ## [0.39.0](https://github.com/PierreBeucher/cloudypad/compare/v0.38.1...v0.39.0) (2025-09-23)
 
 
