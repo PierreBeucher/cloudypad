@@ -77,6 +77,8 @@ You're ready to contribute !
 
 ## Architecture Overview
 
+![](../assets/architecture-overview.jpg)
+
 Cloudy Pad code has 3 main parts:
 
 - **Core** - Internal components to manage instances and deployment
@@ -86,6 +88,8 @@ Cloudy Pad code has 3 main parts:
 - **CLI** - Wrapper around Core components to provide the Cloudy Pad CLI with interactive prompts
 
 ### Instance lifecycle and Core components
+
+![](../assets/instance-lifecycle.jpg)
 
 Instance lifecycle:
 
