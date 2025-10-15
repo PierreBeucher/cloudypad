@@ -7,6 +7,14 @@
   apt:
     name: "linux-modules-extra-{{ ansible_kernel }}"
     state: present
+    update_cache: true
+  ignore_errors: true
+  register: linux_modules_extra_result
+
+- name: Warn if linux-modules-extra package is not available
+  debug:
+    msg: "Warning: linux-modules-extra-{{ ansible_kernel }} is not available. This may cause issues with NVIDIA driver installation if DRM modules are missing."
+  when: linux_modules_extra_result is failed
 
 - name: unload nouveau
   modprobe:
