@@ -1,4 +1,5 @@
 import { z } from "zod"
+import { DISK_TYPES, NETWORK_TIERS, NIC_TYPES } from "./const"
 import { CommonProvisionOutputV1Schema, CommonProvisionInputV1Schema, InstanceStateV1Schema, InstanceInputs, CostAlertSchema } from "../../core/state/state"
 import { CLOUDYPAD_PROVIDER_GCP, PUBLIC_IP_TYPE_DYNAMIC, PUBLIC_IP_TYPE_STATIC } from "../../core/const"
 import { GenericStateParser } from "../../core/state/parser"
@@ -12,7 +13,10 @@ const GcpProvisionInputV1Schema = CommonProvisionInputV1Schema.extend({
     machineType: z.string().describe("GCP Machine Type"),
     acceleratorType: z.string().describe("GCP Accelerator Type"),
     diskSize: z.number().describe("Disk size in GB"),
+    diskType: z.string().optional().describe(`GCP Disk Type (One of: ${DISK_TYPES.join(", ")})`),
     publicIpType: z.enum([PUBLIC_IP_TYPE_STATIC, PUBLIC_IP_TYPE_DYNAMIC]).describe("Type of public IP address"),
+    networkTier: z.string().optional().describe(`GCP Network Tier (One of: ${NETWORK_TIERS.join(", ")})`),
+    nicType: z.string().optional().describe(`GCP NIC Type (One of: ${NIC_TYPES.join(", ")})`),
     region: z.string().describe("GCP region"),
     zone: z.string().describe("GCP zone"),
     useSpot: z.boolean().describe("Whether to use spot instances"),

@@ -1,7 +1,7 @@
 import * as assert from 'assert';
 import { DEFAULT_COMMON_INPUT, getUnitTestCoreConfig, getUnitTestDummyProviderClient, initializeDummyInstanceState } from '../utils';
-import { CommonConfigurationInputV1, InstanceEventEnum, STATE_MAX_EVENTS } from '../../../src/core/state/state';
-import { InstanceStatus, GenericInstanceManager, InstanceManager } from '../../../src/core/manager';
+import { InstanceEventEnum, STATE_MAX_EVENTS } from '../../../src/core/state/state';
+import { InstanceStatus, InstanceManager } from '../../../src/core/manager';
 import { ServerRunningStatus } from '../../../src/core/runner';
 import { getLogger } from '../../../src/log/utils';
 import { CloudypadClient } from '../../../src/core/client';

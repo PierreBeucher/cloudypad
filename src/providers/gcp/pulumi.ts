@@ -1,3 +1,4 @@
+import { DEFAULT_DISK_TYPE, DISK_TYPES, NETWORK_TIERS, NIC_TYPES, NETWORK_TIER_STANDARD, NIC_TYPE_AUTO } from "./const";
 import * as gcp from "@pulumi/gcp"
 import * as pulumi from "@pulumi/pulumi"
 import { LocalWorkspaceOptions, OutputMap } from "@pulumi/pulumi/automation"
@@ -19,7 +20,10 @@ interface CloudyPadGCEInstanceArgs {
     acceleratorType: pulumi.Input<string>
     bootDisk?: {
         sizeGb?: pulumi.Input<number>
+        type?: pulumi.Input<string>
     }
+    networkTier?: pulumi.Input<string>
+    nicType?: pulumi.Input<string>
     useSpot?: pulumi.Input<boolean>
     projectId: pulumi.Input<string>
     costAlert?: {
@@ -46,6 +50,14 @@ class CloudyPadGCEInstance extends pulumi.ComponentResource {
             parent: this
         }
 
+        const effectiveNetworkTier: pulumi.Output<string> = pulumi
+            .output(args.networkTier)
+            .apply((t) => t ?? NETWORK_TIER_STANDARD);
+
+        const enableTier1 = pulumi
+            .all([args.machineType, args.nicType])
+            .apply(([mt, nic]) => supportsTier1(mt, nic) ? { totalEgressBandwidthTier: "TIER_1" } : undefined);
+
         const network = new gcp.compute.Network(`${name}-network`, {
             name: `${name}-network`.toLowerCase(),
             autoCreateSubnetworks: false,
@@ -69,51 +81,58 @@ class CloudyPadGCEInstance extends pulumi.ComponentResource {
         if (args.publicIpType === PUBLIC_IP_TYPE_STATIC) {
             publicIp = new gcp.compute.Address(`${name}-eip`, {
                 name: gcpResourceNamePrefix,
-                networkTier: "STANDARD",
+                networkTier: effectiveNetworkTier,
             }, commonPulumiOpts)
         } else if (args.publicIpType !== PUBLIC_IP_TYPE_DYNAMIC) {
             throw `publicIpType must be either '${PUBLIC_IP_TYPE_STATIC}' or '${PUBLIC_IP_TYPE_DYNAMIC}'`
         }
-
-        const gceInstance = new gcp.compute.Instance(`${name}-gce-instance`, {
-            name: gcpResourceNamePrefix,
-            machineType: args.machineType,
-            bootDisk: {
-                initializeParams: {
-                    image: "ubuntu-2204-jammy-v20241119",
-                    size: args.bootDisk?.sizeGb || 50,
-                    type: "pd-balanced"
-                }
-            },
-            networkInterfaces: [{
-                network: network.id,
-                subnetwork: subnet.id,
-                accessConfigs: [{ 
-                    natIp: publicIp ? publicIp.address : undefined,
-                    networkTier: "STANDARD",
+        // Build instance with strict typing, conditionally add networkPerformanceConfig inline based on enableTier1
+        const gceInstance = enableTier1.apply(enableTier1Result => {
+            const instanceArgs: gcp.compute.InstanceArgs = {
+                name: gcpResourceNamePrefix,
+                machineType: args.machineType,
+                bootDisk: {
+                    initializeParams: {
+                        image: "ubuntu-2204-jammy-v20241119",
+                        size: args.bootDisk?.sizeGb || 50,
+                        type: args.bootDisk?.type ?? DEFAULT_DISK_TYPE
+                    }
+                },
+                networkInterfaces: [{
+                    network: network.id,
+                    subnetwork: subnet.id,
+                    nicType: args.nicType && args.nicType !== NIC_TYPE_AUTO ? args.nicType : undefined,
+                    accessConfigs: [{ 
+                        natIp: publicIp ? publicIp.address : undefined,
+                        networkTier: effectiveNetworkTier,
+                    }],
                 }],
-            }],
-            allowStoppingForUpdate: true,
-            metadata: {
-                "ssh-keys": `ubuntu:${args.publicKeyContent}`
-            },
-            guestAccelerators: [{
-                type: args.acceleratorType,
-                count: 1,
-            }],
-            scheduling: {
-                automaticRestart: args.useSpot ? false : true, // Must be false for spot
-                onHostMaintenance: "TERMINATE",
-                provisioningModel: args.useSpot ? "SPOT" : "STANDARD",
-                instanceTerminationAction: args.useSpot ? "STOP" : undefined, // instanceTerminationAction is only allowed for spot instances
-                preemptible: args.useSpot ?? false
-            },
-        }, {
-            ...commonPulumiOpts,
-            // Ignore bootDisk changes to avoid machine replacement on change (user's data loss)
-            // TODO support such change while keeping user's data
-            ignoreChanges: [ "bootDisk.initializeParams" ]
-        })
+                networkPerformanceConfig: enableTier1Result
+                    ? { totalEgressBandwidthTier: enableTier1Result.totalEgressBandwidthTier }
+                    : undefined,
+                allowStoppingForUpdate: true,
+                metadata: {
+                    "ssh-keys": `ubuntu:${args.publicKeyContent}`
+                },
+                guestAccelerators: [{
+                    type: args.acceleratorType,
+                    count: 1,
+                }],
+                scheduling: {
+                    automaticRestart: args.useSpot ? false : true, // Must be false for spot
+                    onHostMaintenance: "TERMINATE",
+                    provisioningModel: args.useSpot ? "SPOT" : "STANDARD",
+                    instanceTerminationAction: args.useSpot ? "STOP" : undefined, // instanceTerminationAction is only allowed for spot instances
+                    preemptible: args.useSpot ?? false
+                },
+            };
+            return new gcp.compute.Instance(`${name}-gce-instance`, instanceArgs, {
+                ...commonPulumiOpts,
+                // Ignore bootDisk changes to avoid machine replacement on change (user's data loss)
+                // TODO support such change while keeping user's data
+                ignoreChanges: [ "bootDisk.initializeParams" ]
+            });
+        });
 
         this.instanceName = gceInstance.name
 
@@ -228,23 +247,39 @@ class CloudyPadGCEInstance extends pulumi.ComponentResource {
     }
 }
 
+import { TIER1_FAMILIES, TIER1_NIC } from "./const";
+
+function supportsTier1(machineType?: string, nicType?: string): boolean {
+    if (!machineType) return false;
+    const family = machineType.split("-")[0].toLowerCase();
+    const nicOk = !nicType || nicType.toUpperCase() === TIER1_NIC;
+    return TIER1_FAMILIES.some(f => f === family) && nicOk;
+}
+
 /* eslint-disable  @typescript-eslint/no-explicit-any */
 async function gcpPulumiProgram(): Promise<Record<string, any> | void> {
 
-    const gcpConfig = new pulumi.Config("gcp")
-    const projectId = gcpConfig.require("project")
+    const gcpConfig = new pulumi.Config("gcp");
+    const projectId = gcpConfig.require("project");
+    const zone = gcpConfig.require("zone");
 
-    const config = new pulumi.Config()
-    const machineType = config.require("machineType")
-    const acceleratorType = config.require("acceleratorType")
-    const bootDiskSizeGB = config.requireNumber("bootDiskSizeGB")
-    const publicIpType = config.require("publicIpType")
-    const publicKeyContent = config.require("publicSshKeyContent")
-    const useSpot = config.requireBoolean("useSpot")
-    const costAlert = config.getObject<CostAlertOptions>("costAlert")
+    const config = new pulumi.Config();
+    const machineType = config.require("machineType");
+    const acceleratorType = config.require("acceleratorType");
+    const bootDiskSizeGB = config.requireNumber("bootDiskSizeGB");
+    const publicIpType = config.require("publicIpType");
+    const publicKeyContent = config.require("publicSshKeyContent");
+    const useSpot = config.requireBoolean("useSpot");
+    const costAlert = config.getObject<CostAlertOptions>("costAlert");
     const firewallAllowPorts = config.requireObject<SimplePortDefinition[]>("firewallAllowPorts")
 
-    const instanceName = pulumi.getStack()
+    const diskType = config.get("diskType");        
+    const networkTier = config.get("networkTier");
+    const nicType = config.get("nicType");
+
+    const bootDiskTypeUrl = diskType ? `zones/${zone}/diskTypes/${diskType}` : undefined;
+
+    const instanceName = pulumi.getStack();
 
     const instance = new CloudyPadGCEInstance(instanceName, {
         projectId: projectId,
@@ -252,8 +287,11 @@ async function gcpPulumiProgram(): Promise<Record<string, any> | void> {
         acceleratorType: acceleratorType, 
         publicKeyContent: publicKeyContent,
         bootDisk: {
-            sizeGb: bootDiskSizeGB
+            sizeGb: bootDiskSizeGB,
+            type: bootDiskTypeUrl, // e.g. zones/europe-west4-b/diskTypes/pd-ssd
         },
+        networkTier: networkTier,
+        nicType: nicType,
         publicIpType: publicIpType,
         ingressPorts: [ 
             { from: 22, protocol: "tcp" }, 
@@ -270,13 +308,12 @@ async function gcpPulumiProgram(): Promise<Record<string, any> | void> {
             ports: [p.port.toString()],
             protocol: p.protocol,
         })),
-    })
+    });
 
     return {
         instanceName: instance.instanceName,
         publicIp: instance.publicIp
-    }
-
+    };
 }
 
 export interface PulumiStackConfigGcp {
@@ -291,6 +328,9 @@ export interface PulumiStackConfigGcp {
     useSpot: boolean
     costAlert?: CostAlertOptions
     firewallAllowPorts: SimplePortDefinition[]
+    diskType?: string
+    networkTier?: string
+    nicType?: string
 }
 
 export interface GcpPulumiOutput {
@@ -329,6 +369,9 @@ export class GcpPulumiClient extends InstancePulumiClient<PulumiStackConfigGcp, 
         await stack.setConfig("publicIpType", { value: config.publicIpType })
         await stack.setConfig("useSpot", { value: config.useSpot.toString() })
         await stack.setConfig("firewallAllowPorts", { value: JSON.stringify(config.firewallAllowPorts)})
+        if (config.diskType) await stack.setConfig("diskType", { value: config.diskType })
+        if (config.networkTier) await stack.setConfig("networkTier", { value: config.networkTier })
+        if (config.nicType) await stack.setConfig("nicType", { value: config.nicType })
 
         if(config.costAlert){
             await stack.setConfig("costAlert", { value: JSON.stringify(config.costAlert)})
@@ -336,7 +379,6 @@ export class GcpPulumiClient extends InstancePulumiClient<PulumiStackConfigGcp, 
 
         const allConfs = await stack.getAllConfig()
         this.logger.debug(`Config after update: ${JSON.stringify(allConfs)}`)
-
     }
 
     protected async buildTypedOutput(outputs: OutputMap): Promise<GcpPulumiOutput>{
