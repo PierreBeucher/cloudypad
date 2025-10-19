@@ -1,5 +1,4 @@
-import { MACHINE_GPU_COMPAT, DISK_TYPE_DESCRIPTIONS, NETWORK_TIER_DESCRIPTIONS, NIC_TYPE_DESCRIPTIONS, DEFAULT_DISK_TYPE, DEFAULT_NETWORK_TIER, DEFAULT_NIC_TYPE, MACHINE_TYPE_FAMILY_DESCRIPTIONS, MACHINE_TYPE_FAMILIES_GAMING } from "./const";
-import { isGamingMachineType } from "./filtering";
+import { MACHINE_GPU_COMPAT, DISK_TYPE_DESCRIPTIONS, NETWORK_TIER_DESCRIPTIONS, NIC_TYPE_DESCRIPTIONS, DEFAULT_DISK_TYPE, DEFAULT_NETWORK_TIER, DEFAULT_NIC_TYPE, MACHINE_TYPE_FAMILY_DESCRIPTIONS, MACHINE_TYPE_FAMILIES_GAMING, NETWORK_TIERS, NIC_TYPES, DISK_TYPES } from "./const";
 import { GPU_DESCRIPTIONS, REGION_PREFIX_LABELS, REGION_COUNTRY_BY_REGION } from "./const";
 import { GcpInstanceInput, GcpInstanceStateV1, GcpProvisionInputV1, GcpProvisionInputV1Schema } from "./state"
 import { CommonConfigurationInputV1, CommonInstanceInput } from "../../core/state/state"
@@ -14,7 +13,6 @@ import { CLI_OPTION_AUTO_STOP_TIMEOUT, CLI_OPTION_AUTO_STOP_ENABLE, CLI_OPTION_C
 import { RUN_COMMAND_CREATE, RUN_COMMAND_UPDATE } from "../../tools/analytics/events";
 import { InteractiveInstanceUpdater } from "../../cli/updater";
 import { GcpProviderClient } from "./provider";
-import { enumOptions, toEnumFromSchema, toEnumFromSchemaOrThrow } from "../../core/tools/zod-helpers";
 
 export interface GcpCreateCliArgs extends CreateCliArgs {
   projectId?: string
@@ -63,13 +61,6 @@ export class GcpInputPrompter extends AbstractInputPrompter<GcpCreateCliArgs, Gc
     this.selectFn = args.selectFn;
   }
 
-  // Preserve raw CLI values for enum-like fields so we can surface informative logs
-  // in case they were invalid and got dropped during early narrowing in
-  // buildProvisionerInputFromCliArgs.
-  private rawDiskType?: string;
-  private rawNetworkTier?: string;
-  private rawNicType?: string;
-
   /**
    * Centralized accessor to the select prompt; primarily here to keep call sites DRY.
    * Tests should inject a custom function via args.selectFn rather than subclassing.
@@ -78,17 +69,13 @@ export class GcpInputPrompter extends AbstractInputPrompter<GcpCreateCliArgs, Gc
 
   /** Build the initial partial input from CLI args (strings are narrowed to enum literal unions). */
   protected buildProvisionerInputFromCliArgs(cliArgs: GcpCreateCliArgs): PartialDeep<GcpInstanceInput> {
-    // Capture raw values before narrowing so we can later display validation messages.
-    this.rawDiskType = cliArgs.diskType;
-    this.rawNetworkTier = cliArgs.networkTier;
-    this.rawNicType = cliArgs.nicType;
     return {
       provision: {
         machineType: cliArgs.machineType,
         diskSize: cliArgs.diskSize,
-        diskType: toEnumFromSchema(GcpProvisionInputV1Schema.shape.diskType, cliArgs.diskType),
-        networkTier: toEnumFromSchema(GcpProvisionInputV1Schema.shape.networkTier, cliArgs.networkTier),
-        nicType: toEnumFromSchema(GcpProvisionInputV1Schema.shape.nicType, cliArgs.nicType),
+        diskType: cliArgs.diskType,
+        networkTier: cliArgs.networkTier,
+        nicType: cliArgs.nicType,
         publicIpType: cliArgs.publicIpType,
         region: cliArgs.region,
         zone: cliArgs.zone,
@@ -116,16 +103,11 @@ export class GcpInputPrompter extends AbstractInputPrompter<GcpCreateCliArgs, Gc
     const acceleratorType = await this.acceleratorType(client, zone, partialInput.provision?.acceleratorType, machineType)
     const useSpot = await this.useSpotInstance(partialInput.provision?.useSpot)
     const diskSize = await this.diskSize(partialInput.provision?.diskSize)
-    const diskTypeRaw = await this.diskType(partialInput.provision?.diskType, client, zone)
-    const networkTierRaw = await this.networkTier(partialInput.provision?.networkTier)
-    const nicTypeRaw = await this.nicType(partialInput.provision?.nicType)
+    const diskType = await this.diskType({ diskType: partialInput.provision?.diskType, client: client, zone: zone })
+    const networkTier = await this.networkTier(partialInput.provision?.networkTier)
+    const nicType = await this.nicType(partialInput.provision?.nicType)
     const publicIpType = await this.publicIpType(partialInput.provision?.publicIpType)
     const costAlert = await this.costAlert(partialInput.provision?.costAlert)
-
-    // Narrow prompt strings to enum literal unions before merging (avoid widening by merge).
-    const diskType = toEnumFromSchemaOrThrow(GcpProvisionInputV1Schema.shape.diskType, diskTypeRaw)
-    const networkTier = toEnumFromSchemaOrThrow(GcpProvisionInputV1Schema.shape.networkTier, networkTierRaw)
-    const nicType = toEnumFromSchemaOrThrow(GcpProvisionInputV1Schema.shape.nicType, nicTypeRaw)
 
     // Merge into final input (lodash.merge is fine here since we already narrowed the literals).
     const gcpInput: GcpInstanceInput = lodash.merge(
@@ -152,21 +134,18 @@ export class GcpInputPrompter extends AbstractInputPrompter<GcpCreateCliArgs, Gc
   }
 
   /** Prompt for disk type using intersection of schema enum and available API values. */
-  private async diskType(diskType?: string, client?: GcpApi, zone?: string): Promise<string> {
-    if (diskType) return diskType; // already narrowed & valid
-    
-     if (!client || !zone) throw new Error("diskType prompt requires GcpClient and zone.");
-    const diskTypeEnum = enumOptions(GcpProvisionInputV1Schema.shape.diskType);
-   
+  private async diskType(args: { diskType?: string, client: GcpApi, zone: string }): Promise<string> {
+    if (args.diskType) return args.diskType;
+       
     let availableDiskTypes: string[] = [];
     try {
-      availableDiskTypes = await client.listDiskTypes(zone);
+      availableDiskTypes = await args.client.listDiskTypes(args.zone);
     } catch (e) {
-      console.warn(`Failed to fetch disk types from GCP API for zone ${zone}:`, e);
-      availableDiskTypes = Array.from(diskTypeEnum);
+      console.warn(`Failed to fetch disk types from GCP API for zone ${args.zone}. Showing all supported disk types by default. Error:`, e);
+      availableDiskTypes = DISK_TYPES;
     }
 
-    const allowed = new Set<string>(Array.from(diskTypeEnum));
+    const allowed = new Set<string>(DISK_TYPES);
     const filtered = availableDiskTypes.filter((v: string) => allowed.has(v));
 
     const choices = filtered.map((v: string) => {
@@ -174,7 +153,7 @@ export class GcpInputPrompter extends AbstractInputPrompter<GcpCreateCliArgs, Gc
       return { name: `${desc} [${v}]`, value: v };
     });
     if (choices.length === 0) {
-      throw new Error(`No supported disk types available in zone ${zone}.`);
+      throw new Error(`No supported disk types available in zone ${args.zone}.`);
     }
 
     return await this.getSelect()({
@@ -186,17 +165,13 @@ export class GcpInputPrompter extends AbstractInputPrompter<GcpCreateCliArgs, Gc
 
   /** Prompt for network tier with simple explanations. */
   private async networkTier(networkTier?: string): Promise<string> {
-    if (networkTier) return networkTier; // already narrowed & valid
+    if (networkTier) return networkTier;
 
-    const networkTierEnum = enumOptions(GcpProvisionInputV1Schema.shape.networkTier);
-    if (!networkTier && this.rawNetworkTier) {
-      console.info(`Provided network tier '${this.rawNetworkTier}' is not valid. Allowed values: ${Array.from(networkTierEnum).join(', ')}. You'll be prompted to choose a valid one.`)
-      this.rawNetworkTier = undefined;
-    }
-    const choices = Array.from(networkTierEnum).map((v: string) => {
+    const choices = NETWORK_TIERS.map((v: string) => {
       const desc = NETWORK_TIER_DESCRIPTIONS[v] || v;
       return { name: `${desc} [${v}]`, value: v };
     });
+
     return await this.getSelect()({
       message: 'Select network tier (applies to outgoing internet traffic - affects latency & price):',
       choices,
@@ -206,14 +181,9 @@ export class GcpInputPrompter extends AbstractInputPrompter<GcpCreateCliArgs, Gc
 
   /** Prompt for NIC type with simple explanations. */
   private async nicType(nicType?: string): Promise<string> {
-    if (nicType) return nicType; // already narrowed & valid
+    if (nicType) return nicType;
 
-    const nicTypeEnum = enumOptions(GcpProvisionInputV1Schema.shape.nicType);
-    if (!nicType && this.rawNicType) {
-      console.info(`Provided NIC type '${this.rawNicType}' is not valid. Allowed values: ${Array.from(nicTypeEnum).join(', ')}. You'll be prompted to choose a valid one.`)
-      this.rawNicType = undefined;
-    }
-    const choices = Array.from(nicTypeEnum).map((v: string) => {
+    const choices = NIC_TYPES.map((v: string) => {
       const desc = NIC_TYPE_DESCRIPTIONS[v] || v;
       return { name: `${desc} [${v}]`, value: v };
     });
@@ -330,9 +300,9 @@ export class GcpInputPrompter extends AbstractInputPrompter<GcpCreateCliArgs, Gc
     // Inform user that region discovery may take a little time as several API calls are performed
     console.info('\nListing available GCP regions with compatible gaming machine types and GPUs... (this can take ~10-30s)')
 
-  // Only keep regions matching any prefix of the selected continent label (reuse already fetched list)
-  const selectedPrefixes = labelToPrefixes.get(userContinentLabel) ?? [];
-  const regions = allRegions.filter(r => selectedPrefixes.some(p => (r.name ?? '').startsWith(p)));
+    // Only keep regions matching any prefix of the selected continent label (reuse already fetched list)
+    const selectedPrefixes = labelToPrefixes.get(userContinentLabel) ?? [];
+    const regions = allRegions.filter(r => selectedPrefixes.some(p => (r.name ?? '').startsWith(p)));
 
     // For each region, fetch zones in parallel
     type RegionZone = { region: typeof regions[number], zones: string[] };
@@ -346,7 +316,7 @@ export class GcpInputPrompter extends AbstractInputPrompter<GcpCreateCliArgs, Gc
           return null;
         }
       })
-    )) as (RegionZone | null)[];
+    ))
 
     // For each region, test all zones in parallel and stop at the first valid (gaming+GPU) zone using Promise.any
     const regionChecks = await Promise.all(
@@ -393,7 +363,7 @@ export class GcpInputPrompter extends AbstractInputPrompter<GcpCreateCliArgs, Gc
       throw new Error(`No region found with available machine types: ${fams}.`);
     }
     const selected = await this.getSelect()({
-  message: `Select region to use (only regions with gaming machine types are shown: ${MACHINE_TYPE_FAMILIES_GAMING.join(', ')})`,
+      message: `Select region to use (only regions with gaming machine types are shown: ${MACHINE_TYPE_FAMILIES_GAMING.join(', ')})`,
       choices: regionChoices
     });
     return selected.toString();
@@ -483,6 +453,14 @@ export class GcpInputPrompter extends AbstractInputPrompter<GcpCreateCliArgs, Gc
       loop: false
     })
   }
+}
+
+/** Returns true if the machine type matches gaming criteria (family, CPU, RAM). */
+export function isGamingMachineType(t: { name?: string | null, guestCpus?: number | null, memoryMb?: number | null }): boolean {
+  const isGamingType = t.name && MACHINE_TYPE_FAMILIES_GAMING.some(fam => t.name!.startsWith(fam));
+  const enoughCpu = t.guestCpus != null && t.guestCpus >= 2 && t.guestCpus <= 16;
+  const enoughRam = t.memoryMb != null && t.memoryMb >= 1000 && t.memoryMb <= 100000;
+  return Boolean(isGamingType && enoughCpu && enoughRam);
 }
 
 export class GcpCliCommandGenerator extends CliCommandGenerator {

@@ -26,7 +26,6 @@ export const GPU_DESCRIPTIONS: Record<string, { label: string, type: string }> =
 
 // Families eligible for TIER_1 (egress bandwidth)
 export const TIER1_FAMILIES = ["c3", "c3d", "a3", "h3"] as const;
-export const TIER1_NIC = "GVNIC";
 
 // GCP machine type family → compatible acceleratorTypes (GPUs)
 export const MACHINE_GPU_COMPAT: Record<string, string[]> = {
@@ -36,49 +35,64 @@ export const MACHINE_GPU_COMPAT: Record<string, string[]> = {
   // Add more families if needed
 };
 
+// Named constants for better readability
+export const DISK_TYPE_STANDARD = 'pd-standard';
+export const DISK_TYPE_BALANCED = 'pd-balanced';
+export const DISK_TYPE_SSD = 'pd-ssd';
+
+export const NETWORK_TIER_STANDARD = 'STANDARD';
+export const NETWORK_TIER_PREMIUM = 'PREMIUM';
+
+export const NIC_TYPE_AUTO = 'auto';
+export const NIC_TYPE_GVNIC = 'GVNIC';
+export const NIC_TYPE_VIRTIO_NET = 'VIRTIO_NET';
+
 // Central GCP constants for allowed values
-export const DISK_TYPES = [
-  'pd-standard',
-  'pd-balanced',
-  'pd-ssd',
+export const DISK_TYPES: string[] = [
+  DISK_TYPE_STANDARD,
+  DISK_TYPE_BALANCED,
+  DISK_TYPE_SSD,
 ] as const;
 
-export const NETWORK_TIERS = [
-  'STANDARD',
-  'PREMIUM',
+export const NETWORK_TIERS: string[] = [
+  NETWORK_TIER_STANDARD,
+  NETWORK_TIER_PREMIUM,
 ] as const;
 
-export const NIC_TYPES = [
-  'auto',
-  'GVNIC',
-  'VIRTIO_NET',
+export const NIC_TYPES: string[] = [
+  NIC_TYPE_AUTO,
+  NIC_TYPE_GVNIC,
+  NIC_TYPE_VIRTIO_NET,
 ] as const;
+
+// Families eligible for TIER_1 (egress bandwidth) - using named constant
+export const TIER1_NIC = NIC_TYPE_GVNIC;
 
 export type DiskType = typeof DISK_TYPES[number];
 export type NetworkTier = typeof NETWORK_TIERS[number];
 export type NicType = typeof NIC_TYPES[number];
 
 // Default values for prompts (explicit names)
-export const DEFAULT_DISK_TYPE = DISK_TYPES[1]; // 'pd-balanced'
-export const DEFAULT_NETWORK_TIER = NETWORK_TIERS[0]; // 'STANDARD'
-export const DEFAULT_NIC_TYPE = NIC_TYPES[0]; // 'auto'
+export const DEFAULT_DISK_TYPE = DISK_TYPE_BALANCED;
+export const DEFAULT_NETWORK_TIER = NETWORK_TIER_STANDARD;
+export const DEFAULT_NIC_TYPE = NIC_TYPE_AUTO;
 
 // User-facing descriptions for disk, network tier, and NIC types
 export const DISK_TYPE_DESCRIPTIONS: Record<string, string> = {
-  [DISK_TYPES[0]]: 'Standard (cheapest, slowest)',
-  [DISK_TYPES[1]]: 'Balanced (good compromise)',
-  [DISK_TYPES[2]]: 'SSD (best performance, highest cost)',
+  [DISK_TYPE_STANDARD]: 'Standard (cheapest, slowest)',
+  [DISK_TYPE_BALANCED]: 'Balanced (good compromise)',
+  [DISK_TYPE_SSD]: 'SSD (best performance, highest cost)',
 };
 
 export const NETWORK_TIER_DESCRIPTIONS: Record<string, string> = {
-  [NETWORK_TIERS[0]]: 'Standard (higher latency, lower cost, includes 200 GiB/month free)',
-  [NETWORK_TIERS[1]]: 'Premium (lower latency, more expensive)',
+  [NETWORK_TIER_STANDARD]: 'Standard (higher latency, lower cost, includes 200 GiB/month free)',
+  [NETWORK_TIER_PREMIUM]: 'Premium (lower latency, more expensive)',
 };
 
 export const NIC_TYPE_DESCRIPTIONS: Record<string, string> = {
-  [NIC_TYPES[0]]: 'Auto (let GCP choose, recommended)',
-  [NIC_TYPES[1]]: 'GVNIC (high throughput / low latency, supported on some VMs)',
-  [NIC_TYPES[2]]: 'Virtio Net (legacy, broad compatibility)',
+  [NIC_TYPE_AUTO]: 'Auto (let GCP choose, recommended)',
+  [NIC_TYPE_GVNIC]: 'GVNIC (high throughput / low latency, supported on some VMs)',
+  [NIC_TYPE_VIRTIO_NET]: 'Virtio Net (legacy, broad compatibility)',
 };
 
 // Region prefix -> user-friendly label used in the continent/group prompt

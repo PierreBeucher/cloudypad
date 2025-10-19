@@ -1,4 +1,4 @@
-import { DISK_TYPES, NETWORK_TIERS, NIC_TYPES } from "./const";
+import { DEFAULT_DISK_TYPE, DISK_TYPES, NETWORK_TIERS, NIC_TYPES, NETWORK_TIER_STANDARD, NIC_TYPE_AUTO } from "./const";
 import * as gcp from "@pulumi/gcp"
 import * as pulumi from "@pulumi/pulumi"
 import { LocalWorkspaceOptions, OutputMap } from "@pulumi/pulumi/automation"
@@ -22,7 +22,6 @@ interface CloudyPadGCEInstanceArgs {
         sizeGb?: pulumi.Input<number>
         type?: pulumi.Input<string>
     }
-    diskType?: pulumi.Input<string>
     networkTier?: pulumi.Input<string>
     nicType?: pulumi.Input<string>
     useSpot?: pulumi.Input<boolean>
@@ -51,16 +50,9 @@ class CloudyPadGCEInstance extends pulumi.ComponentResource {
             parent: this
         }
 
-        const effectiveDiskType: pulumi.Output<string> = pulumi
-            .all([
-                args.bootDisk?.type ?? pulumi.output<string | undefined>(undefined),
-                args.diskType ?? pulumi.output<string | undefined>(undefined),
-            ])
-            .apply(([bootType, shortType]) => (bootType ?? shortType ?? "pd-balanced"));
-       
         const effectiveNetworkTier: pulumi.Output<string> = pulumi
             .output(args.networkTier)
-            .apply((t) => t ?? "STANDARD");
+            .apply((t) => t ?? NETWORK_TIER_STANDARD);
 
         const enableTier1 = pulumi
             .all([args.machineType, args.nicType])
@@ -103,13 +95,13 @@ class CloudyPadGCEInstance extends pulumi.ComponentResource {
                     initializeParams: {
                         image: "ubuntu-2204-jammy-v20241119",
                         size: args.bootDisk?.sizeGb || 50,
-                        type: effectiveDiskType
+                        type: args.bootDisk?.type ?? DEFAULT_DISK_TYPE
                     }
                 },
                 networkInterfaces: [{
                     network: network.id,
                     subnetwork: subnet.id,
-                    nicType: args.nicType && args.nicType !== "auto" ? args.nicType : undefined,
+                    nicType: args.nicType && args.nicType !== NIC_TYPE_AUTO ? args.nicType : undefined,
                     accessConfigs: [{ 
                         natIp: publicIp ? publicIp.address : undefined,
                         networkTier: effectiveNetworkTier,
@@ -281,13 +273,11 @@ async function gcpPulumiProgram(): Promise<Record<string, any> | void> {
     const costAlert = config.getObject<CostAlertOptions>("costAlert");
     const firewallAllowPorts = config.requireObject<SimplePortDefinition[]>("firewallAllowPorts")
 
-    const diskType = config.get("diskType") as (typeof DISK_TYPES[number]) | undefined;
-    const networkTier = config.get("networkTier") as (typeof NETWORK_TIERS[number]) | undefined;
-    const nicType = config.get("nicType") as (typeof NIC_TYPES[number]) | undefined;
+    const diskType = config.get("diskType");        
+    const networkTier = config.get("networkTier");
+    const nicType = config.get("nicType");
 
-    const bootDiskTypeUrl = diskType
-        ? pulumi.interpolate`zones/${zone}/diskTypes/${diskType}`
-        : undefined;
+    const bootDiskTypeUrl = diskType ? `zones/${zone}/diskTypes/${diskType}` : undefined;
 
     const instanceName = pulumi.getStack();
 
@@ -300,9 +290,8 @@ async function gcpPulumiProgram(): Promise<Record<string, any> | void> {
             sizeGb: bootDiskSizeGB,
             type: bootDiskTypeUrl, // e.g. zones/europe-west4-b/diskTypes/pd-ssd
         },
-        diskType: diskType,  // "pd-ssd" | "pd-balanced" | "pd-standard" | undefined
-        networkTier: networkTier,  // "STANDARD" | "PREMIUM" | undefined
-        nicType: nicType, // "GVNIC" | "VIRTIO_NET" | "auto" | undefined
+        networkTier: networkTier,
+        nicType: nicType,
         publicIpType: publicIpType,
         ingressPorts: [ 
             { from: 22, protocol: "tcp" }, 
@@ -339,9 +328,9 @@ export interface PulumiStackConfigGcp {
     useSpot: boolean
     costAlert?: CostAlertOptions
     firewallAllowPorts: SimplePortDefinition[]
-    diskType?: "pd-standard" | "pd-balanced" | "pd-ssd"
-    networkTier?: "STANDARD" | "PREMIUM"
-    nicType?: "GVNIC" | "VIRTIO_NET" | "auto"
+    diskType?: string
+    networkTier?: string
+    nicType?: string
 }
 
 export interface GcpPulumiOutput {

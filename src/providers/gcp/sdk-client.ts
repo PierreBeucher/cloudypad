@@ -75,9 +75,7 @@ export class GcpClient {
         try {
             const [diskTypes] = await this.diskTypes.list({ project: this.projectId, zone })
             this.logger.debug(`List disk types response: ${JSON.stringify(diskTypes)}`)
-            return (diskTypes || [])
-                .map(dt => dt.name?.trim())
-                .filter((s): s is string => !!s)
+            return diskTypes.map(dt => dt.name?.trim()).filter(s => s !== undefined)
         } catch (e) {
             throw new Error(`Failed to list Google Cloud disk types in zone ${zone} for project ${this.projectId}`, { cause: e })
         }

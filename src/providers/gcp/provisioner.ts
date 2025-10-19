@@ -3,6 +3,7 @@ import { AbstractInstanceProvisioner, InstanceProvisionerArgs, ProvisionerAction
 import { GcpPulumiClient, PulumiStackConfigGcp } from './pulumi';
 import { GcpClient } from './sdk-client';
 import { GcpProvisionInputV1, GcpProvisionOutputV1} from './state';
+import { NIC_TYPE_AUTO } from './const';
 
 export type GcpProvisionerArgs = InstanceProvisionerArgs<GcpProvisionInputV1, GcpProvisionOutputV1>
 
@@ -49,10 +50,7 @@ export class GcpProvisioner extends AbstractInstanceProvisioner<GcpProvisionInpu
             // See: https://cloud.google.com/compute/docs/network-interfaces#nic-types
             // Default is undefined (auto), which lets GCP select the best available NIC type.
             // If user selects 'auto', map to undefined so GCP auto-selects NIC type.
-            nicType: (() => {
-                const nicType = this.args.provisionInput.nicType;
-                return nicType === 'auto' ? undefined : nicType;
-            })(),
+            nicType: this.args.provisionInput.nicType === NIC_TYPE_AUTO ? undefined : this.args.provisionInput.nicType,
             publicSshKeyContent: sshPublicKeyContent,
             useSpot: this.args.provisionInput.useSpot,
             costAlert: this.args.provisionInput.costAlert ?? undefined,
