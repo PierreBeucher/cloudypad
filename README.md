@@ -89,3 +89,5 @@ Thanks to our contributors
 Cloudy Pad is licensed under [GNU General Public License v3.0](https://github.com/PierreBeucher/cloudypad/blob/master/LICENSE.txt)
 
 A business-oriented license is also available, please reach to `pierre@cloudypad.gg`
+
+COUCOU
