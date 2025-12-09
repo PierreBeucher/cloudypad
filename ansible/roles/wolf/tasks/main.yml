@@ -139,11 +139,13 @@
     files: docker-compose.nvidia.yml
 
 - name: Copy Docker Compose preheat pull file
+  when: wolf_app_preheat_images_pull
   ansible.builtin.template:
     src: docker-compose.app-preheat.yml
     dest: "{{ wolf_project_dir }}/docker-compose.app-preheat.yml"
 
 - name: Pull images using preheat Compose file
+  when: wolf_app_preheat_images_pull
   community.docker.docker_compose_v2_pull:
     project_src: /tmp
     files: "{{ wolf_project_dir }}/docker-compose.app-preheat.yml"
