@@ -442,6 +442,10 @@ Instance is reachable via `192.168.56.43`.
 To pair, connect to the Sunshine web UI and use Moonlight manually:
 
 ```sh
+# A TLS certificate warning is shown as certificate is self-signed
+# login: sunshine
+# password: @!/:,?!*#'€`_\µ$="foo
+#   or 'sunshine'
 https://192.168.56.43:47990/
 ```
 
