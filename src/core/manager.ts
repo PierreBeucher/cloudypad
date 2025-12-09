@@ -259,6 +259,14 @@ const ALWAYS_ANSIBLE_ADDITIONAL_ARGS = ['-e', '\'ansible_ssh_common_args="-o Str
  * 
  * The concrete instance type is not known by this class: a per-provider factory is used 
  * to build each sub-managers.
+ * 
+ * Each action function (stop, start, configure, provision, etc.) is a wrapper with retry around
+ * low-level action functions (doStart, doStop, doConfigure, doProvision, etc.).
+ * - a top-level action like deploy() may rely on other top-level actions like configure()
+ *   or call underlying low-level actions like doConfigure wrapped in a retry().
+ *   They may also container logic like retry pattern, starting instance before configuring, etc.
+ * - a low-level action like doConfigure() must NOT call another low-level NOR top-level action.
+ *   These functions should only strictly do the required action without any mre logic.
  */
 export class GenericInstanceManager<ST extends InstanceStateV1> implements InstanceManager {
 
@@ -295,9 +303,23 @@ export class GenericInstanceManager<ST extends InstanceStateV1> implements Insta
             [currentState.configuration.input.ansible.additionalArgs] : undefined
 
         await this.addEvent(InstanceEventEnum.ConfigurationBegin)
+
+        // before configuring, check instance is running as it's possible user would call configure() directly without starting the instance first
+        // start it if needed
+        const currentStatus = await this.getInstanceStatus()
+        if(currentStatus.serverStatus !== ServerRunningStatus.Running){
+
+            this.logger.debug(`About to run configuration for instance ${this.name()} but it's not running, starting it first...`)
+
+            await this.doWithRetry(async () => {
+                await this.doStart({ wait: true })
+            }, 'Pre-configure start', opts)
+        }
+
         await this.doWithRetry(async () => {
             await this.doConfigure(configurationAnsibleAdditionalArgs)
         }, 'Configuration', opts)
+        
         await this.addEvent(InstanceEventEnum.ConfigurationEnd)
     }
 
@@ -330,6 +352,15 @@ export class GenericInstanceManager<ST extends InstanceStateV1> implements Insta
     async start(opts?: StartOptions): Promise<void> {
 
         this.logger.debug(`Starting instance ${this.name()}`)
+
+        // if deleteInstanceServerOnStop is enabled, instance server may have been deleted on last instance stop
+        // so we need to re-provision and re-configure instance using specific Ansible args
+        await this.doWithRetry(async () => {
+            if(this.args.options?.deleteInstanceServerOnStop?.enabled){
+                await this.doProvision(opts)
+                await this.doConfigure(this.args.options.deleteInstanceServerOnStop.postStartReconfigurationAnsibleAdditionalArgs)
+            }
+        }, 'Pre-start reconfiguration', opts)
 
         await this.addEvent(InstanceEventEnum.StartBegin)
         await this.doWithRetry(async () => {
@@ -401,6 +432,7 @@ export class GenericInstanceManager<ST extends InstanceStateV1> implements Insta
         const configurator = await this.buildConfigurator({
             additionalAnsibleArgs: ALWAYS_ANSIBLE_ADDITIONAL_ARGS.concat(additionalAnsibleArgs ?? [])
         })
+
         const output = await configurator.configure()
         
         this.logger.debug(`Configuration output for instance ${this.name()}: ${JSON.stringify(output)}`)
@@ -430,13 +462,6 @@ export class GenericInstanceManager<ST extends InstanceStateV1> implements Insta
      * Start instance using runner.
      */
     async doStart(opts?: StartOptions): Promise<void> {
-
-        // if deleteInstanceServerOnStop is enabled, instance server may have been deleted on last instance stop
-        // so we need to re-provision and re-configure instance using specific Ansible args
-        if(this.args.options?.deleteInstanceServerOnStop?.enabled){
-            await this.doProvision(opts)
-            await this.doConfigure(this.args.options.deleteInstanceServerOnStop.postStartReconfigurationAnsibleAdditionalArgs)
-        }
 
         // always start instance as provisioning and configuring may not start the server for all providers
         // and startOptions logic is ported by runner
