@@ -94,7 +94,8 @@ class CloudyPadScalewayInstance extends pulumi.ComponentResource {
                 ipIds: [publicIp.id],
             }, {
                 ...commonPulumiOpts,
-                ignoreChanges: ["rootVolume.volumeType"] // avoid recreation of existing instances using legacy block volume type
+                ignoreChanges: ["rootVolume.volumeType"], // avoid recreation of existing instances using legacy block volume type
+                dependsOn: [ sshKey ]
             })
 
             this.instanceServerName = server.name
