@@ -28,13 +28,11 @@ export class SunshineMoonlightPairer extends AbstractMoonlightPairer implements 
     }
 
     private buildSshClient(): SSHClient {
+        this.logger.debug(`Building SSH client with args: ${JSON.stringify(this.args.ssh)}`)
         return new SSHClient(this.args.ssh);
     }
 
-    protected async doPair(pin: string) {
-
-        const ssh = this.buildSshClient()
-    
+    protected async doPair(pin: string) {    
         // try to pair for 2 min by punshing through Sunshine API with our pin
         // Using plain curl + SSH command as Sunshine Web UI is not reachable directly
         // A simple but effective enough method
