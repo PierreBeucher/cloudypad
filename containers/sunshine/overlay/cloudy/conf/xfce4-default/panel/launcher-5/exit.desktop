@@ -2,7 +2,7 @@
 Version=1.0
 Type=Application
 Name=Exit to host
-Comment=comment
+Comment=Exit to host
 Exec=/cloudy/bin/stop-container-user.sh
 Icon=system-shutdown
 Path=
