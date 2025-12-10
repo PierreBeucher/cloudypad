@@ -13,7 +13,7 @@
 
 set -e
 
-NVIDIA_DATA_DIR=$CLOUDYPAD_DATA_DIR/nvidia/
+NVIDIA_DATA_DIR="$CLOUDYPAD_DATA_DIR/nvidia"
 mkdir -p $NVIDIA_DATA_DIR
 
 if [ -z "${NVIDIA_DRIVER_VERSION}" ]; then
@@ -31,13 +31,20 @@ NVIDIA_INSTALLER="$NVIDIA_DATA_DIR/nvidia-${NVIDIA_DRIVER_TYPE}-${NVIDIA_DRIVER_
 # Create a marker file in XDG_RUNTIME_DIR to indicate that the driver is installed
 # This is used to avoid reinstalling the driver on container restart
 # But driver should be installed in freshly created container
+# As runtime dir is emptied when container is recreated
 NVIDIA_INSTALL_MARKER="$XDG_RUNTIME_DIR/nvidia-driver-${NVIDIA_DRIVER_TYPE}-${NVIDIA_DRIVER_VERSION}.installed"
+
 
 echo "Checking Nvidia driver ${NVIDIA_DRIVER_VERSION} (${NVIDIA_DRIVER_TYPE}) component installation..."
 
-# Check if the file already exists
-if [ ! -f "$NVIDIA_INSTALLER" ]; then
-    echo "NVIDIA driver version ${NVIDIA_DRIVER_VERSION} (type: '${NVIDIA_DRIVER_TYPE}') not found. Downloading..."
+# Check if installer file is not downloaded yet
+# Create a marker file in NVIDIA_DATA_DIR to indicate that the driver has been downloaded successfully
+# Use marker file to avoid checking if plain .run file exists as sometime file may be partially downloaded 
+# but failed in the middle, causing a corrupted file and/or a file with incorrect permissions
+NVIDIA_DOWNLOAD_MARKER="$NVIDIA_DATA_DIR/nvidia-driver-${NVIDIA_DRIVER_TYPE}-${NVIDIA_DRIVER_VERSION}.downloaded"
+
+if [ ! -f "$NVIDIA_DOWNLOAD_MARKER" ]; then
+    echo "NVIDIA driver version ${NVIDIA_DRIVER_VERSION} (type: '${NVIDIA_DRIVER_TYPE}') not downloaded yet. Downloading..."
     
     echo "Removing old NVIDIA driver installers..."
     find "$NVIDIA_DATA_DIR" -type f -name "nvidia-*.run" -exec rm -f {} +
@@ -54,8 +61,11 @@ if [ ! -f "$NVIDIA_INSTALLER" ]; then
     chmod +x "$NVIDIA_INSTALLER"
 
     echo "Downloaded $NVIDIA_INSTALLER"
+
+    # Create a marker file to indicate that the driver has been downloaded successfully
+    touch "$NVIDIA_DOWNLOAD_MARKER"
 else
-    echo "NVIDIA driver installer file already exists: $NVIDIA_INSTALLER"
+    echo "NVIDIA driver installer file already downloaded: $NVIDIA_INSTALLER ($NVIDIA_DOWNLOAD_MARKER file exists)"
 fi
 
 # Check if the installation marker file exists

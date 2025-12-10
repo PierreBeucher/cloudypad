@@ -99,7 +99,7 @@ describe('Linode lifecycle', () => {
     // run twice for idempotency
     for (let i = 0; i < 2; i++) { 
 
-        it(`should stop instance and keep instance server (${i+1}/2 for idempotency)`, async () => {
+        it(`should stop instance (${i+1}/2 for idempotency)`, async () => {
             const instanceManager = await linodeProviderClient.getInstanceManager(instanceName)
             await instanceManager.stop({ wait: true })
 
@@ -108,7 +108,7 @@ describe('Linode lifecycle', () => {
             assert.strictEqual(instanceStatus.serverStatus, ServerRunningStatus.Unknown)
 
             const state = await getCurrentTestState()
-            assert.strictEqual(state.provision.output?.instanceServerId, currentInstanceServerId)
+            assert.strictEqual(state.provision.output?.instanceServerId, undefined)
 
             // instance should be deleted on stop
             const linodeClient = getLinodeClient()

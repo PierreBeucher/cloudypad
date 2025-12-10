@@ -142,7 +142,7 @@ export class LinodeClient {
             
             if (wait) {
                 this.logger.debug(`Waiting for Linode instance ${instanceId} to start`)
-                await this.withTimeout(this.waitForStatus(safeId, 'running'), waitTimeout * 1000)
+                await this.withTimeout(this.waitForStatus(safeId, ['running']), waitTimeout * 1000)
             }
         } catch (error) {
             throw new Error(`Failed to start Linode instance ${instanceId}`, { cause: error })
@@ -164,7 +164,10 @@ export class LinodeClient {
             
             if (wait) {
                 this.logger.debug(`Waiting for Linode instance ${instanceId} to stop`)
-                await this.withTimeout(this.waitForStatus(safeId, 'stopped'), waitTimeout * 1000)
+                // unclear whether API uses "stopped" or "offline" status
+                // at some point it was stopped, but seemingly changed to be offline
+                // (unless we mistaken status the first time it was implemented and was not tested properly)
+                await this.withTimeout(this.waitForStatus(safeId, ['stopped', 'offline']), waitTimeout * 1000)
             }
         } catch (error) {
             throw new Error(`Failed to stop Linode instance ${instanceId}`, { cause: error })
@@ -186,7 +189,7 @@ export class LinodeClient {
             
             if (wait) {
                 this.logger.debug(`Waiting for Li   node instance ${instanceId} to restart`)
-                await this.withTimeout(this.waitForStatus(safeId, 'running'), waitTimeout * 1000)
+                await this.withTimeout(this.waitForStatus(safeId, ['running']), waitTimeout * 1000)
             }
         } catch (error) {
             throw new Error(`Failed to restart Linode instance ${instanceId}`, { cause: error })
@@ -196,11 +199,14 @@ export class LinodeClient {
     /**
      * Get current status of a Linode instance
      */
-    async getInstanceStatus(instanceId: string | number): Promise<LinodeInstanceStatus | undefined> {
+    async getInstanceStatus(instanceId: string | number): Promise<LinodeInstanceStatus> {
         this.logger.debug(`Getting Linode instance status: ${instanceId}`)
         try {
             const safeId = await this.instanceIdStringNumberToNumber(instanceId)
             const linode = await getLinode(safeId)
+
+            this.logger.debug(`Linode instance ${instanceId} status: ${linode.status}`)
+
             return linode.status
         } catch (error) {
             throw new Error(`Failed to get Linode instance status: ${instanceId}`, { cause: error })
@@ -284,12 +290,16 @@ export class LinodeClient {
         }
     }
 
-    private async waitForStatus(instanceId: number, status: LinodeInstanceStatus): Promise<void> {
+    /**
+     * Wait for Linode instance to reach oone of the given statuses.
+     */
+    private async waitForStatus(instanceId: number, statuses: LinodeInstanceStatus[]): Promise<void> {
         while (true) {
             const currentStatus = await this.getInstanceStatus(instanceId)
-            if (currentStatus === status) {
+            if (statuses.includes(currentStatus)) {
                 return
             }
+            this.logger.debug(`Waiting for status '${statuses}' for Linode instance ${instanceId} - current status: ${currentStatus}`)
             await new Promise(resolve => setTimeout(resolve, 5000))
         }
     }

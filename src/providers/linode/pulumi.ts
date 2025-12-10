@@ -83,14 +83,27 @@ interface LinodeInstanceArgs {
 /**
  * Pulumi component resource for a Linode instance with server, volume and optional DNS record.
  * 
- * The DNS record is optional and if not provided, the instance hostname is the instance IP.
- * 
- * If set, DNS record will always exists on instance so as to remain static and unchanged across updated
- * to prevent recreation (and change) of RandomString used to define record name.
+ * DNS record behavior:
  * 
  * As it's not possible (yet at the time of implementation) to provision static IP address with Linode,
  * using DNS record allows to keep instance hostname static across reboot and instance server recreation
  * so that Moonlight pairing remains valid. 
+ *
+ * When set, DNS record will always exists but:
+ *  - When instance server is enabled, DNS points to instance public IP
+ *  - When instance server is disabled, DNS points to a dummy IP 192.0.2.1 which is in TEST-NET-1 and should not be routed
+ * 
+ * Keeping a short TTL ensures when a user start instance, instance gets enabled and DNS record is quickly updated to point to the new instance IP.
+ * 
+ * Volume and instance configuration hacks:
+ * 
+ * 1. Create instance sever if enabled
+ * 2. Create Data volume and attach it to instance server (if possible)
+ * 3. Create custom instance config to attach data volume and root disk with Grub. Since the default instance config
+ *    prevents NVIDIA driver to work properly on base image.
+ * 
+ * We need to split into these stages since instance must exists for data volume to be created and attached,
+ * but data volume must always exists regardless of instance server presence.
  */
 class CloudyPadLinodeInstance extends pulumi.ComponentResource {
     
@@ -102,6 +115,8 @@ class CloudyPadLinodeInstance extends pulumi.ComponentResource {
 
     public readonly rootDiskId: pulumi.Output<string | undefined>
     public readonly dataDiskId: pulumi.Output<string>
+
+    private readonly instanceServer: linode.Instance | undefined
     
     constructor(name: string, args: LinodeInstanceArgs, opts?: pulumi.ComponentResourceOptions) {
         super("crafteo:cloudypad:linode:instance", name, {}, opts)
@@ -126,9 +141,10 @@ class CloudyPadLinodeInstance extends pulumi.ComponentResource {
             this.instanceHostname = pulumi.output(undefined)
             this.rootDiskId = pulumi.output(undefined)
         } else {
-
-            const intanceConfigLabel = `${name}-custom-config`
-
+            // use a unique random string in ID to force recreation of instance every run
+            // this breaks idempotency partially, but running Pulumi twice 
+            // causes wrong instance config to be used because of a bug in Linode provider
+            // better re-ecreate instance every time rather than reporting success with a broken instance config
             instanceServer = new linode.Instance(`${name}-instance`, {
                 label: this.linodeLabel(name, "-server"),
                 image: args.imageId || "linode/ubuntu22.04",
@@ -148,60 +164,6 @@ class CloudyPadLinodeInstance extends pulumi.ComponentResource {
                 ignoreChanges: ["booted"], // ignored booted changes as it will always be booted with InstanceConfig
             })
 
-            // ID is outputted as string but Pulumi Linode interface requires it as number
-            const instanceServerIdInt = instanceServer.id.apply((id: string) => Number(id))
-
-            // fetch the default instance config set on provision from which we'll create custom config
-            // we don't want this configuration but a custom configuration (see comments on InstanceConfig below)
-            const defaultInstanceConfig = instanceServer.configs.apply(configs => {
-                pulumi.log.info(`Instance server configs: ${JSON.stringify(configs)}`)
-
-                const defaultConfig = configs.find(config => config.label !== intanceConfigLabel)
-
-                if(!defaultConfig) {
-                    throw new Error(`Default config not found for instance server ${name}`)
-                }
-
-                return linode.InstanceConfig.get(`${name}-instance-config`, defaultConfig.id.toString(), {
-                    linodeId: instanceServerIdInt
-                })
-            })
-
-
-            defaultInstanceConfig.kernel?.apply((kernel: string | undefined) => {
-                pulumi.log.info(`Current instance config kernel: ${kernel}`)
-            })
-
-            desiredInstanceConfig = pulumi.all([
-                defaultInstanceConfig.device,
-                defaultInstanceConfig.helpers,
-                defaultInstanceConfig.interfaces,
-                defaultInstanceConfig.memoryLimit,
-                defaultInstanceConfig.runLevel,
-                defaultInstanceConfig.virtMode,
-                defaultInstanceConfig.rootDevice,
-            ]).apply(([device, helpers, interfaces, memoryLimit, runLevel, virtMode, rootDevice]) => {
-
-                // Force use grub2 to ensure base image is used with NVIDIA drivers
-                // Clone other configs from default instanceConfig
-                // Default instance config prevents NVIDIA driver configured on base image to work                
-                // See https://www.linode.com/community/questions/24188/is-it-possible-to-create-an-image-that-has-the-nvidia-driver-pre-installed
-                return new linode.InstanceConfig(`${name}-instance-config`, {
-                    linodeId: instanceServerIdInt,
-                    label: this.linodeLabel(name, "-config"),
-                    kernel: "linode/grub2", 
-                    booted: true,
-                    device: device,
-                    helpers: helpers,
-                    interfaces: interfaces,
-                    memoryLimit: memoryLimit,
-                    rootDevice: rootDevice,
-                    runLevel: runLevel,
-                    virtMode: virtMode
-                }, {
-                    parent: this,
-                })
-            })
 
             // fetch root disk ID
             // can't rely on instance.disks as it's deprecated and buggy (sometime an Object like 
@@ -234,10 +196,91 @@ class CloudyPadLinodeInstance extends pulumi.ComponentResource {
             })
 
             this.rootDiskId = rootDiskId
+            this.instanceServer = instanceServer
             this.instanceServerName = instanceServer.label
             this.instanceServerId = instanceServer.id
             this.publicIp = instanceServer.ipv4s[0]
             this.instanceServerURN = instanceServer.urn
+        }
+
+        // create data disk
+        // if possible attach it to instance server, otherwise leave linodeId undefined
+        const dataVolume = new linode.Volume(`${name}-data-disk`, {
+            label: this.linodeLabel(name, "-vol"),
+            size: args.dataVolume.sizeGb,
+            region: args.region,
+            linodeId: instanceServer ? instanceServer.id.apply((id: string) => Number(id)) : undefined,
+        }, { 
+            parent: this,
+        })
+
+        // if instanceServer is set, create a custom instance config to attach our data disk and root disk with Grub
+        // it's requied to replace default InstanceConfig: without Grub NVIDIA driver won't work properly when present on base image
+        // See https://www.linode.com/community/questions/24188/is-it-possible-to-create-an-image-that-has-the-nvidia-driver-pre-installed
+        if(this.instanceServer) {
+
+            const instanceConfigLabel = `${name}-custom-config`
+
+            // ID is outputted as string but Pulumi Linode interface requires it as number
+            const instanceServerIdInt = this.instanceServer.id.apply((id: string) => Number(id))
+
+            // fetch the default instance config set on provision from which we'll create custom config
+            // we don't want this configuration but a custom configuration (see comments on InstanceConfig below)
+            const defaultInstanceConfig = this.instanceServer.configs.apply(configs => {
+                pulumi.log.info(`Instance server configs: ${JSON.stringify(configs)}`)
+
+                const defaultConfig = configs.find(config => config.label !== instanceConfigLabel)
+
+                if(!defaultConfig) {
+                    throw new Error(`Default config not found for instance server ${name}`)
+                }
+
+                return linode.InstanceConfig.get(`${name}-instance-config`, defaultConfig.id.toString(), {
+                    linodeId: instanceServerIdInt
+                })
+            })
+
+
+            defaultInstanceConfig.kernel?.apply((kernel: string | undefined) => {
+                pulumi.log.info(`Current instance config kernel: ${kernel}`)
+            })
+
+            desiredInstanceConfig = pulumi.all([
+                defaultInstanceConfig.device,
+                defaultInstanceConfig.helpers,
+                defaultInstanceConfig.interfaces,
+                defaultInstanceConfig.memoryLimit,
+                defaultInstanceConfig.runLevel,
+                defaultInstanceConfig.virtMode,
+                defaultInstanceConfig.rootDevice,
+            ]).apply(([device, helpers, interfaces, memoryLimit, runLevel, virtMode, rootDevice]) => {
+
+                // Force use grub2 to ensure base image is used with NVIDIA drivers
+                // Clone other configs from default instanceConfig
+                return new linode.InstanceConfig(`${name}-instance-config`, {
+                    linodeId: instanceServerIdInt,
+                    label: this.linodeLabel(name, "-config"),
+                    kernel: "linode/grub2", 
+                    booted: true,
+                    // need to use devices from default config
+                    // plus our custom disk device
+                    device: [
+                        ...device, 
+                        {
+                            deviceName: "sdc",
+                            volumeId: dataVolume.id.apply((id: string) => Number(id)),
+                        }
+                    ],
+                    helpers: helpers,
+                    interfaces: interfaces,
+                    memoryLimit: memoryLimit,
+                    rootDevice: rootDevice,
+                    runLevel: runLevel,
+                    virtMode: virtMode
+                }, {
+                    parent: this,
+                })
+            })
         }
 
         // create DNS record if provided and use as instance hostname
@@ -294,16 +337,6 @@ class CloudyPadLinodeInstance extends pulumi.ComponentResource {
             // use server IP as hostname if no DNS record is provided
             this.instanceHostname = this.publicIp
         }
-
-        const dataVolume = new linode.Volume(`${name}-data-disk`, {
-            label: this.linodeLabel(name, "-vol"),
-            size: args.dataVolume.sizeGb,
-            region: args.region,
-            linodeId: instanceServer ? instanceServer.id.apply((id: string) => Number(id)) : undefined,
-        }, { 
-            parent: this,
-            dependsOn: desiredInstanceConfig ? [desiredInstanceConfig] : undefined
-        })
 
         const firewall = new linode.Firewall(`${name}-firewall`, {
             label: this.linodeLabel(name, "-fw"),

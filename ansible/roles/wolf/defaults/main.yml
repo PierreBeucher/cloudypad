@@ -18,3 +18,7 @@ wolf_project_dir: "{{ ansible_user_dir }}/wolf"
 wolf_data_dir: "/var/lib/cloudypad/wolf"
 
 wolf_legacy_data_dir: "/etc/wolf"
+
+# Whether to pull app images in parallel for faster subsequent startup when using Wolf
+# Disabled by default to avoid pulling images when not needed
+wolf_app_preheat_images_pull: false
