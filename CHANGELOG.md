@@ -1,5 +1,32 @@
 # Changelog
 
+## [0.41.0](https://github.com/PierreBeucher/cloudypad/compare/v0.40.0...v0.41.0) (2025-12-10)
+
+
+### Features
+
+* disable Wolf image pull preheat to avoid unnecessary storage bloating ([a3b0dfd](https://github.com/PierreBeucher/cloudypad/commit/a3b0dfd6ec23a2516d6f7de169a26108f1beeafd))
+* **gcp:** add support for G2 machine types and adjust CPU/RAM filters for gaming workloads ([ca6d78f](https://github.com/PierreBeucher/cloudypad/commit/ca6d78f316b667c432483a9d1509d8a083ed2e2b))
+* **gcp:** add waiting messages for region/zone discovery and unit tests ([b2e3c7b](https://github.com/PierreBeucher/cloudypad/commit/b2e3c7b49c82366f898787dba48b15825935f87a))
+* **gcp:** diskType prompt early-return + add unit tests ([d4ddb75](https://github.com/PierreBeucher/cloudypad/commit/d4ddb75a4aab33cc00b42f54a6018e4e7283bdb2))
+* **gcp:** dynamic continent selection, dedupe by label, capitalized fallback ([1444956](https://github.com/PierreBeucher/cloudypad/commit/144495661d1cce0295758096a4a961f8c5a0eaba))
+* **gcp:** filter GCP regions by continent prefix at API level ([e01c444](https://github.com/PierreBeucher/cloudypad/commit/e01c444770106c0acd1b18470c0c039ef15daa6b))
+* **gcp:** optional country labels in region list ([b0c4f70](https://github.com/PierreBeucher/cloudypad/commit/b0c4f70c630dbaf677b9aa9cd604fc8c0f0ac37f))
+* **gcp:** validate CLI enum values (diskType, networkTier, nicType) with prompt fallback + tests ([83c13c7](https://github.com/PierreBeucher/cloudypad/commit/83c13c7d24732a5a5e6084497ef484da74e3d2af))
+
+
+### Bug Fixes
+
+* ensure data disk is always attached to Linode ([853ed15](https://github.com/PierreBeucher/cloudypad/commit/853ed1595702fbf01fd84186be516dbca6bac4f3))
+* ensure instance is started for configure, deploy and update operations ([c2b0f7f](https://github.com/PierreBeucher/cloudypad/commit/c2b0f7f228debc2e666ccb9708868b92964d6917))
+* ensure Scaleway SSH key created before instance to avoid instance ingoring key ([5f67439](https://github.com/PierreBeucher/cloudypad/commit/5f6743981602cb057b583399e67db7452d2e9ec8))
+* **gcp:** src/providers/gcp/pulumi.ts ([c67064b](https://github.com/PierreBeucher/cloudypad/commit/c67064b97605cb7a9f54b7c74e78f1fa07ebd49a))
+* **gcp:** test/unit/providers/gcp/cli.spec.ts ([c67064b](https://github.com/PierreBeucher/cloudypad/commit/c67064b97605cb7a9f54b7c74e78f1fa07ebd49a))
+* Linode stop taking long time because of incorrect status check ([d3d0420](https://github.com/PierreBeucher/cloudypad/commit/d3d042067332ea2906de4811a02bb55417e48e4c))
+* reinforce check for NVIDIA installer on container setup ([fb42f01](https://github.com/PierreBeucher/cloudypad/commit/fb42f01bd28e09c3c5da863f74c98048ba4e378f))
+* Sunshine container exit button used non-existing gnome-terminal ([1ff51c7](https://github.com/PierreBeucher/cloudypad/commit/1ff51c7033d062558a9e04fb1006c63c90d6e5bb))
+* update apt cache for linux-modules-extra install ([799a8de](https://github.com/PierreBeucher/cloudypad/commit/799a8de966033fa14e3019f75a877c20f73774f1))
+
 ## [0.40.0](https://github.com/PierreBeucher/cloudypad/compare/v0.39.0...v0.40.0) (2025-10-10)
 
 
