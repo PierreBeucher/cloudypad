@@ -2,8 +2,6 @@
 
 wait-x-availability.sh
 
-source export-dbus-address.sh
-
 MOONDECKBUDDY_APPIMAGE_PATH="/opt/MoonDeckBuddy/MoonDeckBuddy.AppImage"
 
 if [ ! -x "$MOONDECKBUDDY_APPIMAGE_PATH" ]; then
