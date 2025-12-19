@@ -31,7 +31,7 @@ RUN curl -L -o /app/heroic.deb "https://github.com/Heroic-Games-Launcher/HeroicG
 # MoonDeckBuddy
 # https://github.com/FrogTheFrog/moondeck-buddy/releases
 FROM download-base AS download-moondeckbuddy
-ARG MOONDECKBUDDY_VERSION="1.9.1"
+ARG MOONDECKBUDDY_VERSION="1.9.2"
 RUN curl -L -o /app/MoonDeckBuddy.AppImage "https://github.com/FrogTheFrog/moondeck-buddy/releases/download/v${MOONDECKBUDDY_VERSION}/MoonDeckBuddy-${MOONDECKBUDDY_VERSION}-x86_64.AppImage"
 
 #
