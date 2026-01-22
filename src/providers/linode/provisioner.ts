@@ -13,26 +13,6 @@ export class LinodeProvisioner extends AbstractInstanceProvisioner<LinodeProvisi
         super(args)
     }
 
-    /**
-     * Destroy the instance server by running Pulumi stack up with specific configs
-     * to remove instance server
-     */
-    async destroyInstanceServer(opts?: ProvisionerActionOptions): Promise<LinodeProvisionOutputV1> {
-
-        this.logger.info(`Destroying instance server for ${this.args.instanceName}`)
-
-        const pulumiClient = this.buildPulumiClient()
-        const stackConfig = this.buildPulumiConfig({ noInstanceServer: true })
-        await pulumiClient.setConfig(stackConfig)
-        await pulumiClient.up({ cancel: opts?.pulumiCancel })
-
-        const newOutputs = await pulumiClient.getOutputs()
-
-        this.logger.debug(`New outputs after destroying instance server: ${JSON.stringify(newOutputs)}`)
-
-        return this.pulumiOutputsToProvisionOutput(newOutputs)
-    }
-
     private buildPulumiClient(): LinodePulumiClient {
         const pulumiClient = new LinodePulumiClient({
             stackName: this.args.instanceName,
@@ -86,7 +66,7 @@ export class LinodeProvisioner extends AbstractInstanceProvisioner<LinodeProvisi
             imageId: this.args.provisionInput.imageId,
             securityGroupPorts: this.getStreamingServerPorts(),
             publicKeyContent: sshPublicKeyContent,
-            noInstanceServer: args?.noInstanceServer,
+            noInstanceServer: this.args.provisionInput.runtime?.instanceServerState === INSTANCE_SERVER_STATE_ABSENT,
             watchdogEnabled: this.args.provisionInput.watchdogEnabled,
             apiToken: apiToken,
             dns: this.args.provisionInput.dns ? {
