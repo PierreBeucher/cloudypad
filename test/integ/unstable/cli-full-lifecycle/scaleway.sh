@@ -2,12 +2,12 @@ function create_destroy_scaleway() {
     
     instance_name="test-create-destroy-scaleway"
 
-    $cloudypad_cmd create scaleway \
+    npx tsx src/cli/main.ts create scaleway \
         --name $instance_name \
         --project-id "02d02f86-9414-4161-b807-efb2bd22d266" \
         --region fr-par \
         --zone fr-par-2 \
-        --instance-type GPU-3070-S \
+        --instance-type L4-1-24G \
         --root-disk-size 30 \
         --data-disk-size 100 \
         --streaming-server sunshine \

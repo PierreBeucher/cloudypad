@@ -13,7 +13,7 @@ export class GcpProvisioner extends AbstractInstanceProvisioner<GcpProvisionInpu
         super(args)
     }
 
-    async doProvision(opts?: ProvisionerActionOptions) {
+    async doMainProvision(opts?: ProvisionerActionOptions): Promise<GcpProvisionOutputV1> {
 
         this.logger.info(`Provisioning Google Cloud instance ${this.args.instanceName}`)
 

@@ -22,6 +22,12 @@ export interface InstanceConfigurator {
 
 export abstract class AbstractInstanceConfigurator<ST extends InstanceStateV1> implements InstanceConfigurator {
     async configure(opts?: InstanceConfiguratorOpts): Promise<NonNullable<ST["configuration"]["output"]>> {
+        const skipConfig = process.env.CLOUDYPAD_SKIP_CONFIGURATION
+        if (skipConfig === "true" || skipConfig === "1") {
+            console.warn("⚠️  CLOUDYPAD_SKIP_CONFIGURATION is set - skipping configuration")
+            return {} as NonNullable<ST["configuration"]["output"]>
+        }
+
         const retries = opts?.retries ?? 1
         const retryDelaySeconds = opts?.retryDelaySeconds ?? 10
         let lastError: Error | undefined

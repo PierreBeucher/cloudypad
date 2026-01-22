@@ -69,9 +69,10 @@ export class ScalewayProviderClient extends AbstractProviderClient<ScalewayInsta
             stateWriter: this.getStateWriter(),
             options: {
                 deleteInstanceServerOnStop: {
-                    enabled: scalewayState.provision.input.deleteInstanceServerOnStop ?? false,
-                    // on instance restart, only run these tags as full run is not needed
-                    postStartReconfigurationAnsibleAdditionalArgs: [ "-t", "ratelimit,data-disk,sunshine"]
+                    enable: scalewayState.provision.input.deleteInstanceServerOnStop ?? false,
+                },
+                dataDiskSnapshot: {
+                    enable: scalewayState.provision.input.dataDiskSnapshot?.enable ?? false
                 }
             }
         })

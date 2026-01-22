@@ -53,9 +53,9 @@ export class DummyProviderClient extends AbstractProviderClient<DummyInstanceSta
             stateWriter: stateWriter,
             options: {
                 deleteInstanceServerOnStop: {
-                    enabled: dummyState.provision.input.deleteInstanceServerOnStop ?? false,
-                    postStartReconfigurationAnsibleAdditionalArgs: [ "-t", "data-disk,sunshine"]
-                }
+                    enable: dummyState.provision.input.deleteInstanceServerOnStop ?? false,
+                },
+                dataDiskSnapshot: dummyState.provision.input.dataDiskSnapshot,
             }
         })
     }

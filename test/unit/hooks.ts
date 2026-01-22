@@ -9,7 +9,7 @@ import { AbstractInstanceRunner } from '../../src/core/runner';
 import { AbstractInstanceProvisioner } from '../../src/core/provisioner';
 import { AzurePulumiClient } from '../../src/providers/azure/pulumi';
 import { GcpPulumiClient } from '../../src/providers/gcp/pulumi';
-import { ScalewayPulumiClient } from '../../src/providers/scaleway/pulumi';
+import { ScalewayPulumiClient } from '../../src/providers/scaleway/pulumi/main';
 import { PaperspaceClient, PaperspaceMachine } from '../../src/providers/paperspace/client/client';
 import { DUMMY_AWS_PULUMI_OUTPUT, DUMMY_AZURE_PULUMI_OUTPUT, DUMMY_GCP_PULUMI_OUTPUT, DUMMY_PAPERSPACE_MACHINE, DUMMY_SCALEWAY_PULUMI_OUTPUT, DUMMY_SSH_KEY_PATH } from './utils';
 import { AnalyticsManager } from '../../src/tools/analytics/manager';

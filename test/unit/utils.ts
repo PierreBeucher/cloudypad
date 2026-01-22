@@ -11,7 +11,7 @@ import { tmpdir } from "os";
 import { AnonymousStateParser } from "../../src/core/state/parser";
 import { STREAMING_SERVER_SUNSHINE } from '../../src/cli/prompter';
 import { CreateCliArgs } from "../../src/cli/command";
-import { ScalewayPulumiOutput } from "../../src/providers/scaleway/pulumi";
+import { ScalewayPulumiOutput } from "../../src/providers/scaleway/pulumi/main";
 import { CloudypadClient } from "../../src";
 import { AwsInstanceStateV1 } from "../../src/providers/aws/state";
 import { PartialDeep } from "type-fest";

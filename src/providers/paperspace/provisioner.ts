@@ -14,7 +14,7 @@ export class PaperspaceProvisioner extends AbstractInstanceProvisioner<Paperspac
         this.client = new PaperspaceClient({ name: this.args.instanceName, apiKey: this.args.provisionInput.apiKey })
     }
 
-    async doProvision() {
+    async doMainProvision(opts?: ProvisionerActionOptions): Promise<PaperspaceProvisionOutputV1> {
 
         const pspaceMachineName = this.args.instanceName
         

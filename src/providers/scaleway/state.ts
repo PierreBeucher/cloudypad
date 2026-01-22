@@ -8,6 +8,7 @@ const ScalewayProvisionOutputV1Schema = CommonProvisionOutputV1Schema.extend({
     instanceServerId: z.string().describe("Scaleway instance server ID").optional(),
     rootDiskId: z.string().describe("Scaleway root disk ID").optional(),
     dataDiskId: z.string().describe("Scaleway data disk ID").optional(),
+    dataDiskSnapshotId: z.string().describe("Scaleway data disk snapshot ID, if any").optional(),
 })
 
 const ScalewayProvisionInputV1Schema = CommonProvisionInputV1Schema.extend({
@@ -17,7 +18,7 @@ const ScalewayProvisionInputV1Schema = CommonProvisionInputV1Schema.extend({
     instanceType: z.string().describe("Scaleway instance type"),
     deleteInstanceServerOnStop: z.boolean().describe("Whether instance server should be deleted on instance stop and re-created on next start").optional(),
     diskSizeGb: z.number().describe("Root (OS) disk size in GB."),
-    imageId: z.string().optional().describe("Existing image ID for instance server. If set, disk size must be equal or greater than image size."),
+    imageId: z.string().optional().describe("Existing root OS image ID for instance server. If set, disk size must be equal or greater than image size."),
     dataDiskSizeGb: z.number().default(0).describe("Data disk size in GB. If non-0, a disk dedicated for instance data (such as games data) will be created."),
 })
 

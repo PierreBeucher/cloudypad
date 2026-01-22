@@ -73,9 +73,7 @@ export class LinodeProviderClient extends AbstractProviderClient<LinodeInstanceS
                 // always delete instance server on stop for Linode
                 // server would continue to be billed even if instance is stopped
                 deleteInstanceServerOnStop: {
-                    enabled: true,
-                    // on instance restart, only run these tags as full run is not needed
-                    postStartReconfigurationAnsibleAdditionalArgs: [ "-t", "ratelimit,data-disk,sunshine"]
+                    enable: true,
                 }
             }
         })

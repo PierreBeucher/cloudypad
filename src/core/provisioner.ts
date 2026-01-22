@@ -14,7 +14,19 @@ export interface ProvisionerActionOptions {
 }
 
 /**
- * Provision instances: manage Cloud resources and infrastructure
+ * Provision instances: manage Cloud resources and infrastructure.
+ * 
+ * Provisioner has two main provisioning methods called by manager:
+ * - dataSnapshotProvision: manages data disk snapshot stack (create/delete snapshot)
+ * - mainProvision: manages main infrastructure stack (server, disks, network)
+ * 
+ * Manager calls these in sequence:
+ * 1. dataSnapshotProvision - updates snapshot state based on runtime flags
+ * 2. mainProvision - updates main infrastructure based on runtime flags and snapshot output
+ * 
+ * Runtime flags in provision input control behavior:
+ * - enableInstanceServer: if true, server exists; if false, server is deleted
+ * - dataDiskState: "live" = disk exists, "snapshot" = snapshot exists (disk deleted)
  */
 export interface InstanceProvisioner  {
 
@@ -25,16 +37,28 @@ export interface InstanceProvisioner  {
     verifyConfig(): Promise<void>
 
     /**
-     * Provision the instance: create and update infrastructure and Cloud resources. 
+     * Provision data disk snapshot stack.
+     * 
+     * Manages snapshot lifecycle based on runtime.dataDiskState:
+     * - "snapshot": create snapshot from existing data disk (if disk exists)
+     * - "live": no action on snapshot (will be destroyed when restoring disk)
+     * 
      * @param opts 
-     * @returns Outputs after provision
+     * @returns Partial outputs with snapshot info
      */
-    provision(opts?: ProvisionerActionOptions): Promise<CommonProvisionOutputV1>
+    dataSnapshotProvision(opts?: ProvisionerActionOptions): Promise<CommonProvisionOutputV1>
 
     /**
-     * Destroy the instance server. Server can be re-created with provision().
+     * Provision main infrastructure stack.
+     * 
+     * Manages main resources based on runtime flags:
+     * - enableInstanceServer: create/destroy server
+     * - dataDiskState: create/destroy data disk, restore from snapshot if available
+     * 
+     * @param opts 
+     * @returns Full provision outputs
      */
-    destroyInstanceServer(opts?: ProvisionerActionOptions): Promise<CommonProvisionOutputV1>
+    mainProvision(opts?: ProvisionerActionOptions): Promise<CommonProvisionOutputV1>
 
     /**
      * Destroy the instance. Every infrastructure and Cloud resources managed for this instance are destroyed. 
@@ -66,9 +90,22 @@ export abstract class AbstractInstanceProvisioner<PC extends CommonProvisionInpu
         await this.doVerifyConfig();
     }
 
-    async provision(opts?: ProvisionerActionOptions): Promise<PO> {
-        this.logger.info(`Provisioning instance ${this.args.instanceName}`)
-        return await this.doProvision(opts)
+    async dataSnapshotProvision(opts?: ProvisionerActionOptions): Promise<PO> {
+        this.logger.info(`Data snapshot provision for instance ${this.args.instanceName}`)
+        
+        const input = this.args.provisionInput
+        this.logger.debug(`Data snapshot provision with current args: ${JSON.stringify(this.args)}, options: ${JSON.stringify(opts)}`)
+        
+        return await this.doDataSnapshotProvision(opts)
+    }
+
+    async mainProvision(opts?: ProvisionerActionOptions): Promise<PO> {
+        this.logger.info(`Main provision for instance ${this.args.instanceName}`)
+        
+        const input = this.args.provisionInput
+        this.logger.debug(`Main provision with current args: ${JSON.stringify(this.args)}, options: ${JSON.stringify(opts)}`)
+        
+        return await this.doMainProvision(opts)
     }
 
     async destroy(opts?: ProvisionerActionOptions): Promise<void> {
@@ -79,21 +116,35 @@ export abstract class AbstractInstanceProvisioner<PC extends CommonProvisionInpu
         this.logger.info(`Destroyed instance ${this.args.instanceName}`)
     }
 
-    async destroyInstanceServer(opts?: ProvisionerActionOptions): Promise<PO> {
-        this.logger.info(`Destroying instance ${this.args.instanceName} server...`)
-        const outputs = await this.doDestroyInstanceServer(opts)
-        this.logger.info(`Destroyed instance ${this.args.instanceName} server`)
-
-        return outputs
+    /**
+     * Data snapshot provision. Depending on State provision inputs:
+     * - If dataDiskState is DATA_DISK_STATE_SNAPSHOT: create a snapshot from existing data disk if any.
+     *   When DATA_DISK_STATE_SNAPSHOT but no live data disk exists, no-op: this is expected
+     *   on instance initial deployment or if stopped when already stopped. 
+     *   Created or existing data disk snapshot is returned in output. It may be undefined if no snapshot was created
+     *   event if DATA_DISK_STATE_SNAPSHOT is set. 
+     */
+    protected doDataSnapshotProvision(opts?: ProvisionerActionOptions): Promise<PO> {
+        // by default data snapshot is not supported, keep this until it's globally supported and become the default 
+        // or no-op without error
+        throw new Error(`Data snapshot provision not implemented for instance ${this.args.instanceName}`)
     }
+
+    /**
+     * Main provision to deploy instance server, public IP, disks, network, etc.
+     * Depending on inputs can be used to initially deploy, start or stop instance
+     * - Initial deployment: inputs would set enableInstanceServer=true and dataDiskState=DATA_DISK_STATE_LIVE
+     * - Start instance: inputs would set enableInstanceServer=true and dataDiskState=DATA_DISK_STATE_LIVE
+     * - Stop instance: inputs would set enableInstanceServer=false and dataDiskState=DATA_DISK_STATE_SNAPSHOT
+     * 
+     * This behavior may be adapted based on specific provider needs, but should be consistent across all providers
+     * as provision may be part of the instance start/stop flow. It's possible some providers treat provision as no-op,
+     * eg the ssh or local provider.
+     */
+    protected abstract doMainProvision(opts?: ProvisionerActionOptions): Promise<PO>;
 
     protected abstract doVerifyConfig(): Promise<void>;
-    protected abstract doProvision(opts?: ProvisionerActionOptions): Promise<PO>;
     protected abstract doDestroy(opts?: ProvisionerActionOptions): Promise<void>;
-    
-    protected doDestroyInstanceServer(opts?: ProvisionerActionOptions): Promise<PO> {
-        throw new Error(`Instance ${this.args.instanceName} does not support instance server destruction`)
-    }
 
     /**
      * Return ports to expose on this instance for its current streaming server

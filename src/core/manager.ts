@@ -1,4 +1,5 @@
-import { CommonInstanceInput, InstanceEvent, InstanceEventEnum, InstanceStateV1 } from './state/state';
+import { CommonInstanceInput, CommonProvisionInputV1, InstanceEvent, InstanceEventEnum, InstanceStateV1 } from './state/state';
+import { DATA_DISK_STATE, DATA_DISK_STATE_LIVE, DATA_DISK_STATE_SNAPSHOT, INSTANCE_SERVER_STATE, INSTANCE_SERVER_STATE_ABSENT, INSTANCE_SERVER_STATE_PRESENT } from './const';
 import { InstanceProvisioner } from './provisioner';
 import { InstanceConfigurator } from './configurator';
 import { getLogger } from '../log/utils';
@@ -222,17 +223,19 @@ export interface GenericInstanceManagerArgs<ST extends InstanceStateV1> {
             /**
              * Enable instance deletion on stop.
              */
-            enabled: boolean,
+            enable: boolean,
+        }
 
-            /**
-             * Additional Ansible arguments to pass to after-start reconfiguration.
-             * These flags are specific to post-start reconfiguration to avoid re-running
-             * full configuration on every start and should be tailored to specific provider needs
-             * to ensure faster start while preserving functionality.
-             * 
-             * Ansible configuration args from CLI or state are ignored during post-start reconfiguration.
-             */
-            postStartReconfigurationAnsibleAdditionalArgs?: string[]
+        /**
+         * Enable data disk snapshotting. 
+         * 
+         * If enabled, on stop the data disk will be snapshotted and the original volume deleted.
+         * On next start/provision, the data disk will be restored from the snapshot.
+         * 
+         * This reduces costs as snapshots are cheaper than volumes when instance is stopped.
+         */
+        dataDiskSnapshot?: {
+            enable: boolean
         }
     }
 }
@@ -353,12 +356,24 @@ export class GenericInstanceManager<ST extends InstanceStateV1> implements Insta
 
         this.logger.debug(`Starting instance ${this.name()}`)
 
-        // if deleteInstanceServerOnStop is enabled, instance server may have been deleted on last instance stop
-        // so we need to re-provision and re-configure instance using specific Ansible args
         await this.doWithRetry(async () => {
-            if(this.args.options?.deleteInstanceServerOnStop?.enabled){
+
+            // if deleteInstanceServerOnStop or dataDiskSnapshot is enabled, we need to provision the instance
+            // as instance server may not exist and/or data disk snapshot may need to be restored
+            if(this.args.options?.deleteInstanceServerOnStop?.enable ||
+                this.args.options?.dataDiskSnapshot?.enable
+            ){
+                // Update inputs to restore live data disk from snapshot (if any)
+                // and ensure instance server exists
+                await this.updateProvisionInputRuntime({
+                    instanceServerState: INSTANCE_SERVER_STATE_PRESENT,
+                    dataDiskState: DATA_DISK_STATE_LIVE
+                })
+
                 await this.doProvision(opts)
-                await this.doConfigure(this.args.options.deleteInstanceServerOnStop.postStartReconfigurationAnsibleAdditionalArgs)
+            
+                // always reconfigured instance using limited Ansible run to avoid re-running full configuration on every start
+                await this.doConfigure(['-t', 'ratelimit,data-disk,sunshine'])
             }
         }, 'Pre-start reconfiguration', opts)
 
@@ -410,16 +425,23 @@ export class GenericInstanceManager<ST extends InstanceStateV1> implements Insta
     //
 
     /**
-     * Destroy instance server using provisioner and update state with provision output.
-     * Reset configuration output to undefined.
+     * Update provision input runtime state in state.
+     * These control what the provisioner does (create/destroy server, disk state).
      */
-    async doDestroyInstanceServer(opts?: ActionOptions): Promise<void> {
-        const provisioner = await this.buildProvisioner()
-        const newOutputs = await provisioner.destroyInstanceServer({
-            pulumiCancel: opts?.pulumiCancel
-        })
-        await this.stateWriter.setProvisionOutput(this.instanceName, newOutputs)
-        await this.stateWriter.setConfigurationOutput(this.instanceName, undefined)
+    private async updateProvisionInputRuntime(runtime: {
+        instanceServerState?: INSTANCE_SERVER_STATE,
+        dataDiskState?: DATA_DISK_STATE
+    }): Promise<void> {
+        const currentState = await this.stateWriter.getCurrentState(this.instanceName)
+        const updatedInput: CommonProvisionInputV1 = {
+            ...currentState.provision.input,
+            runtime: {
+                instanceServerState: runtime.instanceServerState,
+                dataDiskState: runtime.dataDiskState
+            }
+        }
+        await this.stateWriter.setProvisionInput(this.instanceName, updatedInput)
+        this.logger.debug(`Updated provision input runtime: ${JSON.stringify(runtime)}`)
     }
 
     /**
@@ -443,19 +465,45 @@ export class GenericInstanceManager<ST extends InstanceStateV1> implements Insta
     /**
      * Provision instance using provisioner and update state with provision output.
      * Decorellated from main provision() method as it may be run for configuration and as post-start reconfiguration by start().
+     * 
+     * Runs provisioning in two steps:
+     * 1. data snapshot provision: update or create data snapshot based on provided inputs
+     *    eg. on stop will create a snapshot from data disk, on start won't do anything.
+     * 2. main provision: manages main infrastructure based on runtime flags
+     *    eg. will restore live data disk from snapshot if any, create a new data disk if none exists.
+     * 
+     * State is updated after each step to ensure outputs are persisted.
      */
     async doProvision(opts?: ActionOptions): Promise<void> {
 
         this.logger.debug(`Do provision instance ${this.name()}`)
 
         const provisioner = await this.buildProvisioner()
-        const newOutputs = await provisioner.provision({
+
+        // Data snapshot provision. Only call if dataDiskSnapshot is enabled
+        // and data disk state is set to snapshot and desired disk state is not LIVE
+        // If desired state is LIVE and data disk already exists (eg. running multiple start in a row)
+        // the snapshot stack will try to update existing snapshot with live disk
+        // which is actively being used, risking data corruption (or plain failure)
+        // and losing time on useless operation.
+        if(this.args.options?.dataDiskSnapshot?.enable){
+            this.logger.debug(`Running data snapshot provision for instance ${this.name()}`)
+            const snapshotOutputs = await provisioner.dataSnapshotProvision({
+                pulumiCancel: opts?.pulumiCancel
+            })
+            this.logger.debug(`Data snapshot provision output for instance ${this.name()}: ${JSON.stringify(snapshotOutputs)}`)
+            await this.stateWriter.setProvisionOutput(this.instanceName, snapshotOutputs)
+        }
+
+        // Main provision (manages server, disks, network)
+        // Rebuild provisioner to get updated state with snapshot outputs
+        const provisionerForMain = await this.buildProvisioner()
+        this.logger.debug(`Running main provision for instance ${this.name()}`)
+        const mainOutputs = await provisionerForMain.mainProvision({
             pulumiCancel: opts?.pulumiCancel
         })
-
-        this.logger.debug(`Provision output for instance ${this.name()}: ${JSON.stringify(newOutputs)}`)
-
-        await this.stateWriter.setProvisionOutput(this.instanceName, newOutputs)
+        this.logger.debug(`Main provision output for instance ${this.name()}: ${JSON.stringify(mainOutputs)}`)
+        await this.stateWriter.setProvisionOutput(this.instanceName, mainOutputs)
     }
 
     /**
@@ -470,36 +518,76 @@ export class GenericInstanceManager<ST extends InstanceStateV1> implements Insta
     }
 
     /**
-     * Stop instance using runner.
+     * Stop instance using runner and optionally delete resources via provisioner.
+     * 
+     * Stop flow:
+     * 1. Stop instance server via runner
+     * 2. If deleteInstanceServerOnStop or dataDiskSnapshot is enabled:
+     *    - Update state input runtime (noInstanceServer, noDataDisk, createDataDiskSnapshot)
+     *    - Call provision to handle resource deletion/snapshot creation
+     * 
+     * In itself stop is not only managed via a stop operation on instance server, but also via infra as code
+     * with input setting desired state of resources for a "stop" status.
      */
     async doStop(opts?: StopOptions): Promise<void> {
         const runner = await this.buildRunner()
-        
-        // if instance server is deleted on stop, check server status first to try and stop it cleanly before deletion
-        // skip if server is unknown or can't be found (may happen if previous stop failed or was interrupted)
-        // but do call destroyInstanceServer() to ensure instance server and related resources (disks, etc.) are properly deleted or updated
-        //
-        // if server deletion fails, log error but continue with stop
-        //
-        // otherwise, stop instance normally
-        if(this.args.options?.deleteInstanceServerOnStop?.enabled){
-            const serverStatus = await runner.serverStatus()
-            if(serverStatus !== ServerRunningStatus.Unknown){
 
-                try {
-                    await runner.stop(opts)
-                } catch (error) {
-                    this.logger.warn(`Failed to stop instance ${this.name()}, continuing with server deletion to finalize stop.`, error)
-                }
-            } else {
-                this.logger.info(`Instance ${this.name()} does not have a server (or server in unknown state). ` + 
-                    `Skipping provider API stop and continue with server deletion to finalize stop.`)
+        // First stop the instance via runner (unless server already stopped)
+        const serverStatus = await runner.serverStatus()
+        let serverStopSuccess = false
+        if(serverStatus === ServerRunningStatus.Stopped){
+            serverStopSuccess = true
+            this.logger.info(`Instance ${this.name()} is already stopped, skipping stop operation.`)
+        } else if(serverStatus !== ServerRunningStatus.Unknown){
+            // if data disk snapshot is enabled, force stop wait to ensure data consistency
+            // creating a data disk snapshot on a still running instance may corrupt data
+            const forceStopWait = this.args.options?.dataDiskSnapshot?.enable ?? false
+
+            try {
+                await runner.stop({ 
+                    ...opts, 
+                    wait: forceStopWait || opts?.wait
+                })
+                serverStopSuccess = true
+            } catch (error) {
+                this.logger.warn(`Failed to stop instance ${this.name()}`, error)
             }
-
-            await this.doDestroyInstanceServer(opts)
         } else {
-            // don't check server status if no deletion happen on stop as it shouldn't be deleted
-            await runner.stop(opts)
+            // this runs when server status is unknown
+            // instance server may have been deleted (by previous stop run)
+            // it's also possible we somehow lost track of the server (eg. provider API issue)
+            // handled below since we did not confirm server deletion with serverStopSuccess=true
+            // and we risk a dangling server
+            this.logger.info(`Instance ${this.name()} does not have a server (or server in unknown state). Skipping stop operation.`)
+        }
+
+        // if server stop failed and server is not deleted afterward by infra, it's an error:
+        // we might still have a dangling server running 
+        if(!serverStopSuccess && !this.args.options?.deleteInstanceServerOnStop?.enable){
+            throw new Error(`Failed to stop instance ${this.name()}. Maybe instance server was not stopped properly or does not exist, it's advised to check instance server status manually.`);
+        }
+
+        // If provisioning is required (delete instance server or create snapshot), update runtime input state and call provision
+        // we need to update input to pass proper snapshot ID and desired instance server state to provisioner
+        if(this.args.options?.deleteInstanceServerOnStop?.enable || 
+            this.args.options?.dataDiskSnapshot?.enable
+        ){
+            await this.updateProvisionInputRuntime({
+                // on stop, if deleteInstanceServerOnStop is enabled, we need to explicitely delete the server
+                // otherwise leave undefined to keep default behavior
+                instanceServerState: this.args.options?.deleteInstanceServerOnStop?.enable ? INSTANCE_SERVER_STATE_ABSENT : undefined,
+
+                // on stop, if dataDiskSnapshot is enabled, we need to create a snapshot, otherwise keep live disk
+                dataDiskState: this.args.options?.dataDiskSnapshot?.enable ? DATA_DISK_STATE_SNAPSHOT : DATA_DISK_STATE_LIVE
+            })
+
+            // run provision will remove server (if needed) and remove data disk (if needed) based on updated inputs
+            await this.doProvision(opts)
+
+            // Reset configuration output since server was deleted, it's not configured anymore
+            if(this.args.options?.deleteInstanceServerOnStop?.enable){
+                await this.stateWriter.setConfigurationOutput(this.instanceName, undefined)
+            }
         }
     }
 

@@ -118,6 +118,11 @@ export const CLI_OPTION_RATE_LIMIT_MAX_MBPS = new Option('--ratelimit-max-mbps <
 
 export const CLI_OPTION_FORCE_PULUMI_CANCEL = new Option('--force-pulumi-cancel', 'Cancel any stuck Pulumi operations before running the command. Only used for providers relying on Pulumi for infrastructure management, ignored otherwise.')
 
+export const CLI_OPTION_DATA_DISK_SNAPSHOT_ENABLE = new Option('--data-disk-snapshot-enable [enable|yes|true|1]', 
+    'Whether to enable data disk snapshot on stop for cost reduction (snapshot is cheaper than keeping a live data disk). ' +
+    'If enabled, data disk will be snapshotted on stop and restored from snapshot on next start. (default: false)')
+    .argParser(parseFalseOrDisable)
+
 function parseFalseOrDisable(value: string){
     return value === "disable" || value === "no" || value === "false" || value === "0" ? false : true
 }

@@ -41,7 +41,7 @@ export class LinodeProvisioner extends AbstractInstanceProvisioner<LinodeProvisi
         return pulumiClient
     }
 
-    async doProvision(opts?: ProvisionerActionOptions) {
+    async doMainProvision(opts?: ProvisionerActionOptions) {
 
         this.logger.info(`Provisioning Linode instance ${this.args.instanceName}`)
 
