@@ -33,6 +33,7 @@ const CommonProvisionInputV1Schema = z.object({
     dataDiskSnapshot: z.object({
         enable: z.boolean().describe("Whether to enable data disk snapshot on stop. Default: false"),
     }).optional().describe("Data disk snapshot configuration for cost reduction"),
+    deleteInstanceServerOnStop: z.boolean().describe("Whether instance server should be deleted on instance stop and re-created on next start").optional(),
     
     // Runtime state (updated by manager before calling provision to control provisioner behavior)
     // These represent the desired state of resources and are updated on start/stop operations

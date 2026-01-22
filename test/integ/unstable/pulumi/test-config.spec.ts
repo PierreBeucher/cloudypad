@@ -54,6 +54,7 @@ export const scalewayInput: PulumiStackConfigScaleway = {
     publicKeyContent: pubKey,
     securityGroupPorts: [{ port: 22, protocol: "TCP" }],
     dataDisk: {
+        state: "present",
         sizeGb: 100,
     },
 }

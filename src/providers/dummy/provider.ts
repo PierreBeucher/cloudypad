@@ -51,12 +51,6 @@ export class DummyProviderClient extends AbstractProviderClient<DummyInstanceSta
             }),
             configuratorFactory: new DummyConfiguratorFactory(),  
             stateWriter: stateWriter,
-            options: {
-                deleteInstanceServerOnStop: {
-                    enable: dummyState.provision.input.deleteInstanceServerOnStop ?? false,
-                },
-                dataDiskSnapshot: dummyState.provision.input.dataDiskSnapshot,
-            }
         })
     }
     

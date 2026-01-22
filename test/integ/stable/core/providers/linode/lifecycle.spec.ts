@@ -53,6 +53,7 @@ describe('Linode lifecycle', () => {
                 dns: {
                     domainName: "green.instances.cloudypad.gg",
                 },
+                deleteInstanceServerOnStop: true,
             }, {
                 sunshine: {
                     enable: true,
