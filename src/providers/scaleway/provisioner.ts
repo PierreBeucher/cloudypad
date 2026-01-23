@@ -1,7 +1,7 @@
 import { SshKeyLoader } from '../../tools/ssh'
 import { ScalewayPulumiClient, PulumiStackConfigScaleway } from './pulumi/main'
 import { ScalewayDataDiskSnapshotPulumiClient} from './pulumi/data-volume-snapshot'
-import { ScalewayBaseImageSnapshotPulumiClient } from './pulumi/base-image-snapshot'
+import { ScalewayBaseImagePulumiClient } from './pulumi/base-image-snapshot'
 import { AbstractInstanceProvisioner, InstanceProvisionerArgs, ProvisionerActionOptions } from '../../core/provisioner'
 import { ScalewayProvisionInputV1, ScalewayProvisionOutputV1 } from './state'
 import { ScalewayClient } from './sdk-client'
@@ -23,7 +23,7 @@ export class ScalewayProvisioner extends AbstractInstanceProvisioner<ScalewayPro
         return pulumiClient
     }
 
-    private buildSnapshotPulumiClient(): ScalewayDataDiskSnapshotPulumiClient {
+    private buildDataDiskSnapshotPulumiClient(): ScalewayDataDiskSnapshotPulumiClient {
         const pulumiClient = new ScalewayDataDiskSnapshotPulumiClient({
             stackName: this.args.instanceName,
             workspaceOptions: this.args.coreConfig.pulumi?.workspaceOptions
@@ -31,8 +31,8 @@ export class ScalewayProvisioner extends AbstractInstanceProvisioner<ScalewayPro
         return pulumiClient
     }
 
-    private buildBaseImageSnapshotPulumiClient(): ScalewayBaseImageSnapshotPulumiClient {
-        const pulumiClient = new ScalewayBaseImageSnapshotPulumiClient({
+    private buildBaseImagePulumiClient(): ScalewayBaseImagePulumiClient {
+        const pulumiClient = new ScalewayBaseImagePulumiClient({
             stackName: this.args.instanceName,
             workspaceOptions: this.args.coreConfig.pulumi?.workspaceOptions
         })
@@ -49,7 +49,7 @@ export class ScalewayProvisioner extends AbstractInstanceProvisioner<ScalewayPro
             )
         }
 
-        const snapshotClient = this.buildSnapshotPulumiClient()
+        const snapshotClient = this.buildDataDiskSnapshotPulumiClient()
 
         // don't run Pulumi if there's no data disk ID to snapshot
         // or desired state is set to LIVE (in which case snapshot update is not needed)
@@ -80,7 +80,7 @@ export class ScalewayProvisioner extends AbstractInstanceProvisioner<ScalewayPro
         // Return output with snapshot info
         return {
             ...this.getCurrentProvisionOutput(),
-            dataDiskSnapshotId: snapshotOutput?.snapshotId ?? undefined,
+            dataDiskSnapshotId: snapshotOutput.snapshotId,
         }
     }
 
@@ -127,7 +127,7 @@ export class ScalewayProvisioner extends AbstractInstanceProvisioner<ScalewayPro
 
         this.logger.debug(`Creating base image snapshot for instance ${this.args.instanceName}`)
 
-        const baseImageClient = this.buildBaseImageSnapshotPulumiClient()
+        const baseImageClient = this.buildBaseImagePulumiClient()
         await baseImageClient.setConfig({
             instanceName: this.args.instanceName,
             projectId: this.args.provisionInput.projectId,
@@ -178,8 +178,9 @@ export class ScalewayProvisioner extends AbstractInstanceProvisioner<ScalewayPro
                 sizeGb: this.args.provisionInput.diskSizeGb,
             },
             dataDisk: this.args.provisionInput.dataDiskSizeGb ? {
-                // only absent is desired data disk state is explicitly set to snapshot
-                // if absent or live, data should be present
+                // only set data disk as absent if desired data disk state is explicitly set to snapshot
+                // On main Pulumi stack call, data snapshot would have been done already
+                // if undefined or live, data should be present
                 state: this.args.provisionInput.runtime?.dataDiskState === DATA_DISK_STATE_SNAPSHOT ? "absent" : "present",
                 sizeGb: this.args.provisionInput.dataDiskSizeGb,
                 // Use data disk snapshot ID if any (for restoration)
@@ -204,7 +205,7 @@ export class ScalewayProvisioner extends AbstractInstanceProvisioner<ScalewayPro
 
         // Also destroy base image snapshot stack if it exists and keepOnDeletion is not enabled
         if (!this.args.provisionInput.baseImageSnapshot?.keepOnDeletion) {
-            await this.doDestroyBaseImageSnapshotStack(opts)
+            await this.doDestroyBaseImageStack(opts)
         }
 
         this.args.provisionOutput = undefined
@@ -215,16 +216,16 @@ export class ScalewayProvisioner extends AbstractInstanceProvisioner<ScalewayPro
      */
     private async doDestroyDataSnapshotStack(opts?: ProvisionerActionOptions): Promise<void> {
         this.logger.info(`Destroying data disk snapshot stack for instance ${this.args.instanceName}`)
-        const snapshotClient = this.buildSnapshotPulumiClient()
+        const snapshotClient = this.buildDataDiskSnapshotPulumiClient()
         await snapshotClient.destroy({ cancel: opts?.pulumiCancel })
     }
 
     /**
      * Destroy the base image snapshot Pulumi stack.
      */
-    private async doDestroyBaseImageSnapshotStack(opts?: ProvisionerActionOptions): Promise<void> {
+    private async doDestroyBaseImageStack(opts?: ProvisionerActionOptions): Promise<void> {
         this.logger.info(`Destroying base image snapshot stack for instance ${this.args.instanceName}`)
-        const baseImageClient = this.buildBaseImageSnapshotPulumiClient()
+        const baseImageClient = this.buildBaseImagePulumiClient()
         await baseImageClient.destroy({ cancel: opts?.pulumiCancel })
     }
 

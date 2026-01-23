@@ -32,12 +32,12 @@ interface LinodeRootDiskImageArgs {
     additionalTags: pulumi.Input<string[]>
 }
 
-class CloudyPadLinodeRootDiskImage extends pulumi.ComponentResource {
+class CloudyPadLinodeBaseImage extends pulumi.ComponentResource {
     
     public readonly imageId: pulumi.Output<string>
 
     constructor(name: string, args: LinodeRootDiskImageArgs, opts?: pulumi.ComponentResourceOptions) {
-        super("crafteo:cloudypad:linode:root-disk-image", name, args, opts)
+        super("crafteo:cloudypad:linode:base-image-snapshot", name, args, opts)
 
         const globalTags = pulumi.all([args.additionalTags]).apply(([tags]) => [
             name,
@@ -48,11 +48,11 @@ class CloudyPadLinodeRootDiskImage extends pulumi.ComponentResource {
             parent: this
         }
 
-        const image = new linode.Image(`${name}-root-image`, {
-            label: linodeLabel(name, "-root-image"),
+        const image = new linode.Image(`${name}-base-image`, {
+            label: linodeLabel(name, "-base-image"),
             diskId: args.diskId,
             linodeId: args.linodeId,
-            description: args.description ?? `Cloudy Pad root disk image for ${name}`,
+            description: args.description ?? `Cloudy Pad base image for ${name}`,
             tags: globalTags,
         }, {
             ...commonPulumiOpts,
@@ -67,7 +67,7 @@ class CloudyPadLinodeRootDiskImage extends pulumi.ComponentResource {
 }
 
 /* eslint-disable  @typescript-eslint/no-explicit-any */
-async function linodeRootDiskImagePulumiProgram(): Promise<Record<string, any> | void> {
+async function linodeBaseImageSnapshotPulumiProgram(): Promise<Record<string, any> | void> {
     const config = new pulumi.Config()
     const diskId = config.getNumber("diskId")
     const linodeId = config.getNumber("linodeId")
@@ -75,7 +75,7 @@ async function linodeRootDiskImagePulumiProgram(): Promise<Record<string, any> |
 
     const stackName = pulumi.getStack()
 
-    const image = new CloudyPadLinodeRootDiskImage(stackName, {
+    const image = new CloudyPadLinodeBaseImage(stackName, {
         diskId: diskId,
         linodeId: linodeId,
         additionalTags: additionalTags,
@@ -86,7 +86,7 @@ async function linodeRootDiskImagePulumiProgram(): Promise<Record<string, any> |
     }
 }
 
-export interface PulumiStackConfigLinodeRootDiskImage {
+export interface LinodeBaseImagePulumiStackConfig {
     /**
      * Name of the Cloudy Pad instance to create the base image for
      */
@@ -101,53 +101,53 @@ export interface PulumiStackConfigLinodeRootDiskImage {
      * ID of the disk to create an image from. If undefined, 
      * no-op. Any existing image is KEPT and no new image is created.
      */
-    diskId?: number
+    diskId: number
     
     /**
      * ID of the Linode instance the disk belongs to
      */
-    linodeId?: number
+    linodeId: number
 }
 
-export interface LinodeRootDiskImagePulumiOutput {
+export interface LinodeBaseImagePulumiOutput {
     /**
      * ID of the created image (e.g., "private/12345678")
      */
     imageId: string
 }
 
-export interface LinodeBaseImageSnapshotPulumiClientArgs {
+export interface LinodeBaseImagePulumiClientArgs {
     stackName: string
     workspaceOptions?: LocalWorkspaceOptions
 }
 
-export class LinodeBaseImageSnapshotPulumiClient extends InstancePulumiClient<PulumiStackConfigLinodeRootDiskImage, LinodeRootDiskImagePulumiOutput> {
+export class LinodeBaseImagePulumiClient extends InstancePulumiClient<LinodeBaseImagePulumiStackConfig, LinodeBaseImagePulumiOutput> {
 
-    constructor(args: LinodeBaseImageSnapshotPulumiClientArgs){
+    constructor(args: LinodeBaseImagePulumiClientArgs){
         super({ 
-            program: linodeRootDiskImagePulumiProgram, 
-            projectName: "CloudyPad-Linode-BaseImageSnapshot", 
+            program: linodeBaseImageSnapshotPulumiProgram, 
+            projectName: "CloudyPad-Linode-BaseImage", 
             stackName: args.stackName,
             workspaceOptions: args.workspaceOptions
         })
     }
 
-    async doSetConfig(config: PulumiStackConfigLinodeRootDiskImage){
+    async doSetConfig(config: LinodeBaseImagePulumiStackConfig){
         this.logger.debug(`Setting base image stack ${this.stackName} config: ${JSON.stringify(config)}`)
 
         const stack = await this.getStack()
         await stack.setConfig("linode:token", { value: config.apiToken, secret: true })
         await stack.setConfig("additionalTags", { value: JSON.stringify([`instance:${config.instanceName}`])})
-        if(config.diskId) await stack.setConfig("diskId", { value: config.diskId.toString() })
-        if(config.linodeId) await stack.setConfig("linodeId", { value: config.linodeId.toString() })
+        await stack.setConfig("diskId", { value: config.diskId.toString() })
+        await stack.setConfig("linodeId", { value: config.linodeId.toString() })
 
         const allConfs = await stack.getAllConfig()
         this.logger.debug(`Linode base image stack config after update: ${JSON.stringify(allConfs)}`)
     }
 
-    protected async buildTypedOutput(outputs: OutputMap): Promise<LinodeRootDiskImagePulumiOutput> {
+    protected async buildTypedOutput(outputs: OutputMap): Promise<LinodeBaseImagePulumiOutput> {
         return {
-            imageId: outputs["imageId"]?.value as string
+            imageId: outputs["imageId"].value as string
         }
     }
 }

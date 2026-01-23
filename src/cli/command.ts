@@ -33,7 +33,6 @@ export interface CreateCliArgs {
     retries?: number
     retryDelay?: number
     ratelimitMaxMbps?: number
-    keepBaseImageOnDeletion?: boolean
 }
 
 /**

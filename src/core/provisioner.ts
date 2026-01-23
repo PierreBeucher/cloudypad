@@ -14,19 +14,11 @@ export interface ProvisionerActionOptions {
 }
 
 /**
- * Provision instances: manage Cloud resources and infrastructure.
- * 
- * Provisioner has two main provisioning methods called by manager:
- * - dataSnapshotProvision: manages data disk snapshot stack (create/delete snapshot)
- * - mainProvision: manages main infrastructure stack (server, disks, network)
- * 
- * Manager calls these in sequence:
- * 1. dataSnapshotProvision - updates snapshot state based on runtime flags
- * 2. mainProvision - updates main infrastructure based on runtime flags and snapshot output
- * 
- * Runtime flags in provision input control behavior:
- * - enableInstanceServer: if true, server exists; if false, server is deleted
- * - dataDiskState: "live" = disk exists, "snapshot" = snapshot exists (disk deleted)
+ * Provision instances: manage Cloud resources and infrastructure. Main functions:
+ * - mainProvision(): manages main infrastructure stack (server, disks, network)
+ * - dataSnapshotProvision(): manages data disk snapshot stack (create/delete snapshot)
+ * - baseImageSnapshotProvision(): manages base image snapshot stack (create/delete image)
+ * - destroy(): destroys all infrastructure and Cloud resources managed for this instance
  */
 export interface InstanceProvisioner  {
 
@@ -37,14 +29,11 @@ export interface InstanceProvisioner  {
     verifyConfig(): Promise<void>
 
     /**
-     * Provision data disk snapshot stack.
+     * Provision data disk snapshot stack. Manages snapshot lifecycle based on provision input runtime.dataDiskState:
+     * - DATA_DISK_STATE_SNAPSHOT: create snapshot from existing data disk (if disk exists)
+     * - DATA_DISK_STATE_LIVE: no action on snapshot stack. If it already exists, remain as-is
      * 
-     * Manages snapshot lifecycle based on runtime.dataDiskState:
-     * - "snapshot": create snapshot from existing data disk (if disk exists)
-     * - "live": no action on snapshot (will be destroyed when restoring disk)
-     * 
-     * @param opts 
-     * @returns Partial outputs with snapshot info
+     * @returns Updated provision outputs with snapshot info
      */
     dataSnapshotProvision(opts?: ProvisionerActionOptions): Promise<CommonProvisionOutputV1>
 
@@ -55,29 +44,29 @@ export interface InstanceProvisioner  {
      * - enableInstanceServer: create/destroy server
      * - dataDiskState: create/destroy data disk, restore from snapshot if available
      * 
-     * @param opts 
-     * @returns Full provision outputs
+     * @returns Updated provision outputs with main infrastructure info
      */
     mainProvision(opts?: ProvisionerActionOptions): Promise<CommonProvisionOutputV1>
 
     /**
      * Provision root disk snapshot/image stack.
      * 
-     * Creates a snapshot/image of the root disk after initial configuration.
+     * Creates a snapshot/image of the instance server root disk.
      * This captures the configured system (NVIDIA drivers, Cloudy Pad, etc.) 
      * for use on subsequent instance starts.
      * 
      * If imageId is set in provision input, uses it directly as passthrough
-     * without creating a new image (user provides their own image).
+     * without creating a new image (as user provides their own image).
      * 
-     * @param opts 
-     * @returns Outputs with baseImageId
+     * @returns Updated provision outputs with base image info
      */
     baseImageSnapshotProvision(opts?: ProvisionerActionOptions): Promise<CommonProvisionOutputV1>
 
     /**
-     * Destroy the instance. Every infrastructure and Cloud resources managed for this instance are destroyed. 
-     * @param opts 
+     * Destroy the instance. Every infrastructure and Cloud resources managed for this instance are destroyed:
+     * main resources, data disk snapshot, base image snapshot, etc.
+     * 
+     * If Pulumi is used, related stacks are destroyed and removed. 
      */
     destroy(opts?: ProvisionerActionOptions): Promise<void>
 }

@@ -12,7 +12,7 @@ import { ScalewayPulumiClientArgs } from "./main"
 // Flow: Volume -> Instance Snapshot -> Instance Image
 //
 
-interface ScalewayBaseImageSnapshotArgs {
+interface ScalewayBaseImageArgs {
     /**
      * ID of the root disk volume to create image from
      */
@@ -20,12 +20,12 @@ interface ScalewayBaseImageSnapshotArgs {
     additionalTags: pulumi.Input<string[]>
 }
 
-class CloudyPadScalewayBaseImageSnapshot extends pulumi.ComponentResource {
+class CloudyPadScalewayBaseImage extends pulumi.ComponentResource {
     
     public readonly imageId: pulumi.Output<string>
 
-    constructor(name: string, args: ScalewayBaseImageSnapshotArgs, opts?: pulumi.ComponentResourceOptions) {
-        super("crafteo:cloudypad:scaleway:base-image-snapshot", name, args, opts)
+    constructor(name: string, args: ScalewayBaseImageArgs, opts?: pulumi.ComponentResourceOptions) {
+        super("crafteo:cloudypad:scaleway:base-image", name, args, opts)
 
         const globalTags = pulumi.all([args.additionalTags]).apply(([tags]) => [
             name,
@@ -67,14 +67,14 @@ class CloudyPadScalewayBaseImageSnapshot extends pulumi.ComponentResource {
 }
 
 /* eslint-disable  @typescript-eslint/no-explicit-any */
-async function scalewayBaseImageSnapshotPulumiProgram(): Promise<Record<string, any> | void> {
+async function scalewayBaseImagePulumiProgram(): Promise<Record<string, any> | void> {
     const config = new pulumi.Config()
     const rootVolumeId = config.get("rootVolumeId")
     const additionalTags = config.getObject<string[]>("additionalTags") || []
 
     const stackName = pulumi.getStack()
 
-    const baseImage = new CloudyPadScalewayBaseImageSnapshot(stackName, {
+    const baseImage = new CloudyPadScalewayBaseImage(stackName, {
         rootVolumeId: rootVolumeId,
         additionalTags: additionalTags,
     })
@@ -84,7 +84,7 @@ async function scalewayBaseImageSnapshotPulumiProgram(): Promise<Record<string, 
     }
 }
 
-export interface PulumiStackConfigScalewayBaseImageSnapshot {
+export interface ScalewayBaseImagePulumiStackConfig {
     instanceName: string
     projectId: string
     region: string
@@ -97,25 +97,25 @@ export interface PulumiStackConfigScalewayBaseImageSnapshot {
     rootVolumeId?: string
 }
 
-export interface ScalewayBaseImageSnapshotPulumiOutput {
+export interface ScalewayBaseImagePulumiOutput {
     /**
      * ID of the created Instance Image
      */
     imageId: string
 }
 
-export class ScalewayBaseImageSnapshotPulumiClient extends InstancePulumiClient<PulumiStackConfigScalewayBaseImageSnapshot, ScalewayBaseImageSnapshotPulumiOutput> {
+export class ScalewayBaseImagePulumiClient extends InstancePulumiClient<ScalewayBaseImagePulumiStackConfig, ScalewayBaseImagePulumiOutput> {
 
     constructor(args: ScalewayPulumiClientArgs){
         super({ 
-            program: scalewayBaseImageSnapshotPulumiProgram, 
-            projectName: "CloudyPad-Scaleway-BaseImageSnapshot", 
+            program: scalewayBaseImagePulumiProgram, 
+            projectName: "CloudyPad-Scaleway-BaseImage", 
             stackName: args.stackName,
             workspaceOptions: args.workspaceOptions
         })
     }
 
-    async doSetConfig(config: PulumiStackConfigScalewayBaseImageSnapshot){
+    async doSetConfig(config: ScalewayBaseImagePulumiStackConfig){
         this.logger.debug(`Setting base image snapshot stack ${this.stackName} config: ${JSON.stringify(config)}`)
 
         const stack = await this.getStack()
@@ -129,9 +129,9 @@ export class ScalewayBaseImageSnapshotPulumiClient extends InstancePulumiClient<
         this.logger.debug(`Scaleway base image snapshot stack config after update: ${JSON.stringify(allConfs)}`)
     }
 
-    protected async buildTypedOutput(outputs: OutputMap): Promise<ScalewayBaseImageSnapshotPulumiOutput> {
+    protected async buildTypedOutput(outputs: OutputMap): Promise<ScalewayBaseImagePulumiOutput> {
         return {
-            imageId: outputs["imageId"]?.value as string
+            imageId: outputs["imageId"].value as string
         }
     }
 }

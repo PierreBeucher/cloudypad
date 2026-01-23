@@ -79,7 +79,7 @@ class CloudyPadScalewayInstance extends pulumi.ComponentResource {
 
         let dataDisk: scw.block.Volume | undefined
         // Create data disk if requested and not explicitly disabled (noDataDisk)
-        if(args.dataDisk && args.dataDisk.state === "present"){
+        if(args.dataDisk && args.dataDisk.state !== "absent"){
             // If snapshotId is provided, create volume from snapshot
             // Otherwise create a new empty volume
             dataDisk = new scw.block.Volume(`${name}-data`, {

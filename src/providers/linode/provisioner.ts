@@ -1,6 +1,6 @@
 import { AbstractInstanceProvisioner, InstanceProvisionerArgs, ProvisionerActionOptions } from '../../core/provisioner'
 import { LinodePulumiClient, PulumiStackConfigLinode, LinodePulumiOutput } from './pulumi/main'
-import { LinodeBaseImageSnapshotPulumiClient } from './pulumi/base-image-snapshot'
+import { LinodeBaseImagePulumiClient } from './pulumi/base-image-snapshot'
 import { LinodeProvisionInputV1, LinodeProvisionOutputV1 } from './state'
 import { SshKeyLoader } from '../../tools/ssh'
 import { LinodeClient } from './sdk-client'
@@ -22,8 +22,8 @@ export class LinodeProvisioner extends AbstractInstanceProvisioner<LinodeProvisi
         return pulumiClient
     }
 
-    private buildBaseImageSnapshotPulumiClient(): LinodeBaseImageSnapshotPulumiClient {
-        const pulumiClient = new LinodeBaseImageSnapshotPulumiClient({
+    private buildBaseImageSnapshotPulumiClient(): LinodeBaseImagePulumiClient {
+        const pulumiClient = new LinodeBaseImagePulumiClient({
             stackName: this.args.instanceName,
             workspaceOptions: this.args.coreConfig.pulumi?.workspaceOptions
         })
@@ -87,7 +87,7 @@ export class LinodeProvisioner extends AbstractInstanceProvisioner<LinodeProvisi
 
         return {
             ...this.getCurrentProvisionOutput(),
-            baseImageId: imageOutput?.imageId ?? undefined,
+            baseImageId: imageOutput.imageId,
         }
     }
 
@@ -136,9 +136,6 @@ export class LinodeProvisioner extends AbstractInstanceProvisioner<LinodeProvisi
             throw new Error('Linode API token is required. Linode API token must be set either in state or as LINODE_TOKEN environment variable.')
         }
 
-        // Prefer baseImageId from output (our image or passthrough) over input imageId
-        const imageId = this.args.provisionOutput?.baseImageId ?? this.args.provisionInput.imageId
-
         return {
             instanceName: this.args.instanceName,
             region: this.args.provisionInput.region,
@@ -149,7 +146,9 @@ export class LinodeProvisioner extends AbstractInstanceProvisioner<LinodeProvisi
             dataDisk: this.args.provisionInput.dataDiskSizeGb ? {
                 sizeGb: this.args.provisionInput.dataDiskSizeGb,
             } : undefined,
-            imageId: imageId,
+            // Use input imageId if available, otherwise use output base image ID (created during deploy)
+            // or leave undefined to use default image
+            imageId: this.args.provisionInput.imageId ?? this.args.provisionOutput?.baseImageId,
             securityGroupPorts: this.getStreamingServerPorts(),
             publicKeyContent: sshPublicKeyContent,
             noInstanceServer: this.args.provisionInput.runtime?.instanceServerState === INSTANCE_SERVER_STATE_ABSENT,

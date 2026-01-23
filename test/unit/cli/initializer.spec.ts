@@ -89,7 +89,14 @@ describe('Instance initializer', () => {
             name: instanceName,
             provision: {
                 provider: CLOUDYPAD_PROVIDER_DUMMY,
-                input: TEST_INPUT.provision,
+                input: {
+                    ...TEST_INPUT.provision,
+                    // runtime inputs are set after initialization, so are undefined
+                    runtime: {
+                        dataDiskState: 'live',
+                        instanceServerState: 'present'
+                    }
+                },
                 output: {
                     host: "127.0.0.1",
                     publicIPv4: "127.0.0.1",

@@ -488,10 +488,8 @@ export class GenericInstanceManager<ST extends InstanceStateV1> implements Insta
     }
 
     /**
-     * Create a root disk snapshot/image from current instance server root disk.
-     */
-    /**
      * Create a base image snapshot from current instance server root disk.
+     * Will stop instance to ensure data consistency before creating snapshot.
      */
     private async doBaseImageSnapshotProvision(opts?: ActionOptions): Promise<void> {
         this.logger.debug(`Do base image snapshot provision for instance ${this.name()}`)
@@ -576,12 +574,6 @@ export class GenericInstanceManager<ST extends InstanceStateV1> implements Insta
             // handled below since we did not confirm server deletion with serverStopSuccess=true
             // and we risk a dangling server
             this.logger.info(`Instance ${this.name()} does not have a server (or server in unknown state). Skipping stop operation.`)
-        }
-
-        // if server stop failed and server is not deleted afterward by infra, it's an error:
-        // we might still have a dangling server running 
-        if(!serverStopSuccess && !currentState.provision.input.deleteInstanceServerOnStop){
-            throw new Error(`Failed to stop instance ${this.name()}. Maybe instance server was not stopped properly or does not exist, it's advised to check instance server status manually.`);
         }
 
         // If provisioning is required (delete instance server or create snapshot), update runtime input state and call provision

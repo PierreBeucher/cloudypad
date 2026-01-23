@@ -2,7 +2,7 @@ function create_destroy_scaleway() {
     
     instance_name="test-create-destroy-scaleway"
 
-    npx tsx src/cli/main.ts create scaleway \
+    $cloudypad_cmd create scaleway \
         --name $instance_name \
         --project-id "02d02f86-9414-4161-b807-efb2bd22d266" \
         --region fr-par \
@@ -19,7 +19,7 @@ function create_destroy_scaleway() {
 
     $cloudypad_cmd update scaleway \
         --name $instance_name \
-        --instance-type L4-1-24G \
+        --instance-type L40S-1-48G \
         --yes
 
     $cloudypad_cmd deploy $instance_name --yes

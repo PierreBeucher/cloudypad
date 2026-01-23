@@ -518,7 +518,6 @@ export class LinodePulumiClient extends InstancePulumiClient<PulumiStackConfigLi
         // Set Linode provider configuration
         await stack.setConfig("linode:token", { value: config.apiToken, secret: true })
         await stack.setConfig("region", { value: config.region })
-        await stack.setConfig("instanceName", { value: config.instanceName})
         await stack.setConfig("additionalTags", { value: JSON.stringify([`instance:${config.instanceName}`])})
         
         if(config.noInstanceServer) await stack.setConfig("noInstanceServer", { value: config.noInstanceServer.toString()})

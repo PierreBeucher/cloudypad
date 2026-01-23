@@ -116,7 +116,7 @@ export class ScalewayDataDiskSnapshotPulumiClient extends InstancePulumiClient<P
 
     protected async buildTypedOutput(outputs: OutputMap): Promise<ScalewayDataDiskSnapshotPulumiOutput> {
         return {
-            snapshotId: outputs["snapshotId"]?.value as string
+            snapshotId: outputs["snapshotId"].value as string
         }
     }
 }

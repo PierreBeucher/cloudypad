@@ -40,6 +40,10 @@ describe('InteractiveInstanceUpdater', () => {
                 ...dummyState.provision,
                 input: {
                     ...dummyState.provision.input,
+                    runtime: {
+                        dataDiskState: 'live',
+                        instanceServerState: 'present'
+                    }
                 },
             },
             configuration: {
