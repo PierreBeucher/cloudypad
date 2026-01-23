@@ -198,13 +198,12 @@ export class ScalewayProvisioner extends AbstractInstanceProvisioner<ScalewayPro
         const pulumiClient = this.buildMainPulumiClient()
         await pulumiClient.destroy({ cancel: opts?.pulumiCancel })
 
-        // Also destroy data disk snapshot stack if it exists
-        if (this.args.provisionOutput?.dataDiskSnapshotId) {
-            await this.doDestroyDataSnapshotStack(opts)
-        }
+        // Always destroy related stacks even if they are not enabled
+        // At worst stack will be created empty then deleted
+        await this.doDestroyDataSnapshotStack(opts)
 
-        // Also destroy base image snapshot stack if it exists
-        if (this.args.provisionOutput?.baseImageId) {
+        // Also destroy base image snapshot stack if it exists and keepOnDeletion is not enabled
+        if (!this.args.provisionInput.baseImageSnapshot?.keepOnDeletion) {
             await this.doDestroyBaseImageSnapshotStack(opts)
         }
 

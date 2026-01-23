@@ -36,6 +36,7 @@ const CommonProvisionInputV1Schema = z.object({
     }).optional().describe("Data disk snapshot configuration for cost reduction"),
     baseImageSnapshot: z.object({
         enable: z.boolean().describe("Whether to enable base image snapshot after initial deploy. Default: false"),
+        keepOnDeletion: z.boolean().optional().describe("Whether to keep base image on instance deletion. Default: false"),
     }).optional().describe("Base image snapshot configuration to capture configured system (NVIDIA drivers, Cloudy Pad, etc.)"),
     deleteInstanceServerOnStop: z.boolean().describe("Whether instance server should be deleted on instance stop and re-created on next start").optional(),
     

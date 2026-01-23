@@ -96,8 +96,8 @@ export class LinodeProvisioner extends AbstractInstanceProvisioner<LinodeProvisi
         
         await pulumiClient.destroy({ cancel: opts?.pulumiCancel })
 
-        // Also destroy base image stack if it exists (and not a passthrough from input imageId)
-        if (this.args.provisionOutput?.baseImageId && !this.args.provisionInput.imageId) {
+        // destroy base image snapshot unless keep
+        if (!this.args.provisionInput.baseImageSnapshot?.keepOnDeletion) {
             await this.doDestroyBaseImageSnapshotStack(opts)
         }
 
