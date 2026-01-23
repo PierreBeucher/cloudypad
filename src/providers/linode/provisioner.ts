@@ -1,6 +1,6 @@
 import { AbstractInstanceProvisioner, InstanceProvisionerArgs, ProvisionerActionOptions } from '../../core/provisioner'
-import { LinodePulumiClient, PulumiStackConfigLinode, LinodePulumiOutput } from './pulumi'
-import { LinodeBaseImageSnapshotPulumiClient } from './pulumi-base-image-snapshot'
+import { LinodePulumiClient, PulumiStackConfigLinode, LinodePulumiOutput } from './pulumi/main'
+import { LinodeBaseImageSnapshotPulumiClient } from './pulumi/base-image-snapshot'
 import { LinodeProvisionInputV1, LinodeProvisionOutputV1 } from './state'
 import { SshKeyLoader } from '../../tools/ssh'
 import { LinodeClient } from './sdk-client'
@@ -76,6 +76,7 @@ export class LinodeProvisioner extends AbstractInstanceProvisioner<LinodeProvisi
         const baseImageClient = this.buildBaseImageSnapshotPulumiClient()
         
         await baseImageClient.setConfig({
+            instanceName: this.args.instanceName,
             apiToken: apiToken,
             diskId: parseInt(this.args.provisionOutput.rootDiskId),
             linodeId: parseInt(this.args.provisionOutput.instanceServerId),
@@ -139,6 +140,7 @@ export class LinodeProvisioner extends AbstractInstanceProvisioner<LinodeProvisi
         const imageId = this.args.provisionOutput?.baseImageId ?? this.args.provisionInput.imageId
 
         return {
+            instanceName: this.args.instanceName,
             region: this.args.provisionInput.region,
             instanceType: this.args.provisionInput.instanceType,
             rootDisk: {

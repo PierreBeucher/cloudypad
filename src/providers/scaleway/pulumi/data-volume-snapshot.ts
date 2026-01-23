@@ -107,8 +107,7 @@ export class ScalewayDataDiskSnapshotPulumiClient extends InstancePulumiClient<P
         await stack.setConfig("scaleway:project_id", { value: config.projectId})
         await stack.setConfig("scaleway:region", { value: config.region})
         await stack.setConfig("scaleway:zone", { value: config.zone})
-        await stack.setConfig("instanceName", { value: config.instanceName})
-        await stack.setConfig("additionalTags", { value: JSON.stringify([config.instanceName])})
+        await stack.setConfig("additionalTags", { value: JSON.stringify([`instance:${config.instanceName}`])})
         if(config.baseVolumeId) await stack.setConfig("volumeId", { value: config.baseVolumeId})
 
         const allConfs = await stack.getAllConfig()

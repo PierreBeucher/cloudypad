@@ -264,8 +264,7 @@ export class ScalewayPulumiClient extends InstancePulumiClient<PulumiStackConfig
         await stack.setConfig("scaleway:project_id", { value: config.projectId})
         await stack.setConfig("scaleway:region", { value: config.region})
         await stack.setConfig("scaleway:zone", { value: config.zone})
-        await stack.setConfig("instanceName", { value: config.instanceName})
-        await stack.setConfig("additionalTags", { value: JSON.stringify([config.instanceName])})
+        await stack.setConfig("additionalTags", { value: JSON.stringify([`instance:${config.instanceName}`])})
         
         if(config.instanceServerState) await stack.setConfig("instanceServerState", { value: config.instanceServerState})
         await stack.setConfig("instanceType", { value: config.instanceType})
