@@ -1,3 +1,4 @@
+import { getLogger } from "../log/utils";
 import { CommonConfigurationOutputV1, InstanceStateV1 } from "./state/state";
 
 export interface InstanceConfiguratorOpts {
@@ -21,13 +22,15 @@ export interface InstanceConfigurator {
 }
 
 export abstract class AbstractInstanceConfigurator<ST extends InstanceStateV1> implements InstanceConfigurator {
+    protected readonly logger = getLogger(AbstractInstanceConfigurator.name)
+
     async configure(opts?: InstanceConfiguratorOpts): Promise<NonNullable<ST["configuration"]["output"]>> {
         // Debug env var to skip Ansible configuration
         // Not exposed as CLI since it's for debugging purposes only
         // and will likely break instance if enabled 
         const skipConfig = process.env.CLOUDYPAD_SKIP_CONFIGURATION
         if (skipConfig === "true" || skipConfig === "1") {
-            console.warn("⚠️  CLOUDYPAD_SKIP_CONFIGURATION is set - skipping configuration")
+            this.logger.warn("CLOUDYPAD_SKIP_CONFIGURATION is set - skipping configuration")
             return {} as NonNullable<ST["configuration"]["output"]>
         }
 
