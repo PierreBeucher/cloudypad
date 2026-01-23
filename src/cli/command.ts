@@ -123,6 +123,12 @@ export const CLI_OPTION_DATA_DISK_SNAPSHOT_ENABLE = new Option('--data-disk-snap
     'If enabled, data disk will be snapshotted on stop and restored from snapshot on next start. (default: false)')
     .argParser(parseFalseOrDisable)
 
+export const CLI_OPTION_BASE_IMAGE_SNAPSHOT_ENABLE = new Option('--base-image-snapshot-enable [enable|yes|true|1]', 
+    'Whether to enable base image snapshot after initial deploy. ' +
+    'If enabled, an image will be created after configuration capturing the configured system (NVIDIA drivers, Cloudy Pad, etc.). ' +
+    '(default: false)')
+    .argParser(parseFalseOrDisable)
+
 function parseFalseOrDisable(value: string){
     return value === "disable" || value === "no" || value === "false" || value === "0" ? false : true
 }

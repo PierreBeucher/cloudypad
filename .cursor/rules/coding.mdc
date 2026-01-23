@@ -1,0 +1,17 @@
+---
+alwaysApply: true
+---
+
+# Coding best practice
+
+- Always respect Typescript typing. Never use `any` or such unless specifically allowed
+- Avoid construct setting variables in cascade for a single usage, eg:
+```ts
+// don't chain const like this if anotherSubVar is only used once, this is uselessly verbose
+const someVar = this.foo.bar.baz
+const anotherSubVar = someVar.a.b.c
+function(anotherSubVar)
+
+// do
+function(this.foo.bar.baz.a.b.c)
+```

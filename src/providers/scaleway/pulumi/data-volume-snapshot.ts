@@ -14,7 +14,7 @@ interface ScalewayDataDiskSnapshotArgs {
      * ID of the data disk volume to snapshot
      */
     volumeId?: pulumi.Input<string>
-    tags?: pulumi.Input<string[]>
+    additionalTags: pulumi.Input<string[]>
 }
 
 class CloudyPadScalewayDataDiskSnapshot extends pulumi.ComponentResource {
@@ -24,18 +24,19 @@ class CloudyPadScalewayDataDiskSnapshot extends pulumi.ComponentResource {
     constructor(name: string, args: ScalewayDataDiskSnapshotArgs, opts?: pulumi.ComponentResourceOptions) {
         super("crafteo:cloudypad:scaleway:data-disk-snapshot", name, args, opts)
 
-        const globalTags = [
-            name
-        ]
+        const globalTags = pulumi.all([args.additionalTags]).apply(([tags]) => [
+            name,
+            ...tags
+        ])
 
         const commonPulumiOpts = {
             parent: this
         }
 
-        const snapshot = new scw.block.Snapshot(`${name}-data-snapshot`, {
-            name: `${name}-data-snapshot`,
+        const snapshot = new scw.block.Snapshot(`${name}-data-volume-snapshot`, {
+            name: `${name}-data-volume-snapshot`,
             volumeId: args.volumeId,
-            tags: args.tags ?? globalTags,
+            tags: globalTags,
         }, {
             ...commonPulumiOpts,
             // delete existing snapshot before replacing it
@@ -54,11 +55,13 @@ class CloudyPadScalewayDataDiskSnapshot extends pulumi.ComponentResource {
 async function scalewayDataDiskSnapshotPulumiProgram(): Promise<Record<string, any> | void> {
     const config = new pulumi.Config()
     const volumeId = config.get("volumeId")
+    const additionalTags = config.getObject<string[]>("additionalTags") || []
 
     const stackName = pulumi.getStack()
 
     const snapshot = new CloudyPadScalewayDataDiskSnapshot(stackName, {
         volumeId: volumeId,
+        additionalTags: additionalTags,
     })
 
     return {
@@ -67,6 +70,7 @@ async function scalewayDataDiskSnapshotPulumiProgram(): Promise<Record<string, a
 }
 
 export interface PulumiStackConfigScalewayDataDiskSnapshot {
+    instanceName: string
     projectId: string
     region: string
     zone: string
@@ -103,6 +107,8 @@ export class ScalewayDataDiskSnapshotPulumiClient extends InstancePulumiClient<P
         await stack.setConfig("scaleway:project_id", { value: config.projectId})
         await stack.setConfig("scaleway:region", { value: config.region})
         await stack.setConfig("scaleway:zone", { value: config.zone})
+        await stack.setConfig("instanceName", { value: config.instanceName})
+        await stack.setConfig("additionalTags", { value: JSON.stringify([config.instanceName])})
         if(config.baseVolumeId) await stack.setConfig("volumeId", { value: config.baseVolumeId})
 
         const allConfs = await stack.getAllConfig()

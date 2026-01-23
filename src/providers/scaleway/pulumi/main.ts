@@ -7,7 +7,6 @@ import { SimplePortDefinition } from "../../../core/const"
 interface ScalewayInstanceArgs {
     networkSecurityGroupRules?: pulumi.Input<pulumi.Input<scw.types.input.InstanceSecurityGroupInboundRule>[]>
     publicKeyContent: pulumi.Input<string>
-    tags?: pulumi.Input<string[]>
     instanceType: pulumi.Input<string>
     imageId?: pulumi.Input<string>
     instanceServerState?: "present" | "absent"
@@ -31,6 +30,7 @@ interface ScalewayInstanceArgs {
          */
         snapshotId?: pulumi.Input<string>
     }
+    additionalTags: pulumi.Input<string[]>
 }
 
 class CloudyPadScalewayInstance extends pulumi.ComponentResource {
@@ -45,9 +45,10 @@ class CloudyPadScalewayInstance extends pulumi.ComponentResource {
     constructor(name: string, args: ScalewayInstanceArgs, opts?: pulumi.ComponentResourceOptions) {
         super("crafteo:cloudypad:scaleway:vm", name, args, opts)
 
-        const globalTags = [
-            name
-        ]
+        const globalTags = pulumi.all([args.additionalTags]).apply(([tags]) => [
+            name,
+            ...tags
+        ])
 
         const commonPulumiOpts = {
             parent: this
@@ -144,6 +145,7 @@ async function scalewayPulumiProgram(): Promise<Record<string, any> | void> {
     const dataDisk = config.getObject<ScalewayInstanceArgs["dataDisk"]>("dataDisk")
     const imageId = config.get("imageId")
     const instanceServerState = config.get("instanceServerState") as "present" | "absent" | undefined
+    const additionalTags = config.getObject<string[]>("additionalTags") || []
 
     const stackName = pulumi.getStack()
 
@@ -161,7 +163,8 @@ async function scalewayPulumiProgram(): Promise<Record<string, any> | void> {
         },
         dataDisk: dataDisk,
         imageId: imageId,
-        instanceServerState: instanceServerState
+        instanceServerState: instanceServerState,
+        additionalTags: additionalTags,
     })
 
     return pulumi.all([
@@ -185,6 +188,7 @@ async function scalewayPulumiProgram(): Promise<Record<string, any> | void> {
 }
 
 export interface PulumiStackConfigScaleway {
+    instanceName: string
     projectId: string
     region: string
     zone: string
@@ -260,6 +264,8 @@ export class ScalewayPulumiClient extends InstancePulumiClient<PulumiStackConfig
         await stack.setConfig("scaleway:project_id", { value: config.projectId})
         await stack.setConfig("scaleway:region", { value: config.region})
         await stack.setConfig("scaleway:zone", { value: config.zone})
+        await stack.setConfig("instanceName", { value: config.instanceName})
+        await stack.setConfig("additionalTags", { value: JSON.stringify([config.instanceName])})
         
         if(config.instanceServerState) await stack.setConfig("instanceServerState", { value: config.instanceServerState})
         await stack.setConfig("instanceType", { value: config.instanceType})

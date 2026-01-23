@@ -304,6 +304,12 @@ export class GenericInstanceManager<ST extends InstanceStateV1> implements Insta
     async deploy(opts?: DeployOptions): Promise<void> {
         await this.provision(opts)
         await this.configure(opts)
+
+        // After provision and configure, create base image snapshot if enabled
+        const currentState = await this.getState()
+        if (currentState.provision.input.baseImageSnapshot?.enable) {
+            await this.doBaseImageSnapshotProvision(opts)
+        }
     }
 
     async destroy(opts?: DestroyOptions): Promise<void> {
@@ -472,6 +478,41 @@ export class GenericInstanceManager<ST extends InstanceStateV1> implements Insta
         })
         this.logger.debug(`Main provision output for instance ${this.name()}: ${JSON.stringify(mainOutputs)}`)
         await this.stateWriter.setProvisionOutput(this.instanceName, mainOutputs)
+    }
+
+    /**
+     * Create a root disk snapshot/image from current instance server root disk.
+     */
+    /**
+     * Create a base image snapshot from current instance server root disk.
+     */
+    private async doBaseImageSnapshotProvision(opts?: ActionOptions): Promise<void> {
+        this.logger.debug(`Do base image snapshot provision for instance ${this.name()}`)
+
+        // Stop instance to ensure data consistency before creating snapshot
+        // Directly via runner, not via this.stop(), to ensure disk is kept before creating snapshot
+        // We don't want a full "stop" of all resources which may delete the instance server and root disk
+        // but a simple instance server stop from which we'll create a base image
+        await this.doWithRetry(async () => {
+            const runner = await this.buildRunner()
+            await runner.stop({ wait: true })
+        }, 'Pre-snapshot stop', opts)
+        
+        // Create base image snapshot
+        await this.doWithRetry(async () => {
+            const provisioner = await this.buildProvisioner()
+            const outputs = await provisioner.baseImageSnapshotProvision({
+                pulumiCancel: opts?.pulumiCancel
+            })
+            this.logger.debug(`Base image snapshot provision output for instance ${this.name()}: ${JSON.stringify(outputs)}`)
+            await this.stateWriter.setProvisionOutput(this.instanceName, outputs)
+        }, 'Base image snapshot', opts)
+        
+        // Start instance back up via runner
+        await this.doWithRetry(async () => {
+            const runner = await this.buildRunner()
+            await runner.start({ wait: true })
+        }, 'Post-snapshot start', opts)
     }
 
     /**

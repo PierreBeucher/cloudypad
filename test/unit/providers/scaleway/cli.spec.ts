@@ -22,7 +22,8 @@ describe('Scaleway input prompter', () => {
             dataDiskSizeGb: 100,
             imageId: "123e4567-e89b-12d3-a456-426614174000",
             deleteInstanceServerOnStop: true,
-            dataDiskSnapshot: { enable: true }
+            dataDiskSnapshot: { enable: true },
+            baseImageSnapshot: { enable: true }
         }, 
         configuration: {
             ...DEFAULT_COMMON_INPUT.configuration
@@ -40,7 +41,8 @@ describe('Scaleway input prompter', () => {
         projectId: TEST_INPUT.provision.projectId,
         imageId: TEST_INPUT.provision.imageId,
         deleteInstanceServerOnStop: true,
-        dataDiskSnapshotEnable: true
+        dataDiskSnapshotEnable: true,
+        baseImageSnapshotEnable: true
     }
 
     it('should return provided inputs without prompting when full input provider', async () => {

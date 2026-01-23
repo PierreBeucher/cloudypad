@@ -61,6 +61,21 @@ export interface InstanceProvisioner  {
     mainProvision(opts?: ProvisionerActionOptions): Promise<CommonProvisionOutputV1>
 
     /**
+     * Provision root disk snapshot/image stack.
+     * 
+     * Creates a snapshot/image of the root disk after initial configuration.
+     * This captures the configured system (NVIDIA drivers, Cloudy Pad, etc.) 
+     * for use on subsequent instance starts.
+     * 
+     * If imageId is set in provision input, uses it directly as passthrough
+     * without creating a new image (user provides their own image).
+     * 
+     * @param opts 
+     * @returns Outputs with baseImageId
+     */
+    baseImageSnapshotProvision(opts?: ProvisionerActionOptions): Promise<CommonProvisionOutputV1>
+
+    /**
      * Destroy the instance. Every infrastructure and Cloud resources managed for this instance are destroyed. 
      * @param opts 
      */
@@ -108,6 +123,14 @@ export abstract class AbstractInstanceProvisioner<PC extends CommonProvisionInpu
         return await this.doMainProvision(opts)
     }
 
+    async baseImageSnapshotProvision(opts?: ProvisionerActionOptions): Promise<PO> {
+        this.logger.info(`Base image snapshot provision for instance ${this.args.instanceName}`)
+        
+        this.logger.debug(`Base image snapshot provision with current args: ${JSON.stringify(this.args)}, options: ${JSON.stringify(opts)}`)
+        
+        return await this.doBaseImageSnapshotProvision(opts)
+    }
+
     async destroy(opts?: ProvisionerActionOptions): Promise<void> {
         this.logger.info(`Destroying instance ${this.args.instanceName}...`)
         
@@ -128,6 +151,17 @@ export abstract class AbstractInstanceProvisioner<PC extends CommonProvisionInpu
         // by default data snapshot is not supported, keep this until it's globally supported and become the default 
         // or no-op without error
         throw new Error(`Data snapshot provision not implemented for instance ${this.args.instanceName}`)
+    }
+
+    /**
+     * Base image snapshot provision. Creates an image from the root disk.
+     * 
+     * If imageId is set in provision input, uses it as passthrough (user provides their own image).
+     * Otherwise, creates an image from the current root disk.
+     */
+    protected doBaseImageSnapshotProvision(opts?: ProvisionerActionOptions): Promise<PO> {
+        // by default base image snapshot is not supported
+        throw new Error(`Base image snapshot provision not implemented for instance ${this.args.instanceName}`)
     }
 
     /**
