@@ -302,6 +302,13 @@ export class GenericInstanceManager<ST extends InstanceStateV1> implements Insta
     }
 
     async deploy(opts?: DeployOptions): Promise<void> {
+        // We'll perform a full provision and configuration to ensure instance is fully provisioned and configured
+        // we need instance server and data disk to be present
+        await this.updateProvisionInputRuntime({
+            instanceServerState: INSTANCE_SERVER_STATE_PRESENT,
+            dataDiskState: DATA_DISK_STATE_LIVE
+        })
+        
         await this.provision(opts)
         await this.configure(opts)
 
