@@ -174,6 +174,10 @@ class CloudyPadLinodeInstance extends pulumi.ComponentResource {
             }, { 
                 parent: this,
                 ignoreChanges: ["booted"], // ignored booted changes as it will always be booted with InstanceConfig
+
+                // Must delete existing instance to avoid instance having the same tags
+                // as Linoe won't allow it
+                deleteBeforeReplace: true, 
             })
 
 
