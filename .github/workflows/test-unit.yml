@@ -162,7 +162,6 @@ jobs:
       matrix:
         os:
         - macos-14
-        - macos-13
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
