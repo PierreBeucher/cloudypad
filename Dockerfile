@@ -43,6 +43,12 @@ COPY ansible ansible
 COPY src src
 COPY LICENSE.txt tsconfig.json tsconfig.build.json . 
 
+# Optional: override package.json version for custom builds
+ARG CLOUDYPAD_VERSION
+RUN if [ -n "$CLOUDYPAD_VERSION" ]; then \
+      sed -i "s/\"version\": \"[^\"]*\"/\"version\": \"$CLOUDYPAD_VERSION\"/" package.json; \
+    fi
+
 RUN npm run build
 
 # 
@@ -95,5 +101,11 @@ COPY --from=tsc /build/dist dist/
 COPY LICENSE.txt .
 
 RUN npm install --global dist/
+
+# Optional: override package.json version for custom builds
+ARG CLOUDYPAD_VERSION
+RUN if [ -n "$CLOUDYPAD_VERSION" ]; then \
+      sed -i "s/\"version\": \"[^\"]*\"/\"version\": \"$CLOUDYPAD_VERSION\"/" package.json; \
+    fi
 
 ENTRYPOINT  ["cloudypad"]
