@@ -39,10 +39,15 @@ class CloudyPadLinodeBaseImage extends pulumi.ComponentResource {
     constructor(name: string, args: LinodeRootDiskImageArgs, opts?: pulumi.ComponentResourceOptions) {
         super("crafteo:cloudypad:linode:base-image-snapshot", name, args, opts)
 
-        const globalTags = pulumi.all([args.additionalTags]).apply(([tags]) => [
-            name,
-            ...tags
-        ])
+        const globalTags = pulumi.output(args.additionalTags).apply((tags) => {
+
+            // tags are like labels on Linode, so we need to ensure they are valid
+            const safeTags = tags.map(t => linodeLabel(t))
+            return [
+                name,
+                ...safeTags
+            ]
+        })
 
         const commonPulumiOpts = {
             parent: this

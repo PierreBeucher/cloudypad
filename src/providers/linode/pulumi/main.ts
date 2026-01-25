@@ -127,10 +127,15 @@ class CloudyPadLinodeInstance extends pulumi.ComponentResource {
     constructor(name: string, args: LinodeInstanceArgs, opts?: pulumi.ComponentResourceOptions) {
         super("crafteo:cloudypad:linode:instance", name, {}, opts)
 
-        const globalTags = pulumi.all([args.additionalTags]).apply(([tags]) => [
-            name,
-            ...tags
-        ])
+        const globalTags = pulumi.output(args.additionalTags).apply((tags) => {
+
+            // tags are like labels on Linode, so we need to ensure they are valid
+            const safeTags = tags.map(t => linodeLabel(t))
+            return [
+                name,
+                ...safeTags
+            ]
+        })
 
         let instanceServer: linode.Instance | undefined
         let desiredInstanceConfig: pulumi.Output<linode.InstanceConfig> | undefined
