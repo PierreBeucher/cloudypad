@@ -113,7 +113,7 @@ export interface LinodeBaseImagePulumiOutput {
     /**
      * ID of the created image (e.g., "private/12345678")
      */
-    imageId: string
+    imageId?: string
 }
 
 export interface LinodeBaseImagePulumiClientArgs {
@@ -147,7 +147,7 @@ export class LinodeBaseImagePulumiClient extends InstancePulumiClient<LinodeBase
 
     protected async buildTypedOutput(outputs: OutputMap): Promise<LinodeBaseImagePulumiOutput> {
         return {
-            imageId: outputs["imageId"].value as string
+            imageId: outputs["imageId"]?.value
         }
     }
 }

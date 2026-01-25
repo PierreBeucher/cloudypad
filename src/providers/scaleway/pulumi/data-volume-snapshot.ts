@@ -86,7 +86,7 @@ export interface ScalewayDataDiskSnapshotPulumiOutput {
     /**
      * ID of the created snapshot
      */
-    snapshotId: string
+    snapshotId?: string
 }
 
 export class ScalewayDataDiskSnapshotPulumiClient extends InstancePulumiClient<PulumiStackConfigScalewayDataDiskSnapshot, ScalewayDataDiskSnapshotPulumiOutput> {
@@ -116,7 +116,8 @@ export class ScalewayDataDiskSnapshotPulumiClient extends InstancePulumiClient<P
 
     protected async buildTypedOutput(outputs: OutputMap): Promise<ScalewayDataDiskSnapshotPulumiOutput> {
         return {
-            snapshotId: outputs["snapshotId"].value as string
+            // may be undefined since outputs may be read from stack while it didn't run yet
+            snapshotId: outputs["snapshotId"]?.value
         }
     }
 }

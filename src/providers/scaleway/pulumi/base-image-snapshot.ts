@@ -101,7 +101,7 @@ export interface ScalewayBaseImagePulumiOutput {
     /**
      * ID of the created Instance Image
      */
-    imageId: string
+    imageId?: string
 }
 
 export class ScalewayBaseImagePulumiClient extends InstancePulumiClient<ScalewayBaseImagePulumiStackConfig, ScalewayBaseImagePulumiOutput> {
@@ -131,7 +131,7 @@ export class ScalewayBaseImagePulumiClient extends InstancePulumiClient<Scaleway
 
     protected async buildTypedOutput(outputs: OutputMap): Promise<ScalewayBaseImagePulumiOutput> {
         return {
-            imageId: outputs["imageId"].value as string
+            imageId: outputs["imageId"]?.value
         }
     }
 }
