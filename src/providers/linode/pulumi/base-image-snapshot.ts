@@ -43,8 +43,9 @@ class CloudyPadLinodeBaseImage extends pulumi.ComponentResource {
 
             // tags are like labels on Linode, so we need to ensure they are valid
             const safeTags = tags.map(t => linodeLabel(t))
+            const safeName = linodeLabel(name)
             return [
-                name,
+                safeName,
                 ...safeTags
             ]
         })

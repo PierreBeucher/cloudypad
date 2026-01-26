@@ -85,7 +85,12 @@ WORKDIR /cloudypad
 # Install globally under /etc/ansible
 COPY ansible/requirements.yml ansible/requirements.yml
 RUN ansible-galaxy role install -r ansible/requirements.yml -p /usr/share/ansible/roles
-RUN ansible-galaxy collection install -r ansible/requirements.yml -p /usr/share/ansible/collections
+
+# For git install to workaround temporary workaround for Ansible galaxy
+# Ansible Galaxy has been down for more than 24h: https://github.com/ansible/galaxy/issues/3585
+# returning HTTP 500 errors. Let's use Git in the meantime
+RUN apt install git -y && \
+  ansible-galaxy collection install -r ansible/requirements.yml -p /usr/share/ansible/collections
 
 # Shorter Ansible logs output
 ENV ANSIBLE_STDOUT_CALLBACK=community.general.unixy

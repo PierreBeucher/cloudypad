@@ -13,7 +13,11 @@ describe('Linode lifecycle', () => {
     const logger = getLogger("test-linode-lifecycle")
     const coreConfig = getIntegTestCoreConfig()
     const linodeProviderClient = new LinodeProviderClient({ config: coreConfig })
-    const instanceName = 'test-instance-linode-lifecycle-from-image'
+
+    // Keep a long name (50+ characters) to test Linode label generation
+    // Linode labels and tags can't be longer than 50 chars, using a long name
+    // will ensure we don't hit the limit
+    const instanceName = 'test-instance-linode-lifecycle-from-image-with-long-name'
 
     // Linode test configuration
     const region = "fr-par"

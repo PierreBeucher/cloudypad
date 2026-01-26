@@ -1,10 +1,17 @@
 roles:
   - name: geerlingguy.docker
     version: "7.4.5"
+
+# For git install to workaround temporary workaround for Ansible galaxy
+# Ansible Galaxy has been down for more than 24h: https://github.com/ansible/galaxy/issues/3585
+# returning HTTP 500 errors. Let's use Git in the meantime
 collections:
-  - name: community.docker
+  - name: https://github.com/ansible-collections/community.docker.git
+    type: git
     version: "4.3.1"
-  - name: community.general
+  - name: https://github.com/ansible-collections/community.general.git
+    type: git
     version: "10.3.0"
-  - name: ansible.posix
+  - name: https://github.com/ansible-collections/ansible.posix.git
+    type: git
     version: "2.0.0"
