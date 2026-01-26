@@ -85,7 +85,8 @@ WORKDIR /cloudypad
 # Install globally under /etc/ansible
 COPY ansible/requirements.yml ansible/requirements.yml
 RUN ansible-galaxy role install -r ansible/requirements.yml -p /usr/share/ansible/roles
-RUN ansible-galaxy collection install -r ansible/requirements.yml -p /usr/share/ansible/collections
+RUN apt install git -y && \
+  ansible-galaxy collection install -r ansible/requirements.yml -p /usr/share/ansible/collections
 
 # Shorter Ansible logs output
 ENV ANSIBLE_STDOUT_CALLBACK=community.general.unixy
