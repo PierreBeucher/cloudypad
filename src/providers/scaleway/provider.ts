@@ -67,13 +67,6 @@ export class ScalewayProviderClient extends AbstractProviderClient<ScalewayInsta
             runnerFactory: new ScalewayRunnerFactory(this.coreConfig),
             configuratorFactory: new AnsibleConfiguratorFactory(),
             stateWriter: this.getStateWriter(),
-            options: {
-                deleteInstanceServerOnStop: {
-                    enabled: scalewayState.provision.input.deleteInstanceServerOnStop ?? false,
-                    // on instance restart, only run these tags as full run is not needed
-                    postStartReconfigurationAnsibleAdditionalArgs: [ "-t", "ratelimit,data-disk,sunshine"]
-                }
-            }
         })
     }
 

@@ -48,10 +48,13 @@ describe('Linode lifecycle', () => {
                 rootDiskSizeGb: rootDiskSizeGb,
                 dataDiskSizeGb: dataDiskSizeGb,
                 // imageId: "private/33927621",
-                imageId: "linode/ubuntu24.04",
                 watchdogEnabled: true, // need to have watchdog otherwise Ansible reboot during config will effectively shutdown instance
                 dns: {
                     domainName: "green.instances.cloudypad.gg",
+                },
+                deleteInstanceServerOnStop: true,
+                baseImageSnapshot: {
+                    enable: true,
                 },
             }, {
                 sunshine: {
@@ -81,7 +84,8 @@ describe('Linode lifecycle', () => {
         const instanceDetails = await linodeClient.getLinode(currentInstanceServerId)
         assert.ok(instanceDetails, 'Instance details should be available')
         assert.strictEqual(instanceDetails.type, instanceType)
-    }).timeout(20*60*1000) // 20 minutes timeout
+    }).timeout(30*60*1000) // 30 minutes timeout, 
+    // may be long as Linode instances are slow to start and creating image snapshot may be long
 
     it('should have a valid instance server output with existing server', async () => {
         const state = await getCurrentTestState()

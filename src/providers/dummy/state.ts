@@ -5,7 +5,7 @@ import { CLOUDYPAD_CONFIGURATOR_ANSIBLE, CLOUDYPAD_PROVIDER_DUMMY } from "../../
 import { ServerRunningStatus } from "../../core/runner"
 
 const DummyProvisionOutputV1Schema = CommonProvisionOutputV1Schema.extend({
-    instanceId: z.string().describe("Dummy instance ID"),
+    instanceId: z.string().optional().describe("Dummy instance ID"),
     provisionedAt: z.number().describe("Timestamp (seconds) the instance was finished provisioned at"),
 })
 

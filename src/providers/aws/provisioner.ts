@@ -12,7 +12,7 @@ export class AwsProvisioner extends AbstractInstanceProvisioner<AwsProvisionInpu
         super(args)
     }
 
-    async doProvision(opts?: ProvisionerActionOptions) {
+    async doMainProvision(opts?: ProvisionerActionOptions): Promise<AwsProvisionOutputV1> {
 
         this.logger.info(`Provisioning AWS instance ${this.args.instanceName}`)
 

@@ -12,7 +12,7 @@ export class AzureProvisioner extends AbstractInstanceProvisioner<AzureProvision
         super(args)
     }
 
-    async doProvision(opts?: ProvisionerActionOptions) {
+    async doMainProvision(opts?: ProvisionerActionOptions): Promise<AzureProvisionOutputV1> {
 
         this.logger.info(`Provisioning Azure instance ${this.args.instanceName}`)
 

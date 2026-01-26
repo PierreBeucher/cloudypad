@@ -9,7 +9,7 @@ export class SshProvisioner extends AbstractInstanceProvisioner<SshProvisionInpu
         super(args)
     }
 
-    async doProvision(opts?: ProvisionerActionOptions): Promise<SshProvisionOutputV1> {
+    async doMainProvision(opts?: ProvisionerActionOptions): Promise<SshProvisionOutputV1> {
 
         this.logger.info(`Provisioning local instance ${this.args.instanceName} is a no-op, no action done but setting provision outputs.`)
 

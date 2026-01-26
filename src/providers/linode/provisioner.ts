@@ -1,9 +1,10 @@
 import { AbstractInstanceProvisioner, InstanceProvisionerArgs, ProvisionerActionOptions } from '../../core/provisioner'
-import { getLogger } from '../../log/utils'
-import { LinodePulumiClient, PulumiStackConfigLinode, LinodePulumiOutput } from './pulumi'
+import { LinodePulumiClient, PulumiStackConfigLinode, LinodePulumiOutput } from './pulumi/main'
+import { LinodeBaseImagePulumiClient } from './pulumi/base-image-snapshot'
 import { LinodeProvisionInputV1, LinodeProvisionOutputV1 } from './state'
 import { SshKeyLoader } from '../../tools/ssh'
 import { LinodeClient } from './sdk-client'
+import { INSTANCE_SERVER_STATE_ABSENT } from '../../core/const'
 
 export type LinodeProvisionerArgs = InstanceProvisionerArgs<LinodeProvisionInputV1, LinodeProvisionOutputV1>
 
@@ -11,26 +12,6 @@ export class LinodeProvisioner extends AbstractInstanceProvisioner<LinodeProvisi
 
     constructor(args: LinodeProvisionerArgs){
         super(args)
-    }
-
-    /**
-     * Destroy the instance server by running Pulumi stack up with specific configs
-     * to remove instance server
-     */
-    async destroyInstanceServer(opts?: ProvisionerActionOptions): Promise<LinodeProvisionOutputV1> {
-
-        this.logger.info(`Destroying instance server for ${this.args.instanceName}`)
-
-        const pulumiClient = this.buildPulumiClient()
-        const stackConfig = this.buildPulumiConfig({ noInstanceServer: true })
-        await pulumiClient.setConfig(stackConfig)
-        await pulumiClient.up({ cancel: opts?.pulumiCancel })
-
-        const newOutputs = await pulumiClient.getOutputs()
-
-        this.logger.debug(`New outputs after destroying instance server: ${JSON.stringify(newOutputs)}`)
-
-        return this.pulumiOutputsToProvisionOutput(newOutputs)
     }
 
     private buildPulumiClient(): LinodePulumiClient {
@@ -41,7 +22,15 @@ export class LinodeProvisioner extends AbstractInstanceProvisioner<LinodeProvisi
         return pulumiClient
     }
 
-    async doProvision(opts?: ProvisionerActionOptions) {
+    private buildBaseImageSnapshotPulumiClient(): LinodeBaseImagePulumiClient {
+        const pulumiClient = new LinodeBaseImagePulumiClient({
+            stackName: this.args.instanceName,
+            workspaceOptions: this.args.coreConfig.pulumi?.workspaceOptions
+        })
+        return pulumiClient
+    }
+
+    async doMainProvision(opts?: ProvisionerActionOptions) {
 
         this.logger.info(`Provisioning Linode instance ${this.args.instanceName}`)
 
@@ -58,15 +47,88 @@ export class LinodeProvisioner extends AbstractInstanceProvisioner<LinodeProvisi
         return this.pulumiOutputsToProvisionOutput(pulumiOutputs)
     }
 
+    async doBaseImageSnapshotProvision(opts?: ProvisionerActionOptions): Promise<LinodeProvisionOutputV1> {
+        this.logger.info(`Base image snapshot provision for Linode instance ${this.args.instanceName}`)
+
+        // If imageId is set in input, use it directly as passthrough (user provides their own image)
+        if (this.args.provisionInput.imageId) {
+            this.logger.debug(`Using provided imageId as baseImageId passthrough: ${this.args.provisionInput.imageId}`)
+            return {
+                ...this.getCurrentProvisionOutput(),
+                baseImageId: this.args.provisionInput.imageId,
+            }
+        }
+
+        // Root disk ID and instance server ID are required to create an image
+        if (!this.args.provisionOutput?.rootDiskId || !this.args.provisionOutput?.instanceServerId) {
+            throw new Error(`Root disk ID and instance server ID are required to create base image for instance ${this.args.instanceName}. ` +
+                `This is an internal error, please report an issue. Full args: ${JSON.stringify(this.args)}, options: ${JSON.stringify(opts)}`
+            )
+        }
+
+        this.logger.debug(`Creating base image for instance ${this.args.instanceName}`)
+
+        const apiToken = this.args.provisionInput.apiToken ?? process.env.LINODE_TOKEN
+        if(!apiToken) {
+            throw new Error('Linode API token is required. Linode API token must be set either in state or as LINODE_TOKEN environment variable.')
+        }
+
+        const baseImageClient = this.buildBaseImageSnapshotPulumiClient()
+        
+        await baseImageClient.setConfig({
+            instanceName: this.args.instanceName,
+            apiToken: apiToken,
+            diskId: parseInt(this.args.provisionOutput.rootDiskId),
+            linodeId: parseInt(this.args.provisionOutput.instanceServerId),
+        })
+        const imageOutput = await baseImageClient.up()
+
+        this.logger.debug(`Base image output: ${JSON.stringify(imageOutput)}`)
+
+        return {
+            ...this.getCurrentProvisionOutput(),
+            baseImageId: imageOutput.imageId,
+        }
+    }
+
     async doDestroy(opts?: ProvisionerActionOptions){
         const pulumiClient = this.buildPulumiClient()
         
         await pulumiClient.destroy({ cancel: opts?.pulumiCancel })
 
+        // destroy base image snapshot unless keep
+        if (!this.args.provisionInput.baseImageSnapshot?.keepOnDeletion) {
+            await this.doDestroyBaseImageSnapshotStack(opts)
+        }
+
         this.args.provisionOutput = undefined
     }
 
-    private buildPulumiConfig(args?: { noInstanceServer?: boolean }): PulumiStackConfigLinode {
+    /**
+     * Destroy the base image snapshot Pulumi stack.
+     */
+    private async doDestroyBaseImageSnapshotStack(opts?: ProvisionerActionOptions): Promise<void> {
+        this.logger.info(`Destroying base image snapshot stack for instance ${this.args.instanceName}`)
+        const baseImageClient = this.buildBaseImageSnapshotPulumiClient()
+        await baseImageClient.destroy({ cancel: opts?.pulumiCancel })
+    }
+
+    /**
+     * Build current output from args, used when no changes are made.
+     */
+    private getCurrentProvisionOutput(): LinodeProvisionOutputV1 {
+        return {
+            host: this.args.provisionOutput?.host ?? '',
+            publicIPv4: this.args.provisionOutput?.publicIPv4,
+            instanceServerName: this.args.provisionOutput?.instanceServerName,
+            instanceServerId: this.args.provisionOutput?.instanceServerId,
+            dataDiskId: this.args.provisionOutput?.dataDiskId ?? '',
+            rootDiskId: this.args.provisionOutput?.rootDiskId,
+            baseImageId: this.args.provisionOutput?.baseImageId,
+        }
+    }
+
+    private buildPulumiConfig(): PulumiStackConfigLinode {
         const sshPublicKeyContent = new SshKeyLoader().loadSshPublicKeyContent(this.args.provisionInput.ssh)
 
         const apiToken = this.args.provisionInput.apiToken ?? process.env.LINODE_TOKEN
@@ -75,6 +137,7 @@ export class LinodeProvisioner extends AbstractInstanceProvisioner<LinodeProvisi
         }
 
         return {
+            instanceName: this.args.instanceName,
             region: this.args.provisionInput.region,
             instanceType: this.args.provisionInput.instanceType,
             rootDisk: {
@@ -83,10 +146,12 @@ export class LinodeProvisioner extends AbstractInstanceProvisioner<LinodeProvisi
             dataDisk: this.args.provisionInput.dataDiskSizeGb ? {
                 sizeGb: this.args.provisionInput.dataDiskSizeGb,
             } : undefined,
-            imageId: this.args.provisionInput.imageId,
+            // Use input imageId if available, otherwise use output base image ID (created during deploy)
+            // or leave undefined to use default image
+            imageId: this.args.provisionInput.imageId ?? this.args.provisionOutput?.baseImageId,
             securityGroupPorts: this.getStreamingServerPorts(),
             publicKeyContent: sshPublicKeyContent,
-            noInstanceServer: args?.noInstanceServer,
+            noInstanceServer: this.args.provisionInput.runtime?.instanceServerState === INSTANCE_SERVER_STATE_ABSENT,
             watchdogEnabled: this.args.provisionInput.watchdogEnabled,
             apiToken: apiToken,
             dns: this.args.provisionInput.dns ? {
@@ -103,7 +168,9 @@ export class LinodeProvisioner extends AbstractInstanceProvisioner<LinodeProvisi
             instanceServerName: pulumiOutputs.instanceServerName,
             instanceServerId: pulumiOutputs.instanceServerId,
             dataDiskId: pulumiOutputs.dataDiskId,
-            rootDiskId: pulumiOutputs.rootDiskId
+            rootDiskId: pulumiOutputs.rootDiskId,
+            // Preserve baseImageId from previous output if any
+            baseImageId: this.args.provisionOutput?.baseImageId,
         }
     }
 

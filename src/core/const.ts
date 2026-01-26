@@ -122,3 +122,31 @@ export const CLOUDYPAD_SUNSHINE_PORTS: SimplePortDefinition[] = [
     { port: 48000, protocol: 'udp' }, // Audio
     { port: 48002, protocol: 'udp' }, // Mic (unused)
 ]
+
+/**
+ * Data disk state values for runtime provisioning control
+ * Live: data disk should exist, created from existing snapshot if possible.
+ */
+export const DATA_DISK_STATE_LIVE = "live" as const
+
+/**
+ * Data disk state values for runtime provisioning control
+ * Snapshot: a data disk snapshot should be created, the original data disk should be deleted after snapshot created.
+ */
+export const DATA_DISK_STATE_SNAPSHOT = "snapshot" as const
+
+/**
+ * Instance server state values for runtime provisioning control
+ * Present: instance server should exist
+ */
+export const INSTANCE_SERVER_STATE_PRESENT = "present" as const
+
+export type DATA_DISK_STATE = typeof DATA_DISK_STATE_LIVE | typeof DATA_DISK_STATE_SNAPSHOT
+
+/**
+ * Instance server state values for runtime provisioning control
+ * Absent: instance server should be deleted
+ */
+export const INSTANCE_SERVER_STATE_ABSENT = "absent" as const
+
+export type INSTANCE_SERVER_STATE = typeof INSTANCE_SERVER_STATE_PRESENT | typeof INSTANCE_SERVER_STATE_ABSENT

@@ -118,6 +118,24 @@ export const CLI_OPTION_RATE_LIMIT_MAX_MBPS = new Option('--ratelimit-max-mbps <
 
 export const CLI_OPTION_FORCE_PULUMI_CANCEL = new Option('--force-pulumi-cancel', 'Cancel any stuck Pulumi operations before running the command. Only used for providers relying on Pulumi for infrastructure management, ignored otherwise.')
 
+export const CLI_OPTION_DATA_DISK_SNAPSHOT_ENABLE = new Option('--data-disk-snapshot-enable [enable|yes|true|1]', 
+    'Whether to enable data disk snapshot on stop for cost reduction (snapshot is cheaper than keeping a live data disk). ' +
+    'If enabled, data disk will be snapshotted on stop and restored from snapshot on next start. (default: false)')
+    .argParser(parseFalseOrDisable)
+
+export const CLI_OPTION_BASE_IMAGE_SNAPSHOT_ENABLE = new Option('--base-image-snapshot-enable [enable|yes|true|1]', 
+    'Whether to enable base image snapshot after initial deploy. ' +
+    'If enabled, an image will be created after configuration capturing the configured system (NVIDIA drivers, Cloudy Pad, etc.). ' +
+    '(default: false)')
+    .argParser(parseFalseOrDisable)
+
+export const CLI_OPTION_KEEP_BASE_IMAGE_ON_DELETION = new Option('--base-image-keep-on-deletion [enable|yes|true|1]', 
+    'Whether to keep base image on instance deletion. ' +
+    'If enabled, base image will be preserved when instance is destroyed. ' +
+    'Only applies when base-image-snapshot-enable is also enabled. ' +
+    '(default: false)')
+    .argParser(parseFalseOrDisable)
+
 function parseFalseOrDisable(value: string){
     return value === "disable" || value === "no" || value === "false" || value === "0" ? false : true
 }

@@ -3,7 +3,7 @@ import { AzurePulumiClient } from "../../../../src/providers/azure/pulumi";
 import { InstancePulumiClient } from "../../../../src/tools/pulumi/client";
 import { GcpPulumiClient } from "../../../../src/providers/gcp/pulumi";
 import { awsInput, azureInput, gcpInput, scalewayInput } from "./test-config.spec"
-import { ScalewayPulumiClient } from "../../../../src/providers/scaleway/pulumi";
+import { ScalewayPulumiClient } from "../../../../src/providers/scaleway/pulumi/main";
 
 /**
  * Test using real deployment our stack behave properly, especially for Spot / non-Spot config

@@ -23,13 +23,11 @@ export interface AnsibleConfiguratorArgs<ST extends InstanceStateV1> {
 
 export class AnsibleConfigurator<ST extends InstanceStateV1> extends AbstractInstanceConfigurator<ST> {
 
-    protected readonly logger: Logger
     protected readonly args: AnsibleConfiguratorArgs<ST>
 
     constructor(args: AnsibleConfiguratorArgs<ST>){
         super()
         this.args = args
-        this.logger = getLogger(args.instanceName)
     }
 
     async doConfigure(): Promise<NonNullable<ST["configuration"]["output"]>> {

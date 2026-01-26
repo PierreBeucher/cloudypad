@@ -9,6 +9,8 @@ const CommonProvisionOutputV1Schema = z.object({
     host: z.string().describe("Instance hostname or IP address. Can be used by Moonlight to pair with instance. Maybe be an IP or a FQDN."),
     publicIPv4: z.string().optional().describe("Instance public IPv4 address if any. IPv4 may change in instance lifecycle, prefer using host unless IP is prefered for specific use cases."),
     dataDiskId: z.string().optional().describe("Unique ID of data disk (if any) which can be found on instance /dev/disk/by-id/<data-disk-id>"),
+    dataDiskSnapshotId: z.string().optional().describe("Unique ID of data disk snapshot (if any) which can be used to restore data disk"),
+    baseImageId: z.string().optional().describe("Unique ID of base image (if any) created from initial deploy, used to restore root disk with configured system on instance creation"),
 }).passthrough()
 
 const CommonProvisionInputV1Schema = z.object({
@@ -28,7 +30,23 @@ const CommonProvisionInputV1Schema = z.object({
         return setAuthMethods === 1
     }, {
         message: "Exactly one of privateKeyPath, privateKeyContentBase64 or passwordBase64 must be set"
-    })
+    }),
+    dataDiskSnapshot: z.object({
+        enable: z.boolean().describe("Whether to enable data disk snapshot on stop. Default: false"),
+    }).optional().describe("Data disk snapshot configuration for cost reduction"),
+    baseImageSnapshot: z.object({
+        enable: z.boolean().describe("Whether to enable base image snapshot after initial deploy. Default: false"),
+        keepOnDeletion: z.boolean().optional().describe("Whether to keep base image on instance deletion. Default: false"),
+    }).optional().describe("Base image snapshot configuration to capture configured system (NVIDIA drivers, Cloudy Pad, etc.)"),
+    deleteInstanceServerOnStop: z.boolean().describe("Whether instance server should be deleted on instance stop and re-created on next start").optional(),
+    
+    // Runtime state (updated by manager before calling provision to control provisioner behavior)
+    // These represent the desired state of resources and are updated on start/stop operations
+    // Clearly separated from user-defined config to avoid confusion
+    runtime: z.object({
+        instanceServerState: z.enum(["present", "absent"]).optional().describe("Desired instance server state. present: instance server should exist; absent: should be deleted"),
+        dataDiskState: z.enum(["live", "snapshot"]).optional().describe("Desired data disk state. live: disk exists, created from existing snapshot if possible. snapshot: snapshot exists, created from existing disk if possible (disk is deleted after snapshot created). Default: live"),
+    }).optional().describe("Runtime state flags updated by manager on start/stop operations"),
 }).passthrough()
 
 const CommonConfigurationInputV1Schema = z.object({

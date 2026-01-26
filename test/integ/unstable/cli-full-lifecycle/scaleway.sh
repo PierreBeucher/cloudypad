@@ -7,7 +7,7 @@ function create_destroy_scaleway() {
         --project-id "02d02f86-9414-4161-b807-efb2bd22d266" \
         --region fr-par \
         --zone fr-par-2 \
-        --instance-type GPU-3070-S \
+        --instance-type L4-1-24G \
         --root-disk-size 30 \
         --data-disk-size 100 \
         --streaming-server sunshine \
@@ -19,7 +19,7 @@ function create_destroy_scaleway() {
 
     $cloudypad_cmd update scaleway \
         --name $instance_name \
-        --instance-type L4-1-24G \
+        --instance-type L40S-1-48G \
         --yes
 
     $cloudypad_cmd deploy $instance_name --yes

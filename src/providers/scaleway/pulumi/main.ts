@@ -1,22 +1,36 @@
 import * as scw from "@pulumiverse/scaleway"
 import * as pulumi from "@pulumi/pulumi"
-import { InstancePulumiClient } from "../../tools/pulumi/client"
+import { InstancePulumiClient } from "../../../tools/pulumi/client"
 import { LocalWorkspaceOptions, OutputMap } from "@pulumi/pulumi/automation"
-import { SimplePortDefinition } from "../../core/const"
+import { SimplePortDefinition } from "../../../core/const"
 
 interface ScalewayInstanceArgs {
     networkSecurityGroupRules?: pulumi.Input<pulumi.Input<scw.types.input.InstanceSecurityGroupInboundRule>[]>
     publicKeyContent: pulumi.Input<string>
-    tags?: pulumi.Input<string[]>
     instanceType: pulumi.Input<string>
     imageId?: pulumi.Input<string>
-    noInstanceServer?: pulumi.Input<boolean>
+    instanceServerState?: "present" | "absent"
     rootVolume: {
         sizeGb: pulumi.Input<number>
     },
     dataDisk?: {
+        /**
+         * Desired state of the data disk.
+         */
+        state: "present" | "absent"
+
+        /**
+         * Size of the data disk in GB.
+         */
         sizeGb: pulumi.Input<number>
+
+        /**
+         * If set, create the data disk from this snapshot instead of creating a new empty disk.
+         * Used when restoring from a snapshot on instance start.
+         */
+        snapshotId?: pulumi.Input<string>
     }
+    additionalTags: pulumi.Input<string[]>
 }
 
 class CloudyPadScalewayInstance extends pulumi.ComponentResource {
@@ -31,9 +45,10 @@ class CloudyPadScalewayInstance extends pulumi.ComponentResource {
     constructor(name: string, args: ScalewayInstanceArgs, opts?: pulumi.ComponentResourceOptions) {
         super("crafteo:cloudypad:scaleway:vm", name, args, opts)
 
-        const globalTags = [
-            name
-        ]
+        const globalTags = pulumi.all([args.additionalTags]).apply(([tags]) => [
+            name,
+            ...tags
+        ])
 
         const commonPulumiOpts = {
             parent: this
@@ -63,12 +78,16 @@ class CloudyPadScalewayInstance extends pulumi.ComponentResource {
         this.publicIp = publicIp.address
 
         let dataDisk: scw.block.Volume | undefined
-        if(args.dataDisk){
+        // Create data disk if requested and not explicitly disabled (noDataDisk)
+        if(args.dataDisk && args.dataDisk.state !== "absent"){
+            // If snapshotId is provided, create volume from snapshot
+            // Otherwise create a new empty volume
             dataDisk = new scw.block.Volume(`${name}-data`, {
                 name: `${name}-data`,
                 sizeInGb: args.dataDisk.sizeGb,
                 iops: 5000,
-                tags: globalTags
+                tags: globalTags,
+                snapshotId: args.dataDisk.snapshotId,
             }, commonPulumiOpts)
 
             dataDisk?.id.apply(id => {
@@ -79,7 +98,8 @@ class CloudyPadScalewayInstance extends pulumi.ComponentResource {
             this.dataDiskId = pulumi.output(null)
         }
 
-        if(!args.noInstanceServer){
+        // always create server if state unless specifically set to absent
+        if(args.instanceServerState !== "absent"){
             const server = new scw.instance.Server(`${name}-server`, {
                 name: name,
                 type: args.instanceType,
@@ -124,7 +144,8 @@ async function scalewayPulumiProgram(): Promise<Record<string, any> | void> {
     const securityGroupPorts = config.requireObject<SimplePortDefinition[]>("securityGroupPorts")
     const dataDisk = config.getObject<ScalewayInstanceArgs["dataDisk"]>("dataDisk")
     const imageId = config.get("imageId")
-    const noInstanceServer = config.getBoolean("noInstanceServer")
+    const instanceServerState = config.get("instanceServerState") as "present" | "absent" | undefined
+    const additionalTags = config.getObject<string[]>("additionalTags") || []
 
     const stackName = pulumi.getStack()
 
@@ -142,7 +163,8 @@ async function scalewayPulumiProgram(): Promise<Record<string, any> | void> {
         },
         dataDisk: dataDisk,
         imageId: imageId,
-        noInstanceServer: noInstanceServer
+        instanceServerState: instanceServerState,
+        additionalTags: additionalTags,
     })
 
     return pulumi.all([
@@ -166,11 +188,12 @@ async function scalewayPulumiProgram(): Promise<Record<string, any> | void> {
 }
 
 export interface PulumiStackConfigScaleway {
+    instanceName: string
     projectId: string
     region: string
     zone: string
     instanceType: string
-    noInstanceServer?: boolean
+    instanceServerState?: "present" | "absent"
     imageId?: string
     rootDisk: {
         sizeGb: number
@@ -178,7 +201,9 @@ export interface PulumiStackConfigScaleway {
     publicKeyContent: string
     securityGroupPorts: SimplePortDefinition[]
     dataDisk?: {
+        state: "present" | "absent"
         sizeGb: number
+        snapshotId?: string
     }
 }
 
@@ -239,8 +264,9 @@ export class ScalewayPulumiClient extends InstancePulumiClient<PulumiStackConfig
         await stack.setConfig("scaleway:project_id", { value: config.projectId})
         await stack.setConfig("scaleway:region", { value: config.region})
         await stack.setConfig("scaleway:zone", { value: config.zone})
+        await stack.setConfig("additionalTags", { value: JSON.stringify([`instance:${config.instanceName}`])})
         
-        if(config.noInstanceServer) await stack.setConfig("noInstanceServer", { value: config.noInstanceServer.toString()})
+        if(config.instanceServerState) await stack.setConfig("instanceServerState", { value: config.instanceServerState})
         await stack.setConfig("instanceType", { value: config.instanceType})
 
         if(config.imageId) await stack.setConfig("imageId", { value: config.imageId})
