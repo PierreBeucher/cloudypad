@@ -3,9 +3,9 @@ import { linodeLabel } from '../../../../src/providers/linode/pulumi/utils'
 
 describe('linodeLabel', () => {
   it('should handle very long names with special characters', () => {
-    const longName = 'this.is.a-very-long-instance-name-that-exceeds-50-characters-with-special@chars#here'
+    const longName = 'this.is.a-VERY-long-instance-name-that-exceeds-50-characters-with-special@chars#here'
     const result = linodeLabel(longName, '-vol')
-    const expected = 'this-is-a-very-long-insf0478-vol'
+    const expected = 'this-is-a-very-long-insaa962-vol'
     assert.strictEqual(result, expected)
   })
 
