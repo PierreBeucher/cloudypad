@@ -42,7 +42,6 @@ export class ScalewayProvisioner extends AbstractInstanceProvisioner<ScalewayPro
     async doDataSnapshotProvision(opts?: ProvisionerActionOptions): Promise<ScalewayProvisionOutputV1> {
         this.logger.info(`Data snapshot provision for Scaleway instance ${this.args.instanceName}`)
 
-        // If data disk snapshot feature is not enabled, return current output as-is
         if (!this.args.provisionInput.dataDiskSnapshot?.enable) {
             throw new Error(`Data disk snapshot is not enabled for instance ${this.args.instanceName}, this function should not be called. ` +
                 `This is an internal error, please report an issue. Full args: ${JSON.stringify(this.args)}, options: ${JSON.stringify(opts)}`
@@ -51,8 +50,9 @@ export class ScalewayProvisioner extends AbstractInstanceProvisioner<ScalewayPro
 
         const snapshotClient = this.buildDataDiskSnapshotPulumiClient()
 
-        // don't run Pulumi if there's no data disk ID to snapshot
-        // or desired state is set to LIVE (in which case snapshot update is not needed)
+        // don't run Pulumi if there's no data disk ID to snapshot or desired state is set to LIVE
+        // If LIVE, snapshot update must NOT be done as disk may be actively in use and creating a snapshot
+        // on active disk risks data corruption or plain failure.
         if (!this.args.provisionOutput?.dataDiskId || this.args.provisionInput.runtime?.dataDiskState === DATA_DISK_STATE_LIVE) {
             this.logger.debug(`No data disk ID to snapshot, returning current Pulumi output as-is`)
 

@@ -107,7 +107,7 @@ export interface InstanceStatus {
 }
 
 /**
- * Main operation interface for an instance to start/stop/restart and run various operations.
+ * Main operation interface to manage an instance: deploy, provision configure, start/stop/restart, destroy...
  */
 export interface InstanceManager {
     name(): string
@@ -426,7 +426,7 @@ export class GenericInstanceManager<ST extends InstanceStateV1> implements Insta
 
     /**
      * Configure instance using Ansible configurator and update state with configuration output.
-     * Decorellated from mainn configure() method as it may be run for configuration and as post-start reconfiguration by start().
+     * Decorellated from main configure() method as it may be run for configuration and as post-start reconfiguration by start().
      */
     async doConfigure(additionalAnsibleArgs?: string[]): Promise<void> {
 
@@ -462,11 +462,6 @@ export class GenericInstanceManager<ST extends InstanceStateV1> implements Insta
         const provisioner = await this.buildProvisioner()
 
         // Data snapshot provision. Only call if dataDiskSnapshot is enabled
-        // and data disk state is set to snapshot and desired disk state is not LIVE
-        // If desired state is LIVE and data disk already exists (eg. running multiple start in a row)
-        // the snapshot stack will try to update existing snapshot with live disk
-        // which is actively being used, risking data corruption (or plain failure)
-        // and losing time on useless operation.
         if(currentState.provision.input.dataDiskSnapshot?.enable){
             this.logger.debug(`Running data snapshot provision for instance ${this.name()}`)
             const snapshotOutputs = await provisioner.dataSnapshotProvision({
@@ -476,7 +471,7 @@ export class GenericInstanceManager<ST extends InstanceStateV1> implements Insta
             await this.stateWriter.setProvisionOutput(this.instanceName, snapshotOutputs)
         }
 
-        // Main provision (manages server, disks, network)
+        // Main provision (manages server, disks, network...)
         // Rebuild provisioner to get updated state with snapshot outputs
         const provisionerForMain = await this.buildProvisioner()
         this.logger.debug(`Running main provision for instance ${this.name()}`)
@@ -538,7 +533,7 @@ export class GenericInstanceManager<ST extends InstanceStateV1> implements Insta
      * 1. Stop instance server via runner
      * 2. If deleteInstanceServerOnStop or dataDiskSnapshot is enabled:
      *    - Update state input runtime (noInstanceServer, noDataDisk, createDataDiskSnapshot)
-     *    - Call provision to handle resource deletion/snapshot creation
+     *    - Call provisioner to handle resource deletion and snapshot creation
      * 
      * In itself stop is not only managed via a stop operation on instance server, but also via infra as code
      * with input setting desired state of resources for a "stop" status.
