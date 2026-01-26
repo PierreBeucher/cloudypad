@@ -129,7 +129,7 @@ export const CLI_OPTION_BASE_IMAGE_SNAPSHOT_ENABLE = new Option('--base-image-sn
     '(default: false)')
     .argParser(parseFalseOrDisable)
 
-export const CLI_OPTION_KEEP_BASE_IMAGE_ON_DELETION = new Option('--keep-base-image-on-deletion [enable|yes|true|1]', 
+export const CLI_OPTION_KEEP_BASE_IMAGE_ON_DELETION = new Option('--base-image-keep-on-deletion [enable|yes|true|1]', 
     'Whether to keep base image on instance deletion. ' +
     'If enabled, base image will be preserved when instance is destroyed. ' +
     'Only applies when base-image-snapshot-enable is also enabled. ' +
