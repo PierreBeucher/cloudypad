@@ -1,0 +1,14 @@
+# Novops config to load secrets
+# See https://github.com/PierreBeucher/novops
+environments:
+  
+  # Secrets for release on GitHub
+  release:
+    variables:
+      - name: GITHUB_TOKEN
+        value:
+          hvault_kv2:
+            mount: kv
+            path: cloudypad/core/release
+            key: GITHUB_TOKEN
+      
