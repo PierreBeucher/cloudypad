@@ -2,9 +2,10 @@
   inputs = {
     nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
     flake-utils.url = "github:numtide/flake-utils";
+    novops.url = "github:PierreBeucher/novops";
   };
 
-  outputs = { self, nixpkgs, flake-utils }: 
+  outputs = { self, nixpkgs, flake-utils, novops }: 
     flake-utils.lib.eachDefaultSystem (system:
       let  
         pkgs = import nixpkgs { system = system; config.allowUnfree = true; };
@@ -33,35 +34,38 @@
               license = licenses.agpl3Plus;
             };
           };
-          
+          novops = novops.packages.${system}.novops;
         };
         devShells = {
           default = pkgs.mkShell {
-            packages = with pkgs; [
-              gnumake
-              pulumi-bin
-              pulumiPackages.pulumi-nodejs
-              nodejs_22
-              go-task
-              gettext
-              typescript
-              podman
-              podman-compose
-              ansible
-              sshpass # for Ansible password auth
-              yq
-              jq
-              gh
-              mdbook
-              pv # for demo-magic
-              asciinema
-              imagemagick_light
-              ffmpeg
-              vagrant
-              scaleway-cli
-              bc
-              linode-cli
-              google-cloud-sdk
+            packages = [
+              (with pkgs; [
+                gnumake
+                pulumi-bin
+                pulumiPackages.pulumi-nodejs
+                nodejs_22
+                go-task
+                gettext
+                typescript
+                podman
+                podman-compose
+                ansible
+                sshpass # for Ansible password auth
+                yq
+                jq
+                gh
+                mdbook
+                pv # for demo-magic
+                asciinema
+                imagemagick_light
+                ffmpeg
+                vagrant
+                scaleway-cli
+                bc
+                linode-cli
+                google-cloud-sdk
+              ])
+              novops.packages.${system}.novops
             ];
             
             shellHook = ''
