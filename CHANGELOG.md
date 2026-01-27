@@ -1,5 +1,20 @@
 # Changelog
 
+## [0.42.0](https://github.com/PierreBeucher/cloudypad/compare/v0.41.0...v0.42.0) (2026-01-27)
+
+
+### Features
+
+* create base image on creation to remove root disk on stop for cost effiency ([7b9cbc2](https://github.com/PierreBeucher/cloudypad/commit/7b9cbc2f9104629f7b21e03462cf9e9182c983e2))
+* data disk snapshot on stop for cost reduction (only Scaleway for now) ([060118d](https://github.com/PierreBeucher/cloudypad/commit/060118d44102e4a293b0d83c30a8071eb79e88c5))
+* flag to keep base image on destroy ([e77fa79](https://github.com/PierreBeucher/cloudypad/commit/e77fa79dc8f170f04b78aaa659d48afda49425ad))
+* temporary workaround for Ansible galaxy: use Git to download collections ([0b94cdb](https://github.com/PierreBeucher/cloudypad/commit/0b94cdb825c0e2991d212640e65da00f72bc484d))
+
+
+### Bug Fixes
+
+* some Linode labels still exceed 50 characters ([37a8bea](https://github.com/PierreBeucher/cloudypad/commit/37a8bea8a110b92fd6db38da1d4376f951c426b5))
+
 ## [0.41.0](https://github.com/PierreBeucher/cloudypad/compare/v0.40.0...v0.41.0) (2025-12-10)
 
 
