@@ -1,0 +1,13 @@
+[Desktop Entry]
+Name=Prism Launcher
+Comment=launcher for Minecraft
+Exec=prismlauncher-start.sh
+Icon=prismlauncher
+Terminal=false
+Type=Application
+Categories=Game;
+PrefersNonDefaultGPU=true
+X-KDE-RunOnDiscreteGpu=true
+X-XFCE-Source=file:///usr/share/applications/prismlauncher.desktop
+Path=
+StartupNotify=false
