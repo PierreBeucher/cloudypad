@@ -83,6 +83,7 @@ apt install -y \
     xterm \
     xz-utils \
     zenity \
+    jq \
     bubblewrap \
     software-properties-common \
     nano \
@@ -281,6 +282,9 @@ HEALTHCHECK --interval=10s --timeout=5s --start-period=5s --retries=3 \
 
 # Allow user "cloudy" to stop container
 RUN echo "cloudy ALL=(ALL) NOPASSWD: ${CLOUDYPAD_BIN_DIR}/stop-supervisord.sh" > /etc/sudoers.d/cloudy-stop-container
+
+# Allow user "cloudy" to install apps without password (for App Installer)
+RUN echo "cloudy ALL=(ALL) NOPASSWD: /usr/bin/apt-get, /usr/bin/apt, /usr/bin/install, /usr/bin/ln, /usr/bin/mkdir" > /etc/sudoers.d/cloudy-app-install
 
 # Contain various Cloudy Pad scripts, add to PATH for easier use
 ENV PATH=$PATH:/cloudy/bin
