@@ -10,57 +10,58 @@ PRISMLAUNCHER_VERSION="${PRISMLAUNCHER_VERSION:-10.0.2}"
 PRISMLAUNCHER_APP_DIR="/opt/prismlauncher"
 PRISMLAUNCHER_APPIMAGE_URL="https://github.com/PrismLauncher/PrismLauncher/releases/download/${PRISMLAUNCHER_VERSION}/PrismLauncher-Linux-x86_64.AppImage"
 
-echo "Installing Prism Launcher ${PRISMLAUNCHER_VERSION}..."
+is_installed() {
+    [ -x "${PRISMLAUNCHER_APP_DIR}/PrismLauncher.AppImage" ]
+}
 
-# Check if already installed
-if [ -x "${PRISMLAUNCHER_APP_DIR}/PrismLauncher.AppImage" ]; then
-    echo "Prism Launcher is already installed at ${PRISMLAUNCHER_APP_DIR}"
-    echo "To reinstall, remove the directory first: sudo rm -rf ${PRISMLAUNCHER_APP_DIR}"
+add_to_sunshine_apps() {
+    APPS_JSON="${XDG_CONFIG_HOME}/sunshine/apps.json"
+    
+    [ ! -f "$APPS_JSON" ] && return
+    
+    # Check if already added
+    if jq -e '.apps[] | select(.name | contains("Prism Launcher"))' "$APPS_JSON" > /dev/null 2>&1; then
+        return
+    fi
+    
+    # Add new app
+    jq '.apps += [{
+        "name": "Prism Launcher (Minecraft)",
+        "image-path": "$(XDG_CONFIG_HOME)/sunshine/assets/prismlauncher.png",
+        "prep-cmd": [{
+            "do": "sh -c \"sunshine-app-startup.sh > /tmp/sunshine-session-start.log 2>&1\"",
+            "undo": "sh -c \"prismlauncher-stop.sh > /tmp/prismlauncher-stop.log 2>&1\""
+        }],
+        "detached": ["sh -c \"prismlauncher-start.sh > /tmp/prismlauncher-start.log 2>&1\""],
+        "exclude-global-prep-cmd": "false",
+        "auto-detach": "true",
+        "wait-all": "true",
+        "exit-timeout": "5",
+        "cmd": ""
+    }]' "$APPS_JSON" > "${APPS_JSON}.tmp" && mv "${APPS_JSON}.tmp" "$APPS_JSON"
+}
+
+if is_installed; then
+    echo "Already installed"
     exit 0
 fi
 
-# Install dependencies
-echo "Installing dependencies..."
-sudo apt-get update
-sudo apt-get install -y fuse3 libfuse2t64 openjdk-21-jre
+echo "10"; echo "# Installing dependencies..."
+sudo apt-get update > /tmp/prismlauncher-install.log 2>&1
 
-# Download AppImage
-echo "Downloading Prism Launcher AppImage..."
-cd /tmp
-curl -L -o PrismLauncher.AppImage "${PRISMLAUNCHER_APPIMAGE_URL}"
+echo "30"; echo "# Installing Java and fuse..."
+sudo apt-get install -y fuse3 libfuse2t64 openjdk-21-jre >> /tmp/prismlauncher-install.log 2>&1
 
-# Install AppImage
-echo "Installing AppImage..."
+echo "50"; echo "# Downloading Prism Launcher..."
+curl -L -o /tmp/PrismLauncher.AppImage "${PRISMLAUNCHER_APPIMAGE_URL}" >> /tmp/prismlauncher-install.log 2>&1
+
+echo "70"; echo "# Installing Prism Launcher..."
 sudo install -d -o "${CLOUDYPAD_USER}" -g "${CLOUDYPAD_USER}" "${PRISMLAUNCHER_APP_DIR}"
-sudo install -m 0755 -o "${CLOUDYPAD_USER}" -g "${CLOUDYPAD_USER}" PrismLauncher.AppImage "${PRISMLAUNCHER_APP_DIR}/PrismLauncher.AppImage"
+sudo install -m 0755 -o "${CLOUDYPAD_USER}" -g "${CLOUDYPAD_USER}" /tmp/PrismLauncher.AppImage "${PRISMLAUNCHER_APP_DIR}/PrismLauncher.AppImage"
 sudo ln -sf "${PRISMLAUNCHER_APP_DIR}/PrismLauncher.AppImage" /usr/local/bin/prismlauncher
-rm PrismLauncher.AppImage
+rm -f /tmp/PrismLauncher.AppImage
 
-# Add to Sunshine apps.json
-APPS_JSON="${XDG_CONFIG_HOME}/sunshine/apps.json"
-if [ -f "$APPS_JSON" ] && ! grep -q "Prism Launcher" "$APPS_JSON"; then
-    echo "Adding Prism Launcher to Sunshine apps..."
-    sed -i 's/        }$/        },/' "$APPS_JSON"
-    sed -i '/^    ]$/i\        {\
-            "name": "Prism Launcher (Minecraft)",\
-            "image-path": "$(XDG_CONFIG_HOME)/sunshine/assets/prismlauncher.png",\
-            "prep-cmd": [\
-                {\
-                    "do": "sh -c \\"sunshine-app-startup.sh > /tmp/sunshine-session-start.log 2>\&1\\"",\
-                    "undo": "sh -c \\"prismlauncher-stop.sh > /tmp/prismlauncher-stop.log 2>\&1\\""\
-                }\
-            ],\
-            "detached": [\
-                "sh -c \\"prismlauncher-start.sh > /tmp/prismlauncher-start.log 2>\&1\\""\
-            ],\
-            "exclude-global-prep-cmd": "false",\
-            "auto-detach": "true",\
-            "wait-all": "true",\
-            "exit-timeout": "5",\
-            "cmd": ""\
-        }' "$APPS_JSON"
-fi
+echo "90"; echo "# Adding to Sunshine apps..."
+add_to_sunshine_apps
 
-echo ""
-echo "Prism Launcher installed successfully!"
-echo ""
+echo "100"; echo "# Done!"
