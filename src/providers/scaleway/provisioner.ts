@@ -94,6 +94,9 @@ export class ScalewayProvisioner extends AbstractInstanceProvisioner<ScalewayPro
         await pulumiClient.setConfig(stackConfig)
         const pulumiOutputs = await pulumiClient.up({ cancel: opts?.pulumiCancel })
 
+        // Extract UUID part for machine lookup (Scaleway volumes appear in /dev/disk/by-id/ with UUID)
+        const machineDataDiskLookupId = pulumiOutputs.dataDiskId ? pulumiOutputs.dataDiskId.split("/").pop() : undefined
+
         return {
             ...this.getCurrentProvisionOutput(),
             host: pulumiOutputs.publicIp,
@@ -102,6 +105,7 @@ export class ScalewayProvisioner extends AbstractInstanceProvisioner<ScalewayPro
             instanceServerId: pulumiOutputs.instanceServerId ?? undefined,
             dataDiskId: pulumiOutputs.dataDiskId ?? undefined,
             rootDiskId: pulumiOutputs.rootDiskId ?? undefined,
+            machineDataDiskLookupId: machineDataDiskLookupId,
         }
 
     }
@@ -158,6 +162,7 @@ export class ScalewayProvisioner extends AbstractInstanceProvisioner<ScalewayPro
             rootDiskId: this.args.provisionOutput?.rootDiskId,
             baseImageId: this.args.provisionOutput?.baseImageId,
             dataDiskSnapshotId: this.args.provisionOutput?.dataDiskSnapshotId,
+            machineDataDiskLookupId: this.args.provisionOutput?.machineDataDiskLookupId,
         }
     }
 

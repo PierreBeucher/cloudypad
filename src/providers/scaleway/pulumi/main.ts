@@ -93,7 +93,8 @@ class CloudyPadScalewayInstance extends pulumi.ComponentResource {
             dataDisk?.id.apply(id => {
                 pulumi.log.info(`Data disk: ${id}`)
             })
-            this.dataDiskId = dataDisk.id.apply(id => id.split("/").pop() as string)
+            // Store full ID for infrastructure operations (snapshots, etc.)
+            this.dataDiskId = dataDisk.id
         } else {
             this.dataDiskId = pulumi.output(null)
         }

@@ -15,11 +15,14 @@ export class AzureInstanceRunner extends AbstractInstanceRunner<AzureProvisionIn
         this.client = new AzureClient(args.instanceName, args.provisionInput.subscriptionId)
     }
 
-    private getVmName() {
+    private getVmName(): string {
+        if (!this.args.provisionOutput.vmName) {
+            throw new Error(`VM name is not set in provision output. This may happen if server was deleted. Instance: ${this.args.instanceName}`)
+        }
         return this.args.provisionOutput.vmName
     }
 
-    private getResourceGroupName(){
+    private getResourceGroupName(): string {
         return this.args.provisionOutput.resourceGroupName
     }
 

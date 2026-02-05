@@ -4,7 +4,7 @@ import { input, select, confirm } from '@inquirer/prompts';
 import { AwsClient, EC2_QUOTA_CODE_ALL_G_AND_VT_SPOT_INSTANCES, EC2_QUOTA_CODE_RUNNING_ON_DEMAND_G_AND_VT_INSTANCES, DEFAULT_REGION } from "./sdk-client";
 import { AbstractInputPrompter, AbstractInputPrompterArgs, costAlertCliArgsIntoConfig, PromptOptions } from "../../cli/prompter";
 import lodash from 'lodash'
-import { CLI_OPTION_COST_NOTIFICATION_EMAIL, CLI_OPTION_COST_ALERT, CLI_OPTION_COST_LIMIT, CLI_OPTION_DISK_SIZE, CLI_OPTION_PUBLIC_IP_TYPE, CLI_OPTION_SPOT, CliCommandGenerator, CreateCliArgs, UpdateCliArgs, CLI_OPTION_STREAMING_SERVER, CLI_OPTION_SUNSHINE_PASSWORD, CLI_OPTION_SUNSHINE_USERNAME, CLI_OPTION_SUNSHINE_IMAGE_REGISTRY, CLI_OPTION_SUNSHINE_IMAGE_TAG, CLI_OPTION_AUTO_STOP_TIMEOUT, CLI_OPTION_AUTO_STOP_ENABLE, CLI_OPTION_KEYBOARD_OPTIONS, CLI_OPTION_KEYBOARD_VARIANT, CLI_OPTION_KEYBOARD_MODEL, CLI_OPTION_KEYBOARD_LAYOUT, CLI_OPTION_USE_LOCALE, BuildCreateCommandArgs, BuildUpdateCommandArgs, CLI_OPTION_RATE_LIMIT_MAX_MBPS, CLI_OPTION_SUNSHINE_MAX_BITRATE_KBPS } from "../../cli/command";
+import { CLI_OPTION_COST_NOTIFICATION_EMAIL, CLI_OPTION_COST_ALERT, CLI_OPTION_COST_LIMIT, CLI_OPTION_DISK_SIZE, CLI_OPTION_PUBLIC_IP_TYPE, CLI_OPTION_SPOT, CliCommandGenerator, CreateCliArgs, UpdateCliArgs, CLI_OPTION_STREAMING_SERVER, CLI_OPTION_SUNSHINE_PASSWORD, CLI_OPTION_SUNSHINE_USERNAME, CLI_OPTION_SUNSHINE_IMAGE_REGISTRY, CLI_OPTION_SUNSHINE_IMAGE_TAG, CLI_OPTION_AUTO_STOP_TIMEOUT, CLI_OPTION_AUTO_STOP_ENABLE, CLI_OPTION_KEYBOARD_OPTIONS, CLI_OPTION_KEYBOARD_VARIANT, CLI_OPTION_KEYBOARD_MODEL, CLI_OPTION_KEYBOARD_LAYOUT, CLI_OPTION_USE_LOCALE, BuildCreateCommandArgs, BuildUpdateCommandArgs, CLI_OPTION_RATE_LIMIT_MAX_MBPS, CLI_OPTION_SUNSHINE_MAX_BITRATE_KBPS, CLI_OPTION_ROOT_DISK_SIZE, CLI_OPTION_DATA_DISK_SIZE, CLI_OPTION_DATA_DISK_SNAPSHOT_ENABLE, CLI_OPTION_BASE_IMAGE_SNAPSHOT_ENABLE, CLI_OPTION_KEEP_BASE_IMAGE_ON_DELETION, CLI_OPTION_DELETE_INSTANCE_SERVER_ON_STOP } from "../../cli/command";
 import { CLOUDYPAD_PROVIDER_AWS, PUBLIC_IP_TYPE } from "../../core/const";
 import { InteractiveInstanceInitializer } from "../../cli/initializer";
 import { PartialDeep } from "type-fest";
@@ -15,13 +15,23 @@ import { AwsProviderClient } from "./provider";
 
 export interface AwsCreateCliArgs extends CreateCliArgs {
     spot?: boolean
+
+    // diskSize and rootDiskSize are aliases for the same thing
     diskSize?: number
+    rootDiskSize?: number
+
+    dataDiskSize?: number
     publicIpType?: PUBLIC_IP_TYPE
     instanceType?: string
     region?: string
     costAlert?: boolean
     costLimit?: number
     costNotificationEmail?: string
+    imageId?: string
+    dataDiskSnapshotEnable?: boolean
+    baseImageSnapshotEnable?: boolean
+    keepBaseImageOnDeletion?: boolean
+    deleteInstanceServerOnStop?: boolean
 }
 
 /**
@@ -49,11 +59,21 @@ export class AwsInputPrompter extends AbstractInputPrompter<AwsCreateCliArgs, Aw
         return {
             provision: {
                 instanceType: cliArgs.instanceType,
-                diskSize: cliArgs.diskSize,
+                diskSize: cliArgs.rootDiskSize ?? cliArgs.diskSize, // diskSize and rootDiskSize are aliases for the same thing
+                dataDiskSizeGb: cliArgs.dataDiskSize,
                 publicIpType: cliArgs.publicIpType,
                 region: cliArgs.region,
                 useSpot: cliArgs.spot,
-                costAlert: costAlertCliArgsIntoConfig(cliArgs)
+                imageId: cliArgs.imageId,
+                costAlert: costAlertCliArgsIntoConfig(cliArgs),
+                deleteInstanceServerOnStop: cliArgs.deleteInstanceServerOnStop,
+                dataDiskSnapshot: cliArgs.dataDiskSnapshotEnable ? { 
+                    enable: cliArgs.dataDiskSnapshotEnable 
+                } : undefined,
+                baseImageSnapshot: cliArgs.baseImageSnapshotEnable ? { 
+                    enable: cliArgs.baseImageSnapshotEnable,
+                    keepOnDeletion: cliArgs.keepBaseImageOnDeletion
+                } : undefined
             }
         }
     }
@@ -67,7 +87,8 @@ export class AwsInputPrompter extends AbstractInputPrompter<AwsCreateCliArgs, Aw
         const region = await this.region(partialInput.provision?.region)
         const useSpot = await this.useSpotInstance(partialInput.provision?.useSpot)
         const instanceType = await this.instanceType(region, useSpot, partialInput.provision?.instanceType)
-        const diskSize = await this.diskSize(partialInput.provision?.diskSize)
+        const rootDiskSize = await this.rootDiskSize(partialInput.provision?.diskSize)
+        const dataDiskSizeGb = await this.dataDiskSize(partialInput.provision?.dataDiskSizeGb)
         const publicIpType = await this.publicIpType(partialInput.provision?.publicIpType)
         const costAlert = await this.costAlert(partialInput.provision?.costAlert)
                 
@@ -76,12 +97,21 @@ export class AwsInputPrompter extends AbstractInputPrompter<AwsCreateCliArgs, Aw
             commonInput, 
             {
                 provision:{
-                    diskSize: diskSize,
+                    diskSize: rootDiskSize,
+                    dataDiskSizeGb: dataDiskSizeGb,
                     instanceType: instanceType,
                     publicIpType: publicIpType,
                     region: region,
                     useSpot: useSpot,
+                    imageId: partialInput.provision?.imageId,
                     costAlert: costAlert,
+                    dataDiskSnapshot: partialInput.provision?.dataDiskSnapshot?.enable ? { 
+                        enable: partialInput.provision.dataDiskSnapshot.enable 
+                    } : undefined,
+                    baseImageSnapshot: partialInput.provision?.baseImageSnapshot?.enable ? { 
+                        enable: partialInput.provision.baseImageSnapshot.enable,
+                        keepOnDeletion: partialInput.provision.baseImageSnapshot.keepOnDeletion
+                    } : undefined
                 }
             })
         
@@ -165,18 +195,34 @@ export class AwsInputPrompter extends AbstractInputPrompter<AwsCreateCliArgs, Aw
         return selectedInstanceType        
     }
 
-    private async diskSize(diskSize?: number): Promise<number> {
+    private async rootDiskSize(diskSize?: number): Promise<number> {
         if (diskSize) {
             return diskSize;
         }
 
-        const selectedDiskSize = await input({
-            message: 'Enter desired disk size (GB):',
-            default: "100"
-        });
+        // If not overridden, use a static default value
+        // As OS disk size is managed by Cloudy Pad and should not impact user 
+        // except for specific customizations
+        return 20
+    }
 
-        return Number.parseInt(selectedDiskSize)
+    private async dataDiskSize(diskSize?: number): Promise<number> {
+        if (diskSize !== undefined) { // allow 0 meaning explicit no data disk
+            return diskSize
+        }
 
+        let selectedDiskSize: string
+        let parsedDiskSize: number | undefined = undefined
+
+        while (parsedDiskSize === undefined || isNaN(parsedDiskSize)) {
+            selectedDiskSize = await input({
+                message: 'Data disk size in GB (OS will use another independent disk)',
+                default: "100"
+            })
+            parsedDiskSize = Number.parseInt(selectedDiskSize)
+        }
+
+        return parsedDiskSize
     }
 
     private async region(region?: string): Promise<string> {
@@ -205,6 +251,8 @@ export class AwsCliCommandGenerator extends CliCommandGenerator {
         return this.getBaseCreateCommand(CLOUDYPAD_PROVIDER_AWS)
             .addOption(CLI_OPTION_SPOT)
             .addOption(CLI_OPTION_DISK_SIZE)
+            .addOption(CLI_OPTION_ROOT_DISK_SIZE)
+            .addOption(CLI_OPTION_DATA_DISK_SIZE)
             .addOption(CLI_OPTION_PUBLIC_IP_TYPE)
             .addOption(CLI_OPTION_COST_ALERT)
             .addOption(CLI_OPTION_COST_LIMIT)
@@ -223,8 +271,13 @@ export class AwsCliCommandGenerator extends CliCommandGenerator {
             .addOption(CLI_OPTION_KEYBOARD_VARIANT)
             .addOption(CLI_OPTION_KEYBOARD_OPTIONS)
             .addOption(CLI_OPTION_RATE_LIMIT_MAX_MBPS)
+            .addOption(CLI_OPTION_DATA_DISK_SNAPSHOT_ENABLE)
+            .addOption(CLI_OPTION_BASE_IMAGE_SNAPSHOT_ENABLE)
+            .addOption(CLI_OPTION_KEEP_BASE_IMAGE_ON_DELETION)
+            .addOption(CLI_OPTION_DELETE_INSTANCE_SERVER_ON_STOP)
             .option('--instance-type <type>', 'EC2 instance type')
             .option('--region <region>', 'Region in which to deploy instance')
+            .option('--image-id <image-id>', 'Existing AMI ID for instance server. Disk size must be equal or greater than image size.')
             .action(async (cliArgs: AwsCreateCliArgs) => {
                 this.analytics.sendEvent(RUN_COMMAND_CREATE, { provider: CLOUDYPAD_PROVIDER_AWS })
                 
@@ -256,6 +309,8 @@ export class AwsCliCommandGenerator extends CliCommandGenerator {
     buildUpdateCommand(args: BuildUpdateCommandArgs) {
         return this.getBaseUpdateCommand(CLOUDYPAD_PROVIDER_AWS)
             .addOption(CLI_OPTION_DISK_SIZE)
+            .addOption(CLI_OPTION_ROOT_DISK_SIZE)
+            .addOption(CLI_OPTION_DATA_DISK_SIZE)
             .addOption(CLI_OPTION_PUBLIC_IP_TYPE)
             .addOption(CLI_OPTION_COST_ALERT)
             .addOption(CLI_OPTION_COST_LIMIT)
@@ -273,6 +328,10 @@ export class AwsCliCommandGenerator extends CliCommandGenerator {
             .addOption(CLI_OPTION_KEYBOARD_VARIANT)
             .addOption(CLI_OPTION_KEYBOARD_OPTIONS)
             .addOption(CLI_OPTION_RATE_LIMIT_MAX_MBPS)
+            .addOption(CLI_OPTION_DATA_DISK_SNAPSHOT_ENABLE)
+            .addOption(CLI_OPTION_BASE_IMAGE_SNAPSHOT_ENABLE)
+            .addOption(CLI_OPTION_KEEP_BASE_IMAGE_ON_DELETION)
+            .addOption(CLI_OPTION_DELETE_INSTANCE_SERVER_ON_STOP)
             .option('--instance-type <type>', 'EC2 instance type')
             .action(async (cliArgs: AwsUpdateCliArgs) => {
                 this.analytics.sendEvent(RUN_COMMAND_UPDATE, { provider: CLOUDYPAD_PROVIDER_AWS })

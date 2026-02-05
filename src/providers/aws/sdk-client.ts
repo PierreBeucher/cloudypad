@@ -1,4 +1,4 @@
-import { EC2Client, DescribeInstancesCommand, Instance, StartInstancesCommand, StopInstancesCommand, RebootInstancesCommand, waitUntilInstanceRunning, waitUntilInstanceStopped, DescribeInstanceTypesCommand, _InstanceType, InstanceTypeInfo, InstanceTypeOffering, DescribeInstanceTypeOfferingsCommand, DescribeInstanceStatusCommand, InstanceStateName, paginateDescribeInstances, paginateDescribeInstanceTypes, paginateDescribeInstanceTypeOfferings } from '@aws-sdk/client-ec2'
+import { EC2Client, DescribeInstancesCommand, Instance, StartInstancesCommand, StopInstancesCommand, RebootInstancesCommand, waitUntilInstanceRunning, waitUntilInstanceStopped, DescribeInstanceTypesCommand, _InstanceType, InstanceTypeInfo, InstanceTypeOffering, DescribeInstanceTypeOfferingsCommand, DescribeInstanceStatusCommand, InstanceStateName, paginateDescribeInstances, paginateDescribeInstanceTypes, paginateDescribeInstanceTypeOfferings, DescribeImagesCommand, DescribeSnapshotsCommand } from '@aws-sdk/client-ec2'
 import { STSClient, GetCallerIdentityCommand } from '@aws-sdk/client-sts'
 import { getLogger, Logger } from '../../log/utils'
 import { loadConfig } from "@smithy/node-config-provider"
@@ -311,6 +311,44 @@ export class AwsClient {
 
         } catch (error) {
             throw new Error(`Failed to check availability of instance type ${instanceTypes} in region ${this.region}`, { cause: error })
+        }
+    }
+
+    /**
+     * Check if an AMI (image) exists
+     * @param imageId AMI ID to check
+     * @returns true if AMI exists, false otherwise
+     */
+    async checkAmiExists(imageId: string): Promise<boolean> {
+        this.logger.debug(`Checking if AMI ${imageId} exists`)
+        try {
+            const command = new DescribeImagesCommand({
+                ImageIds: [imageId],
+            })
+            const response = await this.ec2Client.send(command)
+            return response.Images !== undefined && response.Images.length > 0
+        } catch (error) {
+            this.logger.debug(`Error checking AMI ${imageId}: ${error}`)
+            return false
+        }
+    }
+
+    /**
+     * Check if an EBS snapshot exists
+     * @param snapshotId Snapshot ID to check
+     * @returns true if snapshot exists, false otherwise
+     */
+    async checkSnapshotExists(snapshotId: string): Promise<boolean> {
+        this.logger.debug(`Checking if snapshot ${snapshotId} exists`)
+        try {
+            const command = new DescribeSnapshotsCommand({
+                SnapshotIds: [snapshotId],
+            })
+            const response = await this.ec2Client.send(command)
+            return response.Snapshots !== undefined && response.Snapshots.length > 0
+        } catch (error) {
+            this.logger.debug(`Error checking snapshot ${snapshotId}: ${error}`)
+            return false
         }
     }
 

@@ -10,18 +10,21 @@ export enum AZURE_SUPPORTED_DISK_TYPES {
 }
 
 const AzureProvisionOutputV1Schema = CommonProvisionOutputV1Schema.extend({
-    vmName: z.string().describe("Azure VM name"),
+    vmName: z.string().describe("Azure VM name").optional(),
     resourceGroupName: z.string().describe("Azure Resource Group name"),
+    rootDiskId: z.string().describe("Azure OS managed disk ID").optional(),
 })
 
 const AzureProvisionInputV1Schema = CommonProvisionInputV1Schema.extend({
     vmSize: z.string().describe("Azure VM size"),
-    diskSize: z.number().describe("Disk size in GB"),
+    diskSize: z.number().describe("Root (OS) disk size in GB"),
     diskType: z.string().describe("Disk type (HDD, SSD...)").default(AZURE_SUPPORTED_DISK_TYPES.STANDARD_LRS),
+    dataDiskSizeGb: z.number().default(0).describe("Data disk size in GB. If non-0, a disk dedicated for instance data (such as games data) will be created."),
     publicIpType: z.enum([PUBLIC_IP_TYPE_STATIC, PUBLIC_IP_TYPE_DYNAMIC]).describe("Type of public IP address"),
     subscriptionId: z.string().describe("Azure Subscription ID"),
     location: z.string().describe("Azure location/region"),
     useSpot: z.boolean().describe("Whether to use spot instances"),
+    imageId: z.string().optional().describe("Existing Azure Image ID for instance server. If set, disk size must be equal or greater than image size."),
     costAlert: z.object({
         limit: z.number().describe("Cost alert limit"),
         notificationEmail: z.string().describe("Cost alert notification email"),

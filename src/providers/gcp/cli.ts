@@ -9,7 +9,7 @@ import lodash from 'lodash'
 import { CLOUDYPAD_PROVIDER_GCP, PUBLIC_IP_TYPE } from "../../core/const";
 import { PartialDeep } from "type-fest";
 import { InteractiveInstanceInitializer } from "../../cli/initializer";
-import { CLI_OPTION_AUTO_STOP_TIMEOUT, CLI_OPTION_AUTO_STOP_ENABLE, CLI_OPTION_COST_ALERT, CLI_OPTION_COST_LIMIT, CLI_OPTION_COST_NOTIFICATION_EMAIL, CLI_OPTION_DISK_SIZE, CLI_OPTION_PUBLIC_IP_TYPE, CLI_OPTION_SPOT, CLI_OPTION_STREAMING_SERVER, CLI_OPTION_SUNSHINE_IMAGE_REGISTRY, CLI_OPTION_SUNSHINE_IMAGE_TAG, CLI_OPTION_SUNSHINE_PASSWORD, CLI_OPTION_SUNSHINE_USERNAME, CliCommandGenerator, CreateCliArgs, UpdateCliArgs, CLI_OPTION_KEYBOARD_OPTIONS, CLI_OPTION_KEYBOARD_MODEL, CLI_OPTION_KEYBOARD_LAYOUT, CLI_OPTION_USE_LOCALE, CLI_OPTION_KEYBOARD_VARIANT, BuildCreateCommandArgs, BuildUpdateCommandArgs, CLI_OPTION_RATE_LIMIT_MAX_MBPS, CLI_OPTION_SUNSHINE_MAX_BITRATE_KBPS } from "../../cli/command";
+import { CLI_OPTION_AUTO_STOP_TIMEOUT, CLI_OPTION_AUTO_STOP_ENABLE, CLI_OPTION_COST_ALERT, CLI_OPTION_COST_LIMIT, CLI_OPTION_COST_NOTIFICATION_EMAIL, CLI_OPTION_DISK_SIZE, CLI_OPTION_DATA_DISK_SIZE, CLI_OPTION_PUBLIC_IP_TYPE, CLI_OPTION_SPOT, CLI_OPTION_STREAMING_SERVER, CLI_OPTION_SUNSHINE_IMAGE_REGISTRY, CLI_OPTION_SUNSHINE_IMAGE_TAG, CLI_OPTION_SUNSHINE_PASSWORD, CLI_OPTION_SUNSHINE_USERNAME, CliCommandGenerator, CreateCliArgs, UpdateCliArgs, CLI_OPTION_KEYBOARD_OPTIONS, CLI_OPTION_KEYBOARD_MODEL, CLI_OPTION_KEYBOARD_LAYOUT, CLI_OPTION_USE_LOCALE, CLI_OPTION_KEYBOARD_VARIANT, BuildCreateCommandArgs, BuildUpdateCommandArgs, CLI_OPTION_RATE_LIMIT_MAX_MBPS, CLI_OPTION_SUNSHINE_MAX_BITRATE_KBPS, CLI_OPTION_DATA_DISK_SNAPSHOT_ENABLE, CLI_OPTION_BASE_IMAGE_SNAPSHOT_ENABLE, CLI_OPTION_KEEP_BASE_IMAGE_ON_DELETION, CLI_OPTION_DELETE_INSTANCE_SERVER_ON_STOP } from "../../cli/command";
 import { RUN_COMMAND_CREATE, RUN_COMMAND_UPDATE } from "../../tools/analytics/events";
 import { InteractiveInstanceUpdater } from "../../cli/updater";
 import { GcpProviderClient } from "./provider";
@@ -20,6 +20,7 @@ export interface GcpCreateCliArgs extends CreateCliArgs {
   zone?: string
   machineType?: string
   diskSize?: number
+  dataDiskSize?: number
   diskType?: string
   networkTier?: string
   nicType?: string
@@ -29,6 +30,10 @@ export interface GcpCreateCliArgs extends CreateCliArgs {
   costAlert?: boolean
   costLimit?: number
   costNotificationEmail?: string
+  dataDiskSnapshotEnable?: boolean
+  baseImageSnapshotEnable?: boolean
+  keepBaseImageOnDeletion?: boolean
+  deleteInstanceServerOnStop?: boolean
 }
 
 /** Possible update arguments for GCP update. */
@@ -73,6 +78,7 @@ export class GcpInputPrompter extends AbstractInputPrompter<GcpCreateCliArgs, Gc
       provision: {
         machineType: cliArgs.machineType,
         diskSize: cliArgs.diskSize,
+        dataDiskSizeGb: cliArgs.dataDiskSize,
         diskType: cliArgs.diskType,
         networkTier: cliArgs.networkTier,
         nicType: cliArgs.nicType,
@@ -83,6 +89,14 @@ export class GcpInputPrompter extends AbstractInputPrompter<GcpCreateCliArgs, Gc
         projectId: cliArgs.projectId,
         useSpot: cliArgs.spot,
         costAlert: costAlertCliArgsIntoConfig(cliArgs),
+        deleteInstanceServerOnStop: cliArgs.deleteInstanceServerOnStop,
+        dataDiskSnapshot: cliArgs.dataDiskSnapshotEnable ? { 
+          enable: cliArgs.dataDiskSnapshotEnable 
+        } : undefined,
+        baseImageSnapshot: cliArgs.baseImageSnapshotEnable ? { 
+          enable: cliArgs.baseImageSnapshotEnable,
+          keepOnDeletion: cliArgs.keepBaseImageOnDeletion
+        } : undefined,
       },
     }
   }
@@ -127,6 +141,15 @@ export class GcpInputPrompter extends AbstractInputPrompter<GcpCreateCliArgs, Gc
           acceleratorType,
           useSpot,
           costAlert,
+          deleteInstanceServerOnStop: partialInput.provision?.deleteInstanceServerOnStop,
+          dataDiskSnapshot: partialInput.provision?.dataDiskSnapshot?.enable ? { 
+            enable: partialInput.provision.dataDiskSnapshot.enable 
+          } : undefined,
+          baseImageSnapshot: partialInput.provision?.baseImageSnapshot?.enable ? { 
+              enable: partialInput.provision.baseImageSnapshot.enable,
+              keepOnDeletion: partialInput.provision.baseImageSnapshot.keepOnDeletion
+          } : undefined,
+          dataDiskSizeGb: partialInput.provision?.dataDiskSizeGb ?? 0, // Use CLI arg if provided, otherwise default to 0
         },
       }
     )
@@ -469,6 +492,7 @@ export class GcpCliCommandGenerator extends CliCommandGenerator {
     return this.getBaseCreateCommand(CLOUDYPAD_PROVIDER_GCP)
       .addOption(CLI_OPTION_SPOT)
       .addOption(CLI_OPTION_DISK_SIZE)
+      .addOption(CLI_OPTION_DATA_DISK_SIZE)
       .addOption(CLI_OPTION_PUBLIC_IP_TYPE)
       .addOption(CLI_OPTION_COST_ALERT)
       .addOption(CLI_OPTION_COST_LIMIT)
@@ -487,6 +511,10 @@ export class GcpCliCommandGenerator extends CliCommandGenerator {
       .addOption(CLI_OPTION_KEYBOARD_VARIANT)
       .addOption(CLI_OPTION_KEYBOARD_OPTIONS)
       .addOption(CLI_OPTION_RATE_LIMIT_MAX_MBPS)
+      .addOption(CLI_OPTION_DATA_DISK_SNAPSHOT_ENABLE)
+      .addOption(CLI_OPTION_BASE_IMAGE_SNAPSHOT_ENABLE)
+      .addOption(CLI_OPTION_KEEP_BASE_IMAGE_ON_DELETION)
+      .addOption(CLI_OPTION_DELETE_INSTANCE_SERVER_ON_STOP)
       .option('--machine-type <machinetype>', 'Machine type to use for the instance')
       .option('--region <region>', 'Region in which to deploy instance')
       .option('--zone <zone>', 'Zone within the region to deploy the instance')

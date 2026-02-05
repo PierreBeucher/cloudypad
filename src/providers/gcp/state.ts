@@ -6,13 +6,16 @@ import { GenericStateParser } from "../../core/state/parser"
 
 const GcpProvisionOutputV1Schema = CommonProvisionOutputV1Schema.extend({
     instanceName: z.string().describe("GCP instance name"),
+    rootDiskId: z.string().optional().describe("GCP boot disk ID"),
+    dataDiskId: z.string().optional().describe("GCP data disk ID"),
 })
 
 const GcpProvisionInputV1Schema = CommonProvisionInputV1Schema.extend({
     projectId: z.string().describe("GCP Project ID"),
     machineType: z.string().describe("GCP Machine Type"),
     acceleratorType: z.string().describe("GCP Accelerator Type"),
-    diskSize: z.number().describe("Disk size in GB"),
+    diskSize: z.number().describe("Boot disk size in GB"),
+    dataDiskSizeGb: z.number().default(0).describe("Data disk size in GB. If non-0, a disk dedicated for instance data (such as games data) will be created."),
     diskType: z.string().optional().describe(`GCP Disk Type (One of: ${DISK_TYPES.join(", ")})`),
     publicIpType: z.enum([PUBLIC_IP_TYPE_STATIC, PUBLIC_IP_TYPE_DYNAMIC]).describe("Type of public IP address"),
     networkTier: z.string().optional().describe(`GCP Network Tier (One of: ${NETWORK_TIERS.join(", ")})`),
@@ -20,6 +23,7 @@ const GcpProvisionInputV1Schema = CommonProvisionInputV1Schema.extend({
     region: z.string().describe("GCP region"),
     zone: z.string().describe("GCP zone"),
     useSpot: z.boolean().describe("Whether to use spot instances"),
+    imageId: z.string().optional().describe("Existing image ID for instance server. If set, disk size must be equal or greater than image size."),
     costAlert: CostAlertSchema,
 })
 
