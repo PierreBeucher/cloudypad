@@ -83,6 +83,9 @@
               # Force NODE_ENV as Cursor seems to set it to production
               # See https://forum.cursor.com/t/agent-shell-set-node-env-to-production/134489
               export NODE_ENV=development
+
+              # Force max old space size to 8GB for Node.js as compilation is very memory intensive
+              export NODE_OPTIONS="--max-old-space-size=8912"
             '';
           };
         };
