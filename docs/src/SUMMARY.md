@@ -57,5 +57,6 @@
 # Contributing
 
 - [Contribution guide](./contributing/contribution-guide.md)
+- [Architecture overview](./contributing/architecture.md)
 - [Extend Docker images](./contributing/container-image.md)
 - [License](./contributing/license.md)
