@@ -27,7 +27,6 @@ export interface AwsCreateCliArgs extends CreateCliArgs {
     costAlert?: boolean
     costLimit?: number
     costNotificationEmail?: string
-    imageId?: string
     dataDiskSnapshotEnable?: boolean
     baseImageSnapshotEnable?: boolean
     keepBaseImageOnDeletion?: boolean
@@ -64,7 +63,6 @@ export class AwsInputPrompter extends AbstractInputPrompter<AwsCreateCliArgs, Aw
                 publicIpType: cliArgs.publicIpType,
                 region: cliArgs.region,
                 useSpot: cliArgs.spot,
-                imageId: cliArgs.imageId,
                 costAlert: costAlertCliArgsIntoConfig(cliArgs),
                 deleteInstanceServerOnStop: cliArgs.deleteInstanceServerOnStop,
                 dataDiskSnapshot: cliArgs.dataDiskSnapshotEnable ? { 
@@ -103,8 +101,8 @@ export class AwsInputPrompter extends AbstractInputPrompter<AwsCreateCliArgs, Aw
                     publicIpType: publicIpType,
                     region: region,
                     useSpot: useSpot,
-                    imageId: partialInput.provision?.imageId,
                     costAlert: costAlert,
+                    deleteInstanceServerOnStop: partialInput.provision?.deleteInstanceServerOnStop,
                     dataDiskSnapshot: partialInput.provision?.dataDiskSnapshot?.enable ? { 
                         enable: partialInput.provision.dataDiskSnapshot.enable 
                     } : undefined,

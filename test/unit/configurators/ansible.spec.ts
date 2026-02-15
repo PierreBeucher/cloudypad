@@ -8,6 +8,14 @@ import { DummyInstanceStateV1 } from '../../../src/providers/dummy/state';
 
 describe('Ansible configurator', function () {
 
+    const testHost = "test-ansible-configurator-host"
+    const testDataDiskId = "test-ansible-configurator-data-disk-id"
+    const testDataDiskSnapshotId = "test-ansible-configurator-data-disk-snapshot-id"
+    const testMachineDataDiskLookupId = "test-ansible-configurator-data-disk-lookup-id"
+    const testMachineDataDiskMountMethod = "foobar-method"
+    const testBaseImageId = "test-ansible-configurator-base-image-id"
+    const testPublicIPv4 = "127.0.0.1"
+
     it('should generate inventory content (with defined inputs)', async function () {
         const configurator = new AnsibleConfigurator({
             instanceName: "test-ansible-configurator-instance",
@@ -24,9 +32,13 @@ describe('Ansible configurator', function () {
                 }
             },
             provisionOutput: {
-                host: "test-ansible-configurator-host",
-                publicIPv4: "127.0.0.1",
-                dataDiskId: "test-ansible-configurator-data-disk-id"   
+                host: testHost,
+                publicIPv4: testPublicIPv4,
+                dataDiskId: testDataDiskId,
+                dataDiskSnapshotId: testDataDiskSnapshotId,
+                machineDataDiskLookupId: testMachineDataDiskLookupId,
+                machineDataDiskMountMethod: testMachineDataDiskMountMethod,
+                baseImageId: testBaseImageId,
             }
         })
 
@@ -36,7 +48,7 @@ describe('Ansible configurator', function () {
             all: {
                 hosts: {
                     "test-ansible-configurator-instance": {
-                        ansible_host: "127.0.0.1",
+                        ansible_host: testPublicIPv4,
                         ansible_user: DEFAULT_COMMON_INPUT.provision.ssh.user,
                         ansible_password: undefined,
                         ansible_ssh_private_key_file: DEFAULT_COMMON_INPUT.provision.ssh.privateKeyPath,
@@ -66,8 +78,9 @@ describe('Ansible configurator', function () {
                         autostop_enable: DEFAULT_COMMON_INPUT.configuration.autostop?.enable,
                         autostop_timeout_seconds: DEFAULT_COMMON_INPUT.configuration.autostop?.timeoutSeconds,
 
-                        cloudypad_data_disk_enabled: "test-ansible-configurator-data-disk-id" !== undefined,
-                        cloudypad_data_disk_id: "test-ansible-configurator-data-disk-id",
+                        cloudypad_data_disk_enabled: true,
+                        cloudypad_data_disk_id: testMachineDataDiskLookupId,
+                        cloudypad_data_disk_lookup_method: testMachineDataDiskMountMethod,
 
                         ratelimit_enable: true,
                         ratelimit_max_mbps: DEFAULT_COMMON_INPUT.configuration.ratelimit?.maxMbps,

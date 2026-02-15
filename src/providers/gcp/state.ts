@@ -15,7 +15,7 @@ const GcpProvisionInputV1Schema = CommonProvisionInputV1Schema.extend({
     machineType: z.string().describe("GCP Machine Type"),
     acceleratorType: z.string().describe("GCP Accelerator Type"),
     diskSize: z.number().describe("Boot disk size in GB"),
-    dataDiskSizeGb: z.number().default(0).describe("Data disk size in GB. If non-0, a disk dedicated for instance data (such as games data) will be created."),
+    dataDiskSizeGb: z.number().optional().describe("Data disk size in GB. If non-0, a disk dedicated for instance data (such as games data) will be created."),
     diskType: z.string().optional().describe(`GCP Disk Type (One of: ${DISK_TYPES.join(", ")})`),
     publicIpType: z.enum([PUBLIC_IP_TYPE_STATIC, PUBLIC_IP_TYPE_DYNAMIC]).describe("Type of public IP address"),
     networkTier: z.string().optional().describe(`GCP Network Tier (One of: ${NETWORK_TIERS.join(", ")})`),

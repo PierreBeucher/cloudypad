@@ -19,7 +19,7 @@ const AzureProvisionInputV1Schema = CommonProvisionInputV1Schema.extend({
     vmSize: z.string().describe("Azure VM size"),
     diskSize: z.number().describe("Root (OS) disk size in GB"),
     diskType: z.string().describe("Disk type (HDD, SSD...)").default(AZURE_SUPPORTED_DISK_TYPES.STANDARD_LRS),
-    dataDiskSizeGb: z.number().default(0).describe("Data disk size in GB. If non-0, a disk dedicated for instance data (such as games data) will be created."),
+    dataDiskSizeGb: z.number().optional().describe("Data disk size in GB. If non-0, a disk dedicated for instance data (such as games data) will be created."),
     publicIpType: z.enum([PUBLIC_IP_TYPE_STATIC, PUBLIC_IP_TYPE_DYNAMIC]).describe("Type of public IP address"),
     subscriptionId: z.string().describe("Azure Subscription ID"),
     location: z.string().describe("Azure location/region"),
