@@ -9,7 +9,7 @@ function create_destroy_azure() {
         --disk-type Standard_LRS \
         --public-ip-type static \
         --location "francecentral" \
-        --spot \
+        --spot disable \
         --subscription-id 0dceb5ed-9096-4db7-b430-2609e7cc6a15 \
         --cost-limit 2 \
         --cost-notification-email "test@test.com" \

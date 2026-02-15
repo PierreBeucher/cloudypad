@@ -11,7 +11,7 @@ function create_destroy_gcp() {
         --zone "europe-west4-b" \
         --gpu-type "nvidia-tesla-t4" \
         --project-id crafteo-sandbox \
-        --spot \
+        --spot disable \
         --cost-limit 2 \
         --cost-notification-email "test@test.com" \
         --streaming-server sunshine \

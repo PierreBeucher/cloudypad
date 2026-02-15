@@ -48,6 +48,13 @@ describe('Scaleway lifecycle', () => {
                 instanceType: "L4-1-24G",
                 diskSizeGb: 30,
                 dataDiskSizeGb: 50,
+                baseImageSnapshot: {
+                    enable: true,
+                },
+                dataDiskSnapshot: {
+                    enable: true,
+                },
+                deleteInstanceServerOnStop: true,
             }, {
                 sunshine: {
                     enable: true,
@@ -115,16 +122,11 @@ describe('Scaleway lifecycle', () => {
             await instanceManager.stop({ wait: true })
 
             const instanceStatus = await instanceManager.getInstanceStatus()
-            assert.strictEqual(instanceStatus.configured, true)
-            assert.strictEqual(instanceStatus.serverStatus, ServerRunningStatus.Stopped)
+            assert.strictEqual(instanceStatus.configured, false)
+            assert.strictEqual(instanceStatus.serverStatus, ServerRunningStatus.Unknown)
 
             const state = await getCurrentTestState()
-            assert.strictEqual(state.provision.output?.instanceServerId, currentInstanceServerId)
-
-            const scalewayClient = getScalewayClient()
-            const instances = await scalewayClient.listInstances()
-            const instance = instances.find(instance => instance.id === currentInstanceServerId)
-            assert.ok(instance)
+            assert.strictEqual(state.provision.output?.instanceServerId, undefined)
         }).timeout(120000)
     }
 

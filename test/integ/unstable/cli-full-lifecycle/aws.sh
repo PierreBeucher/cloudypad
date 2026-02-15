@@ -8,7 +8,7 @@ function create_destroy_aws() {
         --disk-size 100 \
         --public-ip-type static \
         --region eu-central-1 \
-        --spot \
+        --spot disable \
         --cost-alert \
         --cost-limit 2 \
         --cost-notification-email "test@test.com" \

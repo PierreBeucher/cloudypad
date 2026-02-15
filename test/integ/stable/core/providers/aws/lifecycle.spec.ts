@@ -7,6 +7,7 @@ import { ServerRunningStatus } from '../../../../../../src/core/runner';
 import { getLogger } from '../../../../../../src/log/utils';
 import { CloudypadClient } from '../../../../../../src/core/client';
 import { PUBLIC_IP_TYPE_STATIC } from '../../../../../../src/core/const';
+import { InstanceStateName } from '@aws-sdk/client-ec2';
 
 describe('AWS lifecycle', () => {
     const logger = getLogger("test-aws-lifecycle");
@@ -48,10 +49,18 @@ describe('AWS lifecycle', () => {
                 user: "ubuntu",
             },
             instanceType: instanceType,
-            diskSize: 100,
+            diskSize: 30,
             publicIpType: PUBLIC_IP_TYPE_STATIC,
             region: region,
             useSpot: false,
+            dataDiskSizeGb: 35,
+            baseImageSnapshot: {
+                enable: true,
+            },
+            dataDiskSnapshot: {
+                enable: true,
+            },
+            deleteInstanceServerOnStop: true,
         }, {
             sunshine: {
                 enable: true,
@@ -75,7 +84,12 @@ describe('AWS lifecycle', () => {
         const instance = instances.find(instance => instance.InstanceId === currentInstanceId);
         assert.ok(instance);
         assert.strictEqual(instance.InstanceType, instanceType);
-    }).timeout(30*60*1000); // 30 minutes timeout as deployment may be long
+
+        // Check base image ID is in output and exists on AWS
+        assert.ok(state.provision.output?.baseImageId, "baseImageId should be in output after deployment");
+        const baseImageExists = await awsClient.checkAmiExists(state.provision.output.baseImageId);
+        assert.strictEqual(baseImageExists, true, `Base image ${state.provision.output.baseImageId} should exist on AWS`);
+    }).timeout(60*60*1000); // 60 minutes timeout as deployment and snapshot + AMI creation may be long
  
     it('should update instance', async () => {
         const instanceUpdater = awsProviderClient.getInstanceUpdater();
@@ -122,14 +136,33 @@ describe('AWS lifecycle', () => {
     for (let i = 0; i < 2; i++) { 
 
         it(`should stop instance (${i+1}/2 for idempotency)`, async () => {
+            const stateBeforeStop = await getCurrentTestState();
+            const instanceIdBeforeStop = stateBeforeStop.provision.output?.instanceId;
+
             const instanceManager = await awsProviderClient.getInstanceManager(instanceName);
             await instanceManager.stop({ wait: true });
 
             const instanceStatus = await instanceManager.getInstanceStatus();
 
-            assert.strictEqual(instanceStatus.configured, true);
-            assert.strictEqual(instanceStatus.serverStatus, ServerRunningStatus.Stopped);
-        }).timeout(20*60*1000); // 20 in timeout as stopping g4dn instances is very long
+            // server has been deleted, so it's not configured anymore and server is in unknown state
+            assert.strictEqual(instanceStatus.configured, false);
+            assert.strictEqual(instanceStatus.serverStatus, ServerRunningStatus.Unknown);
+
+            // Check that instance server is not found anymore (since deleteInstanceServerOnStop is enabled)
+            const awsClient = getAwsClient();
+            if (instanceIdBeforeStop) {
+                const instanceState = await awsClient.getInstanceState(instanceIdBeforeStop);
+                assert.ok(instanceState === undefined || instanceState === InstanceStateName.terminated);
+            }
+
+            // Check data disk snapshot has been created (find ID in state and check on AWS)
+            const stateAfterStop = await getCurrentTestState();
+            assert.strictEqual(stateAfterStop.provision.output?.instanceId, undefined);
+            assert.strictEqual(stateAfterStop.provision.output?.dataDiskId, undefined);
+            assert.ok(stateAfterStop.provision.output?.dataDiskSnapshotId, "dataDiskSnapshotId should be in output after stop");
+            const snapshotExists = await awsClient.checkSnapshotExists(stateAfterStop.provision.output.dataDiskSnapshotId);
+            assert.strictEqual(snapshotExists, true, `Data disk snapshot ${stateAfterStop.provision.output.dataDiskSnapshotId} should exist on AWS`);
+        }).timeout(60*60*1000); // 1h timeout as stopping g4dn instances and creating data disk snapshot is very long
     }
 
     // run twice for idempotency
@@ -148,7 +181,7 @@ describe('AWS lifecycle', () => {
             assert.ok(state.provision.output?.instanceId);
 
             currentInstanceId = state.provision.output.instanceId;
-        }).timeout(2*60*1000);
+        }).timeout(20*60*1000);
     }
 
     it('should restart instance', async () => {
