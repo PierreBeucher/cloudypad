@@ -88,6 +88,15 @@ describe('Linode lifecycle', () => {
         const instanceDetails = await linodeClient.getLinode(currentInstanceServerId)
         assert.ok(instanceDetails, 'Instance details should be available')
         assert.strictEqual(instanceDetails.type, instanceType)
+
+        // Check data disk exists
+        assert.ok(state.provision.output?.dataDiskId, "dataDiskId should be in output after deployment")
+
+        // Check root disk exists
+        assert.ok(state.provision.output?.rootDiskId, "rootDiskId should be in output after deployment")
+
+        // Check base image exists
+        assert.ok(state.provision.output?.baseImageId, "baseImageId should be in output after deployment")
     }).timeout(30*60*1000) // 30 minutes timeout, 
     // may be long as Linode instances are slow to start and creating image snapshot may be long
 
@@ -116,7 +125,9 @@ describe('Linode lifecycle', () => {
             assert.strictEqual(instanceStatus.serverStatus, ServerRunningStatus.Unknown)
 
             const state = await getCurrentTestState()
-            assert.strictEqual(state.provision.output?.instanceServerId, undefined)
+            assert.strictEqual(state.provision.output?.instanceServerId, undefined, "instanceServerId should be undefined after stop")
+            assert.strictEqual(state.provision.output?.dataDiskId, undefined, "dataDiskId should be undefined after stop")
+            assert.ok(state.provision.output?.dataDiskSnapshotId, "dataDiskSnapshotId should be in output after stop")
 
             // instance should be deleted on stop
             const linodeClient = getLinodeClient()
@@ -139,7 +150,9 @@ describe('Linode lifecycle', () => {
             assert.strictEqual(instanceStatus.serverStatus, ServerRunningStatus.Running)
 
             const state = await getCurrentTestState()
-            assert.ok(state.provision.output?.instanceServerId)
+            assert.ok(state.provision.output?.instanceServerId, "instanceServerId should exist after start")
+            assert.ok(state.provision.output?.dataDiskId, "dataDiskId should exist after start")
+            assert.ok(state.provision.output?.dataDiskSnapshotId, "dataDiskSnapshotId should exist after start")
 
             currentInstanceServerId = state.provision.output.instanceServerId
         }).timeout(1200000) // 20 minutes timeout

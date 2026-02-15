@@ -108,6 +108,10 @@ describe('Paperspace lifecycle', () => {
         const machine = machines.find(machine => machine.id === currentMachineId);
         assert.ok(machine);
         assert.strictEqual(machine.machineType, machineType);
+
+        // Paperspace doesn't support separate data disk, root disk, or base image
+        // Only check that machineId is set
+        assert.ok(state.provision.output?.machineId, "machineId should be in output after deployment");
     }).timeout(20*60*1000); // 20 minutes timeout as deployment may be long
  
     // Update not supported yet
@@ -163,6 +167,10 @@ describe('Paperspace lifecycle', () => {
 
             assert.strictEqual(instanceStatus.configured, true);
             assert.strictEqual(instanceStatus.serverStatus, ServerRunningStatus.Stopped);
+
+            // Paperspace doesn't delete instance on stop, so machineId should still exist
+            const state = await getCurrentTestState();
+            assert.ok(state.provision.output?.machineId, "machineId should still exist after stop (Paperspace doesn't delete on stop)");
         }).timeout(20*60*1000); // 20 in timeout as stopping P4000 instances is very long
     }
 
@@ -179,7 +187,7 @@ describe('Paperspace lifecycle', () => {
             assert.strictEqual(instanceStatus.serverStatus, ServerRunningStatus.Running);
 
             const state = await getCurrentTestState();
-            assert.ok(state.provision.output?.machineId);
+            assert.ok(state.provision.output?.machineId, "machineId should exist after start");
 
             currentMachineId = state.provision.output.machineId;
         }).timeout(2*60*1000);

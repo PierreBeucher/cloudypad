@@ -1,4 +1,4 @@
-import { EC2Client, DescribeInstancesCommand, Instance, StartInstancesCommand, StopInstancesCommand, RebootInstancesCommand, waitUntilInstanceRunning, waitUntilInstanceStopped, DescribeInstanceTypesCommand, _InstanceType, InstanceTypeInfo, InstanceTypeOffering, DescribeInstanceTypeOfferingsCommand, DescribeInstanceStatusCommand, InstanceStateName, paginateDescribeInstances, paginateDescribeInstanceTypes, paginateDescribeInstanceTypeOfferings, DescribeImagesCommand, DescribeSnapshotsCommand } from '@aws-sdk/client-ec2'
+import { EC2Client, DescribeInstancesCommand, Instance, StartInstancesCommand, StopInstancesCommand, RebootInstancesCommand, waitUntilInstanceRunning, waitUntilInstanceStopped, DescribeInstanceTypesCommand, _InstanceType, InstanceTypeInfo, InstanceTypeOffering, DescribeInstanceTypeOfferingsCommand, DescribeInstanceStatusCommand, InstanceStateName, paginateDescribeInstances, paginateDescribeInstanceTypes, paginateDescribeInstanceTypeOfferings, DescribeImagesCommand, DescribeSnapshotsCommand, DescribeVolumesCommand, Volume, Image } from '@aws-sdk/client-ec2'
 import { STSClient, GetCallerIdentityCommand } from '@aws-sdk/client-sts'
 import { getLogger, Logger } from '../../log/utils'
 import { loadConfig } from "@smithy/node-config-provider"
@@ -349,6 +349,54 @@ export class AwsClient {
         } catch (error) {
             this.logger.debug(`Error checking snapshot ${snapshotId}: ${error}`)
             return false
+        }
+    }
+
+    /**
+     * Get an EBS volume by volume ID
+     * @param volumeId Volume ID to get
+     * @returns Volume if exists, null otherwise
+     */
+    async getVolume(volumeId: string): Promise<Volume | null> {
+        this.logger.debug(`Getting volume ${volumeId}`)
+        try {
+            const command = new DescribeVolumesCommand({
+                VolumeIds: [volumeId],
+            })
+            const response = await this.ec2Client.send(command)
+            if (response.Volumes && response.Volumes.length > 0) {
+                return response.Volumes[0]
+            }
+            return null
+        } catch (error: any) {
+            if (error?.name === 'InvalidVolume.NotFound') {
+                return null
+            }
+            throw new Error(`Failed to get volume ${volumeId}`, { cause: error })
+        }
+    }
+
+    /**
+     * Get an AMI (image) by image ID
+     * @param imageId AMI ID to get
+     * @returns Image if exists, null otherwise
+     */
+    async getImage(imageId: string): Promise<Image | null> {
+        this.logger.debug(`Getting image ${imageId}`)
+        try {
+            const command = new DescribeImagesCommand({
+                ImageIds: [imageId],
+            })
+            const response = await this.ec2Client.send(command)
+            if (response.Images && response.Images.length > 0) {
+                return response.Images[0]
+            }
+            return null
+        } catch (error: any) {
+            if (error?.name === 'InvalidAMIID.NotFound') {
+                return null
+            }
+            throw new Error(`Failed to get image ${imageId}`, { cause: error })
         }
     }
 

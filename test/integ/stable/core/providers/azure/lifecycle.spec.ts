@@ -96,63 +96,80 @@ describe('Azure lifecycle', () => {
         const instance = instances.find(instance => instance.name === currentVmName);
         assert.ok(instance);
         assert.strictEqual(instance.hardwareProfile?.vmSize, vmSize);
+    }).timeout(30*60*1000); // 30 minutes timeout as deployment with image creation may be long
 
-        // Verify data disk exists in Azure
-        if (state.provision.output.dataDiskId) {
+    it('should have resources matching state output after deployment', async () => {
+        const azureClient = await getAzureClient();
+        const state = await getCurrentTestState();
+        const resourceGroupName = state.provision.output?.resourceGroupName;
+        
+        assert.ok(resourceGroupName, "resourceGroupName should be set");
+
+        // Verify data disk exists and ID matches state output
+        if (state.provision.output?.dataDiskId) {
             const dataDiskName = `${instanceName}-data-disk`;
-            const dataDisk = await azureClient.getDisk(currentResourceGroupName, dataDiskName);
+            const dataDisk = await azureClient.getDisk(resourceGroupName, dataDiskName);
             assert.ok(dataDisk, "Data disk should exist in Azure");
+            assert.strictEqual(dataDisk.id, state.provision.output.dataDiskId, "Data disk ID should match state output");
             assert.strictEqual(dataDisk.diskSizeGB, 100, "Data disk size should be 100 GB");
         }
 
-        // Verify base image exists in Azure
-        if (state.provision.output.baseImageId) {
-            const baseImageName = `${instanceName}-base-image`;
-            const baseImage = await azureClient.getImage(currentResourceGroupName, baseImageName);
-            assert.ok(baseImage, "Base image should exist in Azure");
+        // Verify root disk exists and ID matches state output
+        if (state.provision.output?.rootDiskId) {
+            const rootDiskName = `${instanceName}-osdisk`;
+            const rootDisk = await azureClient.getDisk(resourceGroupName, rootDiskName);
+            assert.ok(rootDisk, "Root disk should exist in Azure");
+            assert.strictEqual(rootDisk.id, state.provision.output.rootDiskId, "Root disk ID should match state output");
         }
-    }).timeout(30*60*1000); // 30 minutes timeout as deployment with image creation may be long
 
-    // // Seems to be stuck - missing await ?
-    // it('should update instance', async () => {
-    //     const instanceUpdater = azureProviderClient.getInstanceUpdater();
-    //     await instanceUpdater.updateStateOnly({
-    //         instanceName: instanceName,
-    //         provisionInputs: {
-    //             vmSize: "Standard_NC4as_T4_v3",
-    //         }, 
-    //     });
+        // Verify base image exists and ID matches state output
+        if (state.provision.output?.baseImageId) {
+            const baseImageName = `${instanceName}-base-image`;
+            const baseImage = await azureClient.getImage(resourceGroupName, baseImageName);
+            assert.ok(baseImage, "Base image should exist in Azure");
+            assert.strictEqual(baseImage.id, state.provision.output.baseImageId, "Base image ID should match state output");
+        }
+    }).timeout(10000);
 
-    //     const instanceManager = await azureProviderClient.getInstanceManager(instanceName);
-    //     await instanceManager.deploy();
+    it('should update instance', async () => {
+        const instanceUpdater = azureProviderClient.getInstanceUpdater();
+        await instanceUpdater.updateStateOnly({
+            instanceName: instanceName,
+            provisionInputs: {
+                vmSize: "Standard_NC4as_T4_v3",
+            }, 
+        });
 
-    //     const azureClient = await getAzureClient();
-    //     const state = await getCurrentTestState();
+        const instanceManager = await azureProviderClient.getInstanceManager(instanceName);
+        await instanceManager.deploy();
 
-    //     assert.ok(state.provision.output?.vmName);
-    //     currentVmName = state.provision.output.vmName;
+        const azureClient = await getAzureClient();
+        const state = await getCurrentTestState();
 
-    //     const instances = await azureClient.listInstances();
-    //     const instance = instances.find(instance => instance.name === currentVmName);
-    //     assert.ok(instance);
-    //     assert.strictEqual(instance.hardwareProfile?.vmSize, "Standard_NC4as_T4_v3");
+        assert.ok(state.provision.output?.vmName);
+        currentVmName = state.provision.output.vmName;
 
-    // }).timeout(15*60*1000);
+        const instances = await azureClient.listInstances();
+        const instance = instances.find(instance => instance.name === currentVmName);
+        assert.ok(instance);
+        assert.strictEqual(instance.hardwareProfile?.vmSize, "Standard_NC4as_T4_v3");
+
+    }).timeout(15*60*1000);
 
 
-    // it('should have a valid instance server output with existing server', async () => {
-    //     const state = await getCurrentTestState();
+    it('should have a valid instance server output with existing server', async () => {
+        const state = await getCurrentTestState();
         
-    //     assert.ok(state.provision.output?.vmName);
-    //     assert.ok(state.provision.output?.resourceGroupName);
-    //     currentVmName = state.provision.output.vmName;
-    //     currentResourceGroupName = state.provision.output.resourceGroupName;
+        assert.ok(state.provision.output?.vmName);
+        assert.ok(state.provision.output?.resourceGroupName);
+        currentVmName = state.provision.output.vmName;
+        currentResourceGroupName = state.provision.output.resourceGroupName;
 
-    //     const azureClient = await getAzureClient();
+        const azureClient = await getAzureClient();
         
-    //     const instanceState = await azureClient.getInstanceStatus(currentResourceGroupName, currentVmName);
-    //     assert.strictEqual(instanceState, AzureVmStatus.Running);
-    // }).timeout(60*1000);
+        const instanceState = await azureClient.getInstanceStatus(currentResourceGroupName, currentVmName);
+        assert.strictEqual(instanceState, AzureVmStatus.Running);
+    }).timeout(60*1000);
 
 
     it('should wait for instance readiness after deployment', async () => {
@@ -178,6 +195,7 @@ describe('Azure lifecycle', () => {
 
             // Since deleteInstanceServerOnStop is enabled, VM should be deleted (vmName should be undefined)
             assert.strictEqual(state.provision.output?.vmName, undefined, "VM should be deleted when stopped with deleteInstanceServerOnStop enabled");
+            assert.strictEqual(state.provision.output?.dataDiskId, undefined, "dataDiskId should be undefined after stop");
 
             // Verify data disk snapshot was created
             assert.ok(state.provision.output?.dataDiskSnapshotId, "Data disk snapshot should be created on stop");
@@ -203,6 +221,7 @@ describe('Azure lifecycle', () => {
             const state = await getCurrentTestState();
             assert.ok(state.provision.output?.vmName, "VM should be recreated on start");
             assert.ok(state.provision.output?.dataDiskId, "Data disk should be restored from snapshot");
+            assert.ok(state.provision.output?.dataDiskSnapshotId, "dataDiskSnapshotId should exist after start");
             assert.ok(state.provision.output?.baseImageId, "Base image should be used to recreate VM");
 
             currentVmName = state.provision.output.vmName;
@@ -215,39 +234,39 @@ describe('Azure lifecycle', () => {
         }).timeout(20*60*1000); // Increased timeout for VM recreation from image
     }
 
-    // it('should restart instance', async () => {
+    it('should restart instance', async () => {
 
-    //     const stateBefore = await getCurrentTestState();
-    //     const vmNameBefore = stateBefore.provision.output?.vmName;
+        const stateBefore = await getCurrentTestState();
+        const vmNameBefore = stateBefore.provision.output?.vmName;
 
-    //     assert.ok(vmNameBefore);
+        assert.ok(vmNameBefore);
 
-    //     const instanceManager = await azureProviderClient.getInstanceManager(instanceName);
-    //     await instanceManager.restart({ wait: true });
+        const instanceManager = await azureProviderClient.getInstanceManager(instanceName);
+        await instanceManager.restart({ wait: true });
 
-    //     const stateAfter = await getCurrentTestState();
-    //     assert.strictEqual(stateAfter.provision.output?.vmName, vmNameBefore);
+        const stateAfter = await getCurrentTestState();
+        assert.strictEqual(stateAfter.provision.output?.vmName, vmNameBefore);
 
-    //     const instanceStatus = await instanceManager.getInstanceStatus();
-    //     assert.strictEqual(instanceStatus.configured, true);
-    //     assert.strictEqual(instanceStatus.provisioned, true);
-    //     assert.strictEqual(instanceStatus.serverStatus, ServerRunningStatus.Running);
-    // }).timeout(2*60*1000);
+        const instanceStatus = await instanceManager.getInstanceStatus();
+        assert.strictEqual(instanceStatus.configured, true);
+        assert.strictEqual(instanceStatus.provisioned, true);
+        assert.strictEqual(instanceStatus.serverStatus, ServerRunningStatus.Running);
+    }).timeout(2*60*1000);
 
-    // it('should wait for instance readiness after restart', async () => {
-    //     await waitForInstanceReadiness('restart');
-    // }).timeout(2*60*1000);
+    it('should wait for instance readiness after restart', async () => {
+        await waitForInstanceReadiness('restart');
+    }).timeout(2*60*1000);
 
-    // it('should destroy instance', async () => {
-    //     const instanceManager = await azureProviderClient.getInstanceManager(instanceName);
-    //     await instanceManager.destroy();
-    // }).timeout(20*60*1000); // large timeout as destroying NC instances is very long
+    it('should destroy instance', async () => {
+        const instanceManager = await azureProviderClient.getInstanceManager(instanceName);
+        await instanceManager.destroy();
+    }).timeout(20*60*1000); // large timeout as destroying NC instances is very long
 
-    // it('instance does not exist after destroy', async () => {
-    //     const coreClient = new CloudypadClient({ config: coreConfig });
-    //     const instances = await coreClient.getAllInstances();
-    //     assert.strictEqual(instances.find(instance => instance === instanceName), undefined);
-    // });
+    it('instance does not exist after destroy', async () => {
+        const coreClient = new CloudypadClient({ config: coreConfig });
+        const instances = await coreClient.getAllInstances();
+        assert.strictEqual(instances.find(instance => instance === instanceName), undefined);
+    });
     
 
 }).timeout(30*60*1000); // 30 minutes timeout as deployment and stopping instances may be long

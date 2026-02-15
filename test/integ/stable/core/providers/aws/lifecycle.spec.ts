@@ -84,12 +84,33 @@ describe('AWS lifecycle', () => {
         const instance = instances.find(instance => instance.InstanceId === currentInstanceId);
         assert.ok(instance);
         assert.strictEqual(instance.InstanceType, instanceType);
-
-        // Check base image ID is in output and exists on AWS
-        assert.ok(state.provision.output?.baseImageId, "baseImageId should be in output after deployment");
-        const baseImageExists = await awsClient.checkAmiExists(state.provision.output.baseImageId);
-        assert.strictEqual(baseImageExists, true, `Base image ${state.provision.output.baseImageId} should exist on AWS`);
     }).timeout(60*60*1000); // 60 minutes timeout as deployment and snapshot + AMI creation may be long
+
+    it('should have resources matching state output after deployment', async () => {
+        const awsClient = getAwsClient();
+        const state = await getCurrentTestState();
+
+        // Verify data disk exists and ID matches state output
+        if (state.provision.output?.dataDiskId) {
+            const volume = await awsClient.getVolume(state.provision.output.dataDiskId);
+            assert.ok(volume, "Data disk should exist in AWS");
+            assert.strictEqual(volume.VolumeId, state.provision.output.dataDiskId, "Data disk ID should match state output");
+        }
+
+        // Verify root disk exists and ID matches state output
+        if (state.provision.output?.rootDiskId) {
+            const volume = await awsClient.getVolume(state.provision.output.rootDiskId);
+            assert.ok(volume, "Root disk should exist in AWS");
+            assert.strictEqual(volume.VolumeId, state.provision.output.rootDiskId, "Root disk ID should match state output");
+        }
+
+        // Verify base image exists and ID matches state output
+        if (state.provision.output?.baseImageId) {
+            const image = await awsClient.getImage(state.provision.output.baseImageId);
+            assert.ok(image, "Base image should exist in AWS");
+            assert.strictEqual(image.ImageId, state.provision.output.baseImageId, "Base image ID should match state output");
+        }
+    }).timeout(10000);
  
     it('should update instance', async () => {
         const instanceUpdater = awsProviderClient.getInstanceUpdater();
@@ -178,7 +199,9 @@ describe('AWS lifecycle', () => {
             assert.strictEqual(instanceStatus.serverStatus, ServerRunningStatus.Running);
 
             const state = await getCurrentTestState();
-            assert.ok(state.provision.output?.instanceId);
+            assert.ok(state.provision.output?.instanceId, "instanceId should exist after start");
+            assert.ok(state.provision.output?.dataDiskId, "dataDiskId should exist after start");
+            assert.ok(state.provision.output?.dataDiskSnapshotId, "dataDiskSnapshotId should exist after start");
 
             currentInstanceId = state.provision.output.instanceId;
         }).timeout(20*60*1000);

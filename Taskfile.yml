@@ -148,9 +148,6 @@ tasks:
     - npx mocha --config test/integ/.mocharc.json ./test/integ/stable/core/providers/linode/client.spec.ts
     - npx mocha --config test/integ/.mocharc.json ./test/integ/stable/core/providers/linode/lifecycle.spec.ts 
 
-  test-integ-scaleway-lifecycle-with-server-deletion:
-    - npx mocha --config test/integ/.mocharc.json ./test/integ/scaleway/lifecycle-with-server-deletion.spec.ts 
-
   # Ensure analytics key are matching in various places in code 
   test-analytics-key-match:
     - cmd: test/shell/test-matching-analytics-key.sh
