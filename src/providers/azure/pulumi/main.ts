@@ -121,11 +121,11 @@ class CloudyPadAzureInstance extends pulumi.ComponentResource {
 
         const adminUsername = "ubuntu"
         
-        // Create data disk if requested and state is "present"
+        // Create data disk if requested and state is set and not "absent"
         // Copy disk from snapshot if snapshotId is provided
         // Otherwise create an empty disk
         let dataDisk: az.compute.Disk | undefined = undefined
-        if (args.dataDisk?.state === "present") {
+        if (args.dataDisk && args.dataDisk.state !== "absent") {
             dataDisk = new az.compute.Disk(`${name}-data-disk`, {
                 diskName: `${name}-data-disk`,
                 resourceGroupName: resourceGroup.name,
