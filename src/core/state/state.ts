@@ -41,6 +41,7 @@ const CommonProvisionInputV1Schema = z.object({
         keepOnDeletion: z.boolean().optional().describe("Whether to keep base image on instance deletion. Default: false"),
     }).optional().describe("Base image snapshot configuration to capture configured system (NVIDIA drivers, Cloudy Pad, etc.)"),
     deleteInstanceServerOnStop: z.boolean().describe("Whether instance server should be deleted on instance stop and re-created on next start").optional(),
+    imageId: z.string().optional().describe("Existing image ID for instance server. If set, disk size must be equal or greater than image size. Format is provider-specific (e.g., AMI ID for AWS, image ID for GCP, etc.)."),
     
     // Runtime state (updated by manager before calling provision to control provisioner behavior)
     // These represent the desired state of resources and are updated on start/stop operations

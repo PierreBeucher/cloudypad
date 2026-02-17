@@ -50,15 +50,6 @@ export class LinodeProvisioner extends AbstractInstanceProvisioner<LinodeProvisi
     async doBaseImageSnapshotProvision(opts?: ProvisionerActionOptions): Promise<LinodeProvisionOutputV1> {
         this.logger.info(`Base image snapshot provision for Linode instance ${this.args.instanceName}`)
 
-        // If imageId is set in input, use it directly as passthrough (user provides their own image)
-        if (this.args.provisionInput.imageId) {
-            this.logger.debug(`Using provided imageId as baseImageId passthrough: ${this.args.provisionInput.imageId}`)
-            return {
-                ...this.getCurrentProvisionOutput(),
-                baseImageId: this.args.provisionInput.imageId,
-            }
-        }
-
         // Root disk ID and instance server ID are required to create an image
         if (!this.args.provisionOutput?.rootDiskId || !this.args.provisionOutput?.instanceServerId) {
             throw new Error(`Root disk ID and instance server ID are required to create base image for instance ${this.args.instanceName}. ` +

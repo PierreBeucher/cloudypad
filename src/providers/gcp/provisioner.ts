@@ -115,15 +115,6 @@ export class GcpProvisioner extends AbstractInstanceProvisioner<GcpProvisionInpu
     async doBaseImageSnapshotProvision(opts?: ProvisionerActionOptions): Promise<GcpProvisionOutputV1> {
         this.logger.info(`Base image snapshot provision for GCP instance ${this.args.instanceName}`)
 
-        // If imageId is set in input, use it directly as passthrough (user provides their own image)
-        if (this.args.provisionInput.imageId) {
-            this.logger.debug(`Using provided imageId as baseImageId passthrough: ${this.args.provisionInput.imageId}`)
-            return {
-                ...this.getCurrentProvisionOutput(),
-                baseImageId: this.args.provisionInput.imageId,
-            }
-        }
-
         // Root disk ID is required to create a base image
         if (!this.args.provisionOutput?.rootDiskId) {
             throw new Error(`Root disk ID is required to create base image snapshot for instance ${this.args.instanceName}. ` +

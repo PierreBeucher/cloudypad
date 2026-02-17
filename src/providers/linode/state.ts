@@ -14,7 +14,6 @@ const LinodeProvisionInputV1Schema = CommonProvisionInputV1Schema.extend({
     region: z.string().describe("Linode region"),
     instanceType: z.string().describe("Linode instance type"),
     apiToken: z.string().optional().describe("Linode API token. If not set, LINODE_TOKEN environment variable will be used."),
-    imageId: z.string().optional().describe("Existing image ID for instance server. If set, disk size must be equal or greater than image size"),
     rootDiskSizeGb: z.number().describe("Root (OS) disk size in GB"),
     dataDiskSizeGb: z.number().describe("Data disk size in GB. If non-0, a disk dedicated for instance data (such as games data) will be created"),
     watchdogEnabled: z.boolean().describe("Enable or disable Linode Watchdog. When enabled, automatically restarts instance on shutdown " +

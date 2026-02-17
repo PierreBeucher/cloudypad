@@ -16,7 +16,6 @@ const AwsProvisionInputV1Schema = CommonProvisionInputV1Schema.extend({
     publicIpType: z.enum([PUBLIC_IP_TYPE_STATIC, PUBLIC_IP_TYPE_DYNAMIC]).describe("Type of public IP address"),
     region: z.string().describe("AWS region"),
     useSpot: z.boolean().describe("Whether to use spot instances"),
-    imageId: z.string().optional().describe("Existing AMI ID for instance server. If set, disk size must be equal or greater than image size."),
     costAlert: z.object({
         limit: z.number().describe("Cost alert limit (USD)"),
         notificationEmail: z.string().describe("Cost alert notification email"),

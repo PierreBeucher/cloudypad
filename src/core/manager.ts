@@ -489,6 +489,26 @@ export class GenericInstanceManager<ST extends InstanceStateV1> implements Insta
     private async doBaseImageSnapshotProvision(opts?: ActionOptions): Promise<void> {
         this.logger.debug(`Do base image snapshot provision for instance ${this.name()}`)
 
+        const currentState = await this.getState()
+
+        // If imageId is set in input, use it directly as passthrough (user provides their own image)
+        if (currentState.provision.input.imageId) {
+            this.logger.debug(`Using provided imageId as baseImageId passthrough: ${currentState.provision.input.imageId}`)
+
+            const currentOutput = currentState.provision.output
+            if(!currentOutput){
+                throw new Error(`Base image snapshot provision for instance ${this.name()} failed: no provision output. ` +
+                    `Base image provision requires existing provision output to be run.`)
+            }
+
+            const outputs = {
+                ...currentOutput,
+                baseImageId: currentState.provision.input.imageId,
+            }
+            await this.stateWriter.setProvisionOutput(this.instanceName, outputs)
+            return
+        }
+
         // Stop instance to ensure data consistency before creating snapshot
         // Directly via runner, not via this.stop(), to ensure disk is kept before creating snapshot
         // We don't want a full "stop" of all resources which may delete the instance server and root disk

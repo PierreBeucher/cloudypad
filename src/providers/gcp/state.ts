@@ -23,7 +23,6 @@ const GcpProvisionInputV1Schema = CommonProvisionInputV1Schema.extend({
     region: z.string().describe("GCP region"),
     zone: z.string().describe("GCP zone"),
     useSpot: z.boolean().describe("Whether to use spot instances"),
-    imageId: z.string().optional().describe("Existing image ID for instance server. If set, disk size must be equal or greater than image size."),
     costAlert: CostAlertSchema,
 })
 

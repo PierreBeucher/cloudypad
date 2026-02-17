@@ -18,7 +18,6 @@ const ScalewayProvisionInputV1Schema = CommonProvisionInputV1Schema.extend({
     instanceType: z.string().describe("Scaleway instance type"),
     deleteInstanceServerOnStop: z.boolean().describe("Whether instance server should be deleted on instance stop and re-created on next start").optional(),
     diskSizeGb: z.number().describe("Root (OS) disk size in GB."),
-    imageId: z.string().optional().describe("Existing root OS image ID for instance server. If set, disk size must be equal or greater than image size."),
     dataDiskSizeGb: z.number().default(0).describe("Data disk size in GB. If non-0, a disk dedicated for instance data (such as games data) will be created."),
 })
 

@@ -24,7 +24,6 @@ const AzureProvisionInputV1Schema = CommonProvisionInputV1Schema.extend({
     subscriptionId: z.string().describe("Azure Subscription ID"),
     location: z.string().describe("Azure location/region"),
     useSpot: z.boolean().describe("Whether to use spot instances"),
-    imageId: z.string().optional().describe("Existing Azure Image ID for instance server. If set, disk size must be equal or greater than image size."),
     costAlert: z.object({
         limit: z.number().describe("Cost alert limit"),
         notificationEmail: z.string().describe("Cost alert notification email"),
