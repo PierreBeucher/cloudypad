@@ -2,6 +2,8 @@
 alwaysApply: true
 ---
 
+Coding rules for writing code and test and running basic testing and feedback commands
+
 # Coding best practice
 
 - Always respect Typescript typing. Never use `any` or such unless specifically allowed
@@ -15,3 +17,20 @@ function(anotherSubVar)
 // do
 function(this.foo.bar.baz.a.b.c)
 ```
+
+# Code architecture 
+
+Always consider the overral code Architecture describe in `architecture.mdc`
+
+# Writing code and test
+
+When you write new code, ALWAYS follow this workflow unless specifically asked otherwise:
+
+- Start by writing unit tests under `test/unit` for related component if applicable
+  - Any modification of `src/**` is most likely to have an impact on unit tests
+- Write the code 
+- First run test only for impacted component(s) with command such as `task test-unit -- test/unit/core/updater.spec.ts` 
+  - you can run multiple commands for multiple files 
+  - Even run for a folder with `task test-unit -- test/unit/core`
+- Adapt and fix accordingly: update code and re-run tests until it works
+  - If you become stuck  or see you can't get over a problem after a few attempts, stop and ask for help
