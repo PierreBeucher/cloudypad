@@ -463,7 +463,7 @@ export class GenericInstanceManager<ST extends InstanceStateV1> implements Insta
 
         // Data snapshot provision. Only call if dataDiskSnapshot is enabled
         // and we have data disk snapshot ID output
-        if(currentState.provision.input.dataDiskSnapshot?.enable && currentState.provision.output?.dataDiskSnapshotId){
+        if(currentState.provision.input.dataDiskSnapshot?.enable && currentState.provision.output?.dataDiskId){
             this.logger.debug(`Running data snapshot provision for instance ${this.name()}`)
             const snapshotOutputs = await provisioner.dataSnapshotProvision({
                 pulumiCancel: opts?.pulumiCancel
