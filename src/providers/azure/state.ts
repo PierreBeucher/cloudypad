@@ -10,9 +10,9 @@ export enum AZURE_SUPPORTED_DISK_TYPES {
 }
 
 const AzureProvisionOutputV1Schema = CommonProvisionOutputV1Schema.extend({
-    vmName: z.string().describe("Azure VM name").optional(),
+    vmName: z.string().optional().describe("Azure VM name"),
     resourceGroupName: z.string().describe("Azure Resource Group name"),
-    rootDiskId: z.string().describe("Azure OS managed disk ID").optional(),
+    rootDiskId: z.string().optional().describe("Azure OS managed disk ID"),
 })
 
 const AzureProvisionInputV1Schema = CommonProvisionInputV1Schema.extend({

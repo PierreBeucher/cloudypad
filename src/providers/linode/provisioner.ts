@@ -44,7 +44,16 @@ export class LinodeProvisioner extends AbstractInstanceProvisioner<LinodeProvisi
         await pulumiClient.setConfig(stackConfig)
         const pulumiOutputs = await pulumiClient.up({ cancel: opts?.pulumiCancel })
 
-        return this.pulumiOutputsToProvisionOutput(pulumiOutputs)
+        return {
+            // re-use output from previous state as much as possible, but main provision updates most of it
+            ...(this.args.provisionOutput ?? {}),
+            host: pulumiOutputs.instanceHostname ?? pulumiOutputs.instanceIPv4,
+            publicIPv4: pulumiOutputs.instanceIPv4,
+            instanceServerName: pulumiOutputs.instanceServerName,
+            instanceServerId: pulumiOutputs.instanceServerId,
+            dataDiskId: pulumiOutputs.dataDiskId,
+            rootDiskId: pulumiOutputs.rootDiskId,
+        }
     }
 
     async doBaseImageSnapshotProvision(opts?: ProvisionerActionOptions): Promise<LinodeProvisionOutputV1> {
@@ -77,7 +86,7 @@ export class LinodeProvisioner extends AbstractInstanceProvisioner<LinodeProvisi
         this.logger.debug(`Base image output: ${JSON.stringify(imageOutput)}`)
 
         return {
-            ...this.getCurrentProvisionOutput(),
+            ...(this.args.provisionOutput ?? {}),
             baseImageId: imageOutput.imageId,
         }
     }
@@ -102,21 +111,6 @@ export class LinodeProvisioner extends AbstractInstanceProvisioner<LinodeProvisi
         this.logger.info(`Destroying base image snapshot stack for instance ${this.args.instanceName}`)
         const baseImageClient = this.buildBaseImageSnapshotPulumiClient()
         await baseImageClient.destroy({ cancel: opts?.pulumiCancel })
-    }
-
-    /**
-     * Build current output from args, used when no changes are made.
-     */
-    private getCurrentProvisionOutput(): LinodeProvisionOutputV1 {
-        return {
-            host: this.args.provisionOutput?.host ?? '',
-            publicIPv4: this.args.provisionOutput?.publicIPv4,
-            instanceServerName: this.args.provisionOutput?.instanceServerName,
-            instanceServerId: this.args.provisionOutput?.instanceServerId,
-            dataDiskId: this.args.provisionOutput?.dataDiskId ?? '',
-            rootDiskId: this.args.provisionOutput?.rootDiskId,
-            baseImageId: this.args.provisionOutput?.baseImageId,
-        }
     }
 
     private buildPulumiConfig(): PulumiStackConfigLinode {
@@ -149,19 +143,6 @@ export class LinodeProvisioner extends AbstractInstanceProvisioner<LinodeProvisi
                 domainName: this.args.provisionInput.dns.domainName,
                 record: this.args.provisionInput.dns.record,
             } : undefined,
-        }
-    }
-
-    private pulumiOutputsToProvisionOutput(pulumiOutputs: LinodePulumiOutput): LinodeProvisionOutputV1 {
-        return {
-            host: pulumiOutputs.instanceHostname ?? "unknown",
-            publicIPv4: pulumiOutputs.instanceIPv4,
-            instanceServerName: pulumiOutputs.instanceServerName,
-            instanceServerId: pulumiOutputs.instanceServerId,
-            dataDiskId: pulumiOutputs.dataDiskId,
-            rootDiskId: pulumiOutputs.rootDiskId,
-            // Preserve baseImageId from previous output if any
-            baseImageId: this.args.provisionOutput?.baseImageId,
         }
     }
 

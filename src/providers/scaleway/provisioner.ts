@@ -48,6 +48,12 @@ export class ScalewayProvisioner extends AbstractInstanceProvisioner<ScalewayPro
             )
         }
 
+        if(!this.args.provisionOutput){
+            throw new Error(`Provision output is not available for instance ${this.args.instanceName}, this function should not be called. ` +
+                `This is an internal error, please report an issue. Full args: ${JSON.stringify(this.args)}, options: ${JSON.stringify(opts)}`
+            )
+        }
+
         const snapshotClient = this.buildDataDiskSnapshotPulumiClient()
 
         // don't run Pulumi if there's no data disk ID to snapshot or desired state is set to LIVE
@@ -58,7 +64,8 @@ export class ScalewayProvisioner extends AbstractInstanceProvisioner<ScalewayPro
 
             const currentSnapshotPulumiOutput = await snapshotClient.getOutputs()
             return {
-                ...this.getCurrentProvisionOutput(),
+                // override existing output with new snapshot ID
+                ...(this.args.provisionOutput ?? {}),
                 dataDiskSnapshotId: currentSnapshotPulumiOutput?.snapshotId,
             }
         }
@@ -79,7 +86,8 @@ export class ScalewayProvisioner extends AbstractInstanceProvisioner<ScalewayPro
 
         // Return output with snapshot info
         return {
-            ...this.getCurrentProvisionOutput(),
+            // override existing output with new snapshot ID
+            ...(this.args.provisionOutput ?? {}),
             dataDiskSnapshotId: snapshotOutput.snapshotId,
         }
     }
@@ -98,7 +106,8 @@ export class ScalewayProvisioner extends AbstractInstanceProvisioner<ScalewayPro
         const machineDataDiskLookupId = pulumiOutputs.dataDiskId ? pulumiOutputs.dataDiskId.split("/").pop() : undefined
 
         return {
-            ...this.getCurrentProvisionOutput(),
+            // re-use output from previous state as much as possible, but main provision updates most of it
+            ...(this.args.provisionOutput ?? {}),
             host: pulumiOutputs.publicIp,
             publicIPv4: pulumiOutputs.publicIp,
             instanceServerName: pulumiOutputs.instanceServerName ?? undefined,
@@ -135,25 +144,8 @@ export class ScalewayProvisioner extends AbstractInstanceProvisioner<ScalewayPro
         this.logger.debug(`Base image snapshot output: ${JSON.stringify(imageOutput)}`)
 
         return {
-            ...this.getCurrentProvisionOutput(),
+            ...(this.args.provisionOutput ?? {}),
             baseImageId: imageOutput?.imageId,
-        }
-    }
-
-    /**
-     * Build current output from args, used when no changes are made.
-     */
-    private getCurrentProvisionOutput(): ScalewayProvisionOutputV1 {
-        return {
-            host: this.args.provisionOutput?.host ?? '',
-            publicIPv4: this.args.provisionOutput?.publicIPv4,
-            instanceServerName: this.args.provisionOutput?.instanceServerName,
-            instanceServerId: this.args.provisionOutput?.instanceServerId,
-            dataDiskId: this.args.provisionOutput?.dataDiskId,
-            rootDiskId: this.args.provisionOutput?.rootDiskId,
-            baseImageId: this.args.provisionOutput?.baseImageId,
-            dataDiskSnapshotId: this.args.provisionOutput?.dataDiskSnapshotId,
-            machineDataDiskLookupId: this.args.provisionOutput?.machineDataDiskLookupId,
         }
     }
 

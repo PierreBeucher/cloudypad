@@ -4,9 +4,9 @@ import { CLOUDYPAD_PROVIDER_LINODE } from "../../core/const"
 import { GenericStateParser } from "../../core/state/parser"
 
 const LinodeProvisionOutputV1Schema = CommonProvisionOutputV1Schema.extend({
-    instanceServerName: z.string().describe("Linode instance server name").optional(),
-    instanceServerId: z.string().describe("Linode instance server ID").optional(),
-    rootDiskId: z.string().describe("Linode root disk ID").optional(),
+    instanceServerName: z.string().optional().describe("Linode instance server name"),
+    instanceServerId: z.string().optional().describe("Linode instance server ID"),
+    rootDiskId: z.string().optional().describe("Linode root disk ID"),
     dataDiskId: z.string().describe("Linode data disk ID"),
 })
 

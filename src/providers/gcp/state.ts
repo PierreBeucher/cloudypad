@@ -5,7 +5,7 @@ import { CLOUDYPAD_PROVIDER_GCP, PUBLIC_IP_TYPE_DYNAMIC, PUBLIC_IP_TYPE_STATIC }
 import { GenericStateParser } from "../../core/state/parser"
 
 const GcpProvisionOutputV1Schema = CommonProvisionOutputV1Schema.extend({
-    instanceName: z.string().describe("GCP instance name"),
+    instanceName: z.string().optional().describe("GCP instance name"),
     rootDiskId: z.string().optional().describe("GCP boot disk ID"),
     dataDiskId: z.string().optional().describe("GCP data disk ID"),
 })

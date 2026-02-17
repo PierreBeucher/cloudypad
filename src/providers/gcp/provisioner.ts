@@ -49,6 +49,12 @@ export class GcpProvisioner extends AbstractInstanceProvisioner<GcpProvisionInpu
             )
         }
 
+        if(!this.args.provisionOutput){
+            throw new Error(`Provision output is not available for instance ${this.args.instanceName}, this function should not be called. ` +
+                `This is an internal error, please report an issue. Full args: ${JSON.stringify(this.args)}, options: ${JSON.stringify(opts)}`
+            )
+        }
+
         // don't run Pulumi if there's no data disk ID to snapshot or desired state is set to LIVE
         // If LIVE, snapshot update must NOT be done as disk may be actively in use and creating a snapshot
         // on active disk risks data corruption or plain failure.
@@ -58,7 +64,7 @@ export class GcpProvisioner extends AbstractInstanceProvisioner<GcpProvisionInpu
             // Return current output without trying to access Pulumi stack
             // On initial deploy, there's no data disk yet, so no snapshot to create
             return {
-                ...this.getCurrentProvisionOutput(),
+                ...this.args.provisionOutput,
                 dataDiskSnapshotId: this.args.provisionOutput?.dataDiskSnapshotId,
             }
         }
@@ -79,7 +85,7 @@ export class GcpProvisioner extends AbstractInstanceProvisioner<GcpProvisionInpu
 
         // Return output with snapshot info
         return {
-            ...this.getCurrentProvisionOutput(),
+            ...(this.args.provisionOutput ?? {}),
             dataDiskSnapshotId: snapshotOutput.snapshotId,
         }
     }
@@ -99,7 +105,8 @@ export class GcpProvisioner extends AbstractInstanceProvisioner<GcpProvisionInpu
         const pulumiOutputs = await pulumiClient.up({ cancel: opts?.pulumiCancel })
 
         return {
-            ...this.getCurrentProvisionOutput(),
+            // re-use output from previous state as much as possible, but main provision updates most of it
+            ...(this.args.provisionOutput ?? {}),
             host: pulumiOutputs.publicIp,
             publicIPv4: pulumiOutputs.publicIp,
             instanceName: pulumiOutputs.instanceName,
@@ -137,27 +144,10 @@ export class GcpProvisioner extends AbstractInstanceProvisioner<GcpProvisionInpu
         this.logger.debug(`Base image snapshot output: ${JSON.stringify(imageOutput)}`)
 
         return {
-            ...this.getCurrentProvisionOutput(),
+            ...(this.args.provisionOutput ?? {}),
             baseImageId: imageOutput?.imageId,
         }
     }
-
-    /**
-     * Build current output from args, used when no changes are made.
-     */
-    private getCurrentProvisionOutput(): GcpProvisionOutputV1 {
-        return {
-            host: this.args.provisionOutput?.host ?? '',
-            publicIPv4: this.args.provisionOutput?.publicIPv4,
-            instanceName: this.args.provisionOutput?.instanceName ?? '',
-            rootDiskId: this.args.provisionOutput?.rootDiskId,
-            dataDiskId: this.args.provisionOutput?.dataDiskId,
-            baseImageId: this.args.provisionOutput?.baseImageId,
-            dataDiskSnapshotId: this.args.provisionOutput?.dataDiskSnapshotId,
-            machineDataDiskLookupId: this.args.provisionOutput?.machineDataDiskLookupId,
-        }
-    }
-
     /**
      * Build Pulumi config from provision input, including runtime state.
      */
