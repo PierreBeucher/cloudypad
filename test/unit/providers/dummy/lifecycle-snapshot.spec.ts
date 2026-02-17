@@ -14,7 +14,7 @@ describe('Dummy instance lifecycle', () => {
 
     const coreConfig = getUnitTestCoreConfig()
 
-    const DUMMY_INSTANCE_NAME = "dummy-instance-lifecycle-test"
+    const DUMMY_INSTANCE_NAME = "dummy-instance-lifecycle-with-snapshot-test"
     const DUMMY_INSTANCE_TYPE = "dummy-instance-lifecycle-test-type-1"
 
     const DUMMY_INSTANCE_INPUT: DummyInstanceInput = {
