@@ -5,7 +5,7 @@ WORKDIR /app
 # Sunshine
 # https://github.com/LizardByte/Sunshine/releases
 FROM download-base AS download-sunshine
-ARG SUNSHINE_VERSION=2025.924.154138
+ARG SUNSHINE_VERSION=2026.218.44016
 RUN curl -L -o /app/sunshine.deb "https://github.com/LizardByte/Sunshine/releases/download/v${SUNSHINE_VERSION}/sunshine-ubuntu-24.04-amd64.deb"
 
 # Steam
@@ -19,20 +19,20 @@ RUN curl -o /app/steam.deb "https://repo.steampowered.com/steam/archive/stable/s
 # Lutris
 # https://github.com/lutris/lutris/releases
 FROM download-base AS download-lutris
-ARG LUTRIS_VERSION="0.5.18"
+ARG LUTRIS_VERSION="0.5.20"
 RUN curl -L -o /app/lutris.deb "https://github.com/lutris/lutris/releases/download/v${LUTRIS_VERSION}/lutris_${LUTRIS_VERSION}_all.deb"
 
 # Heroic
 # https://github.com/Heroic-Games-Launcher/HeroicGamesLauncher/releases
 FROM download-base AS download-heroic
-ARG HEROIC_VERSION="2.18.1"
+ARG HEROIC_VERSION="2.19.1"
 RUN curl -L -o /app/heroic.deb "https://github.com/Heroic-Games-Launcher/HeroicGamesLauncher/releases/download/v${HEROIC_VERSION}/Heroic-${HEROIC_VERSION}-linux-amd64.deb"
 
 # 
 # Sunshine image based on Ubuntu 24.04
 # with desktop environment, game launchers and dependencies
 #
-FROM ubuntu:noble-20250925@sha256:728785b59223d755e3e5c5af178fab1be7031f3522c5ccd7a0b32b80d8248123
+FROM ubuntu:noble-20260210.1@sha256:98ff7968124952e719a8a69bb3cccdd217f5fe758108ac4f21ad22e1df44d237
 
 ENV DEBIAN_FRONTEND=noninteractive
 
@@ -226,7 +226,7 @@ apt install -y /app/heroic.deb
 _HEROIC
 
 # GE-Proton version that will be installed and configured for Heroic by default
-ENV CLOUDYPAD_HEROIC_DEFAULT_GEPROTON_VERSION="GE-Proton10-17"
+ENV CLOUDYPAD_HEROIC_DEFAULT_GEPROTON_VERSION="GE-Proton10-32"
 
 # 
 # Global environment variables
