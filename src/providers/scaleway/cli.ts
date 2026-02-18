@@ -5,27 +5,53 @@ import { AbstractInputPrompter, PromptOptions } from "../../cli/prompter";
 import { ScalewayClient } from "./sdk-client";
 import { CLOUDYPAD_PROVIDER_SCALEWAY } from "../../core/const";
 import { PartialDeep } from "type-fest";
-import { CLI_OPTION_AUTO_STOP_TIMEOUT, CLI_OPTION_AUTO_STOP_ENABLE, CLI_OPTION_STREAMING_SERVER, CLI_OPTION_SUNSHINE_IMAGE_REGISTRY, CLI_OPTION_SUNSHINE_IMAGE_TAG, CLI_OPTION_SUNSHINE_PASSWORD, CLI_OPTION_SUNSHINE_USERNAME, CliCommandGenerator, CreateCliArgs, UpdateCliArgs, CLI_OPTION_DISK_SIZE, CLI_OPTION_USE_LOCALE, CLI_OPTION_KEYBOARD_LAYOUT, CLI_OPTION_KEYBOARD_MODEL, CLI_OPTION_KEYBOARD_VARIANT, CLI_OPTION_KEYBOARD_OPTIONS, CLI_OPTION_DATA_DISK_SIZE, CLI_OPTION_ROOT_DISK_SIZE, BuildCreateCommandArgs, BuildUpdateCommandArgs, CLI_OPTION_DELETE_INSTANCE_SERVER_ON_STOP, CLI_OPTION_RATE_LIMIT_MAX_MBPS, CLI_OPTION_SUNSHINE_MAX_BITRATE_KBPS, CLI_OPTION_DATA_DISK_SNAPSHOT_ENABLE, CLI_OPTION_BASE_IMAGE_SNAPSHOT_ENABLE, CLI_OPTION_KEEP_BASE_IMAGE_ON_DELETION } from "../../cli/command";
+import { CreateCliArgsSchema, CLI_OPTION_AUTO_STOP_TIMEOUT, CLI_OPTION_AUTO_STOP_ENABLE, CLI_OPTION_STREAMING_SERVER, CLI_OPTION_SUNSHINE_IMAGE_REGISTRY, CLI_OPTION_SUNSHINE_IMAGE_TAG, CLI_OPTION_SUNSHINE_PASSWORD, CLI_OPTION_SUNSHINE_USERNAME, CliCommandGenerator, UpdateCliArgsSchema, CLI_OPTION_DISK_SIZE, CLI_OPTION_USE_LOCALE, CLI_OPTION_KEYBOARD_LAYOUT, CLI_OPTION_KEYBOARD_MODEL, CLI_OPTION_KEYBOARD_VARIANT, CLI_OPTION_KEYBOARD_OPTIONS, CLI_OPTION_DATA_DISK_SIZE, CLI_OPTION_ROOT_DISK_SIZE, BuildCreateCommandArgs, BuildUpdateCommandArgs, CLI_OPTION_DELETE_INSTANCE_SERVER_ON_STOP, CLI_OPTION_RATE_LIMIT_MAX_MBPS, CLI_OPTION_SUNSHINE_MAX_BITRATE_KBPS, CLI_OPTION_DATA_DISK_SNAPSHOT_ENABLE, CLI_OPTION_BASE_IMAGE_SNAPSHOT_ENABLE, CLI_OPTION_KEEP_BASE_IMAGE_ON_DELETION } from "../../cli/command";
 import { InteractiveInstanceInitializer } from "../../cli/initializer";
 import { RUN_COMMAND_CREATE, RUN_COMMAND_UPDATE } from "../../tools/analytics/events";
 import { InteractiveInstanceUpdater } from "../../cli/updater";
 import { ScalewayProviderClient } from "./provider";
+import { z } from "zod";
 
-export interface ScalewayCreateCliArgs extends CreateCliArgs {
-    projectId?: string
-    region?: string
-    zone?: string
-    instanceType?: string
-    rootDiskSize?: number
-    imageId?: string
-    dataDiskSize?: number
-    deleteInstanceServerOnStop?: boolean
-    dataDiskSnapshotEnable?: boolean
-    baseImageSnapshotEnable?: boolean
-    keepBaseImageOnDeletion?: boolean
-}
+/**
+ * Zod schema for Scaleway-specific CLI arguments.
+ * Extends the generic CreateCliArgsSchema with Scaleway-specific options.
+ * This schema matches what Commander.js produces from CLI flags.
+ */
+export const ScalewayCreateCliArgsSchema = CreateCliArgsSchema.extend({
+    projectId: z.string().optional(),
+    region: z.string().optional(),
+    zone: z.string().optional(),
+    instanceType: z.string().optional(),
+    rootDiskSize: z.number().optional(),
+    imageId: z.string().optional(),
+    dataDiskSize: z.number().optional(),
+    deleteInstanceServerOnStop: z.boolean().optional(),
+    dataDiskSnapshot: z.boolean().optional(),
+    baseImageSnapshot: z.boolean().optional(),
+    baseImageKeepOnDeletion: z.boolean().optional(),
+}).passthrough()
 
-export type ScalewayUpdateCliArgs = UpdateCliArgs & Omit<ScalewayCreateCliArgs, "projectId" | "zone" | "region" | "volumeType" >
+/**
+ * Scaleway-specific CLI arguments for create command.
+ * Type is inferred from Zod schema to ensure consistency.
+ */
+export type ScalewayCreateCliArgs = z.infer<typeof ScalewayCreateCliArgsSchema>
+
+/**
+ * Zod schema for Scaleway-specific update CLI arguments.
+ */
+export const ScalewayUpdateCliArgsSchema = UpdateCliArgsSchema.extend({
+    instanceType: z.string().optional(),
+    rootDiskSize: z.number().optional(),
+    imageId: z.string().optional(),
+    dataDiskSize: z.number().optional(),
+})
+
+/**
+ * Scaleway-specific CLI arguments for update command.
+ * Type is inferred from Zod schema to ensure consistency.
+ */
+export type ScalewayUpdateCliArgs = z.infer<typeof ScalewayUpdateCliArgsSchema>
 
 export class ScalewayInputPrompter extends AbstractInputPrompter<ScalewayCreateCliArgs, ScalewayProvisionInputV1, CommonConfigurationInputV1> {
     
@@ -41,12 +67,12 @@ export class ScalewayInputPrompter extends AbstractInputPrompter<ScalewayCreateC
                 imageId: cliArgs.imageId,
                 dataDiskSizeGb: cliArgs.dataDiskSize,
                 deleteInstanceServerOnStop: cliArgs.deleteInstanceServerOnStop,
-                dataDiskSnapshot: cliArgs.dataDiskSnapshotEnable ? { 
-                    enable: cliArgs.dataDiskSnapshotEnable 
+                dataDiskSnapshot: cliArgs.dataDiskSnapshot ? { 
+                    enable: cliArgs.dataDiskSnapshot 
                 } : undefined,
-                baseImageSnapshot: cliArgs.baseImageSnapshotEnable ? { 
-                    enable: cliArgs.baseImageSnapshotEnable,
-                    keepOnDeletion: cliArgs.keepBaseImageOnDeletion
+                baseImageSnapshot: cliArgs.baseImageSnapshot ? { 
+                    enable: cliArgs.baseImageSnapshot,
+                    keepOnDeletion: cliArgs.baseImageKeepOnDeletion
                 } : undefined
             }
         }
@@ -252,7 +278,10 @@ export class ScalewayCliCommandGenerator extends CliCommandGenerator {
             .option('--project-id <projectid>', 'Project ID in which to deploy resources')
             .option('--instance-type <instance-type>', 'Instance type')
             .option('--image-id <image-id>', 'Existing image ID for instance server. Disk size must be equal or greater than image size.')
-            .action(async (cliArgs: ScalewayCreateCliArgs) => {
+            .action(async (rawCliArgs: unknown) => {
+                // Parse raw CLI args using Zod schema early to ensure type safety
+                const cliArgs = ScalewayCreateCliArgsSchema.parse(rawCliArgs)
+                
                 this.analytics.sendEvent(RUN_COMMAND_CREATE, { provider: CLOUDYPAD_PROVIDER_SCALEWAY })
 
                 try {
@@ -295,7 +324,10 @@ export class ScalewayCliCommandGenerator extends CliCommandGenerator {
             .addOption(CLI_OPTION_KEEP_BASE_IMAGE_ON_DELETION)
             .option('--instance-type <instance-type>', 'Instance type')
             .option('--image-id <image-id>', 'Existing image ID for instance server. Disk size must be equal or greater than image size.')
-            .action(async (cliArgs: ScalewayUpdateCliArgs) => {
+            .action(async (rawCliArgs: unknown) => {
+                // Parse raw CLI args using Zod schema early to ensure type safety
+                const cliArgs = ScalewayUpdateCliArgsSchema.parse(rawCliArgs)
+                
                 this.analytics.sendEvent(RUN_COMMAND_UPDATE, { provider: CLOUDYPAD_PROVIDER_SCALEWAY })
 
                 try {

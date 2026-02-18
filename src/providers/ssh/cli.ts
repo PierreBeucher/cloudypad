@@ -3,21 +3,46 @@ import { CommonConfigurationInputV1, CommonInstanceInput } from "../../core/stat
 import { select, input, confirm, password } from '@inquirer/prompts';
 import { AbstractInputPrompter, PromptOptions } from "../../cli/prompter";
 import lodash from 'lodash'
-import { CliCommandGenerator, CreateCliArgs, UpdateCliArgs, CLI_OPTION_STREAMING_SERVER, CLI_OPTION_SUNSHINE_PASSWORD, CLI_OPTION_SUNSHINE_USERNAME, CLI_OPTION_SUNSHINE_IMAGE_REGISTRY, CLI_OPTION_SUNSHINE_IMAGE_TAG, CLI_OPTION_AUTO_STOP_TIMEOUT, CLI_OPTION_AUTO_STOP_ENABLE, CLI_OPTION_USE_LOCALE, CLI_OPTION_KEYBOARD_LAYOUT, CLI_OPTION_KEYBOARD_MODEL, CLI_OPTION_KEYBOARD_VARIANT, CLI_OPTION_KEYBOARD_OPTIONS, BuildCreateCommandArgs, BuildUpdateCommandArgs, CLI_OPTION_RATE_LIMIT_MAX_MBPS, CLI_OPTION_SUNSHINE_MAX_BITRATE_KBPS } from "../../cli/command";
+import { CreateCliArgsSchema, CliCommandGenerator, UpdateCliArgsSchema, CLI_OPTION_STREAMING_SERVER, CLI_OPTION_SUNSHINE_PASSWORD, CLI_OPTION_SUNSHINE_USERNAME, CLI_OPTION_SUNSHINE_IMAGE_REGISTRY, CLI_OPTION_SUNSHINE_IMAGE_TAG, CLI_OPTION_AUTO_STOP_TIMEOUT, CLI_OPTION_AUTO_STOP_ENABLE, CLI_OPTION_USE_LOCALE, CLI_OPTION_KEYBOARD_LAYOUT, CLI_OPTION_KEYBOARD_MODEL, CLI_OPTION_KEYBOARD_VARIANT, CLI_OPTION_KEYBOARD_OPTIONS, BuildCreateCommandArgs, BuildUpdateCommandArgs, CLI_OPTION_RATE_LIMIT_MAX_MBPS, CLI_OPTION_SUNSHINE_MAX_BITRATE_KBPS } from "../../cli/command";
 import { CLOUDYPAD_PROVIDER_SSH } from "../../core/const";
 import { InteractiveInstanceInitializer } from "../../cli/initializer";
 import { PartialDeep } from "type-fest";
 import { InteractiveInstanceUpdater } from "../../cli/updater";
 import { cleanupAndExit, logFullError } from "../../cli/program";
 import { SshProviderClient as SshProviderClient } from "./provider";
+import { z } from "zod";
 
-export interface SshCreateCliArgs extends CreateCliArgs {
-    hostname?: string
-    sshUser?: string
-    sshPassword?: string
-}
+/**
+ * Zod schema for SSH-specific CLI arguments.
+ * Extends the generic CreateCliArgsSchema with SSH-specific options.
+ * This schema matches what Commander.js produces from CLI flags.
+ */
+export const SshCreateCliArgsSchema = CreateCliArgsSchema.extend({
+    hostname: z.string().optional(),
+    sshUser: z.string().optional(),
+    sshPassword: z.string().optional(),
+}).passthrough()
 
-export type SshUpdateCliArgs = UpdateCliArgs
+/**
+ * SSH-specific CLI arguments for create command.
+ * Type is inferred from Zod schema to ensure consistency.
+ */
+export type SshCreateCliArgs = z.infer<typeof SshCreateCliArgsSchema>
+
+/**
+ * Zod schema for SSH-specific update CLI arguments.
+ */
+export const SshUpdateCliArgsSchema = UpdateCliArgsSchema.extend({
+    sshUser: z.string().optional(),
+    sshPassword: z.string().optional(),
+    hostname: z.string().optional(),
+})
+
+/**
+ * SSH-specific CLI arguments for update command.
+ * Type is inferred from Zod schema to ensure consistency.
+ */
+export type SshUpdateCliArgs = z.infer<typeof SshUpdateCliArgsSchema>
 
 
 export class SshInputPrompter extends AbstractInputPrompter<SshCreateCliArgs, SshProvisionInputV1, CommonConfigurationInputV1> {
@@ -189,7 +214,9 @@ export class SshCliCommandGenerator extends CliCommandGenerator {
             .option('--hostname <hostname>', 'Server IP or hostname on which to deploy the instance')
             .option('--ssh-user <user>', 'SSH username')
             .option('--ssh-password <password>', 'SSH password')
-            .action(async (cliArgs: SshCreateCliArgs) => {
+            .action(async (rawCliArgs: unknown) => {
+                // Parse raw CLI args using Zod schema early to ensure type safety
+                const cliArgs = SshCreateCliArgsSchema.parse(rawCliArgs)
                 
                 try {
                     await new InteractiveInstanceInitializer<SshInstanceStateV1, SshCreateCliArgs>({ 
@@ -233,7 +260,9 @@ export class SshCliCommandGenerator extends CliCommandGenerator {
             .option('--host <host>', 'Host IP or hostname for SSH connection')
             .option('--ssh-user <user>', 'SSH username')
             .option('--ssh-password <password>', 'SSH password')
-            .action(async (cliArgs: SshUpdateCliArgs) => {
+            .action(async (rawCliArgs: unknown) => {
+                // Parse raw CLI args using Zod schema early to ensure type safety
+                const cliArgs = SshUpdateCliArgsSchema.parse(rawCliArgs)
                 
                 try {
                     await new InteractiveInstanceUpdater<SshInstanceStateV1, SshUpdateCliArgs>({

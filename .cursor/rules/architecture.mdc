@@ -1,0 +1,143 @@
+---
+alwaysApply: true
+---
+
+# Cloudy Pad Core architecture overview
+
+You must respect architecture patterns and each component responsibility when coding:
+
+Cloudy Pad Core components:
+
+- **Core** - Internal, Cloud-agnostic components to manage overall instances and deployment.
+- **Provider implementations** - implementation Core components for various Cloud Providers
+  - For example `aws` Provider is the implementation of instance deployment on AWS
+- **CLI** - Wrapper around Core components to provide the Cloudy Pad CLI with interactive prompts
+
+## Instance lifecycle and Core components
+
+
+## Instance resources
+
+An instance is comprised of:
+- Server: the Cloud server or machine on which our games will run
+- Base image: a Server base image (or root disk, OS disk, system disk, term may vary with Cloud providers) with Cloudy Pad pre-installed with NVIDIA drivers, etc. from which a Server can be created or booted. 
+- Data Disk and Data Disk snapshot: user's data stored on a dedicated disk, independent from Base image
+- IP address or hostname: the public IP or hostname address for the instance
+- Depending on Cloud provider, an Instance may also need a VPC or network, a firewall, etc. 
+
+## Instance lifecycle phases
+
+Initialization:
+
+- State initialization - A state is initialized with Inputs (eg. Cloud provider, instance type, disk size, etc.)
+- Deployment - Initial deployment for an instance
+  - Provision - Provision Cloud resources: server, disk, IP address...
+  - Configuration - Runs Ansible configuration on instance (NVIDIA driver install, Docker container deployment...)
+  - Base image snapshot - Create a base image of the instance server
+  - Data disk snapshot - Create a snapshot of data disk
+- Pairing (optional): it's possible to pair instance with Moonlight right after initial deployment
+
+Once fully initialized, possible actions on instances:
+
+- Start - start an instance by:
+  - Provision: create instance server from Base image, restore Data disk from Snapshot and attach Data disk
+  - Quick Configuration: mount data disk, re-deploy containers and other start-specific actions
+- Stop  
+  - Stop the instance server
+  - Provision: delete instance server, update Data disk snapshot from existing Data disk and remove Data disk
+- Restart
+  - Reboot instance server. Don't run provision or configuration again since server isn't deleted. 
+
+It's also possible to run actions independently:
+- Configuration: Run a full Ansible configuration
+- Provision: Run a full Provision cycle based on latest instance state
+  - eg. if latest instance state is Stopped, will run provision to ensure a Stopped state
+- Deployment: 
+  - Run a full provision and configuration of instance (starting it as needed), effectively updating Base image
+
+### Instance State
+
+The Instance State represents the state in which an instance is. It roughly contains:
+- Instance name
+- Provider name (AWS, Azure, etc.)
+- Inputs: desired instance configurations (instance type, region, streaming server, etc.)
+- Outputs: actual infrastructure state (disk storage unique ID, IP address, etc.)
+
+Each Provider implements its own state interface based on a common State implementation. State is by default persisted as a local YAML file under `~/.cloudypad/instance/<name>/state.yml`
+
+Example State file:
+
+```yaml
+name: aws-instance
+version: '1'
+
+# Provision inputs and outputs
+provision:
+  provider: aws # provider name
+
+  # Desired instance state for AWS
+  input:
+    diskSize: 200
+    instanceType: g4dn.2xlarge
+    publicIpType: static
+    region: eu-central-1
+    ssh:
+      user: ubuntu
+      privateKeyContentBase64: xxx
+  
+  # Actual infrastructure state
+  # for AWS, host is instance static IP address and instanceId the EC2 instance ID
+  output:
+    host: 18.199.182.227
+    instanceId: i-0ae901f1799b17fdf
+
+# Configuration inputs and outputs
+# used to configure instance
+configuration:
+  configurator: ansible
+  input:
+    sunshine:
+      enable: true
+      passwordBase64: xxx
+      username: sunshine
+```
+
+As state is written and read externally, [Zod](https://zod.dev/) is used to enforce TypeScript typing.
+
+## Code and components
+
+Related code:
+
+- `core/initializer.ts` - `InstanceInitializer` - Manage overall initialization and deployment with `InstanceManager`
+- `core/manager.ts` - `InstanceManager` - Centralize management logic for instances:
+  - Define top-level `deploy()`, `provision()`, `start()`, etc. using underlying Provisioner, Configurator and Runner
+  - Read and Write the instance State. This is the ONLY component that can manage state through `StateWriter`. Other components are passed State via the Manager.
+  - Update State outputs depending on action results (eg. add Provision output after provisioning)
+  - Can update State some inputs during deployment (eg. instance desired state)
+- `core/provisioner.ts` - `InstanceProvisioner` - Manages Cloud provision: instance server deployment, data disk snapshot, base image creation/update, etc. via specialized Pulumi stacks
+- `core/configurator.ts` - `InstanceConfigurator` - Configure an instance. Only Ansible supported for now.
+- `core/runner.ts` - `InstanceRunner` - Manages instance server plain start/stop actions (eg. stop an AWS EC2 machine)
+- `core/moonlight/pairer.ts` - `MoonlightPairer` - Pair instances with Moonlight by sending PIN from user input.
+- `core/state` - State implementation and related classes (eg. StateWriter). State can use various backends (Local, S3...)
+
+### Provider implementation
+
+A Provider is a specialization of Core components to deploy instances in a given context, typically for a Cloud provider. For example: `provider/scaleway` Provider is the implementation of instance deployment on Scaleway.
+
+Each provider is based on the same pattern:
+
+- `pulumi/[STACK].ts` - Pulumi stacks dedicated to:
+  - Main provision (instance server, data disk, etc.)
+  - Base image
+  - Data disk snapshot
+  - _Note: not all providers implement every stack. Example: SSH provider doesn't use Pulumi. Linode provider doesn't have data disk snapshot._
+- `state.ts` - Extends `InstanceStateV1` with Inputs and Outputs specific to this provider
+- `provisioner.ts` - Implements `InstanceProvisioner` for this provider. Use State Inputs to configure and run Pulumi stacks (or create infra with Provider API directly)
+- `runner.ts` - Implements `InstanceRunner` for this provider. Use a Provider specific client to call Provider API to start/stop/... instance infrastructure. 
+- `cli.ts` - CLI implementation for this provider. Define Provider specific CLI args and command implementation (e.g. `create` arguments which are specific per providers)
+- `sdk-client.ts` - or in a `client/` folder. Provider specific SDK clients to interact with various resources (get server status, list available regions, etc.)
+
+More internal-oriented files:
+
+- `provider.ts` - Implements `ProviderClient` for this Provider.
+- `factory.ts` - Implements `ProvisionerFactory` for this Provider. 

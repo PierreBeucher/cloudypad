@@ -4,29 +4,64 @@ import { input, select, confirm } from '@inquirer/prompts';
 import { AbstractInputPrompter, costAlertCliArgsIntoConfig, PromptOptions } from "../../cli/prompter";
 import { AzureClient } from "./sdk-client";
 import lodash from 'lodash'
-import { CLOUDYPAD_PROVIDER_AZURE, PUBLIC_IP_TYPE } from "../../core/const";
+import { CLOUDYPAD_PROVIDER_AZURE, PUBLIC_IP_TYPE, PUBLIC_IP_TYPE_DYNAMIC, PUBLIC_IP_TYPE_STATIC } from "../../core/const";
 import { PartialDeep } from "type-fest";
-import { CLI_OPTION_AUTO_STOP_TIMEOUT, CLI_OPTION_AUTO_STOP_ENABLE, CLI_OPTION_COST_ALERT, CLI_OPTION_COST_LIMIT, CLI_OPTION_COST_NOTIFICATION_EMAIL, CLI_OPTION_DISK_SIZE, CLI_OPTION_PUBLIC_IP_TYPE, CLI_OPTION_SPOT, CLI_OPTION_STREAMING_SERVER, CLI_OPTION_SUNSHINE_IMAGE_REGISTRY, CLI_OPTION_SUNSHINE_IMAGE_TAG, CLI_OPTION_SUNSHINE_PASSWORD, CLI_OPTION_SUNSHINE_USERNAME, CliCommandGenerator, CreateCliArgs, UpdateCliArgs, CLI_OPTION_KEYBOARD_OPTIONS, CLI_OPTION_KEYBOARD_VARIANT, CLI_OPTION_KEYBOARD_MODEL, CLI_OPTION_KEYBOARD_LAYOUT, CLI_OPTION_USE_LOCALE, BuildCreateCommandArgs, BuildUpdateCommandArgs, CLI_OPTION_RATE_LIMIT_MAX_MBPS, CLI_OPTION_SUNSHINE_MAX_BITRATE_KBPS } from "../../cli/command";
+import { CreateCliArgsSchema, CLI_OPTION_AUTO_STOP_TIMEOUT, CLI_OPTION_AUTO_STOP_ENABLE, CLI_OPTION_COST_ALERT, CLI_OPTION_COST_LIMIT, CLI_OPTION_COST_NOTIFICATION_EMAIL, CLI_OPTION_DISK_SIZE, CLI_OPTION_PUBLIC_IP_TYPE, CLI_OPTION_SPOT, CLI_OPTION_STREAMING_SERVER, CLI_OPTION_SUNSHINE_IMAGE_REGISTRY, CLI_OPTION_SUNSHINE_IMAGE_TAG, CLI_OPTION_SUNSHINE_PASSWORD, CLI_OPTION_SUNSHINE_USERNAME, CliCommandGenerator, UpdateCliArgsSchema, CLI_OPTION_KEYBOARD_OPTIONS, CLI_OPTION_KEYBOARD_VARIANT, CLI_OPTION_KEYBOARD_MODEL, CLI_OPTION_KEYBOARD_LAYOUT, CLI_OPTION_USE_LOCALE, BuildCreateCommandArgs, BuildUpdateCommandArgs, CLI_OPTION_RATE_LIMIT_MAX_MBPS, CLI_OPTION_SUNSHINE_MAX_BITRATE_KBPS, CLI_OPTION_DATA_DISK_SIZE, CLI_OPTION_DATA_DISK_SNAPSHOT_ENABLE, CLI_OPTION_BASE_IMAGE_SNAPSHOT_ENABLE, CLI_OPTION_KEEP_BASE_IMAGE_ON_DELETION, CLI_OPTION_DELETE_INSTANCE_SERVER_ON_STOP } from "../../cli/command";
 import { InteractiveInstanceInitializer } from "../../cli/initializer";
 import { RUN_COMMAND_CREATE, RUN_COMMAND_UPDATE } from "../../tools/analytics/events";
 import { InteractiveInstanceUpdater } from "../../cli/updater";
 import { AzureProviderClient } from "./provider";
+import { z } from "zod";
 
-export interface AzureCreateCliArgs extends CreateCliArgs {
-    subscriptionId?: string
-    resourceGroupName?: string
-    location?: string
-    vmSize?: string
-    diskSize?: number
-    diskType?: string
-    publicIpType?: PUBLIC_IP_TYPE
-    spot?: boolean,
-    costAlert?: boolean,
-    costLimit?: number,
-    costNotificationEmail?: string
-}
+/**
+ * Zod schema for Azure-specific CLI arguments.
+ * Extends the generic CreateCliArgsSchema with Azure-specific options.
+ * This schema matches what Commander.js produces from CLI flags.
+ */
+export const AzureCreateCliArgsSchema = CreateCliArgsSchema.extend({
+    subscriptionId: z.string().optional(),
+    resourceGroupName: z.string().optional(),
+    location: z.string().optional(),
+    vmSize: z.string().optional(),
+    diskSize: z.number().optional(),
+    diskType: z.string().optional(),
+    publicIpType: z.enum([PUBLIC_IP_TYPE_STATIC, PUBLIC_IP_TYPE_DYNAMIC]).optional(),
+    spot: z.boolean().optional(),
+    costAlert: z.boolean().optional(),
+    costLimit: z.number().optional(),
+    costNotificationEmail: z.string().optional(),
+    dataDiskSize: z.number().optional(),
+    deleteInstanceServerOnStop: z.boolean().optional(),
+    dataDiskSnapshot: z.boolean().optional(),
+    baseImageSnapshot: z.boolean().optional(),
+    baseImageKeepOnDeletion: z.boolean().optional(),
+})
 
-export type AzureUpdateCliArgs = UpdateCliArgs & Omit<AzureCreateCliArgs, "subscriptionId" | "resourceGroupName" | "location" | "diskType" >
+/**
+ * Azure-specific CLI arguments for create command.
+ * Type is inferred from Zod schema to ensure consistency.
+ */
+export type AzureCreateCliArgs = z.infer<typeof AzureCreateCliArgsSchema>
+
+/**
+ * Zod schema for Azure-specific update CLI arguments.
+ */
+export const AzureUpdateCliArgsSchema = UpdateCliArgsSchema.extend({ 
+    vmSize: z.string().optional(),
+    diskSize: z.number().optional(),
+    costAlert: z.boolean().optional(),
+    costLimit: z.number().optional(),
+    costNotificationEmail: z.string().optional(),
+    dataDiskSize: z.number().optional(),
+    baseImageKeepOnDeletion: z.boolean().optional(),
+})
+
+/**
+ * Azure-specific CLI arguments for update command.
+ * Type is inferred from Zod schema to ensure consistency.
+ */
+export type AzureUpdateCliArgs = z.infer<typeof AzureUpdateCliArgsSchema>
+
 
 
 export const AZURE_SUPPORTED_GPU = [
@@ -77,12 +112,21 @@ export class AzureInputPrompter extends AbstractInputPrompter<AzureCreateCliArgs
             provision: {
                 vmSize: cliArgs.vmSize,
                 diskSize: cliArgs.diskSize,
+                dataDiskSizeGb: cliArgs.dataDiskSize,
                 diskType: cliArgs.diskType, 
                 publicIpType: cliArgs.publicIpType,
                 location: cliArgs.location,
                 subscriptionId: cliArgs.subscriptionId,
                 useSpot: cliArgs.spot,
-                costAlert: costAlertCliArgsIntoConfig(cliArgs)
+                costAlert: costAlertCliArgsIntoConfig(cliArgs),
+                deleteInstanceServerOnStop: cliArgs.deleteInstanceServerOnStop,
+                dataDiskSnapshot: cliArgs.dataDiskSnapshot ? { 
+                    enable: cliArgs.dataDiskSnapshot 
+                } : undefined,
+                baseImageSnapshot: cliArgs.baseImageSnapshot ? { 
+                    enable: cliArgs.baseImageSnapshot,
+                    keepOnDeletion: cliArgs.baseImageKeepOnDeletion
+                } : undefined
             }
         }
     }
@@ -108,6 +152,7 @@ export class AzureInputPrompter extends AbstractInputPrompter<AzureCreateCliArgs
             {
                 provision: {
                     diskSize: diskSize,
+                    dataDiskSizeGb: partialInput.provision?.dataDiskSizeGb ?? 0, // Use CLI arg if provided, otherwise default to 0
                     diskType: diskType,
                     vmSize: vmSize,
                     publicIpType: publicIpType,
@@ -115,6 +160,9 @@ export class AzureInputPrompter extends AbstractInputPrompter<AzureCreateCliArgs
                     subscriptionId: subscriptionId,
                     useSpot: useSpot,
                     costAlert: costAlert,
+                    deleteInstanceServerOnStop: partialInput.provision?.deleteInstanceServerOnStop,
+                    dataDiskSnapshot: partialInput.provision?.dataDiskSnapshot,
+                    baseImageSnapshot: partialInput.provision?.baseImageSnapshot,
                 },
             })
         
@@ -288,6 +336,7 @@ export class AzureCliCommandGenerator extends CliCommandGenerator {
         return this.getBaseCreateCommand(CLOUDYPAD_PROVIDER_AZURE)
             .addOption(CLI_OPTION_SPOT)
             .addOption(CLI_OPTION_DISK_SIZE)
+            .addOption(CLI_OPTION_DATA_DISK_SIZE)
             .addOption(CLI_OPTION_PUBLIC_IP_TYPE)
             .addOption(CLI_OPTION_COST_ALERT)
             .addOption(CLI_OPTION_COST_LIMIT)
@@ -306,11 +355,18 @@ export class AzureCliCommandGenerator extends CliCommandGenerator {
             .addOption(CLI_OPTION_KEYBOARD_VARIANT)
             .addOption(CLI_OPTION_KEYBOARD_OPTIONS)
             .addOption(CLI_OPTION_RATE_LIMIT_MAX_MBPS)
+            .addOption(CLI_OPTION_DATA_DISK_SNAPSHOT_ENABLE)
+            .addOption(CLI_OPTION_BASE_IMAGE_SNAPSHOT_ENABLE)
+            .addOption(CLI_OPTION_KEEP_BASE_IMAGE_ON_DELETION)
+            .addOption(CLI_OPTION_DELETE_INSTANCE_SERVER_ON_STOP)
             .option('--vm-size <vmsize>', 'Virtual machine size')
             .option('--location <location>', 'Location in which to deploy instance')
             .option('--subscription-id <subscriptionid>', 'Subscription ID in which to deploy resources')
             .option('--disk-type <disktype>', `Disk type. One of ${Object.values(AZURE_SUPPORTED_DISK_TYPES).join(', ')}`)
-            .action(async (cliArgs: AzureCreateCliArgs) => {
+            .action(async (rawCliArgs: unknown) => {
+                // Parse raw CLI args using Zod schema early to ensure type safety
+                const cliArgs = AzureCreateCliArgsSchema.parse(rawCliArgs)
+                
                 this.analytics.sendEvent(RUN_COMMAND_CREATE, { provider: CLOUDYPAD_PROVIDER_AZURE })
 
                 try {
@@ -347,7 +403,10 @@ export class AzureCliCommandGenerator extends CliCommandGenerator {
             .addOption(CLI_OPTION_KEYBOARD_OPTIONS)
             .addOption(CLI_OPTION_RATE_LIMIT_MAX_MBPS)
             .option('--vm-size <vmsize>', 'Virtual machine size')
-            .action(async (cliArgs: AzureUpdateCliArgs) => {
+            .action(async (rawCliArgs: unknown) => {
+                // Parse raw CLI args using Zod schema early to ensure type safety
+                const cliArgs = AzureUpdateCliArgsSchema.parse(rawCliArgs)
+                
                 this.analytics.sendEvent(RUN_COMMAND_UPDATE, { provider: CLOUDYPAD_PROVIDER_AZURE })
 
                 try {

@@ -4,12 +4,15 @@ import { CLOUDYPAD_PROVIDER_AWS, PUBLIC_IP_TYPE_DYNAMIC, PUBLIC_IP_TYPE_STATIC }
 import { GenericStateParser } from "../../core/state/parser"
 
 const AwsProvisionOutputV1Schema = CommonProvisionOutputV1Schema.extend({
-    instanceId: z.string().describe("AWS instance ID"),
+    instanceId: z.string().optional().describe("AWS instance ID"),
+    rootDiskId: z.string().optional().describe("AWS root EBS volume ID"),
+    dataDiskId: z.string().optional().describe("AWS data EBS volume ID"),
 })
 
 const AwsProvisionInputV1Schema = CommonProvisionInputV1Schema.extend({
     instanceType: z.string().describe("Type of AWS instance"),
-    diskSize: z.number().describe("Disk size in GB"),
+    diskSize: z.number().describe("Root disk size in GB"),
+    dataDiskSizeGb: z.number().optional().describe("Data disk size in GB. If non-0, a disk dedicated for instance data (such as games data) will be created."),
     publicIpType: z.enum([PUBLIC_IP_TYPE_STATIC, PUBLIC_IP_TYPE_DYNAMIC]).describe("Type of public IP address"),
     region: z.string().describe("AWS region"),
     useSpot: z.boolean().describe("Whether to use spot instances"),

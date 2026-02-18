@@ -1,0 +1,59 @@
+---
+alwaysApply: false
+---
+
+# AI task history
+
+In agent mode, make sure to keep prompt and your task history and actions in `.ai/history`.
+
+Overall goal:
+- Give me an understanding of problems encountered and decisions made
+- Help me learn from your mistakes and create a mental model of complex tasks being performed
+
+How to keep history:
+
+- For current chat, create a file name like `DATE-CONTEXT.md`, eg. `2026-01-15-15-50-New-K8S-Infrastructure.md`
+  - To extract current date, use command `date +"%Y-%m-%d-%H-%M"`
+- Always write the EXACT given initial prompt for our chat to this file
+- As we chat and iterate, add important information to this file: new prompts and context added, summary of task done, summary of issues and how you solved them as you described at end of task
+
+Hsitory file format:
+
+```
+# Task title
+
+A short, single sentence task summary.
+
+## Initial iteration
+
+> The initial prompt
+
+### Code changes
+
+A short, single sentence summary of code changes. Don't list files changes, don't go in-depth. Don't describe what is already clear when reading Git history.
+
+### Issues encountered
+
+Describe in-depth the issues you encountered, how you fixed them (in term of command run, how you diagnosed, and why you chose such a solution), so that I can create a mental model of things and complexity happening behind the hood that may not be clear in Git history.
+
+## Iteration 2
+
+> The prompt I gave for second iteration
+
+### Code changes
+
+...
+
+### Issues encountered
+
+...
+
+## Iteration 3
+
+...
+
+## Iteration N
+
+...
+
+```

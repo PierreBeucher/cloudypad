@@ -6,11 +6,14 @@ import { ServerRunningStatus } from "../../core/runner"
 
 const DummyProvisionOutputV1Schema = CommonProvisionOutputV1Schema.extend({
     instanceId: z.string().optional().describe("Dummy instance ID"),
+    rootDiskId: z.string().optional().describe("Dummy root disk ID"),
+    dataDiskId: z.string().optional().describe("Dummy data disk ID"),
     provisionedAt: z.number().describe("Timestamp (seconds) the instance was finished provisioned at"),
 })
 
 const DummyProvisionInputV1Schema = CommonProvisionInputV1Schema.extend({
     instanceType: z.string().describe("Type of Dummy instance").optional(),
+    dataDiskSizeGb: z.number().optional().describe("Data disk size in GB. If non-0, a disk dedicated for instance data (such as games data) will be created."),
     startDelaySeconds: z.number().describe("Time (seconds) during which the instance will remain in 'starting' state before becoming 'running' on start/restart operation.").default(0).optional(),
     stopDelaySeconds: z.number().describe("Time (seconds) during which the instance will remain in 'stopping' state before becoming 'stopped' on stop/restart operation.").default(0).optional(),
     configurationDelaySeconds: z.number().describe("Time (seconds) during which configuration will run.").default(0).optional(),
@@ -27,6 +30,10 @@ const DummyConfigurationOutputV1Schema = CommonConfigurationOutputV1Schema.exten
 const DummyInfrastructureStatusSchema = z.object({
     serverStatus: z.nativeEnum(ServerRunningStatus),
     serverId: z.string().optional().describe("Current dummy server id"),
+    rootDiskId: z.string().optional().describe("Dummy root disk ID"),
+    dataDiskId: z.string().optional().describe("Dummy data disk ID"),
+    dataDiskSnapshotId: z.string().optional().describe("Dummy data disk snapshot ID"),
+    baseImageId: z.string().optional().describe("Dummy base image ID"),
     lastUpdate: z.number().describe("Timestamp (seconds) the infrastructure was last updated at"),
 })
 

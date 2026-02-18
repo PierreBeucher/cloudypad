@@ -1,5 +1,7 @@
 # Paperspace costs
 
+_ℹ️ Cloudy Pad Paperspace provider is deprecated. No new feature will be added and support will be dropped in a later version._
+
 ## Monthly cost estimations
 
 Cloudy-Pad is free and open-source; however, charges may apply when using a Cloud provider. Typically billed resources:

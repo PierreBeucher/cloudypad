@@ -1,0 +1,42 @@
+---
+alwaysApply: true
+---
+
+How to run commands for testing, compilation and other things
+
+## ALWAYS run commands under a Nix development shell
+
+When you run command, ALWAYS execute it under a Nix development shell unless specifically asked otherwise.
+
+Exampple: you are asked to run `task test-unit`, do NOT run directly:
+
+```sh
+# Don't run plainly like this
+task test-unit
+```
+
+Instead, run `nix developc -c [COMMAND]` without quotes:
+
+```sh
+nix develop -c task test-unit
+# do not use quote, eg. not this: nix develop -c "task test-unit"
+```
+
+Nix development shell will provide binaries and environment variables suitable for this project. Without it, you may be mising important tools and binaries. 
+
+## Task files
+
+Most commands can be run as a task from Taskfile.yml at project root, for example checking no obvious thing broke after an update:
+
+```sh
+# List all tasks
+task -a
+
+# Quick compilation and syntax check
+task test-compile
+
+# Unit tests
+task test-unit
+```
+
+Considering above statement, these must be run as `nix develop -c task ...` of course.

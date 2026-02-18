@@ -1,5 +1,7 @@
 # Paperspace provider setup
 
+_ℹ️ Cloudy Pad Paperspace provider is deprecated. No new feature will be added and support will be dropped in a later version._
+
 If you don't already have a Paperspace account, [create an account](https://console.paperspace.com/signup).
 
 If you haven't already setup an SSH key in your profile:

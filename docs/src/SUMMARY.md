@@ -3,6 +3,7 @@
 [Introduction](README.md)
 [Getting started 🚀](getting-started.md)
 [What is Cloud Gaming ?](what-is-cloud-gaming.md)
+[Features](features.md)
 [Roadmap](roadmap.md)
 
 # CLI Usage
@@ -57,5 +58,6 @@
 # Contributing
 
 - [Contribution guide](./contributing/contribution-guide.md)
+- [Architecture overview](./contributing/architecture.md)
 - [Extend Docker images](./contributing/container-image.md)
 - [License](./contributing/license.md)

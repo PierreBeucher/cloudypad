@@ -12,6 +12,7 @@ export interface DummyInstanceInfraManagerArgs {
 /**
  * Interface to manage dummy infrastructure for dummy instances:
  * - Instance status and last update time
+ * - Data disk, base image, and instance server status
  */
 export class DummyInstanceInfraManager {
 
@@ -41,29 +42,36 @@ export class DummyInstanceInfraManager {
             lastUpdate: currentInfra?.lastUpdate ?? 0
         }
     }
+
+    async setRootDiskId(rootDiskId: string | undefined): Promise<void> {
+        await this.infraStateManager.setRootDiskId(rootDiskId)
+    }
+
+    async setDataDiskId(dataDiskId: string | undefined): Promise<void> {
+        await this.infraStateManager.setDataDiskId(dataDiskId)
+    }
+
+    async setDataDiskSnapshotId(dataDiskSnapshotId: string | undefined): Promise<void> {
+        await this.infraStateManager.setDataDiskSnapshotId(dataDiskSnapshotId)
+    }
+
+    async setBaseImageId(baseImageId: string | undefined): Promise<void> {
+        await this.infraStateManager.setBaseImageId(baseImageId)
+    }
+
+    async setServerId(serverId: string | undefined): Promise<void> {
+        await this.infraStateManager.setServerId(serverId)
+    }
+
+    async getInstanceInfra(): Promise<DummyInfrastructureStatus | undefined> {
+        return await this.infraStateManager.getInstanceInfra()
+    }
 }
 
 interface DummyInstanceInStateStatusArgs {
     instanceName: string
     coreConfig: CoreConfig
 }
-
-// export interface DummyInstanceInfraStatus {
-//     /**
-//      * Current dummy server status
-//      */
-//     serverStatus: ServerRunningStatus
-
-//     /**
-//      * Current dummy server id
-//      */
-//     serverId?: string
-
-//     /**
-//      * Last update time
-//      */
-//     lastUpdate: number
-// }
 
 class DummyInstanceInStateStatus {
     private readonly args: DummyInstanceInStateStatusArgs
@@ -87,15 +95,44 @@ class DummyInstanceInStateStatus {
     }
 
     async setServerRunningStatus(status: ServerRunningStatus): Promise<void> {
-        this.logger.debug(`Setting server running status for ${this.args.instanceName} to ${status}`)
+        await this.updateInfra({ serverStatus: status })
+    }
+
+    async setRootDiskId(rootDiskId: string | undefined): Promise<void> {
+        await this.updateInfra({ rootDiskId })
+    }
+
+    async setDataDiskId(dataDiskId: string | undefined): Promise<void> {
+        await this.updateInfra({ dataDiskId })
+    }
+
+    async setDataDiskSnapshotId(dataDiskSnapshotId: string | undefined): Promise<void> {
+        await this.updateInfra({ dataDiskSnapshotId })
+    }
+
+    async setBaseImageId(baseImageId: string | undefined): Promise<void> {
+        await this.updateInfra({ baseImageId })
+    }
+
+    async setServerId(serverId: string | undefined): Promise<void> {
+        await this.updateInfra({ serverId })
+    }
+
+    private async updateInfra(updates: Partial<DummyInfrastructureStatus>): Promise<void> {
+        this.logger.debug(`Updating infrastructure for ${this.args.instanceName} with: ${JSON.stringify(updates)}`)
 
         const currentState = await this.dummyProviderClient.getInstanceState(this.args.instanceName)
         const stateWriter = this.dummyProviderClient.getStateWriter()
         const currentInfra = currentState.dummyInfrastructure
-        const newInfra = {
-            ...currentInfra,
-            serverStatus: status,
-            lastUpdate: Date.now()
+        const newInfra: DummyInfrastructureStatus = {
+            serverStatus: currentInfra?.serverStatus ?? ServerRunningStatus.Unknown,
+            serverId: currentInfra?.serverId,
+            rootDiskId: currentInfra?.rootDiskId,
+            dataDiskId: currentInfra?.dataDiskId,
+            dataDiskSnapshotId: currentInfra?.dataDiskSnapshotId,
+            baseImageId: currentInfra?.baseImageId,
+            lastUpdate: Date.now(),
+            ...updates,
         }
         const newState = {
             ...currentState,
@@ -107,129 +144,3 @@ class DummyInstanceInStateStatus {
         await stateWriter.setState(newState)
     }
 }
-
-
-
-// interface DummyInstanceInternalMemoryArgs {
-//     coreConfig: CoreConfig
-// }
-
-// /**
-//  * Singletong holding dummy instances in memory. Used for operations on Dummy instances such as state update, start, stop, restart, etc.
-//  */
-// class DummyInstanceInternalMemory {
-
-//     private static instance: DummyInstanceInternalMemory
-    
-//     public static get(args: DummyInstanceInternalMemoryArgs): DummyInstanceInternalMemory {
-//         if (!DummyInstanceInternalMemory.instance) {
-//             DummyInstanceInternalMemory.instance = new DummyInstanceInternalMemory(args)
-//         }
-//         return DummyInstanceInternalMemory.instance
-//     }
-
-//     private dummyInfrastructure: Map<string, DummyInstanceInfraStatus>
-//     private readonly args: DummyInstanceInternalMemoryArgs
-//     private logger = getLogger('DummyInstanceProviderClient')
-
-//     private constructor(args: DummyInstanceInternalMemoryArgs) {
-//         this.args = args
-//         this.dummyInfrastructure = new Map<string, DummyInstanceInfraStatus>()
-//     }
-
-//     /**
-//      * Get current dummy infrastructure status for a dummy instance. 
-//      * If no infrastructure is found for an instance:
-//      * - Try to get current Core state for the instance
-//      * - Create a dummy infrastructure matching a Stopped status
-//      * - Add events to emulate a stopped instance
-//      * 
-//      * @param instanceName 
-//      * @returns 
-//      */
-//     public async getInstanceInfra(instanceName: string): Promise<DummyInstanceInfraStatus> {
-//         this.logger.debug(`Get dummy instance details for ${instanceName}`)
-//         const currentInfra = this.dummyInfrastructure.get(instanceName)
-        
-//         if (!currentInfra) {
-//             this.logger.debug(`Dummy instance infra: no infrastructure found for ${instanceName}, creating new infrastructure`)
-            
-//             const dummyProviderClient = new DummyProviderClient({
-//                 config: this.args.coreConfig
-//             })
-//             const instanceState = await dummyProviderClient.getInstanceState(instanceName)
-
-//             let newInfra: DummyInstanceInfraStatus
-//             const lastUpdate = new Date().getTime()
-
-//             // if instance server is deleted on stop, create a new infrastructure with Unknown status
-//             if(instanceState.provision.input.deleteInstanceServerOnStop) {
-//                 this.logger.debug(`Dummy instance infra: deleteInstanceServerOnStop is true for ${instanceName}, creating new infrastructure`)
-//                 newInfra = {
-//                     serverStatus: ServerRunningStatus.Unknown,
-//                     lastUpdate: lastUpdate
-//                 }
-//             } else {
-//                 this.logger.debug(`Dummy instance infra: deleteInstanceServerOnStop is false for ${instanceName}, creating new infrastructure`)
-//                 newInfra = {
-//                     serverStatus: ServerRunningStatus.Stopped,
-//                     lastUpdate: lastUpdate
-//                 }
-//             }
-            
-//             this.dummyInfrastructure.set(instanceName, newInfra)
-//             return newInfra
-//         }
-
-//         return currentInfra
-//     }
-
-//     /**
-//      * Create dummy instance infrastructure
-//      * @param instanceName 
-//      * @param serverId 
-//      */
-//     public provision(instanceName: string, serverId?: string, serverStatus: ServerRunningStatus = ServerRunningStatus.Running) {
-//         this.logger.debug(`Provisioning dummy instance infrastructure for ${instanceName}: ${serverId}`)
-
-//         if(!serverId) {
-//             serverId = `dummy-id-${instanceName}-${Date.now()}`
-//         }
-
-//         this.dummyInfrastructure.set(instanceName, {
-//             serverStatus: serverStatus,
-//             serverId: serverId,
-//             lastUpdate: Date.now()
-//         })
-//     }
-
-//     public destroy(instanceName: string) {
-//         this.logger.debug(`Destroying dummy instance infrastructure for ${instanceName}`)
-//         this.dummyInfrastructure.delete(instanceName)
-//     }
-
-//     /**
-//      * Delete dummy instance server. Internally set serverId to undefined and update lastUpdate time
-//      * @param instanceName 
-//      */
-//     public deleteInstanceServer(instanceName: string) {
-//         this.logger.debug(`Deleting dummy instance server for ${instanceName}`)
-//         const currentInfra = this.dummyInfrastructure.get(instanceName)
-//         if(currentInfra) {
-//             currentInfra.serverId = undefined
-//             currentInfra.lastUpdate = Date.now()
-
-//             this.dummyInfrastructure.set(instanceName, currentInfra)
-//         }
-//     }
-
-//     public setInstanceStatus(instanceName: string, status: ServerRunningStatus) {
-//         this.logger.debug(`Set dummy instance status for ${instanceName}: ${status}`)
-//         this.dummyInfrastructure.set(instanceName, {
-//             serverStatus: status,
-//             lastUpdate: Date.now()
-//         })
-//     }
-
-// }
-

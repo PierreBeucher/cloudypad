@@ -218,6 +218,80 @@ export class AzureClient {
         }
     }
 
+    async getImage(resourceGroupName: string, imageName: string) {
+        this.logger.debug(`Getting Azure image ${imageName} in resource group ${resourceGroupName}`)
+        try {
+            const image = await this.computeClient.images.get(resourceGroupName, imageName)
+            this.logger.trace(`Get image response: ${JSON.stringify(image)}`)
+            return image
+        } catch (error) {
+            throw new Error(`Failed to get Azure image: ${imageName}`, { cause: error })
+        }
+    }
+
+    async getDisk(resourceGroupName: string, diskName: string) {
+        this.logger.debug(`Getting Azure disk ${diskName} in resource group ${resourceGroupName}`)
+        try {
+            const disk = await this.computeClient.disks.get(resourceGroupName, diskName)
+            this.logger.trace(`Get disk response: ${JSON.stringify(disk)}`)
+            return disk
+        } catch (error) {
+            throw new Error(`Failed to get Azure disk: ${diskName}`, { cause: error })
+        }
+    }
+
+    async getSnapshot(resourceGroupName: string, snapshotName: string) {
+        this.logger.debug(`Getting Azure snapshot ${snapshotName} in resource group ${resourceGroupName}`)
+        try {
+            const snapshot = await this.computeClient.snapshots.get(resourceGroupName, snapshotName)
+            this.logger.trace(`Get snapshot response: ${JSON.stringify(snapshot)}`)
+            return snapshot
+        } catch (error) {
+            throw new Error(`Failed to get Azure snapshot: ${snapshotName}`, { cause: error })
+        }
+    }
+
+    // MAY NOT BE USEFUL
+    // async detachDataDisk(resourceGroupName: string, vmName: string, lun: number, opts?: StartStopActionOpts) {
+    //     const wait = opts?.wait ?? DEFAULT_START_STOP_OPTION_WAIT
+    //     const waitTimeout = opts?.waitTimeoutSeconds || DEFAULT_START_STOP_OPTION_WAIT_TIMEOUT
+
+    //     try {
+    //         this.logger.debug(`Detaching data disk with LUN ${lun} from virtual machine: ${vmName}`)
+            
+    //         // Get current VM to preserve its configuration
+    //         const vm = await this.computeClient.virtualMachines.get(resourceGroupName, vmName)
+            
+    //         if (!vm.storageProfile?.dataDisks) {
+    //             this.logger.debug(`No data disks found on VM ${vmName}, nothing to detach`)
+    //             return
+    //         }
+
+    //         // Filter out the data disk with the specified LUN
+    //         const updatedDataDisks = vm.storageProfile.dataDisks.filter(disk => disk.lun !== lun)
+            
+    //         if (updatedDataDisks.length === vm.storageProfile.dataDisks.length) {
+    //             this.logger.debug(`Data disk with LUN ${lun} not found on VM ${vmName}, nothing to detach`)
+    //             return
+    //         }
+
+    //         // Update VM with data disk removed
+    //         const poller = await this.computeClient.virtualMachines.beginUpdate(resourceGroupName, vmName, {
+    //             storageProfile: {
+    //                 ...vm.storageProfile,
+    //                 dataDisks: updatedDataDisks
+    //             }
+    //         })
+
+    //         if (wait) {
+    //             this.logger.debug(`Waiting for data disk to be detached from virtual machine ${vmName}`)
+    //             await this.withTimeout(poller.pollUntilDone(), waitTimeout * 1000)
+    //         }
+    //     } catch (error) {
+    //         throw new Error(`Failed to detach data disk from virtual machine ${vmName}`, { cause: error })
+    //     }
+    // }
+
     private async withTimeout<T>(promise: Promise<T>, timeoutMs: number): Promise<T> {
         if (!timeoutMs) {
             return promise

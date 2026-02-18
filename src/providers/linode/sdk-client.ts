@@ -9,8 +9,11 @@ import {
     getLinodeTypes,
     createLinode,
     deleteLinode,
+    getImage,
+    getVolume,
+    getVolumes,
 } from '@linode/api-v4'
-import type { Linode, LinodeStatus } from '@linode/api-v4'
+import type { Linode, LinodeStatus, Image, Volume } from '@linode/api-v4'
 import { getAccountInfo } from '@linode/api-v4/lib/account'
 import { setToken as internalSetToken } from '@linode/api-v4'
 
@@ -287,6 +290,65 @@ export class LinodeClient {
             return linode
         } catch (error) {
             throw new Error(`Failed to get Linode instance details: ${instanceId}`, { cause: error })
+        }
+    }
+
+    /**
+     * Get an image by image ID
+     * @param imageId Image ID to get (e.g., "private/12345678" or "linode/ubuntu22.04")
+     * @returns Image if exists, null otherwise
+     */
+    async getImage(imageId: string): Promise<Image | null> {
+        this.logger.debug(`Getting image ${imageId}`)
+        try {
+            const image = await getImage(imageId)
+            return image
+        } catch (error: any) {
+            if (error?.statusCode === 404 || error?.message?.includes('Not found')) {
+                return null
+            }
+            throw new Error(`Failed to get image ${imageId}`, { cause: error })
+        }
+    }
+
+    /**
+     * Get a volume by volume ID
+     * @param volumeId Volume ID to get (numeric ID as string or number)
+     * @returns Volume if exists, null otherwise
+     */
+    async getVolume(volumeId: string | number): Promise<Volume | null> {
+        this.logger.debug(`Getting volume ${volumeId}`)
+        try {
+            const volumeIdNumber = typeof volumeId === 'string' ? Number(volumeId) : volumeId
+            if (isNaN(volumeIdNumber)) {
+                throw new Error(`Volume ID is not a number: ${volumeId}`)
+            }
+            const volume = await getVolume(volumeIdNumber)
+            return volume
+        } catch (error: any) {
+            if (error?.statusCode === 404 || error?.message?.includes('Not found')) {
+                return null
+            }
+            throw new Error(`Failed to get volume ${volumeId}`, { cause: error })
+        }
+    }
+
+    /**
+     * Get a volume by label
+     * @param label Volume label to search for
+     * @returns Volume if exists, null otherwise
+     */
+    async getVolumeByLabel(label: string): Promise<Volume | null> {
+        this.logger.debug(`Getting volume by label ${label}`)
+        try {
+            const volumesResponse = await getVolumes()
+            const volume = volumesResponse.data.find(v => v.label === label)
+            return volume || null
+        } catch (error: any) {
+            if (error?.statusCode === 404 || error?.message?.includes('Not found')) {
+                return null
+            }
+            throw new Error(`Failed to get volume by label ${label}`, { cause: error })
         }
     }
 

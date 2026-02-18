@@ -1,8 +1,8 @@
 import * as aws from "@pulumi/aws";
 import * as pulumi from "@pulumi/pulumi";
 import { LocalWorkspaceOptions, OutputMap } from "@pulumi/pulumi/automation";
-import { InstancePulumiClient } from "../../tools/pulumi/client";
-import { PUBLIC_IP_TYPE, PUBLIC_IP_TYPE_DYNAMIC, PUBLIC_IP_TYPE_STATIC, SimplePortDefinition } from "../../core/const";
+import { InstancePulumiClient } from "../../../tools/pulumi/client";
+import { PUBLIC_IP_TYPE, PUBLIC_IP_TYPE_DYNAMIC, PUBLIC_IP_TYPE_STATIC, SimplePortDefinition } from "../../../core/const";
 
 interface VolumeArgs {
     size: pulumi.Input<number>
@@ -30,6 +30,12 @@ interface CloudyPadEC2instanceArgs {
         encrypted?: pulumi.Input<boolean>
     }
     additionalVolumes?: VolumeArgs[]
+    dataDisk?: {
+        state: "present" | "absent"
+        sizeGb: pulumi.Input<number>
+        snapshotId?: pulumi.Input<string>
+    }
+    instanceServerState?: "present" | "absent"
 
     /**
      * Spot instance usage configuration
@@ -59,20 +65,18 @@ interface CloudyPadEC2instanceArgs {
  */
 class CloudyPadEC2Instance extends pulumi.ComponentResource {
     
-    private readonly ec2Instance: aws.ec2.Instance
+    private readonly ec2Instance?: aws.ec2.Instance
     private readonly volumes: aws.ebs.Volume[]
+    private readonly dataDisk?: aws.ebs.Volume
     private readonly keyPair?: aws.ec2.KeyPair
     private readonly securityGroup: aws.ec2.SecurityGroup
     private readonly eip?: aws.ec2.Eip
     private readonly keyPairName: pulumi.Output<string>
 
-    /**
-     * The Public IP provisioned for instance.
-     * If publicIpType is static, will be the public EIP provisioned
-     * Otherwise, will be the dynamic Public IP associated to instance at launchtime.
-     */
     readonly publicIp: pulumi.Output<string>
-    readonly instanceId: pulumi.Output<string>
+    readonly instanceId?: pulumi.Output<string>
+    readonly rootVolumeId?: pulumi.Output<string>
+    readonly dataDiskId?: pulumi.Output<string>
 
     constructor(name: string, args: CloudyPadEC2instanceArgs, opts? : pulumi.ComponentResourceOptions) {
         super("crafteo:cloudypad:aws:ec2-instance", name, args, opts);
@@ -152,85 +156,128 @@ class CloudyPadEC2Instance extends pulumi.ComponentResource {
         } else {
             throw new Error("One of publicKeyContent or existingKeyPair is required")
         }
-        
-        let instanceMarketOptions: pulumi.Input<aws.types.input.ec2.InstanceInstanceMarketOptions> | undefined = undefined
-        if(args.spot?.enabled){
-            instanceMarketOptions =  {
-                marketType: "spot",
-                spotOptions:  {
-                    instanceInterruptionBehavior: "stop",
-                    spotInstanceType: "persistent",
+
+        // Create instance server if state is not explicitly set to absent
+        if(args.instanceServerState !== "absent"){
+
+            let instanceMarketOptions: pulumi.Input<aws.types.input.ec2.InstanceInstanceMarketOptions> | undefined = undefined
+            if(args.spot?.enabled){
+                instanceMarketOptions =  {
+                    marketType: "spot",
+                    spotOptions:  {
+                        instanceInterruptionBehavior: "stop",
+                        spotInstanceType: "persistent",
+                    }
                 }
             }
-        }
 
+            this.ec2Instance = new aws.ec2.Instance(`${name}-ec2-instance`, {
+                ami: args.ami,
+                instanceType: args.type,
+                tags:  {
+                    ...args.tags,
+                    Name: awsResourceNamePrefix
+                },
+                volumeTags: args.tags,
+                vpcSecurityGroupIds: [this.securityGroup.id],
+                keyName: this.keyPairName,
+                rootBlockDevice: {
+                    encrypted:  args.rootVolume?.encrypted || true,
+                    volumeSize: args.rootVolume?.sizeGb,
+                    volumeType: args.rootVolume?.type
+                },
+                instanceMarketOptions: instanceMarketOptions,
+                subnetId: args.subnetId,
+                associatePublicIpAddress: true,
+            }, {
+                ...commonPulumiOpts,
+                ignoreChanges: [
+                    "associatePublicIpAddress",
+                    // Don't update AMI as it will replace instance, destroying disk and user's data
+                    // TODO support such change while keeping user's data
+                    "ami" 
+                ]
+            })
 
-        this.ec2Instance = new aws.ec2.Instance(`${name}-ec2-instance`, {
-            ami: args.ami,
-            instanceType: args.type,
-            tags:  {
-                ...args.tags,
-                Name: awsResourceNamePrefix
-            },
-            volumeTags: args.tags,
-            vpcSecurityGroupIds: [this.securityGroup.id],
-            keyName: this.keyPairName,
-            rootBlockDevice: {
-                encrypted:  args.rootVolume?.encrypted || true,
-                volumeSize: args.rootVolume?.sizeGb,
-                volumeType: args.rootVolume?.type
-            },
-            instanceMarketOptions: instanceMarketOptions,
-            subnetId: args.subnetId,
-            associatePublicIpAddress: true,
-        }, {
-            ...commonPulumiOpts,
-            ignoreChanges: [
-                "associatePublicIpAddress",
-                // Don't update AMI as it will replace instance, destroying disk and user's data
-                // TODO support such change while keeping user's data
-                "ami" 
-            ]
-        })
+            // Extract root disk ID from instance, corresponding to the root block device volume ID
+            this.rootVolumeId = this.ec2Instance.rootBlockDevice.apply(rbd => rbd.volumeId)
 
-        this.volumes = []
-        args.additionalVolumes?.forEach(v => {        
-            const vol = new aws.ebs.Volume(`${name}-volume-${v.deviceName}`, {
-                encrypted: v.encrypted || true,
-                availabilityZone: v.availabilityZone || this.ec2Instance.availabilityZone,
-                size: v.size,
-                type: v.type,
-                iops: v.iops,
-                throughput: v.throughput,
-                tags: globalTags
-            }, commonPulumiOpts);
-    
-            new aws.ec2.VolumeAttachment(`${name}-volume-attach-${v.deviceName}`, {
-                deviceName: v.deviceName,
-                volumeId: vol.id,
-                instanceId: this.ec2Instance.id,
-            }, commonPulumiOpts);
+            // Create data disk if requested and not explicitly disabled
+            // Must be created after instance to get availability zone
+            // Data disk is only created if instance server is enabled
+            if(args.dataDisk && args.dataDisk.state !== "absent"){
+                this.dataDisk = new aws.ebs.Volume(`${name}-data-disk`, {
+                    encrypted: true,
+                    size: args.dataDisk.sizeGb,
+                    type: "gp3",
+                    availabilityZone: this.ec2Instance.availabilityZone,
+                    tags: globalTags,
+                    snapshotId: args.dataDisk.snapshotId,
+                }, {
+                    ...commonPulumiOpts,
+                    dependsOn: [this.ec2Instance]
+                })
+                
+                new aws.ec2.VolumeAttachment(`${name}-data-disk-attach`, {
+                    deviceName: "/dev/sdf",
+                    volumeId: this.dataDisk.id,
+                    instanceId: this.ec2Instance.id,
+                }, {
+                    ...commonPulumiOpts,
+                    dependsOn: [this.ec2Instance, this.dataDisk]
+                })
+                
+                this.dataDiskId = this.dataDisk.id
+            } else {
+                this.dataDiskId = undefined
+            }
 
-            this.volumes.push(vol)
-        })
+            this.volumes = []
+            args.additionalVolumes?.forEach(v => {        
+                const vol = new aws.ebs.Volume(`${name}-volume-${v.deviceName}`, {
+                    encrypted: v.encrypted || true,
+                    availabilityZone: v.availabilityZone || this.ec2Instance!.availabilityZone,
+                    size: v.size,
+                    type: v.type,
+                    iops: v.iops,
+                    throughput: v.throughput,
+                    tags: globalTags
+                }, commonPulumiOpts);
         
+                new aws.ec2.VolumeAttachment(`${name}-volume-attach-${v.deviceName}`, {
+                    deviceName: v.deviceName,
+                    volumeId: vol.id,
+                    instanceId: this.ec2Instance!.id,
+                }, commonPulumiOpts);
 
-        if (args.publicIpType === PUBLIC_IP_TYPE_STATIC) {
-            this.eip = new aws.ec2.Eip(`${name}-eip`, {
-                tags: globalTags
-            }, commonPulumiOpts);
-                    
-            new aws.ec2.EipAssociation(`${name}-eipAssoc`, {
-                instanceId: this.ec2Instance.id,
-                allocationId: this.eip.id,
-            }, commonPulumiOpts);
-        } else if (args.publicIpType !== PUBLIC_IP_TYPE_DYNAMIC) {
-            throw `publicIpType must be either '${PUBLIC_IP_TYPE_STATIC}' or '${PUBLIC_IP_TYPE_DYNAMIC}'`
+                this.volumes.push(vol)
+            })
+            
+
+            if (args.publicIpType === PUBLIC_IP_TYPE_STATIC) {
+                this.eip = new aws.ec2.Eip(`${name}-eip`, {
+                    tags: globalTags
+                }, commonPulumiOpts);
+                        
+                new aws.ec2.EipAssociation(`${name}-eipAssoc`, {
+                    instanceId: this.ec2Instance.id,
+                    allocationId: this.eip.id,
+                }, commonPulumiOpts);
+            } else if (args.publicIpType !== PUBLIC_IP_TYPE_DYNAMIC) {
+                throw `publicIpType must be either '${PUBLIC_IP_TYPE_STATIC}' or '${PUBLIC_IP_TYPE_DYNAMIC}'`
+            }
+
+            // set client-facing values
+            this.instanceId = this.ec2Instance.id
+        } else {
+            // Instance server is absent - set outputs to empty
+            this.instanceId = undefined
+            this.rootVolumeId = undefined
+            this.dataDiskId = undefined
+            this.volumes = []
         }
 
-        // set client-facing values
-        this.instanceId = this.ec2Instance.id
-        this.publicIp = this.eip ? this.eip.publicIp : this.ec2Instance.publicIp
+        this.publicIp = this.eip ? this.eip.publicIp : this.ec2Instance?.publicIp || pulumi.output("")
     }
 }
 
@@ -245,6 +292,9 @@ async function awsPulumiProgram(): Promise<Record<string, any> | void> {
     const publicKeyContent = config.require("publicSshKeyContent");
     const useSpot = config.requireBoolean("useSpot");
     const ingressPorts = config.requireObject<SimplePortDefinition[]>("ingressPorts")
+    const imageId = config.get("imageId")
+    const dataDisk = config.getObject<{ state: "present" | "absent", sizeGb: number, snapshotId?: string }>("dataDisk")
+    const instanceServerState = config.get("instanceServerState") as "present" | "absent" | undefined
 
     const billingAlertEnabled = config.requireBoolean("billingAlertEnabled");
     const billingAlertLimit = config.get("billingAlertLimit");
@@ -252,7 +302,8 @@ async function awsPulumiProgram(): Promise<Record<string, any> | void> {
 
     const instanceName = pulumi.getStack()
 
-    const ubuntuAmi = aws.ec2.getAmiOutput({
+    // Use provided imageId if available, otherwise use default Ubuntu AMI
+    const amiId = imageId ? pulumi.output(imageId) : aws.ec2.getAmiOutput({
         mostRecent: true,
         nameRegex: "^ubuntu/images/hvm-ssd-gp3/ubuntu-noble-24.04-amd64-server-[0-9]{8}$",
         filters: [
@@ -269,7 +320,7 @@ async function awsPulumiProgram(): Promise<Record<string, any> | void> {
             },
         ],
         owners: ["099720109477"],
-    })
+    }).imageId
     
     let billingAlert: {
         limit: pulumi.Input<string>
@@ -291,7 +342,7 @@ async function awsPulumiProgram(): Promise<Record<string, any> | void> {
     }
 
     const instance = new CloudyPadEC2Instance(instanceName, {
-        ami: ubuntuAmi.imageId,
+        ami: amiId,
         type: instanceType,
         publicKeyContent: publicKeyContent,
         rootVolume: {
@@ -305,6 +356,8 @@ async function awsPulumiProgram(): Promise<Record<string, any> | void> {
             enabled: useSpot
         },
         billingAlert: billingAlert,
+        dataDisk: dataDisk,
+        instanceServerState: instanceServerState,
         ingressPorts: ingressPorts.map(p => ({
             fromPort: p.port, 
             toPort: p.port, 
@@ -316,7 +369,9 @@ async function awsPulumiProgram(): Promise<Record<string, any> | void> {
 
     return {
         instanceId: instance.instanceId,
-        publicIp: instance.publicIp
+        publicIp: instance.publicIp,
+        rootDiskId: instance.rootVolumeId,
+        dataDiskId: instance.dataDiskId
     }
 
 }
@@ -328,6 +383,13 @@ export interface PulumiStackConfigAws {
     publicSshKeyContent: string
     publicIpType: PUBLIC_IP_TYPE
     useSpot: boolean
+    imageId?: string
+    instanceServerState?: "present" | "absent"
+    dataDisk?: {
+        state: "present" | "absent"
+        sizeGb: number
+        snapshotId?: string
+    }
     billingAlert?: {
         limit: number
         notificationEmail: string
@@ -336,8 +398,26 @@ export interface PulumiStackConfigAws {
 }
 
 export interface AwsPulumiOutput {
-    instanceId: string
+
+    /**
+     * ID of the instance server on AWS.
+     */
+    instanceId?: string
+
+    /**
+     * Public IP address of the instance server.
+     */
     publicIp: string
+
+    /**
+     * ID of the root disk volume on AWS.
+     */
+    rootDiskId?: string
+    
+    /**
+     * ID of the data disk volume on AWS.
+     */
+    dataDiskId?: string
 }
 
 export interface AwsPulumiClientArgs {
@@ -368,6 +448,10 @@ export class AwsPulumiClient extends InstancePulumiClient<PulumiStackConfigAws, 
         await stack.setConfig("useSpot", { value: config.useSpot.toString()})
         await stack.setConfig("ingressPorts", { value: JSON.stringify(config.ingressPorts)})
 
+        if(config.imageId) await stack.setConfig("imageId", { value: config.imageId})
+        if(config.instanceServerState) await stack.setConfig("instanceServerState", { value: config.instanceServerState})
+        if(config.dataDisk) await stack.setConfig("dataDisk", { value: JSON.stringify(config.dataDisk)})
+
         if(config.billingAlert){
             await stack.setConfig("billingAlertEnabled", { value: "true"})
             await stack.setConfig("billingAlertLimit", { value: config.billingAlert.limit.toString()})
@@ -383,8 +467,10 @@ export class AwsPulumiClient extends InstancePulumiClient<PulumiStackConfigAws, 
 
     protected async buildTypedOutput(outputs: OutputMap) : Promise<AwsPulumiOutput>{
         return {
-            instanceId: outputs["instanceId"].value as string, // TODO validate with Zod
-            publicIp: outputs["publicIp"].value as string
+            instanceId: outputs["instanceId"]?.value as string | undefined, // TODO validate with Zod
+            publicIp: outputs["publicIp"]?.value || "" as string,
+            rootDiskId: outputs["rootDiskId"]?.value as string | undefined,
+            dataDiskId: outputs["dataDiskId"]?.value as string | undefined
         }   
     }
 

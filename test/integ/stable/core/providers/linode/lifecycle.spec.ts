@@ -25,8 +25,6 @@ describe('Linode lifecycle', () => {
     const rootDiskSizeGb = 25
     const dataDiskSizeGb = 10
 
-    let currentInstanceServerId: string | undefined = undefined
-
     async function getCurrentTestState(): Promise<LinodeInstanceStateV1> {
         return linodeProviderClient.getInstanceState(instanceName)
     }
@@ -38,8 +36,6 @@ describe('Linode lifecycle', () => {
     }
     
     it('should initialize instance state', async () => {
-
-        assert.strictEqual(currentInstanceServerId, undefined)
 
         const initializer = new LinodeProviderClient({config: coreConfig}).getInstanceInitializer()
             await initializer.initializeStateOnly(instanceName, {
@@ -80,7 +76,7 @@ describe('Linode lifecycle', () => {
         const state = await getCurrentTestState()
 
         assert.ok(state.provision.output?.instanceServerId)
-        currentInstanceServerId = state.provision.output.instanceServerId
+        const currentInstanceServerId = state.provision.output.instanceServerId
 
         // Verify the instance was created with correct specifications
         const linodeClient = getLinodeClient()
@@ -88,14 +84,37 @@ describe('Linode lifecycle', () => {
         const instanceDetails = await linodeClient.getLinode(currentInstanceServerId)
         assert.ok(instanceDetails, 'Instance details should be available')
         assert.strictEqual(instanceDetails.type, instanceType)
+
+        // Check data disk exists
+        assert.ok(state.provision.output?.dataDiskId, "dataDiskId should be in output after deployment")
+
+        // Check root disk exists
+        assert.ok(state.provision.output?.rootDiskId, "rootDiskId should be in output after deployment")
+
+        // Check base image exists
+        assert.ok(state.provision.output?.baseImageId, "baseImageId should be in output after deployment")
     }).timeout(30*60*1000) // 30 minutes timeout, 
     // may be long as Linode instances are slow to start and creating image snapshot may be long
+
+    it('should have resources matching state output after deployment', async () => {
+        const linodeClient = getLinodeClient()
+        const state = await getCurrentTestState()
+
+        // Verify base image exists and ID matches state output
+        if (state.provision.output?.baseImageId) {
+            const image = await linodeClient.getImage(state.provision.output.baseImageId)
+            assert.ok(image, 'Base image should exist in Linode')
+            // Linode image IDs are like "private/12345678" or "linode/ubuntu22.04"
+            // The ID from state should match the image.id
+            assert.strictEqual(image.id, state.provision.output.baseImageId, 'Base image ID should match state output')
+        }
+    }).timeout(10000)
 
     it('should have a valid instance server output with existing server', async () => {
         const state = await getCurrentTestState()
         
         assert.ok(state.provision.output?.instanceServerId)
-        currentInstanceServerId = state.provision.output.instanceServerId
+        const currentInstanceServerId = state.provision.output.instanceServerId
 
         const linodeClient = getLinodeClient()
         
@@ -116,14 +135,37 @@ describe('Linode lifecycle', () => {
             assert.strictEqual(instanceStatus.serverStatus, ServerRunningStatus.Unknown)
 
             const state = await getCurrentTestState()
-            assert.strictEqual(state.provision.output?.instanceServerId, undefined)
+            assert.strictEqual(state.provision.output?.instanceServerId, undefined, "instanceServerId should be undefined after stop (server deleted)")
+            assert.ok(state.provision.output?.dataDiskId, "dataDiskId should be set after stop")
 
+            // Linode do not support data disk snapshots yet, 
+            assert.strictEqual(state.provision.output?.dataDiskSnapshotId, undefined, "dataDiskSnapshotId should be undefined after stop")
+            
+        }).timeout(30*60*1000) // 30 minutes timeout, Linode instances are slow to start and stop
+
+        it("should have no instance server and a live data disk after stop", async () => {
+            
             // instance should be deleted on stop
+            const state = await getCurrentTestState()
+            const currentInstanceServerId = state.provision.output?.instanceServerId
+            assert.strictEqual(currentInstanceServerId, undefined)
+
             const linodeClient = getLinodeClient()
             const instances = await linodeClient.listInstances()
             const instance = instances.find((instance) => instance.id.toString() === currentInstanceServerId)
             assert.ok(!instance)
-        }).timeout(120000)
+
+            // Check data disk exists
+            // dataDiskId is a filesystem path basename like "scsi-0Linode_Volume_my-instance-vol"
+            // Extract the volume label by removing the "scsi-0Linode_Volume_" prefix
+            assert.ok(state.provision.output?.dataDiskId)
+
+            const volumeLabel = state.provision.output.dataDiskId.replace(/^scsi-0Linode_Volume_/, '')
+            const volume = await linodeClient.getVolumeByLabel(volumeLabel)
+            assert.ok(volume, 'Data volume should exist in Linode')
+            assert.strictEqual(volume.label, volumeLabel, 'Data volume label should match')
+
+        }).timeout(10000)
     }
 
     // run twice for idempotency
@@ -139,9 +181,8 @@ describe('Linode lifecycle', () => {
             assert.strictEqual(instanceStatus.serverStatus, ServerRunningStatus.Running)
 
             const state = await getCurrentTestState()
-            assert.ok(state.provision.output?.instanceServerId)
-
-            currentInstanceServerId = state.provision.output.instanceServerId
+            assert.ok(state.provision.output?.instanceServerId, "instanceServerId should exist after start")
+            assert.ok(state.provision.output?.dataDiskId, "dataDiskId should exist after start")
         }).timeout(1200000) // 20 minutes timeout
     }
 

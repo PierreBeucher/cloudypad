@@ -17,8 +17,8 @@ describe('GCP lifecycle', () => {
     const instanceName = 'test-instance-gcp-lifecycle';
 
     const region = "europe-west4";
-    const zone = "europe-west4-b";
-    const machineType = "n1-standard-8";
+    const zone = "europe-west4-a";
+    const machineType = "n1-standard-4";
     const acceleratorType = "nvidia-tesla-t4";
     const projectId = "crafteo-sandbox";
 
@@ -57,6 +57,7 @@ describe('GCP lifecycle', () => {
             machineType: machineType,
             acceleratorType: acceleratorType,
             diskSize: 100,
+            dataDiskSizeGb: 50,
             diskType: 'pd-balanced',
             networkTier: 'STANDARD',
             nicType: 'auto',
@@ -64,10 +65,18 @@ describe('GCP lifecycle', () => {
             projectId: projectId,
             region: region,
             zone: zone,
-            useSpot: true,
+            useSpot: false,
             costAlert: {
                 limit: 2,
                 notificationEmail: "test@test.com"
+            },
+            deleteInstanceServerOnStop: true,
+            dataDiskSnapshot: {
+                enable: true
+            },
+            baseImageSnapshot: {
+                enable: true,
+                keepOnDeletion: false
             }
         }, {
             sunshine: {
@@ -92,8 +101,57 @@ describe('GCP lifecycle', () => {
         const instance = instances.find(instance => instance.name === currentInstanceName);
         assert.ok(instance);
         assert.strictEqual(instance.machineType?.split('/').pop(), machineType);
-    }).timeout(20*60*1000); // 20 minutes timeout as deployment may be long
- 
+    }).timeout(60*60*1000); // 60 minutes timeout as deployment may be long
+
+    it('should have a valid instance server output with existing server', async () => {
+        const state = await getCurrentTestState();
+        
+        assert.ok(state.provision.output?.instanceName);
+        currentInstanceName = state.provision.output.instanceName;
+
+        const gcpClient = await getGcpClient();
+        
+        const instanceState = await gcpClient.getInstanceState(zone, currentInstanceName);
+        assert.strictEqual(instanceState, GcpInstanceStatus.Running);
+    }).timeout(2*60*1000);
+
+    it('should wait for instance readiness after deployment', async () => {
+        await waitForInstanceReadiness('deployment');
+    }).timeout(2*60*1000);
+
+    it('should have resources matching state output after deployment', async () => {
+        const gcpClient = await getGcpClient();
+        const state = await getCurrentTestState();
+
+        // Verify data disk exists and ID matches state output
+        if (state.provision.output?.dataDiskId) {
+            const disk = await gcpClient.getDisk(zone, state.provision.output.dataDiskId);
+            assert.ok(disk, 'Data disk should exist in GCP');
+            assert.strictEqual(disk.name, state.provision.output.dataDiskId, 'Data disk ID should match state output');
+            assert.strictEqual(disk.sizeGb, '50', 'Data disk size should be 50 GB');
+        }
+
+        // Verify root disk exists and ID matches state output
+        if (state.provision.output?.rootDiskId) {
+            const disk = await gcpClient.getDisk(zone, state.provision.output.rootDiskId);
+            assert.ok(disk, 'Root disk should exist in GCP');
+            assert.strictEqual(disk.name, state.provision.output.rootDiskId, 'Root disk ID should match state output');
+        }
+
+        // Verify base image exists and ID matches state output
+        if (state.provision.output?.baseImageId) {
+            const image = await gcpClient.getImage(state.provision.output.baseImageId);
+            assert.ok(image, 'Base image should exist in GCP');
+            // Normalize both values - extract image name from URI if needed
+            // State may store full URI (projects/{projectId}/global/images/{imageName}) or just the name
+            const stateImageName = state.provision.output.baseImageId.includes('/')
+                ? state.provision.output.baseImageId.split('/').pop()!
+                : state.provision.output.baseImageId;
+            assert.strictEqual(image.name, stateImageName, 'Base image ID should match state output');
+            assert.strictEqual(image.status, 'READY', 'Base image should be ready');
+        }
+    }).timeout(10000);
+
     it('should update instance', async () => {
         const instanceUpdater = gcpProviderClient.getInstanceUpdater();
         await instanceUpdater.updateStateOnly({
@@ -119,22 +177,6 @@ describe('GCP lifecycle', () => {
 
     }).timeout(15*60*1000);
 
-    it('should have a valid instance server output with existing server', async () => {
-        const state = await getCurrentTestState();
-        
-        assert.ok(state.provision.output?.instanceName);
-        currentInstanceName = state.provision.output.instanceName;
-
-        const gcpClient = await getGcpClient();
-        
-        const instanceState = await gcpClient.getInstanceState(zone, currentInstanceName);
-        assert.strictEqual(instanceState, GcpInstanceStatus.Running);
-    }).timeout(2*60*1000);
-
-    it('should wait for instance readiness after deployment', async () => {
-        await waitForInstanceReadiness('deployment');
-    }).timeout(2*60*1000);
-
     // run twice for idempotency
     for (let i = 0; i < 2; i++) { 
 
@@ -144,10 +186,25 @@ describe('GCP lifecycle', () => {
 
             const instanceStatus = await instanceManager.getInstanceStatus();
 
-            assert.strictEqual(instanceStatus.configured, true);
-            assert.strictEqual(instanceStatus.serverStatus, ServerRunningStatus.Stopped);
+            assert.strictEqual(instanceStatus.configured, false);
+            assert.strictEqual(instanceStatus.serverStatus, ServerRunningStatus.Unknown);
+
+            const state = await getCurrentTestState();
+            assert.strictEqual(state.provision.output?.dataDiskId, undefined, "dataDiskId should be undefined after stop");
         }).timeout(20*60*1000); // 20 in timeout as stopping n1 instances is very long
     }
+
+    it('should have created data disk snapshot after stop', async () => {
+        const state = await getCurrentTestState();
+        
+        assert.ok(state.provision.output?.dataDiskSnapshotId, 'Data disk snapshot ID should be set');
+        
+        const gcpClient = await getGcpClient();
+        const snapshot = await gcpClient.getSnapshot(state.provision.output.dataDiskSnapshotId);
+        
+        assert.ok(snapshot, 'Data disk snapshot should exist in GCP');
+        assert.strictEqual(snapshot.status, 'READY', 'Snapshot should be ready');
+    }).timeout(10000);
 
     // run twice for idempotency
     for (let i = 0; i < 2; i++) { 

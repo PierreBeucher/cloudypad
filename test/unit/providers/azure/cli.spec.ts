@@ -24,7 +24,16 @@ describe('Azure input prompter', () => {
             costAlert: {
                 notificationEmail: "test@test.com",
                 limit: 100
-            }
+            },
+            dataDiskSizeGb: 100,
+            baseImageSnapshot: {
+                enable: true,
+                keepOnDeletion: true,
+            },
+            dataDiskSnapshot: {
+                enable: true,
+            },
+            deleteInstanceServerOnStop: true,
         }, 
         configuration: {
             ...DEFAULT_COMMON_INPUT.configuration
@@ -48,6 +57,11 @@ describe('Azure input prompter', () => {
         keyboardVariant: TEST_INPUT.configuration.keyboard?.variant,
         keyboardModel: TEST_INPUT.configuration.keyboard?.model,
         keyboardOptions: TEST_INPUT.configuration.keyboard?.options,
+        baseImageSnapshot: TEST_INPUT.provision.baseImageSnapshot?.enable,
+        baseImageKeepOnDeletion: TEST_INPUT.provision.baseImageSnapshot?.keepOnDeletion,
+        dataDiskSnapshot: TEST_INPUT.provision.dataDiskSnapshot?.enable,
+        deleteInstanceServerOnStop: TEST_INPUT.provision.deleteInstanceServerOnStop,
+        dataDiskSize: TEST_INPUT.provision.dataDiskSizeGb,
     }
 
     it('should return provided inputs without prompting when full input provider', async () => {
@@ -64,10 +78,6 @@ describe('Azure input prompter', () => {
             provision: {
                 ...TEST_INPUT.provision,
                 ssh: lodash.omit(TEST_INPUT.provision.ssh, "user"),
-            },
-            configuration: {
-                ...TEST_INPUT.configuration,
-                wolf: null
             }
         }
         

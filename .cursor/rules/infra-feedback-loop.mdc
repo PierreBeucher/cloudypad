@@ -1,0 +1,142 @@
+---
+description: Efficient feedback loop and problem fix when working with Instance deployment and infrastructure using real Cloud resources
+alwaysApply: false
+---
+
+When you test Instance deployment (creation, deployment, provision, configuration, start/stop, etc.) feedback loop is not easy as you need to have broad context with Cloud resources and commands / tests are long to run. These rules define workflow for efficient debugging and feedback loop.
+
+Workflow:
+
+- Identify the failure reason and related component. Identify clearly if it's related to Pulumi, Ansible, a Cloud client we implemented or something else. 
+- You are allowed to run CLI commands (`az`, `aws`, `gcloud`, `pulumi`...) to read and delete resources related to our instance.
+- Update code to try and fix issue
+- Don't run the entire test again, instead run only specific commands or test that will try again the part of code that failed before continuing
+- When problem is fixed, you can the overall test and command again
+
+Below is:
+
+- Workflow to follow in various situations
+- Commands to run for each actions
+
+# Debug workflow in situations
+
+## Instance Deployment or Update
+
+Instance Deployment (or Update) is a full cycle of state creation/update, provision, configuration, stop, base image creation and start again. It's quite long. Depending on where we had failure:
+
+- Before provision: you can start test again from the beginning since we were at the beginning
+- During Provision, typically a Pulumi issue: don't run full deployment again, see Provision workflow
+- During Configuration, typically an Ansible issue: don't run full deployment again. May be related to several problems:
+  - Root cause is Ansible-specific issue (eg. a malformed task, or a missing package on machine): fix Ansible and run Configuration targetting impacted tasks
+  - Root cause is infrastructure (eg. a missing Cloud resource): fix, run Provision and Configuration again, run Configuration targetting impacted tasks
+  - Root cause is unclear (not Ansible itself, unrelated to infrastructure or code): first try to run Configuration targetting impacted tasks, then try to Provision + Configuration, and as last resort re-run full Deployment
+- During instance Stop before base image creation: fix and try to Stop instance again
+- During instance Base image creation: fix and run Instance Base Image update again 
+- During instance Start after Base image creation: fix and run Instance Start again, if it fails, try to identfy the best place to continue our test
+
+See below for specifics on each steps.
+
+## Instance Provision
+
+Typically a Pulumi or internal code issue: fix and run Provision again.
+
+## Instance Configuration
+
+Typically an Ansible issue. Don't run entire configuration and Ansible playbook again. May be related to several problems:
+- Root cause is Ansible-specific issue (eg. a malformed task, or a missing package on machine): fix then run Configuration targetting impacted Ansible tasks
+- Root cause is infrastructure (eg. a missing Cloud resource): fix, run Provision to update infra and then run Configuration targetting impacted Ansible tasks
+- Root cause is unclear (not Ansible itself, unrelated to infrastructure or code): try to fix, run Configuration targetting impacted tasks. If it doesn't wortk, you can run Provision then Configuration again.
+        
+## Instance Start
+
+Start is actually comprised of Data disk snapshot restoration, Provision and Start. 
+
+- Issue with Data disk Snapshot Restoration: maybe coming from how Data disk is passed to Main Pulumi stack or an issue with Snapshot creation.
+  - If issue is how Data Disk snapshot is c:reated: fix and run Stop again to provision disk again, and Start again
+  - If issue is how Provision and Main Pulumi works with given snapshot: just fix and Start again
+  - If issue is after Provision: fix and Start again
+- Other issue: fix and Start again
+
+## Instance Stop
+
+Stop will actually stop the Instance Server, create Data Disk Snapshot then run Provision with desired Instance Server to deleted state (so as to keep only data snapshot)
+
+- Issue with Instance Server stop: fix and run Stop again
+- Issue with Data Disk Snapshot creation:
+  - If a simple timeout (as it may be long): increase timeout and Stop again
+  - If a more complex issue: in most situations, fixing related code and running Stop is OK. But you may need to run Provision or another task as well.
+- Issue with Provision for resources deletion: Fix and stop again. At this point Data Disk Snapshot should be created and Stop will be fast.
+
+## Instance Destroy
+
+Try deletion again. If needed, try to delete manually, ONLY if you're sure that deleted resources are directly related to our instance. Otherwise stop and ask for input. 
+
+# Commands and environment variables
+
+## Provision
+
+```sh
+npx tsx src/cli/main.ts provision my-instance
+```
+
+## Configuration with specific Ansible tasks target
+
+**TODO provide way to override Ansible**
+
+```sh
+# Run Configuration with specifc tasks target or roles
+npx tsx src/cli/main.ts configure my-instance --override-ansible-args xxxx
+```
+
+## Start and Stop
+
+```sh
+npx tsx src/cli/main.ts start my-instance --wait
+npx tsx src/cli/main.ts stop my-instance --wait
+```
+
+## Destroy
+
+```sh
+npx tsx src/cli/main.ts destroy --yes my-instance
+```
+
+## Pulumi commands
+
+Specific pulumi commands you can run when needed:
+
+- If stack is stuck as another update is or was already in progress (typically Pulumi was interrupted)
+- If direct stack operation is needed (eg. cleanup, cancel, destroy, etc.)
+
+```sh
+# Show all stacks
+pulumi stack ls -a
+
+# Cancel a stack (example with Azure stack)
+pulumi cancel -y -s organization/CloudyPad-Azure/test-azure-advanced
+
+# Force destroy with refresh of a stack 
+pulumi destroy -ryf -s organization/CloudyPad-Azure/test-azure-advanced
+```
+
+## Environment variables
+
+```sh
+# Enable DEBUG log level (if not already done)
+export CLOUDYPAD_LOG_LEVEL=2
+
+# Skip Ansible conifguration altogether
+# Useful for quick feedback loop on infra-specific aspects
+export CLOUDYPAD_SKIP_CONFIGURATION=true
+
+# Override Ansible args to run specific tasks or tags
+# Allowing faster feedback when running configuration
+export CLOUDYPAD_ANSIBLE_ARGS_OVERRIDE="-t data-disk"
+```
+
+# Useful references
+
+See for examples:
+
+- Integration testing doing a full lifecycle with JS test and sane options: `test/integ/stable/core/providers/<provider>/lifecycle[.*].ts`. Use it to get more context about expected arguments during create and various steps. 
+- For create CLI flags, see `test/integ/unstable/cli-full-lifecycle/<PROVIDER>.sh`. Use these create commands as example to avoid being prompted input with CLI. 

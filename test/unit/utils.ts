@@ -2,9 +2,9 @@ import { CommonInstanceInput, InstanceStateV1 } from "../../src/core/state/state
 import path from "path"
 import fs, { mkdtempSync } from "fs"
 import yaml from 'yaml'
-import { AwsPulumiOutput } from "../../src/providers/aws/pulumi";
-import { AzurePulumiOutput } from "../../src/providers/azure/pulumi";
-import { GcpPulumiOutput } from "../../src/providers/gcp/pulumi";
+import { AwsPulumiOutput } from "../../src/providers/aws/pulumi/main";
+import { AzurePulumiOutput } from "../../src/providers/azure/pulumi/main";
+import { GcpPulumiOutput } from "../../src/providers/gcp/pulumi/main";
 import { PaperspaceMachine } from "../../src/providers/paperspace/client/client";
 import { PUBLIC_IP_TYPE_STATIC } from "../../src/core/const";
 import { tmpdir } from "os";

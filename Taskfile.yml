@@ -12,8 +12,21 @@ tasks:
   # Build and test
   #
 
+  # Run unit tests.
+  # By default, all tests are run recursively with "test/unit --recursive",
+  # CLI arguments are passed directly to mocha to allow running specific tests
+  #
+  # Note that by passing CLI arguments you MUST pass "--" (to separate CLI args from task args) 
+  # and a test file like "test/unit" otherwise mocha will not run any tests
+  #
+  # eg. 
+  #   task test-unit -- test/unit --recursive # run all tests
+  #   task test-unit -- test/unit --recursive --grep "should list all quota instance types" # run a single test 
+  #   task test-unit -- test/unit/instance/quota/accessor.spec.ts # run a single test file
   test-unit:
-    cmd: npx mocha --config test/unit/.mocharc.json ./test/unit --recursive
+    cmds:
+      - npx mocha --config test/unit/.mocharc.json {{ .CLI_ARGS | default "test/unit --recursive" }}
+
 
   build-npm:
     cmds:
@@ -134,9 +147,6 @@ tasks:
     cmds:
     - npx mocha --config test/integ/.mocharc.json ./test/integ/stable/core/providers/linode/client.spec.ts
     - npx mocha --config test/integ/.mocharc.json ./test/integ/stable/core/providers/linode/lifecycle.spec.ts 
-
-  test-integ-scaleway-lifecycle-with-server-deletion:
-    - npx mocha --config test/integ/.mocharc.json ./test/integ/scaleway/lifecycle-with-server-deletion.spec.ts 
 
   # Ensure analytics key are matching in various places in code 
   test-analytics-key-match:

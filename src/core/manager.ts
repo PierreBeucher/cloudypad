@@ -462,7 +462,8 @@ export class GenericInstanceManager<ST extends InstanceStateV1> implements Insta
         const provisioner = await this.buildProvisioner()
 
         // Data snapshot provision. Only call if dataDiskSnapshot is enabled
-        if(currentState.provision.input.dataDiskSnapshot?.enable){
+        // and we have data disk snapshot ID output
+        if(currentState.provision.input.dataDiskSnapshot?.enable && currentState.provision.output?.dataDiskId){
             this.logger.debug(`Running data snapshot provision for instance ${this.name()}`)
             const snapshotOutputs = await provisioner.dataSnapshotProvision({
                 pulumiCancel: opts?.pulumiCancel
@@ -488,6 +489,26 @@ export class GenericInstanceManager<ST extends InstanceStateV1> implements Insta
      */
     private async doBaseImageSnapshotProvision(opts?: ActionOptions): Promise<void> {
         this.logger.debug(`Do base image snapshot provision for instance ${this.name()}`)
+
+        const currentState = await this.getState()
+
+        // If imageId is set in input, use it directly as passthrough (user provides their own image)
+        if (currentState.provision.input.imageId) {
+            this.logger.debug(`Using provided imageId as baseImageId passthrough: ${currentState.provision.input.imageId}`)
+
+            const currentOutput = currentState.provision.output
+            if(!currentOutput){
+                throw new Error(`Base image snapshot provision for instance ${this.name()} failed: no provision output. ` +
+                    `Base image provision requires existing provision output to be run.`)
+            }
+
+            const outputs = {
+                ...currentOutput,
+                baseImageId: currentState.provision.input.imageId,
+            }
+            await this.stateWriter.setProvisionOutput(this.instanceName, outputs)
+            return
+        }
 
         // Stop instance to ensure data consistency before creating snapshot
         // Directly via runner, not via this.stop(), to ensure disk is kept before creating snapshot

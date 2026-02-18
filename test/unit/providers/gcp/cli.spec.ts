@@ -31,6 +31,15 @@ describe('GCP input prompter', () => {
             diskType: DISK_TYPE_SSD,
             networkTier: NETWORK_TIER_PREMIUM,
             nicType: NIC_TYPE_AUTO,
+            dataDiskSizeGb: 100,
+            baseImageSnapshot: {
+                enable: true,
+                keepOnDeletion: true,
+            },
+            dataDiskSnapshot: {
+                enable: true,
+            },
+            deleteInstanceServerOnStop: true,
         }, 
         configuration: {
             ...DEFAULT_COMMON_INPUT.configuration
@@ -56,6 +65,11 @@ describe('GCP input prompter', () => {
         diskType: TEST_INPUT.provision.diskType,
         networkTier: TEST_INPUT.provision.networkTier,
         nicType: TEST_INPUT.provision.nicType,
+        baseImageSnapshot: TEST_INPUT.provision.baseImageSnapshot?.enable,
+        baseImageKeepOnDeletion: TEST_INPUT.provision.baseImageSnapshot?.keepOnDeletion,
+        dataDiskSnapshot: TEST_INPUT.provision.dataDiskSnapshot?.enable,
+        deleteInstanceServerOnStop: TEST_INPUT.provision.deleteInstanceServerOnStop,
+        dataDiskSize: TEST_INPUT.provision.dataDiskSizeGb,
     }
 
     it('should convert CLI args into partial input', () => {
@@ -93,10 +107,6 @@ describe('GCP input prompter', () => {
                 ...TEST_INPUT.provision,
                 ssh: lodash.omit(TEST_INPUT.provision.ssh, "user")
             },
-            configuration: {
-                ...TEST_INPUT.configuration,
-                wolf: null
-            }
         }
         
         assert.deepEqual(result, expected)

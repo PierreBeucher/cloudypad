@@ -8,9 +8,11 @@ import { CLOUDYPAD_CONFIGURATOR_LIST } from "../const"
 const CommonProvisionOutputV1Schema = z.object({
     host: z.string().describe("Instance hostname or IP address. Can be used by Moonlight to pair with instance. Maybe be an IP or a FQDN."),
     publicIPv4: z.string().optional().describe("Instance public IPv4 address if any. IPv4 may change in instance lifecycle, prefer using host unless IP is prefered for specific use cases."),
-    dataDiskId: z.string().optional().describe("Unique ID of data disk (if any) which can be found on instance /dev/disk/by-id/<data-disk-id>"),
+    dataDiskId: z.string().optional().describe("Unique ID of data disk for infrastructure operations (snapshots, etc.). Format is provider-specific."),
     dataDiskSnapshotId: z.string().optional().describe("Unique ID of data disk snapshot (if any) which can be used to restore data disk"),
     baseImageId: z.string().optional().describe("Unique ID of base image (if any) created from initial deploy, used to restore root disk with configured system on instance creation"),
+    machineDataDiskLookupId: z.string().optional().describe("Identifier used to find and mount the data disk on the VM. Format depends on provider (e.g., volume UUID, LUN number, disk name)."),
+    machineDataDiskMountMethod: z.string().optional().describe("Method to look up and mount data disk on VM (e.g., 'default', 'azure_lun'). If undefined, uses default method."),
 }).passthrough()
 
 const CommonProvisionInputV1Schema = z.object({
@@ -39,6 +41,7 @@ const CommonProvisionInputV1Schema = z.object({
         keepOnDeletion: z.boolean().optional().describe("Whether to keep base image on instance deletion. Default: false"),
     }).optional().describe("Base image snapshot configuration to capture configured system (NVIDIA drivers, Cloudy Pad, etc.)"),
     deleteInstanceServerOnStop: z.boolean().describe("Whether instance server should be deleted on instance stop and re-created on next start").optional(),
+    imageId: z.string().optional().describe("Existing image ID for instance server. If set, disk size must be equal or greater than image size. Format is provider-specific (e.g., AMI ID for AWS, image ID for GCP, etc.)."),
     
     // Runtime state (updated by manager before calling provision to control provisioner behavior)
     // These represent the desired state of resources and are updated on start/stop operations

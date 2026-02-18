@@ -23,7 +23,16 @@ describe('AWS input prompter', () => {
             costAlert: {
                 limit: 999,
                 notificationEmail: "dummy@crafteo.io",
-            }
+            },
+            dataDiskSizeGb: 100,
+            baseImageSnapshot: {
+                enable: true,
+                keepOnDeletion: true,
+            },
+            dataDiskSnapshot: {
+                enable: true,
+            },
+            deleteInstanceServerOnStop: true,
         },
         configuration: {
             ...DEFAULT_COMMON_INPUT.configuration
@@ -40,16 +49,19 @@ describe('AWS input prompter', () => {
         spot: TEST_INPUT.provision.useSpot,
         costLimit: TEST_INPUT.provision.costAlert?.limit,
         costNotificationEmail: TEST_INPUT.provision.costAlert?.notificationEmail,
+        baseImageSnapshot: TEST_INPUT.provision.baseImageSnapshot?.enable,
+        baseImageKeepOnDeletion: TEST_INPUT.provision.baseImageSnapshot?.keepOnDeletion,
+        dataDiskSnapshot: TEST_INPUT.provision.dataDiskSnapshot?.enable,
+        deleteInstanceServerOnStop: TEST_INPUT.provision.deleteInstanceServerOnStop,
+        dataDiskSize: TEST_INPUT.provision.dataDiskSizeGb,
     }
 
     it('should return provided inputs without prompting when full input provider', async () => {
-        const coreClient = getUnitTestCoreClient()
         const result = await new AwsInputPrompter({ coreConfig: coreConfig }).promptInput(TEST_INPUT, { autoApprove: true })
         assert.deepEqual(result, TEST_INPUT)
     })
 
     it('should convert CLI args into partial input', () => {
-        const coreClient = getUnitTestCoreClient()
         const prompter = new AwsInputPrompter({ coreConfig: coreConfig })
         const result = prompter.cliArgsIntoPartialInput(TEST_CLI_ARGS)
 
@@ -62,11 +74,6 @@ describe('AWS input prompter', () => {
                     limit: 999,
                     notificationEmail: "dummy@crafteo.io",
                 },
-            },
-            configuration: {
-                ...TEST_INPUT.configuration,
-                // cliArgsIntoPartialInput will leave this value specifically undefined
-                wolf: null
             }
         }
         

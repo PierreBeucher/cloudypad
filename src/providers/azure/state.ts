@@ -10,14 +10,16 @@ export enum AZURE_SUPPORTED_DISK_TYPES {
 }
 
 const AzureProvisionOutputV1Schema = CommonProvisionOutputV1Schema.extend({
-    vmName: z.string().describe("Azure VM name"),
+    vmName: z.string().optional().describe("Azure VM name"),
     resourceGroupName: z.string().describe("Azure Resource Group name"),
+    rootDiskId: z.string().optional().describe("Azure OS managed disk ID"),
 })
 
 const AzureProvisionInputV1Schema = CommonProvisionInputV1Schema.extend({
     vmSize: z.string().describe("Azure VM size"),
-    diskSize: z.number().describe("Disk size in GB"),
+    diskSize: z.number().describe("Root (OS) disk size in GB"),
     diskType: z.string().describe("Disk type (HDD, SSD...)").default(AZURE_SUPPORTED_DISK_TYPES.STANDARD_LRS),
+    dataDiskSizeGb: z.number().optional().describe("Data disk size in GB. If non-0, a disk dedicated for instance data (such as games data) will be created."),
     publicIpType: z.enum([PUBLIC_IP_TYPE_STATIC, PUBLIC_IP_TYPE_DYNAMIC]).describe("Type of public IP address"),
     subscriptionId: z.string().describe("Azure Subscription ID"),
     location: z.string().describe("Azure location/region"),

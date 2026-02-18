@@ -184,6 +184,8 @@ export function buildProgram(){
                 analyticsClient.sendEvent(RUN_COMMAND_STOP)
 
                 console.info(`Stopping instance ${name}...`)
+                console.info(`ℹ️ Stopping may take some time to complete while your instance's data is put to sleep for better cost efficiency (data disk snapshot may be long).`)
+
                 const m = await getInstanceManager(name)
                 await m.stop({ 
                     wait: opts.wait, 

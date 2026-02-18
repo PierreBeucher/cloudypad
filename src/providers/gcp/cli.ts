@@ -6,33 +6,69 @@ import { input, select } from '@inquirer/prompts';
 import { AbstractInputPrompter, costAlertCliArgsIntoConfig, PromptOptions, AbstractInputPrompterArgs } from "../../cli/prompter";
 import { GcpClient } from "./sdk-client";
 import lodash from 'lodash'
-import { CLOUDYPAD_PROVIDER_GCP, PUBLIC_IP_TYPE } from "../../core/const";
+import { CLOUDYPAD_PROVIDER_GCP } from "../../core/const";
 import { PartialDeep } from "type-fest";
 import { InteractiveInstanceInitializer } from "../../cli/initializer";
-import { CLI_OPTION_AUTO_STOP_TIMEOUT, CLI_OPTION_AUTO_STOP_ENABLE, CLI_OPTION_COST_ALERT, CLI_OPTION_COST_LIMIT, CLI_OPTION_COST_NOTIFICATION_EMAIL, CLI_OPTION_DISK_SIZE, CLI_OPTION_PUBLIC_IP_TYPE, CLI_OPTION_SPOT, CLI_OPTION_STREAMING_SERVER, CLI_OPTION_SUNSHINE_IMAGE_REGISTRY, CLI_OPTION_SUNSHINE_IMAGE_TAG, CLI_OPTION_SUNSHINE_PASSWORD, CLI_OPTION_SUNSHINE_USERNAME, CliCommandGenerator, CreateCliArgs, UpdateCliArgs, CLI_OPTION_KEYBOARD_OPTIONS, CLI_OPTION_KEYBOARD_MODEL, CLI_OPTION_KEYBOARD_LAYOUT, CLI_OPTION_USE_LOCALE, CLI_OPTION_KEYBOARD_VARIANT, BuildCreateCommandArgs, BuildUpdateCommandArgs, CLI_OPTION_RATE_LIMIT_MAX_MBPS, CLI_OPTION_SUNSHINE_MAX_BITRATE_KBPS } from "../../cli/command";
+import { CreateCliArgsSchema, CLI_OPTION_AUTO_STOP_TIMEOUT, CLI_OPTION_AUTO_STOP_ENABLE, CLI_OPTION_COST_ALERT, CLI_OPTION_COST_LIMIT, CLI_OPTION_COST_NOTIFICATION_EMAIL, CLI_OPTION_DISK_SIZE, CLI_OPTION_DATA_DISK_SIZE, CLI_OPTION_PUBLIC_IP_TYPE, CLI_OPTION_SPOT, CLI_OPTION_STREAMING_SERVER, CLI_OPTION_SUNSHINE_IMAGE_REGISTRY, CLI_OPTION_SUNSHINE_IMAGE_TAG, CLI_OPTION_SUNSHINE_PASSWORD, CLI_OPTION_SUNSHINE_USERNAME, CliCommandGenerator, UpdateCliArgsSchema, CLI_OPTION_KEYBOARD_OPTIONS, CLI_OPTION_KEYBOARD_MODEL, CLI_OPTION_KEYBOARD_LAYOUT, CLI_OPTION_USE_LOCALE, CLI_OPTION_KEYBOARD_VARIANT, BuildCreateCommandArgs, BuildUpdateCommandArgs, CLI_OPTION_RATE_LIMIT_MAX_MBPS, CLI_OPTION_SUNSHINE_MAX_BITRATE_KBPS, CLI_OPTION_DATA_DISK_SNAPSHOT_ENABLE, CLI_OPTION_BASE_IMAGE_SNAPSHOT_ENABLE, CLI_OPTION_KEEP_BASE_IMAGE_ON_DELETION, CLI_OPTION_DELETE_INSTANCE_SERVER_ON_STOP } from "../../cli/command";
 import { RUN_COMMAND_CREATE, RUN_COMMAND_UPDATE } from "../../tools/analytics/events";
 import { InteractiveInstanceUpdater } from "../../cli/updater";
 import { GcpProviderClient } from "./provider";
+import { z } from "zod";
+import { PUBLIC_IP_TYPE_DYNAMIC, PUBLIC_IP_TYPE_STATIC } from "../../core/const";
 
-export interface GcpCreateCliArgs extends CreateCliArgs {
-  projectId?: string
-  region?: string
-  zone?: string
-  machineType?: string
-  diskSize?: number
-  diskType?: string
-  networkTier?: string
-  nicType?: string
-  publicIpType?: PUBLIC_IP_TYPE
-  gpuType?: string
-  spot?: boolean,
-  costAlert?: boolean
-  costLimit?: number
-  costNotificationEmail?: string
-}
+/**
+ * Zod schema for GCP-specific CLI arguments.
+ * Extends the generic CreateCliArgsSchema with GCP-specific options.
+ * This schema matches what Commander.js produces from CLI flags.
+ */
+export const GcpCreateCliArgsSchema = CreateCliArgsSchema.extend({
+  projectId: z.string().optional(),
+  region: z.string().optional(),
+  zone: z.string().optional(),
+  machineType: z.string().optional(),
+  diskSize: z.number().optional(),
+  dataDiskSize: z.number().optional(),
+  diskType: z.string().optional(),
+  networkTier: z.string().optional(),
+  nicType: z.string().optional(),
+  publicIpType: z.enum([PUBLIC_IP_TYPE_STATIC, PUBLIC_IP_TYPE_DYNAMIC]).optional(),
+  gpuType: z.string().optional(),
+  spot: z.boolean().optional(),
+  costAlert: z.boolean().optional(),
+  costLimit: z.number().optional(),
+  costNotificationEmail: z.string().optional(),
+  dataDiskSnapshot: z.boolean().optional(),
+  baseImageSnapshot: z.boolean().optional(),
+  baseImageKeepOnDeletion: z.boolean().optional(),
+  deleteInstanceServerOnStop: z.boolean().optional(),
+})
 
-/** Possible update arguments for GCP update. */
-export type GcpUpdateCliArgs = UpdateCliArgs & Omit<GcpCreateCliArgs, "projectId" | "region" | "zone">
+/**
+ * GCP-specific CLI arguments for create command.
+ * Type is inferred from Zod schema to ensure consistency.
+ */
+export type GcpCreateCliArgs = z.infer<typeof GcpCreateCliArgsSchema>
+
+/**
+ * Zod schema for GCP-specific update CLI arguments.
+ */
+export const GcpUpdateCliArgsSchema = UpdateCliArgsSchema.extend({
+  machineType: z.string().optional(),
+  diskSize: z.number().optional(),
+  dataDiskSize: z.number().optional(),
+  networkTier: z.string().optional(),
+  nicType: z.string().optional(),
+  gpuType: z.string().optional(),
+  costAlert: z.boolean().optional(),
+  costLimit: z.number().optional(),
+  costNotificationEmail: z.string().optional(),
+})
+
+/**
+ * GCP-specific CLI arguments for update command.
+ * Type is inferred from Zod schema to ensure consistency.
+ */
+export type GcpUpdateCliArgs = z.infer<typeof GcpUpdateCliArgsSchema>
 
 // Narrow API surface needed by the prompter for dependency injection and testing
 export type GcpApi = Pick<GcpClient,
@@ -73,6 +109,7 @@ export class GcpInputPrompter extends AbstractInputPrompter<GcpCreateCliArgs, Gc
       provision: {
         machineType: cliArgs.machineType,
         diskSize: cliArgs.diskSize,
+        dataDiskSizeGb: cliArgs.dataDiskSize,
         diskType: cliArgs.diskType,
         networkTier: cliArgs.networkTier,
         nicType: cliArgs.nicType,
@@ -83,6 +120,14 @@ export class GcpInputPrompter extends AbstractInputPrompter<GcpCreateCliArgs, Gc
         projectId: cliArgs.projectId,
         useSpot: cliArgs.spot,
         costAlert: costAlertCliArgsIntoConfig(cliArgs),
+        deleteInstanceServerOnStop: cliArgs.deleteInstanceServerOnStop,
+        dataDiskSnapshot: cliArgs.dataDiskSnapshot ? { 
+          enable: cliArgs.dataDiskSnapshot 
+        } : undefined,
+        baseImageSnapshot: cliArgs.baseImageSnapshot ? { 
+          enable: cliArgs.baseImageSnapshot,
+          keepOnDeletion: cliArgs.baseImageKeepOnDeletion
+        } : undefined,
       },
     }
   }
@@ -127,6 +172,15 @@ export class GcpInputPrompter extends AbstractInputPrompter<GcpCreateCliArgs, Gc
           acceleratorType,
           useSpot,
           costAlert,
+          deleteInstanceServerOnStop: partialInput.provision?.deleteInstanceServerOnStop,
+          dataDiskSnapshot: partialInput.provision?.dataDiskSnapshot?.enable ? { 
+            enable: partialInput.provision.dataDiskSnapshot.enable 
+          } : undefined,
+          baseImageSnapshot: partialInput.provision?.baseImageSnapshot?.enable ? { 
+              enable: partialInput.provision.baseImageSnapshot.enable,
+              keepOnDeletion: partialInput.provision.baseImageSnapshot.keepOnDeletion
+          } : undefined,
+          dataDiskSizeGb: partialInput.provision?.dataDiskSizeGb ?? 0, // Use CLI arg if provided, otherwise default to 0
         },
       }
     )
@@ -469,6 +523,7 @@ export class GcpCliCommandGenerator extends CliCommandGenerator {
     return this.getBaseCreateCommand(CLOUDYPAD_PROVIDER_GCP)
       .addOption(CLI_OPTION_SPOT)
       .addOption(CLI_OPTION_DISK_SIZE)
+      .addOption(CLI_OPTION_DATA_DISK_SIZE)
       .addOption(CLI_OPTION_PUBLIC_IP_TYPE)
       .addOption(CLI_OPTION_COST_ALERT)
       .addOption(CLI_OPTION_COST_LIMIT)
@@ -487,6 +542,10 @@ export class GcpCliCommandGenerator extends CliCommandGenerator {
       .addOption(CLI_OPTION_KEYBOARD_VARIANT)
       .addOption(CLI_OPTION_KEYBOARD_OPTIONS)
       .addOption(CLI_OPTION_RATE_LIMIT_MAX_MBPS)
+      .addOption(CLI_OPTION_DATA_DISK_SNAPSHOT_ENABLE)
+      .addOption(CLI_OPTION_BASE_IMAGE_SNAPSHOT_ENABLE)
+      .addOption(CLI_OPTION_KEEP_BASE_IMAGE_ON_DELETION)
+      .addOption(CLI_OPTION_DELETE_INSTANCE_SERVER_ON_STOP)
       .option('--machine-type <machinetype>', 'Machine type to use for the instance')
       .option('--region <region>', 'Region in which to deploy instance')
       .option('--zone <zone>', 'Zone within the region to deploy the instance')
@@ -495,7 +554,10 @@ export class GcpCliCommandGenerator extends CliCommandGenerator {
       .option('--disk-type <disktype>', 'Disk type to use (pd-standard, pd-balanced, pd-ssd)')
       .option('--network-tier <networktier>', 'Network tier to use (STANDARD, PREMIUM)')
       .option('--nic-type <nictype>', 'NIC type to use (auto, GVNIC, VIRTIO_NET)')
-      .action(async (cliArgs: GcpCreateCliArgs) => {
+      .action(async (rawCliArgs: unknown) => {
+        // Parse raw CLI args using Zod schema early to ensure type safety
+        const cliArgs = GcpCreateCliArgsSchema.parse(rawCliArgs)
+        
         this.analytics.sendEvent(RUN_COMMAND_CREATE, { provider: CLOUDYPAD_PROVIDER_GCP })
         try {
           await new InteractiveInstanceInitializer<GcpInstanceStateV1, GcpCreateCliArgs>({
@@ -532,7 +594,10 @@ export class GcpCliCommandGenerator extends CliCommandGenerator {
       .addOption(CLI_OPTION_RATE_LIMIT_MAX_MBPS)
       .option('--machine-type <machinetype>', 'Machine type to use for the instance')
       .option('--gpu-type <gputype>', 'Type of accelerator (e.g., GPU) to attach to the instance')
-      .action(async (cliArgs: GcpUpdateCliArgs) => {
+      .action(async (rawCliArgs: unknown) => {
+        // Parse raw CLI args using Zod schema early to ensure type safety
+        const cliArgs = GcpUpdateCliArgsSchema.parse(rawCliArgs)
+        
         this.analytics.sendEvent(RUN_COMMAND_UPDATE, { provider: CLOUDYPAD_PROVIDER_GCP })
         try {
           await new InteractiveInstanceUpdater<GcpInstanceStateV1, GcpUpdateCliArgs>({

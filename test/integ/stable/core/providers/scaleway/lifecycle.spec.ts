@@ -48,6 +48,13 @@ describe('Scaleway lifecycle', () => {
                 instanceType: "L4-1-24G",
                 diskSizeGb: 30,
                 dataDiskSizeGb: 50,
+                baseImageSnapshot: {
+                    enable: true,
+                },
+                dataDiskSnapshot: {
+                    enable: true,
+                },
+                deleteInstanceServerOnStop: true,
             }, {
                 sunshine: {
                     enable: true,
@@ -71,6 +78,41 @@ describe('Scaleway lifecycle', () => {
         const serverData = await scalewayClient.getRawServerData(currentInstanceServerId)
         assert.strictEqual(serverData?.commercialType, "L4-1-24G")
     }).timeout(20*60*1000) // 20 minutes timeout
+
+    it('should have resources matching state output after deployment', async () => {
+        const scalewayClient = getScalewayClient()
+        const state = await getCurrentTestState()
+
+        // Helper to extract ID from zone-prefixed ID or plain ID
+        const extractId = (id: string): string => id.includes('/') ? id.split('/').pop()! : id
+
+        // Verify data disk exists and ID matches state output
+        if (state.provision.output?.dataDiskId) {
+            const dataDiskId = extractId(state.provision.output.dataDiskId)
+            const volume = await scalewayClient.getVolume({ zone: zone, volumeId: dataDiskId })
+            assert.ok(volume, "Data disk should exist in Scaleway")
+            const volumeId = extractId(volume.id || '')
+            assert.strictEqual(volumeId, dataDiskId, "Data disk ID should match state output")
+        }
+
+        // Verify root disk exists and ID matches state output
+        if (state.provision.output?.rootDiskId) {
+            const rootDiskId = extractId(state.provision.output.rootDiskId)
+            const volume = await scalewayClient.getVolume({ zone: zone, volumeId: rootDiskId })
+            assert.ok(volume, "Root disk should exist in Scaleway")
+            const volumeId = extractId(volume.id || '')
+            assert.strictEqual(volumeId, rootDiskId, "Root disk ID should match state output")
+        }
+
+        // Verify base image exists and ID matches state output
+        if (state.provision.output?.baseImageId) {
+            const baseImageId = extractId(state.provision.output.baseImageId)
+            const image = await scalewayClient.getImage({ zone: zone, imageId: baseImageId })
+            assert.ok(image, "Base image should exist in Scaleway")
+            const imageId = extractId(image.id || '')
+            assert.strictEqual(imageId, baseImageId, "Base image ID should match state output")
+        }
+    }).timeout(10000)
 
     it('should update instance', async () => {
         const instanceUpdater = scalewayProviderClient.getInstanceUpdater()
@@ -115,16 +157,13 @@ describe('Scaleway lifecycle', () => {
             await instanceManager.stop({ wait: true })
 
             const instanceStatus = await instanceManager.getInstanceStatus()
-            assert.strictEqual(instanceStatus.configured, true)
-            assert.strictEqual(instanceStatus.serverStatus, ServerRunningStatus.Stopped)
+            assert.strictEqual(instanceStatus.configured, false)
+            assert.strictEqual(instanceStatus.serverStatus, ServerRunningStatus.Unknown)
 
             const state = await getCurrentTestState()
-            assert.strictEqual(state.provision.output?.instanceServerId, currentInstanceServerId)
-
-            const scalewayClient = getScalewayClient()
-            const instances = await scalewayClient.listInstances()
-            const instance = instances.find(instance => instance.id === currentInstanceServerId)
-            assert.ok(instance)
+            assert.strictEqual(state.provision.output?.instanceServerId, undefined, "instanceServerId should be undefined after stop")
+            assert.strictEqual(state.provision.output?.dataDiskId, undefined, "dataDiskId should be undefined after stop")
+            assert.ok(state.provision.output?.dataDiskSnapshotId, "dataDiskSnapshotId should be in output after stop")
         }).timeout(120000)
     }
 
@@ -141,7 +180,9 @@ describe('Scaleway lifecycle', () => {
             assert.strictEqual(instanceStatus.serverStatus, ServerRunningStatus.Running)
 
             const state = await getCurrentTestState()
-            assert.ok(state.provision.output?.instanceServerId)
+            assert.ok(state.provision.output?.instanceServerId, "instanceServerId should exist after start")
+            assert.ok(state.provision.output?.dataDiskId, "dataDiskId should exist after start")
+            assert.ok(state.provision.output?.dataDiskSnapshotId, "dataDiskSnapshotId should exist after start")
 
             currentInstanceServerId = state.provision.output.instanceServerId
         }).timeout(120000)

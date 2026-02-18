@@ -16,29 +16,40 @@ export class AwsInstanceRunner extends AbstractInstanceRunner<AwsProvisionInputV
         this.awsClient = new AwsClient(args.instanceName, args.provisionInput.region)
     }
 
+    private getInstanceIdSafe(){
+        const instanceId = this.getInstanceId()
+        if(!instanceId) {
+            throw new Error(`Instance ID is not set for instance ${this.args.instanceName}. Is instance fully provisioned and running?`)
+        }
+        return instanceId
+    }
+    
     private getInstanceId(){
         return this.args.provisionOutput.instanceId
     }
 
     async doStart(opts?: StartStopOptions) {
-        const instanceId = this.getInstanceId()
+        const instanceId = this.getInstanceIdSafe()
         await this.awsClient.startInstance(instanceId, opts)
     }
 
     async doStop(opts?: StartStopOptions) {
-        const instanceId = this.getInstanceId()
+        const instanceId = this.getInstanceIdSafe()
         await this.awsClient.stopInstance(instanceId, opts)
     }
 
     async doRestart(opts?: StartStopOptions) {
-        const instanceId = this.getInstanceId()
+        const instanceId = this.getInstanceIdSafe()
         await this.awsClient.restartInstance(instanceId, opts)
     }
 
     async doGetInstanceStatus(): Promise<ServerRunningStatus> {
         const instanceId = this.getInstanceId()
-        const awsStatus = await this.awsClient.getInstanceState(instanceId)
+        if(!instanceId) {
+            return ServerRunningStatus.Unknown
+        }
 
+        const awsStatus = await this.awsClient.getInstanceState(instanceId)
         if(!awsStatus) {
             return ServerRunningStatus.Unknown
         }

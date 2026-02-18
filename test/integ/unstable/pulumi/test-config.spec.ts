@@ -1,8 +1,8 @@
 import { PUBLIC_IP_TYPE_STATIC } from "../../../../src/core/const";
-import { PulumiStackConfigAws } from "../../../../src/providers/aws/pulumi"
-import { PulumiStackConfigAzure } from "../../../../src/providers/azure/pulumi";
+import { PulumiStackConfigAws } from "../../../../src/providers/aws/pulumi/main";
+import { PulumiStackConfigAzure } from "../../../../src/providers/azure/pulumi/main";
 import { AZURE_SUPPORTED_DISK_TYPES } from "../../../../src/providers/azure/state";
-import { PulumiStackConfigGcp } from "../../../../src/providers/gcp/pulumi";
+import { PulumiStackConfigGcp } from "../../../../src/providers/gcp/pulumi/main";
 import { PulumiStackConfigScaleway } from "../../../../src/providers/scaleway/pulumi/main";
 
 // Test key, not used anywhere but here
@@ -51,6 +51,7 @@ export const scalewayInput: PulumiStackConfigScaleway = {
     rootDisk: {
         sizeGb: 20,
     },
+    instanceName: "test-instance",
     publicKeyContent: pubKey,
     securityGroupPorts: [{ port: 22, protocol: "TCP" }],
     dataDisk: {
