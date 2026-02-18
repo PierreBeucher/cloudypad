@@ -98,7 +98,7 @@ Providers are located under `src/providers/<provider>` with a similar structure.
 - Update infrastructure used for provider in `pulumi.ts`
 - Improve CLI arguments and prompting for a provider in `cli.ts`
 
-See [Provider implementation](#provider-implementation) to get a better understanding of Providers.
+See [Architecture and Provider implementation](./architecture.md) to get a better understanding of Providers.
 
 ### `cloudypad` CLI: fixing bugs, adding arguments, etc.
 
