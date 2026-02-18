@@ -65,9 +65,9 @@ describe('GCP input prompter', () => {
         diskType: TEST_INPUT.provision.diskType,
         networkTier: TEST_INPUT.provision.networkTier,
         nicType: TEST_INPUT.provision.nicType,
-        baseImageSnapshotEnable: TEST_INPUT.provision.baseImageSnapshot?.enable,
-        keepBaseImageOnDeletion: TEST_INPUT.provision.baseImageSnapshot?.keepOnDeletion,
-        dataDiskSnapshotEnable: TEST_INPUT.provision.dataDiskSnapshot?.enable,
+        baseImageSnapshot: TEST_INPUT.provision.baseImageSnapshot?.enable,
+        baseImageKeepOnDeletion: TEST_INPUT.provision.baseImageSnapshot?.keepOnDeletion,
+        dataDiskSnapshot: TEST_INPUT.provision.dataDiskSnapshot?.enable,
         deleteInstanceServerOnStop: TEST_INPUT.provision.deleteInstanceServerOnStop,
         dataDiskSize: TEST_INPUT.provision.dataDiskSizeGb,
     }

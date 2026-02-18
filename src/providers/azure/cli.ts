@@ -26,8 +26,8 @@ export interface AzureCreateCliArgs extends CreateCliArgs {
     costNotificationEmail?: string
     dataDiskSize?: number
     deleteInstanceServerOnStop?: boolean
-    dataDiskSnapshotEnable?: boolean
-    baseImageSnapshotEnable?: boolean
+    dataDiskSnapshot?: boolean
+    baseImageSnapshot?: boolean
     keepBaseImageOnDeletion?: boolean
 }
 
@@ -90,11 +90,11 @@ export class AzureInputPrompter extends AbstractInputPrompter<AzureCreateCliArgs
                 useSpot: cliArgs.spot,
                 costAlert: costAlertCliArgsIntoConfig(cliArgs),
                 deleteInstanceServerOnStop: cliArgs.deleteInstanceServerOnStop,
-                dataDiskSnapshot: cliArgs.dataDiskSnapshotEnable ? { 
-                    enable: cliArgs.dataDiskSnapshotEnable 
+                dataDiskSnapshot: cliArgs.dataDiskSnapshot ? { 
+                    enable: cliArgs.dataDiskSnapshot 
                 } : undefined,
-                baseImageSnapshot: cliArgs.baseImageSnapshotEnable ? { 
-                    enable: cliArgs.baseImageSnapshotEnable,
+                baseImageSnapshot: cliArgs.baseImageSnapshot ? { 
+                    enable: cliArgs.baseImageSnapshot,
                     keepOnDeletion: cliArgs.keepBaseImageOnDeletion
                 } : undefined
             }

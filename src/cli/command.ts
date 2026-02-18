@@ -87,10 +87,6 @@ export const CLI_OPTION_COST_LIMIT = new Option('--cost-limit <limit>', 'Cost al
 })
 export const CLI_OPTION_COST_NOTIFICATION_EMAIL = new Option('--cost-notification-email <email>', 'Cost alert notification email. Imply --cost-alert.')
 
-export const CLI_OPTION_DELETE_INSTANCE_SERVER_ON_STOP = new Option('--delete-instance-server-on-stop [enable|yes|true|1]', 
-    'Whether to delete instance server on stop. ' +
-    'If enabled, instance server will be destroyed on stop and recreated on next start (along with provisioning and configuration).')
-    .argParser(parseFalseOrDisable)
 
 export const CLI_OPTION_STREAMING_SERVER = new Option('--streaming-server <name>', 'Streaming server to use. Either "sunshine" or "wolf"')
 export const CLI_OPTION_SUNSHINE_USERNAME = new Option('--sunshine-user <name>', 'Sunshine username (ignored if streaming server is not sunshine)')
@@ -118,22 +114,28 @@ export const CLI_OPTION_RATE_LIMIT_MAX_MBPS = new Option('--ratelimit-max-mbps <
 
 export const CLI_OPTION_FORCE_PULUMI_CANCEL = new Option('--force-pulumi-cancel', 'Cancel any stuck Pulumi operations before running the command. Only used for providers relying on Pulumi for infrastructure management, ignored otherwise.')
 
-export const CLI_OPTION_DATA_DISK_SNAPSHOT_ENABLE = new Option('--data-disk-snapshot-enable [enable|yes|true|1]', 
+export const CLI_OPTION_DELETE_INSTANCE_SERVER_ON_STOP = new Option('--delete-instance-server-on-stop [disable|no|false|0]', 
+    'Whether to delete instance server on stop. ' +
+    'If enabled, instance server will be destroyed on stop and recreated on next start (along with provisioning and configuration).')
+    .default(true)
+    .argParser(parseFalseOrDisable)
+
+export const CLI_OPTION_DATA_DISK_SNAPSHOT_ENABLE = new Option('--data-disk-snapshot [disable|no|false|0]', 
     'Whether to enable data disk snapshot on stop for cost reduction (snapshot is cheaper than keeping a live data disk). ' +
-    'If enabled, data disk will be snapshotted on stop and restored from snapshot on next start. (default: false)')
+    'If enabled, data disk will be snapshotted on stop and restored from snapshot on next start.')
+    .default(true)
     .argParser(parseFalseOrDisable)
 
-export const CLI_OPTION_BASE_IMAGE_SNAPSHOT_ENABLE = new Option('--base-image-snapshot-enable [enable|yes|true|1]', 
+export const CLI_OPTION_BASE_IMAGE_SNAPSHOT_ENABLE = new Option('--base-image-snapshot [disable|no|false|0]', 
     'Whether to enable base image snapshot after initial deploy. ' +
-    'If enabled, an image will be created after configuration capturing the configured system (NVIDIA drivers, Cloudy Pad, etc.). ' +
-    '(default: false)')
+    'If enabled, an image will be created after configuration capturing the configured system (NVIDIA drivers, Cloudy Pad, etc.). ')
+    .default(true)
     .argParser(parseFalseOrDisable)
 
-export const CLI_OPTION_KEEP_BASE_IMAGE_ON_DELETION = new Option('--base-image-keep-on-deletion [enable|yes|true|1]', 
+export const CLI_OPTION_KEEP_BASE_IMAGE_ON_DELETION = new Option('--base-image-keep-on-deletion [disable|no|false|0]', 
     'Whether to keep base image on instance deletion. ' +
     'If enabled, base image will be preserved when instance is destroyed. ' +
-    'Only applies when base-image-snapshot-enable is also enabled. ' +
-    '(default: false)')
+    'Only applies when base-image-snapshot-enable is also enabled. ')
     .argParser(parseFalseOrDisable)
 
 function parseFalseOrDisable(value: string){

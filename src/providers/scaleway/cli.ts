@@ -20,8 +20,8 @@ export interface ScalewayCreateCliArgs extends CreateCliArgs {
     imageId?: string
     dataDiskSize?: number
     deleteInstanceServerOnStop?: boolean
-    dataDiskSnapshotEnable?: boolean
-    baseImageSnapshotEnable?: boolean
+    dataDiskSnapshot?: boolean
+    baseImageSnapshot?: boolean
     keepBaseImageOnDeletion?: boolean
 }
 
@@ -41,11 +41,11 @@ export class ScalewayInputPrompter extends AbstractInputPrompter<ScalewayCreateC
                 imageId: cliArgs.imageId,
                 dataDiskSizeGb: cliArgs.dataDiskSize,
                 deleteInstanceServerOnStop: cliArgs.deleteInstanceServerOnStop,
-                dataDiskSnapshot: cliArgs.dataDiskSnapshotEnable ? { 
-                    enable: cliArgs.dataDiskSnapshotEnable 
+                dataDiskSnapshot: cliArgs.dataDiskSnapshot ? { 
+                    enable: cliArgs.dataDiskSnapshot 
                 } : undefined,
-                baseImageSnapshot: cliArgs.baseImageSnapshotEnable ? { 
-                    enable: cliArgs.baseImageSnapshotEnable,
+                baseImageSnapshot: cliArgs.baseImageSnapshot ? { 
+                    enable: cliArgs.baseImageSnapshot,
                     keepOnDeletion: cliArgs.keepBaseImageOnDeletion
                 } : undefined
             }

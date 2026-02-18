@@ -41,9 +41,9 @@ describe('Scaleway input prompter', () => {
         projectId: TEST_INPUT.provision.projectId,
         imageId: TEST_INPUT.provision.imageId,
         deleteInstanceServerOnStop: true,
-        dataDiskSnapshotEnable: true,
-        baseImageSnapshotEnable: true,
-        keepBaseImageOnDeletion: true
+        dataDiskSnapshot: true,
+        baseImageSnapshot: true,
+        baseImageKeepOnDeletion: true
     }
 
     it('should return provided inputs without prompting when full input provider', async () => {

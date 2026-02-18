@@ -57,9 +57,9 @@ describe('Azure input prompter', () => {
         keyboardVariant: TEST_INPUT.configuration.keyboard?.variant,
         keyboardModel: TEST_INPUT.configuration.keyboard?.model,
         keyboardOptions: TEST_INPUT.configuration.keyboard?.options,
-        baseImageSnapshotEnable: TEST_INPUT.provision.baseImageSnapshot?.enable,
-        keepBaseImageOnDeletion: TEST_INPUT.provision.baseImageSnapshot?.keepOnDeletion,
-        dataDiskSnapshotEnable: TEST_INPUT.provision.dataDiskSnapshot?.enable,
+        baseImageSnapshot: TEST_INPUT.provision.baseImageSnapshot?.enable,
+        baseImageKeepOnDeletion: TEST_INPUT.provision.baseImageSnapshot?.keepOnDeletion,
+        dataDiskSnapshot: TEST_INPUT.provision.dataDiskSnapshot?.enable,
         deleteInstanceServerOnStop: TEST_INPUT.provision.deleteInstanceServerOnStop,
         dataDiskSize: TEST_INPUT.provision.dataDiskSizeGb,
     }
