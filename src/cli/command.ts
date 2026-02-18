@@ -2,46 +2,67 @@ import { Command, Option } from "@commander-js/extra-typings";
 import { PUBLIC_IP_TYPE, PUBLIC_IP_TYPE_DYNAMIC, PUBLIC_IP_TYPE_STATIC } from "../core/const";
 import { AnalyticsManager } from "../tools/analytics/manager";
 import { CoreConfig } from "../core/config/interface";
+import { z } from "zod";
 
 //
 // Common CLI Option each providers can re-use
 //
 
 /**
- * Arguments any Provider can take as parameter for create command
+ * Base Zod schema for generic CLI arguments
+ * This schema matches what Commander.js produces from CLI flags (e.g., --base-image-snapshot becomes baseImageSnapshot).
  */
-export interface CreateCliArgs {
-    name?: string
-    sshPrivateKey?: string
-    yes?: boolean // auto approve
-    overwriteExisting?: boolean
-    skipPairing?: boolean
-    streamingServer?: string
-    sunshineUser?: string
-    sunshinePassword?: string
-    sunshineImageTag?: string
-    sunshineImageRegistry?: string
-    sunshineMaxBitrateKbps?: number
-    autostop?: boolean
-    autostopTimeout?: number
-    useLocale?: string | null
-    keyboardLayout?: string
-    keyboardModel?: string
-    keyboardVariant?: string
-    keyboardOptions?: string
-    ansibleAdditionalArgs?: string
-    retries?: number
-    retryDelay?: number
-    ratelimitMaxMbps?: number
-}
+export const CreateCliArgsSchema = z.object({
+    name: z.string().optional(),
+    sshPrivateKey: z.string().optional(),
+    yes: z.boolean().optional(),
+    overwriteExisting: z.boolean().optional(),
+    skipPairing: z.boolean().optional(),
+    streamingServer: z.string().optional(),
+    sunshineUser: z.string().optional(),
+    sunshinePassword: z.string().optional(),
+    sunshineImageTag: z.string().optional(),
+    sunshineImageRegistry: z.string().optional(),
+    sunshineMaxBitrateKbps: z.number().optional(),
+    autostop: z.boolean().optional(),
+    autostopTimeout: z.number().optional(),
+    useLocale: z.string().nullable().optional(),
+    keyboardLayout: z.string().optional(),
+    keyboardModel: z.string().optional(),
+    keyboardVariant: z.string().optional(),
+    keyboardOptions: z.string().optional(),
+    ansibleAdditionalArgs: z.string().optional(),
+    retries: z.number().optional(),
+    retryDelay: z.number().optional(),
+    ratelimitMaxMbps: z.number().optional(),
+})
 
 /**
- * Arguments any Provider can take as parameter for update command. Omit config that cannot/shouldn't be updated
- * - sshCrivateKey: updating would recreated the instance entirely. Since root volume is used to persist data, it would be lost. 
+ * Arguments any Provider can take as parameter for create command
+ * Type is inferred from Zod schema to ensure consistency
+ */
+export type CreateCliArgs = z.infer<typeof CreateCliArgsSchema>
+
+/**
+ * Base Zod schema for update CLI arguments.
+ * Omit config that cannot/shouldn't be updated:
+ * - sshPrivateKey: updating would recreate the instance entirely. Since root volume is used to persist data, it would be lost. 
  *  May be supported once we persist data in a dedicated volume.
  * - streamingServer: too complex to handle as it would leave behind existing streaming server data and config. Maybe possible in the future.
+ * - name: required for update command
  */
-export type UpdateCliArgs = Omit<CreateCliArgs, | "sshPrivateKey" | "streamingServer" > & { name: string }
+export const UpdateCliArgsSchema = CreateCliArgsSchema.omit({ 
+    sshPrivateKey: true, 
+    streamingServer: true })
+.extend({
+    name: z.string()
+})
+
+/**
+ * Arguments any Provider can take as parameter for update command.
+ * Type is inferred from Zod schema to ensure consistency
+ */
+export type UpdateCliArgs = z.infer<typeof UpdateCliArgsSchema>
 
 export const CLI_OPTION_INSTANCE_NAME = new Option('--name <name>', 'Instance name')
 

@@ -5,8 +5,8 @@ import { select, input, password } from '@inquirer/prompts';
 import { fetchApiKeyFromEnvironment } from './client/client';
 import lodash from 'lodash'
 import { PartialDeep } from "type-fest";
-import { CLOUDYPAD_PROVIDER_PAPERSPACE, PUBLIC_IP_TYPE } from "../../core/const";
-import { CLI_OPTION_AUTO_STOP_TIMEOUT, CLI_OPTION_AUTO_STOP_ENABLE, CLI_OPTION_DISK_SIZE, CLI_OPTION_PUBLIC_IP_TYPE, CLI_OPTION_SPOT, CLI_OPTION_STREAMING_SERVER, CLI_OPTION_SUNSHINE_IMAGE_REGISTRY, CLI_OPTION_SUNSHINE_IMAGE_TAG, CLI_OPTION_SUNSHINE_PASSWORD, CLI_OPTION_SUNSHINE_USERNAME, CliCommandGenerator, CreateCliArgs, UpdateCliArgs, CLI_OPTION_USE_LOCALE, CLI_OPTION_KEYBOARD_LAYOUT, CLI_OPTION_KEYBOARD_MODEL, CLI_OPTION_KEYBOARD_VARIANT, CLI_OPTION_KEYBOARD_OPTIONS, BuildCreateCommandArgs, BuildUpdateCommandArgs, CLI_OPTION_SUNSHINE_MAX_BITRATE_KBPS } from "../../cli/command";
+import { CLOUDYPAD_PROVIDER_PAPERSPACE } from "../../core/const";
+import { CreateCliArgsSchema, CLI_OPTION_AUTO_STOP_TIMEOUT, CLI_OPTION_AUTO_STOP_ENABLE, CLI_OPTION_DISK_SIZE, CLI_OPTION_PUBLIC_IP_TYPE, CLI_OPTION_SPOT, CLI_OPTION_STREAMING_SERVER, CLI_OPTION_SUNSHINE_IMAGE_REGISTRY, CLI_OPTION_SUNSHINE_IMAGE_TAG, CLI_OPTION_SUNSHINE_PASSWORD, CLI_OPTION_SUNSHINE_USERNAME, CliCommandGenerator, UpdateCliArgsSchema, CLI_OPTION_USE_LOCALE, CLI_OPTION_KEYBOARD_LAYOUT, CLI_OPTION_KEYBOARD_MODEL, CLI_OPTION_KEYBOARD_VARIANT, CLI_OPTION_KEYBOARD_OPTIONS, BuildCreateCommandArgs, BuildUpdateCommandArgs, CLI_OPTION_SUNSHINE_MAX_BITRATE_KBPS } from "../../cli/command";
 import { InteractiveInstanceInitializer } from "../../cli/initializer";
 import { RUN_COMMAND_CREATE, RUN_COMMAND_UPDATE } from "../../tools/analytics/events";
 import { InteractiveInstanceUpdater } from "../../cli/updater";
@@ -14,17 +14,42 @@ import { PaperspaceProviderClient } from "./provider";
 import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';
+import { z } from "zod";
+import { PUBLIC_IP_TYPE_DYNAMIC, PUBLIC_IP_TYPE_STATIC } from "../../core/const";
 
-export interface PaperspaceCreateCliArgs extends CreateCliArgs {
-    apiKeyFile?: string
-    machineType?: string
-    diskSize?: number
-    publicIpType?: PUBLIC_IP_TYPE
-    region?: string
-    sshKeyPath?: string
-}
+/**
+ * Zod schema for Paperspace-specific CLI arguments.
+ * Extends the generic CreateCliArgsSchema with Paperspace-specific options.
+ * This schema matches what Commander.js produces from CLI flags.
+ */
+export const PaperspaceCreateCliArgsSchema = CreateCliArgsSchema.extend({
+    apiKeyFile: z.string().optional(),
+    machineType: z.string().optional(),
+    diskSize: z.number().optional(),
+    publicIpType: z.enum([PUBLIC_IP_TYPE_STATIC, PUBLIC_IP_TYPE_DYNAMIC]).optional(),
+    region: z.string().optional(),
+    sshKeyPath: z.string().optional(),
+})
 
-export type PaperspaceUpdateCliArgs = UpdateCliArgs & Omit<PaperspaceCreateCliArgs, "region">
+/**
+ * Paperspace-specific CLI arguments for create command.
+ * Type is inferred from Zod schema to ensure consistency.
+ */
+export type PaperspaceCreateCliArgs = z.infer<typeof PaperspaceCreateCliArgsSchema>
+
+/**
+ * Zod schema for Paperspace-specific update CLI arguments.
+ */
+export const PaperspaceUpdateCliArgsSchema = UpdateCliArgsSchema.extend({
+    apiKeyFile: z.string().optional(),
+    machineType: z.string().optional(),
+})
+
+/**
+ * Paperspace-specific CLI arguments for update command.
+ * Type is inferred from Zod schema to ensure consistency.
+ */
+export type PaperspaceUpdateCliArgs = z.infer<typeof PaperspaceUpdateCliArgsSchema>
 
 export class PaperspaceInputPrompter extends AbstractInputPrompter<PaperspaceCreateCliArgs, PaperspaceProvisionInputV1, CommonConfigurationInputV1> {
     
@@ -228,7 +253,10 @@ export class PaperspaceCliCommandGenerator extends CliCommandGenerator {
             .option('--machine-type <type>', 'Machine type')
             .option('--region <region>', 'Region in which to deploy instance')
             .option('--ssh-key-path <path>', 'Path to SSH private key')
-            .action(async (cliArgs: PaperspaceCreateCliArgs) => {
+            .action(async (rawCliArgs: unknown) => {
+                // Parse raw CLI args using Zod schema early to ensure type safety
+                const cliArgs = PaperspaceCreateCliArgsSchema.parse(rawCliArgs)
+                
                 this.analytics.sendEvent(RUN_COMMAND_CREATE, { provider: CLOUDYPAD_PROVIDER_PAPERSPACE })
                 try {
                     await new InteractiveInstanceInitializer<PaperspaceInstanceStateV1, PaperspaceCreateCliArgs>({ 
@@ -257,7 +285,10 @@ export class PaperspaceCliCommandGenerator extends CliCommandGenerator {
             .option('--api-key-file <apikeyfile>', 'Path to Paperspace API key file')
             .option('--machine-type <type>', 'Machine type')
             .option('--ssh-key-path <path>', 'Path to SSH private key')
-            .action(async (cliArgs: PaperspaceUpdateCliArgs) => {
+            .action(async (rawCliArgs: unknown) => {
+                // Parse raw CLI args using Zod schema early to ensure type safety
+                const cliArgs = PaperspaceUpdateCliArgsSchema.parse(rawCliArgs)
+                
                 this.analytics.sendEvent(RUN_COMMAND_UPDATE, { provider: CLOUDYPAD_PROVIDER_PAPERSPACE })
                 try {
                     await new InteractiveInstanceUpdater<PaperspaceInstanceStateV1, PaperspaceUpdateCliArgs>({

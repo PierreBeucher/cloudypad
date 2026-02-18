@@ -1,7 +1,6 @@
 import * as assert from 'assert';
 import { createDummyAwsState, createDummyState, DUMMY_AWS_PULUMI_OUTPUT, getUnitTestCoreClient, getUnitTestCoreConfig, getUnitTestDummyProviderClient, initializeDummyInstanceState, loadDumyAnonymousStateV1 } from '../utils';
 import { InteractiveInstanceUpdater } from '../../../src/cli/updater';
-import { AwsUpdateCliArgs } from '../../../src/providers/aws/cli';
 import * as lodash from 'lodash'
 import { DummyStateParser, DummyInstanceStateV1 } from '../../../src/providers/dummy/state';
 import { DummyInputPrompter, DummyUpdateCliArgs } from '../../../src/providers/dummy/cli';
@@ -104,7 +103,7 @@ describe('InteractiveInstanceUpdater', () => {
         await manager.deploy()
 
         // perform update and check resulting state
-        const updater = new InteractiveInstanceUpdater<DummyInstanceStateV1, AwsUpdateCliArgs>({
+        const updater = new InteractiveInstanceUpdater<DummyInstanceStateV1, DummyUpdateCliArgs>({
             inputPrompter: new DummyInputPrompter({ coreConfig: coreConfig }),
             providerClient: dummyProviderClient
         })
@@ -112,8 +111,7 @@ describe('InteractiveInstanceUpdater', () => {
         await updater.updateInteractive({
             name: testState.name,
             overwriteExisting: true,
-            yes: true,
-            diskSize: 500
+            yes: true
         })
 
         const stateLoader = dummyProviderClient.getStateLoader()
