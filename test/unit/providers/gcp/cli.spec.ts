@@ -57,7 +57,6 @@ describe('GCP input prompter', () => {
         zone: TEST_INPUT.provision.zone,
         machineType: TEST_INPUT.provision.machineType,
         diskSize: TEST_INPUT.provision.diskSize,
-        publicIpType: TEST_INPUT.provision.publicIpType,
         gpuType: TEST_INPUT.provision.acceleratorType,
         spot: TEST_INPUT.provision.useSpot,
         costNotificationEmail: TEST_INPUT.provision.costAlert?.notificationEmail,
@@ -79,7 +78,8 @@ describe('GCP input prompter', () => {
         const expected: PartialDeep<GcpInstanceInput> = {
             ...TEST_INPUT,
             provision: {
-                ...TEST_INPUT.provision,
+                // publicIpType is not set via CLI
+                ...lodash.omit(TEST_INPUT.provision, "publicIpType"),
                 ssh: lodash.omit(TEST_INPUT.provision.ssh, "user")
             },
             configuration: {
@@ -104,7 +104,8 @@ describe('GCP input prompter', () => {
         const expected: PartialDeep<GcpInstanceInput> = {
             ...TEST_INPUT,
             provision: {
-                ...TEST_INPUT.provision,
+                // publicIpType is not set via CLI
+                ...lodash.omit(TEST_INPUT.provision, "publicIpType"),
                 ssh: lodash.omit(TEST_INPUT.provision.ssh, "user")
             },
         }

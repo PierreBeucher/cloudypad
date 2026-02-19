@@ -5,7 +5,8 @@ function create_destroy_aws() {
     $cloudypad_cmd create aws \
         --name $instance_name \
         --instance-type g4dn.xlarge \
-        --disk-size 100 \
+        --disk-size 50 \
+        --data-disk-size 50 \
         --public-ip-type static \
         --region eu-central-1 \
         --spot disable \

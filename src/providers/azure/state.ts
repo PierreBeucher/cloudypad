@@ -20,7 +20,7 @@ const AzureProvisionInputV1Schema = CommonProvisionInputV1Schema.extend({
     diskSize: z.number().describe("Root (OS) disk size in GB"),
     diskType: z.string().describe("Disk type (HDD, SSD...)").default(AZURE_SUPPORTED_DISK_TYPES.STANDARD_LRS),
     dataDiskSizeGb: z.number().optional().describe("Data disk size in GB. If non-0, a disk dedicated for instance data (such as games data) will be created."),
-    publicIpType: z.enum([PUBLIC_IP_TYPE_STATIC, PUBLIC_IP_TYPE_DYNAMIC]).describe("Type of public IP address"),
+    publicIpType: z.enum([PUBLIC_IP_TYPE_STATIC, PUBLIC_IP_TYPE_DYNAMIC]).describe("Type of public IP address. Deprecated: static IP is now the only default. Dynamic IP will be removed in future release."),
     subscriptionId: z.string().describe("Azure Subscription ID"),
     location: z.string().describe("Azure location/region"),
     useSpot: z.boolean().describe("Whether to use spot instances"),

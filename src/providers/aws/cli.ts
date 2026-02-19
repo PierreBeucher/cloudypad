@@ -4,7 +4,7 @@ import { input, select, confirm } from '@inquirer/prompts';
 import { AwsClient, EC2_QUOTA_CODE_ALL_G_AND_VT_SPOT_INSTANCES, EC2_QUOTA_CODE_RUNNING_ON_DEMAND_G_AND_VT_INSTANCES, DEFAULT_REGION } from "./sdk-client";
 import { AbstractInputPrompter, AbstractInputPrompterArgs, costAlertCliArgsIntoConfig, PromptOptions } from "../../cli/prompter";
 import lodash from 'lodash'
-import { CreateCliArgsSchema, CLI_OPTION_COST_NOTIFICATION_EMAIL, CLI_OPTION_COST_ALERT, CLI_OPTION_COST_LIMIT, CLI_OPTION_DISK_SIZE, CLI_OPTION_PUBLIC_IP_TYPE, CLI_OPTION_SPOT, CliCommandGenerator, UpdateCliArgsSchema, CLI_OPTION_STREAMING_SERVER, CLI_OPTION_SUNSHINE_PASSWORD, CLI_OPTION_SUNSHINE_USERNAME, CLI_OPTION_SUNSHINE_IMAGE_REGISTRY, CLI_OPTION_SUNSHINE_IMAGE_TAG, CLI_OPTION_AUTO_STOP_TIMEOUT, CLI_OPTION_AUTO_STOP_ENABLE, CLI_OPTION_KEYBOARD_OPTIONS, CLI_OPTION_KEYBOARD_VARIANT, CLI_OPTION_KEYBOARD_MODEL, CLI_OPTION_KEYBOARD_LAYOUT, CLI_OPTION_USE_LOCALE, BuildCreateCommandArgs, BuildUpdateCommandArgs, CLI_OPTION_RATE_LIMIT_MAX_MBPS, CLI_OPTION_SUNSHINE_MAX_BITRATE_KBPS, CLI_OPTION_ROOT_DISK_SIZE, CLI_OPTION_DATA_DISK_SIZE, CLI_OPTION_DATA_DISK_SNAPSHOT_ENABLE, CLI_OPTION_BASE_IMAGE_SNAPSHOT_ENABLE, CLI_OPTION_KEEP_BASE_IMAGE_ON_DELETION, CLI_OPTION_DELETE_INSTANCE_SERVER_ON_STOP } from "../../cli/command";
+import { CreateCliArgsSchema, CLI_OPTION_COST_NOTIFICATION_EMAIL, CLI_OPTION_COST_ALERT, CLI_OPTION_COST_LIMIT, CLI_OPTION_DISK_SIZE, CLI_OPTION_SPOT, CliCommandGenerator, UpdateCliArgsSchema, CLI_OPTION_STREAMING_SERVER, CLI_OPTION_SUNSHINE_PASSWORD, CLI_OPTION_SUNSHINE_USERNAME, CLI_OPTION_SUNSHINE_IMAGE_REGISTRY, CLI_OPTION_SUNSHINE_IMAGE_TAG, CLI_OPTION_AUTO_STOP_TIMEOUT, CLI_OPTION_AUTO_STOP_ENABLE, CLI_OPTION_KEYBOARD_OPTIONS, CLI_OPTION_KEYBOARD_VARIANT, CLI_OPTION_KEYBOARD_MODEL, CLI_OPTION_KEYBOARD_LAYOUT, CLI_OPTION_USE_LOCALE, BuildCreateCommandArgs, BuildUpdateCommandArgs, CLI_OPTION_RATE_LIMIT_MAX_MBPS, CLI_OPTION_SUNSHINE_MAX_BITRATE_KBPS, CLI_OPTION_ROOT_DISK_SIZE, CLI_OPTION_DATA_DISK_SIZE, CLI_OPTION_DATA_DISK_SNAPSHOT_ENABLE, CLI_OPTION_BASE_IMAGE_SNAPSHOT_ENABLE, CLI_OPTION_KEEP_BASE_IMAGE_ON_DELETION, CLI_OPTION_DELETE_INSTANCE_SERVER_ON_STOP } from "../../cli/command";
 import { CLOUDYPAD_PROVIDER_AWS, PUBLIC_IP_TYPE_DYNAMIC, PUBLIC_IP_TYPE_STATIC } from "../../core/const";
 import { InteractiveInstanceInitializer } from "../../cli/initializer";
 import { PartialDeep } from "type-fest";
@@ -24,9 +24,9 @@ export const AwsCreateCliArgsSchema = CreateCliArgsSchema.extend({
     diskSize: z.number().optional(),
     rootDiskSize: z.number().optional(),
     dataDiskSize: z.number().optional(),
-    publicIpType: z.enum([PUBLIC_IP_TYPE_STATIC, PUBLIC_IP_TYPE_DYNAMIC]).optional(),
     instanceType: z.string().optional(),
     region: z.string().optional(),
+    zone: z.string().optional(),
     costAlert: z.boolean().optional(),
     costLimit: z.number().optional(),
     costNotificationEmail: z.string().optional(),
@@ -86,8 +86,8 @@ export class AwsInputPrompter extends AbstractInputPrompter<AwsCreateCliArgs, Aw
                 instanceType: cliArgs.instanceType,
                 diskSize: cliArgs.rootDiskSize ?? cliArgs.diskSize, // diskSize and rootDiskSize are aliases for the same thing
                 dataDiskSizeGb: cliArgs.dataDiskSize,
-                publicIpType: cliArgs.publicIpType,
                 region: cliArgs.region,
+                zone: cliArgs.zone,
                 useSpot: cliArgs.spot,
                 costAlert: costAlertCliArgsIntoConfig(cliArgs),
                 deleteInstanceServerOnStop: cliArgs.deleteInstanceServerOnStop,
@@ -109,6 +109,7 @@ export class AwsInputPrompter extends AbstractInputPrompter<AwsCreateCliArgs, Aw
         }
 
         const region = await this.region(partialInput.provision?.region)
+        const zone = await this.zone(region, partialInput.provision?.zone)
         const useSpot = await this.useSpotInstance(partialInput.provision?.useSpot)
         const instanceType = await this.instanceType(region, useSpot, partialInput.provision?.instanceType)
         const rootDiskSize = await this.rootDiskSize(partialInput.provision?.diskSize)
@@ -126,6 +127,7 @@ export class AwsInputPrompter extends AbstractInputPrompter<AwsCreateCliArgs, Aw
                     instanceType: instanceType,
                     publicIpType: publicIpType,
                     region: region,
+                    zone: zone,
                     useSpot: useSpot,
                     costAlert: costAlert,
                     deleteInstanceServerOnStop: partialInput.provision?.deleteInstanceServerOnStop,
@@ -267,6 +269,27 @@ export class AwsInputPrompter extends AbstractInputPrompter<AwsCreateCliArgs, Aw
             default: currentAwsRegion,
         })
     }
+
+    private async zone(region: string, zone?: string): Promise<string | undefined> {
+        if (zone) {
+            return zone;
+        }
+
+        const awsClient = new AwsClient("zone-prompt", region)
+        const zones = await awsClient.listAvailabilityZones()
+
+        return await select({
+            message: 'Select an availability zone:',
+            choices: [
+                { name: 'auto (let AWS choose)', value: undefined },
+                ...zones.map(z => ({
+                    name: z,
+                    value: z,
+                }))
+            ],
+            loop: false,
+        })
+    }
 }
 
 export class AwsCliCommandGenerator extends CliCommandGenerator {
@@ -277,7 +300,6 @@ export class AwsCliCommandGenerator extends CliCommandGenerator {
             .addOption(CLI_OPTION_DISK_SIZE)
             .addOption(CLI_OPTION_ROOT_DISK_SIZE)
             .addOption(CLI_OPTION_DATA_DISK_SIZE)
-            .addOption(CLI_OPTION_PUBLIC_IP_TYPE)
             .addOption(CLI_OPTION_COST_ALERT)
             .addOption(CLI_OPTION_COST_LIMIT)
             .addOption(CLI_OPTION_COST_NOTIFICATION_EMAIL)
@@ -301,6 +323,7 @@ export class AwsCliCommandGenerator extends CliCommandGenerator {
             .addOption(CLI_OPTION_DELETE_INSTANCE_SERVER_ON_STOP)
             .option('--instance-type <type>', 'EC2 instance type')
             .option('--region <region>', 'Region in which to deploy instance')
+            .option('--zone <zone>', 'Availability zone in which to deploy instance')
             .option('--image-id <image-id>', 'Existing AMI ID for instance server. Disk size must be equal or greater than image size.')
             .action(async (rawCliArgs: unknown) => {
                 // Parse raw CLI args using Zod schema early to ensure type safety
@@ -338,7 +361,6 @@ export class AwsCliCommandGenerator extends CliCommandGenerator {
             .addOption(CLI_OPTION_DISK_SIZE)
             .addOption(CLI_OPTION_ROOT_DISK_SIZE)
             .addOption(CLI_OPTION_DATA_DISK_SIZE)
-            .addOption(CLI_OPTION_PUBLIC_IP_TYPE)
             .addOption(CLI_OPTION_COST_ALERT)
             .addOption(CLI_OPTION_COST_LIMIT)
             .addOption(CLI_OPTION_COST_NOTIFICATION_EMAIL)

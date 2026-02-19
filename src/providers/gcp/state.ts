@@ -17,7 +17,7 @@ const GcpProvisionInputV1Schema = CommonProvisionInputV1Schema.extend({
     diskSize: z.number().describe("Boot disk size in GB"),
     dataDiskSizeGb: z.number().optional().describe("Data disk size in GB. If non-0, a disk dedicated for instance data (such as games data) will be created."),
     diskType: z.string().optional().describe(`GCP Disk Type (One of: ${DISK_TYPES.join(", ")})`),
-    publicIpType: z.enum([PUBLIC_IP_TYPE_STATIC, PUBLIC_IP_TYPE_DYNAMIC]).describe("Type of public IP address"),
+    publicIpType: z.enum([PUBLIC_IP_TYPE_STATIC, PUBLIC_IP_TYPE_DYNAMIC]).describe("Type of public IP address. Deprecated: static IP is now the only default. Dynamic IP will be removed in future release."),
     networkTier: z.string().optional().describe(`GCP Network Tier (One of: ${NETWORK_TIERS.join(", ")})`),
     nicType: z.string().optional().describe(`GCP NIC Type (One of: ${NIC_TYPES.join(", ")})`),
     region: z.string().describe("GCP region"),

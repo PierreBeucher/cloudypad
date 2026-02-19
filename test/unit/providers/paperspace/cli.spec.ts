@@ -36,7 +36,6 @@ describe('Paperspace input prompter', () => {
         region: TEST_INPUT.provision.region,
         machineType: TEST_INPUT.provision.machineType,
         diskSize: TEST_INPUT.provision.diskSize,
-        publicIpType: TEST_INPUT.provision.publicIpType,
         apiKeyFile: TEST_INPUT.provision.apiKey,
     }
     
@@ -52,7 +51,8 @@ describe('Paperspace input prompter', () => {
         const expected: PartialDeep<PaperspaceInstanceInput> = {
             ...TEST_INPUT,
             provision: {
-                ...TEST_INPUT.provision,
+                // publicIpType is not set via CLI
+                ...lodash.omit(TEST_INPUT.provision, "publicIpType"),
                 ssh: lodash.omit(TEST_INPUT.provision.ssh, "user")
             },
             configuration: {

@@ -70,6 +70,26 @@ describe('AWS Client Integration Tests', () => {
         }, /Failed to fetch instance details for instance type/)    
     }).timeout(60000)
 
+    it('should list availability zones for a region', async () => {
+        const region = "us-east-1"
+        const awsClient = new AwsClient('integ-test', region)
+        
+        const zones = await awsClient.listAvailabilityZones()
+        
+        console.info(`Found ${zones.length} availability zones in ${region}: ${JSON.stringify(zones)}`)
+        
+        // Should return at least one zone
+        assert.ok(zones.length > 0, `Expected at least one availability zone in ${region}`)
+        
+        // Should include expected zones for us-east-1
+        assert.ok(zones.includes('us-east-1a'), 'Should include us-east-1a')
+        assert.ok(zones.includes('us-east-1b'), 'Should include us-east-1b')
+        
+        // Zones should be sorted alphabetically
+        const sortedZones = [...zones].sort()
+        assert.deepEqual(zones, sortedZones, 'Zones should be sorted alphabetically')
+    })
+
     // don't test instance-specific methods as they are indirectly tested by lifecycle tests
     // it('should get instance state', async () => {
     //     const instanceId = 'i-08a558204090d96a7'

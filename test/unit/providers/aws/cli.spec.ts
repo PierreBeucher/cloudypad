@@ -19,6 +19,7 @@ describe('AWS input prompter', () => {
             diskSize: 200,
             publicIpType: PUBLIC_IP_TYPE_STATIC,
             region: "us-west-2",
+            zone: "us-west-2a",
             useSpot: true,
             costAlert: {
                 limit: 999,
@@ -43,9 +44,9 @@ describe('AWS input prompter', () => {
         ...DEFAULT_COMMON_CLI_ARGS,
         name: instanceName,
         diskSize: TEST_INPUT.provision.diskSize,
-        publicIpType: TEST_INPUT.provision.publicIpType,
         instanceType: TEST_INPUT.provision.instanceType,
         region: TEST_INPUT.provision.region,
+        zone: TEST_INPUT.provision.zone,
         spot: TEST_INPUT.provision.useSpot,
         costLimit: TEST_INPUT.provision.costAlert?.limit,
         costNotificationEmail: TEST_INPUT.provision.costAlert?.notificationEmail,
@@ -68,7 +69,8 @@ describe('AWS input prompter', () => {
         const expected: PartialDeep<AwsInstanceInput> = {
             ...TEST_INPUT,
             provision: {
-                ...TEST_INPUT.provision,
+                // publicIpType is not set via CLI
+                ...lodash.omit(TEST_INPUT.provision, "publicIpType"),
                 ssh: lodash.omit(TEST_INPUT.provision.ssh, "user"),
                 costAlert: {
                     limit: 999,

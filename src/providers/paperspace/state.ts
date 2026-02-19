@@ -11,7 +11,7 @@ const PaperspaceProvisionInputV1Schema = CommonProvisionInputV1Schema.extend({
     apiKey: z.string().describe("Paperspace API key"),
     machineType: z.string().describe("Type of Paperspace machine"),
     diskSize: z.number().describe("Disk size in GB"),
-    publicIpType: z.enum([PUBLIC_IP_TYPE_STATIC, PUBLIC_IP_TYPE_DYNAMIC]).describe("Type of public IP address"),
+    publicIpType: z.enum([PUBLIC_IP_TYPE_STATIC, PUBLIC_IP_TYPE_DYNAMIC]).describe("Type of public IP address. Deprecated: static IP is now the only default. Dynamic IP will be removed in future release."),
     region: z.string().describe("Paperspace region"),
 })
 
