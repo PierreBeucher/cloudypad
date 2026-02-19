@@ -13,7 +13,7 @@ const AwsProvisionInputV1Schema = CommonProvisionInputV1Schema.extend({
     instanceType: z.string().describe("Type of AWS instance"),
     diskSize: z.number().describe("Root disk size in GB"),
     dataDiskSizeGb: z.number().optional().describe("Data disk size in GB. If non-0, a disk dedicated for instance data (such as games data) will be created."),
-    publicIpType: z.enum([PUBLIC_IP_TYPE_STATIC, PUBLIC_IP_TYPE_DYNAMIC]).describe("Type of public IP address"),
+    publicIpType: z.enum([PUBLIC_IP_TYPE_STATIC, PUBLIC_IP_TYPE_DYNAMIC]).describe("Type of public IP address. Deprecated: static IP is now the only default. Dynamic IP will be removed in future release."),
     region: z.string().describe("AWS region"),
     zone: z.string().optional().describe("AWS availability zone"),
     useSpot: z.boolean().describe("Whether to use spot instances"),

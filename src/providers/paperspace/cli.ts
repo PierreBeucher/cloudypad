@@ -6,7 +6,7 @@ import { fetchApiKeyFromEnvironment } from './client/client';
 import lodash from 'lodash'
 import { PartialDeep } from "type-fest";
 import { CLOUDYPAD_PROVIDER_PAPERSPACE } from "../../core/const";
-import { CreateCliArgsSchema, CLI_OPTION_AUTO_STOP_TIMEOUT, CLI_OPTION_AUTO_STOP_ENABLE, CLI_OPTION_DISK_SIZE, CLI_OPTION_PUBLIC_IP_TYPE, CLI_OPTION_SPOT, CLI_OPTION_STREAMING_SERVER, CLI_OPTION_SUNSHINE_IMAGE_REGISTRY, CLI_OPTION_SUNSHINE_IMAGE_TAG, CLI_OPTION_SUNSHINE_PASSWORD, CLI_OPTION_SUNSHINE_USERNAME, CliCommandGenerator, UpdateCliArgsSchema, CLI_OPTION_USE_LOCALE, CLI_OPTION_KEYBOARD_LAYOUT, CLI_OPTION_KEYBOARD_MODEL, CLI_OPTION_KEYBOARD_VARIANT, CLI_OPTION_KEYBOARD_OPTIONS, BuildCreateCommandArgs, BuildUpdateCommandArgs, CLI_OPTION_SUNSHINE_MAX_BITRATE_KBPS } from "../../cli/command";
+import { CreateCliArgsSchema, CLI_OPTION_AUTO_STOP_TIMEOUT, CLI_OPTION_AUTO_STOP_ENABLE, CLI_OPTION_DISK_SIZE, CLI_OPTION_SPOT, CLI_OPTION_STREAMING_SERVER, CLI_OPTION_SUNSHINE_IMAGE_REGISTRY, CLI_OPTION_SUNSHINE_IMAGE_TAG, CLI_OPTION_SUNSHINE_PASSWORD, CLI_OPTION_SUNSHINE_USERNAME, CliCommandGenerator, UpdateCliArgsSchema, CLI_OPTION_USE_LOCALE, CLI_OPTION_KEYBOARD_LAYOUT, CLI_OPTION_KEYBOARD_MODEL, CLI_OPTION_KEYBOARD_VARIANT, CLI_OPTION_KEYBOARD_OPTIONS, BuildCreateCommandArgs, BuildUpdateCommandArgs, CLI_OPTION_SUNSHINE_MAX_BITRATE_KBPS } from "../../cli/command";
 import { InteractiveInstanceInitializer } from "../../cli/initializer";
 import { RUN_COMMAND_CREATE, RUN_COMMAND_UPDATE } from "../../tools/analytics/events";
 import { InteractiveInstanceUpdater } from "../../cli/updater";
@@ -26,7 +26,6 @@ export const PaperspaceCreateCliArgsSchema = CreateCliArgsSchema.extend({
     apiKeyFile: z.string().optional(),
     machineType: z.string().optional(),
     diskSize: z.number().optional(),
-    publicIpType: z.enum([PUBLIC_IP_TYPE_STATIC, PUBLIC_IP_TYPE_DYNAMIC]).optional(),
     region: z.string().optional(),
     sshKeyPath: z.string().optional(),
 })
@@ -60,7 +59,6 @@ export class PaperspaceInputPrompter extends AbstractInputPrompter<PaperspaceCre
                 apiKey: cliArgs.apiKeyFile,
                 machineType: cliArgs.machineType,
                 diskSize: cliArgs.diskSize,
-                publicIpType: cliArgs.publicIpType,
                 region: cliArgs.region,
                 ssh: {
                     privateKeyPath: cliArgs.sshKeyPath,
@@ -235,7 +233,6 @@ export class PaperspaceCliCommandGenerator extends CliCommandGenerator {
         return this.getBaseCreateCommand(CLOUDYPAD_PROVIDER_PAPERSPACE)
             .addOption(CLI_OPTION_SPOT)
             .addOption(CLI_OPTION_DISK_SIZE)
-            .addOption(CLI_OPTION_PUBLIC_IP_TYPE)
             .addOption(CLI_OPTION_STREAMING_SERVER)
             .addOption(CLI_OPTION_SUNSHINE_USERNAME)
             .addOption(CLI_OPTION_SUNSHINE_PASSWORD)
@@ -274,7 +271,6 @@ export class PaperspaceCliCommandGenerator extends CliCommandGenerator {
     buildUpdateCommand(args: BuildUpdateCommandArgs) {
         return this.getBaseUpdateCommand(CLOUDYPAD_PROVIDER_PAPERSPACE)
             .addOption(CLI_OPTION_DISK_SIZE)
-            .addOption(CLI_OPTION_PUBLIC_IP_TYPE)
             .addOption(CLI_OPTION_SUNSHINE_USERNAME)
             .addOption(CLI_OPTION_SUNSHINE_PASSWORD)
             .addOption(CLI_OPTION_SUNSHINE_IMAGE_TAG)

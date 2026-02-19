@@ -44,7 +44,6 @@ describe('AWS input prompter', () => {
         ...DEFAULT_COMMON_CLI_ARGS,
         name: instanceName,
         diskSize: TEST_INPUT.provision.diskSize,
-        publicIpType: TEST_INPUT.provision.publicIpType,
         instanceType: TEST_INPUT.provision.instanceType,
         region: TEST_INPUT.provision.region,
         zone: TEST_INPUT.provision.zone,
@@ -70,7 +69,8 @@ describe('AWS input prompter', () => {
         const expected: PartialDeep<AwsInstanceInput> = {
             ...TEST_INPUT,
             provision: {
-                ...TEST_INPUT.provision,
+                // publicIpType is not set via CLI
+                ...lodash.omit(TEST_INPUT.provision, "publicIpType"),
                 ssh: lodash.omit(TEST_INPUT.provision.ssh, "user"),
                 costAlert: {
                     limit: 999,

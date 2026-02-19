@@ -45,7 +45,6 @@ describe('Azure input prompter', () => {
         name: instanceName,
         diskSize: TEST_INPUT.provision.diskSize,
         diskType: TEST_INPUT.provision.diskType,
-        publicIpType: TEST_INPUT.provision.publicIpType,
         spot: TEST_INPUT.provision.useSpot,
         location: TEST_INPUT.provision.location,
         subscriptionId: TEST_INPUT.provision.subscriptionId,
@@ -76,7 +75,8 @@ describe('Azure input prompter', () => {
         const expected: PartialDeep<AzureInstanceInput> = {
             ...TEST_INPUT,
             provision: {
-                ...TEST_INPUT.provision,
+                // publicIpType is not set via CLI
+                ...lodash.omit(TEST_INPUT.provision, "publicIpType"),
                 ssh: lodash.omit(TEST_INPUT.provision.ssh, "user"),
             }
         }

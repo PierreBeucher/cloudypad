@@ -302,19 +302,8 @@ export abstract class AbstractInputPrompter<
             return publicIpType
         }
 
-        const publicIpTypeChoices: {name: PUBLIC_IP_TYPE, value: PUBLIC_IP_TYPE }[] = [{
-            name: PUBLIC_IP_TYPE_STATIC,
-            value: PUBLIC_IP_TYPE_STATIC
-        },{
-            name: PUBLIC_IP_TYPE_DYNAMIC,
-            value: PUBLIC_IP_TYPE_DYNAMIC
-        }]
-
-        return await select({
-            message: 'Use static Elastic IP or dynamic IP? :',
-            choices: publicIpTypeChoices,
-            default: PUBLIC_IP_TYPE_STATIC,
-        })
+        // Always return static IP type by default, dynamic IP is deprecated and will be removed in the future
+        return PUBLIC_IP_TYPE_STATIC
     }
 
     protected async informCloudProviderQuotaWarning(provider: string, helpUrl: string){
