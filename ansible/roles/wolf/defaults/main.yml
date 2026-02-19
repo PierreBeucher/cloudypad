@@ -3,13 +3,13 @@ wolf_instance_name: wolf
 
 # Image versions to use for each apps
 # Lock version with hash for better reproducibility
-wolf_server_image: ghcr.io/games-on-whales/wolf:stable@sha256:42ff2354e0f24991d28d25946634f8788d9036cd5299d48f88cf1d5a739f3ec6
-wolf_app_steam_image: ghcr.io/games-on-whales/steam:edge@sha256:7302e12af18d620f926d3ad370b0e40092c917a287f9771e23e89bd72649038f
-wolf_app_lutris_image: ghcr.io/games-on-whales/lutris:edge@sha256:66b753292ce7135ae3c89088458b04f747f67a853e8e6fa6e5c30fe5afb52e7c
-wolf_app_pegasus_image: ghcr.io/games-on-whales/pegasus:edge@sha256:790115ee134e895c1cdf57b3ff4d12d66a2a43b4ab504909875c525524ea4872
-wolf_app_retroarch_image: ghcr.io/games-on-whales/retroarch:edge@sha256:9a0ae5e76e7785f8d28321c81d0de3aa368cb3aaf4c38402d45fb0eb3d4963f5
-wolf_app_prismlauncher_image: ghcr.io/games-on-whales/prismlauncher:edge@sha256:1fb4dcd0f131dff9d68ccf97034120f60376da34fce9300db02f24403968e8e7
-wolf_app_firefox_image: ghcr.io/games-on-whales/firefox:edge@sha256:92a7ab4a26213caa6c2c62db1e653e57dbb0d10c795f5cc6774e327e90f05892
+wolf_server_image: ghcr.io/games-on-whales/wolf:stable@sha256:5bf5041065dbfea67e60c3a28a42a551be970feed5d1be6d59bee2d134da1770
+wolf_app_steam_image: ghcr.io/games-on-whales/steam:edge@sha256:e1bc09a265fe2ee95499efc8c7431c1cccfd8b1c99553aa5bf32305ec8ce482a
+wolf_app_lutris_image: ghcr.io/games-on-whales/lutris:edge@sha256:7f96dd7c990d13d62a87d08969cb756ee1418f0690af6dbe15125e6acd4c679a
+wolf_app_pegasus_image: ghcr.io/games-on-whales/pegasus:edge@sha256:0a30ce11257219b0a8630339fe0b75ccea9462d7a7d58f65218de68b4409e09a
+wolf_app_retroarch_image: ghcr.io/games-on-whales/retroarch:edge@sha256:0da32e530583040b917268b7f96245fcbf9744ec7ce03619fdec2f90fcc4fe1e
+wolf_app_prismlauncher_image: ghcr.io/games-on-whales/prismlauncher:edge@sha256:e8f4451ec81946a54f886b36d4cf99c38878a452fe442351320631441024d303
+wolf_app_firefox_image: ghcr.io/games-on-whales/firefox:edge@sha256:097eb6a311fe6b5c60dfdd6b8f5e6e32f4bcd1cca9eaf2b1ea46afe5f06a4da8
 
 # Directory where Wolf project config is stored (eg. Docker Compose files)
 wolf_project_dir: "{{ ansible_user_dir }}/wolf"

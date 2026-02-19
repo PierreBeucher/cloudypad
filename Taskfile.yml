@@ -183,7 +183,8 @@ tasks:
       # Wait for mdbook serve to be ready
       timeout 30 bash -c 'until curl -s http://localhost:3000 > /dev/null; do sleep 1; done'
 
-      docker run --network host --rm raviqqe/muffet http://localhost:3000 \
+      docker run --network host --rm raviqqe/muffet@sha256:76b5dd90b589470abd8b93c08e115016d098104ca7d819ff077d5894c501bebc \
+        http://localhost:3000 \
         -b 8192 \
         -e 'https://localhost:47990' \
         -e 'https://repo.steampowered.com' \

@@ -1,5 +1,5 @@
 # https://hub.docker.com/_/node
-ARG NODE_VERSION="24.9.0-bookworm-slim"
+ARG NODE_VERSION="25.6.1-trixie-slim"
 FROM node:${NODE_VERSION} AS build
 
 RUN apt update && apt install -y \
@@ -12,7 +12,7 @@ RUN apt update && apt install -y \
 FROM build AS pulumi
 
 # https://github.com/pulumi/pulumi/releases
-ARG PULUMI_VERSION="v3.200.0"
+ARG PULUMI_VERSION="v3.221.0"
 ARG TARGETPLATFORM
 RUN case "$TARGETPLATFORM" in \
       "linux/amd64") \
@@ -69,7 +69,7 @@ RUN apt update && apt install -y \
 # Can't use pipx yet for global install as major distrib have an older version (1.1.0) 
 # which does not support pipx ensurepath --global
 # Python warns about break-system-packages but should be fine
-RUN pip3 install ansible==12.0.0 --break-system-packages
+RUN pip3 install ansible==13.3.0 --break-system-packages
 
 # Required for Azure DefaultAzureCredential
 RUN curl -sL https://aka.ms/InstallAzureCLIDeb -o install.sh && chmod +x install.sh && ./install.sh -y
