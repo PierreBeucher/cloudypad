@@ -1,4 +1,4 @@
-import { EC2Client, DescribeInstancesCommand, Instance, StartInstancesCommand, StopInstancesCommand, RebootInstancesCommand, waitUntilInstanceRunning, waitUntilInstanceStopped, DescribeInstanceTypesCommand, _InstanceType, InstanceTypeInfo, InstanceTypeOffering, DescribeInstanceTypeOfferingsCommand, DescribeInstanceStatusCommand, InstanceStateName, paginateDescribeInstances, paginateDescribeInstanceTypes, paginateDescribeInstanceTypeOfferings, DescribeImagesCommand, DescribeSnapshotsCommand, DescribeVolumesCommand, Volume, Image } from '@aws-sdk/client-ec2'
+import { EC2Client, DescribeInstancesCommand, Instance, StartInstancesCommand, StopInstancesCommand, RebootInstancesCommand, waitUntilInstanceRunning, waitUntilInstanceStopped, DescribeInstanceTypesCommand, _InstanceType, InstanceTypeInfo, InstanceTypeOffering, DescribeInstanceTypeOfferingsCommand, DescribeInstanceStatusCommand, InstanceStateName, paginateDescribeInstances, paginateDescribeInstanceTypes, paginateDescribeInstanceTypeOfferings, DescribeImagesCommand, DescribeSnapshotsCommand, DescribeVolumesCommand, Volume, Image, DescribeAvailabilityZonesCommand } from '@aws-sdk/client-ec2'
 import { STSClient, GetCallerIdentityCommand } from '@aws-sdk/client-sts'
 import { getLogger, Logger } from '../../log/utils'
 import { loadConfig } from "@smithy/node-config-provider"
@@ -93,6 +93,26 @@ export class AwsClient {
             this.logger.debug(`Currently authenticated as ${callerIdentity.UserId} on account ${callerIdentity.Account}`)
         } catch (e) {
             throw new Error(`Couldn't check AWS authentication. Did you configure your AWS credentials ?`, { cause: e })
+        }
+    }
+
+    async listAvailabilityZones(): Promise<string[]> {
+        this.logger.debug(`Listing availability zones in region ${this.region}`)
+        try {
+            const command = new DescribeAvailabilityZonesCommand({
+                Filters: [
+                    {
+                        Name: 'state',
+                        Values: ['available']
+                    }
+                ]
+            })
+            const result = await this.ec2Client.send(command)
+            const zones = result.AvailabilityZones?.map(az => az.ZoneName).filter((zoneName): zoneName is string => zoneName !== undefined) ?? []
+            this.logger.debug(`Found ${zones.length} availability zones in region ${this.region}`)
+            return zones.sort()
+        } catch (e) {
+            throw new Error(`Failed to list availability zones in region ${this.region}`, { cause: e })
         }
     }
 

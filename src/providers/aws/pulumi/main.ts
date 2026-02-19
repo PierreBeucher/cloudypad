@@ -23,6 +23,7 @@ interface CloudyPadEC2instanceArgs {
     tags?: pulumi.Input<{ [key: string]: pulumi.Input<string> }>
     ami: pulumi.Input<string>;
     type: pulumi.Input<string>;
+    availabilityZone?: pulumi.Input<string>
     publicIpType?: pulumi.Input<string>
     rootVolume?: {
         sizeGb?: pulumi.Input<number>
@@ -174,6 +175,7 @@ class CloudyPadEC2Instance extends pulumi.ComponentResource {
             this.ec2Instance = new aws.ec2.Instance(`${name}-ec2-instance`, {
                 ami: args.ami,
                 instanceType: args.type,
+                availabilityZone: args.availabilityZone,
                 tags:  {
                     ...args.tags,
                     Name: awsResourceNamePrefix
@@ -295,6 +297,7 @@ async function awsPulumiProgram(): Promise<Record<string, any> | void> {
     const imageId = config.get("imageId")
     const dataDisk = config.getObject<{ state: "present" | "absent", sizeGb: number, snapshotId?: string }>("dataDisk")
     const instanceServerState = config.get("instanceServerState") as "present" | "absent" | undefined
+    const zone = config.get("zone")
 
     const billingAlertEnabled = config.requireBoolean("billingAlertEnabled");
     const billingAlertLimit = config.get("billingAlertLimit");
@@ -344,6 +347,7 @@ async function awsPulumiProgram(): Promise<Record<string, any> | void> {
     const instance = new CloudyPadEC2Instance(instanceName, {
         ami: amiId,
         type: instanceType,
+        availabilityZone: zone,
         publicKeyContent: publicKeyContent,
         rootVolume: {
             type: "gp3",
@@ -378,6 +382,7 @@ async function awsPulumiProgram(): Promise<Record<string, any> | void> {
 
 export interface PulumiStackConfigAws {
     region: string
+    zone?: string
     instanceType: string
     rootVolumeSizeGB: number
     publicSshKeyContent: string
@@ -448,6 +453,7 @@ export class AwsPulumiClient extends InstancePulumiClient<PulumiStackConfigAws, 
         await stack.setConfig("useSpot", { value: config.useSpot.toString()})
         await stack.setConfig("ingressPorts", { value: JSON.stringify(config.ingressPorts)})
 
+        if(config.zone) await stack.setConfig("zone", { value: config.zone})
         if(config.imageId) await stack.setConfig("imageId", { value: config.imageId})
         if(config.instanceServerState) await stack.setConfig("instanceServerState", { value: config.instanceServerState})
         if(config.dataDisk) await stack.setConfig("dataDisk", { value: JSON.stringify(config.dataDisk)})

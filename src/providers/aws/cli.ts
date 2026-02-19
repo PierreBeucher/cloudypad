@@ -27,6 +27,7 @@ export const AwsCreateCliArgsSchema = CreateCliArgsSchema.extend({
     publicIpType: z.enum([PUBLIC_IP_TYPE_STATIC, PUBLIC_IP_TYPE_DYNAMIC]).optional(),
     instanceType: z.string().optional(),
     region: z.string().optional(),
+    zone: z.string().optional(),
     costAlert: z.boolean().optional(),
     costLimit: z.number().optional(),
     costNotificationEmail: z.string().optional(),
@@ -88,6 +89,7 @@ export class AwsInputPrompter extends AbstractInputPrompter<AwsCreateCliArgs, Aw
                 dataDiskSizeGb: cliArgs.dataDiskSize,
                 publicIpType: cliArgs.publicIpType,
                 region: cliArgs.region,
+                zone: cliArgs.zone,
                 useSpot: cliArgs.spot,
                 costAlert: costAlertCliArgsIntoConfig(cliArgs),
                 deleteInstanceServerOnStop: cliArgs.deleteInstanceServerOnStop,
@@ -109,6 +111,7 @@ export class AwsInputPrompter extends AbstractInputPrompter<AwsCreateCliArgs, Aw
         }
 
         const region = await this.region(partialInput.provision?.region)
+        const zone = await this.zone(region, partialInput.provision?.zone)
         const useSpot = await this.useSpotInstance(partialInput.provision?.useSpot)
         const instanceType = await this.instanceType(region, useSpot, partialInput.provision?.instanceType)
         const rootDiskSize = await this.rootDiskSize(partialInput.provision?.diskSize)
@@ -126,6 +129,7 @@ export class AwsInputPrompter extends AbstractInputPrompter<AwsCreateCliArgs, Aw
                     instanceType: instanceType,
                     publicIpType: publicIpType,
                     region: region,
+                    zone: zone,
                     useSpot: useSpot,
                     costAlert: costAlert,
                     deleteInstanceServerOnStop: partialInput.provision?.deleteInstanceServerOnStop,
@@ -267,6 +271,27 @@ export class AwsInputPrompter extends AbstractInputPrompter<AwsCreateCliArgs, Aw
             default: currentAwsRegion,
         })
     }
+
+    private async zone(region: string, zone?: string): Promise<string | undefined> {
+        if (zone) {
+            return zone;
+        }
+
+        const awsClient = new AwsClient("zone-prompt", region)
+        const zones = await awsClient.listAvailabilityZones()
+
+        return await select({
+            message: 'Select an availability zone (optional, press Enter to skip):',
+            choices: [
+                { name: 'auto (let AWS choose)', value: undefined },
+                ...zones.map(z => ({
+                    name: z,
+                    value: z,
+                }))
+            ],
+            loop: false,
+        })
+    }
 }
 
 export class AwsCliCommandGenerator extends CliCommandGenerator {
@@ -301,6 +326,7 @@ export class AwsCliCommandGenerator extends CliCommandGenerator {
             .addOption(CLI_OPTION_DELETE_INSTANCE_SERVER_ON_STOP)
             .option('--instance-type <type>', 'EC2 instance type')
             .option('--region <region>', 'Region in which to deploy instance')
+            .option('--zone <zone>', 'Availability zone in which to deploy instance')
             .option('--image-id <image-id>', 'Existing AMI ID for instance server. Disk size must be equal or greater than image size.')
             .action(async (rawCliArgs: unknown) => {
                 // Parse raw CLI args using Zod schema early to ensure type safety

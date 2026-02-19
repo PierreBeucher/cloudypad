@@ -150,6 +150,7 @@ export class AwsProvisioner extends AbstractInstanceProvisioner<AwsProvisionInpu
             instanceType: this.args.provisionInput.instanceType,
             publicIpType: this.args.provisionInput.publicIpType,
             region: this.args.provisionInput.region,
+            zone: this.args.provisionInput.zone,
             rootVolumeSizeGB: this.args.provisionInput.diskSize,
             publicSshKeyContent: sshPublicKeyContent,
             useSpot: this.args.provisionInput.useSpot,

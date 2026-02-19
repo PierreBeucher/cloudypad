@@ -15,6 +15,7 @@ const AwsProvisionInputV1Schema = CommonProvisionInputV1Schema.extend({
     dataDiskSizeGb: z.number().optional().describe("Data disk size in GB. If non-0, a disk dedicated for instance data (such as games data) will be created."),
     publicIpType: z.enum([PUBLIC_IP_TYPE_STATIC, PUBLIC_IP_TYPE_DYNAMIC]).describe("Type of public IP address"),
     region: z.string().describe("AWS region"),
+    zone: z.string().optional().describe("AWS availability zone"),
     useSpot: z.boolean().describe("Whether to use spot instances"),
     costAlert: z.object({
         limit: z.number().describe("Cost alert limit (USD)"),
