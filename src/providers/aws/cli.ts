@@ -279,7 +279,7 @@ export class AwsInputPrompter extends AbstractInputPrompter<AwsCreateCliArgs, Aw
         const zones = await awsClient.listAvailabilityZones()
 
         return await select({
-            message: 'Select an availability zone (optional, press Enter to skip):',
+            message: 'Select an availability zone:',
             choices: [
                 { name: 'auto (let AWS choose)', value: undefined },
                 ...zones.map(z => ({
