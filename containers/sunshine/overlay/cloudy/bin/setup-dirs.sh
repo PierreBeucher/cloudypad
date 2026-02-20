@@ -19,7 +19,8 @@ mkdir -p \
     $XDG_CACHE_HOME \
     $XDG_CONFIG_HOME \
     $XDG_DATA_HOME \
-    $CLOUDYPAD_USER_HOME
+    $CLOUDYPAD_USER_HOME \
+    $CLOUDYPAD_USER_HOME/Desktop
 
 chown $CLOUDYPAD_USER:$CLOUDYPAD_USER \
     $CLOUDYPAD_DATA_DIR \
@@ -38,3 +39,10 @@ chmod 0700 \
     $XDG_CONFIG_HOME \
     $XDG_DATA_HOME \
     $CLOUDYPAD_USER_HOME
+
+# Copy desktop shortcuts to user's Desktop
+if [ -d "/cloudy/conf/desktop-shortcuts" ]; then
+    cp /cloudy/conf/desktop-shortcuts/*.desktop $CLOUDYPAD_USER_HOME/Desktop/ 2>/dev/null || true
+    chown -R $CLOUDYPAD_USER:$CLOUDYPAD_USER $CLOUDYPAD_USER_HOME/Desktop
+    chmod 755 $CLOUDYPAD_USER_HOME/Desktop/*.desktop 2>/dev/null || true
+fi
