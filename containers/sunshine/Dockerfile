@@ -28,7 +28,13 @@ FROM download-base AS download-heroic
 ARG HEROIC_VERSION="2.19.1"
 RUN curl -L -o /app/heroic.deb "https://github.com/Heroic-Games-Launcher/HeroicGamesLauncher/releases/download/v${HEROIC_VERSION}/Heroic-${HEROIC_VERSION}-linux-amd64.deb"
 
-# 
+# MoonDeckBuddy
+# https://github.com/FrogTheFrog/moondeck-buddy/releases
+FROM download-base AS download-moondeckbuddy
+ARG MOONDECKBUDDY_VERSION="1.9.2"
+RUN curl -L -o /app/MoonDeckBuddy.AppImage "https://github.com/FrogTheFrog/moondeck-buddy/releases/download/v${MOONDECKBUDDY_VERSION}/MoonDeckBuddy-${MOONDECKBUDDY_VERSION}-x86_64.AppImage"
+
+#
 # Sunshine image based on Ubuntu 24.04
 # with desktop environment, game launchers and dependencies
 #
@@ -38,9 +44,9 @@ ENV DEBIAN_FRONTEND=noninteractive
 
 RUN --mount=type=cache,target=/var/cache --mount=type=tmpfs,target=/var/log <<_MAIN_PACKAGES
 
-set -e 
+set -e
 
-# Required for some Steam packages  
+# Required for some Steam packages
 dpkg --add-architecture i386
 
 apt update
@@ -84,6 +90,8 @@ apt install -y \
     xz-utils \
     zenity \
     bubblewrap \
+    fuse3 \
+    libfuse2t64 \
     software-properties-common \
     nano \
     unzip \
@@ -272,7 +280,21 @@ ENV DBUS_SYSTEM_BUS_ADDRESS="unix:path=$XDG_RUNTIME_DIR/dbus"
 # TODO use host UID/GID for better portability and usage from host ?
 RUN useradd -m -d $CLOUDYPAD_USER_HOME -s /bin/bash -u 1001 $CLOUDYPAD_USER
 
-# Copy overlay files: startup scripts, default config, etc. 
+# Install MoonDeckBuddy AppImage
+RUN --mount=type=bind,from=download-moondeckbuddy,source=/app,target=/app <<_MOONDECKBUDDY
+
+set -e
+
+MOONDECKBUDDY_APP_DIR="/opt/MoonDeckBuddy"
+MOONDECKBUDDY_APPIMAGE_PATH="${MOONDECKBUDDY_APP_DIR}/MoonDeckBuddy.AppImage"
+
+install -d -o "${CLOUDYPAD_USER}" -g "${CLOUDYPAD_USER}" "${MOONDECKBUDDY_APP_DIR}"
+install -m 0755 -o "${CLOUDYPAD_USER}" -g "${CLOUDYPAD_USER}" /app/MoonDeckBuddy.AppImage "${MOONDECKBUDDY_APPIMAGE_PATH}"
+ln -sf "${MOONDECKBUDDY_APPIMAGE_PATH}" /usr/local/bin/MoonDeckBuddy
+
+_MOONDECKBUDDY
+
+# Copy overlay files: startup scripts, default config, etc.
 COPY overlay /
 
 # Run healthcheck using script
