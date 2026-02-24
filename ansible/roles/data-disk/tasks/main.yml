@@ -36,10 +36,11 @@
     msg: "No disk found matching data disk ID '{{ cloudypad_data_disk_id }}'"
   when: cloudypad_data_disk_path is not defined or cloudypad_data_disk_path == ""
 
-- name: Format Cloudy Pad data disk (ext4)
-  filesystem:
+- name: Format Cloudy Pad data disk (ext4) and resize filesystem
+  community.general.filesystem:
     fstype: "ext4"
     dev: "{{ cloudypad_data_disk_path }}"
+    resizefs: true
 
 - name: Ensure Cloudy Pad data directory exists
   file:
