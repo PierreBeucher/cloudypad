@@ -23,3 +23,8 @@ nvidia_driver_skip_docker_restart: false
 
 # Skip reboot during NVIDIA driver installation
 nvidia_driver_skip_reboot: false
+
+# NVIDIA Container Toolkit version
+# See available versions: apt-cache madison nvidia-container-toolkit
+# Pinned to avoid drift between providers (CDI vs Legacy mode behavior differences)
+nvidia_container_toolkit_version: "1.18.2-1"

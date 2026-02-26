@@ -41,6 +41,9 @@ Then:
 - [ ] NVIDIA Datacenter driver version 
   - Take latest Datacenter Linux x86_64 version at [NVIDIA Unix Driver archive page](https://developer.nvidia.com/datacenter-driver-archive)
   - Update in `ansible/roles/nvidia-driver/defaults/main.yml` `nvidia_driver_datacenter_dotrun_install_version`
+- [ ] NVIDIA Container Toolkit version
+  - Check available versions on [APT package](https://nvidia.github.io/libnvidia-container/stable/deb/amd64/Packages)
+  - Update in `ansible/roles/nvidia-driver/defaults/main.yml` `nvidia_container_toolkit_version`
 - [ ] Wolf version and config
   - [ ] Run `hack/update-wolf-images.sh` to update default images in Ansible role
   - [ ] Update Wolf config template in `ansible/roles/wolf/templates/wolf-config.toml` using default config
