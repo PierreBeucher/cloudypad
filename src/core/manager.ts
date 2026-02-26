@@ -35,9 +35,17 @@ export interface ActionOptions {
 }
 
 export interface DeployOptions extends ActionOptions {
+    /**
+     * Override Ansible arguments to pass to configuration, e.g. ["--tags", "nvidia-container-toolkit"]
+     */
+    ansibleArgsOverride?: string[]
 }
 
 export interface ConfigureOptions extends ActionOptions {
+    /**
+     * Override Ansible arguments to pass to configuration, e.g. ["--tags", "nvidia-container-toolkit"]
+     */
+    ansibleArgsOverride?: string[]
 }
 
 export interface ProvisionOptions extends ActionOptions {
@@ -266,9 +274,15 @@ export class GenericInstanceManager<ST extends InstanceStateV1> implements Insta
 
         this.logger.debug(`Configuring instance ${this.name()}`)
 
-        const currentState = await this.getState()
-        const configurationAnsibleAdditionalArgs = currentState.configuration.input.ansible?.additionalArgs ? 
-            [currentState.configuration.input.ansible.additionalArgs] : undefined
+        // Prefer CLI-provided args override over state-stored args
+        let configurationAnsibleAdditionalArgs: string[] | undefined
+        if (opts?.ansibleArgsOverride) {
+            configurationAnsibleAdditionalArgs = opts.ansibleArgsOverride
+        } else {
+            const currentState = await this.getState()
+            configurationAnsibleAdditionalArgs = currentState.configuration.input.ansible?.additionalArgs ? 
+                [currentState.configuration.input.ansible.additionalArgs] : undefined
+        }
 
         await this.addEvent(InstanceEventEnum.ConfigurationBegin)
 
