@@ -1,5 +1,5 @@
 [Desktop Entry]
-Name=Leroic
+Name=Lutris
 Comment=Managing and play games on Lutris
 Exec=lutris-start.sh
 Icon=lutris
