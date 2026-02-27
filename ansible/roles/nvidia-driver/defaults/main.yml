@@ -23,3 +23,13 @@ nvidia_driver_skip_docker_restart: false
 
 # Skip reboot during NVIDIA driver installation
 nvidia_driver_skip_reboot: false
+
+# NVIDIA Container Toolkit version
+# See available versions: apt-cache madison nvidia-container-toolkit
+# Pinned to avoid drift between providers (CDI vs Legacy mode behavior differences)
+# IMPORTANT: Must stay on 1.17.x - versions 1.18+ default to CDI mode which keeps
+# /dev/dri/card1 at 0660 root:root inside the container, preventing the NVIDIA Vulkan
+# driver from accessing the DRM card node, causing vkGetPhysicalDeviceSurfacePresentModesKHR
+# to fail with VK_ERROR_UNKNOWN (-13) and a black screen.
+# Legacy mode (1.17.x) sets /dev/dri/card1 to 0666, allowing proper GPU access.
+nvidia_container_toolkit_version: "1.17.8-1"

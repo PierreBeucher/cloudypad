@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.43.0](https://github.com/PierreBeucher/cloudypad/compare/v0.42.0...v0.43.0) (2026-02-27)
+
+
+### Features
+
+* use a fixed NVIDIA Container Toolkit version ([46bc245](https://github.com/PierreBeucher/cloudypad/commit/46bc245eee22cf020d8446be107f2019d4ee45da))
+
+
+### Bug Fixes
+
+* force NVIDIA Container Toolkit version to 1.17.8-1 to avoid black screen issues with 1.18.x and Container Device Interface ([86c27d6](https://github.com/PierreBeucher/cloudypad/commit/86c27d69706f57cc87201eb589e244e6bd510ded))
+
 ## [0.42.0](https://github.com/PierreBeucher/cloudypad/compare/v0.41.0...v0.42.0) (2026-01-27)
 
 
