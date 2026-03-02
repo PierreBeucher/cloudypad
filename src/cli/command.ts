@@ -125,6 +125,8 @@ export const CLI_OPTION_AUTO_STOP_TIMEOUT = new Option('--autostop-timeout <seco
 
 export const CLI_OPTION_ANSIBLE_ADDITIONAL_ARGS = new Option('--ansible-additional-args <args>', 'Additional Ansible arguments to pass to configuration, eg. "--tags data-disk -vvv"')
 
+export const CLI_OPTION_ANSIBLE_ARGS_OVERRIDE = new Option('--ansible-args-override <args>', 'Override Ansible arguments to pass to configuration, eg. "--tags data-disk -vvv"')
+
 export const CLI_OPTION_RETRIES = new Option('--retries <number>', 'Number of retries when deploying, configuring, starting, stopping or destroying instance')
     .argParser(parseInt)
 export const CLI_OPTION_RETRY_DELAY = new Option('--retry-delay <seconds>', 'Retry delay in seconds when deploying, configuring, starting, stopping or destroying instance')

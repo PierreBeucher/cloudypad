@@ -35,9 +35,17 @@ export interface ActionOptions {
 }
 
 export interface DeployOptions extends ActionOptions {
+    /**
+     * Override Ansible arguments to pass to configuration, e.g. ["--tags", "nvidia-container-toolkit"]
+     */
+    ansibleArgsOverride?: string[]
 }
 
 export interface ConfigureOptions extends ActionOptions {
+    /**
+     * Override Ansible arguments to pass to configuration, e.g. ["--tags", "nvidia-container-toolkit"]
+     */
+    ansibleArgsOverride?: string[]
 }
 
 export interface ProvisionOptions extends ActionOptions {
@@ -266,9 +274,15 @@ export class GenericInstanceManager<ST extends InstanceStateV1> implements Insta
 
         this.logger.debug(`Configuring instance ${this.name()}`)
 
-        const currentState = await this.getState()
-        const configurationAnsibleAdditionalArgs = currentState.configuration.input.ansible?.additionalArgs ? 
-            [currentState.configuration.input.ansible.additionalArgs] : undefined
+        // Prefer CLI-provided args override over state-stored args
+        let configurationAnsibleAdditionalArgs: string[] | undefined
+        if (opts?.ansibleArgsOverride) {
+            configurationAnsibleAdditionalArgs = opts.ansibleArgsOverride
+        } else {
+            const currentState = await this.getState()
+            configurationAnsibleAdditionalArgs = currentState.configuration.input.ansible?.additionalArgs ? 
+                [currentState.configuration.input.ansible.additionalArgs] : undefined
+        }
 
         await this.addEvent(InstanceEventEnum.ConfigurationBegin)
 
@@ -351,6 +365,16 @@ export class GenericInstanceManager<ST extends InstanceStateV1> implements Insta
                 })
 
                 await this.doProvision(opts)
+            
+                // Check if server is actually running after provision
+                // Provisioning may not have started the server if it was existing but not running
+                // eg. if instance server was stopped by auto-stop feature rather than stop() operation
+                const runner = await this.buildRunner()
+                const serverStatus = await runner.serverStatus()
+                if(serverStatus !== ServerRunningStatus.Running){
+                    this.logger.debug(`Server is not running after provision (status: ${serverStatus}), starting it now`)
+                    await runner.start({ wait: true })
+                }
             
                 // always reconfigured instance using limited Ansible run to avoid re-running full configuration on every start
                 await this.doConfigure(['-t', 'ratelimit,data-disk,sunshine'])

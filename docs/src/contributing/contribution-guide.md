@@ -37,6 +37,11 @@ Here's a typical workflow outline for contributions:
   - [Ansible playbook](#ansible-playbook)
   - [Local Pulumi stack manipulation](#local-pulumi-stack-manipulation)
   - [Local Virtual Machine as Cloudy Pad instance](#local-virtual-machine-as-cloudy-pad-instance)
+  - [Connect to Cloudy Pad VM and container](#connect-to-cloudy-pad-vm-and-container)
+  - [Debug Proton / Wine and game run](#debug-proton--wine-and-game-run)
+  - [Debug process CPU usage or affinity](#debug-process-cpu-usage-or-affinity)
+  - [Debug process environment variable](#debug-process-environment-variable)
+  - [Enable debug log with Steam and Proton](#enable-debug-log-with-steam-and-proton)
 - [Create a Pull Request with your changes](#create-a-pull-request-with-your-changes)
   - [Review process](#review-process)
 - [Useful commands](#useful-commands)
@@ -348,6 +353,78 @@ For example, if you change `containers/sunshine/overlay/cloudy/conf/sunshine/sun
 vagrant ssh
 $ docker compose -f /vagrant/test/resources/docker-compose.vagrant.yml -p sunshine up -d --force-recreate
 ```
+
+### Connect to Cloudy Pad VM and container
+
+To connect via SSH on instance, see: [Connect via SSH](../usage/ssh.md)
+
+### Debug Proton / Wine and game run
+
+To run directly Proton or Wine and see how it behaves, first run the game in a standard way and re-use the same command to reproduce issue or situation. 
+
+Identify process running game, then get their env variables:
+
+```sh
+ps -ef 
+
+GAME_PID=1234 cat proc/$GAME_PID$/environ | tr '\0' '\n'
+```
+
+Steam specifics: variables we want to re-use:
+
+```sh
+export STEAM_COMPAT_CLIENT_INSTALL_PATH="/cloudy/data/Steam"
+export STEAM_COMPAT_DATA_PATH="/cloudy/data/Steam/steamapps/compatdata/1903340"
+```
+
+Then run game manually (re-use actual command), eg.:
+
+```sh
+python3 "/cloudy/data/Steam/steamapps/common/Proton 10.0/proton" waitforexitandrun "C:\\windows\\system32\\cmd.exe" /c "path/to/game.exe"
+```
+
+Example for Steam with Expedition 33:
+
+```sh
+python3 /cloudy/data/Steam/steamapps/common/Proton 10.0/proton waitforexitandrun /cloudy/data/Steam/steamapps/common/Expedition 33/Expedition33_Steam.exe
+```
+
+### Debug process CPU usage or affinity
+
+Specific instructions to debug CPU usage, especially linked to CPU affinity. (eg. for [#335](https://github.com/PierreBeucher/cloudypad/issues/335))
+
+```sh
+# Show all process
+ps -ef
+
+# Show process using NVIDIA GPU
+nvidia-smi
+
+# Show process CPU affinity
+taskset -pc PID
+```
+
+### Debug process environment variable
+
+```sh
+cat /proc/5096/environ | tr '\0' '\n'
+```
+
+### Enable debug log with Steam and Proton
+
+Connect on instance and `docker exec -it -u cloudy cloudy bash` to run a shell in container as cloudy user, then run Steam directly:
+
+```sh
+STEAM_LINUX_RUNTIME_LOG=1 STEAM_LINUX_RUNTIME_VERBOSE=1 PRESSURE_VESSEL_VERBOSE=1 PROTON_LOG=1 PROTON_LOG_DIR=/tmp steam
+```
+
+Possibly also add (as per [Steam debug logging instructions](https://github.com/ValveSoftware/steam-runtime/blob/master/doc/reporting-steamlinuxruntime-bugs.md) ):
+
+```sh
+CAPSULE_DEBUG=all
+G_MESSAGES_DEBUG=all
+```
+
 
 ## Create a Pull Request with your changes
 
