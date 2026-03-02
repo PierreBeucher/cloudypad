@@ -5,7 +5,7 @@ WORKDIR /app
 # Sunshine
 # https://github.com/LizardByte/Sunshine/releases
 FROM download-base AS download-sunshine
-ARG SUNSHINE_VERSION=2026.226.41312
+ARG SUNSHINE_VERSION=2025.924.154138
 RUN curl -fL -o /app/sunshine.deb "https://github.com/LizardByte/Sunshine/releases/download/v${SUNSHINE_VERSION}/sunshine-ubuntu-24.04-amd64.deb"
 
 # Steam
