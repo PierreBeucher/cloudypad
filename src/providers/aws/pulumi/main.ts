@@ -254,20 +254,6 @@ class CloudyPadEC2Instance extends pulumi.ComponentResource {
 
                 this.volumes.push(vol)
             })
-            
-
-            if (args.publicIpType === PUBLIC_IP_TYPE_STATIC) {
-                this.eip = new aws.ec2.Eip(`${name}-eip`, {
-                    tags: globalTags
-                }, commonPulumiOpts);
-                        
-                new aws.ec2.EipAssociation(`${name}-eipAssoc`, {
-                    instanceId: this.ec2Instance.id,
-                    allocationId: this.eip.id,
-                }, commonPulumiOpts);
-            } else if (args.publicIpType !== PUBLIC_IP_TYPE_DYNAMIC) {
-                throw `publicIpType must be either '${PUBLIC_IP_TYPE_STATIC}' or '${PUBLIC_IP_TYPE_DYNAMIC}'`
-            }
 
             // set client-facing values
             this.instanceId = this.ec2Instance.id
@@ -277,6 +263,25 @@ class CloudyPadEC2Instance extends pulumi.ComponentResource {
             this.rootVolumeId = undefined
             this.dataDiskId = undefined
             this.volumes = []
+        }
+
+        // public IP must be outside of instance reation block to avoid deletion on stop
+        if (args.publicIpType === PUBLIC_IP_TYPE_STATIC) {
+            this.eip = new aws.ec2.Eip(`${name}-eip`, {
+                tags: globalTags
+            }, commonPulumiOpts);
+            
+            // Attach IP to instance if it exists
+            // otherwise keep IP
+            if(this.ec2Instance){
+                new aws.ec2.EipAssociation(`${name}-eipAssoc`, {
+                    instanceId: this.ec2Instance.id,
+                    allocationId: this.eip.id,
+                }, commonPulumiOpts);
+            }
+
+        } else if (args.publicIpType !== PUBLIC_IP_TYPE_DYNAMIC) {
+            throw `publicIpType must be either '${PUBLIC_IP_TYPE_STATIC}' or '${PUBLIC_IP_TYPE_DYNAMIC}'`
         }
 
         this.publicIp = this.eip ? this.eip.publicIp : this.ec2Instance?.publicIp || pulumi.output("")
