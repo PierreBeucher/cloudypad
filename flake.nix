@@ -86,6 +86,9 @@
 
               # Force max old space size to 8GB for Node.js as compilation is very memory intensive
               export NODE_OPTIONS="--max-old-space-size=8912"
+              
+              # Debug alias
+              alias cloudypad="npx tsx src/cli/main.ts"
             '';
           };
         };
