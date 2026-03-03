@@ -73,19 +73,149 @@ Try deletion again. If needed, try to delete manually, ONLY if you're sure that 
 
 # Commands and environment variables
 
+## Create and deploy instance for debugging
+
+Use debug CLI to create an instance without interaction. All CLI flags must be passed so as not to be prompted:
+
+### AWS
+
+```sh
+# Set name according to current test
+instance_name=test-instance-aws
+
+# Prefer these default parameters
+# Override accordingly for test being done
+npx tsx src/cli/main.ts create aws \
+  --name $instance_name \
+  --instance-type g4dn.xlarge \
+  --disk-size 30 \
+  --data-disk-size 10 \
+  --region eu-central-1 \
+  --zone eu-central-1a \
+  --spot disable \
+  --cost-alert \
+  --cost-limit 2 \
+  --cost-notification-email "test@cloudypad.gg" \
+  --streaming-server sunshine \
+  --sunshine-user sunshine \
+  --sunshine-password 'S3un$h1ne!"' \
+  --autostop true \
+  --autostop-timeout 300 \
+  --data-disk-snapshot \
+  --base-image-snapshot \
+  --delete-instance-server-on-stop \
+  --yes --overwrite-existing --skip-pairing
+```
+
+### Azure
+
+```sh
+# Set name according to current test
+instance_name=test-instance-az
+
+# Prefer these default parameters
+# Override accordingly for test being done
+npx tsx src/cli/main.ts create azure \
+  --name $instance_name \
+  --vm-size Standard_NC8as_T4_v3 \
+  --disk-size 100 \
+  --data-disk-size 10 \
+  --disk-type Standard_LRS \
+  --location "francecentral" \
+  --spot disable \
+  --subscription-id 0dceb5ed-9096-4db7-b430-2609e7cc6a15 \
+  --cost-limit 2 \
+  --cost-notification-email "test@cloudypad.gg" \
+  --streaming-server sunshine \
+  --sunshine-user sunshine \
+  --sunshine-password 'S3un$h1ne!"' \
+  --autostop true \
+  --autostop-timeout 300 \
+  --data-disk-snapshot \
+  --base-image-snapshot \
+  --delete-instance-server-on-stop \
+  --yes --overwrite-existing --skip-pairing
+```
+
+### GCP
+
+```sh
+# Set name according to current test
+instance_name=test-instance-gcp
+
+# Prefer these default parameters
+# Override accordingly for test being done
+npx tsx src/cli/main.ts create gcp \
+  --name $instance_name \
+  --machine-type n1-standard-8 \
+  --disk-size 100 \
+  --data-disk-size 10 \
+  --disk-type pd-standard \
+  --network-tier STANDARD \
+  --nic-type auto \
+  --region "europe-west4" \
+  --zone "europe-west4-b" \
+  --gpu-type "nvidia-tesla-t4" \
+  --project-id crafteo-sandbox \
+  --spot disable \
+  --cost-limit 2 \
+  --cost-notification-email "test@cloudypad.gg" \
+  --streaming-server sunshine \
+  --sunshine-user sunshine \
+  --sunshine-password 'S3un$h1ne!"' \
+  --autostop true \
+  --autostop-timeout 300 \
+  --data-disk-snapshot \
+  --base-image-snapshot \
+  --delete-instance-server-on-stop \
+  --yes --overwrite-existing --skip-pairing
+```
+
+### Scaleway
+
+```sh
+# Set name according to current test
+instance_name=test-instance-scw
+
+# Prefer these default parameters
+# Override accordingly for test being done
+npx tsx src/cli/main.ts create scaleway \
+  --name $instance_name \
+  --project-id "02d02f86-9414-4161-b807-efb2bd22d266" \
+  --region fr-par \
+  --zone fr-par-2 \
+  --instance-type L4-1-24G \
+  --root-disk-size 30 \
+  --data-disk-size 10 \
+  --streaming-server sunshine \
+  --sunshine-user sunshine \
+  --sunshine-password "sunshine!" \
+  --autostop true \
+  --autostop-timeout 300 \
+  --data-disk-snapshot \
+  --base-image-snapshot \
+  --delete-instance-server-on-stop \
+  --yes --overwrite-existing --skip-pairing
+```
+
 ## Provision
 
 ```sh
 npx tsx src/cli/main.ts provision my-instance
 ```
 
-## Configuration with specific Ansible tasks target
-
-**TODO provide way to override Ansible**
+## Configure, create or deploy with specific Ansible tasks target
 
 ```sh
 # Run Configuration with specifc tasks target or roles
-npx tsx src/cli/main.ts configure my-instance --override-ansible-args xxxx
+# You can use Ansible flags like "-t data-disk" or "--start-at-task xxx" 
+# to run specific configuration steps for faster feedback loop
+npx tsx src/cli/main.ts configure my-instance --ansible-args-override "-t data-disk"
+
+# Also works for deploy, create and start command
+npx tsx src/cli/main.ts create [...lots of args...] --ansible-args-override "-t data-disk"
+npx tsx src/cli/main.ts deploy my-instance --ansible-args-override "-t data-disk"
+npx tsx src/cli/main.ts start my-instance --ansible-args-override "-t data-disk"
 ```
 
 ## Start and Stop
@@ -133,6 +263,10 @@ export CLOUDYPAD_SKIP_CONFIGURATION=true
 # Allowing faster feedback when running configuration
 export CLOUDYPAD_ANSIBLE_ARGS_OVERRIDE="-t data-disk"
 ```
+
+## SSH into instance
+
+See docs: `docs/src/usage/ssh.md`
 
 # Useful references
 
