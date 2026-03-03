@@ -36,6 +36,29 @@
     msg: "No disk found matching data disk ID '{{ cloudypad_data_disk_id }}'"
   when: cloudypad_data_disk_path is not defined or cloudypad_data_disk_path == ""
 
+- name: Check if filesystem already exists on disk
+  shell: blkid -s TYPE -o value "{{ cloudypad_data_disk_path }}" || echo ""
+  register: existing_fs_type
+  changed_when: false
+  failed_when: false
+
+- name: Check if disk is currently mounted
+  shell: findmnt -n -o TARGET "{{ cloudypad_data_disk_path }}" || echo ""
+  register: mount_point
+  changed_when: false
+  failed_when: false
+
+- name: Run filesystem check if filesystem exists and disk is unmounted (required before resize on restored snapshots)
+  command: e2fsck -fp "{{ cloudypad_data_disk_path }}"
+  when: existing_fs_type.stdout | trim == "ext4" and mount_point.stdout | trim == ""
+  register: e2fsck_result
+  failed_when: e2fsck_result.rc > 1
+  # -f: force check even if filesystem looks clean
+  # -p: automatic repair (non-interactive)
+  # Only run if disk is unmounted (if mounted, filesystem is already in use and doesn't need check)
+  # rc 1 means filesystem errors were corrected, which is OK
+  # rc > 1 means serious errors that couldn't be fixed
+
 - name: Format Cloudy Pad data disk (ext4) and resize filesystem
   community.general.filesystem:
     fstype: "ext4"
