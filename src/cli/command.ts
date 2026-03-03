@@ -32,6 +32,7 @@ export const CreateCliArgsSchema = z.object({
     keyboardVariant: z.string().optional(),
     keyboardOptions: z.string().optional(),
     ansibleAdditionalArgs: z.string().optional(),
+    ansibleArgsOverride: z.string().optional(),
     retries: z.number().optional(),
     retryDelay: z.number().optional(),
     ratelimitMaxMbps: z.number().optional(),
@@ -193,6 +194,7 @@ export abstract class CliCommandGenerator {
             .addOption(CLI_OPTION_OVERWRITE_EXISTING)
             .addOption(CLI_OPTION_SKIP_PAIRING)
             .addOption(CLI_OPTION_ANSIBLE_ADDITIONAL_ARGS)
+            .addOption(CLI_OPTION_ANSIBLE_ARGS_OVERRIDE)
             .addOption(CLI_OPTION_RETRIES)
             .addOption(CLI_OPTION_RETRY_DELAY)
             .addOption(CLI_OPTION_FORCE_PULUMI_CANCEL)
