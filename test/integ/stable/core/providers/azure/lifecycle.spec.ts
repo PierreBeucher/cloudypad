@@ -1,7 +1,7 @@
 import * as assert from 'assert';
 import { AzureClient, AzureVmStatus } from '../../../../../../src/providers/azure/sdk-client';
 import { AzureInstanceStateV1 } from '../../../../../../src/providers/azure/state';
-import { getIntegTestCoreConfig } from '../../../../utils';
+import { getIntegTestCoreConfig, runVerifyPlaybook } from '../../../../utils';
 import { AzureProviderClient } from '../../../../../../src/providers/azure/provider';
 import { ServerRunningStatus } from '../../../../../../src/core/runner';
 import { getLogger } from '../../../../../../src/log/utils';
@@ -16,6 +16,8 @@ describe('Azure lifecycle', () => {
 
     const location = "francecentral";
     const vmSize = "Standard_NC8as_T4_v3";
+    const dataDiskSizeGb = 10;
+    const dataDiskSizeAfterUpdate = dataDiskSizeGb + 2;
 
     let currentVmName: string | undefined = undefined;
     let currentResourceGroupName: string | undefined = undefined;
@@ -41,6 +43,11 @@ describe('Azure lifecycle', () => {
         }
         assert.strictEqual(isReady, true);
     }
+
+    async function runVerify(opts: { createDataDiskTestFile?: boolean, checkDataDiskTestFile?: boolean } = {}): Promise<void> {
+        const state = await getCurrentTestState()
+        await runVerifyPlaybook(instanceName, state, opts)
+    }
     
     it('should initialize instance state', async () => {
         assert.strictEqual(currentVmName, undefined);
@@ -52,7 +59,7 @@ describe('Azure lifecycle', () => {
             },
             vmSize: vmSize,
             diskSize: 100,  // Root disk size (OS) - increased to 100GB to accommodate base images
-            dataDiskSizeGb: 100,  // Data disk size
+            dataDiskSizeGb: dataDiskSizeGb,  // Data disk size
             diskType: "Standard_LRS",
             publicIpType: PUBLIC_IP_TYPE_STATIC,
             subscriptionId: "0dceb5ed-9096-4db7-b430-2609e7cc6a15",
@@ -111,7 +118,7 @@ describe('Azure lifecycle', () => {
             const dataDisk = await azureClient.getDisk(resourceGroupName, dataDiskName);
             assert.ok(dataDisk, "Data disk should exist in Azure");
             assert.strictEqual(dataDisk.id, state.provision.output.dataDiskId, "Data disk ID should match state output");
-            assert.strictEqual(dataDisk.diskSizeGB, 100, "Data disk size should be 100 GB");
+            assert.strictEqual(dataDisk.diskSizeGB, dataDiskSizeGb, `Data disk size should be ${dataDiskSizeGb} GB`);
         }
 
         // Verify root disk exists and ID matches state output
@@ -137,6 +144,7 @@ describe('Azure lifecycle', () => {
             instanceName: instanceName,
             provisionInputs: {
                 vmSize: "Standard_NC4as_T4_v3",
+                dataDiskSizeGb: dataDiskSizeAfterUpdate,
             }, 
         });
 
@@ -153,6 +161,12 @@ describe('Azure lifecycle', () => {
         const instance = instances.find(instance => instance.name === currentVmName);
         assert.ok(instance);
         assert.strictEqual(instance.hardwareProfile?.vmSize, "Standard_NC4as_T4_v3");
+
+        assert.ok(state.provision.output?.dataDiskId);
+        const dataDiskName = `${instanceName}-data-disk`;
+        const dataDisk = await azureClient.getDisk(state.provision.output.resourceGroupName, dataDiskName);
+        assert.ok(dataDisk);
+        assert.strictEqual(dataDisk.diskSizeGB, dataDiskSizeAfterUpdate);
 
     }).timeout(15*60*1000);
 
@@ -176,6 +190,9 @@ describe('Azure lifecycle', () => {
         await waitForInstanceReadiness('deployment');
     }).timeout(2*60*1000);
 
+    it('should verify instance configuration after deployment', async () => {
+        await runVerify({ createDataDiskTestFile: true })
+    }).timeout(5*60*1000);
 
     // run twice for idempotency
     for (let i = 0; i < 2; i++) { 
@@ -233,6 +250,14 @@ describe('Azure lifecycle', () => {
             assert.ok(instance, "VM should exist in Azure after start");
         }).timeout(20*60*1000); // Increased timeout for VM recreation from image
     }
+
+    it('should wait for instance readiness after start', async () => {
+        await waitForInstanceReadiness('start');
+    }).timeout(2*60*1000);
+
+    it('should verify instance configuration after stop/start', async () => {
+        await runVerify({ checkDataDiskTestFile: true })
+    }).timeout(5*60*1000);
 
     it('should restart instance', async () => {
 

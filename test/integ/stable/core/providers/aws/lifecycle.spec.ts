@@ -1,7 +1,7 @@
 import * as assert from 'assert';
 import { AwsClient } from '../../../../../../src/providers/aws/sdk-client';
 import { AwsInstanceStateV1 } from '../../../../../../src/providers/aws/state';
-import { getIntegTestCoreConfig } from '../../../../utils';
+import { getIntegTestCoreConfig, runVerifyPlaybook } from '../../../../utils';
 import { AwsProviderClient } from '../../../../../../src/providers/aws/provider';
 import { ServerRunningStatus } from '../../../../../../src/core/runner';
 import { getLogger } from '../../../../../../src/log/utils';
@@ -39,6 +39,11 @@ describe('AWS lifecycle', () => {
         }
         throw new Error(`Instance did not become ready after ${maxAttempts} attempts`);
     }
+
+    async function runVerify(opts: { createDataDiskTestFile?: boolean, checkDataDiskTestFile?: boolean } = {}): Promise<void> {
+        const state = await getCurrentTestState()
+        await runVerifyPlaybook(instanceName, state, opts)
+    }
     
     it('should initialize instance state', async () => {
         assert.strictEqual(currentInstanceId, undefined);
@@ -49,11 +54,11 @@ describe('AWS lifecycle', () => {
                 user: "ubuntu",
             },
             instanceType: instanceType,
-            diskSize: 30,
+            diskSize: 20, // voluntary small disk as AWS is very slow to create disk snapshots
             publicIpType: PUBLIC_IP_TYPE_STATIC,
             region: region,
             useSpot: false,
-            dataDiskSizeGb: 35,
+            dataDiskSizeGb: 5, // voluntary small disk as AWS is very slow to create disk snapshots
             baseImageSnapshot: {
                 enable: true,
             },
@@ -118,6 +123,7 @@ describe('AWS lifecycle', () => {
             instanceName: instanceName,
             provisionInputs: {
                 instanceType: "g4dn.2xlarge",
+                dataDiskSizeGb: 6,
             }, 
         });
 
@@ -134,6 +140,11 @@ describe('AWS lifecycle', () => {
         const instance = instances.find(instance => instance.InstanceId === currentInstanceId);
         assert.ok(instance);
         assert.strictEqual(instance.InstanceType, "g4dn.2xlarge");
+
+        assert.ok(state.provision.output?.dataDiskId);
+        
+        const volume = await awsClient.getVolume(state.provision.output.dataDiskId);
+        assert.strictEqual(volume?.Size, 6); // 6GB in bytes
 
     }).timeout(30*60*1000);
 
@@ -152,6 +163,10 @@ describe('AWS lifecycle', () => {
     it('should wait for instance readiness after deployment', async () => {
         await waitForInstanceReadiness();
     }).timeout(2*60*1000);
+
+    it('should verify instance configuration after deployment', async () => {
+        await runVerify({ createDataDiskTestFile: true })
+    }).timeout(5*60*1000);
 
     // run twice for idempotency
     for (let i = 0; i < 2; i++) { 
@@ -206,6 +221,14 @@ describe('AWS lifecycle', () => {
             currentInstanceId = state.provision.output.instanceId;
         }).timeout(20*60*1000);
     }
+
+    it('should wait for instance readiness after start', async () => {
+        await waitForInstanceReadiness();
+    }).timeout(2*60*1000);
+
+    it('should verify instance configuration after stop/start', async () => {
+        await runVerify({ checkDataDiskTestFile: true })
+    }).timeout(5*60*1000);
 
     it('should restart instance', async () => {
 

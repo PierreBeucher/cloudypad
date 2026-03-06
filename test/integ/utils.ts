@@ -1,7 +1,16 @@
 import { CloudypadClient } from "../../src/core/client";
+import * as assert from 'assert'
 import fs from "fs"
 import path from "path"
+import * as os from 'os'
+import * as yaml from 'yaml'
 import { CoreConfig } from "../../src/core/config/interface";
+import { InstanceStateV1 } from "../../src/core/state/state";
+import { AnsibleClient } from "../../src/tools/ansible";
+import { SshKeyLoader } from "../../src/tools/ssh";
+import { getLogger } from "../../src/log/utils";
+
+const logger = getLogger("integ-test-utils")
 
 export function getIntegTestCoreConfig(): CoreConfig {
     // ensure directory relative to this file ./tmp exists
@@ -34,4 +43,54 @@ export function getIntegTestCoreClient(): CloudypadClient{
     return new CloudypadClient({
         config: getIntegTestCoreConfig()
     })
+}
+
+export interface RunVerifyPlaybookOpts {
+    createDataDiskTestFile?: boolean
+    checkDataDiskTestFile?: boolean
+}
+
+/**
+ * Run the verify.yml playbook against an instance.
+ * Builds an Ansible inventory on the fly from current state and runs the cloudypad-check role.
+ */
+export async function runVerifyPlaybook(instanceName: string, state: InstanceStateV1, opts: RunVerifyPlaybookOpts): Promise<void> {
+    assert.ok(state.provision.output, "Provision output must exist to run verify playbook")
+
+    const sshAuth = new SshKeyLoader().getSshAuth(state.provision.input.ssh)
+
+    const inventoryObject = {
+        all: {
+            hosts: {
+                [instanceName]: {
+                    ansible_host: state.provision.output.publicIPv4 ?? state.provision.output.host,
+                    ansible_user: state.provision.input.ssh.user,
+                    ansible_ssh_private_key_file: sshAuth.privateKeyPath,
+                    ansible_password: sshAuth.password,
+
+                    cloudypad_data_disk_id: state.provision.output.machineDataDiskLookupId,
+                    cloudypad_data_disk_lookup_method: state.provision.output.machineDataDiskMountMethod ?? "default",
+
+                    ratelimit_enable: state.configuration.input.ratelimit?.maxMbps !== undefined &&
+                        state.configuration.input.ratelimit.maxMbps > 0,
+
+                    cloudypad_check_create_data_disk_test_file: opts.createDataDiskTestFile ?? false,
+                    cloudypad_check_data_disk_test_file: opts.checkDataDiskTestFile ?? false,
+                },
+            },
+        },
+    }
+
+    const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'cloudypad-verify-'))
+    const inventoryPath = path.join(tmpDir, 'inventory.yml')
+    fs.writeFileSync(inventoryPath, yaml.stringify(inventoryObject), 'utf8')
+
+    const playbookPath = path.resolve(__dirname, '..', '..', 'ansible', 'verify.yml')
+
+    logger.info(`Running verify playbook: ${playbookPath} with inventory: ${inventoryPath}`)
+
+    const ansible = new AnsibleClient()
+    await ansible.runAnsible(inventoryPath, playbookPath, [
+        '-e', '\'ansible_ssh_common_args="-o StrictHostKeyChecking=no"\'',
+    ])
 }

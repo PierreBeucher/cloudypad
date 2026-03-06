@@ -52,6 +52,10 @@ export interface ProvisionOptions extends ActionOptions {
 }
 
 export interface StartOptions extends StartStopOptions, ActionOptions {
+    /**
+     * Override Ansible arguments passed to configuration, e.g. ["-t", "data-disk"]
+     */
+    ansibleArgsOverride?: string[]
 }
 
 export interface StopOptions extends StartStopOptions, ActionOptions {
@@ -377,7 +381,9 @@ export class GenericInstanceManager<ST extends InstanceStateV1> implements Insta
                 }
             
                 // always reconfigured instance using limited Ansible run to avoid re-running full configuration on every start
-                await this.doConfigure(['-t', 'ratelimit,data-disk,sunshine'])
+                // Use ansibleArgsOverride if provided, otherwise use default tags
+                const ansibleArgs = opts?.ansibleArgsOverride ?? ['-t', 'ratelimit,data-disk,sunshine']
+                await this.doConfigure(ansibleArgs)
             }
         }, 'Pre-start reconfiguration', opts)
 

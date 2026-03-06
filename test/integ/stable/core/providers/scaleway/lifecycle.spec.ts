@@ -1,7 +1,7 @@
 import * as assert from 'assert'
 import { ScalewayClient, ScalewayServerState } from '../../../../../../src/providers/scaleway/sdk-client'
 import { ScalewayInstanceStateV1 } from '../../../../../../src/providers/scaleway/state'
-import { getIntegTestCoreConfig } from '../../../../utils'
+import { getIntegTestCoreConfig, runVerifyPlaybook } from '../../../../utils'
 import { ScalewayProviderClient } from '../../../../../../src/providers/scaleway/provider'
 import { ServerRunningStatus } from '../../../../../../src/core/runner'
 import { getLogger } from '../../../../../../src/log/utils'
@@ -32,6 +32,11 @@ describe('Scaleway lifecycle', () => {
             zone: zone,
         })
     }
+
+    async function runVerify(opts: { createDataDiskTestFile?: boolean, checkDataDiskTestFile?: boolean } = {}): Promise<void> {
+        const state = await getCurrentTestState()
+        await runVerifyPlaybook(instanceName, state, opts)
+    }
     
     it('should initialize instance state', async () => {
 
@@ -61,7 +66,10 @@ describe('Scaleway lifecycle', () => {
                     username: "sunshine",
                     passwordBase64: Buffer.from("Sunshine!").toString('base64'),
                     imageTag: "dev"
-                }, 
+                },
+                ratelimit: {
+                    maxMbps: 50,
+                },
             })
     })
 
@@ -114,12 +122,18 @@ describe('Scaleway lifecycle', () => {
         }
     }).timeout(10000)
 
+    it('should verify instance configuration after deployment', async () => {
+        await runVerify({ createDataDiskTestFile: true })
+    }).timeout(5*60*1000) // 5 minutes timeout
+
     it('should update instance', async () => {
         const instanceUpdater = scalewayProviderClient.getInstanceUpdater()
         await instanceUpdater.updateStateOnly({
             instanceName: instanceName,
             provisionInputs: {
+                // update instance type and disk size
                 instanceType: "L40S-1-48G",
+                dataDiskSizeGb: 55,
             }, 
         })
 
@@ -134,6 +148,12 @@ describe('Scaleway lifecycle', () => {
 
         const serverData = await scalewayClient.getRawServerData(currentInstanceServerId)
         assert.strictEqual(serverData?.commercialType, "L40S-1-48G")
+
+        const dataDiskId = state.provision.output?.machineDataDiskLookupId
+        assert.ok(dataDiskId)
+
+        const volume = await scalewayClient.getVolume({ zone: zone, volumeId: dataDiskId })
+        assert.strictEqual(String(volume?.size).substring(0, 2), "55")
 
     }).timeout(20*60*1000) // 20 minutes timeout
 
@@ -201,6 +221,10 @@ describe('Scaleway lifecycle', () => {
         assert.strictEqual(isReady, true)
 
     }).timeout(120000)
+
+    it('should verify instance configuration after stop/start', async () => {
+        await runVerify({ checkDataDiskTestFile: true })
+    }).timeout(5*60*1000) // 5 minutes timeout
 
     it('should restart instance without deleting or re-provisioning', async () => {
 

@@ -1,0 +1,19 @@
+# Verify Cloudy Pad instance configuration
+# Run checks on NVIDIA driver, data disk, autostop, Sunshine, and rate limiting
+---
+- name: "Wait for machine to be reachable (timeout: 5min)"
+  hosts: all
+  gather_facts: false
+  tags: [always]
+  tasks:
+    - wait_for_connection:
+        timeout: 300
+        sleep: 5
+
+- name: Verify Cloudy Pad instance configuration
+  hosts: all
+  roles:
+    - role: roles/cloudypad-check
+      become: true
+      tags: [cloudypad-check]
+

@@ -1,7 +1,7 @@
 import * as assert from 'assert'
 import { LinodeClient } from '../../../../../../src/providers/linode/sdk-client'
 import { LinodeInstanceStateV1 } from '../../../../../../src/providers/linode/state'
-import { getIntegTestCoreConfig } from '../../../../utils'
+import { getIntegTestCoreConfig, runVerifyPlaybook } from '../../../../utils'
 import { LinodeProviderClient } from '../../../../../../src/providers/linode/provider'
 import { ServerRunningStatus } from '../../../../../../src/core/runner'
 import { getLogger } from '../../../../../../src/log/utils'
@@ -33,6 +33,11 @@ describe('Linode lifecycle', () => {
         return new LinodeClient({
             region: region,
         })
+    }
+
+    async function runVerify(opts: { createDataDiskTestFile?: boolean, checkDataDiskTestFile?: boolean } = {}): Promise<void> {
+        const state = await getCurrentTestState()
+        await runVerifyPlaybook(instanceName, state, opts)
     }
     
     it('should initialize instance state', async () => {
@@ -123,6 +128,32 @@ describe('Linode lifecycle', () => {
         assert.equal(serverStatus, 'running')
     }).timeout(10000)
 
+    it('should verify instance configuration after deployment', async () => {
+        await runVerify({ createDataDiskTestFile: true })
+    }).timeout(5*60*1000)
+
+    it('should update instance data disk size', async () => {
+        const instanceUpdater = linodeProviderClient.getInstanceUpdater()
+        await instanceUpdater.updateStateOnly({
+            instanceName: instanceName,
+            provisionInputs: {
+                dataDiskSizeGb: dataDiskSizeGb+2,
+            }, 
+        })
+
+        const instanceManager = await linodeProviderClient.getInstanceManager(instanceName)
+        await instanceManager.deploy()
+
+        const state = await getCurrentTestState()
+        assert.ok(state.provision.output?.dataDiskId);
+
+        const linodeClient = getLinodeClient()
+        const dataDisk = await linodeClient.getVolumeByLabel(state.provision.output.dataDiskId);
+        assert.ok(dataDisk);
+        assert.strictEqual(dataDisk.size, (dataDiskSizeGb+2) * 1024 * 1024 * 1024); // 2GB in bytes
+
+    }).timeout(10000)
+
     // run twice for idempotency
     for (let i = 0; i < 2; i++) { 
 
@@ -199,6 +230,10 @@ describe('Linode lifecycle', () => {
         assert.strictEqual(isReady, true)
 
     }).timeout(120000)
+
+    it('should verify instance configuration after stop/start', async () => {
+        await runVerify({ checkDataDiskTestFile: true })
+    }).timeout(5*60*1000)
 
     it('should restart instance without deleting or re-provisioning', async () => {
 

@@ -1,0 +1,17 @@
+- import_tasks: nvidia.yml
+  tags: [nvidia]
+
+- import_tasks: data-disk.yml
+  tags: [data-disk]
+  when: cloudypad_data_disk_id is defined
+
+- import_tasks: autostop.yml
+  tags: [autostop]
+
+- import_tasks: sunshine.yml
+  tags: [sunshine]
+
+# - import_tasks: rate-limit.yml
+#   tags: [rate-limit]
+#   when: ratelimit_enable | default(false) | bool
+
