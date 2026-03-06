@@ -119,7 +119,9 @@ describe('Scaleway lifecycle', () => {
         await instanceUpdater.updateStateOnly({
             instanceName: instanceName,
             provisionInputs: {
+                // update instance type and disk size
                 instanceType: "L40S-1-48G",
+                dataDiskSizeGb: 55,
             }, 
         })
 
@@ -134,6 +136,12 @@ describe('Scaleway lifecycle', () => {
 
         const serverData = await scalewayClient.getRawServerData(currentInstanceServerId)
         assert.strictEqual(serverData?.commercialType, "L40S-1-48G")
+
+        const dataDiskId = state.provision.output?.machineDataDiskLookupId
+        assert.ok(dataDiskId)
+
+        const volume = await scalewayClient.getVolume({ zone: zone, volumeId: dataDiskId })
+        assert.strictEqual(String(volume?.size).substring(0, 2), "55")
 
     }).timeout(20*60*1000) // 20 minutes timeout
 

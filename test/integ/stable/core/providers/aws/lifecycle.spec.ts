@@ -40,190 +40,196 @@ describe('AWS lifecycle', () => {
         throw new Error(`Instance did not become ready after ${maxAttempts} attempts`);
     }
     
-    // it('should initialize instance state', async () => {
-    //     assert.strictEqual(currentInstanceId, undefined);
+    it('should initialize instance state', async () => {
+        assert.strictEqual(currentInstanceId, undefined);
 
-    //     const initializer = new AwsProviderClient({config: coreConfig}).getInstanceInitializer();
-    //     await initializer.initializeStateOnly(instanceName, {
-    //         ssh: {
-    //             user: "ubuntu",
-    //         },
-    //         instanceType: instanceType,
-    //         diskSize: 30,
-    //         publicIpType: PUBLIC_IP_TYPE_STATIC,
-    //         region: region,
-    //         useSpot: false,
-    //         dataDiskSizeGb: 35,
-    //         baseImageSnapshot: {
-    //             enable: true,
-    //         },
-    //         dataDiskSnapshot: {
-    //             enable: true,
-    //         },
-    //         deleteInstanceServerOnStop: true,
-    //     }, {
-    //         sunshine: {
-    //             enable: true,
-    //             username: "sunshine",
-    //             passwordBase64: Buffer.from("S3un$h1ne!").toString('base64')
-    //         }, 
-    //     });
-    // })
+        const initializer = new AwsProviderClient({config: coreConfig}).getInstanceInitializer();
+        await initializer.initializeStateOnly(instanceName, {
+            ssh: {
+                user: "ubuntu",
+            },
+            instanceType: instanceType,
+            diskSize: 20, // voluntary small disk as AWS is very slow to create disk snapshots
+            publicIpType: PUBLIC_IP_TYPE_STATIC,
+            region: region,
+            useSpot: false,
+            dataDiskSizeGb: 5, // voluntary small disk as AWS is very slow to create disk snapshots
+            baseImageSnapshot: {
+                enable: true,
+            },
+            dataDiskSnapshot: {
+                enable: true,
+            },
+            deleteInstanceServerOnStop: true,
+        }, {
+            sunshine: {
+                enable: true,
+                username: "sunshine",
+                passwordBase64: Buffer.from("S3un$h1ne!").toString('base64')
+            }, 
+        });
+    })
 
-    // it('should deploy instance', async () => {
-    //     const instanceManager = await awsProviderClient.getInstanceManager(instanceName);
-    //     await instanceManager.deploy();
+    it('should deploy instance', async () => {
+        const instanceManager = await awsProviderClient.getInstanceManager(instanceName);
+        await instanceManager.deploy();
 
-    //     const awsClient = getAwsClient();
-    //     const state = await getCurrentTestState();
+        const awsClient = getAwsClient();
+        const state = await getCurrentTestState();
 
-    //     assert.ok(state.provision.output?.instanceId);
-    //     currentInstanceId = state.provision.output.instanceId;
+        assert.ok(state.provision.output?.instanceId);
+        currentInstanceId = state.provision.output.instanceId;
 
-    //     const instances = await awsClient.listInstances();
-    //     const instance = instances.find(instance => instance.InstanceId === currentInstanceId);
-    //     assert.ok(instance);
-    //     assert.strictEqual(instance.InstanceType, instanceType);
-    // }).timeout(60*60*1000); // 60 minutes timeout as deployment and snapshot + AMI creation may be long
+        const instances = await awsClient.listInstances();
+        const instance = instances.find(instance => instance.InstanceId === currentInstanceId);
+        assert.ok(instance);
+        assert.strictEqual(instance.InstanceType, instanceType);
+    }).timeout(60*60*1000); // 60 minutes timeout as deployment and snapshot + AMI creation may be long
 
-    // it('should have resources matching state output after deployment', async () => {
-    //     const awsClient = getAwsClient();
-    //     const state = await getCurrentTestState();
+    it('should have resources matching state output after deployment', async () => {
+        const awsClient = getAwsClient();
+        const state = await getCurrentTestState();
 
-    //     // Verify data disk exists and ID matches state output
-    //     if (state.provision.output?.dataDiskId) {
-    //         const volume = await awsClient.getVolume(state.provision.output.dataDiskId);
-    //         assert.ok(volume, "Data disk should exist in AWS");
-    //         assert.strictEqual(volume.VolumeId, state.provision.output.dataDiskId, "Data disk ID should match state output");
-    //     }
+        // Verify data disk exists and ID matches state output
+        if (state.provision.output?.dataDiskId) {
+            const volume = await awsClient.getVolume(state.provision.output.dataDiskId);
+            assert.ok(volume, "Data disk should exist in AWS");
+            assert.strictEqual(volume.VolumeId, state.provision.output.dataDiskId, "Data disk ID should match state output");
+        }
 
-    //     // Verify root disk exists and ID matches state output
-    //     if (state.provision.output?.rootDiskId) {
-    //         const volume = await awsClient.getVolume(state.provision.output.rootDiskId);
-    //         assert.ok(volume, "Root disk should exist in AWS");
-    //         assert.strictEqual(volume.VolumeId, state.provision.output.rootDiskId, "Root disk ID should match state output");
-    //     }
+        // Verify root disk exists and ID matches state output
+        if (state.provision.output?.rootDiskId) {
+            const volume = await awsClient.getVolume(state.provision.output.rootDiskId);
+            assert.ok(volume, "Root disk should exist in AWS");
+            assert.strictEqual(volume.VolumeId, state.provision.output.rootDiskId, "Root disk ID should match state output");
+        }
 
-    //     // Verify base image exists and ID matches state output
-    //     if (state.provision.output?.baseImageId) {
-    //         const image = await awsClient.getImage(state.provision.output.baseImageId);
-    //         assert.ok(image, "Base image should exist in AWS");
-    //         assert.strictEqual(image.ImageId, state.provision.output.baseImageId, "Base image ID should match state output");
-    //     }
-    // }).timeout(10000);
+        // Verify base image exists and ID matches state output
+        if (state.provision.output?.baseImageId) {
+            const image = await awsClient.getImage(state.provision.output.baseImageId);
+            assert.ok(image, "Base image should exist in AWS");
+            assert.strictEqual(image.ImageId, state.provision.output.baseImageId, "Base image ID should match state output");
+        }
+    }).timeout(10000);
  
-    // it('should update instance', async () => {
-    //     const instanceUpdater = awsProviderClient.getInstanceUpdater();
-    //     await instanceUpdater.updateStateOnly({
-    //         instanceName: instanceName,
-    //         provisionInputs: {
-    //             instanceType: "g4dn.2xlarge",
-    //         }, 
-    //     });
+    it('should update instance', async () => {
+        const instanceUpdater = awsProviderClient.getInstanceUpdater();
+        await instanceUpdater.updateStateOnly({
+            instanceName: instanceName,
+            provisionInputs: {
+                instanceType: "g4dn.2xlarge",
+                dataDiskSizeGb: 6,
+            }, 
+        });
 
-    //     const instanceManager = await awsProviderClient.getInstanceManager(instanceName);
-    //     await instanceManager.deploy();
+        const instanceManager = await awsProviderClient.getInstanceManager(instanceName);
+        await instanceManager.deploy();
 
-    //     const awsClient = getAwsClient();
-    //     const state = await getCurrentTestState();
+        const awsClient = getAwsClient();
+        const state = await getCurrentTestState();
 
-    //     assert.ok(state.provision.output?.instanceId);
-    //     currentInstanceId = state.provision.output.instanceId;
+        assert.ok(state.provision.output?.instanceId);
+        currentInstanceId = state.provision.output.instanceId;
 
-    //     const instances = await awsClient.listInstances();
-    //     const instance = instances.find(instance => instance.InstanceId === currentInstanceId);
-    //     assert.ok(instance);
-    //     assert.strictEqual(instance.InstanceType, "g4dn.2xlarge");
+        const instances = await awsClient.listInstances();
+        const instance = instances.find(instance => instance.InstanceId === currentInstanceId);
+        assert.ok(instance);
+        assert.strictEqual(instance.InstanceType, "g4dn.2xlarge");
 
-    // }).timeout(30*60*1000);
-
-    // it('should have a valid instance server output with existing server', async () => {
-    //     const state = await getCurrentTestState();
+        assert.ok(state.provision.output?.dataDiskId);
         
-    //     assert.ok(state.provision.output?.instanceId);
-    //     currentInstanceId = state.provision.output.instanceId;
+        const volume = await awsClient.getVolume(state.provision.output.dataDiskId);
+        assert.strictEqual(volume?.Size, 6); // 6GB in bytes
 
-    //     const awsClient = getAwsClient();
+    }).timeout(30*60*1000);
+
+    it('should have a valid instance server output with existing server', async () => {
+        const state = await getCurrentTestState();
         
-    //     const instanceState = await awsClient.getInstanceState(currentInstanceId);
-    //     assert.strictEqual(instanceState, "running");
-    // })
+        assert.ok(state.provision.output?.instanceId);
+        currentInstanceId = state.provision.output.instanceId;
 
-    // it('should wait for instance readiness after deployment', async () => {
-    //     await waitForInstanceReadiness();
-    // }).timeout(2*60*1000);
+        const awsClient = getAwsClient();
+        
+        const instanceState = await awsClient.getInstanceState(currentInstanceId);
+        assert.strictEqual(instanceState, "running");
+    })
 
-    // // run twice for idempotency
-    // for (let i = 0; i < 2; i++) { 
+    it('should wait for instance readiness after deployment', async () => {
+        await waitForInstanceReadiness();
+    }).timeout(2*60*1000);
 
-    //     it(`should stop instance (${i+1}/2 for idempotency)`, async () => {
-    //         const stateBeforeStop = await getCurrentTestState();
-    //         const instanceIdBeforeStop = stateBeforeStop.provision.output?.instanceId;
+    // run twice for idempotency
+    for (let i = 0; i < 2; i++) { 
 
-    //         const instanceManager = await awsProviderClient.getInstanceManager(instanceName);
-    //         await instanceManager.stop({ wait: true });
+        it(`should stop instance (${i+1}/2 for idempotency)`, async () => {
+            const stateBeforeStop = await getCurrentTestState();
+            const instanceIdBeforeStop = stateBeforeStop.provision.output?.instanceId;
 
-    //         const instanceStatus = await instanceManager.getInstanceStatus();
+            const instanceManager = await awsProviderClient.getInstanceManager(instanceName);
+            await instanceManager.stop({ wait: true });
 
-    //         // server has been deleted, so it's not configured anymore and server is in unknown state
-    //         assert.strictEqual(instanceStatus.configured, false);
-    //         assert.strictEqual(instanceStatus.serverStatus, ServerRunningStatus.Unknown);
+            const instanceStatus = await instanceManager.getInstanceStatus();
 
-    //         // Check that instance server is not found anymore (since deleteInstanceServerOnStop is enabled)
-    //         const awsClient = getAwsClient();
-    //         if (instanceIdBeforeStop) {
-    //             const instanceState = await awsClient.getInstanceState(instanceIdBeforeStop);
-    //             assert.ok(instanceState === undefined || instanceState === InstanceStateName.terminated);
-    //         }
+            // server has been deleted, so it's not configured anymore and server is in unknown state
+            assert.strictEqual(instanceStatus.configured, false);
+            assert.strictEqual(instanceStatus.serverStatus, ServerRunningStatus.Unknown);
 
-    //         // Check data disk snapshot has been created (find ID in state and check on AWS)
-    //         const stateAfterStop = await getCurrentTestState();
-    //         assert.strictEqual(stateAfterStop.provision.output?.instanceId, undefined);
-    //         assert.strictEqual(stateAfterStop.provision.output?.dataDiskId, undefined);
-    //         assert.ok(stateAfterStop.provision.output?.dataDiskSnapshotId, "dataDiskSnapshotId should be in output after stop");
-    //         const snapshotExists = await awsClient.checkSnapshotExists(stateAfterStop.provision.output.dataDiskSnapshotId);
-    //         assert.strictEqual(snapshotExists, true, `Data disk snapshot ${stateAfterStop.provision.output.dataDiskSnapshotId} should exist on AWS`);
-    //     }).timeout(60*60*1000); // 1h timeout as stopping g4dn instances and creating data disk snapshot is very long
-    // }
+            // Check that instance server is not found anymore (since deleteInstanceServerOnStop is enabled)
+            const awsClient = getAwsClient();
+            if (instanceIdBeforeStop) {
+                const instanceState = await awsClient.getInstanceState(instanceIdBeforeStop);
+                assert.ok(instanceState === undefined || instanceState === InstanceStateName.terminated);
+            }
 
-    // // run twice for idempotency
-    // for (let i = 0; i < 2; i++) { 
+            // Check data disk snapshot has been created (find ID in state and check on AWS)
+            const stateAfterStop = await getCurrentTestState();
+            assert.strictEqual(stateAfterStop.provision.output?.instanceId, undefined);
+            assert.strictEqual(stateAfterStop.provision.output?.dataDiskId, undefined);
+            assert.ok(stateAfterStop.provision.output?.dataDiskSnapshotId, "dataDiskSnapshotId should be in output after stop");
+            const snapshotExists = await awsClient.checkSnapshotExists(stateAfterStop.provision.output.dataDiskSnapshotId);
+            assert.strictEqual(snapshotExists, true, `Data disk snapshot ${stateAfterStop.provision.output.dataDiskSnapshotId} should exist on AWS`);
+        }).timeout(60*60*1000); // 1h timeout as stopping g4dn instances and creating data disk snapshot is very long
+    }
 
-    //     it(`should start instance (${i+1}/2 for idempotency)`, async () => {
-    //         const instanceManager = await awsProviderClient.getInstanceManager(instanceName);
-    //         await instanceManager.start({ wait: true });
+    // run twice for idempotency
+    for (let i = 0; i < 2; i++) { 
 
-    //         const instanceStatus = await instanceManager.getInstanceStatus();
-    //         assert.strictEqual(instanceStatus.configured, true);
-    //         assert.strictEqual(instanceStatus.provisioned, true);
-    //         assert.strictEqual(instanceStatus.serverStatus, ServerRunningStatus.Running);
+        it(`should start instance (${i+1}/2 for idempotency)`, async () => {
+            const instanceManager = await awsProviderClient.getInstanceManager(instanceName);
+            await instanceManager.start({ wait: true });
 
-    //         const state = await getCurrentTestState();
-    //         assert.ok(state.provision.output?.instanceId, "instanceId should exist after start");
-    //         assert.ok(state.provision.output?.dataDiskId, "dataDiskId should exist after start");
-    //         assert.ok(state.provision.output?.dataDiskSnapshotId, "dataDiskSnapshotId should exist after start");
+            const instanceStatus = await instanceManager.getInstanceStatus();
+            assert.strictEqual(instanceStatus.configured, true);
+            assert.strictEqual(instanceStatus.provisioned, true);
+            assert.strictEqual(instanceStatus.serverStatus, ServerRunningStatus.Running);
 
-    //         currentInstanceId = state.provision.output.instanceId;
-    //     }).timeout(20*60*1000);
-    // }
+            const state = await getCurrentTestState();
+            assert.ok(state.provision.output?.instanceId, "instanceId should exist after start");
+            assert.ok(state.provision.output?.dataDiskId, "dataDiskId should exist after start");
+            assert.ok(state.provision.output?.dataDiskSnapshotId, "dataDiskSnapshotId should exist after start");
 
-    // it('should restart instance', async () => {
+            currentInstanceId = state.provision.output.instanceId;
+        }).timeout(20*60*1000);
+    }
 
-    //     const stateBefore = await getCurrentTestState();
-    //     const instanceIdBefore = stateBefore.provision.output?.instanceId;
+    it('should restart instance', async () => {
 
-    //     assert.ok(instanceIdBefore);
+        const stateBefore = await getCurrentTestState();
+        const instanceIdBefore = stateBefore.provision.output?.instanceId;
 
-    //     const instanceManager = await awsProviderClient.getInstanceManager(instanceName);
-    //     await instanceManager.restart({ wait: true });
+        assert.ok(instanceIdBefore);
 
-    //     const stateAfter = await getCurrentTestState();
-    //     assert.strictEqual(stateAfter.provision.output?.instanceId, instanceIdBefore);
-    // }).timeout(2*60*1000);
+        const instanceManager = await awsProviderClient.getInstanceManager(instanceName);
+        await instanceManager.restart({ wait: true });
 
-    // it('should wait for instance readiness after restart', async () => {
-    //     await waitForInstanceReadiness();
-    // }).timeout(2*60*1000);
+        const stateAfter = await getCurrentTestState();
+        assert.strictEqual(stateAfter.provision.output?.instanceId, instanceIdBefore);
+    }).timeout(2*60*1000);
+
+    it('should wait for instance readiness after restart', async () => {
+        await waitForInstanceReadiness();
+    }).timeout(2*60*1000);
     
     it('should destroy instance', async () => {
         const instanceManager = await awsProviderClient.getInstanceManager(instanceName);
