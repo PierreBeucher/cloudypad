@@ -1,7 +1,7 @@
 import * as assert from 'assert';
 import { GcpClient, GcpInstanceStatus } from '../../../../../../src/providers/gcp/sdk-client';
 import { GcpInstanceStateV1 } from '../../../../../../src/providers/gcp/state';
-import { getIntegTestCoreConfig } from '../../../../utils';
+import { getIntegTestCoreConfig, runVerifyPlaybook } from '../../../../utils';
 import { GcpProviderClient } from '../../../../../../src/providers/gcp/provider';
 import { ServerRunningStatus } from '../../../../../../src/core/runner';
 import { getLogger } from '../../../../../../src/log/utils';
@@ -44,6 +44,11 @@ describe('GCP lifecycle', () => {
             await new Promise(resolve => setTimeout(resolve, 5000)); // wait for 5 seconds before retrying
         }
         assert.strictEqual(isReady, true);
+    }
+
+    async function runVerify(opts: { createDataDiskTestFile?: boolean, checkDataDiskTestFile?: boolean } = {}): Promise<void> {
+        const state = await getCurrentTestState()
+        await runVerifyPlaybook(instanceName, state, opts)
     }
     
     it('should initialize instance state', async () => {
@@ -118,6 +123,10 @@ describe('GCP lifecycle', () => {
     it('should wait for instance readiness after deployment', async () => {
         await waitForInstanceReadiness('deployment');
     }).timeout(2*60*1000);
+
+    it('should verify instance configuration after deployment', async () => {
+        await runVerify({ createDataDiskTestFile: true })
+    }).timeout(5*60*1000);
 
     it('should have resources matching state output after deployment', async () => {
         const gcpClient = await getGcpClient();
@@ -229,6 +238,14 @@ describe('GCP lifecycle', () => {
             currentInstanceName = state.provision.output.instanceName;
         }).timeout(10*60*1000);
     }
+
+    it('should wait for instance readiness after start', async () => {
+        await waitForInstanceReadiness('start');
+    }).timeout(2*60*1000);
+
+    it('should verify instance configuration after stop/start', async () => {
+        await runVerify({ checkDataDiskTestFile: true })
+    }).timeout(5*60*1000);
 
     it('should restart instance', async () => {
 

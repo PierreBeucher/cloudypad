@@ -1,7 +1,7 @@
 import * as assert from 'assert'
 import { ScalewayClient, ScalewayServerState } from '../../../../../../src/providers/scaleway/sdk-client'
 import { ScalewayInstanceStateV1 } from '../../../../../../src/providers/scaleway/state'
-import { getIntegTestCoreConfig } from '../../../../utils'
+import { getIntegTestCoreConfig, runVerifyPlaybook } from '../../../../utils'
 import { ScalewayProviderClient } from '../../../../../../src/providers/scaleway/provider'
 import { ServerRunningStatus } from '../../../../../../src/core/runner'
 import { getLogger } from '../../../../../../src/log/utils'
@@ -32,6 +32,11 @@ describe('Scaleway lifecycle', () => {
             zone: zone,
         })
     }
+
+    async function runVerify(opts: { createDataDiskTestFile?: boolean, checkDataDiskTestFile?: boolean } = {}): Promise<void> {
+        const state = await getCurrentTestState()
+        await runVerifyPlaybook(instanceName, state, opts)
+    }
     
     it('should initialize instance state', async () => {
 
@@ -61,7 +66,10 @@ describe('Scaleway lifecycle', () => {
                     username: "sunshine",
                     passwordBase64: Buffer.from("Sunshine!").toString('base64'),
                     imageTag: "dev"
-                }, 
+                },
+                ratelimit: {
+                    maxMbps: 50,
+                },
             })
     })
 
@@ -113,6 +121,10 @@ describe('Scaleway lifecycle', () => {
             assert.strictEqual(imageId, baseImageId, "Base image ID should match state output")
         }
     }).timeout(10000)
+
+    it('should verify instance configuration after deployment', async () => {
+        await runVerify({ createDataDiskTestFile: true })
+    }).timeout(5*60*1000) // 5 minutes timeout
 
     it('should update instance', async () => {
         const instanceUpdater = scalewayProviderClient.getInstanceUpdater()
@@ -209,6 +221,10 @@ describe('Scaleway lifecycle', () => {
         assert.strictEqual(isReady, true)
 
     }).timeout(120000)
+
+    it('should verify instance configuration after stop/start', async () => {
+        await runVerify({ checkDataDiskTestFile: true })
+    }).timeout(5*60*1000) // 5 minutes timeout
 
     it('should restart instance without deleting or re-provisioning', async () => {
 

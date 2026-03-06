@@ -1,7 +1,7 @@
 import * as assert from 'assert';
 import { AwsClient } from '../../../../../../src/providers/aws/sdk-client';
 import { AwsInstanceStateV1 } from '../../../../../../src/providers/aws/state';
-import { getIntegTestCoreConfig } from '../../../../utils';
+import { getIntegTestCoreConfig, runVerifyPlaybook } from '../../../../utils';
 import { AwsProviderClient } from '../../../../../../src/providers/aws/provider';
 import { ServerRunningStatus } from '../../../../../../src/core/runner';
 import { getLogger } from '../../../../../../src/log/utils';
@@ -38,6 +38,11 @@ describe('AWS lifecycle', () => {
             await new Promise(resolve => setTimeout(resolve, 5000)); // wait for 5 seconds before retrying
         }
         throw new Error(`Instance did not become ready after ${maxAttempts} attempts`);
+    }
+
+    async function runVerify(opts: { createDataDiskTestFile?: boolean, checkDataDiskTestFile?: boolean } = {}): Promise<void> {
+        const state = await getCurrentTestState()
+        await runVerifyPlaybook(instanceName, state, opts)
     }
     
     it('should initialize instance state', async () => {
@@ -159,6 +164,10 @@ describe('AWS lifecycle', () => {
         await waitForInstanceReadiness();
     }).timeout(2*60*1000);
 
+    it('should verify instance configuration after deployment', async () => {
+        await runVerify({ createDataDiskTestFile: true })
+    }).timeout(5*60*1000);
+
     // run twice for idempotency
     for (let i = 0; i < 2; i++) { 
 
@@ -212,6 +221,14 @@ describe('AWS lifecycle', () => {
             currentInstanceId = state.provision.output.instanceId;
         }).timeout(20*60*1000);
     }
+
+    it('should wait for instance readiness after start', async () => {
+        await waitForInstanceReadiness();
+    }).timeout(2*60*1000);
+
+    it('should verify instance configuration after stop/start', async () => {
+        await runVerify({ checkDataDiskTestFile: true })
+    }).timeout(5*60*1000);
 
     it('should restart instance', async () => {
 

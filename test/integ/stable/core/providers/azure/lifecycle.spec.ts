@@ -1,7 +1,7 @@
 import * as assert from 'assert';
 import { AzureClient, AzureVmStatus } from '../../../../../../src/providers/azure/sdk-client';
 import { AzureInstanceStateV1 } from '../../../../../../src/providers/azure/state';
-import { getIntegTestCoreConfig } from '../../../../utils';
+import { getIntegTestCoreConfig, runVerifyPlaybook } from '../../../../utils';
 import { AzureProviderClient } from '../../../../../../src/providers/azure/provider';
 import { ServerRunningStatus } from '../../../../../../src/core/runner';
 import { getLogger } from '../../../../../../src/log/utils';
@@ -42,6 +42,11 @@ describe('Azure lifecycle', () => {
             await new Promise(resolve => setTimeout(resolve, 5000)); // wait for 5 seconds before retrying
         }
         assert.strictEqual(isReady, true);
+    }
+
+    async function runVerify(opts: { createDataDiskTestFile?: boolean, checkDataDiskTestFile?: boolean } = {}): Promise<void> {
+        const state = await getCurrentTestState()
+        await runVerifyPlaybook(instanceName, state, opts)
     }
     
     it('should initialize instance state', async () => {
@@ -185,6 +190,9 @@ describe('Azure lifecycle', () => {
         await waitForInstanceReadiness('deployment');
     }).timeout(2*60*1000);
 
+    it('should verify instance configuration after deployment', async () => {
+        await runVerify({ createDataDiskTestFile: true })
+    }).timeout(5*60*1000);
 
     // run twice for idempotency
     for (let i = 0; i < 2; i++) { 
@@ -242,6 +250,14 @@ describe('Azure lifecycle', () => {
             assert.ok(instance, "VM should exist in Azure after start");
         }).timeout(20*60*1000); // Increased timeout for VM recreation from image
     }
+
+    it('should wait for instance readiness after start', async () => {
+        await waitForInstanceReadiness('start');
+    }).timeout(2*60*1000);
+
+    it('should verify instance configuration after stop/start', async () => {
+        await runVerify({ checkDataDiskTestFile: true })
+    }).timeout(5*60*1000);
 
     it('should restart instance', async () => {
 

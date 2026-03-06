@@ -1,0 +1,40 @@
+# Identify network interfaces using same pattern as rate-limit role
+- name: Identify network interfaces
+  set_fact:
+    check_ratelimit_network_infs: >-
+      {{
+        ansible_interfaces 
+        | reject('match', '^lo$')
+        | reject('match', '^docker.*')
+        | reject('match', '^br-.*')
+        | reject('match', '^veth.*')
+        | select('match', '^(eth|ens|enp|eno|wlan|wlp).*')
+        | list
+      }}
+
+- name: Show identified network interfaces
+  debug:
+    msg: "Found network interfaces for rate limit check: {{ check_ratelimit_network_infs }}"
+
+- name: Check tc qdisc rules on network interfaces
+  shell: tc qdisc show dev {{ item }}
+  register: tc_qdisc_results
+  loop: "{{ check_ratelimit_network_infs }}"
+  changed_when: false
+
+- name: Show tc qdisc output per interface
+  debug:
+    msg: "tc qdisc show dev {{ item.item }}: {{ item.stdout }}"
+  loop: "{{ tc_qdisc_results.results }}"
+  loop_control:
+    label: "{{ item.item }}"
+
+- name: Assert tbf rate limit rule exists on at least one interface
+  assert:
+    that:
+      - tc_qdisc_results.results | selectattr('stdout', 'search', 'tbf') | list | length > 0
+    fail_msg: >-
+      No tbf rate limit rule found on any interface: {{ check_ratelimit_network_infs }}.
+      tc output: {{ tc_qdisc_results.results | map(attribute='stdout') | list }}
+    success_msg: "tbf rate limit rule found on network interface"
+

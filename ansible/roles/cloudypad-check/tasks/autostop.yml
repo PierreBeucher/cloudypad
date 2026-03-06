@@ -1,0 +1,14 @@
+- name: Check cloudypad-autostop service is active
+  command: systemctl is-active cloudypad-autostop
+  register: autostop_service_result
+  changed_when: false
+
+- name: Assert autostop service is running
+  assert:
+    that:
+      - autostop_service_result.rc == 0
+      - autostop_service_result.stdout | trim == "active"
+    fail_msg: "cloudypad-autostop service is not active: {{ autostop_service_result.stdout }}"
+    success_msg: "cloudypad-autostop service is running"
+
+
