@@ -459,6 +459,7 @@ export interface PulumiStackConfigLinode {
         domainName: string
         record?: string
     }
+    additionalLabels?: string[]
 }
 
 /**
@@ -524,7 +525,10 @@ export class LinodePulumiClient extends InstancePulumiClient<PulumiStackConfigLi
         // Set Linode provider configuration
         await stack.setConfig("linode:token", { value: config.apiToken, secret: true })
         await stack.setConfig("region", { value: config.region })
-        await stack.setConfig("additionalTags", { value: JSON.stringify([`instance:${config.instanceName}`])})
+        
+        // Always add the instance name tag along with given labels
+        const additionalTags = [`instance:${config.instanceName}`, ...(config.additionalLabels || [])]
+        await stack.setConfig("additionalTags", { value: JSON.stringify(additionalTags)})
         
         if(config.noInstanceServer) await stack.setConfig("noInstanceServer", { value: config.noInstanceServer.toString()})
         await stack.setConfig("instanceType", { value: config.instanceType})

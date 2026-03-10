@@ -143,6 +143,7 @@ export class LinodeProvisioner extends AbstractInstanceProvisioner<LinodeProvisi
                 domainName: this.args.provisionInput.dns.domainName,
                 record: this.args.provisionInput.dns.record,
             } : undefined,
+            additionalLabels: this.args.provisionInput.additionalLabels,
         }
     }
 
