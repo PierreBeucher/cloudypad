@@ -78,8 +78,10 @@ describe('Azure lifecycle', () => {
                 notificationEmail: "test@test.com"
             }
         }, {
-            wolf: {
-                enable: true
+            sunshine: {
+                enable: true,
+                username: "sunshine",
+                passwordBase64: Buffer.from("S3un$h1ne!").toString('base64'),
             }, 
         });
     })
@@ -104,6 +106,10 @@ describe('Azure lifecycle', () => {
         assert.ok(instance);
         assert.strictEqual(instance.hardwareProfile?.vmSize, vmSize);
     }).timeout(30*60*1000); // 30 minutes timeout as deployment with image creation may be long
+
+    it('should wait for instance readiness after deployment', async () => {
+        await waitForInstanceReadiness('deployment');
+    }).timeout(2*60*1000);
 
     it('should have resources matching state output after deployment', async () => {
         const azureClient = await getAzureClient();
