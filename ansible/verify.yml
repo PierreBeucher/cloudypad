@@ -13,7 +13,7 @@
 - name: Verify Cloudy Pad instance configuration
   hosts: all
   roles:
-    - role: roles/cloudypad-check
+    - role: roles/verify
       become: true
-      tags: [cloudypad-check]
+      tags: [verify]
 

@@ -74,8 +74,8 @@ export async function runVerifyPlaybook(instanceName: string, state: InstanceSta
                     ratelimit_enable: state.configuration.input.ratelimit?.maxMbps !== undefined &&
                         state.configuration.input.ratelimit.maxMbps > 0,
 
-                    cloudypad_check_create_data_disk_test_file: opts.createDataDiskTestFile ?? false,
-                    cloudypad_check_data_disk_test_file: opts.checkDataDiskTestFile ?? false,
+                    cloudypad_verify_create_data_disk_test_file: opts.createDataDiskTestFile ?? false,
+                    cloudypad_verify_data_disk_test_file: opts.checkDataDiskTestFile ?? false,
                 },
             },
         },

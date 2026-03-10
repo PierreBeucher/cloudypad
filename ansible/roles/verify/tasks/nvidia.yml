@@ -30,6 +30,6 @@
 - name: Assert NVIDIA driver version matches expected
   assert:
     that:
-      - nvidia_check_driver_version == cloudypad_check_nvidia_driver_version
-    fail_msg: "NVIDIA driver version mismatch: got '{{ nvidia_check_driver_version }}', expected '{{ cloudypad_check_nvidia_driver_version }}'"
+      - nvidia_check_driver_version == cloudypad_verify_nvidia_driver_version
+    fail_msg: "NVIDIA driver version mismatch: got '{{ nvidia_check_driver_version }}', expected '{{ cloudypad_verify_nvidia_driver_version }}'"
     success_msg: "NVIDIA driver version matches: {{ nvidia_check_driver_version }}"

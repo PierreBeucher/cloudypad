@@ -1,19 +1,19 @@
 - name: Check data disk is mounted
-  command: findmnt -n -o SOURCE "{{ cloudypad_check_data_root }}"
+  command: findmnt -n -o SOURCE "{{ cloudypad_verify_data_root }}"
   register: data_disk_mount_result
   changed_when: false
 
 - name: Show data disk mount info
   debug:
-    msg: "Data disk mounted at {{ cloudypad_check_data_root }}: {{ data_disk_mount_result.stdout }}"
+    msg: "Data disk mounted at {{ cloudypad_verify_data_root }}: {{ data_disk_mount_result.stdout }}"
 
 - name: Assert data disk is mounted
   assert:
     that:
       - data_disk_mount_result.rc == 0
       - data_disk_mount_result.stdout | trim | length > 0
-    fail_msg: "Data disk is not mounted at {{ cloudypad_check_data_root }}"
-    success_msg: "Data disk is properly mounted at {{ cloudypad_check_data_root }}"
+    fail_msg: "Data disk is not mounted at {{ cloudypad_verify_data_root }}"
+    success_msg: "Data disk is properly mounted at {{ cloudypad_verify_data_root }}"
 
 - name: Find disk device via disk ID
   command: /usr/local/bin/get-disk-id.sh "{{ cloudypad_data_disk_id }}" "{{ cloudypad_data_disk_lookup_method | default('default') }}"
@@ -35,21 +35,21 @@
 - name: Create test file on data disk
   copy:
     content: "cloudypad-check-test-file-content"
-    dest: "{{ cloudypad_check_data_disk_test_file_path }}"
+    dest: "{{ cloudypad_verify_data_disk_test_file_path }}"
     mode: '0644'
-  when: cloudypad_check_create_data_disk_test_file | bool
+  when: cloudypad_verify_create_data_disk_test_file | bool
 
 - name: Check test file exists on data disk
   stat:
-    path: "{{ cloudypad_check_data_disk_test_file_path }}"
+    path: "{{ cloudypad_verify_data_disk_test_file_path }}"
   register: test_file_stat
-  when: cloudypad_check_data_disk_test_file | bool
+  when: cloudypad_verify_data_disk_test_file | bool
 
 - name: Assert test file exists on data disk (persistence check)
   assert:
     that:
       - test_file_stat.stat.exists
-    fail_msg: "Test file not found at {{ cloudypad_check_data_disk_test_file_path }} - data disk was not persisted across stop/start"
-    success_msg: "Test file found at {{ cloudypad_check_data_disk_test_file_path }} - data disk persistence verified"
-  when: cloudypad_check_data_disk_test_file | bool
+    fail_msg: "Test file not found at {{ cloudypad_verify_data_disk_test_file_path }} - data disk was not persisted across stop/start"
+    success_msg: "Test file found at {{ cloudypad_verify_data_disk_test_file_path }} - data disk persistence verified"
+  when: cloudypad_verify_data_disk_test_file | bool
 
