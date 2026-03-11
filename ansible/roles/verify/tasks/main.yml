@@ -11,7 +11,7 @@
 - import_tasks: sunshine.yml
   tags: [sunshine]
 
-# - import_tasks: rate-limit.yml
-#   tags: [rate-limit]
-#   when: ratelimit_enable | default(false) | bool
+- import_tasks: rate-limit.yml
+  tags: [rate-limit]
+  when: ratelimit_enable | default(false) | bool
 

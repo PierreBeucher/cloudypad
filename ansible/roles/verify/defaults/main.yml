@@ -14,3 +14,6 @@ cloudypad_verify_data_disk_test_file_path: "{{ cloudypad_verify_data_root }}/clo
 # Expected NVIDIA driver version
 cloudypad_verify_nvidia_driver_version: "590.48.01"
 
+# Expected rate limit in Mbps
+cloudypad_verify_ratelimit_max_mbps: "{{ ratelimit_max_mbps | default(50) }}"
+
