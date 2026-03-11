@@ -1,5 +1,21 @@
 # Changelog
 
+## [0.44.0](https://github.com/PierreBeucher/cloudypad/compare/v0.43.0...v0.44.0) (2026-03-11)
+
+
+### Features
+
+* add --ansible-args-override option to create and start command ([67292ab](https://github.com/PierreBeucher/cloudypad/commit/67292abb891bfad305b6b0342d06c532466ce736))
+* add deploy/configure --ansible-args-override override ([f72bc3c](https://github.com/PierreBeucher/cloudypad/commit/f72bc3c96b1f878dd4476a28a2cd5730c1b2ff09))
+* add Linode custom labels ([fbb1047](https://github.com/PierreBeucher/cloudypad/commit/fbb104775229346734ffe702b49dde0cc9b64783))
+* support data disk resize ([ac05cfe](https://github.com/PierreBeucher/cloudypad/commit/ac05cfebc73fed5a5ddb1645e23eaf7762638f15))
+
+
+### Bug Fixes
+
+* Lutris desktop entry name typo ([84355e8](https://github.com/PierreBeucher/cloudypad/commit/84355e85b6e18e8811e61faf8580664313548ebc))
+* on start with deletedInstanceServerOnStop, if instance server was still existing, ensure it's started ([9a10c78](https://github.com/PierreBeucher/cloudypad/commit/9a10c78f0e0a10abc656a41e92c09dfbb98ebd0f))
+
 ## [0.43.0](https://github.com/PierreBeucher/cloudypad/compare/v0.42.0...v0.43.0) (2026-02-27)
 
 
