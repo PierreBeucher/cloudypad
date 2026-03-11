@@ -1,0 +1,30 @@
+- name: Assert Sunshine container is running
+  command: docker container inspect -f '{% raw %}{{.State.Status}}{% endraw %}' cloudy
+  register: sunshine_status
+  changed_when: false
+  failed_when: sunshine_status.stdout | trim != "running"
+
+- name: Show Sunshine container status
+  debug:
+    msg: "Sunshine container status: {{ sunshine_status.stdout | trim }}"
+
+- name: Wait for Sunshine container to be healthy (up to 2min)
+  shell: |
+    for i in $(seq 1 24); do
+      status=$(docker container inspect -f '{% raw %}{{.State.Health.Status}}{% endraw %}' cloudy 2>/dev/null)
+      if [ "$status" = "healthy" ]; then
+        echo "healthy"
+        exit 0
+      fi
+      echo "Attempt $i/24: status=$status, retrying in 5s..."
+      sleep 5
+    done
+    echo "Container not healthy after 2 minutes (last status: $status)"
+    exit 1
+  register: sunshine_health
+  changed_when: false
+
+- name: Show Sunshine container health
+  debug:
+    msg: "{{ sunshine_health.stdout }}"
+

@@ -146,6 +146,7 @@ export function buildProgram(){
         .addOption(CLI_OPTION_RETRIES)
         .addOption(CLI_OPTION_RETRY_DELAY)
         .addOption(CLI_OPTION_FORCE_PULUMI_CANCEL)
+        .addOption(CLI_OPTION_ANSIBLE_ARGS_OVERRIDE)
         .action(async (name, opts) => {
             try {
                 analyticsClient.sendEvent(RUN_COMMAND_START)
@@ -157,7 +158,8 @@ export function buildProgram(){
                     waitTimeoutSeconds: opts.timeout, 
                     retries: opts.retries, 
                     retryDelaySeconds: opts.retryDelay,
-                    pulumiCancel: opts.forcePulumiCancel
+                    pulumiCancel: opts.forcePulumiCancel,
+                    ansibleArgsOverride: opts.ansibleArgsOverride ? [opts.ansibleArgsOverride] : undefined
                 })
     
                 if(opts.wait){

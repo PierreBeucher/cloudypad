@@ -36,10 +36,43 @@
     msg: "No disk found matching data disk ID '{{ cloudypad_data_disk_id }}'"
   when: cloudypad_data_disk_path is not defined or cloudypad_data_disk_path == ""
 
-- name: Format Cloudy Pad data disk (ext4)
-  filesystem:
+- name: Check if filesystem already exists on disk
+  shell: blkid -s TYPE -o value "{{ cloudypad_data_disk_path }}" || echo ""
+  register: existing_fs_type
+  changed_when: false
+  failed_when: false
+
+- name: Check if disk is currently mounted
+  shell: findmnt -n -o TARGET "{{ cloudypad_data_disk_path }}" || echo ""
+  register: mount_point
+  changed_when: false
+  failed_when: false
+
+- name: Run filesystem check if filesystem exists and disk is unmounted (required before resize on restored snapshots)
+  command: e2fsck -fp "{{ cloudypad_data_disk_path }}"
+  when: existing_fs_type.stdout | trim == "ext4" and mount_point.stdout | trim == ""
+  register: e2fsck_result
+  failed_when: e2fsck_result.rc > 1
+  # -f: force check even if filesystem looks clean
+  # -p: automatic repair (non-interactive)
+  # Only run if disk is unmounted (if mounted, filesystem is already in use and doesn't need check)
+  # rc 1 means filesystem errors were corrected, which is OK
+  # rc > 1 means serious errors that couldn't be fixed
+
+- name: Format Cloudy Pad data disk (ext4) and resize filesystem
+  community.general.filesystem:
     fstype: "ext4"
     dev: "{{ cloudypad_data_disk_path }}"
+    resizefs: true
+
+- name: Get filesystem UUID for persistent mounting
+  shell: blkid -s UUID -o value "{{ cloudypad_data_disk_path }}"
+  register: disk_uuid_result
+  changed_when: false
+
+- name: Set filesystem UUID fact
+  set_fact:
+    cloudypad_data_disk_uuid: "{{ disk_uuid_result.stdout | trim }}"
 
 - name: Ensure Cloudy Pad data directory exists
   file:
@@ -64,7 +97,11 @@
 - name: Mount and configure fstab for Cloudy Pad data disk
   mount:
     path: "{{ cloudypad_data_root }}"
-    src: "{{ cloudypad_data_disk_path }}"
+    # Mount data disk using UUID instead of device path for persistent mounting
+    # across reboot the disk path maybe change 
+    # (eg. AWS instances have our data disk and another ephemeral disk, their
+    # path may change across reboots. Using UUID ensures the mount point is always the same)
+    src: "UUID={{ cloudypad_data_disk_uuid }}"
     fstype: "ext4"
     state: mounted
 

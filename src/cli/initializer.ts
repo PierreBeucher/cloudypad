@@ -93,7 +93,11 @@ export class InteractiveInstanceInitializer<
     private async doDeploy(instanceName: string) {
         this.analyticsEvent("create_instance_start_deploy")
         const manager = await this.args.providerClient.getInstanceManager(instanceName)
-        await manager.deploy()
+        await manager.deploy({
+            retries: this.args.initArgs.retries,
+            retryDelaySeconds: this.args.initArgs.retryDelay,
+            ansibleArgsOverride: this.args.initArgs.ansibleArgsOverride ? [this.args.initArgs.ansibleArgsOverride] : undefined
+        })
         this.analyticsEvent("create_instance_finish_deploy")
     }
 

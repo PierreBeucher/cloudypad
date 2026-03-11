@@ -25,6 +25,7 @@ const LinodeProvisionInputV1Schema = CommonProvisionInputV1Schema.extend({
     }).describe("Optional DNS configuration to create DNS record pointing to the instance's public IP and set as instance hostname. If not set, instance public IP is used as hostname.").optional(),
     // Force true as Linode ALWAYS deletes instance server on stop
     deleteInstanceServerOnStop: z.literal(true).default(true).describe("Whether instance server should be deleted on instance stop and re-created on next start"),
+    additionalLabels: z.array(z.string()).optional().describe("Additional labels to apply to Linode instances and resources"),
 })
 
 const LinodeInstanceStateV1Schema = InstanceStateV1Schema.extend({

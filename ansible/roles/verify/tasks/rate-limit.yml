@@ -1,0 +1,84 @@
+# Identify network interfaces using same pattern as rate-limit role
+- name: Identify network interfaces
+  set_fact:
+    check_ratelimit_network_infs: >-
+      {{
+        ansible_interfaces 
+        | reject('match', '^lo$')
+        | reject('match', '^docker.*')
+        | reject('match', '^br-.*')
+        | reject('match', '^veth.*')
+        | select('match', '^(eth|ens|enp|eno|wlan|wlp).*')
+        | list
+      }}
+
+- name: Show identified network interfaces
+  debug:
+    msg: "Found network interfaces for rate limit check: {{ check_ratelimit_network_infs }}"
+
+- name: Check tc qdisc rules on network interfaces
+  shell: tc qdisc show dev {{ item }}
+  register: tc_qdisc_results
+  loop: "{{ check_ratelimit_network_infs }}"
+  changed_when: false
+
+- name: Show tc qdisc output per interface
+  debug:
+    msg: "tc qdisc show dev {{ item.item }}: {{ item.stdout }}"
+  loop: "{{ tc_qdisc_results.results }}"
+  loop_control:
+    label: "{{ item.item }}"
+
+- name: Check if tbf rule exists in tc output
+  set_fact:
+    tbf_found: >-
+      {{
+        tc_qdisc_results.results 
+        | map(attribute='stdout') 
+        | select('match', '.*tbf.*') 
+        | list 
+        | length > 0
+      }}
+
+- name: Extract rate limit value from tc output
+  set_fact:
+    tbf_output_lines: >-
+      {{
+        tc_qdisc_results.results 
+        | map(attribute='stdout') 
+        | select('match', '.*tbf.*') 
+        | list
+      }}
+
+- name: Extract rate value from tbf output using shell
+  shell: echo "{{ tbf_output_lines[0] }}" | grep -oP 'rate \K\d+(?=Mbit)' || echo "0"
+  register: extracted_rate_output
+  when: tbf_output_lines | length > 0
+  changed_when: false
+
+- name: Set extracted rate value
+  set_fact:
+    extracted_rate_mbps: "{{ (extracted_rate_output.stdout | trim | int) if (tbf_output_lines | length > 0 and extracted_rate_output is defined) else 0 }}"
+
+- name: Show extracted and expected rate limits
+  debug:
+    msg: "Extracted rate: {{ extracted_rate_mbps }}Mbps, Expected: {{ cloudypad_verify_ratelimit_max_mbps }}Mbps"
+
+- name: Assert tbf rate limit rule exists on at least one interface
+  assert:
+    that:
+      - tbf_found | bool
+    fail_msg: >-
+      No tbf rate limit rule found on any interface: {{ check_ratelimit_network_infs }}.
+      tc output: {{ tc_qdisc_results.results | map(attribute='stdout') | list }}
+    success_msg: "tbf rate limit rule found on network interface"
+
+- name: Assert rate limit value matches expected
+  assert:
+    that:
+      - extracted_rate_mbps == (cloudypad_verify_ratelimit_max_mbps | int)
+    fail_msg: >-
+      Rate limit mismatch: found {{ extracted_rate_mbps }}Mbps, expected {{ cloudypad_verify_ratelimit_max_mbps }}Mbps.
+      tc output: {{ tbf_output_lines }}
+    success_msg: "Rate limit value matches expected: {{ cloudypad_verify_ratelimit_max_mbps }}Mbps"
+

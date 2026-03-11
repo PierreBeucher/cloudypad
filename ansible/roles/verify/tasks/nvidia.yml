@@ -1,0 +1,35 @@
+- name: Check NVIDIA driver is installed
+  command: nvidia-smi
+  register: nvidia_smi_result
+  changed_when: false
+
+- name: Show NVIDIA driver info
+  debug:
+    msg: "{{ nvidia_smi_result.stdout_lines[:5] }}"
+
+- name: Assert nvidia-smi succeeded
+  assert:
+    that:
+      - nvidia_smi_result.rc == 0
+    fail_msg: "nvidia-smi failed with rc={{ nvidia_smi_result.rc }}: {{ nvidia_smi_result.stderr }}"
+    success_msg: "NVIDIA driver is properly installed"
+
+- name: Read NVIDIA driver version from version file
+  slurp:
+    src: /sys/module/nvidia/version
+  register: nvidia_driver_version_file
+
+- name: Set found NVIDIA driver version fact
+  set_fact:
+    nvidia_check_driver_version: "{{ nvidia_driver_version_file.content | b64decode | trim }}"
+
+- name: Show NVIDIA driver version
+  debug:
+    msg: "NVIDIA driver version: {{ nvidia_check_driver_version }}"
+
+- name: Assert NVIDIA driver version matches expected
+  assert:
+    that:
+      - nvidia_check_driver_version == cloudypad_verify_nvidia_driver_version
+    fail_msg: "NVIDIA driver version mismatch: got '{{ nvidia_check_driver_version }}', expected '{{ cloudypad_verify_nvidia_driver_version }}'"
+    success_msg: "NVIDIA driver version matches: {{ nvidia_check_driver_version }}"

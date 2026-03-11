@@ -1,0 +1,12 @@
+- name: Gather service facts
+  service_facts:
+
+- name: Assert autostop service is running
+  assert:
+    that:
+      - ansible_facts.services['cloudypad-autostop.service'] is defined
+      - ansible_facts.services['cloudypad-autostop.service'].state == 'running'
+    fail_msg: "cloudypad-autostop service is not active"
+    success_msg: "cloudypad-autostop service is running"
+
+

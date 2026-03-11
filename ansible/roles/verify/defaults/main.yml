@@ -1,0 +1,19 @@
+# Control flags for data disk persistence test
+# When true, create a test file on the data disk (used after initial deployment)
+cloudypad_verify_create_data_disk_test_file: false
+
+# When true, check the test file exists on the data disk (used after stop/start to verify persistence)
+cloudypad_verify_data_disk_test_file: false
+
+# Data disk root mount point
+cloudypad_verify_data_root: /var/lib/cloudypad
+
+# Path of the test file created/checked on data disk
+cloudypad_verify_data_disk_test_file_path: "{{ cloudypad_verify_data_root }}/cloudypad-check-test-file"
+
+# Expected NVIDIA driver version
+cloudypad_verify_nvidia_driver_version: "590.48.01"
+
+# Expected rate limit in Mbps
+cloudypad_verify_ratelimit_max_mbps: "{{ ratelimit_max_mbps | default(50) }}"
+
