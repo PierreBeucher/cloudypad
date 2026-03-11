@@ -1,14 +1,12 @@
-- name: Check cloudypad-autostop service is active
-  command: systemctl is-active cloudypad-autostop
-  register: autostop_service_result
-  changed_when: false
+- name: Gather service facts
+  service_facts:
 
 - name: Assert autostop service is running
   assert:
     that:
-      - autostop_service_result.rc == 0
-      - autostop_service_result.stdout | trim == "active"
-    fail_msg: "cloudypad-autostop service is not active: {{ autostop_service_result.stdout }}"
+      - ansible_facts.services['cloudypad-autostop.service'] is defined
+      - ansible_facts.services['cloudypad-autostop.service'].state == 'running'
+    fail_msg: "cloudypad-autostop service is not active"
     success_msg: "cloudypad-autostop service is running"
 
 
