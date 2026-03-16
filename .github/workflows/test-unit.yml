@@ -41,6 +41,7 @@ jobs:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
+          logout: false
 
       - name: test analytics key match
         run: nix develop -c task test-analytics-key-match
@@ -69,6 +70,7 @@ jobs:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
+          logout: false
 
       - name: Build container image
         run: nix develop -c task build-sunshine-container-ci
