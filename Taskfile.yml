@@ -105,14 +105,20 @@ tasks:
     - task: test-integ-provider-linode
 
   # Setup containers for integration tests
-  test-integ-containers-setup:
+  # Cleanup and start containers
+  test-integ-setup:
     cmds:
+    - task: test-integ-cleanup
     - docker compose -f test/integ/docker-compose.yml up -d
+
+  test-integ-cleanup:
+    cmds:
+    - docker compose -f test/integ/docker-compose.yml down -v
 
   # Run side-effects tests
   test-integ-s3-side-effects:
     cmds:
-    - task: test-integ-containers-setup
+    - task: test-integ-setup
     - npx mocha --config test/integ/.mocharc.json ./test/integ/stable/core/state/side-effects/s3.spec.ts
 
   test-integ-provider-aws:

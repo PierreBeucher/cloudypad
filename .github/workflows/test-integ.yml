@@ -25,3 +25,8 @@ jobs:
       # Only S3 integ test on CI for now as it only depends on container not external accounts and runs quickly
       - name: Run integration tests
         run: nix develop -c task test-integ-s3-side-effects
+
+      # Cleanup integration test containers
+      - name: Cleanup integration test containers
+        if: always()
+        run: nix develop -c task test-integ-cleanup
