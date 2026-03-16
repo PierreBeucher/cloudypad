@@ -67,7 +67,7 @@ RUN if [ -n "$CLOUDYPAD_VERSION" ]; then \
       sed -i "s/\"version\": \"[^\"]*\"/\"version\": \"$CLOUDYPAD_VERSION\"/" package.json; \
     fi
 
-RUN pnpm run build
+RUN NODE_OPTIONS="--max-old-space-size=4896" pnpm run build
 
 # 
 # Final Cloudypad image
