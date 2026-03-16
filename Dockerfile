@@ -14,8 +14,8 @@ RUN apt update && apt install -y \
 
 # pnpm for cache efficiency
 # Requires PNPM_HOME on PATH
-# Cach mounts are used later using these paths
-# pnpm requires global-bin-dir to exist nd be on PATH
+# Cache mounts are used later using these paths
+# pnpm requires global-bin-dir to exist and be on PATH
 ENV PNPM_HOME="/root/.local/share/pnpm"
 ENV PATH="$PNPM_HOME:$PATH"
 
