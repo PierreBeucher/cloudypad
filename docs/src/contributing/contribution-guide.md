@@ -67,7 +67,7 @@ You can then run commands:
 
 ```sh
 # Build Node CLI package
-task build-npm
+task build-pnpm
 
 # Run unit tests
 task test-unit
@@ -180,7 +180,7 @@ Building application (plain node build or Docker build):
 
 ```sh
 # Node build
-task build-npm
+task build-pnpm
 
 # CLI Docker container build
 task build-core-container-local

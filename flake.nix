@@ -64,6 +64,7 @@
                 bc
                 linode-cli
                 google-cloud-sdk
+                pnpm
               ])
               novops.packages.${system}.novops
             ];

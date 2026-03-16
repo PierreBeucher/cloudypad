@@ -8,18 +8,13 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Install mdBook
-        run: >
-          curl -sL https://github.com/rust-lang/mdBook/releases/download/v0.4.40/mdbook-v0.4.40-x86_64-unknown-linux-musl.tar.gz | 
-          tar xz -C /usr/local/bin
-
       - name: Build doc
-        run: mdbook build docs
+        run: nix develop -c mdbook build docs
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
@@ -27,7 +22,7 @@ jobs:
           path: ./docs/book
 
   publish:
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     needs: build
     if: ${{ github.ref == 'refs/heads/master' || github.ref == 'refs/heads/mdbook' }}
     environment:
