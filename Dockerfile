@@ -1,15 +1,32 @@
 # https://hub.docker.com/_/node
 ARG NODE_VERSION="25.6.1-trixie-slim"
-FROM node:${NODE_VERSION} AS build
+FROM node:${NODE_VERSION} AS base
 
+# Global tooling
 RUN apt update && apt install -y \
+    python3-pip \
     curl \
-    unzip 
+    unzip \
+    ssh \
+    sshpass \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
+# pnpm for cache efficiency
+# Requires PNPM_HOME on PATH
+# Cach mounts are used later using these paths
+# pnpm requires global-bin-dir to exist nd be on PATH
+ENV PNPM_HOME="/root/.local/share/pnpm"
+ENV PATH="$PNPM_HOME:$PATH"
+
+RUN npm install -g pnpm && \
+  pnpm config set store-dir /pnpm_store && \
+  pnpm config set package-import-method copy
 
 #
 # Pulumi (can be copied from /usr/local/bin/pulumi/)
 #
-FROM build AS pulumi
+FROM base AS pulumi
 
 # https://github.com/pulumi/pulumi/releases
 ARG PULUMI_VERSION="v3.221.0"
@@ -30,13 +47,14 @@ RUN case "$TARGETPLATFORM" in \
 #
 
 # Compile Typescript code in dedicated image to avoid dev dependencies in final image
-FROM build AS tsc
+FROM base AS tsc
 
 WORKDIR /build
 
-COPY package.json       package.json
-COPY package-lock.json  package-lock.json
-RUN npm install
+COPY package.json    package.json
+COPY pnpm-lock.yaml  pnpm-lock.yaml
+RUN --mount=type=cache,id=pnmcache,target=/pnpm_store \
+  pnpm install --prefer-offline --frozen-lockfile
 
 # ansible required for build as packaged with node code
 COPY ansible ansible
@@ -49,21 +67,12 @@ RUN if [ -n "$CLOUDYPAD_VERSION" ]; then \
       sed -i "s/\"version\": \"[^\"]*\"/\"version\": \"$CLOUDYPAD_VERSION\"/" package.json; \
     fi
 
-RUN npm run build
+RUN pnpm run build
 
 # 
 # Final Cloudypad image
 #
-FROM node:${NODE_VERSION}
-
-# Global tooling
-RUN apt update && apt install -y \
-    python3-pip \
-    curl \
-    ssh \
-    sshpass \
-    && apt-get clean \
-    && rm -rf /var/lib/apt/lists/*
+FROM base AS final
 
 # Ansible via pip to use fixed version for better reproducibility
 # Can't use pipx yet for global install as major distrib have an older version (1.1.0) 
@@ -97,15 +106,20 @@ ENV ANSIBLE_STDOUT_CALLBACK=community.general.unixy
 
 # Deps
 ENV NODE_ENV=production
-COPY package.json       package.json
-COPY package-lock.json  package-lock.json
-RUN npm ci --omit dev
+COPY package.json    package.json
+COPY pnpm-lock.yaml  pnpm-lock.yaml
+RUN --mount=type=cache,id=pnmcache,target=/pnpm_store \
+  pnpm install --prefer-offline --frozen-lockfile --prod
 
 # Copy built app directly
 COPY --from=tsc /build/dist dist/
 COPY LICENSE.txt .
 
-RUN npm install --global dist/
+# Global install of built app
+RUN --mount=type=cache,id=pnmcache,target=/pnpm_store \
+  pnpm config set store-dir /pnpm_store && \
+  pnpm config set package-import-method copy && \
+  pnpm install --global /cloudypad/dist
 
 # Optional: override package.json version for custom builds
 ARG CLOUDYPAD_VERSION

@@ -21,7 +21,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
       
-      - run: nix develop -c npm i
+      - run: nix develop -c pnpm i
 
       - name: Run standard unit tests
         run: nix develop -c task test-unit

@@ -20,7 +20,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
       
-      - run: nix develop -c npm i
+      - run: nix develop -c pnpm i
 
       # Only S3 integ test on CI for now as it only depends on container not external accounts and runs quickly
       - name: Run integration tests

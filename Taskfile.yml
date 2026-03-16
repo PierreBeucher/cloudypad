@@ -28,14 +28,14 @@ tasks:
       - npx mocha --config test/unit/.mocharc.json {{ .CLI_ARGS | default "test/unit --recursive" }}
 
 
-  build-npm:
+  build-pnpm:
     cmds:
-    - npm run build
+    - pnpm run build
 
-  build-npm-tar:
+  build-pnpm-tar:
     cmds:
-    - task: build-npm
-    - (cd dist && npm pack)
+    - task: build-pnpm
+    - (cd dist && pnpm pack)
   
   test-compile:
     cmds:
