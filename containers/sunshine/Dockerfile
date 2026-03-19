@@ -161,6 +161,7 @@ Pin-Priority: -1" | tee /etc/apt/preferences.d/mozilla-firefox
 apt update
 apt install -y \
     xfce4 \
+    xfce4-screenshooter \
     sudo \
     locales \
     firefox
