@@ -457,6 +457,7 @@ async function awsPulumiProgram(): Promise<Record<string, any> | void> {
             protocol: p.protocol,
             cidrBlocks: allowedCidrs?.ipv4 ?? ["0.0.0.0/0"],
             ipv6CidrBlocks: allowedCidrs?.ipv6 ?? ["::/0"],
+            description: p.description,
         }))
     })
 
