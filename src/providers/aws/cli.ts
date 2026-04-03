@@ -35,6 +35,7 @@ export const AwsCreateCliArgsSchema = CreateCliArgsSchema.extend({
     baseImageKeepOnDeletion: z.boolean().optional(),
     dataDiskSnapshot: z.boolean().optional(),
     deleteInstanceServerOnStop: z.boolean().optional(),
+    restrictToMyIp: z.boolean().optional(),
 })
 
 /**
@@ -89,6 +90,7 @@ export class AwsInputPrompter extends AbstractInputPrompter<AwsCreateCliArgs, Aw
                 region: cliArgs.region,
                 zone: cliArgs.zone,
                 useSpot: cliArgs.spot,
+                restrictToMyIp: cliArgs.restrictToMyIp,
                 costAlert: costAlertCliArgsIntoConfig(cliArgs),
                 deleteInstanceServerOnStop: cliArgs.deleteInstanceServerOnStop,
                 dataDiskSnapshot: cliArgs.dataDiskSnapshot ? { 
@@ -116,10 +118,11 @@ export class AwsInputPrompter extends AbstractInputPrompter<AwsCreateCliArgs, Aw
         const dataDiskSizeGb = await this.dataDiskSize(partialInput.provision?.dataDiskSizeGb)
         const publicIpType = await this.publicIpType(partialInput.provision?.publicIpType)
         const costAlert = await this.costAlert(partialInput.provision?.costAlert)
-                
+        const restrictToMyIp = await this.promptRestrictToMyIp(partialInput.provision?.restrictToMyIp)
+
         const awsInput: AwsInstanceInput = lodash.merge(
             {},
-            commonInput, 
+            commonInput,
             {
                 provision:{
                     diskSize: rootDiskSize,
@@ -129,6 +132,7 @@ export class AwsInputPrompter extends AbstractInputPrompter<AwsCreateCliArgs, Aw
                     region: region,
                     zone: zone,
                     useSpot: useSpot,
+                    restrictToMyIp: restrictToMyIp,
                     costAlert: costAlert,
                     deleteInstanceServerOnStop: partialInput.provision?.deleteInstanceServerOnStop,
                     dataDiskSnapshot: partialInput.provision?.dataDiskSnapshot?.enable ? { 
@@ -143,6 +147,16 @@ export class AwsInputPrompter extends AbstractInputPrompter<AwsCreateCliArgs, Aw
         
         return awsInput
         
+    }
+
+    private async promptRestrictToMyIp(restrictToMyIp?: boolean): Promise<boolean> {
+        if (restrictToMyIp !== undefined) {
+            return restrictToMyIp
+        }
+        return await confirm({
+            message: 'Restrict inbound traffic to your current IP address?',
+            default: true,
+        })
     }
 
     private async instanceType(region: string, useSpot: boolean, instanceType?: string): Promise<string> {
@@ -325,6 +339,7 @@ export class AwsCliCommandGenerator extends CliCommandGenerator {
             .option('--region <region>', 'Region in which to deploy instance')
             .option('--zone <zone>', 'Availability zone in which to deploy instance')
             .option('--image-id <image-id>', 'Existing AMI ID for instance server. Disk size must be equal or greater than image size.')
+            .option('--no-restrict-to-my-ip', 'Allow inbound traffic from all IPs instead of restricting to your current IP')
             .action(async (rawCliArgs: unknown) => {
                 // Parse raw CLI args using Zod schema early to ensure type safety
                 const cliArgs = AwsCreateCliArgsSchema.parse(rawCliArgs)
