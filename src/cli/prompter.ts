@@ -1,4 +1,5 @@
 import * as os from 'os';
+import * as crypto from 'crypto';
 import { PartialDeep } from "type-fest"
 import { input, select, confirm, password } from '@inquirer/prompts';
 import { ExitPromptError } from '@inquirer/core';
@@ -422,28 +423,28 @@ export abstract class AbstractInputPrompter<
     private async promptSunshinePasswordBase64(_sunshinePasswordBase64?: string): Promise<string> {
         if(_sunshinePasswordBase64){
             return _sunshinePasswordBase64
-        } else {
-
-            const sunshinePassword = await password({
-                message: "Enter Sunshine Web UI password:",
-            })
-
-            if(sunshinePassword.length == 0){
-                console.warn("Password cannot be empty.")
-                return this.promptSunshinePasswordBase64()
-            }
-
-            const sunshinePasswordConfirm = await password({
-                message: "Confirm Sunshine Web UI password:",
-            })
-
-            if(sunshinePassword !== sunshinePasswordConfirm){
-                console.warn("Passwords do not match.")
-                return this.promptSunshinePasswordBase64()
-            }
-            
-            return Buffer.from(sunshinePassword).toString('base64')
         }
+
+        const sunshinePassword = await password({
+            message: "Enter Sunshine Web UI password (leave blank to generate one):",
+        })
+
+        if(sunshinePassword.length == 0){
+            const generated = crypto.randomBytes(16).toString('hex')
+            console.info(`Generated Sunshine Web UI password: ${generated}`)
+            return Buffer.from(generated).toString('base64')
+        }
+
+        const sunshinePasswordConfirm = await password({
+            message: "Confirm Sunshine Web UI password:",
+        })
+
+        if(sunshinePassword !== sunshinePasswordConfirm){
+            console.warn("Passwords do not match.")
+            return this.promptSunshinePasswordBase64()
+        }
+
+        return Buffer.from(sunshinePassword).toString('base64')
     }
 
     private async promptAutoStop(_autoStopEnable?: boolean, _autostopTimeout?: number): Promise<{ autoStopEnable: boolean, autoStopTimeout?: number }> {
