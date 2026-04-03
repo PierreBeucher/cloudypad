@@ -145,7 +145,8 @@ class CloudyPadEC2Instance extends pulumi.ComponentResource {
         } else if (args.publicKeyContent){
             this.keyPair = new aws.ec2.KeyPair(`${name}-keypair`, {
                 publicKey: args.publicKeyContent,
-                keyName: awsResourceNamePrefix
+                keyName: awsResourceNamePrefix,
+                tags: globalTags,
             }, {
                 ...commonPulumiOpts,
                 ignoreChanges: args.ignorePublicKeyChanges ? [ "publicKey" ] : []
