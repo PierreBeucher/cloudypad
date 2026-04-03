@@ -166,7 +166,7 @@ export class AwsBaseImagePulumiClient extends InstancePulumiClient<PulumiStackCo
 
         const stack = await this.getStack()
         await stack.setConfig("aws:region", { value: config.region})
-        await stack.setConfig("additionalTags", { value: JSON.stringify([`instance:${config.instanceName}`])})
+        await stack.setConfig("additionalTags", { value: JSON.stringify([`CloudyPadInstance:${config.instanceName}`, `DeployedBy:cloudypad`])})
         if(config.rootVolumeId) await stack.setConfig("rootVolumeId", { value: config.rootVolumeId})
 
         const allConfs = await stack.getAllConfig()

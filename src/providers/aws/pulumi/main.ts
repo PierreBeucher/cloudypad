@@ -310,6 +310,11 @@ async function awsPulumiProgram(): Promise<Record<string, any> | void> {
 
     const instanceName = pulumi.getStack()
 
+    const cloudypadTags = {
+        DeployedBy: "cloudypad",
+        CloudyPadInstance: instanceName,
+    }
+
     // Use provided imageId if available, otherwise use default Ubuntu AMI
     const amiId = imageId ? pulumi.output(imageId) : aws.ec2.getAmiOutput({
         mostRecent: true,
@@ -350,6 +355,7 @@ async function awsPulumiProgram(): Promise<Record<string, any> | void> {
     }
 
     const instance = new CloudyPadEC2Instance(instanceName, {
+        tags: cloudypadTags,
         ami: amiId,
         type: instanceType,
         availabilityZone: zone,

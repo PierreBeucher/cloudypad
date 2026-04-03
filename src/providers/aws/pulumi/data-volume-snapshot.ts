@@ -120,7 +120,7 @@ export class AwsDataDiskSnapshotPulumiClient extends InstancePulumiClient<Pulumi
 
         const stack = await this.getStack()
         await stack.setConfig("aws:region", { value: config.region})
-        await stack.setConfig("additionalTags", { value: JSON.stringify([`instance:${config.instanceName}`])})
+        await stack.setConfig("additionalTags", { value: JSON.stringify([`CloudyPadInstance:${config.instanceName}`, `DeployedBy:cloudypad`])})
         await stack.setConfig("volumeId", { value: config.baseVolumeId})
 
         const allConfs = await stack.getAllConfig()
