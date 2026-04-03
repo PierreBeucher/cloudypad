@@ -367,6 +367,7 @@ async function awsPulumiProgram(): Promise<Record<string, any> | void> {
     const publicKeyContent = config.require("publicSshKeyContent");
     const useSpot = config.requireBoolean("useSpot");
     const ingressPorts = config.requireObject<SimplePortDefinition[]>("ingressPorts")
+    const allowedCidrs = config.getObject<{ ipv4: string[], ipv6: string[] }>("allowedCidrs")
     const imageId = config.get("imageId")
     const dataDisk = config.getObject<{ state: "present" | "absent", sizeGb: number, snapshotId?: string }>("dataDisk")
     const instanceServerState = config.get("instanceServerState") as "present" | "absent" | undefined
@@ -454,8 +455,8 @@ async function awsPulumiProgram(): Promise<Record<string, any> | void> {
             fromPort: p.port,
             toPort: p.port,
             protocol: p.protocol,
-            cidrBlocks: ["0.0.0.0/0"],
-            ipv6CidrBlocks: ["::/0"]
+            cidrBlocks: allowedCidrs?.ipv4 ?? ["0.0.0.0/0"],
+            ipv6CidrBlocks: allowedCidrs?.ipv6 ?? ["::/0"],
         }))
     })
 
@@ -489,6 +490,10 @@ export interface PulumiStackConfigAws {
     },
     ingressPorts: SimplePortDefinition[]
     dedicatedVpc?: { enabled: boolean }
+    allowedCidrs?: {
+        ipv4: string[]
+        ipv6: string[]
+    }
 }
 
 export interface AwsPulumiOutput {
@@ -547,6 +552,7 @@ export class AwsPulumiClient extends InstancePulumiClient<PulumiStackConfigAws, 
         if(config.imageId) await stack.setConfig("imageId", { value: config.imageId})
         if(config.instanceServerState) await stack.setConfig("instanceServerState", { value: config.instanceServerState})
         if(config.dataDisk) await stack.setConfig("dataDisk", { value: JSON.stringify(config.dataDisk)})
+        if(config.allowedCidrs) await stack.setConfig("allowedCidrs", { value: JSON.stringify(config.allowedCidrs) })
 
         if(config.billingAlert){
             await stack.setConfig("billingAlertEnabled", { value: "true"})

@@ -1,3 +1,4 @@
+import * as https from 'https';
 import { SshKeyLoader } from '../../tools/ssh';
 import { AwsPulumiClient, PulumiStackConfigAws } from './pulumi/main';
 import { AwsDataDiskSnapshotPulumiClient, PulumiStackConfigAwsDataDiskSnapshot } from './pulumi/data-volume-snapshot';
@@ -6,6 +7,29 @@ import { AbstractInstanceProvisioner, InstanceProvisionerArgs, ProvisionerAction
 import { AwsClient } from './sdk-client';
 import { AwsProvisionInputV1, AwsProvisionOutputV1 } from './state';
 import { DATA_DISK_STATE_LIVE, DATA_DISK_STATE_SNAPSHOT } from '../../core/const';
+
+/**
+ * Fetch the current external IP address using the specified address family.
+ * Returns undefined if the request fails or times out (e.g. no IPv6 connectivity).
+ */
+function fetchCurrentIp(family: 4 | 6, timeoutMs = 5000): Promise<string | undefined> {
+    return new Promise((resolve) => {
+        const req = https.request({
+            hostname: 'checkip.global.api.aws',
+            path: '/',
+            method: 'GET',
+            family,
+            timeout: timeoutMs,
+        }, (res) => {
+            let data = ''
+            res.on('data', (chunk: string) => { data += chunk })
+            res.on('end', () => resolve(data.trim()))
+        })
+        req.on('timeout', () => { req.destroy(); resolve(undefined) })
+        req.on('error', () => resolve(undefined))
+        req.end()
+    })
+}
 
 export type AwsProvisionerArgs = InstanceProvisionerArgs<AwsProvisionInputV1, AwsProvisionOutputV1>
 
@@ -92,7 +116,7 @@ export class AwsProvisioner extends AbstractInstanceProvisioner<AwsProvisionInpu
 
         // Build and run main Pulumi stack
         const pulumiClient = this.buildMainPulumiClient()
-        const stackConfig = this.buildMainPulumiConfig()
+        const stackConfig = await this.buildMainPulumiConfig()
         await pulumiClient.setConfig(stackConfig)
         const pulumiOutputs = await pulumiClient.up({ cancel: opts?.pulumiCancel })
 
@@ -143,8 +167,23 @@ export class AwsProvisioner extends AbstractInstanceProvisioner<AwsProvisionInpu
     /**
      * Build Pulumi config from provision input, including runtime state.
      */
-    private buildMainPulumiConfig(): PulumiStackConfigAws {
+    private async buildMainPulumiConfig(): Promise<PulumiStackConfigAws> {
         const sshPublicKeyContent = new SshKeyLoader().loadSshPublicKeyContent(this.args.provisionInput.ssh)
+
+        let allowedCidrs: { ipv4: string[], ipv6: string[] } | undefined = undefined
+        if (this.args.provisionInput.restrictToMyIp) {
+            const [ipv4, ipv6] = await Promise.all([fetchCurrentIp(4), fetchCurrentIp(6)])
+
+            if (!ipv4) {
+                throw new Error("Could not detect current IPv4 address. Check your internet connection, or use --no-restrict-to-my-ip to skip IP restriction.")
+            }
+
+            this.logger.info(`Detected current IPs for security group: IPv4=${ipv4}${ipv6 ? `, IPv6=${ipv6}` : " (no IPv6 detected)"}`)
+            allowedCidrs = {
+                ipv4: [`${ipv4}/32`],
+                ipv6: ipv6 ? [`${ipv6}/128`] : [],
+            }
+        }
 
         return {
             instanceType: this.args.provisionInput.instanceType,
@@ -156,6 +195,7 @@ export class AwsProvisioner extends AbstractInstanceProvisioner<AwsProvisionInpu
             useSpot: this.args.provisionInput.useSpot,
             billingAlert: this.args.provisionInput.costAlert ?? undefined,
             ingressPorts: this.getStreamingServerPorts(),
+            allowedCidrs,
             instanceServerState: this.args.provisionInput.runtime?.instanceServerState,
             dataDisk: this.args.provisionInput.dataDiskSizeGb ? {
                 // only set data disk as absent if desired data disk state is explicitly set to snapshot
