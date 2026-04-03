@@ -321,6 +321,7 @@ async function awsPulumiProgram(): Promise<Record<string, any> | void> {
             cidrBlock: "10.0.0.0/16",
             enableDnsHostnames: true,
             enableDnsSupport: true,
+            assignGeneratedIpv6CidrBlock: true,
             tags: { Name: `CloudyPad-${instanceName}` },
         })
 
@@ -331,21 +332,31 @@ async function awsPulumiProgram(): Promise<Record<string, any> | void> {
 
         const routeTable = new aws.ec2.RouteTable(`${instanceName}-rt`, {
             vpcId: vpc.id,
-            routes: [{
-                cidrBlock: "0.0.0.0/0",
-                gatewayId: igw.id,
-            }],
+            routes: [
+                { cidrBlock: "0.0.0.0/0", gatewayId: igw.id },
+                { ipv6CidrBlock: "::/0", gatewayId: igw.id },
+            ],
             tags: { Name: `CloudyPad-${instanceName}` },
         })
 
         // Create one public subnet per AZ so spot instances can be placed in any AZ
         const azResult = await aws.getAvailabilityZones({ state: "available" })
         const subnets = azResult.names.map((azName: string, index: number) => {
+            // Carve a /64 per subnet from the VPC's Amazon-provided /56 by replacing the last two hex digits of the 4th group with the subnet index.
+            const ipv6CidrBlock = vpc.ipv6CidrBlock.apply(cidr => {
+                if (!cidr.endsWith("::/56")) throw new Error(`Expected VPC IPv6 CIDR to be a /56, got: ${cidr}`)
+                const base = cidr.replace("::/56", "").slice(0, -2)
+                return `${base}${index.toString(16).padStart(2, "0")}::/64`
+            })
+
+
             const subnet = new aws.ec2.Subnet(`${instanceName}-subnet-${index}`, {
                 vpcId: vpc.id,
                 cidrBlock: `10.0.${index}.0/24`,
+                ipv6CidrBlock: ipv6CidrBlock,
                 availabilityZone: azName,
                 mapPublicIpOnLaunch: true,
+                assignIpv6AddressOnCreation: true,
                 tags: { Name: `CloudyPad-${instanceName}-${azName}` },
             })
 
