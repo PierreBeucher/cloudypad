@@ -180,7 +180,7 @@ class CloudyPadEC2Instance extends pulumi.ComponentResource {
                     ...args.tags,
                     Name: awsResourceNamePrefix
                 },
-                volumeTags: args.tags,
+                volumeTags: { ...args.tags, Name: `${awsResourceNamePrefix}-os` },
                 vpcSecurityGroupIds: [this.securityGroup.id],
                 keyName: this.keyPairName,
                 rootBlockDevice: {
@@ -213,7 +213,7 @@ class CloudyPadEC2Instance extends pulumi.ComponentResource {
                     size: args.dataDisk.sizeGb,
                     type: "gp3",
                     availabilityZone: this.ec2Instance.availabilityZone,
-                    tags: globalTags,
+                    tags: { ...globalTags, Name: `${awsResourceNamePrefix}-data` },
                     snapshotId: args.dataDisk.snapshotId,
                 }, {
                     ...commonPulumiOpts,
