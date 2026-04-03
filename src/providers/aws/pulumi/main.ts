@@ -65,7 +65,7 @@ interface CloudyPadEC2instanceArgs {
  * Multiple replicas of CompositeEC2Instance
  */
 class CloudyPadEC2Instance extends pulumi.ComponentResource {
-    
+
     private readonly ec2Instance?: aws.ec2.Instance
     private readonly volumes: aws.ebs.Volume[]
     private readonly dataDisk?: aws.ebs.Volume
@@ -197,7 +197,7 @@ class CloudyPadEC2Instance extends pulumi.ComponentResource {
                     "associatePublicIpAddress",
                     // Don't update AMI as it will replace instance, destroying disk and user's data
                     // TODO support such change while keeping user's data
-                    "ami" 
+                    "ami"
                 ]
             })
 
@@ -219,7 +219,7 @@ class CloudyPadEC2Instance extends pulumi.ComponentResource {
                     ...commonPulumiOpts,
                     dependsOn: [this.ec2Instance]
                 })
-                
+
                 new aws.ec2.VolumeAttachment(`${name}-data-disk-attach`, {
                     deviceName: "/dev/sdf",
                     volumeId: this.dataDisk.id,
@@ -228,14 +228,14 @@ class CloudyPadEC2Instance extends pulumi.ComponentResource {
                     ...commonPulumiOpts,
                     dependsOn: [this.ec2Instance, this.dataDisk]
                 })
-                
+
                 this.dataDiskId = this.dataDisk.id
             } else {
                 this.dataDiskId = undefined
             }
 
             this.volumes = []
-            args.additionalVolumes?.forEach(v => {        
+            args.additionalVolumes?.forEach(v => {
                 const vol = new aws.ebs.Volume(`${name}-volume-${v.deviceName}`, {
                     encrypted: v.encrypted || true,
                     availabilityZone: v.availabilityZone || this.ec2Instance!.availabilityZone,
@@ -245,7 +245,7 @@ class CloudyPadEC2Instance extends pulumi.ComponentResource {
                     throughput: v.throughput,
                     tags: globalTags
                 }, commonPulumiOpts);
-        
+
                 new aws.ec2.VolumeAttachment(`${name}-volume-attach-${v.deviceName}`, {
                     deviceName: v.deviceName,
                     volumeId: vol.id,
@@ -270,7 +270,7 @@ class CloudyPadEC2Instance extends pulumi.ComponentResource {
             this.eip = new aws.ec2.Eip(`${name}-eip`, {
                 tags: globalTags
             }, commonPulumiOpts);
-            
+
             // Attach IP to instance if it exists
             // otherwise keep IP
             if(this.ec2Instance){
@@ -308,7 +308,68 @@ async function awsPulumiProgram(): Promise<Record<string, any> | void> {
     const billingAlertLimit = config.get("billingAlertLimit");
     const billingAlertNotificationEmail = config.get("billingAlertNotificationEmail");
 
+    const createVpc = config.getBoolean("createVpc") ?? false
+
     const instanceName = pulumi.getStack()
+
+    // Create a dedicated VPC with public subnet if requested (e.g. when account has no default VPC)
+    let vpcId: pulumi.Output<string> | undefined = undefined
+    let subnetId: pulumi.Output<string> | undefined = undefined
+
+    if (createVpc) {
+        const vpc = new aws.ec2.Vpc(`${instanceName}-vpc`, {
+            cidrBlock: "10.0.0.0/16",
+            enableDnsHostnames: true,
+            enableDnsSupport: true,
+            tags: { Name: `CloudyPad-${instanceName}` },
+        })
+
+        const igw = new aws.ec2.InternetGateway(`${instanceName}-igw`, {
+            vpcId: vpc.id,
+            tags: { Name: `CloudyPad-${instanceName}` },
+        })
+
+        const routeTable = new aws.ec2.RouteTable(`${instanceName}-rt`, {
+            vpcId: vpc.id,
+            routes: [{
+                cidrBlock: "0.0.0.0/0",
+                gatewayId: igw.id,
+            }],
+            tags: { Name: `CloudyPad-${instanceName}` },
+        })
+
+        // Create one public subnet per AZ so spot instances can be placed in any AZ
+        const azResult = await aws.getAvailabilityZones({ state: "available" })
+        const subnets = azResult.names.map((azName: string, index: number) => {
+            const subnet = new aws.ec2.Subnet(`${instanceName}-subnet-${index}`, {
+                vpcId: vpc.id,
+                cidrBlock: `10.0.${index}.0/24`,
+                availabilityZone: azName,
+                mapPublicIpOnLaunch: true,
+                tags: { Name: `CloudyPad-${instanceName}-${azName}` },
+            })
+
+            new aws.ec2.RouteTableAssociation(`${instanceName}-rta-${index}`, {
+                subnetId: subnet.id,
+                routeTableId: routeTable.id,
+            })
+
+            return { azName, subnet }
+        })
+
+        vpcId = vpc.id
+
+        // Use the subnet for the requested zone; otherwise fall back to the first available subnet
+        if (zone) {
+            const match = subnets.find((s) => s.azName === zone)
+            if (!match) {
+                throw new Error(`Zone ${zone} not found among available zones: ${azResult.names.join(", ")}`)
+            }
+            subnetId = match.subnet.id
+        } else {
+            subnetId = subnets[0].subnet.id
+        }
+    }
 
     // Use provided imageId if available, otherwise use default Ubuntu AMI
     const amiId = imageId ? pulumi.output(imageId) : aws.ec2.getAmiOutput({
@@ -318,7 +379,7 @@ async function awsPulumiProgram(): Promise<Record<string, any> | void> {
             {
                 name: "name",
                 // Use a specific version as much as possible to avoid reproducibility issues
-                // Can't use AMI ID as it's region dependent 
+                // Can't use AMI ID as it's region dependent
                 // and specifying AMI for all regions may not yield expected results and would be hard to maintain
                 values: ["ubuntu/images/hvm-ssd-gp3/ubuntu-noble-24.04-amd64-server-*"],
             },
@@ -329,7 +390,7 @@ async function awsPulumiProgram(): Promise<Record<string, any> | void> {
         ],
         owners: ["099720109477"],
     }).imageId
-    
+
     let billingAlert: {
         limit: pulumi.Input<string>
         notificationEmail: pulumi.Input<string>
@@ -353,6 +414,8 @@ async function awsPulumiProgram(): Promise<Record<string, any> | void> {
         ami: amiId,
         type: instanceType,
         availabilityZone: zone,
+        vpcId: vpcId,
+        subnetId: subnetId,
         publicKeyContent: publicKeyContent,
         rootVolume: {
             type: "gp3",
@@ -368,9 +431,9 @@ async function awsPulumiProgram(): Promise<Record<string, any> | void> {
         dataDisk: dataDisk,
         instanceServerState: instanceServerState,
         ingressPorts: ingressPorts.map(p => ({
-            fromPort: p.port, 
-            toPort: p.port, 
-            protocol: p.protocol, 
+            fromPort: p.port,
+            toPort: p.port,
+            protocol: p.protocol,
             cidrBlocks: ["0.0.0.0/0"],
             ipv6CidrBlocks: ["::/0"]
         }))
@@ -405,6 +468,7 @@ export interface PulumiStackConfigAws {
         notificationEmail: string
     },
     ingressPorts: SimplePortDefinition[]
+    createVpc?: boolean
 }
 
 export interface AwsPulumiOutput {
@@ -423,7 +487,7 @@ export interface AwsPulumiOutput {
      * ID of the root disk volume on AWS.
      */
     rootDiskId?: string
-    
+
     /**
      * ID of the data disk volume on AWS.
      */
@@ -434,13 +498,13 @@ export interface AwsPulumiClientArgs {
     stackName: string
     workspaceOptions?: LocalWorkspaceOptions
 }
-    
+
 export class AwsPulumiClient extends InstancePulumiClient<PulumiStackConfigAws, AwsPulumiOutput> {
 
     constructor(args: AwsPulumiClientArgs){
-        super({ 
-            program: awsPulumiProgram, 
-            projectName: "CloudyPad-AWS", 
+        super({
+            program: awsPulumiProgram,
+            projectName: "CloudyPad-AWS",
             stackName: args.stackName,
             workspaceOptions: args.workspaceOptions
         })
@@ -459,6 +523,7 @@ export class AwsPulumiClient extends InstancePulumiClient<PulumiStackConfigAws, 
         await stack.setConfig("ingressPorts", { value: JSON.stringify(config.ingressPorts)})
 
         if(config.zone) await stack.setConfig("zone", { value: config.zone})
+        if(config.createVpc !== undefined) await stack.setConfig("createVpc", { value: config.createVpc.toString()})
         if(config.imageId) await stack.setConfig("imageId", { value: config.imageId})
         if(config.instanceServerState) await stack.setConfig("instanceServerState", { value: config.instanceServerState})
         if(config.dataDisk) await stack.setConfig("dataDisk", { value: JSON.stringify(config.dataDisk)})
@@ -482,7 +547,7 @@ export class AwsPulumiClient extends InstancePulumiClient<PulumiStackConfigAws, 
             publicIp: outputs["publicIp"]?.value || "" as string,
             rootDiskId: outputs["rootDiskId"]?.value as string | undefined,
             dataDiskId: outputs["dataDiskId"]?.value as string | undefined
-        }   
+        }
     }
 
 }
