@@ -10,17 +10,36 @@ Moonlight is available [Windows, MacOS and Linux](https://github.com/moonlight-s
 
 ## Run Moonlight and connect to your instance
 
-Pairing is done automatically when you run `cloudypad create`.
+### Step 1: Pair your instance
 
-If needed, can pair your instance using Cloudy Pad CLI:
+Pairing is done automatically when you run `cloudypad create`. If you need to pair again:
 
 ```sh
 cloudypad pair my-instance
-
-# Run this command in another terminal to pair your instance:
-#
-#   moonlight pair 35.181.136.176 --pin 1234
 ```
+
+Choose **automatic** pairing when prompted. Cloudy Pad will generate a PIN and display a command like:
+
+```sh
+moonlight pair 35.181.136.176 --pin 1234
+```
+
+Run that command in a separate terminal **while `cloudypad pair` is still waiting**. Both sides need to complete the handshake together.
+
+> **Important:** do not use Moonlight's GUI to initiate pairing (clicking the padlock icon). That flow requires entering a PIN in Sunshine's web interface, which is not directly accessible. Always use `cloudypad pair` and the `moonlight pair --pin` command.
+
+### Step 2: Add your instance in Moonlight
+
+Cloud instances are not on your local network, so Moonlight will not discover them automatically. You must add the instance IP address manually:
+
+1. Open Moonlight
+2. Click the **+** button (Add PC)
+3. Enter your instance's IP address (shown by `cloudypad list`)
+4. Click **OK**
+
+### Step 3: Connect
+
+Once paired and added, click your instance in Moonlight to connect and start streaming.
 
 ## Mac and Apple specificities
 
