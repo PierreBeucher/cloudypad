@@ -25,7 +25,6 @@ class CloudyPadAwsDataDiskSnapshot extends pulumi.ComponentResource {
         super("crafteo:cloudypad:aws:data-disk-snapshot", name, args, opts)
 
         const globalTags = pulumi.all([args.additionalTags]).apply(([tags]) => [
-            name,
             ...tags
         ])
 

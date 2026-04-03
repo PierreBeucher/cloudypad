@@ -28,7 +28,6 @@ class CloudyPadAwsBaseImage extends pulumi.ComponentResource {
         super("crafteo:cloudypad:aws:base-image", name, args, opts)
 
         const globalTags = pulumi.all([args.additionalTags]).apply(([tags]) => [
-            name,
             ...tags
         ])
 
