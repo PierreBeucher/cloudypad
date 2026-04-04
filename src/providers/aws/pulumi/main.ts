@@ -145,7 +145,8 @@ class CloudyPadEC2Instance extends pulumi.ComponentResource {
         } else if (args.publicKeyContent){
             this.keyPair = new aws.ec2.KeyPair(`${name}-keypair`, {
                 publicKey: args.publicKeyContent,
-                keyName: awsResourceNamePrefix
+                keyName: awsResourceNamePrefix,
+                tags: globalTags,
             }, {
                 ...commonPulumiOpts,
                 ignoreChanges: args.ignorePublicKeyChanges ? [ "publicKey" ] : []
@@ -180,7 +181,7 @@ class CloudyPadEC2Instance extends pulumi.ComponentResource {
                     ...args.tags,
                     Name: awsResourceNamePrefix
                 },
-                volumeTags: args.tags,
+                volumeTags: { ...args.tags, Name: `${awsResourceNamePrefix}-os` },
                 vpcSecurityGroupIds: [this.securityGroup.id],
                 keyName: this.keyPairName,
                 rootBlockDevice: {
@@ -213,7 +214,7 @@ class CloudyPadEC2Instance extends pulumi.ComponentResource {
                     size: args.dataDisk.sizeGb,
                     type: "gp3",
                     availabilityZone: this.ec2Instance.availabilityZone,
-                    tags: globalTags,
+                    tags: { ...globalTags, Name: `${awsResourceNamePrefix}-data` },
                     snapshotId: args.dataDisk.snapshotId,
                 }, {
                     ...commonPulumiOpts,
@@ -310,6 +311,11 @@ async function awsPulumiProgram(): Promise<Record<string, any> | void> {
 
     const instanceName = pulumi.getStack()
 
+    const cloudypadTags = {
+        DeployedBy: "cloudypad",
+        CloudyPadInstance: instanceName,
+    }
+
     // Use provided imageId if available, otherwise use default Ubuntu AMI
     const amiId = imageId ? pulumi.output(imageId) : aws.ec2.getAmiOutput({
         mostRecent: true,
@@ -350,6 +356,7 @@ async function awsPulumiProgram(): Promise<Record<string, any> | void> {
     }
 
     const instance = new CloudyPadEC2Instance(instanceName, {
+        tags: cloudypadTags,
         ami: amiId,
         type: instanceType,
         availabilityZone: zone,
