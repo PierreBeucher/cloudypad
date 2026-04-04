@@ -116,7 +116,7 @@ describe('Linode lifecycle', () => {
         }
     }).timeout(10000)
 
-    it('should have a valid instance server output with existing server and additional labels applied to instance and data disk', async () => {
+    it('should have a valid outputs and infrastructure matching outputs', async () => {
         const state = await getCurrentTestState()
         const linodeClient = getLinodeClient()
         
@@ -173,6 +173,10 @@ describe('Linode lifecycle', () => {
             volumeActualTags.some(tag => tag.startsWith('instance-')),
             `Data disk should have an 'instance-' tag derived from instance name. Actual tags: ${JSON.stringify(volumeActualTags)}`
         )
+
+        // should have a machineDataDiskLookupId
+        assert.ok(state.provision.output?.machineDataDiskLookupId, "machineDataDiskLookupId should be in output")
+        
     }).timeout(10000)
 
     it('should verify instance configuration after deployment', async () => {
