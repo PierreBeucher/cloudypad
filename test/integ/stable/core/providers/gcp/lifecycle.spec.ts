@@ -108,18 +108,6 @@ describe('GCP lifecycle', () => {
         assert.strictEqual(instance.machineType?.split('/').pop(), machineType);
     }).timeout(60*60*1000); // 60 minutes timeout as deployment may be long
 
-    it('should have a valid instance server output with existing server', async () => {
-        const state = await getCurrentTestState();
-        
-        assert.ok(state.provision.output?.instanceName);
-        currentInstanceName = state.provision.output.instanceName;
-
-        const gcpClient = await getGcpClient();
-        
-        const instanceState = await gcpClient.getInstanceState(zone, currentInstanceName);
-        assert.strictEqual(instanceState, GcpInstanceStatus.Running);
-    }).timeout(2*60*1000);
-
     it('should wait for instance readiness after deployment', async () => {
         await waitForInstanceReadiness('deployment');
     }).timeout(2*60*1000);
@@ -128,37 +116,51 @@ describe('GCP lifecycle', () => {
         await runVerify({ createDataDiskTestFile: true })
     }).timeout(5*60*1000);
 
-    it('should have resources matching state output after deployment', async () => {
+    it('should have valid instance outputs', async () => {
         const gcpClient = await getGcpClient();
         const state = await getCurrentTestState();
+        
+        assert.ok(state.provision.output?.instanceName);
+        currentInstanceName = state.provision.output.instanceName;
+        
+        const instanceState = await gcpClient.getInstanceState(zone, currentInstanceName);
+        assert.strictEqual(instanceState, GcpInstanceStatus.Running);
+
+        // should have a machineDataDiskLookupId for Ansible data disk mount
+        assert.ok(state.provision.output?.machineDataDiskLookupId, "machineDataDiskLookupId should be in output")
 
         // Verify data disk exists and ID matches state output
-        if (state.provision.output?.dataDiskId) {
-            const disk = await gcpClient.getDisk(zone, state.provision.output.dataDiskId);
+        assert.ok(state.provision.output?.dataDiskId, 'dataDiskId should be in output');
+        {
+            const dataDiskId = state.provision.output.dataDiskId;
+            const disk = await gcpClient.getDisk(zone, dataDiskId);
             assert.ok(disk, 'Data disk should exist in GCP');
-            assert.strictEqual(disk.name, state.provision.output.dataDiskId, 'Data disk ID should match state output');
+            assert.strictEqual(disk.name, dataDiskId, 'Data disk ID should match state output');
             assert.strictEqual(disk.sizeGb, '50', 'Data disk size should be 50 GB');
         }
 
         // Verify root disk exists and ID matches state output
-        if (state.provision.output?.rootDiskId) {
-            const disk = await gcpClient.getDisk(zone, state.provision.output.rootDiskId);
+        assert.ok(state.provision.output?.rootDiskId, 'rootDiskId should be in output');
+        {
+            const rootDiskId = state.provision.output.rootDiskId;
+            const disk = await gcpClient.getDisk(zone, rootDiskId);
             assert.ok(disk, 'Root disk should exist in GCP');
-            assert.strictEqual(disk.name, state.provision.output.rootDiskId, 'Root disk ID should match state output');
+            assert.strictEqual(disk.name, rootDiskId, 'Root disk ID should match state output');
         }
 
         // Verify base image exists and ID matches state output
-        if (state.provision.output?.baseImageId) {
-            const image = await gcpClient.getImage(state.provision.output.baseImageId);
-            assert.ok(image, 'Base image should exist in GCP');
-            // Normalize both values - extract image name from URI if needed
-            // State may store full URI (projects/{projectId}/global/images/{imageName}) or just the name
-            const stateImageName = state.provision.output.baseImageId.includes('/')
-                ? state.provision.output.baseImageId.split('/').pop()!
-                : state.provision.output.baseImageId;
-            assert.strictEqual(image.name, stateImageName, 'Base image ID should match state output');
-            assert.strictEqual(image.status, 'READY', 'Base image should be ready');
-        }
+        assert.ok(state.provision.output?.baseImageId, 'baseImageId should be in output');
+        const baseImageId = state.provision.output.baseImageId;
+        const image = await gcpClient.getImage(baseImageId);
+        assert.ok(image, 'Base image should exist in GCP');
+        
+        // Normalize both values - extract image name from URI if needed
+        // State may store full URI (projects/{projectId}/global/images/{imageName}) or just the name
+        const stateImageName = baseImageId.includes('/')
+            ? baseImageId.split('/').pop()!
+            : baseImageId;
+        assert.strictEqual(image.name, stateImageName, 'Base image ID should match state output');
+        assert.strictEqual(image.status, 'READY', 'Base image should be ready');
     }).timeout(10000);
 
     it('should update instance', async () => {

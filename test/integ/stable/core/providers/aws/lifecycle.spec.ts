@@ -91,30 +91,28 @@ describe('AWS lifecycle', () => {
         assert.strictEqual(instance.InstanceType, instanceType);
     }).timeout(60*60*1000); // 60 minutes timeout as deployment and snapshot + AMI creation may be long
 
-    it('should have resources matching state output after deployment', async () => {
+    it('should have valid instance outputs', async () => {
         const awsClient = getAwsClient();
         const state = await getCurrentTestState();
 
-        // Verify data disk exists and ID matches state output
-        if (state.provision.output?.dataDiskId) {
-            const volume = await awsClient.getVolume(state.provision.output.dataDiskId);
-            assert.ok(volume, "Data disk should exist in AWS");
-            assert.strictEqual(volume.VolumeId, state.provision.output.dataDiskId, "Data disk ID should match state output");
-        }
+        // should have a machineDataDiskLookupId for Ansible data disk mount
+        assert.ok(state.provision.output?.machineDataDiskLookupId, "machineDataDiskLookupId should be in output")
 
-        // Verify root disk exists and ID matches state output
-        if (state.provision.output?.rootDiskId) {
-            const volume = await awsClient.getVolume(state.provision.output.rootDiskId);
-            assert.ok(volume, "Root disk should exist in AWS");
-            assert.strictEqual(volume.VolumeId, state.provision.output.rootDiskId, "Root disk ID should match state output");
-        }
+        assert.ok(state.provision.output?.dataDiskId, "dataDiskId should be in output");
+        const dataVol = await awsClient.getVolume(state.provision.output.dataDiskId);
+        assert.ok(dataVol, "Data disk should exist in AWS");
+        assert.strictEqual(dataVol.VolumeId, state.provision.output.dataDiskId, "Data disk ID should match state output");
+    
+        assert.ok(state.provision.output?.rootDiskId, "rootDiskId should be in output");
+        const rootVol = await awsClient.getVolume(state.provision.output.rootDiskId);
+        assert.ok(rootVol, "Root disk should exist in AWS");
+        assert.strictEqual(rootVol.VolumeId, state.provision.output.rootDiskId, "Root disk ID should match state output");
+    
+        assert.ok(state.provision.output?.baseImageId, "baseImageId should be in output");
+        const image = await awsClient.getImage(state.provision.output.baseImageId);
+        assert.ok(image, "Base image should exist in AWS");
+        assert.strictEqual(image.ImageId, state.provision.output.baseImageId, "Base image ID should match state output");
 
-        // Verify base image exists and ID matches state output
-        if (state.provision.output?.baseImageId) {
-            const image = await awsClient.getImage(state.provision.output.baseImageId);
-            assert.ok(image, "Base image should exist in AWS");
-            assert.strictEqual(image.ImageId, state.provision.output.baseImageId, "Base image ID should match state output");
-        }
     }).timeout(10000);
  
     it('should update instance', async () => {

@@ -102,24 +102,25 @@ describe('Linode lifecycle', () => {
     }).timeout(30*60*1000) // 30 minutes timeout, 
     // may be long as Linode instances are slow to start and creating image snapshot may be long
 
-    it('should have resources matching state output after deployment', async () => {
+    it('should have valid instance outputs', async () => {
         const linodeClient = getLinodeClient()
         const state = await getCurrentTestState()
+
+        // should have a machineDataDiskLookupId for Ansible data disk mount
+        assert.ok(state.provision.output?.machineDataDiskLookupId, "machineDataDiskLookupId should be in output")
+
+        // Ensure core disk outputs are present
+        assert.ok(state.provision.output?.dataDiskId, "dataDiskId should be in output")
+        assert.ok(state.provision.output?.rootDiskId, "rootDiskId should be in output")
 
         // Verify base image exists and ID matches state output
-        if (state.provision.output?.baseImageId) {
-            const image = await linodeClient.getImage(state.provision.output.baseImageId)
-            assert.ok(image, 'Base image should exist in Linode')
-            // Linode image IDs are like "private/12345678" or "linode/ubuntu22.04"
-            // The ID from state should match the image.id
-            assert.strictEqual(image.id, state.provision.output.baseImageId, 'Base image ID should match state output')
-        }
-    }).timeout(10000)
-
-    it('should have a valid outputs and infrastructure matching outputs', async () => {
-        const state = await getCurrentTestState()
-        const linodeClient = getLinodeClient()
-        
+        assert.ok(state.provision.output?.baseImageId, "baseImageId should be in output")
+        const image = await linodeClient.getImage(state.provision.output.baseImageId)
+        assert.ok(image, 'Base image should exist in Linode')
+        // Linode image IDs are like "private/12345678" or "linode/ubuntu22.04"
+        // The ID from state should match the image.id
+        assert.strictEqual(image.id, state.provision.output.baseImageId, 'Base image ID should match state output')
+           
         assert.ok(state.provision.output?.instanceServerId)
         const currentInstanceServerId = state.provision.output.instanceServerId
 
@@ -177,7 +178,7 @@ describe('Linode lifecycle', () => {
         // should have a machineDataDiskLookupId
         assert.ok(state.provision.output?.machineDataDiskLookupId, "machineDataDiskLookupId should be in output")
         
-    }).timeout(10000)
+    }).timeout(20000)
 
     it('should verify instance configuration after deployment', async () => {
         await runVerify({ createDataDiskTestFile: true })
