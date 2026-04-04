@@ -53,7 +53,7 @@ export class LinodeProvisioner extends AbstractInstanceProvisioner<LinodeProvisi
             instanceServerId: pulumiOutputs.instanceServerId,
             dataDiskId: pulumiOutputs.dataDiskId,
             rootDiskId: pulumiOutputs.rootDiskId,
-            machineDataDiskLookupId: pulumiOutputs.dataDiskId // the plain Linode data disk ID can be used to mount data disk on VM
+            machineDataDiskLookupId: pulumiOutputs.dataDiskHostPath
         }
     }
 
