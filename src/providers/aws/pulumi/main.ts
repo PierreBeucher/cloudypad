@@ -288,6 +288,74 @@ class CloudyPadEC2Instance extends pulumi.ComponentResource {
     }
 }
 
+interface CloudyPadVpcArgs {
+    instanceName: string
+    zone?: string
+    region: string
+}
+
+class CloudyPadVpc extends pulumi.ComponentResource {
+    readonly vpcId: pulumi.Output<string>
+    readonly subnetId: pulumi.Output<string>
+
+    constructor(name: string, args: CloudyPadVpcArgs, opts?: pulumi.ComponentResourceOptions) {
+        super("crafteo:cloudypad:aws:vpc", name, args, opts)
+
+        const { instanceName, region } = args
+        // Use specified zone, or default to {region}a for deterministic AZ assignment.
+        // This ensures repeated Pulumi runs always target the same AZ, keeping EBS volumes and instances co-located.
+        const targetAz = args.zone ?? `${region}a`
+
+        const vpc = new aws.ec2.Vpc(`${instanceName}-vpc`, {
+            cidrBlock: "10.0.0.0/16",
+            enableDnsHostnames: true,
+            enableDnsSupport: true,
+            assignGeneratedIpv6CidrBlock: true,
+            tags: { Name: `CloudyPad-${instanceName}` },
+        }, { parent: this })
+
+        const igw = new aws.ec2.InternetGateway(`${instanceName}-igw`, {
+            vpcId: vpc.id,
+            tags: { Name: `CloudyPad-${instanceName}` },
+        }, { parent: this })
+
+        const routeTable = new aws.ec2.RouteTable(`${instanceName}-rt`, {
+            vpcId: vpc.id,
+            routes: [
+                { cidrBlock: "0.0.0.0/0", gatewayId: igw.id },
+                { ipv6CidrBlock: "::/0", gatewayId: igw.id },
+            ],
+            tags: { Name: `CloudyPad-${instanceName}` },
+        }, { parent: this })
+
+        const ipv6CidrBlock = vpc.ipv6CidrBlock.apply(cidr => {
+            if (!cidr.endsWith("::/56")) throw new Error(`Expected VPC IPv6 CIDR to be a /56, got: ${cidr}`)
+            const base = cidr.replace("::/56", "").slice(0, -2)
+            return `${base}00::/64`
+        })
+
+        const subnet = new aws.ec2.Subnet(`${instanceName}-subnet`, {
+            vpcId: vpc.id,
+            cidrBlock: "10.0.0.0/24",
+            ipv6CidrBlock: ipv6CidrBlock,
+            availabilityZone: targetAz,
+            mapPublicIpOnLaunch: true,
+            assignIpv6AddressOnCreation: true,
+            tags: { Name: `CloudyPad-${instanceName}-${targetAz}` },
+        }, { parent: this })
+
+        new aws.ec2.RouteTableAssociation(`${instanceName}-rta`, {
+            subnetId: subnet.id,
+            routeTableId: routeTable.id,
+        }, { parent: this })
+
+        this.vpcId = vpc.id
+        this.subnetId = subnet.id
+
+        this.registerOutputs({ vpcId: this.vpcId, subnetId: this.subnetId })
+    }
+}
+
 /* eslint-disable  @typescript-eslint/no-explicit-any */
 // Interface is set by Pulumi
 async function awsPulumiProgram(): Promise<Record<string, any> | void> {
@@ -308,7 +376,7 @@ async function awsPulumiProgram(): Promise<Record<string, any> | void> {
     const billingAlertLimit = config.get("billingAlertLimit");
     const billingAlertNotificationEmail = config.get("billingAlertNotificationEmail");
 
-    const createVpc = config.getBoolean("createVpc") ?? false
+    const dedicatedVpc = config.getObject<{ enabled: boolean }>("dedicatedVpc")
 
     const instanceName = pulumi.getStack()
 
@@ -316,70 +384,11 @@ async function awsPulumiProgram(): Promise<Record<string, any> | void> {
     let vpcId: pulumi.Output<string> | undefined = undefined
     let subnetId: pulumi.Output<string> | undefined = undefined
 
-    if (createVpc) {
-        const vpc = new aws.ec2.Vpc(`${instanceName}-vpc`, {
-            cidrBlock: "10.0.0.0/16",
-            enableDnsHostnames: true,
-            enableDnsSupport: true,
-            assignGeneratedIpv6CidrBlock: true,
-            tags: { Name: `CloudyPad-${instanceName}` },
-        })
-
-        const igw = new aws.ec2.InternetGateway(`${instanceName}-igw`, {
-            vpcId: vpc.id,
-            tags: { Name: `CloudyPad-${instanceName}` },
-        })
-
-        const routeTable = new aws.ec2.RouteTable(`${instanceName}-rt`, {
-            vpcId: vpc.id,
-            routes: [
-                { cidrBlock: "0.0.0.0/0", gatewayId: igw.id },
-                { ipv6CidrBlock: "::/0", gatewayId: igw.id },
-            ],
-            tags: { Name: `CloudyPad-${instanceName}` },
-        })
-
-        // Create one public subnet per AZ so spot instances can be placed in any AZ
-        const azResult = await aws.getAvailabilityZones({ state: "available" })
-        const subnets = azResult.names.map((azName: string, index: number) => {
-            // Carve a /64 per subnet from the VPC's Amazon-provided /56 by replacing the last two hex digits of the 4th group with the subnet index.
-            const ipv6CidrBlock = vpc.ipv6CidrBlock.apply(cidr => {
-                if (!cidr.endsWith("::/56")) throw new Error(`Expected VPC IPv6 CIDR to be a /56, got: ${cidr}`)
-                const base = cidr.replace("::/56", "").slice(0, -2)
-                return `${base}${index.toString(16).padStart(2, "0")}::/64`
-            })
-
-
-            const subnet = new aws.ec2.Subnet(`${instanceName}-subnet-${index}`, {
-                vpcId: vpc.id,
-                cidrBlock: `10.0.${index}.0/24`,
-                ipv6CidrBlock: ipv6CidrBlock,
-                availabilityZone: azName,
-                mapPublicIpOnLaunch: true,
-                assignIpv6AddressOnCreation: true,
-                tags: { Name: `CloudyPad-${instanceName}-${azName}` },
-            })
-
-            new aws.ec2.RouteTableAssociation(`${instanceName}-rta-${index}`, {
-                subnetId: subnet.id,
-                routeTableId: routeTable.id,
-            })
-
-            return { azName, subnet }
-        })
-
-        vpcId = vpc.id
-
-        // Use the subnet for the requested zone; otherwise fall back to the first available subnet
-        if (zone) {
-            const match = subnets.find((s) => s.azName === zone)
-            if (!match) {
-                throw new Error(`Zone ${zone} not found among available zones: ${azResult.names.join(", ")}`)
-            }
-            subnetId = match.subnet.id
-        } else {
-            subnetId = subnets[0].subnet.id
-        }
+    if (dedicatedVpc?.enabled) {
+        const region = new pulumi.Config("aws").require("region")
+        const cloudypadVpc = new CloudyPadVpc(`${instanceName}-cloudypad-vpc`, { instanceName, zone, region })
+        vpcId = cloudypadVpc.vpcId
+        subnetId = cloudypadVpc.subnetId
     }
 
     // Use provided imageId if available, otherwise use default Ubuntu AMI
@@ -479,7 +488,7 @@ export interface PulumiStackConfigAws {
         notificationEmail: string
     },
     ingressPorts: SimplePortDefinition[]
-    createVpc?: boolean
+    dedicatedVpc?: { enabled: boolean }
 }
 
 export interface AwsPulumiOutput {
@@ -534,7 +543,7 @@ export class AwsPulumiClient extends InstancePulumiClient<PulumiStackConfigAws, 
         await stack.setConfig("ingressPorts", { value: JSON.stringify(config.ingressPorts)})
 
         if(config.zone) await stack.setConfig("zone", { value: config.zone})
-        if(config.createVpc !== undefined) await stack.setConfig("createVpc", { value: config.createVpc.toString()})
+        if(config.dedicatedVpc !== undefined) await stack.setConfig("dedicatedVpc", { value: JSON.stringify(config.dedicatedVpc) })
         if(config.imageId) await stack.setConfig("imageId", { value: config.imageId})
         if(config.instanceServerState) await stack.setConfig("instanceServerState", { value: config.instanceServerState})
         if(config.dataDisk) await stack.setConfig("dataDisk", { value: JSON.stringify(config.dataDisk)})

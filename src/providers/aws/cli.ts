@@ -31,7 +31,7 @@ export const AwsCreateCliArgsSchema = CreateCliArgsSchema.extend({
     costLimit: z.number().optional(),
     costNotificationEmail: z.string().optional(),
     imageId: z.string().optional(),
-    createVpc: z.boolean().optional(),
+    dedicatedVpc: z.boolean().optional(),
     baseImageSnapshot: z.boolean().optional(),
     baseImageKeepOnDeletion: z.boolean().optional(),
     dataDiskSnapshot: z.boolean().optional(),
@@ -90,7 +90,7 @@ export class AwsInputPrompter extends AbstractInputPrompter<AwsCreateCliArgs, Aw
                 region: cliArgs.region,
                 zone: cliArgs.zone,
                 useSpot: cliArgs.spot,
-                createVpc: cliArgs.createVpc,
+                dedicatedVpc: cliArgs.dedicatedVpc !== undefined ? { enabled: cliArgs.dedicatedVpc } : undefined,
                 costAlert: costAlertCliArgsIntoConfig(cliArgs),
                 deleteInstanceServerOnStop: cliArgs.deleteInstanceServerOnStop,
                 dataDiskSnapshot: cliArgs.dataDiskSnapshot ? { 
@@ -110,7 +110,7 @@ export class AwsInputPrompter extends AbstractInputPrompter<AwsCreateCliArgs, Aw
             await this.informCloudProviderQuotaWarning(CLOUDYPAD_PROVIDER_AWS, "https://docs.cloudypad.gg/cloud-provider-setup/aws.html")
         }
 
-        const createVpc = await this.promptCreateVpc(partialInput.provision?.createVpc)
+        const dedicatedVpcEnabled = await this.promptDedicatedVpc(partialInput.provision?.dedicatedVpc?.enabled)
         const region = await this.region(partialInput.provision?.region)
         const zone = await this.zone(region, partialInput.provision?.zone)
         const useSpot = await this.useSpotInstance(partialInput.provision?.useSpot)
@@ -132,7 +132,7 @@ export class AwsInputPrompter extends AbstractInputPrompter<AwsCreateCliArgs, Aw
                     region: region,
                     zone: zone,
                     useSpot: useSpot,
-                    createVpc: createVpc,
+                    dedicatedVpc: { enabled: dedicatedVpcEnabled },
                     costAlert: costAlert,
                     deleteInstanceServerOnStop: partialInput.provision?.deleteInstanceServerOnStop,
                     dataDiskSnapshot: partialInput.provision?.dataDiskSnapshot?.enable ? { 
@@ -149,9 +149,9 @@ export class AwsInputPrompter extends AbstractInputPrompter<AwsCreateCliArgs, Aw
         
     }
 
-    private async promptCreateVpc(createVpc?: boolean): Promise<boolean> {
-        if (createVpc !== undefined) {
-            return createVpc
+    private async promptDedicatedVpc(enabled?: boolean): Promise<boolean> {
+        if (enabled !== undefined) {
+            return enabled
         }
 
         return await confirm({
@@ -340,7 +340,7 @@ export class AwsCliCommandGenerator extends CliCommandGenerator {
             .option('--region <region>', 'Region in which to deploy instance')
             .option('--zone <zone>', 'Availability zone in which to deploy instance')
             .option('--image-id <image-id>', 'Existing AMI ID for instance server. Disk size must be equal or greater than image size.')
-            .option('--create-vpc', 'Create a dedicated VPC for this instance')
+            .option('--dedicated-vpc', 'Create a dedicated VPC for this instance')
             .action(async (rawCliArgs: unknown) => {
                 // Parse raw CLI args using Zod schema early to ensure type safety
                 const cliArgs = AwsCreateCliArgsSchema.parse(rawCliArgs)
