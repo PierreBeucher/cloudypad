@@ -17,6 +17,7 @@ const AwsProvisionInputV1Schema = CommonProvisionInputV1Schema.extend({
     region: z.string().describe("AWS region"),
     zone: z.string().optional().describe("AWS availability zone"),
     useSpot: z.boolean().describe("Whether to use spot instances"),
+    dedicatedVpc: z.object({ enabled: z.boolean() }).optional().describe("Dedicated VPC configuration (required when no default VPC exists)"),
     costAlert: z.object({
         limit: z.number().describe("Cost alert limit (USD)"),
         notificationEmail: z.string().describe("Cost alert notification email"),
