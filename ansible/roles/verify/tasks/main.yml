@@ -1,9 +1,10 @@
 - import_tasks: nvidia.yml
   tags: [nvidia]
 
+# Always verify data disk is mounted and accessible
+# since all tested providers are tested with a data disk
 - import_tasks: data-disk.yml
   tags: [data-disk]
-  when: cloudypad_data_disk_id is defined
 
 - import_tasks: autostop.yml
   tags: [autostop]

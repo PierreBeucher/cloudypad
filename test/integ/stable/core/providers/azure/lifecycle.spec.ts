@@ -111,37 +111,40 @@ describe('Azure lifecycle', () => {
         await waitForInstanceReadiness('deployment');
     }).timeout(2*60*1000);
 
-    it('should have resources matching state output after deployment', async () => {
+    it('should have valid instance outputs', async () => {
         const azureClient = await getAzureClient();
         const state = await getCurrentTestState();
         const resourceGroupName = state.provision.output?.resourceGroupName;
+
+        // should have a machineDataDiskLookupId
+        assert.ok(state.provision.output?.machineDataDiskLookupId, "machineDataDiskLookupId should be in output")
         
         assert.ok(resourceGroupName, "resourceGroupName should be set");
 
         // Verify data disk exists and ID matches state output
-        if (state.provision.output?.dataDiskId) {
-            const dataDiskName = `${instanceName}-data-disk`;
-            const dataDisk = await azureClient.getDisk(resourceGroupName, dataDiskName);
-            assert.ok(dataDisk, "Data disk should exist in Azure");
-            assert.strictEqual(dataDisk.id, state.provision.output.dataDiskId, "Data disk ID should match state output");
-            assert.strictEqual(dataDisk.diskSizeGB, dataDiskSizeGb, `Data disk size should be ${dataDiskSizeGb} GB`);
-        }
+        assert.ok(state.provision.output?.dataDiskId, "dataDiskId should be in output");
+        const dataDiskId = state.provision.output.dataDiskId;
+        const dataDiskName = `${instanceName}-data-disk`;
+        const dataDisk = await azureClient.getDisk(resourceGroupName, dataDiskName);
+        assert.ok(dataDisk, "Data disk should exist in Azure");
+        assert.strictEqual(dataDisk.id, dataDiskId, "Data disk ID should match state output");
+        assert.strictEqual(dataDisk.diskSizeGB, dataDiskSizeGb, `Data disk size should be ${dataDiskSizeGb} GB`);
 
         // Verify root disk exists and ID matches state output
-        if (state.provision.output?.rootDiskId) {
-            const rootDiskName = `${instanceName}-osdisk`;
-            const rootDisk = await azureClient.getDisk(resourceGroupName, rootDiskName);
-            assert.ok(rootDisk, "Root disk should exist in Azure");
-            assert.strictEqual(rootDisk.id, state.provision.output.rootDiskId, "Root disk ID should match state output");
-        }
+        assert.ok(state.provision.output?.rootDiskId, "rootDiskId should be in output");
+        const rootDiskId = state.provision.output.rootDiskId;
+        const rootDiskName = `${instanceName}-osdisk`;
+        const rootDisk = await azureClient.getDisk(resourceGroupName, rootDiskName);
+        assert.ok(rootDisk, "Root disk should exist in Azure");
+        assert.strictEqual(rootDisk.id, rootDiskId, "Root disk ID should match state output");
 
         // Verify base image exists and ID matches state output
-        if (state.provision.output?.baseImageId) {
-            const baseImageName = `${instanceName}-base-image`;
-            const baseImage = await azureClient.getImage(resourceGroupName, baseImageName);
-            assert.ok(baseImage, "Base image should exist in Azure");
-            assert.strictEqual(baseImage.id, state.provision.output.baseImageId, "Base image ID should match state output");
-        }
+        assert.ok(state.provision.output?.baseImageId, "baseImageId should be in output");
+        const baseImageId = state.provision.output.baseImageId;
+        const baseImageName = `${instanceName}-base-image`;
+        const baseImage = await azureClient.getImage(resourceGroupName, baseImageName);
+        assert.ok(baseImage, "Base image should exist in Azure");
+        assert.strictEqual(baseImage.id, baseImageId, "Base image ID should match state output");
     }).timeout(10000);
 
     it('should update instance', async () => {

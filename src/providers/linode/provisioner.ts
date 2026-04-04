@@ -53,6 +53,7 @@ export class LinodeProvisioner extends AbstractInstanceProvisioner<LinodeProvisi
             instanceServerId: pulumiOutputs.instanceServerId,
             dataDiskId: pulumiOutputs.dataDiskId,
             rootDiskId: pulumiOutputs.rootDiskId,
+            machineDataDiskLookupId: pulumiOutputs.dataDiskHostPath
         }
     }
 

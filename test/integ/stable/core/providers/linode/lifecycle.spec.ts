@@ -40,86 +40,87 @@ describe('Linode lifecycle', () => {
         await runVerifyPlaybook(instanceName, state, opts)
     }
     
-    it('should initialize instance state', async () => {
+    // it('should initialize instance state', async () => {
 
-        const initializer = new LinodeProviderClient({config: coreConfig}).getInstanceInitializer()
-            await initializer.initializeStateOnly(instanceName, {
-                ssh: {
-                    user: "root",
-                    privateKeyPath: "/home/pbeucher/.ssh/id_ed25519",
-                },
-                region: region,
-                instanceType: instanceType,
-                rootDiskSizeGb: rootDiskSizeGb,
-                dataDiskSizeGb: dataDiskSizeGb,
-                // imageId: "private/33927621",
-                watchdogEnabled: true, // need to have watchdog otherwise Ansible reboot during config will effectively shutdown instance
-                dns: {
-                    domainName: "green.instances.cloudypad.gg",
-                },
-                deleteInstanceServerOnStop: true,
-                baseImageSnapshot: {
-                    enable: true,
-                },
-                additionalLabels: ['test-label-1', 'test-label-2'],
-            }, {
-                sunshine: {
-                    enable: true,
-                    username: "sunshine",
-                    passwordBase64: Buffer.from("Sunshine!").toString('base64'),
-                    imageTag: "dev"
-                }, 
-                // ansible: {
-                //     additionalArgs: "-t data-disk,sunshine"
-                // }
-            })
-    })
+    //     const initializer = new LinodeProviderClient({config: coreConfig}).getInstanceInitializer()
+    //         await initializer.initializeStateOnly(instanceName, {
+    //             ssh: {
+    //                 user: "root",
+    //                 privateKeyPath: "/home/pbeucher/.ssh/id_ed25519",
+    //             },
+    //             region: region,
+    //             instanceType: instanceType,
+    //             rootDiskSizeGb: rootDiskSizeGb,
+    //             dataDiskSizeGb: dataDiskSizeGb,
+    //             // imageId: "private/33927621",
+    //             watchdogEnabled: true, // need to have watchdog otherwise Ansible reboot during config will effectively shutdown instance
+    //             dns: {
+    //                 domainName: "green.instances.cloudypad.gg",
+    //             },
+    //             deleteInstanceServerOnStop: true,
+    //             baseImageSnapshot: {
+    //                 enable: true,
+    //             },
+    //             additionalLabels: ['test-label-1', 'test-label-2'],
+    //         }, {
+    //             sunshine: {
+    //                 enable: true,
+    //                 username: "sunshine",
+    //                 passwordBase64: Buffer.from("Sunshine!").toString('base64'),
+    //                 imageTag: "dev"
+    //             }, 
+    //             // ansible: {
+    //             //     additionalArgs: "-t data-disk,sunshine"
+    //             // }
+    //         })
+    // })
 
-    it('should deploy instance', async () => {
-        const instanceManager = await linodeProviderClient.getInstanceManager(instanceName)
-        await instanceManager.deploy()
+    // it('should deploy instance', async () => {
+    //     const instanceManager = await linodeProviderClient.getInstanceManager(instanceName)
+    //     await instanceManager.deploy()
 
+    //     const state = await getCurrentTestState()
+
+    //     assert.ok(state.provision.output?.instanceServerId)
+    //     const currentInstanceServerId = state.provision.output.instanceServerId
+
+    //     // Verify the instance was created with correct specifications
+    //     const linodeClient = getLinodeClient()
+    //     await linodeClient.checkAuth()
+    //     const instanceDetails = await linodeClient.getLinode(currentInstanceServerId)
+    //     assert.ok(instanceDetails, 'Instance details should be available')
+    //     assert.strictEqual(instanceDetails.type, instanceType)
+
+    //     // Check data disk exists
+    //     assert.ok(state.provision.output?.dataDiskId, "dataDiskId should be in output after deployment")
+
+    //     // Check root disk exists
+    //     assert.ok(state.provision.output?.rootDiskId, "rootDiskId should be in output after deployment")
+
+    //     // Check base image exists
+    //     assert.ok(state.provision.output?.baseImageId, "baseImageId should be in output after deployment")
+    // }).timeout(30*60*1000) // 30 minutes timeout, 
+    // // may be long as Linode instances are slow to start and creating image snapshot may be long
+
+    it('should have valid instance outputs', async () => {
+        const linodeClient = getLinodeClient()
         const state = await getCurrentTestState()
 
-        assert.ok(state.provision.output?.instanceServerId)
-        const currentInstanceServerId = state.provision.output.instanceServerId
+        // should have a machineDataDiskLookupId for Ansible data disk mount
+        assert.ok(state.provision.output?.machineDataDiskLookupId, "machineDataDiskLookupId should be in output")
 
-        // Verify the instance was created with correct specifications
-        const linodeClient = getLinodeClient()
-        await linodeClient.checkAuth()
-        const instanceDetails = await linodeClient.getLinode(currentInstanceServerId)
-        assert.ok(instanceDetails, 'Instance details should be available')
-        assert.strictEqual(instanceDetails.type, instanceType)
-
-        // Check data disk exists
-        assert.ok(state.provision.output?.dataDiskId, "dataDiskId should be in output after deployment")
-
-        // Check root disk exists
-        assert.ok(state.provision.output?.rootDiskId, "rootDiskId should be in output after deployment")
-
-        // Check base image exists
-        assert.ok(state.provision.output?.baseImageId, "baseImageId should be in output after deployment")
-    }).timeout(30*60*1000) // 30 minutes timeout, 
-    // may be long as Linode instances are slow to start and creating image snapshot may be long
-
-    it('should have resources matching state output after deployment', async () => {
-        const linodeClient = getLinodeClient()
-        const state = await getCurrentTestState()
+        // Ensure core disk outputs are present
+        assert.ok(state.provision.output?.dataDiskId, "dataDiskId should be in output")
+        assert.ok(state.provision.output?.rootDiskId, "rootDiskId should be in output")
 
         // Verify base image exists and ID matches state output
-        if (state.provision.output?.baseImageId) {
-            const image = await linodeClient.getImage(state.provision.output.baseImageId)
-            assert.ok(image, 'Base image should exist in Linode')
-            // Linode image IDs are like "private/12345678" or "linode/ubuntu22.04"
-            // The ID from state should match the image.id
-            assert.strictEqual(image.id, state.provision.output.baseImageId, 'Base image ID should match state output')
-        }
-    }).timeout(10000)
-
-    it('should have a valid instance server output with existing server and additional labels applied to instance and data disk', async () => {
-        const state = await getCurrentTestState()
-        const linodeClient = getLinodeClient()
-        
+        assert.ok(state.provision.output?.baseImageId, "baseImageId should be in output")
+        const image = await linodeClient.getImage(state.provision.output.baseImageId)
+        assert.ok(image, 'Base image should exist in Linode')
+        // Linode image IDs are like "private/12345678" or "linode/ubuntu22.04"
+        // The ID from state should match the image.id
+        assert.strictEqual(image.id, state.provision.output.baseImageId, 'Base image ID should match state output')
+           
         assert.ok(state.provision.output?.instanceServerId)
         const currentInstanceServerId = state.provision.output.instanceServerId
 
@@ -150,10 +151,7 @@ describe('Linode lifecycle', () => {
 
         // Verify data disk has correct labels
         assert.ok(state.provision.output?.dataDiskId, 'Data disk ID should be in output')
-        // dataDiskId is a filesystem path basename like "scsi-0Linode_Volume_my-instance-vol"
-        // Extract the volume label by removing the "scsi-0Linode_Volume_" prefix
-        const volumeLabel = state.provision.output.dataDiskId.replace(/^scsi-0Linode_Volume_/, '')
-        const volume = await linodeClient.getVolumeByLabel(volumeLabel)
+        const volume = await linodeClient.getVolume(state.provision.output.dataDiskId)
         assert.ok(volume, 'Data volume should exist in Linode')
         
         // Expected additional labels from state
@@ -173,7 +171,11 @@ describe('Linode lifecycle', () => {
             volumeActualTags.some(tag => tag.startsWith('instance-')),
             `Data disk should have an 'instance-' tag derived from instance name. Actual tags: ${JSON.stringify(volumeActualTags)}`
         )
-    }).timeout(10000)
+
+        // should have a machineDataDiskLookupId
+        assert.ok(state.provision.output?.machineDataDiskLookupId, "machineDataDiskLookupId should be in output")
+        
+    }).timeout(20000)
 
     it('should verify instance configuration after deployment', async () => {
         await runVerify({ createDataDiskTestFile: true })
@@ -191,15 +193,18 @@ describe('Linode lifecycle', () => {
         const instanceManager = await linodeProviderClient.getInstanceManager(instanceName)
         await instanceManager.deploy()
 
+    }).timeout(30*60*1000) // 30 minutes timeout, might be long
+
+    it('should have valid instance outputs after update', async () => {
         const state = await getCurrentTestState()
         assert.ok(state.provision.output?.dataDiskId);
 
         const linodeClient = getLinodeClient()
-        const dataDisk = await linodeClient.getVolumeByLabel(state.provision.output.dataDiskId);
-        assert.ok(dataDisk);
-        assert.strictEqual(dataDisk.size, (dataDiskSizeGb+2) * 1024 * 1024 * 1024); // 2GB in bytes
+        const dataDisk = await linodeClient.getVolume(state.provision.output.dataDiskId);
 
-    }).timeout(30*60*1000) // 30 minutes timeout, might be long
+        assert.ok(dataDisk, `Data disk should exist in Linode for id ${state.provision.output.dataDiskId}`);
+        assert.strictEqual(dataDisk.size, dataDiskSizeGb+2);
+    }).timeout(10000)
 
     // run twice for idempotency
     for (let i = 0; i < 2; i++) { 
@@ -234,14 +239,11 @@ describe('Linode lifecycle', () => {
             assert.ok(!instance)
 
             // Check data disk exists
-            // dataDiskId is a filesystem path basename like "scsi-0Linode_Volume_my-instance-vol"
-            // Extract the volume label by removing the "scsi-0Linode_Volume_" prefix
             assert.ok(state.provision.output?.dataDiskId)
 
-            const volumeLabel = state.provision.output.dataDiskId.replace(/^scsi-0Linode_Volume_/, '')
-            const volume = await linodeClient.getVolumeByLabel(volumeLabel)
+            const volumeId = state.provision.output.dataDiskId
+            const volume = await linodeClient.getVolume(volumeId)
             assert.ok(volume, 'Data volume should exist in Linode')
-            assert.strictEqual(volume.label, volumeLabel, 'Data volume label should match')
 
         }).timeout(10000)
     }

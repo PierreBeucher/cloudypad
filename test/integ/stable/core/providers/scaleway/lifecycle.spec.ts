@@ -87,39 +87,39 @@ describe('Scaleway lifecycle', () => {
         assert.strictEqual(serverData?.commercialType, "L4-1-24G")
     }).timeout(20*60*1000) // 20 minutes timeout
 
-    it('should have resources matching state output after deployment', async () => {
+    it('should have valid instance outputs', async () => {
         const scalewayClient = getScalewayClient()
         const state = await getCurrentTestState()
+
+        // should have a machineDataDiskLookupId for Ansible data disk mount
+        assert.ok(state.provision.output?.machineDataDiskLookupId, "machineDataDiskLookupId should be in output")
 
         // Helper to extract ID from zone-prefixed ID or plain ID
         const extractId = (id: string): string => id.includes('/') ? id.split('/').pop()! : id
 
         // Verify data disk exists and ID matches state output
-        if (state.provision.output?.dataDiskId) {
-            const dataDiskId = extractId(state.provision.output.dataDiskId)
-            const volume = await scalewayClient.getVolume({ zone: zone, volumeId: dataDiskId })
-            assert.ok(volume, "Data disk should exist in Scaleway")
-            const volumeId = extractId(volume.id || '')
-            assert.strictEqual(volumeId, dataDiskId, "Data disk ID should match state output")
-        }
+        assert.ok(state.provision.output?.dataDiskId, "dataDiskId should be in output")
+        const dataDiskId = extractId(state.provision.output.dataDiskId)
+        const dataVolume = await scalewayClient.getVolume({ zone: zone, volumeId: dataDiskId })
+        assert.ok(dataVolume, "Data disk should exist in Scaleway")
+        const dataVolumeId = extractId(dataVolume.id || '')
+        assert.strictEqual(dataVolumeId, dataDiskId, "Data disk ID should match state output")
 
         // Verify root disk exists and ID matches state output
-        if (state.provision.output?.rootDiskId) {
-            const rootDiskId = extractId(state.provision.output.rootDiskId)
-            const volume = await scalewayClient.getVolume({ zone: zone, volumeId: rootDiskId })
-            assert.ok(volume, "Root disk should exist in Scaleway")
-            const volumeId = extractId(volume.id || '')
-            assert.strictEqual(volumeId, rootDiskId, "Root disk ID should match state output")
-        }
+        assert.ok(state.provision.output?.rootDiskId, "rootDiskId should be in output")
+        const rootDiskId = extractId(state.provision.output.rootDiskId)
+        const rootVolume = await scalewayClient.getVolume({ zone: zone, volumeId: rootDiskId })
+        assert.ok(rootVolume, "Root disk should exist in Scaleway")
+        const rootVolumeId = extractId(rootVolume.id || '')
+        assert.strictEqual(rootVolumeId, rootDiskId, "Root disk ID should match state output")
 
         // Verify base image exists and ID matches state output
-        if (state.provision.output?.baseImageId) {
-            const baseImageId = extractId(state.provision.output.baseImageId)
-            const image = await scalewayClient.getImage({ zone: zone, imageId: baseImageId })
-            assert.ok(image, "Base image should exist in Scaleway")
-            const imageId = extractId(image.id || '')
-            assert.strictEqual(imageId, baseImageId, "Base image ID should match state output")
-        }
+        assert.ok(state.provision.output?.baseImageId, "baseImageId should be in output")
+        const baseImageId = extractId(state.provision.output.baseImageId)
+        const image = await scalewayClient.getImage({ zone: zone, imageId: baseImageId })
+        assert.ok(image, "Base image should exist in Scaleway")
+        const imageId = extractId(image.id || '')
+        assert.strictEqual(imageId, baseImageId, "Base image ID should match state output")
     }).timeout(10000)
 
     it('should verify instance configuration after deployment', async () => {

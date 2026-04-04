@@ -121,6 +121,7 @@ class CloudyPadLinodeInstance extends pulumi.ComponentResource {
 
     public readonly rootDiskId: pulumi.Output<string | undefined>
     public readonly dataDiskId: pulumi.Output<string>
+    public readonly dataDiskHostPath: pulumi.Output<string>
 
     private readonly instanceServer: linode.Instance | undefined
     
@@ -379,8 +380,8 @@ class CloudyPadLinodeInstance extends pulumi.ComponentResource {
         })
 
         // path is like /dev/disk/by-id/scsi-0Linode_Volume_my-instance-vol
-        // we want to extract the volume name
-        this.dataDiskId = dataVolume.filesystemPath.apply(p => path.basename(p))
+        this.dataDiskHostPath = dataVolume.filesystemPath.apply(p => path.basename(p))
+        this.dataDiskId = dataVolume.id
     }
 }
 
@@ -421,17 +422,19 @@ async function linodePulumiProgram(): Promise<Record<string, any> | void> {
         instance.instanceServerName, 
         instance.instanceHostname, 
         instance.instanceServerId, 
-        instance.dataDiskId, 
+        instance.dataDiskId,
+        instance.dataDiskHostPath,
         instance.instanceServerURN,
         instance.publicIp,
         instance.rootDiskId
-    ]).apply(([instanceServerName, instanceHostname, instanceServerId, dataDiskId, instanceServerUrn, publicIp, rootDiskId]) => {
+    ]).apply(([instanceServerName, instanceHostname, instanceServerId, dataDiskId, dataDiskHostPath, instanceServerUrn, publicIp, rootDiskId]) => {
         const result: LinodePulumiOutput = {
             instanceServerName: instanceServerName,
             instanceHostname: instanceHostname,
             instanceIPv4: publicIp,
             instanceServerId: instanceServerId,
             dataDiskId: dataDiskId,
+            dataDiskHostPath: dataDiskHostPath,
             instanceServerUrn: instanceServerUrn,
             rootDiskId: rootDiskId
         }
@@ -496,6 +499,11 @@ export interface LinodePulumiOutput {
     dataDiskId: string
 
     /**
+     * Host path of the data disk
+     */
+    dataDiskHostPath: string
+
+    /**
      * ID of instance root disk
      */
     rootDiskId?: string
@@ -554,7 +562,8 @@ export class LinodePulumiClient extends InstancePulumiClient<PulumiStackConfigLi
             instanceHostname: outputs["instanceHostname"].value as string | undefined,
             instanceServerId: outputs["instanceServerId"]?.value as string | undefined,
             instanceServerUrn: outputs["instanceServerUrn"]?.value as string | undefined,
-            dataDiskId: outputs["dataDiskId"].value as string,
+            dataDiskId: outputs["dataDiskId"].value as string,  
+            dataDiskHostPath: outputs["dataDiskHostPath"].value as string,
             rootDiskId: outputs["rootDiskId"]?.value as string | undefined
         }   
     }
