@@ -68,6 +68,7 @@ export const CLOUDYPAD_SUNSHINE_IMAGE_REGISTRY = "ghcr.io/pierrebeucher/cloudypa
 export interface SimplePortDefinition {
     port: number
     protocol: string
+    description?: string
 }
 
 /**
@@ -75,33 +76,33 @@ export interface SimplePortDefinition {
  * See https://games-on-whales.github.io/wolf/stable/user/quickstart.html
  */
 export const CLOUDYPAD_WOLF_PORTS: SimplePortDefinition[] = [
-    { port: 22, protocol: 'tcp' }, // SSH
-    { port: 47984, protocol: 'tcp' }, // HTTPS
-    { port: 47989, protocol: 'tcp' }, // HTTP
-    { port: 47999, protocol: 'udp' }, // Control
-    { port: 48010, protocol: 'tcp' }, // RTSP
-    { port: 48100, protocol: 'udp' }, // Video (up to 10 users, you can open more ports if needed)
-    { port: 48101, protocol: 'udp' },
-    { port: 48102, protocol: 'udp' },
-    { port: 48103, protocol: 'udp' },
-    { port: 48104, protocol: 'udp' },
-    { port: 48105, protocol: 'udp' },
-    { port: 48106, protocol: 'udp' },
-    { port: 48107, protocol: 'udp' },
-    { port: 48108, protocol: 'udp' },
-    { port: 48109, protocol: 'udp' },
-    { port: 48110, protocol: 'udp' },
-    { port: 48200, protocol: 'udp' }, // Audio (up to 10 users, you can open more ports if needed)
-    { port: 48201, protocol: 'udp' },
-    { port: 48202, protocol: 'udp' },
-    { port: 48203, protocol: 'udp' },
-    { port: 48204, protocol: 'udp' },
-    { port: 48205, protocol: 'udp' },
-    { port: 48206, protocol: 'udp' },
-    { port: 48207, protocol: 'udp' },
-    { port: 48208, protocol: 'udp' },
-    { port: 48209, protocol: 'udp' },
-    { port: 48210, protocol: 'udp' },
+    { port: 22, protocol: 'tcp', description: 'SSH' },
+    { port: 47984, protocol: 'tcp', description: 'Wolf HTTPS control' },
+    { port: 47989, protocol: 'tcp', description: 'Wolf HTTP control' },
+    { port: 47999, protocol: 'udp', description: 'Wolf Moonlight control channel' },
+    { port: 48010, protocol: 'tcp', description: 'Wolf RTSP stream setup' },
+    { port: 48100, protocol: 'udp', description: 'Wolf video stream (user 1)' },
+    { port: 48101, protocol: 'udp', description: 'Wolf video stream (user 2)' },
+    { port: 48102, protocol: 'udp', description: 'Wolf video stream (user 3)' },
+    { port: 48103, protocol: 'udp', description: 'Wolf video stream (user 4)' },
+    { port: 48104, protocol: 'udp', description: 'Wolf video stream (user 5)' },
+    { port: 48105, protocol: 'udp', description: 'Wolf video stream (user 6)' },
+    { port: 48106, protocol: 'udp', description: 'Wolf video stream (user 7)' },
+    { port: 48107, protocol: 'udp', description: 'Wolf video stream (user 8)' },
+    { port: 48108, protocol: 'udp', description: 'Wolf video stream (user 9)' },
+    { port: 48109, protocol: 'udp', description: 'Wolf video stream (user 10)' },
+    { port: 48110, protocol: 'udp', description: 'Wolf video stream (user 11)' },
+    { port: 48200, protocol: 'udp', description: 'Wolf audio stream (user 1)' },
+    { port: 48201, protocol: 'udp', description: 'Wolf audio stream (user 2)' },
+    { port: 48202, protocol: 'udp', description: 'Wolf audio stream (user 3)' },
+    { port: 48203, protocol: 'udp', description: 'Wolf audio stream (user 4)' },
+    { port: 48204, protocol: 'udp', description: 'Wolf audio stream (user 5)' },
+    { port: 48205, protocol: 'udp', description: 'Wolf audio stream (user 6)' },
+    { port: 48206, protocol: 'udp', description: 'Wolf audio stream (user 7)' },
+    { port: 48207, protocol: 'udp', description: 'Wolf audio stream (user 8)' },
+    { port: 48208, protocol: 'udp', description: 'Wolf audio stream (user 9)' },
+    { port: 48209, protocol: 'udp', description: 'Wolf audio stream (user 10)' },
+    { port: 48210, protocol: 'udp', description: 'Wolf audio stream (user 11)' },
 ]
 
 /**
@@ -111,16 +112,15 @@ export const CLOUDYPAD_WOLF_PORTS: SimplePortDefinition[] = [
  * See archive: https://web.archive.org/web/20241228223157/https://docs.lizardbyte.dev/projects/sunshine/en/latest/about/advanced_usage.html#port
  */
 export const CLOUDYPAD_SUNSHINE_PORTS: SimplePortDefinition[] = [
-    { port: 22, protocol: 'tcp' }, // SSH
-    { port: 47984, protocol: 'tcp' }, // HTTPS
-    { port: 47989, protocol: 'tcp' }, // HTTP
-    { port: 47990, protocol: 'tcp' }, // Web
-    { port: 48010, protocol: 'tcp' }, // RTSP
-
-    { port: 47998, protocol: 'udp' }, // Video
-    { port: 47999, protocol: 'udp' }, // Control
-    { port: 48000, protocol: 'udp' }, // Audio
-    { port: 48002, protocol: 'udp' }, // Mic (unused)
+    { port: 22, protocol: 'tcp', description: 'SSH' },
+    { port: 47984, protocol: 'tcp', description: 'Sunshine HTTPS control' },
+    { port: 47989, protocol: 'tcp', description: 'Sunshine HTTP control' },
+    { port: 47990, protocol: 'tcp', description: 'Sunshine web UI' },
+    { port: 48010, protocol: 'tcp', description: 'Sunshine RTSP stream setup' },
+    { port: 47998, protocol: 'udp', description: 'Sunshine video stream' },
+    { port: 47999, protocol: 'udp', description: 'Sunshine Moonlight control channel' },
+    { port: 48000, protocol: 'udp', description: 'Sunshine audio stream' },
+    { port: 48002, protocol: 'udp', description: 'Sunshine microphone input (client to server)' },
 ]
 
 /**

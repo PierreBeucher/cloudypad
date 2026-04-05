@@ -17,6 +17,10 @@ const AwsProvisionInputV1Schema = CommonProvisionInputV1Schema.extend({
     region: z.string().describe("AWS region"),
     zone: z.string().optional().describe("AWS availability zone"),
     useSpot: z.boolean().describe("Whether to use spot instances"),
+    allowedCidrs: z.object({
+        ipv4: z.array(z.string()),
+        ipv6: z.array(z.string()),
+    }).default({ ipv4: ['0.0.0.0/0'], ipv6: ['::/0'] }).describe("Allowed CIDRs for security group ingress. Defaults to open access; set to specific ranges to restrict inbound traffic to those IPs, refreshed on every provision."),
     costAlert: z.object({
         limit: z.number().describe("Cost alert limit (USD)"),
         notificationEmail: z.string().describe("Cost alert notification email"),
