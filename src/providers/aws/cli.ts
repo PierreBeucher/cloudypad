@@ -1,4 +1,5 @@
 import { AwsInstanceInput, AwsInstanceStateV1, AwsProvisionInputV1, AwsStateParser } from "./state"
+import { fetchCurrentIpCidrs } from '../../tools/ip'
 import { CommonConfigurationInputV1, CommonInstanceInput } from "../../core/state/state"
 import { input, select, confirm } from '@inquirer/prompts';
 import { AwsClient, EC2_QUOTA_CODE_ALL_G_AND_VT_SPOT_INSTANCES, EC2_QUOTA_CODE_RUNNING_ON_DEMAND_G_AND_VT_INSTANCES, DEFAULT_REGION } from "./sdk-client";
@@ -35,7 +36,7 @@ export const AwsCreateCliArgsSchema = CreateCliArgsSchema.extend({
     baseImageKeepOnDeletion: z.boolean().optional(),
     dataDiskSnapshot: z.boolean().optional(),
     deleteInstanceServerOnStop: z.boolean().optional(),
-    restrictToMyIp: z.boolean().optional(),
+    restrictToMyIp: z.boolean().default(true),
 })
 
 /**
@@ -76,11 +77,17 @@ export const SUPPORTED_INSTANCE_TYPES = [
 
 export class AwsInputPrompter extends AbstractInputPrompter<AwsCreateCliArgs, AwsProvisionInputV1, CommonConfigurationInputV1> {
 
+    // Stashed from buildProvisionerInputFromCliArgs for use in resolveAllowedCidrs.
+    // restrictToMyIp is a CLI-only concept; state stores resolved allowedCidrs instead.
+    // Defaults to false (no restriction); set to true by Commander's --no-restrict-to-my-ip default.
+    private _cliRestrictToMyIp = false
+
     constructor(args: AbstractInputPrompterArgs){
         super(args)
     }
 
     buildProvisionerInputFromCliArgs(cliArgs: AwsCreateCliArgs): PartialDeep<AwsInstanceInput> {
+        this._cliRestrictToMyIp = cliArgs.restrictToMyIp
 
         return {
             provision: {
@@ -90,13 +97,12 @@ export class AwsInputPrompter extends AbstractInputPrompter<AwsCreateCliArgs, Aw
                 region: cliArgs.region,
                 zone: cliArgs.zone,
                 useSpot: cliArgs.spot,
-                restrictToMyIp: cliArgs.restrictToMyIp,
                 costAlert: costAlertCliArgsIntoConfig(cliArgs),
                 deleteInstanceServerOnStop: cliArgs.deleteInstanceServerOnStop,
-                dataDiskSnapshot: cliArgs.dataDiskSnapshot ? { 
-                    enable: cliArgs.dataDiskSnapshot 
+                dataDiskSnapshot: cliArgs.dataDiskSnapshot ? {
+                    enable: cliArgs.dataDiskSnapshot
                 } : undefined,
-                baseImageSnapshot: cliArgs.baseImageSnapshot ? { 
+                baseImageSnapshot: cliArgs.baseImageSnapshot ? {
                     enable: cliArgs.baseImageSnapshot,
                     keepOnDeletion: cliArgs.baseImageKeepOnDeletion
                 } : undefined
@@ -118,7 +124,7 @@ export class AwsInputPrompter extends AbstractInputPrompter<AwsCreateCliArgs, Aw
         const dataDiskSizeGb = await this.dataDiskSize(partialInput.provision?.dataDiskSizeGb)
         const publicIpType = await this.publicIpType(partialInput.provision?.publicIpType)
         const costAlert = await this.costAlert(partialInput.provision?.costAlert)
-        const restrictToMyIp = await this.promptRestrictToMyIp(partialInput.provision?.restrictToMyIp)
+        const allowedCidrs = await this.resolveAllowedCidrs()
 
         const awsInput: AwsInstanceInput = lodash.merge(
             {},
@@ -132,7 +138,7 @@ export class AwsInputPrompter extends AbstractInputPrompter<AwsCreateCliArgs, Aw
                     region: region,
                     zone: zone,
                     useSpot: useSpot,
-                    restrictToMyIp: restrictToMyIp,
+                    allowedCidrs: allowedCidrs,
                     costAlert: costAlert,
                     deleteInstanceServerOnStop: partialInput.provision?.deleteInstanceServerOnStop,
                     dataDiskSnapshot: partialInput.provision?.dataDiskSnapshot?.enable ? { 
@@ -149,14 +155,22 @@ export class AwsInputPrompter extends AbstractInputPrompter<AwsCreateCliArgs, Aw
         
     }
 
-    private async promptRestrictToMyIp(restrictToMyIp?: boolean): Promise<boolean> {
-        if (restrictToMyIp !== undefined) {
-            return restrictToMyIp
+    /**
+     * Resolve allowed CIDRs for security group ingress based on CLI flags.
+     *
+     * - If --no-restrict-to-my-ip was passed, use open CIDRs (no restriction).
+     * - Otherwise (default), fetch and return the user's current IP as restricted CIDRs.
+     */
+    private async resolveAllowedCidrs(): Promise<{ ipv4: string[], ipv6: string[] }> {
+        if (!this._cliRestrictToMyIp) {
+            return { ipv4: ['0.0.0.0/0'], ipv6: ['::/0'] }
         }
-        return await confirm({
-            message: 'Restrict inbound traffic to your current IP address?',
-            default: true,
-        })
+
+        const cidrs = await fetchCurrentIpCidrs()
+        this.logger.info(
+            `Detected current IPs: IPv4=${cidrs.ipv4[0]}${cidrs.ipv6[0] ? `, IPv6=${cidrs.ipv6[0]}` : ' (no IPv6 detected)'}`
+        )
+        return cidrs
     }
 
     private async instanceType(region: string, useSpot: boolean, instanceType?: string): Promise<string> {

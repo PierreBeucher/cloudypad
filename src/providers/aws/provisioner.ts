@@ -1,35 +1,12 @@
-import * as https from 'https';
 import { SshKeyLoader } from '../../tools/ssh';
 import { AwsPulumiClient, PulumiStackConfigAws } from './pulumi/main';
 import { AwsDataDiskSnapshotPulumiClient, PulumiStackConfigAwsDataDiskSnapshot } from './pulumi/data-volume-snapshot';
 import { AwsBaseImagePulumiClient, PulumiStackConfigAwsBaseImage } from './pulumi/base-image-snapshot';
 import { AbstractInstanceProvisioner, InstanceProvisionerArgs, ProvisionerActionOptions } from '../../core/provisioner';
 import { AwsClient } from './sdk-client';
+import { fetchCurrentIpCidrs } from '../../tools/ip';
 import { AwsProvisionInputV1, AwsProvisionOutputV1 } from './state';
 import { DATA_DISK_STATE_LIVE, DATA_DISK_STATE_SNAPSHOT } from '../../core/const';
-
-/**
- * Fetch the current external IP address using the specified address family.
- * Returns undefined if the request fails or times out (e.g. no IPv6 connectivity).
- */
-function fetchCurrentIp(family: 4 | 6, timeoutMs = 5000): Promise<string | undefined> {
-    return new Promise((resolve) => {
-        const req = https.request({
-            hostname: 'checkip.global.api.aws',
-            path: '/',
-            method: 'GET',
-            family,
-            timeout: timeoutMs,
-        }, (res) => {
-            let data = ''
-            res.on('data', (chunk: string) => { data += chunk })
-            res.on('end', () => resolve(data.trim()))
-        })
-        req.on('timeout', () => { req.destroy(); resolve(undefined) })
-        req.on('error', () => resolve(undefined))
-        req.end()
-    })
-}
 
 export type AwsProvisionerArgs = InstanceProvisionerArgs<AwsProvisionInputV1, AwsProvisionOutputV1>
 
@@ -170,19 +147,15 @@ export class AwsProvisioner extends AbstractInstanceProvisioner<AwsProvisionInpu
     private async buildMainPulumiConfig(): Promise<PulumiStackConfigAws> {
         const sshPublicKeyContent = new SshKeyLoader().loadSshPublicKeyContent(this.args.provisionInput.ssh)
 
-        let allowedCidrs: { ipv4: string[], ipv6: string[] } | undefined = undefined
-        if (this.args.provisionInput.restrictToMyIp) {
-            const [ipv4, ipv6] = await Promise.all([fetchCurrentIp(4), fetchCurrentIp(6)])
-
-            if (!ipv4) {
-                throw new Error("Could not detect current IPv4 address. Check your internet connection, or use --no-restrict-to-my-ip to skip IP restriction.")
-            }
-
-            this.logger.info(`Detected current IPs for security group: IPv4=${ipv4}${ipv6 ? `, IPv6=${ipv6}` : " (no IPv6 detected)"}`)
-            allowedCidrs = {
-                ipv4: [`${ipv4}/32`],
-                ipv6: ipv6 ? [`${ipv6}/128`] : [],
-            }
+        // If the user chose open access (0.0.0.0/0), preserve that choice as-is.
+        // If the user chose IP restriction, re-fetch their current IP on every provision
+        // so the security group stays current across create and start flows.
+        let allowedCidrs = this.args.provisionInput.allowedCidrs
+        if (allowedCidrs.ipv4[0] !== '0.0.0.0/0') {
+            allowedCidrs = await fetchCurrentIpCidrs()
+            this.logger.info(
+                `Refreshed IPs for security group: IPv4=${allowedCidrs.ipv4[0]}${allowedCidrs.ipv6[0] ? `, IPv6=${allowedCidrs.ipv6[0]}` : ' (no IPv6 detected)'}`
+            )
         }
 
         return {
