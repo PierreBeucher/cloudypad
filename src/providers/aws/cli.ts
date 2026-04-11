@@ -348,7 +348,7 @@ export class AwsCliCommandGenerator extends CliCommandGenerator {
                     console.error("")
                     console.error("⚠️ Your instance was not created successfully. To cleanup resources and avoid leaving orphaned resources which may be charged, run:")
                     console.error("")
-                    console.error("    cloudypad destroy <instance-name>")
+                    console.error(`    cloudypad destroy ${cliArgs.name ?? "<instance-name>"}`)
 
                     handleErrorAnalytics(error)
                     await cleanupAndExit(1)
