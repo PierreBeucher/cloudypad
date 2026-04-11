@@ -333,6 +333,10 @@ export class GenericInstanceManager<ST extends InstanceStateV1> implements Insta
         // After provision and configure, create base image snapshot if enabled
         const currentState = await this.getState()
         if (currentState.provision.input.baseImageSnapshot?.enable) {
+            console.info("")
+            console.info("Creating a base image snapshot of your instance. This will stop the instance temporarily and may take several minutes.")
+            console.info("The snapshot is used to speed up future starts by skipping the initial setup steps.")
+            console.info("")
             await this.doBaseImageSnapshotProvision(opts)
         }
     }
