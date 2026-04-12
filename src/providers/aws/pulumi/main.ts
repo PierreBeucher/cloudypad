@@ -65,7 +65,7 @@ interface CloudyPadEC2instanceArgs {
  * Multiple replicas of CompositeEC2Instance
  */
 class CloudyPadEC2Instance extends pulumi.ComponentResource {
-    
+
     private readonly ec2Instance?: aws.ec2.Instance
     private readonly volumes: aws.ebs.Volume[]
     private readonly dataDisk?: aws.ebs.Volume
@@ -197,7 +197,7 @@ class CloudyPadEC2Instance extends pulumi.ComponentResource {
                     "associatePublicIpAddress",
                     // Don't update AMI as it will replace instance, destroying disk and user's data
                     // TODO support such change while keeping user's data
-                    "ami" 
+                    "ami"
                 ]
             })
 
@@ -219,7 +219,7 @@ class CloudyPadEC2Instance extends pulumi.ComponentResource {
                     ...commonPulumiOpts,
                     dependsOn: [this.ec2Instance]
                 })
-                
+
                 new aws.ec2.VolumeAttachment(`${name}-data-disk-attach`, {
                     deviceName: "/dev/sdf",
                     volumeId: this.dataDisk.id,
@@ -228,14 +228,14 @@ class CloudyPadEC2Instance extends pulumi.ComponentResource {
                     ...commonPulumiOpts,
                     dependsOn: [this.ec2Instance, this.dataDisk]
                 })
-                
+
                 this.dataDiskId = this.dataDisk.id
             } else {
                 this.dataDiskId = undefined
             }
 
             this.volumes = []
-            args.additionalVolumes?.forEach(v => {        
+            args.additionalVolumes?.forEach(v => {
                 const vol = new aws.ebs.Volume(`${name}-volume-${v.deviceName}`, {
                     encrypted: v.encrypted || true,
                     availabilityZone: v.availabilityZone || this.ec2Instance!.availabilityZone,
@@ -245,7 +245,7 @@ class CloudyPadEC2Instance extends pulumi.ComponentResource {
                     throughput: v.throughput,
                     tags: globalTags
                 }, commonPulumiOpts);
-        
+
                 new aws.ec2.VolumeAttachment(`${name}-volume-attach-${v.deviceName}`, {
                     deviceName: v.deviceName,
                     volumeId: vol.id,
@@ -270,7 +270,7 @@ class CloudyPadEC2Instance extends pulumi.ComponentResource {
             this.eip = new aws.ec2.Eip(`${name}-eip`, {
                 tags: globalTags
             }, commonPulumiOpts);
-            
+
             // Attach IP to instance if it exists
             // otherwise keep IP
             if(this.ec2Instance){
@@ -285,6 +285,74 @@ class CloudyPadEC2Instance extends pulumi.ComponentResource {
         }
 
         this.publicIp = this.eip ? this.eip.publicIp : this.ec2Instance?.publicIp || pulumi.output("")
+    }
+}
+
+interface CloudyPadVpcArgs {
+    instanceName: string
+    zone?: string
+    region: string
+}
+
+class CloudyPadVpc extends pulumi.ComponentResource {
+    readonly vpcId: pulumi.Output<string>
+    readonly subnetId: pulumi.Output<string>
+
+    constructor(name: string, args: CloudyPadVpcArgs, opts?: pulumi.ComponentResourceOptions) {
+        super("crafteo:cloudypad:aws:vpc", name, args, opts)
+
+        const { instanceName, region } = args
+        // Use specified zone, or default to {region}a for deterministic AZ assignment.
+        // This ensures repeated Pulumi runs always target the same AZ, keeping EBS volumes and instances co-located.
+        const targetAz = args.zone ?? `${region}a`
+
+        const vpc = new aws.ec2.Vpc(`${instanceName}-vpc`, {
+            cidrBlock: "10.0.0.0/16",
+            enableDnsHostnames: true,
+            enableDnsSupport: true,
+            assignGeneratedIpv6CidrBlock: true,
+            tags: { Name: `CloudyPad-${instanceName}` },
+        }, { parent: this })
+
+        const igw = new aws.ec2.InternetGateway(`${instanceName}-igw`, {
+            vpcId: vpc.id,
+            tags: { Name: `CloudyPad-${instanceName}` },
+        }, { parent: this })
+
+        const routeTable = new aws.ec2.RouteTable(`${instanceName}-rt`, {
+            vpcId: vpc.id,
+            routes: [
+                { cidrBlock: "0.0.0.0/0", gatewayId: igw.id },
+                { ipv6CidrBlock: "::/0", gatewayId: igw.id },
+            ],
+            tags: { Name: `CloudyPad-${instanceName}` },
+        }, { parent: this })
+
+        const ipv6CidrBlock = vpc.ipv6CidrBlock.apply(cidr => {
+            if (!cidr.endsWith("::/56")) throw new Error(`Expected VPC IPv6 CIDR to be a /56, got: ${cidr}`)
+            const base = cidr.replace("::/56", "").slice(0, -2)
+            return `${base}00::/64`
+        })
+
+        const subnet = new aws.ec2.Subnet(`${instanceName}-subnet`, {
+            vpcId: vpc.id,
+            cidrBlock: "10.0.0.0/24",
+            ipv6CidrBlock: ipv6CidrBlock,
+            availabilityZone: targetAz,
+            mapPublicIpOnLaunch: true,
+            assignIpv6AddressOnCreation: true,
+            tags: { Name: `CloudyPad-${instanceName}-${targetAz}` },
+        }, { parent: this })
+
+        new aws.ec2.RouteTableAssociation(`${instanceName}-rta`, {
+            subnetId: subnet.id,
+            routeTableId: routeTable.id,
+        }, { parent: this })
+
+        this.vpcId = vpc.id
+        this.subnetId = subnet.id
+
+        this.registerOutputs({ vpcId: this.vpcId, subnetId: this.subnetId })
     }
 }
 
@@ -308,7 +376,20 @@ async function awsPulumiProgram(): Promise<Record<string, any> | void> {
     const billingAlertLimit = config.get("billingAlertLimit");
     const billingAlertNotificationEmail = config.get("billingAlertNotificationEmail");
 
+    const dedicatedVpc = config.getObject<{ enabled: boolean }>("dedicatedVpc")
+
     const instanceName = pulumi.getStack()
+
+    // Create a dedicated VPC with public subnet if requested (e.g. when account has no default VPC)
+    let vpcId: pulumi.Output<string> | undefined = undefined
+    let subnetId: pulumi.Output<string> | undefined = undefined
+
+    if (dedicatedVpc?.enabled) {
+        const region = new pulumi.Config("aws").require("region")
+        const cloudypadVpc = new CloudyPadVpc(`${instanceName}-cloudypad-vpc`, { instanceName, zone, region })
+        vpcId = cloudypadVpc.vpcId
+        subnetId = cloudypadVpc.subnetId
+    }
 
     // Use provided imageId if available, otherwise use default Ubuntu AMI
     const amiId = imageId ? pulumi.output(imageId) : aws.ec2.getAmiOutput({
@@ -318,7 +399,7 @@ async function awsPulumiProgram(): Promise<Record<string, any> | void> {
             {
                 name: "name",
                 // Use a specific version as much as possible to avoid reproducibility issues
-                // Can't use AMI ID as it's region dependent 
+                // Can't use AMI ID as it's region dependent
                 // and specifying AMI for all regions may not yield expected results and would be hard to maintain
                 values: ["ubuntu/images/hvm-ssd-gp3/ubuntu-noble-24.04-amd64-server-*"],
             },
@@ -329,7 +410,7 @@ async function awsPulumiProgram(): Promise<Record<string, any> | void> {
         ],
         owners: ["099720109477"],
     }).imageId
-    
+
     let billingAlert: {
         limit: pulumi.Input<string>
         notificationEmail: pulumi.Input<string>
@@ -353,6 +434,8 @@ async function awsPulumiProgram(): Promise<Record<string, any> | void> {
         ami: amiId,
         type: instanceType,
         availabilityZone: zone,
+        vpcId: vpcId,
+        subnetId: subnetId,
         publicKeyContent: publicKeyContent,
         rootVolume: {
             type: "gp3",
@@ -368,9 +451,9 @@ async function awsPulumiProgram(): Promise<Record<string, any> | void> {
         dataDisk: dataDisk,
         instanceServerState: instanceServerState,
         ingressPorts: ingressPorts.map(p => ({
-            fromPort: p.port, 
-            toPort: p.port, 
-            protocol: p.protocol, 
+            fromPort: p.port,
+            toPort: p.port,
+            protocol: p.protocol,
             cidrBlocks: ["0.0.0.0/0"],
             ipv6CidrBlocks: ["::/0"]
         }))
@@ -405,6 +488,7 @@ export interface PulumiStackConfigAws {
         notificationEmail: string
     },
     ingressPorts: SimplePortDefinition[]
+    dedicatedVpc?: { enabled: boolean }
 }
 
 export interface AwsPulumiOutput {
@@ -423,7 +507,7 @@ export interface AwsPulumiOutput {
      * ID of the root disk volume on AWS.
      */
     rootDiskId?: string
-    
+
     /**
      * ID of the data disk volume on AWS.
      */
@@ -434,13 +518,13 @@ export interface AwsPulumiClientArgs {
     stackName: string
     workspaceOptions?: LocalWorkspaceOptions
 }
-    
+
 export class AwsPulumiClient extends InstancePulumiClient<PulumiStackConfigAws, AwsPulumiOutput> {
 
     constructor(args: AwsPulumiClientArgs){
-        super({ 
-            program: awsPulumiProgram, 
-            projectName: "CloudyPad-AWS", 
+        super({
+            program: awsPulumiProgram,
+            projectName: "CloudyPad-AWS",
             stackName: args.stackName,
             workspaceOptions: args.workspaceOptions
         })
@@ -459,6 +543,7 @@ export class AwsPulumiClient extends InstancePulumiClient<PulumiStackConfigAws, 
         await stack.setConfig("ingressPorts", { value: JSON.stringify(config.ingressPorts)})
 
         if(config.zone) await stack.setConfig("zone", { value: config.zone})
+        if(config.dedicatedVpc !== undefined) await stack.setConfig("dedicatedVpc", { value: JSON.stringify(config.dedicatedVpc) })
         if(config.imageId) await stack.setConfig("imageId", { value: config.imageId})
         if(config.instanceServerState) await stack.setConfig("instanceServerState", { value: config.instanceServerState})
         if(config.dataDisk) await stack.setConfig("dataDisk", { value: JSON.stringify(config.dataDisk)})
@@ -482,7 +567,7 @@ export class AwsPulumiClient extends InstancePulumiClient<PulumiStackConfigAws, 
             publicIp: outputs["publicIp"]?.value || "" as string,
             rootDiskId: outputs["rootDiskId"]?.value as string | undefined,
             dataDiskId: outputs["dataDiskId"]?.value as string | undefined
-        }   
+        }
     }
 
 }

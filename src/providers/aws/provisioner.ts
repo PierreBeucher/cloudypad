@@ -168,6 +168,7 @@ export class AwsProvisioner extends AbstractInstanceProvisioner<AwsProvisionInpu
             } : undefined,
             // use base image ID from input if available, otherwise use output base image ID (created during deploy)
             imageId: this.args.provisionInput?.imageId ?? this.args.provisionOutput?.baseImageId,
+            dedicatedVpc: this.args.provisionInput.dedicatedVpc,
         }
     }
 
