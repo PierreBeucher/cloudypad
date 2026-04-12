@@ -111,6 +111,7 @@ export const DUMMY_GCP_PULUMI_OUTPUT: GcpPulumiOutput = { instanceName: "dummy-g
 export const DUMMY_SCALEWAY_PULUMI_OUTPUT: ScalewayPulumiOutput = { 
     instanceServerName: "dummy-scw", 
     publicIp: "127.0.0.1", 
+    instanceHostname: "scaleway.example.com",
     instanceServerId: "server-123456789",
     rootDiskId: "disk-123456789",
     dataDiskId: null,

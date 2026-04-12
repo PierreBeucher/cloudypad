@@ -108,7 +108,7 @@ export class ScalewayProvisioner extends AbstractInstanceProvisioner<ScalewayPro
         return {
             // re-use output from previous state as much as possible, but main provision updates most of it
             ...(this.args.provisionOutput ?? {}),
-            host: pulumiOutputs.publicIp,
+            host: pulumiOutputs.instanceHostname,
             publicIPv4: pulumiOutputs.publicIp,
             instanceServerName: pulumiOutputs.instanceServerName ?? undefined,
             instanceServerId: pulumiOutputs.instanceServerId ?? undefined,
@@ -178,6 +178,10 @@ export class ScalewayProvisioner extends AbstractInstanceProvisioner<ScalewayPro
             imageId: this.args.provisionInput?.imageId ?? this.args.provisionOutput?.baseImageId,
             securityGroupPorts: this.getStreamingServerPorts(),
             publicKeyContent: sshPublicKeyContent,
+            dns: this.args.provisionInput.dns ? {
+                domainName: this.args.provisionInput.dns.domainName,
+                record: this.args.provisionInput.dns.record,
+            } : undefined,
         }
     }
 

@@ -18,6 +18,8 @@ describe('Scaleway lifecycle', () => {
     const projectId = "02d02f86-9414-4161-b807-efb2bd22d266"
     const region = "fr-par"
     const zone = "fr-par-2"
+    const dnsZone = "test-core.cloudypad.gg"
+    const dnsRecordName = "instance-lifecycle"
 
     let currentInstanceServerId: string | undefined = undefined
 
@@ -60,6 +62,10 @@ describe('Scaleway lifecycle', () => {
                     enable: true,
                 },
                 deleteInstanceServerOnStop: true,
+                dns: {
+                    domainName: dnsZone,
+                    record: dnsRecordName,
+                },
             }, {
                 sunshine: {
                     enable: true,
@@ -120,6 +126,26 @@ describe('Scaleway lifecycle', () => {
         assert.ok(image, "Base image should exist in Scaleway")
         const imageId = extractId(image.id || '')
         assert.strictEqual(imageId, baseImageId, "Base image ID should match state output")
+
+        // should have a FQDN as hostname
+        const instanceHostname = state.provision.output?.host
+        assert.ok(instanceHostname.endsWith(`.${dnsZone}`), `hostname should end with ${dnsZone}`)
+
+        // should have a DNS A record pointing to instance public IP
+        // matching our inputs
+        const instanceIp = state.provision.output?.publicIPv4
+        assert.ok(instanceIp, "publicIPv4 should be in output")
+
+        const scwClient = getScalewayClient()
+        const records = await scwClient.listDnsZoneRecords(dnsZone)
+
+        logger.info(`DNS records for zone ${dnsZone}: ${JSON.stringify(records)}`)
+        const instanceRecordName = instanceHostname.replace(`.${dnsZone}`, '')
+        const aRecord = records.find(r => r.type === "A" && r.name === instanceRecordName)
+        assert.ok(aRecord, `DNS A record for '${instanceHostname}' should exist after deploy`)
+        assert.strictEqual(aRecord.data, instanceIp, `DNS record should point to instance IP ${instanceIp}`)
+        assert.strictEqual(aRecord.name, dnsRecordName, `DNS record name should be ${dnsRecordName}`)
+    
     }).timeout(10000)
 
     it('should verify instance configuration after deployment', async () => {
@@ -166,13 +192,13 @@ describe('Scaleway lifecycle', () => {
         const scalewayClient = getScalewayClient()
         
         const serverStatus = await scalewayClient.getInstanceStatus(currentInstanceServerId)
-        // assert.strictEqual(serverStatus, ScalewayServerState.Running)
+        assert.strictEqual(serverStatus, ScalewayServerState.Running)
     }).timeout(10000)
 
     // run twice for idempotency
     for (let i = 0; i < 2; i++) { 
 
-        it(`should stop instance and keep instance server (${i+1}/2 for idempotency)`, async () => {
+        it(`should stop instance (${i+1}/2 for idempotency)`, async () => {
             const instanceManager = await scalewayProviderClient.getInstanceManager(instanceName)
             await instanceManager.stop({ wait: true })
 
@@ -184,6 +210,17 @@ describe('Scaleway lifecycle', () => {
             assert.strictEqual(state.provision.output?.instanceServerId, undefined, "instanceServerId should be undefined after stop")
             assert.strictEqual(state.provision.output?.dataDiskId, undefined, "dataDiskId should be undefined after stop")
             assert.ok(state.provision.output?.dataDiskSnapshotId, "dataDiskSnapshotId should be in output after stop")
+
+            // host should still be the FQDN after stop
+            assert.strictEqual(state.provision.output?.host, `${dnsRecordName}.${dnsZone}`, "host should be FQDN after stop")
+
+            // DNS A record should persist but point to TEST-NET while server is gone
+            const scwClient = getScalewayClient()
+            const records = await scwClient.listDnsZoneRecords(dnsZone)
+            assert.ok(records.length > 0, `DNS A record '${dnsRecordName}.${dnsZone}' should still exist after stop`)
+            const aRecord = records.find(r => r.type === "A")
+            assert.ok(aRecord, "DNS A record type should still exist after stop")
+            assert.strictEqual(aRecord.data, "192.0.2.1", "DNS record should point to TEST-NET 192.0.2.1 while stopped")
         }).timeout(120000)
     }
 
@@ -195,9 +232,9 @@ describe('Scaleway lifecycle', () => {
             await instanceManager.start({ wait: true })
 
             const instanceStatus = await instanceManager.getInstanceStatus()
-            assert.strictEqual(instanceStatus.configured, true)
             assert.strictEqual(instanceStatus.provisioned, true)
             assert.strictEqual(instanceStatus.serverStatus, ServerRunningStatus.Running)
+            // assert.strictEqual(instanceStatus.configured, true) // skipped: CLOUDYPAD_SKIP_CONFIGURATION=true
 
             const state = await getCurrentTestState()
             assert.ok(state.provision.output?.instanceServerId, "instanceServerId should exist after start")
@@ -205,6 +242,21 @@ describe('Scaleway lifecycle', () => {
             assert.ok(state.provision.output?.dataDiskSnapshotId, "dataDiskSnapshotId should exist after start")
 
             currentInstanceServerId = state.provision.output.instanceServerId
+
+            // host should still be the FQDN after start
+            const instanceIp = state.provision.output?.publicIPv4
+            assert.ok(instanceIp, "publicIPv4 should be set after start")
+            assert.strictEqual(state.provision.output?.host, `${dnsRecordName}.${dnsZone}`, "host should be FQDN after start")
+
+            // DNS A record should point to the new real public IP
+            const scwClient = getScalewayClient()
+            const records = await scwClient.listDnsZoneRecords(dnsZone)
+            logger.info(`DNS records after start for ${dnsRecordName}.${dnsZone}: ${JSON.stringify(records)}`)
+            assert.ok(records.length > 0, `DNS A record '${dnsRecordName}.${dnsZone}' should exist after start`)
+            const aRecord = records.find(r => r.type === "A")
+            assert.ok(aRecord, "DNS A record type should exist after start")
+            assert.strictEqual(aRecord.data, instanceIp, `DNS record should point to instance IP ${instanceIp} after start`)
+            assert.strictEqual(aRecord.name, dnsRecordName, `DNS record name should be ${dnsRecordName} after start`)
         }).timeout(120000)
     }
 
@@ -219,7 +271,6 @@ describe('Scaleway lifecycle', () => {
             await new Promise(resolve => setTimeout(resolve, 5000)) // wait for 5 seconds before retrying
         }
         assert.strictEqual(isReady, true)
-
     }).timeout(120000)
 
     it('should verify instance configuration after stop/start', async () => {

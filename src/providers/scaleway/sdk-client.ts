@@ -1,5 +1,5 @@
 import { getLogger, Logger } from '../../log/utils'
-import { createClient, Instance, Vpc, Account, Marketplace, Profile, Block } from '@scaleway/sdk'
+import { createClient, Instance, Vpc, Account, Marketplace, Profile, Block, Domain } from '@scaleway/sdk'
 import { loadProfileFromConfigurationFile } from '@scaleway/configuration-loader'
 
 interface StartStopActionOpts {
@@ -125,6 +125,7 @@ export class ScalewayClient {
     private readonly accountProjectClient: Account.v3.ProjectAPI
     private readonly marketplaceClient: Marketplace.v2.API
     private readonly blockClient: Block.v1alpha1.API
+    private readonly domainClient: Domain.v2beta1.API
 
     constructor(name: string, args: ScalewayClientArgs) {
         const profile = ScalewayClient.loadProfileFromConfigurationFile()
@@ -139,6 +140,7 @@ export class ScalewayClient {
         this.accountProjectClient = new Account.v3.ProjectAPI(client)
         this.marketplaceClient = new Marketplace.v2.API(client)
         this.blockClient = new Block.v1alpha1.API(client)
+        this.domainClient = new Domain.v2beta1.API(client)
     }
 
     async listInstances(): Promise<ScalewayVMDetails[]> {
@@ -355,6 +357,28 @@ export class ScalewayClient {
                     reject(error)
                 })
         })
+    }
+
+    /**
+     * List all DNS records for a given zone.
+     * @param dnsZone Full DNS zone name, e.g. "test-core.cloudypad.gg"
+     * @returns All DNS records in the zone
+     */
+    async listDnsZoneRecords(dnsZone: string): Promise<Domain.v2beta1.DomainRecord[]> {
+        this.logger.debug(`Listing DNS zone records for zone '${dnsZone}'`)
+        const response = await this.domainClient.listDNSZoneRecords({ dnsZone, name: "" })
+        return response.records
+    }
+
+    /**
+     * List nameservers for a given DNS zone.
+     * @param dnsZone Full DNS zone name, e.g. "test-core.cloudypad.gg"
+     * @returns List of nameservers for the zone
+     */
+    async listDnsZoneNameservers(dnsZone: string): Promise<Domain.v2beta1.Nameserver[]> {
+        this.logger.debug(`Listing DNS zone nameservers for zone '${dnsZone}'`)
+        const response = await this.domainClient.listDNSZoneNameservers({ dnsZone })
+        return response.ns
     }
     
 }
