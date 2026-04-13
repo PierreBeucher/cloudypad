@@ -431,7 +431,6 @@ export abstract class AbstractInputPrompter<
 
         if(sunshinePassword.length == 0){
             const generated = crypto.randomBytes(16).toString('hex')
-            console.info(`Generated Sunshine Web UI password: ${generated}`)
             return Buffer.from(generated).toString('base64')
         }
 
