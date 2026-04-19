@@ -25,6 +25,9 @@ describe('AWS input prompter', () => {
                 limit: 999,
                 notificationEmail: "dummy@crafteo.io",
             },
+            dedicatedVpc: {
+                enabled: true,
+            },
             dataDiskSizeGb: 100,
             baseImageSnapshot: {
                 enable: true,
@@ -55,6 +58,7 @@ describe('AWS input prompter', () => {
         dataDiskSnapshot: TEST_INPUT.provision.dataDiskSnapshot?.enable,
         deleteInstanceServerOnStop: TEST_INPUT.provision.deleteInstanceServerOnStop,
         dataDiskSize: TEST_INPUT.provision.dataDiskSizeGb,
+        dedicatedVpc: TEST_INPUT.provision.dedicatedVpc?.enabled,
     }
 
     it('should return provided inputs without prompting when full input provider', async () => {
