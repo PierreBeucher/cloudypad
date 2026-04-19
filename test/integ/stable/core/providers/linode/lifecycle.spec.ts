@@ -1,4 +1,5 @@
 import * as assert from 'assert'
+import { fetchCurrentIpCidrs } from '../../../../../../src/tools/ip'
 import { LinodeClient } from '../../../../../../src/providers/linode/sdk-client'
 import { LinodeInstanceStateV1 } from '../../../../../../src/providers/linode/state'
 import { getIntegTestCoreConfig, runVerifyPlaybook } from '../../../../utils'
@@ -25,6 +26,19 @@ describe('Linode lifecycle', () => {
     const rootDiskSizeGb = 25
     const dataDiskSizeGb = 10
 
+    // Restrict access to the current host external IP so Ansible can still reach the instance.
+    // Fetched fresh on each test that needs it (at init and verification time) so that test phases
+    // can run independently across iterations.
+    async function getCurrentAllowedCidrs(): Promise<{ ipv4: string[], ipv6: string[] }> {
+        const cidrs = await fetchCurrentIpCidrs()
+        const result = {
+            ipv4: cidrs.ipv4,
+            ipv6: cidrs.ipv6.length > 0 ? cidrs.ipv6 : ['::/0'],
+        }
+        logger.info(`Using allowedCidrs: ${JSON.stringify(result)}`)
+        return result
+    }
+
     async function getCurrentTestState(): Promise<LinodeInstanceStateV1> {
         return linodeProviderClient.getInstanceState(instanceName)
     }
@@ -41,6 +55,8 @@ describe('Linode lifecycle', () => {
     }
     
     // it('should initialize instance state', async () => {
+
+    //     const allowedCidrs = await getCurrentAllowedCidrs()
 
     //     const initializer = new LinodeProviderClient({config: coreConfig}).getInstanceInitializer()
     //         await initializer.initializeStateOnly(instanceName, {
@@ -62,6 +78,7 @@ describe('Linode lifecycle', () => {
     //                 enable: true,
     //             },
     //             additionalLabels: ['test-label-1', 'test-label-2'],
+    //             allowedCidrs: allowedCidrs,
     //         }, {
     //             sunshine: {
     //                 enable: true,
@@ -148,6 +165,19 @@ describe('Linode lifecycle', () => {
             actualTags.some(tag => tag.startsWith('instance-')),
             `Instance should have an 'instance-' tag derived from instance name. Actual tags: ${JSON.stringify(actualTags)}`
         )
+
+        // Verify firewall inbound rules contain the configured allowedCidrs
+        const firewalls = await linodeClient.getInstanceFirewalls(currentInstanceServerId)
+        assert.ok(firewalls.length > 0, "Instance should have at least one firewall attached")
+        const inboundIpv4 = firewalls.flatMap(fw => fw.rules.inbound ?? []).flatMap(r => r.addresses?.ipv4 ?? [])
+        const inboundIpv6 = firewalls.flatMap(fw => fw.rules.inbound ?? []).flatMap(r => r.addresses?.ipv6 ?? [])
+        const expectedAllowedCidrs = await getCurrentAllowedCidrs()
+        for (const cidr of expectedAllowedCidrs.ipv4) {
+            assert.ok(inboundIpv4.includes(cidr), `IPv4 CIDR ${cidr} should be in firewall inbound rules. Found: ${JSON.stringify(inboundIpv4)}`)
+        }
+        for (const cidr of expectedAllowedCidrs.ipv6) {
+            assert.ok(inboundIpv6.includes(cidr), `IPv6 CIDR ${cidr} should be in firewall inbound rules. Found: ${JSON.stringify(inboundIpv6)}`)
+        }
 
         // Verify data disk has correct labels
         assert.ok(state.provision.output?.dataDiskId, 'Data disk ID should be in output')

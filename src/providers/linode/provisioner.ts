@@ -136,6 +136,7 @@ export class LinodeProvisioner extends AbstractInstanceProvisioner<LinodeProvisi
             // or leave undefined to use default image
             imageId: this.args.provisionInput.imageId ?? this.args.provisionOutput?.baseImageId,
             securityGroupPorts: this.getStreamingServerPorts(),
+            allowedCidrs: this.args.provisionInput.allowedCidrs,
             publicKeyContent: sshPublicKeyContent,
             noInstanceServer: this.args.provisionInput.runtime?.instanceServerState === INSTANCE_SERVER_STATE_ABSENT,
             watchdogEnabled: this.args.provisionInput.watchdogEnabled,

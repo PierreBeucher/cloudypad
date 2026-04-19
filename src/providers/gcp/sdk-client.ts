@@ -1,4 +1,4 @@
-import { InstancesClient, protos, RegionsClient, MachineTypesClient, AcceleratorTypesClient, ZoneOperationsClient, DiskTypesClient, DisksClient, SnapshotsClient, ImagesClient } from '@google-cloud/compute'
+import { InstancesClient, protos, RegionsClient, MachineTypesClient, AcceleratorTypesClient, ZoneOperationsClient, DiskTypesClient, DisksClient, SnapshotsClient, ImagesClient, FirewallsClient } from '@google-cloud/compute'
 import { GoogleAuth } from 'google-auth-library'
 import { getLogger, Logger } from '../../log/utils'
 import { ProjectsClient, protos as rmprotos  } from '@google-cloud/resource-manager'
@@ -57,6 +57,7 @@ export class GcpClient {
     private readonly disks: DisksClient
     private readonly snapshots: SnapshotsClient
     private readonly images: ImagesClient
+    private readonly firewalls: FirewallsClient
 
     constructor(name: string, projectId: string){
         this.logger = getLogger(name)
@@ -69,7 +70,25 @@ export class GcpClient {
         this.disks = new DisksClient()
         this.snapshots = new SnapshotsClient()
         this.images = new ImagesClient()
+        this.firewalls = new FirewallsClient()
         this.projectId = projectId
+    }
+
+    /**
+     * Get a GCP firewall rule by name in the current project.
+     * @returns Firewall if found, null otherwise.
+     */
+    async getFirewall(firewallName: string): Promise<protos.google.cloud.compute.v1.IFirewall | null> {
+        this.logger.debug(`Getting GCP firewall ${firewallName} in project ${this.projectId}`)
+        try {
+            const [firewall] = await this.firewalls.get({ project: this.projectId, firewall: firewallName })
+            return firewall
+        } catch (error: any) {
+            if(error?.code === 5){ // NOT_FOUND
+                return null
+            }
+            throw new Error(`Failed to get firewall ${firewallName}`, { cause: error })
+        }
     }
 
     /**

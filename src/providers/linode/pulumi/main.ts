@@ -28,6 +28,14 @@ interface LinodeInstanceArgs {
     networkSecurityGroupPorts: SimplePortDefinition[]
 
     /**
+     * Allowed inbound CIDRs. If not set, defaults to open access on both IPv4 and IPv6.
+     */
+    allowedCidrs?: {
+        ipv4?: string[]
+        ipv6?: string[]
+    }
+
+    /**
      * Size of the root disk in GB.
      */
     rootVolume: {
@@ -369,8 +377,8 @@ class CloudyPadLinodeInstance extends pulumi.ComponentResource {
                 action: "ACCEPT",
                 protocol: port.protocol.toUpperCase(),
                 ports: port.port.toString(),
-                ipv4s: ["0.0.0.0/0"],
-                ipv6s: ["::/0"],
+                ipv4s: args.allowedCidrs?.ipv4 ?? ["0.0.0.0/0"],
+                ipv6s: args.allowedCidrs?.ipv6 ?? ["::/0"],
             })),
             inboundPolicy: "DROP",
             outboundPolicy: "ACCEPT",
@@ -393,6 +401,7 @@ async function linodePulumiProgram(): Promise<Record<string, any> | void> {
     const authorizedKeys = config.requireObject<string[]>("authorizedKeys")
     const rootDiskSizeGB = config.requireNumber("rootDiskSizeGB")
     const securityGroupPorts = config.requireObject<SimplePortDefinition[]>("securityGroupPorts")
+    const allowedCidrs = config.getObject<{ ipv4?: string[], ipv6?: string[] }>("allowedCidrs")
     const dataDisk = config.requireObject<LinodeInstanceArgs["dataVolume"]>("dataDisk")
     const imageId = config.get("imageId")
     const noInstanceServer = config.getBoolean("noInstanceServer")
@@ -407,6 +416,7 @@ async function linodePulumiProgram(): Promise<Record<string, any> | void> {
         region: region,
         authorizedKeys: authorizedKeys,
         networkSecurityGroupPorts: securityGroupPorts,
+        allowedCidrs: allowedCidrs,
         rootVolume: {
             sizeGb: rootDiskSizeGB,
         },
@@ -454,6 +464,10 @@ export interface PulumiStackConfigLinode {
     }
     publicKeyContent: string
     securityGroupPorts: SimplePortDefinition[]
+    allowedCidrs?: {
+        ipv4?: string[]
+        ipv6?: string[]
+    }
     dataDisk?: {
         sizeGb: number
     }
@@ -544,6 +558,7 @@ export class LinodePulumiClient extends InstancePulumiClient<PulumiStackConfigLi
         if(config.imageId) await stack.setConfig("imageId", { value: config.imageId})
         if(config.dataDisk) await stack.setConfig("dataDisk", { value: JSON.stringify(config.dataDisk)})
         if(config.watchdogEnabled !== undefined) await stack.setConfig("watchdogEnabled", { value: config.watchdogEnabled.toString()})
+        if(config.allowedCidrs) await stack.setConfig("allowedCidrs", { value: JSON.stringify(config.allowedCidrs)})
 
         await stack.setConfig("rootDiskSizeGB", { value: config.rootDisk.sizeGb.toString()})
         await stack.setConfig("authorizedKeys", { value: JSON.stringify([config.publicKeyContent])})

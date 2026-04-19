@@ -1,4 +1,5 @@
 import * as assert from 'assert';
+import { fetchCurrentIpCidrs } from '../../../../../../src/tools/ip';
 import { AzureClient, AzureVmStatus } from '../../../../../../src/providers/azure/sdk-client';
 import { AzureInstanceStateV1 } from '../../../../../../src/providers/azure/state';
 import { getIntegTestCoreConfig, runVerifyPlaybook } from '../../../../utils';
@@ -21,6 +22,19 @@ describe('Azure lifecycle', () => {
 
     let currentVmName: string | undefined = undefined;
     let currentResourceGroupName: string | undefined = undefined;
+
+    // Restrict access to the current host external IP so Ansible can still reach the instance.
+    // Fetched fresh on each test that needs it (at init and verification time) so that test phases
+    // can run independently across iterations.
+    async function getCurrentAllowedCidrs(): Promise<{ ipv4: string[], ipv6: string[] }> {
+        const cidrs = await fetchCurrentIpCidrs()
+        const result = {
+            ipv4: cidrs.ipv4,
+            ipv6: cidrs.ipv6.length > 0 ? cidrs.ipv6 : ['::/0'],
+        }
+        logger.info(`Using allowedCidrs: ${JSON.stringify(result)}`)
+        return result
+    }
 
     async function getCurrentTestState(): Promise<AzureInstanceStateV1> {
         return azureProviderClient.getInstanceState(instanceName);
@@ -52,6 +66,8 @@ describe('Azure lifecycle', () => {
     it('should initialize instance state', async () => {
         assert.strictEqual(currentVmName, undefined);
 
+        const allowedCidrs = await getCurrentAllowedCidrs()
+
         const initializer = new AzureProviderClient({config: coreConfig}).getInstanceInitializer();
         await initializer.initializeStateOnly(instanceName, {
             ssh: {
@@ -76,7 +92,8 @@ describe('Azure lifecycle', () => {
             costAlert: {
                 limit: 2,
                 notificationEmail: "test@test.com"
-            }
+            },
+            allowedCidrs: allowedCidrs,
         }, {
             sunshine: {
                 enable: true,
@@ -145,7 +162,19 @@ describe('Azure lifecycle', () => {
         const baseImage = await azureClient.getImage(resourceGroupName, baseImageName);
         assert.ok(baseImage, "Base image should exist in Azure");
         assert.strictEqual(baseImage.id, baseImageId, "Base image ID should match state output");
-    }).timeout(10000);
+
+        // Verify Network Security Group inbound rules contain the configured allowedCidrs
+        const nsgs = await azureClient.listNetworkSecurityGroups(resourceGroupName);
+        assert.ok(nsgs.length > 0, "At least one NSG should exist in the resource group");
+        const inboundPrefixes = nsgs
+            .flatMap(nsg => nsg.securityRules ?? [])
+            .filter(rule => rule.direction === "Inbound" && rule.access === "Allow")
+            .flatMap(rule => rule.sourceAddressPrefixes ?? (rule.sourceAddressPrefix ? [rule.sourceAddressPrefix] : []));
+        const expectedAllowedCidrs = await getCurrentAllowedCidrs()
+        for (const cidr of [...expectedAllowedCidrs.ipv4, ...expectedAllowedCidrs.ipv6]) {
+            assert.ok(inboundPrefixes.includes(cidr), `CIDR ${cidr} should be in NSG inbound rule prefixes. Found: ${JSON.stringify(inboundPrefixes)}`);
+        }
+    }).timeout(60*1000);
 
     it('should update instance', async () => {
         const instanceUpdater = azureProviderClient.getInstanceUpdater();

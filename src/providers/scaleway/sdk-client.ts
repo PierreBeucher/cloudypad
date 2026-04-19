@@ -141,6 +141,22 @@ export class ScalewayClient {
         this.blockClient = new Block.v1alpha1.API(client)
     }
 
+    /**
+     * Get inbound rules of the security group attached to a Scaleway server.
+     * @param serverId Scaleway server ID
+     * @returns Array of inbound security group rules; empty if server has no security group
+     */
+    async getServerInboundSecurityRules(serverId: string): Promise<Instance.v1.SecurityGroupRule[]> {
+        this.logger.debug(`Getting Scaleway security group inbound rules for server ${serverId}`)
+        const { server } = await this.instanceClient.getServer({ serverId })
+        const sgId = server?.securityGroup?.id
+        if(!sgId){
+            return []
+        }
+        const { rules } = await this.instanceClient.listSecurityGroupRules({ securityGroupId: sgId })
+        return rules.filter(r => r.direction === "inbound")
+    }
+
     async listInstances(): Promise<ScalewayVMDetails[]> {
         this.logger.debug(`Listing Scaleway virtual machines`)
 

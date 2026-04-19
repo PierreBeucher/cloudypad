@@ -177,6 +177,7 @@ export class GcpProvisioner extends AbstractInstanceProvisioner<GcpProvisionInpu
             useSpot: this.args.provisionInput.useSpot,
             costAlert: this.args.provisionInput.costAlert ?? undefined,
             firewallAllowPorts: this.getStreamingServerPorts(),
+            allowedCidrs: this.args.provisionInput.allowedCidrs,
             instanceServerState: this.args.provisionInput.runtime?.instanceServerState,
             dataDisk: this.args.provisionInput.dataDiskSizeGb ? {
                 // only set data disk as absent if desired data disk state is explicitly set to snapshot

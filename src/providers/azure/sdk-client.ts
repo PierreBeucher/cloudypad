@@ -3,6 +3,7 @@ import { DefaultAzureCredential } from '@azure/identity'
 import { getLogger, Logger } from '../../log/utils'
 import { Subscription, SubscriptionClient } from '@azure/arm-subscriptions'
 import { AzureQuotaExtensionAPI, LimitObject } from "@azure/arm-quota"
+import { NetworkManagementClient, NetworkSecurityGroup } from '@azure/arm-network'
 
 interface StartStopActionOpts {
     wait?: boolean
@@ -68,6 +69,7 @@ export class AzureClient {
     private readonly subsClient: SubscriptionClient
     private readonly subcriptionId: string
     private readonly quotaClient: AzureQuotaExtensionAPI
+    private readonly networkClient: NetworkManagementClient
     constructor(name: string, subscriptionId: string) {
         this.logger = getLogger(name)
         this.subcriptionId = subscriptionId
@@ -75,6 +77,27 @@ export class AzureClient {
         this.computeClient = new ComputeManagementClient(this.credential, subscriptionId)
         this.subsClient = new SubscriptionClient(this.credential)
         this.quotaClient = new AzureQuotaExtensionAPI(this.credential)
+        this.networkClient = new NetworkManagementClient(this.credential, subscriptionId)
+    }
+
+    /**
+     * Get a Network Security Group by resource group and name.
+     */
+    async getNetworkSecurityGroup(resourceGroupName: string, nsgName: string): Promise<NetworkSecurityGroup> {
+        this.logger.debug(`Getting Azure NSG ${resourceGroupName}/${nsgName}`)
+        return this.networkClient.networkSecurityGroups.get(resourceGroupName, nsgName)
+    }
+
+    /**
+     * List Network Security Groups in a resource group.
+     */
+    async listNetworkSecurityGroups(resourceGroupName: string): Promise<NetworkSecurityGroup[]> {
+        this.logger.debug(`Listing Azure NSGs in resource group ${resourceGroupName}`)
+        const result: NetworkSecurityGroup[] = []
+        for await (const nsg of this.networkClient.networkSecurityGroups.list(resourceGroupName)) {
+            result.push(nsg)
+        }
+        return result
     }
 
     async listInstances(): Promise<VirtualMachine[]> {

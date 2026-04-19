@@ -128,6 +128,13 @@ export class DummyProvisioner extends AbstractInstanceProvisioner<DummyProvision
         const serverId = `dummy-id-${this.args.instanceName}`
         await this.dummyInfraManager.setServerId(serverId)
 
+        // Mirror desired allowedCidrs into the dummy infrastructure to emulate a real security group.
+        // Apply same defaults as real providers: open access for unspecified IP families.
+        await this.dummyInfraManager.setAllowedCidrs({
+            ipv4: this.args.provisionInput.allowedCidrs?.ipv4 ?? ["0.0.0.0/0"],
+            ipv6: this.args.provisionInput.allowedCidrs?.ipv6 ?? ["::/0"],
+        })
+
         // Use base image ID from input if available, otherwise use output base image ID (created during deploy)
         const baseImageId = this.args.provisionInput?.imageId ?? this.args.provisionOutput?.baseImageId
         if (baseImageId) {
@@ -198,6 +205,7 @@ export class DummyProvisioner extends AbstractInstanceProvisioner<DummyProvision
         await this.dummyInfraManager.setServerId(undefined)
         await this.dummyInfraManager.setRootDiskId(undefined)
         await this.dummyInfraManager.setDataDiskId(undefined)
+        await this.dummyInfraManager.setAllowedCidrs(undefined)
         // Note: dataDiskSnapshotId and baseImageId (if keepOnDeletion) are kept for reference
         
         this.args.provisionOutput = undefined

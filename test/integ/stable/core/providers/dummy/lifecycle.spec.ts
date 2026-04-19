@@ -1,4 +1,5 @@
 import * as assert from 'assert';
+import { fetchCurrentIpCidrs } from '../../../../../../src/tools/ip';
 import { CLOUDYPAD_PROVIDER_DUMMY } from '../../../../../../src/core/const';
 import { DummyProvisionInputV1 } from '../../../../../../src/providers/dummy/state';
 import { ServerRunningStatus } from '../../../../../../src/core/runner';
@@ -13,30 +14,37 @@ describe('Dummy instance lifecycle with delay', () => {
     const DUMMY_INSTANCE_NAME = "dummy-instance-integ-lifecycle-test"
     const DUMMY_INSTANCE_TYPE = "dummy-instance-type-1"
 
-    const DUMMY_INSTANCE_INPUT: DummyInstanceInput = {
-        instanceName: DUMMY_INSTANCE_NAME,
-        configuration: {
-            configurator: CLOUDYPAD_CONFIGURATOR_ANSIBLE,
-        },
-        provision: {
-            instanceType: DUMMY_INSTANCE_TYPE,
-            startDelaySeconds: 1,
-            stopDelaySeconds: 1,
-            configurationDelaySeconds: 1,
-            provisioningDelaySeconds: 1,
-            readinessAfterStartDelaySeconds: 1,
-            initialServerStateAfterProvision: "running",
-            ssh: {
-                user: "dummy-user",
+    it('should ensure dummy infra lifecycle works', async () => {
+        const cidrs = await fetchCurrentIpCidrs()
+        const dummyAllowedCidrs = {
+            ipv4: cidrs.ipv4,
+            ipv6: cidrs.ipv6.length > 0 ? cidrs.ipv6 : ['::/0'],
+        }
+
+        const dummyInstanceInput: DummyInstanceInput = {
+            instanceName: DUMMY_INSTANCE_NAME,
+            configuration: {
+                configurator: CLOUDYPAD_CONFIGURATOR_ANSIBLE,
+            },
+            provision: {
+                instanceType: DUMMY_INSTANCE_TYPE,
+                startDelaySeconds: 1,
+                stopDelaySeconds: 1,
+                configurationDelaySeconds: 1,
+                provisioningDelaySeconds: 1,
+                readinessAfterStartDelaySeconds: 1,
+                initialServerStateAfterProvision: "running",
+                ssh: {
+                    user: "dummy-user",
+                },
+                allowedCidrs: dummyAllowedCidrs,
             }
         }
-    }
 
-    it('should ensure dummy infra lifecycle works', async () => {
         const coreConfig = getUnitTestCoreConfig()
         const dummyProviderClient = new DummyProviderClient({ config: coreConfig })
         const initializer = dummyProviderClient.getInstanceInitializer()
-        await initializer.initializeStateOnly(DUMMY_INSTANCE_NAME, DUMMY_INSTANCE_INPUT.provision, DUMMY_INSTANCE_INPUT.configuration)
+        await initializer.initializeStateOnly(DUMMY_INSTANCE_NAME, dummyInstanceInput.provision, dummyInstanceInput.configuration)
 
         const manager = await dummyProviderClient.getInstanceManager(DUMMY_INSTANCE_NAME)
 
@@ -58,6 +66,11 @@ describe('Dummy instance lifecycle with delay', () => {
         assert.equal(statusAfterProvision.configured, false, 'Instance should not be configured after provisioning')
         assert.equal(statusAfterProvision.serverStatus, ServerRunningStatus.Running, 'Instance should be running after provisioning')
         assert.equal(statusAfterProvision.ready, false, 'Instance should not be ready before provisioning')
+
+        // Verify the dummy infrastructure mirrors the configured allowedCidrs
+        const stateAfterProvision = await dummyProviderClient.getInstanceState(DUMMY_INSTANCE_NAME)
+        assert.deepEqual(stateAfterProvision.dummyInfrastructure?.allowedCidrs, dummyAllowedCidrs,
+            'Dummy infrastructure should reflect the allowedCidrs from provision input')
 
         const configureStartTime = Date.now()
         await manager.configure()   
