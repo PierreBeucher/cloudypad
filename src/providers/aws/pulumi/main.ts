@@ -492,8 +492,8 @@ export interface PulumiStackConfigAws {
     ingressPorts: SimplePortDefinition[]
     dedicatedVpc?: { enabled: boolean }
     allowedCidrs?: {
-        ipv4: string[]
-        ipv6: string[]
+        ipv4?: string[]
+        ipv6?: string[]
     }
 }
 

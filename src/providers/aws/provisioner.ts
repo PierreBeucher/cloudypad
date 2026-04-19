@@ -4,7 +4,6 @@ import { AwsDataDiskSnapshotPulumiClient, PulumiStackConfigAwsDataDiskSnapshot }
 import { AwsBaseImagePulumiClient, PulumiStackConfigAwsBaseImage } from './pulumi/base-image-snapshot';
 import { AbstractInstanceProvisioner, InstanceProvisionerArgs, ProvisionerActionOptions } from '../../core/provisioner';
 import { AwsClient } from './sdk-client';
-import { fetchCurrentIpCidrs } from '../../tools/ip';
 import { AwsProvisionInputV1, AwsProvisionOutputV1 } from './state';
 import { DATA_DISK_STATE_LIVE, DATA_DISK_STATE_SNAPSHOT } from '../../core/const';
 
@@ -147,17 +146,6 @@ export class AwsProvisioner extends AbstractInstanceProvisioner<AwsProvisionInpu
     private async buildMainPulumiConfig(): Promise<PulumiStackConfigAws> {
         const sshPublicKeyContent = new SshKeyLoader().loadSshPublicKeyContent(this.args.provisionInput.ssh)
 
-        // If the user chose open access (0.0.0.0/0), preserve that choice as-is.
-        // If the user chose IP restriction, re-fetch their current IP on every provision
-        // so the security group stays current across create and start flows.
-        let allowedCidrs = this.args.provisionInput.allowedCidrs
-        if (allowedCidrs.ipv4[0] !== '0.0.0.0/0') {
-            allowedCidrs = await fetchCurrentIpCidrs()
-            this.logger.info(
-                `Refreshed IPs for security group: IPv4=${allowedCidrs.ipv4[0]}${allowedCidrs.ipv6[0] ? `, IPv6=${allowedCidrs.ipv6[0]}` : ' (no IPv6 detected)'}`
-            )
-        }
-
         return {
             instanceType: this.args.provisionInput.instanceType,
             publicIpType: this.args.provisionInput.publicIpType,
@@ -168,7 +156,7 @@ export class AwsProvisioner extends AbstractInstanceProvisioner<AwsProvisionInpu
             useSpot: this.args.provisionInput.useSpot,
             billingAlert: this.args.provisionInput.costAlert ?? undefined,
             ingressPorts: this.getStreamingServerPorts(),
-            allowedCidrs,
+            allowedCidrs: this.args.provisionInput.allowedCidrs,
             instanceServerState: this.args.provisionInput.runtime?.instanceServerState,
             dataDisk: this.args.provisionInput.dataDiskSizeGb ? {
                 // only set data disk as absent if desired data disk state is explicitly set to snapshot

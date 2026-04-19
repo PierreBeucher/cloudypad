@@ -42,6 +42,10 @@ const CommonProvisionInputV1Schema = z.object({
     }).optional().describe("Base image snapshot configuration to capture configured system (NVIDIA drivers, Cloudy Pad, etc.)"),
     deleteInstanceServerOnStop: z.boolean().describe("Whether instance server should be deleted on instance stop and re-created on next start").optional(),
     imageId: z.string().optional().describe("Existing image ID for instance server. If set, disk size must be equal or greater than image size. Format is provider-specific (e.g., AMI ID for AWS, image ID for GCP, etc.)."),
+    allowedCidrs: z.object({
+        ipv4: z.array(z.string()).optional().describe("Allowed IPv4 CIDRs for inbound traffic. Default: ['0.0.0.0/0'] (open access)."),
+        ipv6: z.array(z.string()).optional().describe("Allowed IPv6 CIDRs for inbound traffic. Default: ['::/0'] (open access)."),
+    }).optional().describe("Allowed CIDRs for inbound traffic to instance. Defaults to open access; set to specific ranges to restrict inbound traffic to those IPs. Whether and how it's enforced depends on provider implementation."),
     
     // Runtime state (updated by manager before calling provision to control provisioner behavior)
     // These represent the desired state of resources and are updated on start/stop operations

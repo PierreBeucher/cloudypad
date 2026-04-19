@@ -1,5 +1,4 @@
 import { AwsInstanceInput, AwsInstanceStateV1, AwsProvisionInputV1, AwsStateParser } from "./state"
-import { fetchCurrentIpCidrs } from '../../tools/ip'
 import { CommonConfigurationInputV1, CommonInstanceInput } from "../../core/state/state"
 import { input, select, confirm } from '@inquirer/prompts';
 import { AwsClient, EC2_QUOTA_CODE_ALL_G_AND_VT_SPOT_INSTANCES, EC2_QUOTA_CODE_RUNNING_ON_DEMAND_G_AND_VT_INSTANCES, DEFAULT_REGION } from "./sdk-client";
@@ -37,7 +36,6 @@ export const AwsCreateCliArgsSchema = CreateCliArgsSchema.extend({
     baseImageKeepOnDeletion: z.boolean().optional(),
     dataDiskSnapshot: z.boolean().optional(),
     deleteInstanceServerOnStop: z.boolean().optional(),
-    restrictToMyIp: z.boolean().default(true),
 })
 
 /**
@@ -78,18 +76,11 @@ export const SUPPORTED_INSTANCE_TYPES = [
 
 export class AwsInputPrompter extends AbstractInputPrompter<AwsCreateCliArgs, AwsProvisionInputV1, CommonConfigurationInputV1> {
 
-    // Stashed from buildProvisionerInputFromCliArgs for use in resolveAllowedCidrs.
-    // restrictToMyIp is a CLI-only concept; state stores resolved allowedCidrs instead.
-    // Defaults to false (no restriction); set to true by Commander's --no-restrict-to-my-ip default.
-    private _cliRestrictToMyIp = false
-
     constructor(args: AbstractInputPrompterArgs){
         super(args)
     }
 
     buildProvisionerInputFromCliArgs(cliArgs: AwsCreateCliArgs): PartialDeep<AwsInstanceInput> {
-        this._cliRestrictToMyIp = cliArgs.restrictToMyIp
-
         return {
             provision: {
                 instanceType: cliArgs.instanceType,
@@ -127,13 +118,13 @@ export class AwsInputPrompter extends AbstractInputPrompter<AwsCreateCliArgs, Aw
         const dataDiskSizeGb = await this.dataDiskSize(partialInput.provision?.dataDiskSizeGb)
         const publicIpType = await this.publicIpType(partialInput.provision?.publicIpType)
         const costAlert = await this.costAlert(partialInput.provision?.costAlert)
-        const allowedCidrs = await this.resolveAllowedCidrs()
 
         const awsInput: AwsInstanceInput = lodash.merge(
             {},
             commonInput,
             {
                 provision:{
+                    allowedCidrs: partialInput.provision?.allowedCidrs,
                     diskSize: rootDiskSize,
                     dataDiskSizeGb: dataDiskSizeGb,
                     instanceType: instanceType,
@@ -142,7 +133,6 @@ export class AwsInputPrompter extends AbstractInputPrompter<AwsCreateCliArgs, Aw
                     zone: zone,
                     useSpot: useSpot,
                     dedicatedVpc: { enabled: dedicatedVpcEnabled },
-                    allowedCidrs: allowedCidrs,
                     costAlert: costAlert,
                     deleteInstanceServerOnStop: partialInput.provision?.deleteInstanceServerOnStop,
                     dataDiskSnapshot: partialInput.provision?.dataDiskSnapshot?.enable ? { 
@@ -168,24 +158,6 @@ export class AwsInputPrompter extends AbstractInputPrompter<AwsCreateCliArgs, Aw
             message: 'Create a dedicated VPC for this instance? (required if your AWS account has no default VPC)',
             default: false,
         })
-    }
-
-    /**
-     * Resolve allowed CIDRs for security group ingress based on CLI flags.
-     *
-     * - If --no-restrict-to-my-ip was passed, use open CIDRs (no restriction).
-     * - Otherwise (default), fetch and return the user's current IP as restricted CIDRs.
-     */
-    private async resolveAllowedCidrs(): Promise<{ ipv4: string[], ipv6: string[] }> {
-        if (!this._cliRestrictToMyIp) {
-            return { ipv4: ['0.0.0.0/0'], ipv6: ['::/0'] }
-        }
-
-        const cidrs = await fetchCurrentIpCidrs()
-        this.logger.info(
-            `Detected current IPs: IPv4=${cidrs.ipv4[0]}${cidrs.ipv6[0] ? `, IPv6=${cidrs.ipv6[0]}` : ' (no IPv6 detected)'}`
-        )
-        return cidrs
     }
 
     private async instanceType(region: string, useSpot: boolean, instanceType?: string): Promise<string> {
@@ -369,7 +341,6 @@ export class AwsCliCommandGenerator extends CliCommandGenerator {
             .option('--zone <zone>', 'Availability zone in which to deploy instance')
             .option('--image-id <image-id>', 'Existing AMI ID for instance server. Disk size must be equal or greater than image size.')
             .option('--dedicated-vpc', 'Create a dedicated VPC for this instance')
-            .option('--no-restrict-to-my-ip', 'Allow inbound traffic from all IPs instead of restricting to your current IP')
             .action(async (rawCliArgs: unknown) => {
                 // Parse raw CLI args using Zod schema early to ensure type safety
                 const cliArgs = AwsCreateCliArgsSchema.parse(rawCliArgs)

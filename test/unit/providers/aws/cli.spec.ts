@@ -37,7 +37,6 @@ describe('AWS input prompter', () => {
                 enable: true,
             },
             deleteInstanceServerOnStop: true,
-            allowedCidrs: { ipv4: ['0.0.0.0/0'], ipv6: ['::/0'] },
         },
         configuration: {
             ...DEFAULT_COMMON_INPUT.configuration
@@ -74,8 +73,8 @@ describe('AWS input prompter', () => {
         const expected: PartialDeep<AwsInstanceInput> = {
             ...TEST_INPUT,
             provision: {
-                // publicIpType and allowedCidrs are not set via CLI args — resolved at prompt time
-                ...lodash.omit(TEST_INPUT.provision, "publicIpType", "allowedCidrs"),
+                // publicIpType is not set via CLI args
+                ...lodash.omit(TEST_INPUT.provision, "publicIpType"),
                 ssh: lodash.omit(TEST_INPUT.provision.ssh, "user"),
                 costAlert: {
                     limit: 999,
