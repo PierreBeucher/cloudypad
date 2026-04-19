@@ -1,5 +1,4 @@
 import * as os from 'os';
-import * as crypto from 'crypto';
 import { PartialDeep } from "type-fest"
 import { input, select, confirm, password } from '@inquirer/prompts';
 import { ExitPromptError } from '@inquirer/core';
@@ -11,6 +10,7 @@ import { CreateCliArgs } from './command';
 import { CostAlertOptions } from '../core/provisioner';
 import { CoreConfig } from '../core/config/interface';
 import { StateManagerBuilder } from '../core/state/builders';
+import { generateStrongPassword } from '../tools/password';
 
 const { kebabCase } = lodash
 
@@ -430,8 +430,7 @@ export abstract class AbstractInputPrompter<
         })
 
         if(sunshinePassword.length == 0){
-            const generated = crypto.randomBytes(16).toString('hex')
-            return Buffer.from(generated).toString('base64')
+            return generateStrongPassword()
         }
 
         const sunshinePasswordConfirm = await password({
