@@ -2,7 +2,7 @@
 Name=Lutris
 Comment=Managing and play games on Lutris
 Exec=lutris-start.sh
-Icon=lutris
+Icon=net.lutris.Lutris
 Terminal=false
 Type=Application
 Categories=Network;FileTransfer;Game;
