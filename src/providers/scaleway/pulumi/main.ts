@@ -143,6 +143,7 @@ async function scalewayPulumiProgram(): Promise<Record<string, any> | void> {
     const publicKeyContent = config.require("publicKeyContent")
     const rootDiskSizeGB = config.requireNumber("rootDiskSizeGB")
     const securityGroupPorts = config.requireObject<SimplePortDefinition[]>("securityGroupPorts")
+    const allowedCidrs = config.getObject<{ ipv4?: string[], ipv6?: string[] }>("allowedCidrs")
     const dataDisk = config.getObject<ScalewayInstanceArgs["dataDisk"]>("dataDisk")
     const imageId = config.get("imageId")
     const instanceServerState = config.get("instanceServerState") as "present" | "absent" | undefined
@@ -150,15 +151,24 @@ async function scalewayPulumiProgram(): Promise<Record<string, any> | void> {
 
     const stackName = pulumi.getStack()
 
+    // Scaleway security groups define one CIDR per inbound rule; expand to one rule per CIDR per port.
+    const cidrs = [
+        ...(allowedCidrs?.ipv4 ?? ["0.0.0.0/0"]),
+        ...(allowedCidrs?.ipv6 ?? ["::/0"]),
+    ]
+    const inboundRules: scw.types.input.InstanceSecurityGroupInboundRule[] = securityGroupPorts.flatMap(p =>
+        cidrs.map(cidr => ({
+            action: "accept",
+            ipRange: cidr,
+            protocol: p.protocol,
+            port: p.port,
+        }))
+    )
+
     const instance = new CloudyPadScalewayInstance(stackName, {
         instanceType: instanceType,
         publicKeyContent: publicKeyContent,
-        networkSecurityGroupRules: securityGroupPorts.map(p => ({
-            action: "accept",
-            ipRange: "0.0.0.0/0",
-            protocol: p.protocol,
-            port: p.port,
-        })),
+        networkSecurityGroupRules: inboundRules,
         rootVolume: {
             sizeGb: rootDiskSizeGB,
         },
@@ -201,6 +211,10 @@ export interface PulumiStackConfigScaleway {
     }
     publicKeyContent: string
     securityGroupPorts: SimplePortDefinition[]
+    allowedCidrs?: {
+        ipv4?: string[]
+        ipv6?: string[]
+    }
     dataDisk?: {
         state: "present" | "absent"
         sizeGb: number
@@ -279,6 +293,7 @@ export class ScalewayPulumiClient extends InstancePulumiClient<PulumiStackConfig
             protocol: p.protocol.toUpperCase(), // Scaleway SDK requires "TCP" or "UDP" in upper!case
             port: p.port
         })))})
+        if(config.allowedCidrs) await stack.setConfig("allowedCidrs", { value: JSON.stringify(config.allowedCidrs)})
 
         const allConfs = await stack.getAllConfig()
         this.logger.debug(`Scaleway stack config after update: ${JSON.stringify(allConfs)}`)

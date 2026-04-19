@@ -31,6 +31,10 @@ export const DEFAULT_COMMON_INPUT: CommonInstanceInput = {
         ssh: {
             privateKeyPath: "./test/resources/ssh-key",
             user: "ubuntu"
+        },
+        allowedCidrs: {
+            ipv4: ["127.0.0.1/32"],
+            ipv6: ["::1/128"],
         }
     },
     configuration: {
@@ -59,7 +63,7 @@ export const DEFAULT_COMMON_INPUT: CommonInstanceInput = {
         },
         ansible: {
             additionalArgs: "-t dummytag"
-        }
+        },
     },
 }
 
@@ -84,6 +88,8 @@ export const DEFAULT_COMMON_CLI_ARGS: CreateCliArgs = {
     ansibleAdditionalArgs: DEFAULT_COMMON_INPUT.configuration.ansible?.additionalArgs,
     ratelimitMaxMbps: DEFAULT_COMMON_INPUT.configuration.ratelimit?.maxMbps,
     sunshineMaxBitrateKbps: DEFAULT_COMMON_INPUT.configuration.sunshine?.maxBitrateKbps,
+    allowedCidrsIpv4: DEFAULT_COMMON_INPUT.provision.allowedCidrs?.ipv4,
+    allowedCidrsIpv6: DEFAULT_COMMON_INPUT.provision.allowedCidrs?.ipv6,
 }
 
 export const DUMMY_SSH_KEY_PATH = path.resolve(__dirname, '..', 'resources', 'ssh-key')

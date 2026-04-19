@@ -92,7 +92,7 @@ export class AwsProvisioner extends AbstractInstanceProvisioner<AwsProvisionInpu
 
         // Build and run main Pulumi stack
         const pulumiClient = this.buildMainPulumiClient()
-        const stackConfig = this.buildMainPulumiConfig()
+        const stackConfig = await this.buildMainPulumiConfig()
         await pulumiClient.setConfig(stackConfig)
         const pulumiOutputs = await pulumiClient.up({ cancel: opts?.pulumiCancel })
 
@@ -143,7 +143,7 @@ export class AwsProvisioner extends AbstractInstanceProvisioner<AwsProvisionInpu
     /**
      * Build Pulumi config from provision input, including runtime state.
      */
-    private buildMainPulumiConfig(): PulumiStackConfigAws {
+    private async buildMainPulumiConfig(): Promise<PulumiStackConfigAws> {
         const sshPublicKeyContent = new SshKeyLoader().loadSshPublicKeyContent(this.args.provisionInput.ssh)
 
         return {
@@ -156,6 +156,7 @@ export class AwsProvisioner extends AbstractInstanceProvisioner<AwsProvisionInpu
             useSpot: this.args.provisionInput.useSpot,
             billingAlert: this.args.provisionInput.costAlert ?? undefined,
             ingressPorts: this.getStreamingServerPorts(),
+            allowedCidrs: this.args.provisionInput.allowedCidrs,
             instanceServerState: this.args.provisionInput.runtime?.instanceServerState,
             dataDisk: this.args.provisionInput.dataDiskSizeGb ? {
                 // only set data disk as absent if desired data disk state is explicitly set to snapshot

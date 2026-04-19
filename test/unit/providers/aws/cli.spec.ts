@@ -73,7 +73,7 @@ describe('AWS input prompter', () => {
         const expected: PartialDeep<AwsInstanceInput> = {
             ...TEST_INPUT,
             provision: {
-                // publicIpType is not set via CLI
+                // publicIpType is not set via CLI args
                 ...lodash.omit(TEST_INPUT.provision, "publicIpType"),
                 ssh: lodash.omit(TEST_INPUT.provision.ssh, "user"),
                 costAlert: {

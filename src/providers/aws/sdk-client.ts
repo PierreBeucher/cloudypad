@@ -1,4 +1,4 @@
-import { EC2Client, DescribeInstancesCommand, Instance, StartInstancesCommand, StopInstancesCommand, RebootInstancesCommand, waitUntilInstanceRunning, waitUntilInstanceStopped, DescribeInstanceTypesCommand, _InstanceType, InstanceTypeInfo, InstanceTypeOffering, DescribeInstanceTypeOfferingsCommand, DescribeInstanceStatusCommand, InstanceStateName, paginateDescribeInstances, paginateDescribeInstanceTypes, paginateDescribeInstanceTypeOfferings, DescribeImagesCommand, DescribeSnapshotsCommand, DescribeVolumesCommand, Volume, Image, DescribeAvailabilityZonesCommand } from '@aws-sdk/client-ec2'
+import { EC2Client, DescribeInstancesCommand, Instance, StartInstancesCommand, StopInstancesCommand, RebootInstancesCommand, waitUntilInstanceRunning, waitUntilInstanceStopped, DescribeInstanceTypesCommand, _InstanceType, InstanceTypeInfo, InstanceTypeOffering, DescribeInstanceTypeOfferingsCommand, DescribeInstanceStatusCommand, InstanceStateName, paginateDescribeInstances, paginateDescribeInstanceTypes, paginateDescribeInstanceTypeOfferings, DescribeImagesCommand, DescribeSnapshotsCommand, DescribeVolumesCommand, Volume, Image, DescribeAvailabilityZonesCommand, DescribeSecurityGroupsCommand, SecurityGroup } from '@aws-sdk/client-ec2'
 import { STSClient, GetCallerIdentityCommand } from '@aws-sdk/client-sts'
 import { getLogger, Logger } from '../../log/utils'
 import { loadConfig } from "@smithy/node-config-provider"
@@ -401,6 +401,26 @@ export class AwsClient {
      * @param imageId AMI ID to get
      * @returns Image if exists, null otherwise
      */
+    /**
+     * Get security groups attached to an instance.
+     * @param instanceId Instance ID to look up security groups for
+     * @returns List of security groups attached to the instance (with their ingress/egress rules)
+     */
+    async getInstanceSecurityGroups(instanceId: string): Promise<SecurityGroup[]> {
+        this.logger.debug(`Getting security groups for instance ${instanceId}`)
+
+        const describeInstances = await this.ec2Client.send(new DescribeInstancesCommand({ InstanceIds: [instanceId] }))
+        const instance = describeInstances.Reservations?.flatMap(r => r.Instances ?? [])[0]
+        const sgIds = instance?.SecurityGroups?.map(sg => sg.GroupId).filter((id): id is string => !!id) ?? []
+
+        if(sgIds.length === 0){
+            return []
+        }
+
+        const result = await this.ec2Client.send(new DescribeSecurityGroupsCommand({ GroupIds: sgIds }))
+        return result.SecurityGroups ?? []
+    }
+
     async getImage(imageId: string): Promise<Image | null> {
         this.logger.debug(`Getting image ${imageId}`)
         try {

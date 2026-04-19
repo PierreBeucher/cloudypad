@@ -50,6 +50,10 @@ interface CloudyPadGCEInstanceArgs {
         notificationEmail: pulumi.Input<string>
     }
     firewallAllowPorts: pulumi.Input<pulumi.Input<gcp.types.input.compute.FirewallAllow>[]> 
+    allowedCidrs?: {
+        ipv4?: string[]
+        ipv6?: string[]
+    }
 }
 
 /**
@@ -90,11 +94,15 @@ class CloudyPadGCEInstance extends pulumi.ComponentResource {
             ipCidrRange: "10.0.0.0/24",
         }, commonPulumiOpts);
 
+        // GCP firewall sourceRanges accepts both IPv4 and IPv6 CIDRs in the same list
         new gcp.compute.Firewall(`${name}-firewall`, {
             name: gcpResourceNamePrefix,
             network: network.id,
             allows: args.firewallAllowPorts,
-            sourceRanges: ["0.0.0.0/0"],
+            sourceRanges: [
+                ...(args.allowedCidrs?.ipv4 ?? ["0.0.0.0/0"]),
+                ...(args.allowedCidrs?.ipv6 ?? ["::/0"]),
+            ],
             direction: "INGRESS",
         }, commonPulumiOpts)
 
@@ -338,6 +346,7 @@ async function gcpPulumiProgram(): Promise<Record<string, any> | void> {
     const useSpot = config.requireBoolean("useSpot");
     const costAlert = config.getObject<CostAlertOptions>("costAlert");
     const firewallAllowPorts = config.requireObject<SimplePortDefinition[]>("firewallAllowPorts")
+    const allowedCidrs = config.getObject<{ ipv4?: string[], ipv6?: string[] }>("allowedCidrs")
 
     const diskType = config.get("diskType");        
     const networkTier = config.get("networkTier");
@@ -380,6 +389,7 @@ async function gcpPulumiProgram(): Promise<Record<string, any> | void> {
             ports: [p.port.toString()],
             protocol: p.protocol,
         })),
+        allowedCidrs: allowedCidrs,
     });
 
     return {
@@ -402,6 +412,10 @@ export interface PulumiStackConfigGcp {
     useSpot: boolean
     costAlert?: CostAlertOptions
     firewallAllowPorts: SimplePortDefinition[]
+    allowedCidrs?: {
+        ipv4?: string[]
+        ipv6?: string[]
+    }
     diskType?: string
     networkTier?: string
     nicType?: string
@@ -452,6 +466,7 @@ export class GcpPulumiClient extends InstancePulumiClient<PulumiStackConfigGcp, 
         await stack.setConfig("publicIpType", { value: config.publicIpType })
         await stack.setConfig("useSpot", { value: config.useSpot.toString() })
         await stack.setConfig("firewallAllowPorts", { value: JSON.stringify(config.firewallAllowPorts)})
+        if (config.allowedCidrs) await stack.setConfig("allowedCidrs", { value: JSON.stringify(config.allowedCidrs)})
         if (config.diskType) await stack.setConfig("diskType", { value: config.diskType })
         if (config.networkTier) await stack.setConfig("networkTier", { value: config.networkTier })
         if (config.nicType) await stack.setConfig("nicType", { value: config.nicType })

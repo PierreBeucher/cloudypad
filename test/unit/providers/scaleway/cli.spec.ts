@@ -47,7 +47,6 @@ describe('Scaleway input prompter', () => {
     }
 
     it('should return provided inputs without prompting when full input provider', async () => {
-        const coreClient = getUnitTestCoreClient()
         const result = await new ScalewayInputPrompter({ coreConfig: coreConfig }).promptInput(TEST_INPUT, { autoApprove: true })
         assert.deepEqual(result, TEST_INPUT)
     })

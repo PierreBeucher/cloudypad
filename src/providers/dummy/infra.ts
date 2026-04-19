@@ -63,6 +63,10 @@ export class DummyInstanceInfraManager {
         await this.infraStateManager.setServerId(serverId)
     }
 
+    async setAllowedCidrs(allowedCidrs: { ipv4: string[], ipv6: string[] } | undefined): Promise<void> {
+        await this.infraStateManager.setAllowedCidrs(allowedCidrs)
+    }
+
     async getInstanceInfra(): Promise<DummyInfrastructureStatus | undefined> {
         return await this.infraStateManager.getInstanceInfra()
     }
@@ -118,6 +122,10 @@ class DummyInstanceInStateStatus {
         await this.updateInfra({ serverId })
     }
 
+    async setAllowedCidrs(allowedCidrs: { ipv4: string[], ipv6: string[] } | undefined): Promise<void> {
+        await this.updateInfra({ allowedCidrs })
+    }
+
     private async updateInfra(updates: Partial<DummyInfrastructureStatus>): Promise<void> {
         this.logger.debug(`Updating infrastructure for ${this.args.instanceName} with: ${JSON.stringify(updates)}`)
 
@@ -131,6 +139,7 @@ class DummyInstanceInStateStatus {
             dataDiskId: currentInfra?.dataDiskId,
             dataDiskSnapshotId: currentInfra?.dataDiskSnapshotId,
             baseImageId: currentInfra?.baseImageId,
+            allowedCidrs: currentInfra?.allowedCidrs,
             lastUpdate: Date.now(),
             ...updates,
         }

@@ -36,6 +36,8 @@ export const CreateCliArgsSchema = z.object({
     retries: z.number().optional(),
     retryDelay: z.number().optional(),
     ratelimitMaxMbps: z.number().optional(),
+    allowedCidrsIpv4: z.array(z.string()).optional(),
+    allowedCidrsIpv6: z.array(z.string()).optional(),
 })
 
 /**
@@ -156,6 +158,16 @@ export const CLI_OPTION_BASE_IMAGE_SNAPSHOT_ENABLE = new Option('--base-image-sn
     .default(true)
     .argParser(parseFalseOrDisable)
 
+export const CLI_OPTION_IP_ALLOWED_CIDRS_IPV4 = new Option('--allowed-cidrs-ipv4 <cidrs>',
+    'Allowed IPv4 CIDRs for inbound traffic to the instance. Comma-separated list (e.g. "1.2.3.4/32,5.6.7.0/24") or repeat the flag. ' +
+    'Default: 0.0.0.0/0 (open access). May be ignored if the provider does not implement IP-based restriction.')
+    .argParser(parseCidrList)
+
+export const CLI_OPTION_IP_ALLOWED_CIDRS_IPV6 = new Option('--allowed-cidrs-ipv6 <cidrs>',
+    'Allowed IPv6 CIDRs for inbound traffic to the instance. Comma-separated list (e.g. "::1/128,2001:db8::/32") or repeat the flag. ' +
+    'Default: ::/0 (open access). May be ignored if the provider does not implement IP-based restriction.')
+    .argParser(parseCidrList)
+
 export const CLI_OPTION_KEEP_BASE_IMAGE_ON_DELETION = new Option('--base-image-keep-on-deletion [disable|no|false|0]', 
     'Whether to keep base image on instance deletion. ' +
     'If enabled, base image will be preserved when instance is destroyed. ' +
@@ -164,6 +176,15 @@ export const CLI_OPTION_KEEP_BASE_IMAGE_ON_DELETION = new Option('--base-image-k
 
 function parseFalseOrDisable(value: string){
     return value === "disable" || value === "no" || value === "false" || value === "0" ? false : true
+}
+
+/**
+ * Parse a CIDR list option value. Accepts comma-separated CIDRs and accumulates across multiple uses.
+ * Empty entries are filtered out.
+ */
+function parseCidrList(value: string, previous?: string[]): string[] {
+    const parsed = value.split(',').map(s => s.trim()).filter(s => s.length > 0)
+    return previous ? [...previous, ...parsed] : parsed
 }
 
 export interface BuildCreateCommandArgs {
@@ -198,6 +219,8 @@ export abstract class CliCommandGenerator {
             .addOption(CLI_OPTION_RETRIES)
             .addOption(CLI_OPTION_RETRY_DELAY)
             .addOption(CLI_OPTION_FORCE_PULUMI_CANCEL)
+            .addOption(CLI_OPTION_IP_ALLOWED_CIDRS_IPV4)
+            .addOption(CLI_OPTION_IP_ALLOWED_CIDRS_IPV6)
     }
 
     /**
@@ -212,6 +235,8 @@ export abstract class CliCommandGenerator {
             .addOption(CLI_OPTION_RETRIES)
             .addOption(CLI_OPTION_RETRY_DELAY)
             .addOption(CLI_OPTION_FORCE_PULUMI_CANCEL)
+            .addOption(CLI_OPTION_IP_ALLOWED_CIDRS_IPV4)
+            .addOption(CLI_OPTION_IP_ALLOWED_CIDRS_IPV6)
     }
 
     /**

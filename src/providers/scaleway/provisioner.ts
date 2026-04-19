@@ -177,6 +177,7 @@ export class ScalewayProvisioner extends AbstractInstanceProvisioner<ScalewayPro
             // use base image ID from input if available, otherwise use output base image ID (created during deploy)
             imageId: this.args.provisionInput?.imageId ?? this.args.provisionOutput?.baseImageId,
             securityGroupPorts: this.getStreamingServerPorts(),
+            allowedCidrs: this.args.provisionInput.allowedCidrs,
             publicKeyContent: sshPublicKeyContent,
         }
     }

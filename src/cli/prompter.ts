@@ -129,7 +129,11 @@ export abstract class AbstractInputPrompter<
                 ssh: {
                     privateKeyPath: partialInput.provision?.ssh?.privateKeyPath, // use provided private key path if set
                     user: sshUser
-                }
+                },
+                allowedCidrs: partialInput.provision?.allowedCidrs ? {
+                    ipv4: partialInput.provision?.allowedCidrs?.ipv4,
+                    ipv6: partialInput.provision?.allowedCidrs?.ipv6,
+                } : undefined,
             },
             configuration: {
                 sunshine: sunshineConfig,
@@ -183,7 +187,11 @@ export abstract class AbstractInputPrompter<
             provision: {
                 ssh: {
                     privateKeyPath: cliArgs.sshPrivateKey,
-                }
+                },
+                allowedCidrs: (cliArgs.allowedCidrsIpv4 || cliArgs.allowedCidrsIpv6) ? {
+                    ipv4: cliArgs.allowedCidrsIpv4 ?? undefined,
+                    ipv6: cliArgs.allowedCidrsIpv6 ?? undefined,
+                } : undefined,
             },
             configuration: {
                 autostop: cliArgs.autostop !== undefined ? {

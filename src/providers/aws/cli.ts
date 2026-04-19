@@ -81,7 +81,6 @@ export class AwsInputPrompter extends AbstractInputPrompter<AwsCreateCliArgs, Aw
     }
 
     buildProvisionerInputFromCliArgs(cliArgs: AwsCreateCliArgs): PartialDeep<AwsInstanceInput> {
-
         return {
             provision: {
                 instanceType: cliArgs.instanceType,
@@ -93,10 +92,10 @@ export class AwsInputPrompter extends AbstractInputPrompter<AwsCreateCliArgs, Aw
                 dedicatedVpc: cliArgs.dedicatedVpc !== undefined ? { enabled: cliArgs.dedicatedVpc } : undefined,
                 costAlert: costAlertCliArgsIntoConfig(cliArgs),
                 deleteInstanceServerOnStop: cliArgs.deleteInstanceServerOnStop,
-                dataDiskSnapshot: cliArgs.dataDiskSnapshot ? { 
-                    enable: cliArgs.dataDiskSnapshot 
+                dataDiskSnapshot: cliArgs.dataDiskSnapshot ? {
+                    enable: cliArgs.dataDiskSnapshot
                 } : undefined,
-                baseImageSnapshot: cliArgs.baseImageSnapshot ? { 
+                baseImageSnapshot: cliArgs.baseImageSnapshot ? {
                     enable: cliArgs.baseImageSnapshot,
                     keepOnDeletion: cliArgs.baseImageKeepOnDeletion
                 } : undefined
@@ -119,12 +118,13 @@ export class AwsInputPrompter extends AbstractInputPrompter<AwsCreateCliArgs, Aw
         const dataDiskSizeGb = await this.dataDiskSize(partialInput.provision?.dataDiskSizeGb)
         const publicIpType = await this.publicIpType(partialInput.provision?.publicIpType)
         const costAlert = await this.costAlert(partialInput.provision?.costAlert)
-                
+
         const awsInput: AwsInstanceInput = lodash.merge(
             {},
-            commonInput, 
+            commonInput,
             {
                 provision:{
+                    allowedCidrs: partialInput.provision?.allowedCidrs,
                     diskSize: rootDiskSize,
                     dataDiskSizeGb: dataDiskSizeGb,
                     instanceType: instanceType,

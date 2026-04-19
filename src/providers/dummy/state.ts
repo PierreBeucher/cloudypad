@@ -35,6 +35,10 @@ const DummyInfrastructureStatusSchema = z.object({
     dataDiskSnapshotId: z.string().optional().describe("Dummy data disk snapshot ID"),
     baseImageId: z.string().optional().describe("Dummy base image ID"),
     lastUpdate: z.number().describe("Timestamp (seconds) the infrastructure was last updated at"),
+    allowedCidrs: z.object({
+        ipv4: z.array(z.string()),
+        ipv6: z.array(z.string()),
+    }).optional().describe("Allowed CIDRs for inbound traffic. Mirrors the allowedCidrs from provision input to emulate a real security group."),
 })
 
 const DummyInstanceStateV1Schema = InstanceStateV1Schema.extend({

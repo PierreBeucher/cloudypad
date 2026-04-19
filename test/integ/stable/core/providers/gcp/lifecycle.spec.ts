@@ -1,4 +1,5 @@
 import * as assert from 'assert';
+import { fetchCurrentIpCidrs } from '../../../../../../src/tools/ip';
 import { GcpClient, GcpInstanceStatus } from '../../../../../../src/providers/gcp/sdk-client';
 import { GcpInstanceStateV1 } from '../../../../../../src/providers/gcp/state';
 import { getIntegTestCoreConfig, runVerifyPlaybook } from '../../../../utils';
@@ -23,6 +24,19 @@ describe('GCP lifecycle', () => {
     const projectId = "crafteo-sandbox";
 
     let currentInstanceName: string | undefined = undefined;
+
+    // Restrict access to the current host external IP so Ansible can still reach the instance.
+    // Fetched fresh on each test that needs it (at init and verification time) so that test phases
+    // can run independently across iterations.
+    async function getCurrentAllowedCidrs(): Promise<{ ipv4: string[], ipv6: string[] }> {
+        const cidrs = await fetchCurrentIpCidrs()
+        const result = {
+            ipv4: cidrs.ipv4,
+            ipv6: cidrs.ipv6.length > 0 ? cidrs.ipv6 : ['::/0'],
+        }
+        logger.info(`Using allowedCidrs: ${JSON.stringify(result)}`)
+        return result
+    }
 
     async function getCurrentTestState(): Promise<GcpInstanceStateV1> {
         return gcpProviderClient.getInstanceState(instanceName);
@@ -54,6 +68,8 @@ describe('GCP lifecycle', () => {
     it('should initialize instance state', async () => {
         assert.strictEqual(currentInstanceName, undefined);
 
+        const allowedCidrs = await getCurrentAllowedCidrs()
+
         const initializer = new GcpProviderClient({config: coreConfig}).getInstanceInitializer();
         await initializer.initializeStateOnly(instanceName, {
             ssh: {
@@ -82,7 +98,8 @@ describe('GCP lifecycle', () => {
             baseImageSnapshot: {
                 enable: true,
                 keepOnDeletion: false
-            }
+            },
+            allowedCidrs: allowedCidrs,
         }, {
             sunshine: {
                 enable: true,
@@ -161,7 +178,18 @@ describe('GCP lifecycle', () => {
             : baseImageId;
         assert.strictEqual(image.name, stateImageName, 'Base image ID should match state output');
         assert.strictEqual(image.status, 'READY', 'Base image should be ready');
-    }).timeout(10000);
+
+        // Verify firewall ingress rules contain the configured allowedCidrs
+        // GCP firewall sourceRanges accepts both IPv4 and IPv6 CIDRs in the same list
+        const firewallName = `cloudypad-${instanceName}`.toLowerCase();
+        const firewall = await gcpClient.getFirewall(firewallName);
+        assert.ok(firewall, `Firewall ${firewallName} should exist in GCP`);
+        const sourceRanges = firewall.sourceRanges ?? [];
+        const expectedAllowedCidrs = await getCurrentAllowedCidrs()
+        for (const cidr of [...expectedAllowedCidrs.ipv4, ...expectedAllowedCidrs.ipv6]) {
+            assert.ok(sourceRanges.includes(cidr), `CIDR ${cidr} should be in firewall sourceRanges. Found: ${JSON.stringify(sourceRanges)}`);
+        }
+    }).timeout(60*1000);
 
     it('should update instance', async () => {
         const instanceUpdater = gcpProviderClient.getInstanceUpdater();

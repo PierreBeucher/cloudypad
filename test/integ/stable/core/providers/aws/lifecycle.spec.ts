@@ -1,4 +1,5 @@
 import * as assert from 'assert';
+import { fetchCurrentIpCidrs } from '../../../../../../src/tools/ip';
 import { AwsClient } from '../../../../../../src/providers/aws/sdk-client';
 import { AwsInstanceStateV1 } from '../../../../../../src/providers/aws/state';
 import { getIntegTestCoreConfig, runVerifyPlaybook } from '../../../../utils';
@@ -19,6 +20,19 @@ describe('AWS lifecycle', () => {
     const instanceType = "g4dn.xlarge";
 
     let currentInstanceId: string | undefined = undefined;
+
+    // Restrict access to the current host external IP so Ansible can still reach the instance.
+    // Fetched fresh on each test that needs it (at init and verification time) so that test phases
+    // can run independently across iterations.
+    async function getCurrentAllowedCidrs(): Promise<{ ipv4: string[], ipv6: string[] }> {
+        const cidrs = await fetchCurrentIpCidrs()
+        const result = {
+            ipv4: cidrs.ipv4,
+            ipv6: cidrs.ipv6.length > 0 ? cidrs.ipv6 : ['::/0'],
+        }
+        logger.info(`Using allowedCidrs: ${JSON.stringify(result)}`)
+        return result
+    }
 
     async function getCurrentTestState(): Promise<AwsInstanceStateV1> {
         return awsProviderClient.getInstanceState(instanceName);
@@ -48,6 +62,8 @@ describe('AWS lifecycle', () => {
     it('should initialize instance state', async () => {
         assert.strictEqual(currentInstanceId, undefined);
 
+        const allowedCidrs = await getCurrentAllowedCidrs()
+
         const initializer = new AwsProviderClient({config: coreConfig}).getInstanceInitializer();
         await initializer.initializeStateOnly(instanceName, {
             ssh: {
@@ -66,6 +82,7 @@ describe('AWS lifecycle', () => {
                 enable: true,
             },
             deleteInstanceServerOnStop: true,
+            allowedCidrs: allowedCidrs,
         }, {
             sunshine: {
                 enable: true,
@@ -112,6 +129,19 @@ describe('AWS lifecycle', () => {
         const image = await awsClient.getImage(state.provision.output.baseImageId);
         assert.ok(image, "Base image should exist in AWS");
         assert.strictEqual(image.ImageId, state.provision.output.baseImageId, "Base image ID should match state output");
+
+        assert.ok(state.provision.output?.instanceId, "instanceId should be in output");
+        const securityGroups = await awsClient.getInstanceSecurityGroups(state.provision.output.instanceId);
+        assert.ok(securityGroups.length > 0, "Instance should have at least one security group");
+        const allIpv4Cidrs = securityGroups.flatMap(sg => sg.IpPermissions ?? []).flatMap(p => (p.IpRanges ?? []).map(r => r.CidrIp));
+        const allIpv6Cidrs = securityGroups.flatMap(sg => sg.IpPermissions ?? []).flatMap(p => (p.Ipv6Ranges ?? []).map(r => r.CidrIpv6));
+        const expectedAllowedCidrs = await getCurrentAllowedCidrs()
+        for (const cidr of expectedAllowedCidrs.ipv4) {
+            assert.ok(allIpv4Cidrs.includes(cidr), `IPv4 CIDR ${cidr} should be in security group ingress rules. Found: ${JSON.stringify(allIpv4Cidrs)}`);
+        }
+        for (const cidr of expectedAllowedCidrs.ipv6) {
+            assert.ok(allIpv6Cidrs.includes(cidr), `IPv6 CIDR ${cidr} should be in security group ingress rules. Found: ${JSON.stringify(allIpv6Cidrs)}`);
+        }
 
     }).timeout(10000);
  

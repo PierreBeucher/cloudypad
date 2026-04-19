@@ -297,11 +297,19 @@ async function azurePulumiProgram(): Promise<Record<string, any> | void> {
     const useSpot = config.requireBoolean("useSpot")
     const costAlert = config.getObject<CostAlertOptions>("costAlert")
     const securityGroupPorts = config.requireObject<SimplePortDefinition[]>("securityGroupPorts")
+    const allowedCidrs = config.getObject<{ ipv4?: string[], ipv6?: string[] }>("allowedCidrs")
     const instanceServerState = config.get("instanceServerState") as "present" | "absent" | undefined
     const imageId = config.get("imageId")
     const dataDiskConfig = config.getObject<DataDiskArgs>("dataDisk")
 
     const instanceName = pulumi.getStack()
+
+    // Azure NSG rules accept both IPv4 and IPv6 prefixes in the same `sourceAddressPrefixes` list.
+    // Merge ipv4 + ipv6 CIDRs and fall back to open access if none specified.
+    const sourceAddressPrefixes = [
+        ...(allowedCidrs?.ipv4 ?? ["0.0.0.0/0"]),
+        ...(allowedCidrs?.ipv6 ?? ["::/0"]),
+    ]
 
     const instance = new CloudyPadAzureInstance(instanceName, {
         vmSize: vmSize,
@@ -318,7 +326,7 @@ async function azurePulumiProgram(): Promise<Record<string, any> | void> {
             protocol: p.protocol,
             sourcePortRange: "*",
             destinationPortRange: p.port.toString(),
-            sourceAddressPrefix: "*",
+            sourceAddressPrefixes: sourceAddressPrefixes,
             destinationAddressPrefix: "*",
             access: "Allow",
             priority: 100 + index,
@@ -353,6 +361,10 @@ export interface PulumiStackConfigAzure {
     useSpot: boolean,
     costAlert?: CostAlertOptions,
     securityGroupPorts: SimplePortDefinition[]
+    allowedCidrs?: {
+        ipv4?: string[]
+        ipv6?: string[]
+    }
     instanceServerState?: "present" | "absent"
     imageId?: string
     dataDisk?: DataDiskArgs
@@ -397,6 +409,10 @@ export class AzurePulumiClient extends InstancePulumiClient<PulumiStackConfigAzu
         await stack.setConfig("publicIpType", { value: config.publicIpType})
         await stack.setConfig("useSpot", { value: config.useSpot.toString()})
         await stack.setConfig("securityGroupPorts", { value: JSON.stringify(config.securityGroupPorts)})
+
+        if(config.allowedCidrs){
+            await stack.setConfig("allowedCidrs", { value: JSON.stringify(config.allowedCidrs)})
+        }
 
         if(config.costAlert){
             await stack.setConfig("costAlert", { value: JSON.stringify(config.costAlert)})

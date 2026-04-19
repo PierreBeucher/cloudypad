@@ -60,6 +60,8 @@ describe('Instance initializer', () => {
         startDelaySeconds: TEST_INPUT.provision.startDelaySeconds,
         stopDelaySeconds: TEST_INPUT.provision.stopDelaySeconds,
         ratelimitMaxMbps: TEST_INPUT.configuration.ratelimit?.maxMbps,
+        allowedCidrsIpv4: TEST_INPUT.provision.allowedCidrs?.ipv4,
+        allowedCidrsIpv6: TEST_INPUT.provision.allowedCidrs?.ipv6,
     }
 
     const TEST_CLI_ARGS_ALREADY_EXISTING: DummyCreateCliArgs = {
@@ -128,7 +130,7 @@ describe('Instance initializer', () => {
                         model: DEFAULT_COMMON_INPUT.configuration.keyboard?.model,
                         variant: DEFAULT_COMMON_INPUT.configuration.keyboard?.variant,
                         options: DEFAULT_COMMON_INPUT.configuration.keyboard?.options
-                    }
+                    },
                 },
             }
         }

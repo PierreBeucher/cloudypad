@@ -11,6 +11,7 @@ import { RUN_COMMAND_CREATE, RUN_COMMAND_UPDATE } from "../../tools/analytics/ev
 import { InteractiveInstanceUpdater } from "../../cli/updater";
 import { ScalewayProviderClient } from "./provider";
 import { z } from "zod";
+import lodash from 'lodash'
 
 /**
  * Zod schema for Scaleway-specific CLI arguments.
@@ -102,28 +103,31 @@ export class ScalewayInputPrompter extends AbstractInputPrompter<ScalewayCreateC
         const rootDiskSizeGb = await this.rootDiskSize(partialInput.provision?.diskSizeGb)
         const dataDiskSizeGb = await this.dataDiskSize(partialInput.provision?.dataDiskSizeGb)
 
-        const scwInput: ScalewayInstanceInput = {
-            configuration: commonInput.configuration,
-            instanceName: commonInput.instanceName,
-            provision: {
-                ssh: commonInput.provision.ssh,
-                region: region,
-                projectId: projectId,
-                zone: zone,
-                instanceType: instanceType,
-                diskSizeGb: rootDiskSizeGb,
-                dataDiskSizeGb: dataDiskSizeGb,
-                imageId: partialInput.provision?.imageId,
-                deleteInstanceServerOnStop: partialInput.provision?.deleteInstanceServerOnStop,
-                dataDiskSnapshot: partialInput.provision?.dataDiskSnapshot?.enable ? { 
-                    enable: partialInput.provision.dataDiskSnapshot.enable 
-                } : undefined,
-                baseImageSnapshot: partialInput.provision?.baseImageSnapshot?.enable ? { 
-                    enable: partialInput.provision.baseImageSnapshot.enable,
-                    keepOnDeletion: partialInput.provision.baseImageSnapshot.keepOnDeletion
-                } : undefined
+        const scwInput: ScalewayInstanceInput = lodash.merge(
+            {},
+            commonInput,
+            {
+                configuration: commonInput.configuration,
+                instanceName: commonInput.instanceName,
+                provision: {
+                    region: region,
+                    projectId: projectId,
+                    zone: zone,
+                    instanceType: instanceType,
+                    diskSizeGb: rootDiskSizeGb,
+                    dataDiskSizeGb: dataDiskSizeGb,
+                    imageId: partialInput.provision?.imageId,
+                    deleteInstanceServerOnStop: partialInput.provision?.deleteInstanceServerOnStop,
+                    dataDiskSnapshot: partialInput.provision?.dataDiskSnapshot?.enable ? { 
+                        enable: partialInput.provision.dataDiskSnapshot.enable 
+                    } : undefined,
+                    baseImageSnapshot: partialInput.provision?.baseImageSnapshot?.enable ? { 
+                        enable: partialInput.provision.baseImageSnapshot.enable,
+                        keepOnDeletion: partialInput.provision.baseImageSnapshot.keepOnDeletion
+                    } : undefined
+                }
             }
-        }
+        )
         
         return scwInput
         

@@ -11,6 +11,11 @@ provision:
     publicIpType: static
     region: eu-central-1
     useSpot: true
+    allowedCidrs:
+      ipv4:
+        - 0.0.0.0/0
+      ipv6:
+        - ::/0
     ssh:
       user: ubuntu
       privateKeyContentBase64: ZHVtbXkta2V5

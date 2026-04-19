@@ -12,8 +12,9 @@ import {
     getImage,
     getVolume,
     getVolumes,
+    getLinodeFirewalls,
 } from '@linode/api-v4'
-import type { Linode, LinodeStatus, Image, Volume } from '@linode/api-v4'
+import type { Linode, LinodeStatus, Image, Volume, Firewall } from '@linode/api-v4'
 import { getAccountInfo } from '@linode/api-v4/lib/account'
 import { setToken as internalSetToken } from '@linode/api-v4'
 
@@ -291,6 +292,18 @@ export class LinodeClient {
         } catch (error) {
             throw new Error(`Failed to get Linode instance details: ${instanceId}`, { cause: error })
         }
+    }
+
+    /**
+     * Get firewalls attached to a given Linode instance.
+     * @param instanceId Linode instance ID
+     * @returns Array of firewalls attached to the instance (with their inbound/outbound rules)
+     */
+    async getInstanceFirewalls(instanceId: string | number): Promise<Firewall[]> {
+        this.logger.debug(`Getting Linode firewalls attached to instance ${instanceId}`)
+        const safeId = await this.instanceIdStringNumberToNumber(instanceId)
+        const result = await getLinodeFirewalls(safeId)
+        return result.data
     }
 
     /**

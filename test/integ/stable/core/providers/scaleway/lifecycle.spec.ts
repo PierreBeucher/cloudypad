@@ -1,4 +1,5 @@
 import * as assert from 'assert'
+import { fetchCurrentIpCidrs } from '../../../../../../src/tools/ip'
 import { ScalewayClient, ScalewayServerState } from '../../../../../../src/providers/scaleway/sdk-client'
 import { ScalewayInstanceStateV1 } from '../../../../../../src/providers/scaleway/state'
 import { getIntegTestCoreConfig, runVerifyPlaybook } from '../../../../utils'
@@ -21,6 +22,19 @@ describe('Scaleway lifecycle', () => {
 
     let currentInstanceServerId: string | undefined = undefined
 
+    // Restrict access to the current host external IP so Ansible can still reach the instance.
+    // Fetched fresh on each test that needs it (at init and verification time) so that test phases
+    // can run independently across iterations.
+    async function getCurrentAllowedCidrs(): Promise<{ ipv4: string[], ipv6: string[] }> {
+        const cidrs = await fetchCurrentIpCidrs()
+        const result = {
+            ipv4: cidrs.ipv4,
+            ipv6: cidrs.ipv6.length > 0 ? cidrs.ipv6 : ['::/0'],
+        }
+        logger.info(`Using allowedCidrs: ${JSON.stringify(result)}`)
+        return result
+    }
+
     async function getCurrentTestState(): Promise<ScalewayInstanceStateV1> {
         return scalewayProviderClient.getInstanceState(instanceName)
     }
@@ -42,6 +56,8 @@ describe('Scaleway lifecycle', () => {
 
         assert.strictEqual(currentInstanceServerId, undefined)
 
+        const allowedCidrs = await getCurrentAllowedCidrs()
+
         const initializer = new ScalewayProviderClient({config: coreConfig}).getInstanceInitializer()
             await initializer.initializeStateOnly(instanceName, {
                 ssh: {
@@ -60,6 +76,7 @@ describe('Scaleway lifecycle', () => {
                     enable: true,
                 },
                 deleteInstanceServerOnStop: true,
+                allowedCidrs: allowedCidrs,
             }, {
                 sunshine: {
                     enable: true,
@@ -120,7 +137,16 @@ describe('Scaleway lifecycle', () => {
         assert.ok(image, "Base image should exist in Scaleway")
         const imageId = extractId(image.id || '')
         assert.strictEqual(imageId, baseImageId, "Base image ID should match state output")
-    }).timeout(10000)
+
+        // Verify security group inbound rules contain the configured allowedCidrs
+        assert.ok(state.provision.output?.instanceServerId, "instanceServerId should be in output")
+        const inboundRules = await scalewayClient.getServerInboundSecurityRules(extractId(state.provision.output.instanceServerId))
+        const ruleCidrs = inboundRules.map(r => r.ipRange).filter((c): c is string => !!c)
+        const expectedAllowedCidrs = await getCurrentAllowedCidrs()
+        for (const cidr of [...expectedAllowedCidrs.ipv4, ...expectedAllowedCidrs.ipv6]) {
+            assert.ok(ruleCidrs.includes(cidr), `CIDR ${cidr} should be in security group inbound rules. Found: ${JSON.stringify(ruleCidrs)}`)
+        }
+    }).timeout(60*1000)
 
     it('should verify instance configuration after deployment', async () => {
         await runVerify({ createDataDiskTestFile: true })

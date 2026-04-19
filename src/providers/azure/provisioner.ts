@@ -189,6 +189,7 @@ export class AzureProvisioner extends AbstractInstanceProvisioner<AzureProvision
             useSpot: this.args.provisionInput.useSpot,
             costAlert: this.args.provisionInput.costAlert ?? undefined,
             securityGroupPorts: this.getStreamingServerPorts(),
+            allowedCidrs: this.args.provisionInput.allowedCidrs,
             instanceServerState: this.args.provisionInput.runtime?.instanceServerState,
             dataDisk: this.args.provisionInput.dataDiskSizeGb ? {
                 // only set data disk as absent if desired data disk state is explicitly set to snapshot
