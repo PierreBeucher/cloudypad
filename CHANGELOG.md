@@ -1,5 +1,31 @@
 # Changelog
 
+## [0.45.0](https://github.com/PierreBeucher/cloudypad/compare/v0.44.0...v0.45.0) (2026-04-26)
+
+
+### Features
+
+* auto-generate Sunshine Web UI password if none provided ([6bb98cc](https://github.com/PierreBeucher/cloudypad/commit/6bb98ccdcc9b3418350ed65f96a7b685478fd75e))
+* **aws:** add --create-vpc option to provision a dedicated VPC ([c39428e](https://github.com/PierreBeucher/cloudypad/commit/c39428e327b9de9ff76dea3a8c20030863cd2b7a))
+* **aws:** add --create-vpc option to provision a dedicated VPC ([b9b5367](https://github.com/PierreBeucher/cloudypad/commit/b9b53679a82eacb3ffacd9f07124c93c30ec4b2f))
+* **aws:** enable IPv6 for created VPC ([9fe52e5](https://github.com/PierreBeucher/cloudypad/commit/9fe52e5a9d2adf67c7d639e29c3cc8a5e5abf165))
+* bump NVIDIA driver and container toolkit version ([25757ad](https://github.com/PierreBeucher/cloudypad/commit/25757adcad5aa5d6dcbbb3f5b8fdfa15e16c9f30))
+* bump to Proton 10 by default ([1f1050b](https://github.com/PierreBeucher/cloudypad/commit/1f1050b91cd40687e7fd1ac243fbb4137644df08))
+* log message before base image snapshot creation ([19d3e4e](https://github.com/PierreBeucher/cloudypad/commit/19d3e4e028358dc3a810d7120dfffe565058d463))
+* log message before base image snapshot creation ([f3b61b3](https://github.com/PierreBeucher/cloudypad/commit/f3b61b3d71b434bb9cc4103b781c99a836011779))
+* Scaleway DNS record management ([769ddb4](https://github.com/PierreBeucher/cloudypad/commit/769ddb472516c8819395433997f615b24200aee4))
+* **sunshine:** add screenshotter ([0c09a3f](https://github.com/PierreBeucher/cloudypad/commit/0c09a3fa1deed6e85d9ec89577a4c8db89e0bd3c))
+
+
+### Bug Fixes
+
+* Linode disk not being mounted on machine as per missing var in Ansible playbook ([9be60f5](https://github.com/PierreBeucher/cloudypad/commit/9be60f564fe94997b37fc65b56d4f1a8124f399f))
+* missing Lutris icon ([77124d9](https://github.com/PierreBeucher/cloudypad/commit/77124d9f5119f1f0e8f991d15d92a309e93d29d9))
+* show actual instance name in destroy hint on create failure ([5d48265](https://github.com/PierreBeucher/cloudypad/commit/5d482655a0dc389c9dc2417e5fcb69dc7b76ba16))
+* show actual instance name in destroy hint on create failure ([f8d4621](https://github.com/PierreBeucher/cloudypad/commit/f8d462108db361c0073d9073bc4ffc3bbdfe1e83))
+* stop logging generated sunshine password ([66c1c76](https://github.com/PierreBeucher/cloudypad/commit/66c1c7627fefc4a90f6d49f69ea90d141dd857db))
+* use hostname rather than public IP for pairing to ensure Moonlight config remains stable across reboot when DNS config is used ([8b639d1](https://github.com/PierreBeucher/cloudypad/commit/8b639d1e0d12baa7e75eedd15bf85bc03169671f))
+
 ## [0.44.0](https://github.com/PierreBeucher/cloudypad/compare/v0.43.0...v0.44.0) (2026-03-11)
 
 
