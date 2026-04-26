@@ -21,7 +21,7 @@ describe('Linode lifecycle', () => {
 
     // Linode test configuration
     const region = "fr-par"
-    const instanceType = "g2-gpu-rtx4000a1-s"
+    const instanceType = "g2-gpu-rtx4000a1-m"
     const rootDiskSizeGb = 25
     const dataDiskSizeGb = 10
 
@@ -40,67 +40,67 @@ describe('Linode lifecycle', () => {
         await runVerifyPlaybook(instanceName, state, opts)
     }
     
-    // it('should initialize instance state', async () => {
+    it('should initialize instance state', async () => {
 
-    //     const initializer = new LinodeProviderClient({config: coreConfig}).getInstanceInitializer()
-    //         await initializer.initializeStateOnly(instanceName, {
-    //             ssh: {
-    //                 user: "root",
-    //                 privateKeyPath: "/home/pbeucher/.ssh/id_ed25519",
-    //             },
-    //             region: region,
-    //             instanceType: instanceType,
-    //             rootDiskSizeGb: rootDiskSizeGb,
-    //             dataDiskSizeGb: dataDiskSizeGb,
-    //             // imageId: "private/33927621",
-    //             watchdogEnabled: true, // need to have watchdog otherwise Ansible reboot during config will effectively shutdown instance
-    //             dns: {
-    //                 domainName: "green.instances.cloudypad.gg",
-    //             },
-    //             deleteInstanceServerOnStop: true,
-    //             baseImageSnapshot: {
-    //                 enable: true,
-    //             },
-    //             additionalLabels: ['test-label-1', 'test-label-2'],
-    //         }, {
-    //             sunshine: {
-    //                 enable: true,
-    //                 username: "sunshine",
-    //                 passwordBase64: Buffer.from("Sunshine!").toString('base64'),
-    //                 imageTag: "dev"
-    //             }, 
-    //             // ansible: {
-    //             //     additionalArgs: "-t data-disk,sunshine"
-    //             // }
-    //         })
-    // })
+        const initializer = new LinodeProviderClient({config: coreConfig}).getInstanceInitializer()
+            await initializer.initializeStateOnly(instanceName, {
+                ssh: {
+                    user: "root",
+                    privateKeyPath: "/home/pbeucher/.ssh/id_ed25519",
+                },
+                region: region,
+                instanceType: instanceType,
+                rootDiskSizeGb: rootDiskSizeGb,
+                dataDiskSizeGb: dataDiskSizeGb,
+                // imageId: "private/33927621",
+                watchdogEnabled: true, // need to have watchdog otherwise Ansible reboot during config will effectively shutdown instance
+                dns: {
+                    domainName: "green.instances.cloudypad.gg",
+                },
+                deleteInstanceServerOnStop: true,
+                baseImageSnapshot: {
+                    enable: true,
+                },
+                additionalLabels: ['test-label-1', 'test-label-2'],
+            }, {
+                sunshine: {
+                    enable: true,
+                    username: "sunshine",
+                    passwordBase64: Buffer.from("Sunshine!").toString('base64'),
+                    imageTag: "dev"
+                }, 
+                // ansible: {
+                //     additionalArgs: "-t data-disk,sunshine"
+                // }
+            })
+    })
 
-    // it('should deploy instance', async () => {
-    //     const instanceManager = await linodeProviderClient.getInstanceManager(instanceName)
-    //     await instanceManager.deploy()
+    it('should deploy instance', async () => {
+        const instanceManager = await linodeProviderClient.getInstanceManager(instanceName)
+        await instanceManager.deploy()
 
-    //     const state = await getCurrentTestState()
+        const state = await getCurrentTestState()
 
-    //     assert.ok(state.provision.output?.instanceServerId)
-    //     const currentInstanceServerId = state.provision.output.instanceServerId
+        assert.ok(state.provision.output?.instanceServerId)
+        const currentInstanceServerId = state.provision.output.instanceServerId
 
-    //     // Verify the instance was created with correct specifications
-    //     const linodeClient = getLinodeClient()
-    //     await linodeClient.checkAuth()
-    //     const instanceDetails = await linodeClient.getLinode(currentInstanceServerId)
-    //     assert.ok(instanceDetails, 'Instance details should be available')
-    //     assert.strictEqual(instanceDetails.type, instanceType)
+        // Verify the instance was created with correct specifications
+        const linodeClient = getLinodeClient()
+        await linodeClient.checkAuth()
+        const instanceDetails = await linodeClient.getLinode(currentInstanceServerId)
+        assert.ok(instanceDetails, 'Instance details should be available')
+        assert.strictEqual(instanceDetails.type, instanceType)
 
-    //     // Check data disk exists
-    //     assert.ok(state.provision.output?.dataDiskId, "dataDiskId should be in output after deployment")
+        // Check data disk exists
+        assert.ok(state.provision.output?.dataDiskId, "dataDiskId should be in output after deployment")
 
-    //     // Check root disk exists
-    //     assert.ok(state.provision.output?.rootDiskId, "rootDiskId should be in output after deployment")
+        // Check root disk exists
+        assert.ok(state.provision.output?.rootDiskId, "rootDiskId should be in output after deployment")
 
-    //     // Check base image exists
-    //     assert.ok(state.provision.output?.baseImageId, "baseImageId should be in output after deployment")
-    // }).timeout(30*60*1000) // 30 minutes timeout, 
-    // // may be long as Linode instances are slow to start and creating image snapshot may be long
+        // Check base image exists
+        assert.ok(state.provision.output?.baseImageId, "baseImageId should be in output after deployment")
+    }).timeout(30*60*1000) // 30 minutes timeout, 
+    // may be long as Linode instances are slow to start and creating image snapshot may be long
 
     it('should have valid instance outputs', async () => {
         const linodeClient = getLinodeClient()

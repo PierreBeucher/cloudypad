@@ -48,13 +48,14 @@ export function getIntegTestCoreClient(): CloudypadClient{
 export interface RunVerifyPlaybookOpts {
     createDataDiskTestFile?: boolean
     checkDataDiskTestFile?: boolean
+    skipRatelimitVerify?: boolean
 }
 
 /**
  * Run the verify.yml playbook against an instance.
  * Builds an Ansible inventory on the fly from current state and runs the cloudypad-check role.
  */
-export async function runVerifyPlaybook(instanceName: string, state: InstanceStateV1, opts: RunVerifyPlaybookOpts): Promise<void> {
+export async function runVerifyPlaybook(instanceName: string, state: InstanceStateV1, opts?: RunVerifyPlaybookOpts): Promise<void> {
 
     if(process.env.CLOUDYPAD_SKIP_CONFIGURATION === "true"){
         logger.warn("CLOUDYPAD_SKIP_CONFIGURATION is set - skipping verify playbook")
@@ -77,11 +78,13 @@ export async function runVerifyPlaybook(instanceName: string, state: InstanceSta
                     cloudypad_data_disk_id: state.provision.output.machineDataDiskLookupId,
                     cloudypad_data_disk_lookup_method: state.provision.output.machineDataDiskMountMethod ?? "default",
 
-                    ratelimit_enable: state.configuration.input.ratelimit?.maxMbps !== undefined &&
-                        state.configuration.input.ratelimit.maxMbps > 0,
+                    // if rate limit is skipped, always set ratelimit_enable to false
+                    // otherwise only enable if instance input did provide a rate limit
+                    ratelimit_enable: opts?.skipRatelimitVerify ? false : 
+                        state.configuration.input.ratelimit?.maxMbps !== undefined && state.configuration.input.ratelimit.maxMbps > 0,
 
-                    cloudypad_verify_create_data_disk_test_file: opts.createDataDiskTestFile ?? false,
-                    cloudypad_verify_data_disk_test_file: opts.checkDataDiskTestFile ?? false,
+                    cloudypad_verify_create_data_disk_test_file: opts?.createDataDiskTestFile ?? false,
+                    cloudypad_verify_data_disk_test_file: opts?.checkDataDiskTestFile ?? false,
                 },
             },
         },
