@@ -234,7 +234,7 @@ describe('Scaleway lifecycle', () => {
             const instanceStatus = await instanceManager.getInstanceStatus()
             assert.strictEqual(instanceStatus.provisioned, true)
             assert.strictEqual(instanceStatus.serverStatus, ServerRunningStatus.Running)
-            // assert.strictEqual(instanceStatus.configured, true) // skipped: CLOUDYPAD_SKIP_CONFIGURATION=true
+            assert.strictEqual(instanceStatus.configured, true)
 
             const state = await getCurrentTestState()
             assert.ok(state.provision.output?.instanceServerId, "instanceServerId should exist after start")
@@ -261,6 +261,11 @@ describe('Scaleway lifecycle', () => {
     }
 
     it('should wait for instance readiness', async () => {
+        if(process.env.CLOUDYPAD_SKIP_CONFIGURATION === "true"){
+            logger.warn("CLOUDYPAD_SKIP_CONFIGURATION is set - skipping instance readiness check")
+            return
+        }
+
         const instanceManager = await scalewayProviderClient.getInstanceManager(instanceName)
         
         let isReady = false
