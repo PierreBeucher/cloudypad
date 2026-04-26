@@ -55,6 +55,12 @@ export interface RunVerifyPlaybookOpts {
  * Builds an Ansible inventory on the fly from current state and runs the cloudypad-check role.
  */
 export async function runVerifyPlaybook(instanceName: string, state: InstanceStateV1, opts: RunVerifyPlaybookOpts): Promise<void> {
+
+    if(process.env.CLOUDYPAD_SKIP_CONFIGURATION === "true"){
+        logger.warn("CLOUDYPAD_SKIP_CONFIGURATION is set - skipping verify playbook")
+        return
+    }
+
     assert.ok(state.provision.output, "Provision output must exist to run verify playbook")
 
     const sshAuth = new SshKeyLoader().getSshAuth(state.provision.input.ssh)

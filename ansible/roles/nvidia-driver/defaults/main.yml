@@ -12,7 +12,7 @@ nvidia_driver_module_params: ''
 
 # Install version from .run file
 # See https://www.nvidia.com/en-us/drivers/unix/ or https://download.nvidia.com/XFree86/Linux-x86_64
-nvidia_driver_display_dotrun_install_version: "590.48.01"
+nvidia_driver_display_dotrun_install_version: "595.58.03"
 
 # Datacenter driver version
 # See https://developer.nvidia.com/datacenter-driver-archive
@@ -32,4 +32,4 @@ nvidia_driver_skip_reboot: false
 # driver from accessing the DRM card node, causing vkGetPhysicalDeviceSurfacePresentModesKHR
 # to fail with VK_ERROR_UNKNOWN (-13) and a black screen.
 # Legacy mode (1.17.x) sets /dev/dri/card1 to 0666, allowing proper GPU access.
-nvidia_container_toolkit_version: "1.17.8-1"
+nvidia_container_toolkit_version: "1.19.0-1"
