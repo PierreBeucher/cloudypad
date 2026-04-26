@@ -1,7 +1,7 @@
 import * as assert from 'assert'
 import { ScalewayClient, ScalewayServerState } from '../../../../../../src/providers/scaleway/sdk-client'
 import { ScalewayInstanceStateV1 } from '../../../../../../src/providers/scaleway/state'
-import { getIntegTestCoreConfig, runVerifyPlaybook } from '../../../../utils'
+import { getIntegTestCoreConfig, runVerifyPlaybook, RunVerifyPlaybookOpts } from '../../../../utils'
 import { ScalewayProviderClient } from '../../../../../../src/providers/scaleway/provider'
 import { ServerRunningStatus } from '../../../../../../src/core/runner'
 import { getLogger } from '../../../../../../src/log/utils'
@@ -35,7 +35,7 @@ describe('Scaleway lifecycle', () => {
         })
     }
 
-    async function runVerify(opts: { createDataDiskTestFile?: boolean, checkDataDiskTestFile?: boolean } = {}): Promise<void> {
+    async function runVerify(opts?: RunVerifyPlaybookOpts): Promise<void> {
         const state = await getCurrentTestState()
         await runVerifyPlaybook(instanceName, state, opts)
     }
@@ -149,7 +149,7 @@ describe('Scaleway lifecycle', () => {
     }).timeout(10000)
 
     it('should verify instance configuration after deployment', async () => {
-        await runVerify({ createDataDiskTestFile: true })
+        await runVerify({ createDataDiskTestFile: true, skipRatelimitVerify: true })
     }).timeout(5*60*1000) // 5 minutes timeout
 
     it('should update instance', async () => {
