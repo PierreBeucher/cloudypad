@@ -116,13 +116,16 @@ class CloudyPadScalewayInstance extends pulumi.ComponentResource {
             this.dataDiskId = pulumi.output(null)
         }
 
-        // always create server if state unless specifically set to absent
-        if(args.instanceServerState !== "absent"){
-            
-            // IP address is only present when server is present
-            const publicIpResource = new scw.instance.Ip(`${name}-public-ip`, {
+        // little tweak to always create the same public IP resource in different places 
+        const buildPublicIpResource: () => scw.instance.Ip = () => {
+            return new scw.instance.Ip(`${name}-public-ip`, {
                 tags: globalTags
             }, commonPulumiOpts)
+        }
+
+        // always create server if state unless specifically set to absent
+        if(args.instanceServerState !== "absent"){
+            const instancePublicIp = buildPublicIpResource()
 
             const server = new scw.instance.Server(`${name}-server`, {
                 name: name,
@@ -135,7 +138,7 @@ class CloudyPadScalewayInstance extends pulumi.ComponentResource {
                 tags: globalTags,
                 securityGroupId: securityGroup.id,
                 image: args.imageId ?? "ubuntu_jammy_gpu_os_12",
-                ipIds: [publicIpResource.id],
+                ipIds: [instancePublicIp.id],
             }, {
                 ...commonPulumiOpts,
                 ignoreChanges: ["rootVolume.volumeType"], // avoid recreation of existing instances using legacy block volume type
@@ -143,7 +146,7 @@ class CloudyPadScalewayInstance extends pulumi.ComponentResource {
             })
 
             this.instanceServerName = server.name
-            this.publicIp = publicIpResource.address
+            this.publicIp = instancePublicIp.address
             
             // server id looks like this: "fr-par-2/4becedc8-51e9-4320-a45c-20f0f57033fa"
             // we want to extract only the ID
@@ -152,13 +155,23 @@ class CloudyPadScalewayInstance extends pulumi.ComponentResource {
             this.instanceServerURN = server.urn
             this.rootDiskId = server.rootVolume.volumeId.apply(id => id.split("/").pop() as string)
         } else {
+            // instance server is absent, set output accordingly
             this.instanceServerName = pulumi.output(null)
             this.instanceServerId = pulumi.output(null)
             this.instanceServerURN = pulumi.output(null)
             this.rootDiskId = pulumi.output(null)
 
-            // when server is absent, use dummy IP address to keep DNS record stable
-            this.publicIp = pulumi.output(DUMMY_UNUSED_IPV4)
+            // When server is absent, an actual public IP address is needed when no DNS config exists:
+            // - with DNS config, we can remove the public IP address as DNS record will keep the hostname stable.
+            //   Wiht short TTL, DNS record will be updated quickly on instance start with fresh public IP.
+            // - without DNS config, we need to keep the public IP address to keep a stable hostname 
+            //   (otherwise we'd lose the IP and user would have to pair again with a new IP)
+            if(args.dns){
+                this.publicIp = pulumi.output(DUMMY_UNUSED_IPV4)
+            } else {
+                const publicIpResource = buildPublicIpResource()
+                this.publicIp = publicIpResource.address
+            }
         }
 
         if (args.dns) {
@@ -223,7 +236,15 @@ async function scalewayPulumiProgram(): Promise<Record<string, any> | void> {
         instance.rootDiskId, 
         instance.instanceServerURN,
         instance.instanceHostname,
-    ]).apply(([instanceServerName, publicIp, instanceServerId, dataDiskId, rootDiskId, instanceServerUrn, instanceHostname]) => {
+    ]).apply(([
+        instanceServerName, 
+        publicIp, 
+        instanceServerId, 
+        dataDiskId, 
+        rootDiskId, 
+        instanceServerUrn, 
+        instanceHostname
+    ]) => {
         const result: ScalewayPulumiOutput = {
             instanceServerName: instanceServerName,
             publicIp: publicIp,
