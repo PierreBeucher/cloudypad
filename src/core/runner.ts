@@ -116,10 +116,14 @@ export abstract class AbstractInstanceRunner<C extends CommonProvisionInputV1, O
 
         const sshClientArgs = this.buildSshClientArgs()
 
+        // use instance host for pairing to ensure hostname remains stable even if public IP changes
+        // when DNS record is used
+        const moonlightPairingHost = this.args.provisionOutput.host
+
         if(this.args.configurationInput.sunshine?.enable){
             return new SunshineMoonlightPairer({
                 instanceName: this.args.instanceName,
-                host: sshClientArgs.host,
+                host: moonlightPairingHost,
                 ssh: sshClientArgs,
                 sunshine: {
                     username: this.args.configurationInput.sunshine.username,
@@ -129,7 +133,7 @@ export abstract class AbstractInstanceRunner<C extends CommonProvisionInputV1, O
         } else if(this.args.configurationInput.wolf?.enable){
             return new WolfMoonlightPairer({
                 instanceName: this.args.instanceName,
-                host: sshClientArgs.host,
+                host: moonlightPairingHost,
                 ssh: sshClientArgs
             })
         } else {
