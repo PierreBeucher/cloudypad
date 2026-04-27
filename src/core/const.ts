@@ -116,6 +116,7 @@ export const CLOUDYPAD_SUNSHINE_PORTS: SimplePortDefinition[] = [
     { port: 47989, protocol: 'tcp' }, // HTTP
     { port: 47990, protocol: 'tcp' }, // Web
     { port: 48010, protocol: 'tcp' }, // RTSP
+    { port: 59999, protocol: "tcp" }, // MoonDeckBuddy
 
     { port: 47998, protocol: 'udp' }, // Video
     { port: 47999, protocol: 'udp' }, // Control
