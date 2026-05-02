@@ -16,7 +16,7 @@ RUN apt update && apt install -y \
 # Requires PNPM_HOME on PATH
 # Cache mounts are used later using these paths
 # pnpm requires global-bin-dir to exist and be on PATH
-ENV PNPM_HOME="/root/.local/share/pnpm"
+ENV PNPM_HOME="/usr/local/share/pnpm"
 ENV PATH="$PNPM_HOME:$PATH"
 
 RUN npm install -g pnpm && \
