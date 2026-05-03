@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.45.1](https://github.com/PierreBeucher/cloudypad/compare/v0.45.0...v0.45.1) (2026-05-03)
+
+
+### Bug Fixes
+
+* move PNPM_HOME to /usr/local/share/pnpm so non-root users can execute cloudypad ([7eddc88](https://github.com/PierreBeucher/cloudypad/commit/7eddc885c62fb943ce6115c65135a1cabdc4c363))
+
 ## [0.45.0](https://github.com/PierreBeucher/cloudypad/compare/v0.44.0...v0.45.0) (2026-04-26)
 
 
