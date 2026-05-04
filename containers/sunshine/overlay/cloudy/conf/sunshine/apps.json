@@ -142,6 +142,23 @@
             "wait-all": "true",
             "exit-timeout": "5",
             "cmd": ""
+        },
+        {
+            "name": "App Installer",
+            "image-path": "$(XDG_CONFIG_HOME)/sunshine/assets/app-installer.png",
+            "prep-cmd": [
+                {
+                    "do": "sh -c \"sunshine-app-startup.sh > \/tmp\/sunshine-session-start.log 2>&1\""
+                }
+            ],
+            "detached": [
+                "sh -c \"cloudy-app-installer.sh > \/tmp\/app-installer.log 2>&1\""
+            ],
+            "exclude-global-prep-cmd": "false",
+            "auto-detach": "true",
+            "wait-all": "true",
+            "exit-timeout": "5",
+            "cmd": ""
         }
     ]
 }

@@ -1,0 +1,9 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=App Installer
+Comment=Install optional applications
+Exec=/cloudy/bin/cloudy-app-installer.sh
+Icon=gnome-app-install
+Terminal=false
+Categories=System;
