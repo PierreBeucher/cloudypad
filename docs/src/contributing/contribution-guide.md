@@ -11,7 +11,7 @@ Here's a typical workflow outline for contributions:
 4. Write code 
    - Use of AI is encouraged, we provide contextual AI `AGENTS.md` and Cursor rules files. 
    - You can also pass this contribution guide directly to AI context
-   - Make sure to review and test your code before going forward though. Unsupervised IA contribution are unlikely to pass review.
+   - Make sure to review and test your code before going forward though. Unsupervised AI contribution are unlikely to pass review.
 5. Run tests and review
    - A simple `task test-unit` and human is enough for most situations
    - Detailed testing and debugging instructions are provided for more complex situation
