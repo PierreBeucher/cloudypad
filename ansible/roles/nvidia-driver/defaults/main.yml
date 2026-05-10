@@ -26,10 +26,14 @@ nvidia_driver_skip_reboot: false
 
 # NVIDIA Container Toolkit version
 # See available versions: apt-cache madison nvidia-container-toolkit
-# Pinned to avoid drift between providers (CDI vs Legacy mode behavior differences)
-# IMPORTANT: Must stay on 1.17.x - versions 1.18+ default to CDI mode which keeps
-# /dev/dri/card1 at 0660 root:root inside the container, preventing the NVIDIA Vulkan
-# driver from accessing the DRM card node, causing vkGetPhysicalDeviceSurfacePresentModesKHR
-# to fail with VK_ERROR_UNKNOWN (-13) and a black screen.
-# Legacy mode (1.17.x) sets /dev/dri/card1 to 0666, allowing proper GPU access.
+# 1.18+ defaults to JIT CDI instead of legacy mode and no longer enables the CDI
+# chmod hook by default. CDI keeps host device permissions for /dev/dri/card*,
+# /dev/dri/renderD* and /dev/nvidia-modeset, which can leave them inaccessible
+# to non-root game processes in containers and cause Vulkan black screens such as
+# VK_ERROR_UNKNOWN (-13) from vkGetPhysicalDeviceSurfacePresentModesKHR.
+# We explicitly chmod those devices at startup instead of relying on legacy mode.
+# See:
+# - https://github.com/NVIDIA/nvidia-container-toolkit/issues/1218
+# - https://github.com/NVIDIA/nvidia-container-toolkit/issues/1456
+# - https://github.com/NVIDIA/nvidia-container-toolkit/issues/1477
 nvidia_container_toolkit_version: "1.19.0-1"
