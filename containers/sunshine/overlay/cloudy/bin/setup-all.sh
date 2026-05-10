@@ -16,6 +16,7 @@ source setup-dirs.sh
 source setup-user.sh
 
 if [ "$NVIDIA_ENABLE" = true ]; then
+    source setup-nvidia-permissions.sh
     source setup-nvidia-driver.sh
 fi
 
