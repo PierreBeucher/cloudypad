@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.45.2](https://github.com/PierreBeucher/cloudypad/compare/v0.45.1...v0.45.2) (2026-05-10)
+
+
+### Bug Fixes
+
+* nvidia devices permissions in container ([d409d83](https://github.com/PierreBeucher/cloudypad/commit/d409d8336dbf7a272b36ea1b8cd2357cdc96d255))
+* nvidia devices permissions in container ([c4c32e0](https://github.com/PierreBeucher/cloudypad/commit/c4c32e0169605be74c931187fc21d26aac8ffd77))
+
 ## [0.45.1](https://github.com/PierreBeucher/cloudypad/compare/v0.45.0...v0.45.1) (2026-05-03)
 
 
