@@ -18,8 +18,9 @@ RUN apt update && apt install -y \
 # pnpm requires global-bin-dir to exist and be on PATH
 ENV PNPM_HOME="/usr/local/share/pnpm"
 ENV PATH="$PNPM_HOME:$PATH"
+ARG PNPM_VERSION="10.33.3"
 
-RUN npm install -g pnpm && \
+RUN npm install -g "pnpm@${PNPM_VERSION}" && \
   pnpm config set store-dir /pnpm_store && \
   pnpm config set package-import-method copy
 
