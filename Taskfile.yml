@@ -283,6 +283,7 @@ tasks:
   # Push currently built core container image as "dev" tag
   build-core-container-push-current-as-dev:
     cmds:
+    - task: build-core-container-local
     - >-
       docker tag 
       $CLOUDYPAD_BUILD_CORE_IMAGE_REGISTRY:$CLOUDYPAD_BUILD_CORE_IMAGE_TAG 
@@ -346,6 +347,7 @@ tasks:
   # Push currently built Sunshine image as "dev" tag
   build-sunshine-container-push-current-as-dev:
     cmds:
+    - task: build-sunshine-container-local
     - >-
       docker tag 
       $CLOUDYPAD_BUILD_SUNSHINE_IMAGE_REGISTRY:$CLOUDYPAD_BUILD_SUNSHINE_IMAGE_TAG 
