@@ -30,7 +30,7 @@ sunshine_web_password_base64: "" # Password encoded in base64, eg echo -n "<pass
 
 # Sunshine container image to use 
 sunshine_image_tag: "dev"
-sunshine_image_repo: "ghcr.io/pierrebeucher/cloudypad/sunshine"
+sunshine_image_repo: "ghcr.io/gabbelitov2/cloudypad/sunshine"
 
 # Whether to force pull images when deploying Docker Compose Sunshine containers
 sunshine_compose_pull_images: always
