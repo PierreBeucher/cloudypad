@@ -11,3 +11,4 @@ test/unit/core/state/TMP-v0-root-data-dir
 **/__pycache__
 **/.venv
 test/integ/.data-root-dir
+ansible/inventories/custom-dev.yml
