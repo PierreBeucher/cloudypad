@@ -46,6 +46,7 @@ services:
       - "47989:47989/tcp" # HTTP
       - "47990:47990/tcp" # Web
       - "48010:48010/tcp" # RTSP
+      - "59999:59999/tcp" # MoonDeckBuddy
 
       - "47998:47998/udp" # Video
       - "47999:47999/udp" # Control

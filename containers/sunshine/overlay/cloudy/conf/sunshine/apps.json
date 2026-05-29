@@ -142,6 +142,23 @@
             "wait-all": "true",
             "exit-timeout": "5",
             "cmd": ""
+        },
+        {
+            "name": "MoonDeckStream",
+            "prep-cmd": [
+                {
+                    "do": "sh -c \"sunshine-app-startup.sh > \/tmp\/sunshine-session-start.log 2>&1\"",
+                    "undo": "sh -c \"moondeckstream-stop.sh > \/tmp\/moondeckstream-stop.log 2>&1\""
+                }
+            ],
+            "detached": [
+                "MOONDECKBUDDY_EXEC_STREAM=1 sh -c \"moondeckstream-start.sh > \/tmp\/moondeckstream-start.log 2>&1\""
+            ],
+            "exclude-global-prep-cmd": "false",
+            "auto-detach": "true",
+            "wait-all": "true",
+            "exit-timeout": "5",
+            "cmd": ""
         }
     ]
 }

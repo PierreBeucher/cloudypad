@@ -17,6 +17,7 @@
       <property name="plugin-ids" type="array">
 
         <value type="int" value="10"/>
+        <value type="int" value="20"/>
       
       </property>
     </property>
@@ -76,6 +77,8 @@
     <property name="plugin-10" type="string" value="tasklist">
       <property name="grouping" type="uint" value="1"/>
     </property>
+    
+    <property name="plugin-20" type="string" value="systray"/>
 
     <property name="plugin-1" type="string" value="launcher">
       <property name="items" type="array">
