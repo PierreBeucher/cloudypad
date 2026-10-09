@@ -1,6 +1,6 @@
 ---
-description: Efficient feedback loop and problem fix when working with Instance deployment and infrastructure using real Cloud resources
-alwaysApply: false
+name: infra-feedback-loop
+description: Efficient feedback loop and problem fix when working with Instance deployment and infrastructure using real Cloud resources. Use when testing Instance deployment (creation, deployment, provision, configuration, start/stop, destroy, etc.)
 ---
 
 When you test Instance deployment (creation, deployment, provision, configuration, start/stop, etc.) feedback loop is not easy as you need to have broad context with Cloud resources and commands / tests are long to run. These rules define workflow for efficient debugging and feedback loop.
@@ -32,7 +32,7 @@ Instance Deployment (or Update) is a full cycle of state creation/update, provis
   - Root cause is unclear (not Ansible itself, unrelated to infrastructure or code): first try to run Configuration targetting impacted tasks, then try to Provision + Configuration, and as last resort re-run full Deployment
 - During instance Stop before base image creation: fix and try to Stop instance again
 - During instance Base image creation: fix and run Instance Base Image update again 
-- During instance Start after Base image creation: fix and run Instance Start again, if it fails, try to identfy the best place to continue our test
+- During instance Start after Base image creation: fix and run Instance Start again, if it fails, try to identify the best place to continue our test
 
 See below for specifics on each steps.
 
@@ -45,14 +45,14 @@ Typically a Pulumi or internal code issue: fix and run Provision again.
 Typically an Ansible issue. Don't run entire configuration and Ansible playbook again. May be related to several problems:
 - Root cause is Ansible-specific issue (eg. a malformed task, or a missing package on machine): fix then run Configuration targetting impacted Ansible tasks
 - Root cause is infrastructure (eg. a missing Cloud resource): fix, run Provision to update infra and then run Configuration targetting impacted Ansible tasks
-- Root cause is unclear (not Ansible itself, unrelated to infrastructure or code): try to fix, run Configuration targetting impacted tasks. If it doesn't wortk, you can run Provision then Configuration again.
+- Root cause is unclear (not Ansible itself, unrelated to infrastructure or code): try to fix, run Configuration targetting impacted tasks. If it doesn't work, you can run Provision then Configuration again.
         
 ## Instance Start
 
 Start is actually comprised of Data disk snapshot restoration, Provision and Start. 
 
 - Issue with Data disk Snapshot Restoration: maybe coming from how Data disk is passed to Main Pulumi stack or an issue with Snapshot creation.
-  - If issue is how Data Disk snapshot is c:reated: fix and run Stop again to provision disk again, and Start again
+  - If issue is how Data Disk snapshot is created: fix and run Stop again to provision disk again, and Start again
   - If issue is how Provision and Main Pulumi works with given snapshot: just fix and Start again
   - If issue is after Provision: fix and Start again
 - Other issue: fix and Start again
@@ -255,7 +255,7 @@ pulumi destroy -ryf -s organization/CloudyPad-Azure/test-azure-advanced
 # Enable DEBUG log level (if not already done)
 export CLOUDYPAD_LOG_LEVEL=2
 
-# Skip Ansible conifguration altogether
+# Skip Ansible configuration altogether
 # Useful for quick feedback loop on infra-specific aspects
 export CLOUDYPAD_SKIP_CONFIGURATION=true
 
@@ -270,7 +270,7 @@ See docs: `docs/src/usage/ssh.md`
 
 ## Running and using integration tests
 
-Tests under `test/integ/stable/core/providers/<provider>/lifecycle[.*].ts` are useful for feedback to create instances and do various lifecyce checks. When using these tests:
+Tests under `test/integ/stable/core/providers/<provider>/lifecycle[.*].ts` are useful for feedback to create instances and do various lifecycle checks. When using these tests:
 
 - Comment/uncomment some part of the test depending on context.
   - For example, when testing an infrastructure side aspect, it may be useful to disable anything related to Ansible with `CLOUDYPAD_SKIP_CONFIGURATION=true`
