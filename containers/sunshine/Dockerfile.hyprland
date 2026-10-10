@@ -562,7 +562,7 @@ RUN --mount=type=cache,id=cache-build,target=/var/cache --mount=type=tmpfs,targe
 set -e
 git clone --depth 1 --branch 20240722.0 https://github.com/abseil/abseil-cpp.git
 cd abseil-cpp
-cmake -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=${PREFIX} -DABSL_BUILD_TESTS=OFF -DABSL_PROPAGATE_CXX_STD=ON -S .
+cmake -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=${PREFIX} -DABSL_BUILD_TESTS=OFF -DABSL_PROPAGATE_CXX_STD=ON -DCMAKE_POSITION_INDEPENDENT_CODE=ON -S .
 cmake --build build -j$(nproc)
 cmake --install build
 ldconfig
