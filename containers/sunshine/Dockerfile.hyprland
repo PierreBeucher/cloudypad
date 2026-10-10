@@ -346,6 +346,23 @@ ninja -C build install
 
 _BUILD_WAYLAND_PROTOCOLS
 
+# libei 1.6.0 from source: Hyprland requires libeis-1.0, provided by libei >= 1.3
+# (noble only has libei 1.2.1). Requires our /usr/local libxkbcommon (see PKG_CONFIG_PATH)
+RUN --mount=type=cache,id=cache-build,target=/var/cache --mount=type=tmpfs,target=/var/log <<_BUILD_LIBEI
+
+set -e
+curl -fL -o /tmp/libei.tar.gz https://gitlab.freedesktop.org/libinput/libei/-/archive/1.6.0/libei-1.6.0.tar.gz
+tar -xzf /tmp/libei.tar.gz -C /tmp
+cd /tmp/libei-1.6.0
+meson setup build --buildtype=release --prefix ${PREFIX} \
+    -Dtests=false \
+    -Ddocumentation=false \
+    -Dsd-bus=disabled
+ninja -C build install
+ldconfig
+
+_BUILD_LIBEI
+
 # libxkbcommon from source (noble: 1.6.0, Hyprland requires >= 1.11)
 # Using stable release xkbcommon-1.13.2, does not support 'disabled' feature values
 RUN --mount=type=cache,id=cache-build,target=/var/cache --mount=type=tmpfs,target=/var/log <<_BUILD_XKBCOMMON
