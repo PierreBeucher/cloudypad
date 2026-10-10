@@ -198,12 +198,18 @@ _BUILD_LIBDISPLAY_INFO
 # wlroots: labwc 0.9.x requires wlroots >= 0.19 (noble only has 0.17)
 # Built with all default backends (incl. DRM, see libdisplay-info note above):
 # only headless and libinput are used at runtime (WLR_BACKENDS pin)
+# Patched: headless backend must NOT claim hardware cursor support (its
+# set_cursor stub silently discards the cursor buffer), otherwise the cursor
+# stays on the "hardware" path and is never composited into the output
+# buffer - invisible to Sunshine and any wlr-screencopy client
+COPY patches/wlroots-headless-software-cursor.patch /build/patches/
 RUN --mount=type=cache,id=cache-build,target=/var/cache --mount=type=tmpfs,target=/var/log <<_BUILD_WLROOTS
 
 set -e
 
 git clone --depth 1 --branch "${WLROOTS_VERSION}" https://gitlab.freedesktop.org/wlroots/wlroots.git /build/wlroots
 cd /build/wlroots
+git apply /build/patches/wlroots-headless-software-cursor.patch
 meson setup build --buildtype=release --prefix /usr/local --libdir=lib \
     -Dexamples=false
 ninja -C build install
@@ -303,6 +309,9 @@ apt install -y \
     xdg-desktop-portal-gtk \
     adwaita-icon-theme \
     fonts-noto-core \
+    fonts-noto-color-emoji \
+    swaybg \
+    librsvg2-bin \
     gettext-base \
     bc \
     python3-apt \
@@ -532,6 +541,10 @@ RUN useradd -m -d $CLOUDYPAD_USER_HOME -s /bin/bash -u 1001 $CLOUDYPAD_USER
 # Copy overlay files: startup scripts, default config, etc.
 COPY overlay /
 RUN chmod +x /cloudy/*.sh /cloudy/bin/*.sh
+
+# Rasterize wallpaper to PNG: Wayland wallpaper tools (swaybg) do not render SVG
+RUN mkdir -p /usr/share/cloudypad && \
+    rsvg-convert -w 1920 -h 1080 -o /usr/share/cloudypad/wallpaper.png $CLOUDYPAD_CONF_DIR/cloudypad/wallpaper.svg
 
 # Run healthcheck using script
 HEALTHCHECK --interval=10s --timeout=5s --start-period=5s --retries=3 \

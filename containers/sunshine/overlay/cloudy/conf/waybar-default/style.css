@@ -1,10 +1,10 @@
 /* Cloudy Pad waybar style
  * Copied from $XDG_CONFIG_HOME/waybar-default/style.css at container start
- * by setup-labwc-config.sh
+ * by setup-labwc-config.sh (first boot only)
  */
 
 * {
-    font-family: "Noto Sans", sans-serif;
+    font-family: "Noto Sans", "Noto Color Emoji", sans-serif;
     font-size: 13px;
 }
 
@@ -12,6 +12,32 @@ window#waybar {
     background-color: rgba(30, 30, 34, 0.9);
     color: #e6e6e6;
     border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Launcher buttons */
+#custom-steam,
+#custom-heroic,
+#custom-epic,
+#custom-gog,
+#custom-lutris,
+#custom-firefox,
+#custom-terminal,
+#custom-files {
+    padding: 0 8px;
+    margin: 4px 2px;
+    border-radius: 6px;
+    background-color: rgba(255, 255, 255, 0.08);
+}
+
+#custom-steam:hover,
+#custom-heroic:hover,
+#custom-epic:hover,
+#custom-gog:hover,
+#custom-lutris:hover,
+#custom-firefox:hover,
+#custom-terminal:hover,
+#custom-files:hover {
+    background-color: rgba(255, 255, 255, 0.2);
 }
 
 #taskbar button {

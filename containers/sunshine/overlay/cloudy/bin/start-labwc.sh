@@ -7,7 +7,7 @@ set -e
 #
 # - Headless backend provides the virtual display output (no real monitor
 #   attached to the container). Output resolution is set at session start
-#   by start-desktop-session.sh and adjusted on Sunshine session start by
+#   (see below) and adjusted on Sunshine session start by
 #   setup-sunshine-screen-mode.sh
 # - libinput backend handles input devices, including virtual devices
 #   created by Sunshine via /dev/uinput when a client connects
@@ -15,6 +15,9 @@ set -e
 #   access to the seatd socket via "video" group (see setup-user.sh)
 #
 # X11 applications (Steam, Heroic, Lutris...) run via labwc-managed XWayland
+#
+# Desktop panel (waybar) and wallpaper (swaybg) are separate supervised
+# services (see supervisord.conf), not children of the compositor
 #
 
 # Explicitly force seatd as libseat backend (no logind in container)
@@ -66,9 +69,22 @@ if [ -n "$CLOUDYPAD_KEYBOARD_OPTIONS" ]; then
 fi
 echo "Keyboard layout: XKB_DEFAULT_LAYOUT=$XKB_DEFAULT_LAYOUT XKB_DEFAULT_MODEL=$XKB_DEFAULT_MODEL XKB_DEFAULT_VARIANT=$XKB_DEFAULT_VARIANT XKB_DEFAULT_OPTIONS=$XKB_DEFAULT_OPTIONS"
 
+# Apply initial screen resolution once the compositor is accepting clients.
+# Background subshell: it must run while labwc is starting and re-runs on
+# every compositor restart (supervisor restarts labwc on crash)
+(
+    for i in $(seq 1 100); do
+        if [ -S "$XDG_RUNTIME_DIR/$WAYLAND_DISPLAY" ]; then
+            break
+        fi
+        sleep 0.2
+    done
+    export SUNSHINE_CLIENT_WIDTH=${CLOUDYPAD_SCREEN_INITIAL_WIDTH:-1920}
+    export SUNSHINE_CLIENT_HEIGHT=${CLOUDYPAD_SCREEN_INITIAL_HEIGHT:-1080}
+    export SUNSHINE_CLIENT_FPS=${CLOUDYPAD_SCREEN_INITIAL_FPS:-60}
+    setup-sunshine-screen-mode.sh || echo "WARNING: failed to set initial screen resolution"
+) &
+
 echo "Starting labwc compositor (config dir: $XDG_CONFIG_HOME/labwc, WAYLAND_DISPLAY=$WAYLAND_DISPLAY)"
 
-# Session controller start-desktop-session.sh applies initial resolution and
-# starts the panel: when it exits, labwc exits and supervisor restarts the
-# whole compositor session
-exec labwc -s /cloudy/bin/start-desktop-session.sh
+exec labwc

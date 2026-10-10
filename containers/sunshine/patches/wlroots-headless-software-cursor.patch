@@ -1,0 +1,40 @@
+From: Cloudy Pad <dev@cloudypad.gg>
+Subject: [PATCH] headless: report hardware cursor as unsupported
+
+The headless backend's set_cursor stub reports hardware cursor support
+(return true) while having no way to display a cursor: there is no cursor
+plane on headless outputs. wlroots then marks the cursor as the hardware
+cursor and skips it in software rendering, so the cursor is never
+composited into the output buffer. Screen capture clients (Sunshine via
+wlr-screencopy or wlr-export-dmabuf) copy the output buffer and the
+cursor is invisible in the stream, while input events keep working.
+
+Returning false keeps the cursor on the software path, where the scene
+renderer composites it into the output buffer: the cursor becomes visible
+to capture clients, matching what users see on real hardware (hardware
+cursor planes) and other headless setups.
+---
+ backend/headless/output.c | 6 +++++-
+ 1 file changed, 5 insertions(+), 1 deletion(-)
+
+diff --git a/backend/headless/output.c b/backend/headless/output.c
+index a4cdb17..2cf10af 100644
+--- a/backend/headless/output.c
++++ b/backend/headless/output.c
+@@ -81,7 +81,11 @@ static bool output_commit(struct wlr_output *wlr_output,
+
+ static bool output_set_cursor(struct wlr_output *wlr_output,
+ 		struct wlr_buffer *buffer, int hotspot_x, int hotspot_y) {
+-	return true;
++	// Report failure: the headless backend cannot actually display a
++	// hardware cursor (no cursor plane). Returning false keeps the cursor
++	// on the software path, where it is composited into the output buffer
++	// and thus visible to wlr-screencopy clients (eg. Sunshine).
++	return false;
+ }
+
+ static bool output_move_cursor(struct wlr_output *wlr_output, int x, int y) {
+	return true;
+ }
+--
+2.39.5

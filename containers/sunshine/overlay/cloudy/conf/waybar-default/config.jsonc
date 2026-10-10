@@ -1,28 +1,74 @@
 // Cloudy Pad waybar configuration
 // Copied from $XDG_CONFIG_HOME/waybar-default/config.jsonc at container start
-// by setup-labwc-config.sh
+// by setup-labwc-config.sh (first boot only)
 //
-// Top panel with window taskbar (wlr/taskbar works with any wlroots
-// compositor, incl. labwc) and clock
+// Top panel: game launcher shortcuts (left), open windows taskbar (center),
+// clock (right). Launcher buttons use the same start scripts as Sunshine apps.
+//
+// wlr/taskbar works with any wlroots compositor, incl. labwc.
 {
     "layer": "top",
     "position": "top",
-    "height": 32,
+    "height": 36,
     "exclusive": true,
-    "modules-left": ["wlr/taskbar"],
-    "modules-center": ["clock"],
-    "modules-right": [],
+    "modules-left": ["custom/steam", "custom/heroic", "custom/epic", "custom/gog", "custom/lutris", "custom/firefox", "custom/terminal", "custom/files"],
+    "modules-center": ["wlr/taskbar"],
+    "modules-right": ["clock"],
+    "custom/steam": {
+        "exec": "echo '{\"text\":\"🎮\",\"tooltip\":\"Steam\"}'",
+        "interval": "once",
+        "return-type": "json",
+        "on-click": "steam-start.sh steam://open/games"
+    },
+    "custom/heroic": {
+        "exec": "echo '{\"text\":\"🛡️\",\"tooltip\":\"Heroic Games Launcher\"}'",
+        "interval": "once",
+        "return-type": "json",
+        "on-click": "heroic-start.sh"
+    },
+    "custom/epic": {
+        "exec": "echo '{\"text\":\"🕹️\",\"tooltip\":\"Epic Games (via Heroic)\"}'",
+        "interval": "once",
+        "return-type": "json",
+        "on-click": "heroic-start.sh"
+    },
+    "custom/gog": {
+        "exec": "echo '{\"text\":\"🐔\",\"tooltip\":\"GOG (via Heroic)\"}'",
+        "interval": "once",
+        "return-type": "json",
+        "on-click": "heroic-start.sh"
+    },
+    "custom/lutris": {
+        "exec": "echo '{\"text\":\"🎲\",\"tooltip\":\"Lutris\"}'",
+        "interval": "once",
+        "return-type": "json",
+        "on-click": "lutris-start.sh"
+    },
+    "custom/firefox": {
+        "exec": "echo '{\"text\":\"🦊\",\"tooltip\":\"Firefox\"}'",
+        "interval": "once",
+        "return-type": "json",
+        "on-click": "firefox"
+    },
+    "custom/terminal": {
+        "exec": "echo '{\"text\":\"🖥️\",\"tooltip\":\"Terminal\"}'",
+        "interval": "once",
+        "return-type": "json",
+        "on-click": "xterm"
+    },
+    "custom/files": {
+        "exec": "echo '{\"text\":\"📁\",\"tooltip\":\"File manager\"}'",
+        "interval": "once",
+        "return-type": "json",
+        "on-click": "xdg-open $HOME"
+    },
     "wlr/taskbar": {
         "format": "{icon}",
-        "icon-size": 20,
+        "icon-size": 22,
         "tooltip-format": "{title}",
         "on-click": "activate",
         "on-click-middle": "close",
-        "ignore-list": [],
-        "app-icons": {
-            "steam": "steam",
-            "firefox": "firefox"
-        }
+        "ignore-list": []
     },
     "clock": {
         "format": "{:%H:%M}",

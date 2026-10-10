@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+  Cloudy Pad labwc root menu (right-click on desktop)
+  Copied from $XDG_CONFIG_HOME/labwc-default/menu.xml at container start
+  by setup-labwc-config.sh (first boot only)
+-->
+
+<openbox_menu>
+
+<menu id="root-menu">
+
+  <item label="Steam">
+    <action name="Execute" command="steam-start.sh steam://open/games" />
+  </item>
+  <item label="Heroic Games Launcher">
+    <action name="Execute" command="heroic-start.sh" />
+  </item>
+  <item label="Lutris">
+    <action name="Execute" command="lutris-start.sh" />
+  </item>
+  <item label="Firefox">
+    <action name="Execute" command="firefox" />
+  </item>
+  <separator />
+  <item label="Terminal">
+    <action name="Execute" command="xterm" />
+  </item>
+  <item label="App launcher (fuzzel)">
+    <action name="Execute" command="fuzzel" />
+  </item>
+  <separator />
+  <item label="Stop session">
+    <action name="Execute" command="stop-container-user.sh" />
+  </item>
+
+</menu>
+
+</openbox_menu>
