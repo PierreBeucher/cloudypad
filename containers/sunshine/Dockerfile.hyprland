@@ -566,7 +566,9 @@ RUN --mount=type=cache,id=cache-build,target=/var/cache --mount=type=tmpfs,targe
 set -e
 git clone --depth 1 --branch 20240722.0 https://github.com/abseil/abseil-cpp.git
 cd abseil-cpp
-cmake -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=${PREFIX} -DABSL_BUILD_TESTS=OFF -DABSL_PROPAGATE_CXX_STD=ON -DCMAKE_POSITION_INDEPENDENT_CODE=ON -S .
+# Shared libs: re2 links absl at runtime (DT_NEEDED), and the flat re2.pc below
+# then needs no Requires chain (see comment there)
+cmake -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=${PREFIX} -DABSL_BUILD_TESTS=OFF -DABSL_PROPAGATE_CXX_STD=ON -DBUILD_SHARED_LIBS=ON -S .
 cmake --build build -j$(nproc)
 cmake --install build
 ldconfig
@@ -585,6 +587,22 @@ cmake -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=${PREFIX} -DBUI
 cmake --build build -j$(nproc)
 cmake --install build
 ldconfig
+
+# Flatten re2.pc: pkgconf 1.8 hangs (infinite loop) when the 15 absl Requires
+# entries are combined with other modules in one pkg_check_modules call
+# (eg. "re2 muparser lcms2"). absl is built as SHARED libs, so re2.so carries
+# its absl dependencies via DT_NEEDED and the Requires chain is unnecessary.
+cat > ${PREFIX}/lib/pkgconfig/re2.pc <<EOF
+prefix=${PREFIX}
+libdir=\${prefix}/lib
+includedir=\${prefix}/include
+
+Name: re2
+Description: RE2 regular expression engine (Cloudy Pad build, flattened)
+Version: 11.0.0
+Cflags: -pthread -I\${includedir}
+Libs: -pthread -L\${libdir} -lre2
+EOF
 
 _BUILD_RE2
 
