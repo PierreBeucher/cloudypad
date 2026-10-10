@@ -492,6 +492,60 @@ ldconfig
 
 _LINKER_FIXUP_2
 
+# Additional deps for Hyprland v0.56:
+# - libxcb-composite0-dev: packaged in noble
+# - xcb-errors: not packaged in noble, built from source (tiny, meson)
+# - lua 5.5: noble only has 5.4, Hyprland requires >= 5.5 - built from source with a
+#   hand-written pkg-config file (upstream Lua does not ship one)
+RUN --mount=type=cache,id=cache-build,target=/var/cache --mount=type=tmpfs,target=/var/log <<_BUILD_HYPRLAND_FINAL_DEPS
+
+set -e
+
+apt update
+
+apt install -y \
+    libxcb-composite0-dev
+
+apt clean
+
+_BUILD_HYPRLAND_FINAL_DEPS
+
+# xcb-errors from source (not packaged in noble)
+RUN --mount=type=cache,id=cache-build,target=/var/cache --mount=type=tmpfs,target=/var/log <<_BUILD_XCB_ERRORS
+
+set -e
+git clone --depth 1 https://gitlab.freedesktop.org/xorg/lib/libxcb-errors.git
+cd libxcb-errors
+meson setup build --buildtype=release --prefix ${PREFIX}
+ninja -C build install
+ldconfig
+
+_BUILD_XCB_ERRORS
+
+# lua 5.5.1 from source + hand-written pkg-config file
+RUN --mount=type=cache,id=cache-build,target=/var/cache --mount=type=tmpfs,target=/var/log <<_BUILD_LUA
+
+set -e
+curl -fL -o /tmp/lua.tar.gz https://github.com/lua/lua/archive/refs/tags/v5.5.1.tar.gz
+tar -xzf /tmp/lua.tar.gz -C /tmp
+cd /tmp/lua-5.5.1
+make all MYCFLAGS="-fPIC" -j$(nproc) > /dev/null
+make install INSTALL_TOP=${PREFIX} > /dev/null
+mkdir -p ${PREFIX}/lib/pkgconfig
+cat > ${PREFIX}/lib/pkgconfig/lua5.5.pc <<EOF
+prefix=${PREFIX}
+libdir=\${prefix}/lib
+includedir=\${prefix}/include
+
+Name: Lua 5.5
+Description: Lua 5.5 scripting language (Cloudy Pad build)
+Version: 5.5.1
+Libs: -L\${libdir} -llua -lm
+Cflags: -I\${includedir}
+EOF
+
+_BUILD_LUA
+
 # Hyprland
 # NOTE: --recursive is required: subprojects/udis86 is a git submodule
 ARG HYPRLAND_VERSION=v0.56.2
