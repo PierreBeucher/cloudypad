@@ -356,8 +356,7 @@ tar -xzf /tmp/libei.tar.gz -C /tmp
 cd /tmp/libei-1.6.0
 meson setup build --buildtype=release --prefix ${PREFIX} \
     -Dtests=disabled \
-    -Ddocumentation=none \
-    -Dsd-bus=disabled
+    -Dsd-bus-provider=auto
 ninja -C build install
 ldconfig
 
