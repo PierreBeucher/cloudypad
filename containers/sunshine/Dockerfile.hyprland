@@ -79,6 +79,7 @@ apt install -y \
     ca-certificates \
     cpio \
     bison \
+    pkgconf \
     meson
 
 apt clean
@@ -179,11 +180,14 @@ _PIP_CMAKE
 # Build with clang + libc++ for C++26 support
 # PKG_CONFIG_PATH forces pkg-config to resolve our /usr/local builds (libinput, libdisplay-info,
 # toml++...) before Ubuntu's older system packages
+# PKG_CONFIG=pkgconf: legacy pkg-config 0.29.2 hangs (100% CPU infinite loop) when the same
+# module appears both directly and via Requires (eg. hyprwire -> hyprutils). pkgconf handles dedup.
 ENV CC=clang-20 \
     CXX=clang++-20 \
     CXXFLAGS="-stdlib=libc++" \
     LDFLAGS="-stdlib=libc++" \
     PREFIX=/usr/local \
+    PKG_CONFIG=pkgconf \
     PKG_CONFIG_PATH="/usr/local/lib/x86_64-linux-gnu/pkgconfig:/usr/local/lib/pkgconfig"
 
 WORKDIR /build
