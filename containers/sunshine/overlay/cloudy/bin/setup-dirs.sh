@@ -6,8 +6,10 @@
 # 
 
 # Ensure /dev/uinput usable by all processes, required to properly handle mouse and keyboard
-# TODO is this secure ?
-chmod 0666 /dev/uinput
+# Only if present: not passed to container when running locally without device
+if [ -e /dev/uinput ]; then
+    chmod 0666 /dev/uinput
+fi
 
 # Ensure required directories exist and are usable by Cloudy user (XDG_*, Home directories, etc.)
 # As these directories are designed to be mounted from host, we need to ensure they exist and are usable by Cloudy user

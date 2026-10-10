@@ -1,5 +1,8 @@
 sunshine_name = $SUNSHINE_SERVER_NAME
 
+# Capture the labwc (wlroots) Wayland compositor via wlr-screencopy
+capture = wlr
+
 origin_web_ui_allowed = lan
 min_log_level = info
 

@@ -1,0 +1,95 @@
+<?xml version="1.0"?>
+
+<!--
+  Cloudy Pad labwc desktop configuration
+  Copied from $XDG_CONFIG_HOME/labwc-default/rc.xml to $XDG_CONFIG_HOME/labwc/rc.xml
+  at container start by setup-labwc-config.sh: user customizations in the
+  persistent config dir are overwritten each start.
+
+  Keyboard layout is applied via XKB_DEFAULT_* environment variables
+  (see start-labwc.sh), not via this file.
+
+  Desktop behavior follows Openbox conventions (labwc is an Openbox-style
+  stacking/floating compositor): every window floats with a titlebar, which
+  suits remote desktop and windowed game launchers well.
+
+  See https://labwc.github.io/config.html
+-->
+
+<labwc_config>
+
+  <core>
+    <!-- Server-side decorations for every client that leaves the choice to
+         the compositor: consistent titlebars with buttons across apps.
+         Clients drawing their own decorations (GTK) are unaffected. -->
+    <decoration>server</decoration>
+
+    <!-- Keep the XWayland server up across the last X11 window closing, so
+         the next one (eg. a game launcher) starts without a cold restart -->
+    <xwaylandPersistence>yes</xwaylandPersistence>
+
+    <!-- No gap between windows and screen edges: maximize space for games
+         and streaming sessions -->
+    <gap>0</gap>
+  </core>
+
+  <theme>
+    <cornerRadius>0</cornerRadius>
+  </theme>
+
+  <!-- New window lands beside the last rather than on top of it: keeps
+       several windows usable without manual re-positioning -->
+  <placement>
+    <policy>cascade</policy>
+  </placement>
+
+  <focus>
+    <followMouse>no</followMouse>
+    <raiseOnFocus>yes</raiseOnFocus>
+  </focus>
+
+  <windowRules>
+
+    <!-- Big Picture mode: fullscreen, no decorations -->
+    <windowRule identifier="steam" title="Steam Big Picture Mode" serverDecoration="no">
+      <action name="Fullscreen"/>
+    </windowRule>
+
+  </windowRules>
+
+  <keyboard>
+    <default />
+
+    <!-- App launcher -->
+    <keybind key="W-Menu">
+      <action name="Execute" command="fuzzel" />
+    </keybind>
+    <keybind key="W-Return">
+      <action name="Execute" command="xterm" />
+    </keybind>
+    <keybind key="W-B">
+      <action name="Execute" command="firefox" />
+    </keybind>
+
+    <!-- Window management -->
+    <keybind key="W-Q">
+      <action name="Close" />
+    </keybind>
+    <keybind key="W-F">
+      <action name="ToggleFullscreen" />
+    </keybind>
+    <keybind key="W-M">
+      <action name="ToggleMaximize" />
+    </keybind>
+
+    <!-- Stop container (sudoers entry allows user to run it) -->
+    <keybind key="W-Escape">
+      <action name="Execute" command="stop-container-user.sh" />
+    </keybind>
+  </keyboard>
+
+  <mouse>
+    <default />
+  </mouse>
+
+</labwc_config>

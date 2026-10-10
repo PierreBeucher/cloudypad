@@ -1,0 +1,35 @@
+/* Cloudy Pad waybar style
+ * Copied from $XDG_CONFIG_HOME/waybar-default/style.css at container start
+ * by setup-labwc-config.sh
+ */
+
+* {
+    font-family: "Noto Sans", sans-serif;
+    font-size: 13px;
+}
+
+window#waybar {
+    background-color: rgba(30, 30, 34, 0.9);
+    color: #e6e6e6;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+#taskbar button {
+    padding: 0 6px;
+    border-radius: 4px;
+    margin: 4px 2px;
+    background-color: transparent;
+}
+
+#taskbar button:hover {
+    background-color: rgba(255, 255, 255, 0.15);
+}
+
+#taskbar button.active {
+    background-color: rgba(255, 255, 255, 0.25);
+}
+
+#clock {
+    padding: 0 12px;
+    font-weight: bold;
+}

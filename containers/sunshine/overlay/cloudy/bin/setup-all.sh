@@ -4,10 +4,12 @@ set -e
 
 #
 # Setup services and components configs on container startup depending on runtime context:
-# - Setup locale and keyboard layout
-# - Copy Xorg configuration adapted for GPU and driver used
-# - Setup additional driver component (eg. NVIDIA driver component for X)
-# 
+# - Setup locale
+# - Setup directories and permissions
+# - Setup user groups for device access
+# - Setup additional driver component (eg. NVIDIA driver userspace libraries)
+# - Setup labwc desktop config
+#
 
 source setup-locale.sh
 
@@ -20,10 +22,6 @@ if [ "$NVIDIA_ENABLE" = true ]; then
     source setup-nvidia-driver.sh
 fi
 
-source setup-x-config.sh
-
-setup-xfce4-default-config.sh
-
-setup-pulseaudio.sh
+setup-labwc-config.sh
 
 setup-heroic.sh

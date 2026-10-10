@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-wait-x-availability.sh
+wait-wayland-availability.sh
 
 # Ensure Sunshine state directory exists
 mkdir -p $CLOUDYPAD_DATA_DIR/sunshine

@@ -25,8 +25,11 @@ services:
     # Cloudy Pad data and XDG_DATA_HOME where data should be persisted (game files, Sunshine state, etc.)
     - "{{ sunshine_data_dir }}:/cloudy/data"
 
-    # Keep xfce4 config on host as user may customize it (eg. keyboard layout)
-    - "{{ sunshine_persistent_config_dir }}/xfce4:/cloudy/conf/xfce4"
+    # Keep labwc desktop config on host as user may customize it (eg. keybinds)
+    - "{{ sunshine_persistent_config_dir }}/labwc:/cloudy/conf/labwc"
+
+    # Keep waybar panel config on host as user may customize it (eg. bar style)
+    - "{{ sunshine_persistent_config_dir }}/waybar:/cloudy/conf/waybar"
 
     # Keep Heroic config and data
     - "{{ sunshine_persistent_config_dir }}/heroic:/cloudy/conf/heroic"
@@ -35,6 +38,11 @@ services:
     # Some important data are stored in $HOME by numerous apps (like Heroic or Lutris)
     # persisting this folder makes sense to keep user's data across container recreation
     - "{{ sunshine_persistent_home_dir }}:/home/cloudy"
+
+    # XDG_RUNTIME_DIR as tmpfs: required by Wayland clients (compositor sockets,
+    # PipeWire, dbus session...) and wiped on restart as expected by XDG spec
+    tmpfs:
+      - /cloudy/runtime
 
     # Allow container to read/write/manage attributes on character device 13
     # 13 matches /dev/input mouse, keyboard, etc. devices
@@ -54,9 +62,9 @@ services:
     environment:
       # Desired keyboard layout
       # See available layouts: https://man.archlinux.org/man/xkeyboard-config.7#LAYOUTS
-      # Passed to Xorg config as per https://wiki.archlinux.org/title/Xorg/Keyboard_configuration#Using_X_configuration_files
       #
-      # Variables are passed to template overlay/cloudy/conf/x11/templates/00-keyboard.conf
+      # Passed to the Wayland compositor via XKB_DEFAULT_* environment variables
+      # (see containers/sunshine/overlay/cloudy/bin/start-labwc.sh)
       CLOUDYPAD_KEYBOARD_LAYOUT: {{ sunshine_keyboard_layout }}
       CLOUDYPAD_KEYBOARD_MODEL: {{ sunshine_keyboard_model }}
       CLOUDYPAD_KEYBOARD_VARIANT: {{ sunshine_keyboard_variant }}

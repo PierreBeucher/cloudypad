@@ -1,0 +1,31 @@
+// Cloudy Pad waybar configuration
+// Copied from $XDG_CONFIG_HOME/waybar-default/config.jsonc at container start
+// by setup-labwc-config.sh
+//
+// Top panel with window taskbar (wlr/taskbar works with any wlroots
+// compositor, incl. labwc) and clock
+{
+    "layer": "top",
+    "position": "top",
+    "height": 32,
+    "exclusive": true,
+    "modules-left": ["wlr/taskbar"],
+    "modules-center": ["clock"],
+    "modules-right": [],
+    "wlr/taskbar": {
+        "format": "{icon}",
+        "icon-size": 20,
+        "tooltip-format": "{title}",
+        "on-click": "activate",
+        "on-click-middle": "close",
+        "ignore-list": [],
+        "app-icons": {
+            "steam": "steam",
+            "firefox": "firefox"
+        }
+    },
+    "clock": {
+        "format": "{:%H:%M}",
+        "tooltip-format": "{:%A %d %B %Y}"
+    }
+}
