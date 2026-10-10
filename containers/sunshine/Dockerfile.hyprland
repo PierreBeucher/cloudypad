@@ -560,7 +560,7 @@ _BUILD_LUA
 RUN --mount=type=cache,id=cache-build,target=/var/cache --mount=type=tmpfs,target=/var/log <<_BUILD_RE2
 
 set -e
-git clone --depth 1 -b 2024-07-02 https://github.com/google/re2.git
+git clone --depth 1 -b 2024-07-02 --recursive https://github.com/google/re2.git
 cd re2
 cmake -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=${PREFIX} -DBUILD_SHARED_LIBS=ON -S .
 cmake --build build -j$(nproc)
