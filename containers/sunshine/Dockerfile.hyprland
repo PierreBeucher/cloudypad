@@ -504,7 +504,11 @@ set -e
 apt update
 
 apt install -y \
-    libxcb-composite0-dev
+    libxcb-composite0-dev \
+    xutils-dev \
+    autoconf \
+    automake \
+    libtool
 
 apt clean
 
@@ -514,10 +518,13 @@ _BUILD_HYPRLAND_FINAL_DEPS
 RUN --mount=type=cache,id=cache-build,target=/var/cache --mount=type=tmpfs,target=/var/log <<_BUILD_XCB_ERRORS
 
 set -e
-git clone --depth 1 https://gitlab.freedesktop.org/xorg/lib/libxcb-errors.git
+# autotools build with util-macros submodule
+git clone --depth 1 --recurse-submodules https://gitlab.freedesktop.org/xorg/lib/libxcb-errors.git
 cd libxcb-errors
-meson setup build --buildtype=release --prefix ${PREFIX}
-ninja -C build install
+autoreconf -fi
+./configure --prefix=${PREFIX}
+make -j$(nproc) > /dev/null
+make install > /dev/null
 ldconfig
 
 _BUILD_XCB_ERRORS
