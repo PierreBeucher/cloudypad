@@ -356,9 +356,9 @@ meson setup build --buildtype=release --prefix ${PREFIX} \
     -Denable-x11=false \
     -Denable-wayland=false \
     -Denable-xkbregistry=false \
-    -Denable-cli=false \
-    -Denable-docs=false \
-    -Denable-tests=false
+    -Denable-tools=false \
+    -Denable-bash-completion=false \
+    -Denable-docs=false
 ninja -C build install
 ldconfig
 
