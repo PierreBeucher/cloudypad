@@ -166,12 +166,12 @@ apt clean
 
 _BUILD_EXTRA_DEPS
 
-# cmake >= 3.30 required by Hyprland, noble only has 3.28
+# cmake >= 3.30 (noble has 3.28) and meson >= 1.4 (noble has 1.3.2, required by libxkbcommon)
 RUN --mount=type=cache,target=/root/.cache/pip <<_PIP_CMAKE
 
 set -e
 
-pip3 install --break-system-packages cmake
+pip3 install --break-system-packages cmake meson
 
 _PIP_CMAKE
 
