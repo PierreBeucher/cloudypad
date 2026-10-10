@@ -1,0 +1,776 @@
+# EXPERIMENT: Hyprland-based Sunshine image (Wayland session)
+#
+# Modernized desktop stack experiment for Cloudy Pad:
+# - Hyprland (Wayland compositor) running headless with virtual outputs
+# - X11 apps via xwayland-satellite
+# - PipeWire audio (replaces PulseAudio)
+# - Sunshine capture via wlroots-screencopy (capture = wlr)
+# - Steam, Lutris, Heroic kept identical to main Dockerfile
+#
+# NOT production-ready yet. See container-x-analysis.md
+#
+# Build: docker buildx build containers/sunshine -f containers/sunshine/Dockerfile.hyprland -t cloudypad/sunshine:hyprland
+
+# Download installers in base to bind-mount them in other stages
+FROM alpine/curl:8.14.1 AS download-base
+WORKDIR /app
+
+# Sunshine
+# https://github.com/LizardByte/Sunshine/releases
+FROM download-base AS download-sunshine
+ARG SUNSHINE_VERSION=2025.924.154138
+RUN curl -fL -o /app/sunshine.deb "https://github.com/LizardByte/Sunshine/releases/download/v${SUNSHINE_VERSION}/sunshine-ubuntu-24.04-amd64.deb"
+
+# Steam
+# https://repo.steampowered.com/steam/archive/stable/
+FROM download-base AS download-steam
+ARG STEAM_VERSION="1.0.0.81"
+RUN curl -f -o /app/steam-libs-amd64.deb "https://repo.steampowered.com/steam/archive/stable/steam-libs-amd64_${STEAM_VERSION}_amd64.deb"
+RUN curl -f -o /app/steam-libs-i386.deb "https://repo.steampowered.com/steam/archive/stable/steam-libs-i386_${STEAM_VERSION}_i386.deb"
+RUN curl -f -o /app/steam.deb "https://repo.steampowered.com/steam/archive/stable/steam-launcher_${STEAM_VERSION}_all.deb"
+
+# Lutris
+# https://github.com/lutris/lutris/releases
+FROM download-base AS download-lutris
+ARG LUTRIS_VERSION="0.5.20"
+RUN curl -fL -o /app/lutris.deb "https://github.com/lutris/lutris/releases/download/v${LUTRIS_VERSION}/lutris_${LUTRIS_VERSION}_all.deb"
+
+# Heroic
+# https://github.com/Heroic-Games-Launcher/HeroicGamesLauncher/releases
+FROM download-base AS download-heroic
+ARG HEROIC_VERSION="2.19.1"
+
+RUN curl -fL -o /app/heroic.deb "https://github.com/Heroic-Games-Launcher/HeroicGamesLauncher/releases/download/v${HEROIC_VERSION}/Heroic-${HEROIC_VERSION}-linux-amd64.deb"
+
+#
+# Build Hyprland and its ecosystem from source
+# Ubuntu noble doesn't package Hyprland (only 24.10+) and Hyprland requires
+# C++26 (clang >= 19, packaged in noble) and cmake >= 3.30 (pip)
+#
+# Build order: hyprutils -> hyprlang -> hyprcursor -> hyprgraphics -> aquamarine -> Hyprland -> xwayland-satellite
+#
+# Dependencies are installed in separate layers for progressive build and fast debugging:
+# build-toolchain -> build-hyprland (see comments on each layer)
+#
+
+FROM ubuntu:noble AS build-toolchain
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+# Base toolchain: clang-20 (C++26), cmake from pip, build helpers
+RUN --mount=type=cache,id=cache-build,target=/var/cache --mount=type=tmpfs,target=/var/log <<_BUILD_TOOLCHAIN
+
+set -e
+
+apt update
+
+apt install -y \
+    build-essential \
+    clang-20 \
+    libc++-20-dev \
+    libc++abi-20-dev \
+    lld-20 \
+    ninja-build \
+    pkg-config \
+    python3-pip \
+    python3-dev \
+    git \
+    curl \
+    ca-certificates \
+    cpio \
+    meson
+
+apt clean
+
+_BUILD_TOOLCHAIN
+
+FROM build-toolchain AS build-hyprland
+
+# Hyprland and ecosystem build dependencies
+RUN --mount=type=cache,id=cache-build,target=/var/cache --mount=type=tmpfs,target=/var/log <<_BUILD_HYPRLAND_DEPS
+
+set -e
+
+apt update
+
+apt install -y \
+    libgl1-mesa-dev \
+    libegl1-mesa-dev \
+    libgles2-mesa-dev \
+    libglvnd-dev \
+    libdrm-dev \
+    libgbm-dev \
+    libudev-dev \
+    libinput-dev \
+    libseat-dev \
+    libdisplay-info-dev \
+    libxkbcommon-dev \
+    libxkbcommon-x11-dev \
+    libpixman-1-dev \
+    libpango1.0-dev \
+    libcairo2-dev \
+    librsvg2-dev \
+    libjpeg-dev \
+    libpng-dev \
+    libwebp-dev \
+    libjxl-dev \
+    libtomlplusplus-dev \
+    libmagic-dev \
+    libre2-dev \
+    libmuparser-dev \
+    glslang-dev \
+    glslang-tools \
+    libwayland-dev \
+    wayland-protocols
+
+apt clean
+
+_BUILD_HYPRLAND_DEPS
+
+# xwayland-satellite build dependencies
+RUN --mount=type=cache,id=cache-build,target=/var/cache --mount=type=tmpfs,target=/var/log <<_BUILD_XWS_DEPS
+
+set -e
+
+apt update
+
+apt install -y \
+    libxcb1-dev \
+    libxcb-util-dev \
+    libxcb-xfixes0-dev \
+    libxcb-xkb-dev \
+    libxcb-shm0-dev \
+    libxcb-icccm4-dev \
+    libxcb-render0-dev \
+    libxcb-shape0-dev \
+    libxcb-res0-dev \
+    libxcb-cursor-dev \
+    libx11-dev \
+    libx11-xcb-dev
+
+apt clean
+
+_BUILD_XWS_DEPS
+
+# Additional deps discovered during build iterations (kept in separate layers to preserve build cache)
+RUN --mount=type=cache,id=cache-build,target=/var/cache --mount=type=tmpfs,target=/var/log <<_BUILD_EXTRA_DEPS
+
+set -e
+
+apt update
+
+apt install -y \
+    libzip-dev
+
+apt clean
+
+_BUILD_EXTRA_DEPS
+
+# cmake >= 3.30 required by Hyprland, noble only has 3.28
+RUN --mount=type=cache,target=/root/.cache/pip <<_PIP_CMAKE
+
+set -e
+
+pip3 install --break-system-packages cmake
+
+_PIP_CMAKE
+
+# Build with clang + libc++ for C++26 support
+# PKG_CONFIG_PATH forces pkg-config to resolve our /usr/local builds (libinput, libdisplay-info,
+# toml++...) before Ubuntu's older system packages
+ENV CC=clang-20 \
+    CXX=clang++-20 \
+    CXXFLAGS="-stdlib=libc++" \
+    LDFLAGS="-stdlib=libc++" \
+    PREFIX=/usr/local \
+    PKG_CONFIG_PATH="/usr/local/lib/x86_64-linux-gnu/pkgconfig:/usr/local/lib/pkgconfig"
+
+WORKDIR /build
+
+# toml++ built from source as header-only (INTERFACE) library
+# Ubuntu's libtomlplusplus is compiled against libstdc++ (GCC ABI) which conflicts
+# with our libc++ build: installing upstream header-only version to /usr/local
+# makes pkg-config resolve it first and avoids the ABI mismatch
+# CMAKE_POLICY_VERSION_MINIMUM needed as toml++ supports older cmake than 4.x accepts
+RUN --mount=type=cache,id=cache-build,target=/var/cache --mount=type=tmpfs,target=/var/log <<_BUILD_TOMLPP
+
+set -e
+git clone --depth 1 --branch v3.4.0 https://github.com/marzer/tomlplusplus.git
+cd tomlplusplus
+cmake -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=${PREFIX} -DCMAKE_POLICY_VERSION_MINIMUM=3.5 -S .
+cmake --install build
+
+# toml++ upstream does not install a pkg-config file: pkg-config would resolve
+# Ubuntu's libtomlplusplus (compiled against libstdc++, GCC ABI) and link it,
+# causing undefined references when building with libc++.
+# Install a header-only .pc into /usr/local (searched first by pkg-config) with no -l flag
+mkdir -p ${PREFIX}/lib/pkgconfig
+cat > ${PREFIX}/lib/pkgconfig/tomlplusplus.pc <<EOF
+prefix=${PREFIX}
+includedir=\${prefix}/include
+
+Name: tomlplusplus
+Description: toml++ header-only (Cloudy Pad build, libc++ compatible)
+Version: 3.4.0
+Cflags: -I\${includedir}
+EOF
+
+_BUILD_TOMLPP
+
+# pugixml: required by hyprwayland-scanner
+RUN --mount=type=cache,id=cache-build,target=/var/cache --mount=type=tmpfs,target=/var/log <<_BUILD_PUGIXML_DEPS
+
+set -e
+
+apt update
+
+apt install -y \
+    libpugixml-dev
+
+apt clean
+
+_BUILD_PUGIXML_DEPS
+
+# hyprwayland-scanner: Wayland protocol code generator used by aquamarine and Hyprland
+RUN --mount=type=cache,id=cache-build,target=/var/cache --mount=type=tmpfs,target=/var/log <<_BUILD_HWS
+
+set -e
+git clone --depth 1 --branch v0.4.6 https://github.com/hyprwm/hyprwayland-scanner.git
+cd hyprwayland-scanner
+cmake -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=${PREFIX} -S .
+cmake --build build -j$(nproc)
+cmake --install build
+
+_BUILD_HWS
+
+# hyprutils
+RUN --mount=type=cache,id=cache-build,target=/var/cache --mount=type=tmpfs,target=/var/log <<_BUILD_HYPRUTILS
+
+set -e
+git clone --depth 1 --branch v0.14.2 https://github.com/hyprwm/hyprutils.git
+cd hyprutils
+cmake -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=${PREFIX} -S .
+cmake --build build -j$(nproc)
+cmake --install build
+ldconfig
+
+_BUILD_HYPRUTILS
+
+# hyprlang
+RUN --mount=type=cache,id=cache-build,target=/var/cache --mount=type=tmpfs,target=/var/log <<_BUILD_HYPRLANG
+
+set -e
+git clone --depth 1 --branch v0.6.8 https://github.com/hyprwm/hyprlang.git
+cd hyprlang
+cmake -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=${PREFIX} -S .
+cmake --build build -j$(nproc)
+cmake --install build
+ldconfig
+
+_BUILD_HYPRLANG
+
+# hyprcursor
+RUN --mount=type=cache,id=cache-build,target=/var/cache --mount=type=tmpfs,target=/var/log <<_BUILD_HYPRCURSOR
+
+set -e
+git clone --depth 1 --branch v0.1.13 https://github.com/hyprwm/hyprcursor.git
+cd hyprcursor
+cmake -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=${PREFIX} -S .
+cmake --build build -j$(nproc)
+cmake --install build
+ldconfig
+
+_BUILD_HYPRCURSOR
+
+# hyprgraphics
+RUN --mount=type=cache,id=cache-build,target=/var/cache --mount=type=tmpfs,target=/var/log <<_BUILD_HYPRGRAPHICS
+
+set -e
+git clone --depth 1 --branch v0.5.1 https://github.com/hyprwm/hyprgraphics.git
+cd hyprgraphics
+cmake -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=${PREFIX} -S .
+cmake --build build -j$(nproc)
+cmake --install build
+ldconfig
+
+_BUILD_HYPRGRAPHICS
+
+# Extra runtime deps for Hyprland not packaged (or too old) in noble:
+# - libxcursor, libei (libeis-1.0), lcms2: packaged, just missing dev packages
+# - wayland, wayland-protocols, libxkbcommon: noble versions too old for Hyprland v0.56
+#   (wayland >= 1.22.91 vs noble 1.22.0, xkbcommon >= 1.11 vs noble 1.6, protocols >= 1.49 vs noble 1.45)
+# Built to /usr/local so pkg-config resolves them first (see PKG_CONFIG_PATH)
+RUN --mount=type=cache,id=cache-build,target=/var/cache --mount=type=tmpfs,target=/var/log <<_BUILD_HYPRLAND_EXTRA_DEPS
+
+set -e
+
+apt update
+
+apt install -y \
+    libxcursor-dev \
+    libei-dev \
+    liblcms2-dev \
+    libexpat1-dev \
+    libffi-dev
+
+apt clean
+
+_BUILD_HYPRLAND_EXTRA_DEPS
+
+# wayland 1.26.0 from source (noble: 1.22.0, Hyprland requires >= 1.22.91)
+RUN --mount=type=cache,id=cache-build,target=/var/cache --mount=type=tmpfs,target=/var/log <<_BUILD_WAYLAND
+
+set -e
+curl -fL -o /tmp/wayland.tar.gz https://gitlab.freedesktop.org/wayland/wayland/-/archive/1.26.0/wayland-1.26.0.tar.gz
+tar -xzf /tmp/wayland.tar.gz -C /tmp
+cd /tmp/wayland-1.26.0
+meson setup build --buildtype=release --prefix ${PREFIX} \
+    -Ddocumentation=false \
+    -Ddtd_validation=false \
+    -Dtests=false
+ninja -C build install
+ldconfig
+
+_BUILD_WAYLAND
+
+# wayland-protocols 1.49 from source (noble: 1.45, Hyprland requires >= 1.49)
+RUN --mount=type=cache,id=cache-build,target=/var/cache --mount=type=tmpfs,target=/var/log <<_BUILD_WAYLAND_PROTOCOLS
+
+set -e
+curl -fL -o /tmp/wayland-protocols.tar.gz https://gitlab.freedesktop.org/wayland/wayland-protocols/-/archive/1.49/wayland-protocols-1.49.tar.gz
+tar -xzf /tmp/wayland-protocols.tar.gz -C /tmp
+cd /tmp/wayland-protocols-1.49
+meson setup build --buildtype=release --prefix ${PREFIX} -Dtests=false
+ninja -C build install
+
+_BUILD_WAYLAND_PROTOCOLS
+
+# libxkbcommon from source (noble: 1.6.0, Hyprland requires >= 1.11)
+# Using stable release xkbcommon-1.13.2, does not support 'disabled' feature values
+RUN --mount=type=cache,id=cache-build,target=/var/cache --mount=type=tmpfs,target=/var/log <<_BUILD_XKBCOMMON
+
+set -e
+git clone --depth 1 --branch xkbcommon-1.13.2 https://github.com/xkbcommon/libxkbcommon.git
+cd libxkbcommon
+meson setup build --buildtype=release --prefix ${PREFIX} \
+    -Denable-x11=false \
+    -Denable-wayland=false \
+    -Denable-xkbregistry=false \
+    -Denable-cli=false \
+    -Denable-docs=false \
+    -Denable-tests=false
+ninja -C build install
+ldconfig
+
+_BUILD_XKBCOMMON
+
+# hwdata: PCI IDs database, required by aquamarine via pkg-config
+RUN --mount=type=cache,id=cache-build,target=/var/cache --mount=type=tmpfs,target=/var/log <<_BUILD_HWDATA_DEPS
+
+set -e
+
+apt update
+
+apt install -y \
+    hwdata \
+    libevdev-dev \
+    libmtdev-dev \
+    libwacom-dev
+
+apt clean
+
+_BUILD_HWDATA_DEPS
+
+# libdisplay-info built from source: aquamarine requires APIs from >= 0.2 (HDR/colorimetry),
+# noble only has 0.1.1. Installed to /usr/local so pkg-config resolves it first.
+# NOTE: aquamarine 0.15.x requires APIs not yet in a libdisplay-info release (HDR metadata,
+# signal colorimetry): building from git main, pinned to commit 62a9346 (2026-08-31)
+RUN --mount=type=cache,id=cache-build,target=/var/cache --mount=type=tmpfs,target=/var/log <<_BUILD_LIBDISPLAY_INFO
+
+set -e
+curl -fL -o /tmp/ldi.tar.gz https://gitlab.freedesktop.org/emersion/libdisplay-info/-/archive/62a9346c3dce2bddba1d4dc186949e4320d6f801/libdisplay-info-62a9346c3dce2bddba1d4dc186949e4320d6f801.tar.gz
+tar -xzf /tmp/ldi.tar.gz -C /tmp
+cd /tmp/libdisplay-info-62a9346c3dce2bddba1d4dc186949e4320d6f801
+meson setup build --buildtype=release --prefix ${PREFIX}
+ninja -C build install
+ldconfig
+
+_BUILD_LIBDISPLAY_INFO
+
+# libinput built from source: aquamarine requires libinput >= 1.26, noble has 1.25
+# Installed to /usr/local so pkg-config resolves it before Ubuntu's libinput
+RUN --mount=type=cache,id=cache-build,target=/var/cache --mount=type=tmpfs,target=/var/log <<_BUILD_LIBINPUT
+
+set -e
+curl -fL -o /tmp/libinput.tar.gz https://gitlab.freedesktop.org/libinput/libinput/-/archive/1.32.0/libinput-1.32.0.tar.gz
+tar -xzf /tmp/libinput.tar.gz -C /tmp
+cd /tmp/libinput-1.32.0
+meson setup build --buildtype=release --prefix ${PREFIX} \
+    -Ddocumentation=false \
+    -Dtests=false \
+    -Ddebug-gui=false \
+    -Dlibwacom=false
+ninja -C build install
+ldconfig
+
+_BUILD_LIBINPUT
+
+# Fixup: the linker's default search path does NOT include the multiarch
+# subdir /usr/local/lib/x86_64-linux-gnu (only /usr/local/lib), so -l flags would
+# otherwise resolve to Ubuntu's older system libs (same SONAME, missing symbols).
+# Symlink our built .so files into /usr/local/lib.
+RUN <<_LINKER_FIXUP
+
+set -e
+for f in /usr/local/lib/x86_64-linux-gnu/*.so*; do ln -sf "$f" /usr/local/lib/; done
+ldconfig
+
+_LINKER_FIXUP
+
+# Debug stage boundary: build --target build-deps-ready then docker run to inspect
+FROM build-hyprland AS build-deps-ready
+
+RUN --mount=type=cache,id=cache-build,target=/var/cache --mount=type=tmpfs,target=/var/log <<_BUILD_AQUAMARINE
+
+set -e
+
+# Remove Ubuntu's dev .so symlinks for libraries we shadow with newer builds:
+# CMake's pkg-config imported target resolution may otherwise pick Ubuntu's
+# older .so (libinput 1.25 / libdisplay-info 0.1.1, missing symbols required
+# by aquamarine) over our /usr/local builds despite pkg-config resolving
+# the right versions. Runtime libs (.so.N) are untouched, only dev symlinks removed.
+rm -f /usr/lib/x86_64-linux-gnu/libinput.so
+rm -f /usr/lib/x86_64-linux-gnu/libdisplay-info.so
+
+git clone --depth 1 --branch v0.15.1 https://github.com/hyprwm/aquamarine.git
+cd aquamarine
+cmake -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=${PREFIX} -S .
+cmake --build build -j$(nproc)
+cmake --install build
+ldconfig
+
+_BUILD_AQUAMARINE
+
+# Fixup: symlink aquamarine .so into /usr/local/lib before building Hyprland (see above)
+RUN <<_LINKER_FIXUP_2
+
+set -e
+for f in /usr/local/lib/x86_64-linux-gnu/*.so*; do ln -sf "$f" /usr/local/lib/; done
+ldconfig
+
+_LINKER_FIXUP_2
+
+# Hyprland
+# NOTE: --recursive is required: subprojects/udis86 is a git submodule
+ARG HYPRLAND_VERSION=v0.56.2
+RUN --mount=type=cache,id=cache-build,target=/var/cache --mount=type=tmpfs,target=/var/log <<_BUILD_HYPRLAND
+
+set -e
+git clone --depth 1 --branch ${HYPRLAND_VERSION} --recursive https://github.com/hyprwm/Hyprland.git
+cd Hyprland
+cmake -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=${PREFIX} -S .
+cmake --build build -j$(nproc)
+cmake --install build
+ldconfig
+
+_BUILD_HYPRLAND
+
+# xwayland-satellite (X11 support for Hyprland)
+RUN --mount=type=cache,id=cache-build,target=/var/cache --mount=type=tmpfs,target=/var/log <<_BUILD_XWS
+
+set -e
+git clone --depth 1 --branch v0.8.3 https://github.com/Supreeeme/xwayland-satellite.git
+cd xwayland-satellite
+meson setup build --buildtype=release --prefix ${PREFIX}
+ninja -C build install
+ldconfig
+
+_BUILD_XWS
+
+#
+# Sunshine image based on Ubuntu 24.04 with Hyprland desktop stack
+# Same base and gaming apps as the main (XFCE) image
+#
+FROM ubuntu:noble-20260210.1@sha256:98ff7968124952e719a8a69bb3cccdd217f5fe758108ac4f21ad22e1df44d237
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+RUN --mount=type=cache,id=cache-main,target=/var/cache --mount=type=tmpfs,target=/var/log <<_MAIN_PACKAGES
+
+set -e
+
+# Required for some Steam packages
+dpkg --add-architecture i386
+
+apt update
+
+# Main system packages: dbus, seatd, supervisor...
+# NOTE: no Xorg server - Hyprland runs headless, X11 apps use xwayland-satellite
+apt install -y \
+    curl \
+    x11-utils \
+    x11-xkb-utils \
+    x11-xserver-utils \
+    xauth \
+    xclip \
+    xdotool \
+    xfonts-base \
+    xdg-desktop-portal \
+    xdg-desktop-portal-gtk \
+    xterm \
+    wayland-utils \
+    dbus \
+    dbus-x11 \
+    avahi-utils \
+    libxcursor1 \
+    wmctrl \
+    supervisor \
+    gettext-base \
+    bc \
+    python3-apt \
+    xz-utils \
+    zenity \
+    bubblewrap \
+    software-properties-common \
+    nano \
+    unzip \
+    gedit \
+    seatd \
+    pipewire \
+    pipewire-pulse \
+    wireplumber \
+    libmagic1 \
+    libjxl0.7 \
+    libdisplay-info1 \
+    waybar \
+    fuzzel \
+    fonts-noto-core
+
+apt clean
+
+_MAIN_PACKAGES
+
+# Vulkan, LibGL and other video related packages
+# Same set as main image: Steam 32-bit and GPU rendering support
+RUN --mount=type=cache,id=cache-main,target=/var/cache --mount=type=tmpfs,target=/var/log <<_VIDEO_PACKAGES
+
+set -e
+
+apt update
+
+apt install -y \
+    libxcb1:i386 \
+    libxcb1:amd64 \
+    libc6:amd64 \
+    libc6:i386 \
+    libegl1:amd64 \
+    libegl1:i386 \
+    libgbm1:amd64 \
+    libgbm1:i386 \
+    libgl1-mesa-dri:amd64 \
+    libgl1-mesa-dri:i386 \
+    libgl1:amd64 \
+    libgl1:i386 \
+    steam-libs-i386:i386 \
+    steam-libs-amd64:amd64 \
+    libvulkan1:amd64 \
+    libvulkan1:i386 \
+    libxext6:amd64 \
+    libxext6:i386 \
+    libxtst6:amd64 \
+    libxtst6:i386 \
+    libxrandr2:amd64 \
+    libxrandr2:i386 \
+    libpulse0:amd64 \
+    libpulse0:i386 \
+    libglx0:amd64 \
+    libglx0:i386 \
+    libglx-mesa0:amd64 \
+    libglx-mesa0:i386 \
+    mesa-utils \
+    mesa-vulkan-drivers:amd64 \
+    mesa-vulkan-drivers:i386 \
+    libgbm1:amd64 \
+    libgbm1:i386 \
+    libgles2:amd64 \
+    libgles2:i386 \
+    libegl1:amd64 \
+    libegl1:i386 \
+    libgl1-mesa-dri:amd64 \
+    libgl1-mesa-dri:i386 \
+    libnvidia-egl-gbm1
+
+apt clean
+
+_VIDEO_PACKAGES
+
+# Locales, sudo and Firefox (moved from the removed XFCE desktop block of the main image)
+# Firefox installed as apt package (not snap): use Mozilla PPA and prioritise non-snap version
+# See https://askubuntu.com/a/1404401
+RUN --mount=type=cache,id=cache-main,target=/var/cache --mount=type=tmpfs,target=/var/log <<_LOCALE_FIREFOX
+
+set -e
+
+apt update
+
+apt install -y \
+    locales \
+    sudo
+
+apt clean
+
+# Firefox PPA and snap pinning
+add-apt-repository ppa:mozillateam/ppa
+
+echo "\
+Package: * \n\
+Pin: release o=LP-PPA-mozillateam \n\
+Pin-Priority: 1001 \n\
+\n\
+Package: firefox \n\
+Pin: version 1:1snap* \n\
+Pin-Priority: -1" | tee /etc/apt/preferences.d/mozilla-firefox
+
+apt update
+apt install -y firefox
+
+apt clean
+
+_LOCALE_FIREFOX
+
+# Default locale
+RUN locale-gen en_US.UTF-8 && \
+    update-locale LANG=en_US.UTF-8
+
+# Copy Hyprland stack and ecosystem libs from build stage
+# NOTE: build-deps-ready is the final build stage (build-hyprland ends at the deps-ready
+# boundary used for debugging, before aquamarine/Hyprland/xwayland-satellite are built)
+COPY --from=build-deps-ready /usr/local/ /usr/local/
+# Ensure /usr/local libs (libinput, libdisplay-info, etc.) take precedence over
+# Ubuntu system versions (same SONAME, newer symbols) - /usr/local/lib/x86_64-linux-gnu
+# is NOT in default ld.so.conf.d on Ubuntu
+RUN echo "/usr/local/lib/x86_64-linux-gnu" > /etc/ld.so.conf.d/999-cloudypad-local.conf && \
+    echo "/usr/local/lib" >> /etc/ld.so.conf.d/999-cloudypad-local.conf && \
+    ldconfig
+
+#
+# Sunshine
+#
+RUN --mount=type=cache,id=cache-main,target=/var/cache --mount=type=tmpfs,target=/var/log --mount=type=bind,from=download-sunshine,source=/app,target=/app <<_SUNSHINE
+
+set -e
+apt update
+apt install -y /app/sunshine.deb
+
+_SUNSHINE
+
+#
+# Steam
+#
+
+# Install Steam and Steam libs via official .deb
+RUN --mount=type=cache,id=cache-main,target=/var/cache --mount=type=tmpfs,target=/var/log --mount=type=bind,from=download-steam,source=/app,target=/app <<_STEAM
+
+set -e
+
+apt install -y /app/steam-libs-amd64.deb
+apt install -y /app/steam-libs-i386.deb
+apt install -y /app/steam.deb
+
+# Patch steam launch script to prevent Desktop shortcut creation on first launch:
+# The file is redundant with launchbar shortcut but is on trusted by default on desktop and does not use Cloudy Pad launcher script
+sed -i 's/if \[ ! -L "\$DESKTOP_DIR\/\$STEAMPACKAGE\.desktop" \]; then/if false; then # Patched by Cloudy Pad: prevent deskop shortcut creation/' /usr/lib/steam/bin_steam.sh
+
+_STEAM
+
+#
+# Lutris
+#
+RUN --mount=type=bind,from=download-lutris,source=/app/lutris.deb,target=/app/lutris.deb <<_LUTRIS
+
+set -e
+
+apt install -y /app/lutris.deb
+
+_LUTRIS
+
+#
+# Heroic
+#
+RUN --mount=type=cache,id=cache-main,target=/var/cache --mount=type=tmpfs,target=/var/log --mount=type=bind,from=download-heroic,source=/app/heroic.deb,target=/app/heroic.deb <<_HEROIC
+
+set -e
+
+apt install -y /app/heroic.deb
+
+_HEROIC
+
+# GE-Proton version that will be installed and configured for Heroic by default
+ENV CLOUDYPAD_HEROIC_DEFAULT_GEPROTON_VERSION="GE-Proton10-32"
+
+#
+# Global environment variables
+#
+
+# Display: XWayland display provided by xwayland-satellite
+ENV DISPLAY=":0"
+
+# Wayland display used by Hyprland
+ENV WAYLAND_DISPLAY="wayland-1"
+
+# Hyprland compositor: allow starting on render-only GPUs (datacenter NVIDIA, headless)
+ENV AQ_NO_KMS_REQUIREMENT="1"
+
+# User under which non-root services and softwares will run
+ENV CLOUDYPAD_USER=cloudy
+ENV CLOUDYPAD_USER_HOME=/home/$CLOUDYPAD_USER
+
+# Data directory that should be persisted via volume or bind mount
+ENV CLOUDYPAD_DATA_DIR=/cloudy/data
+ENV CLOUDYPAD_LOG_DIR=/cloudy/log
+ENV CLOUDYPAD_CONF_DIR=/cloudy/conf
+# TODO as tmpfs ?
+ENV CLOUDYPAD_RUNTIME_DIR=/cloudy/runtime
+ENV CLOUDYPAD_BIN_DIR=/cloudy/bin
+
+# Default name for Sunshine server (as shown by Moonlight)
+# Used in sunshine.conf templates
+ENV SUNSHINE_SERVER_NAME="Sunshine"
+
+#
+# XDG directories used by some services
+# Some program expect these paths to exist (or would use some default location)
+# Setting proper XDG_* variables allow more control other config and data persistence
+# See https://specifications.freedesktop.org/basedir-spec/latest/
+#
+ENV XDG_RUNTIME_DIR=$CLOUDYPAD_RUNTIME_DIR
+ENV XDG_CONFIG_HOME=$CLOUDYPAD_CONF_DIR
+ENV XDG_CACHE_HOME=$CLOUDYPAD_USER_HOME/.cache
+
+# Write data in known directory for persistence
+# XDG_DATA_HOME is used by various programs (like Steam) to store data
+# Use this known directory to easily persist it as bind mount or volume
+ENV XDG_DATA_HOME=$CLOUDYPAD_DATA_DIR
+
+ENV DBUS_SYSTEM_BUS_ADDRESS="unix:path=$XDG_RUNTIME_DIR/dbus"
+
+# Run as non-root user
+RUN useradd -m -d $CLOUDYPAD_USER_HOME -s /bin/bash -u 1001 $CLOUDYPAD_USER
+
+# Copy overlay files: startup scripts, default config, etc.
+COPY overlay /
+RUN chmod +x /cloudy/*.sh /cloudy/bin/*.sh
+
+# Run healthcheck using script
+HEALTHCHECK --interval=10s --timeout=5s --start-period=5s --retries=3 \
+    CMD /cloudy/bin/sunshine-healthcheck.sh
+
+# Allow user "cloudy" to stop container
+RUN echo "cloudy ALL=(ALL) NOPASSWD: ${CLOUDYPAD_BIN_DIR}/stop-supervisord.sh" > /etc/sudoers.d/cloudy-stop-container
+
+# Contain various Cloudy Pad scripts, add to PATH for easier use
+ENV PATH=$PATH:/cloudy/bin:/usr/local/bin
+
+RUN chown -R cloudy:cloudy /cloudy
+
+ENTRYPOINT [ "/cloudy/entrypoint-hyprland.sh" ]

@@ -4,6 +4,12 @@
 # Set xfce4 desktop bottom dock icon size depending on screen resolution
 #
 
+# Skip when not running an XFCE desktop (eg. Hyprland-based image)
+if ! command -v xfconf-query >/dev/null 2>&1; then
+    echo "xfconf-query not available: not an XFCE desktop, skipping desktop icon size setup"
+    exit 0
+fi
+
 # Get current screen resolution in format WIDTHxHEIGHT
 # xrandr would output something like "DUMMY0 connected primary 1920x1080+0+0 0mm x 0mm", only extract first connect screen resolution with regex
 current_screen_resolution=$(xrandr -q | grep -w "connected" | grep -oP '\d+x\d+' | head -n1)

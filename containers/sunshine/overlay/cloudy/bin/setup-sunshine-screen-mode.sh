@@ -61,6 +61,45 @@ else
   FINAL_SCREEN_HEIGHT=$DESIRED_SCREEN_HEIGHT
 fi
 
+#
+# Wayland / Hyprland path: resize compositor virtual output via hyprctl
+# Replaces the xrandr modeline flow below, resolution is native to the compositor
+#
+if [ -n "$WAYLAND_DISPLAY" ] && command -v hyprctl >/dev/null 2>&1; then
+
+    echo "Wayland display detected (WAYLAND_DISPLAY=$WAYLAND_DISPLAY), using Hyprland resolution setup"
+
+    # Create the headless output if not already present (should be created at Hyprland startup)
+    if ! hyprctl outputs 2>/dev/null | grep -q "^output "; then
+        echo "No Hyprland output found, creating headless output 'cloudypad'..."
+        hyprctl output create headless cloudypad
+    fi
+
+    # Detect first available output (headless output created at startup, named 'cloudypad')
+    HYPR_OUTPUT=$(hyprctl outputs | grep "^output " | head -n1 | awk '{print $2}')
+
+    if [[ -z "$HYPR_OUTPUT" ]]; then
+        echo "Error: could not find any Hyprland output"
+        exit 1
+    fi
+
+    echo "Setting Hyprland output '$HYPR_OUTPUT' to $FINAL_SCREEN_WIDTH x $FINAL_SCREEN_HEIGHT @ $DESIRED_SCREEN_FPS"
+
+    hyprctl keyword monitor "$HYPR_OUTPUT,$FINAL_SCREEN_WIDTHx$FINAL_SCREEN_HEIGHT@$DESIRED_SCREEN_FPS,0x0,1"
+
+    if [ $? -eq 0 ]; then
+        echo "Successfully applied mode '$FINAL_SCREEN_WIDTH x $FINAL_SCREEN_HEIGHT @ $DESIRED_SCREEN_FPS' to Hyprland output '$HYPR_OUTPUT'."
+    else
+        echo "Failed to apply mode to Hyprland output '$HYPR_OUTPUT'."
+        exit 1
+    fi
+
+    # NVIDIA ForceFullCompositionPipeline is Xorg-specific, not applicable on Wayland
+    # Tearing handling is done by the compositor (see hyprland.conf allow_tearing)
+
+    exit 0
+fi
+
 echo "Setting up screen mode for screen '$SCREEN_NAME' with $FINAL_SCREEN_WIDTH x $FINAL_SCREEN_HEIGHT @ $DESIRED_SCREEN_FPS"
 
 if [[ -z "$FINAL_SCREEN_WIDTH" || -z "$FINAL_SCREEN_HEIGHT" || -z "$DESIRED_SCREEN_FPS" ]]; then

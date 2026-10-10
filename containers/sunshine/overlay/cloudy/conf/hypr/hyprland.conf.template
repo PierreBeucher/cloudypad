@@ -1,0 +1,92 @@
+#
+# Cloudy Pad Hyprland configuration
+# Generated from this template by setup-hyprland-config.sh
+#
+# NOTE: Cloudy Pad env variables are substituted by envsubst at setup time.
+# Hyprland's own config variables (eg. $mod) are preserved (not substituted).
+#
+# See https://wiki.hypr.land/Configuring/
+#
+
+$mod = SUPER
+
+# Virtual display: create a headless output at startup
+# Required since container has no real monitor/display output.
+# Resolution is adjusted on Sunshine session start by setup-sunshine-screen-mode.sh
+# to match the connecting client resolution.
+# See https://wiki.hypr.land/Configuring/Monitors/
+exec-once = sh -c 'hyprctl output create headless cloudypad'
+
+# X11 apps support (Steam, Heroic, Lutris...) via xwayland-satellite
+# See https://github.com/Supreeeme/xwayland-satellite
+exec-once = xwayland-satellite :0
+
+# Desktop panel
+exec-once = waybar
+
+# Environment for spawned apps
+env = XDG_CURRENT_DESKTOP,Hyprland
+env = XDG_SESSION_TYPE,wayland
+env = XDG_SESSION_DESKTOP,Hyprland
+env = GDK_BACKEND,wayland,x11
+env = QT_QPA_PLATFORM,wayland
+env = MOZ_ENABLE_WAYLAND,1
+# DISPLAY env points to xwayland-satellite display, used by X11 apps
+env = DISPLAY,:0
+
+input {
+    kb_layout = ${CLOUDYPAD_KEYBOARD_LAYOUT}
+    kb_variant = ${CLOUDYPAD_KEYBOARD_VARIANT}
+    kb_model = ${CLOUDYPAD_KEYBOARD_MODEL}
+    kb_options = ${CLOUDYPAD_KEYBOARD_OPTIONS}
+
+    follow_mouse = 1
+    touchpad {
+        natural_scroll = false
+    }
+    sensitivity = 0
+}
+
+general {
+    gaps_in = 0
+    gaps_out = 0
+    border_size = 1
+    allow_tearing = true
+    layout = master
+}
+
+decoration {
+    rounding = 0
+    blur {
+        enabled = false
+    }
+    shadow {
+        enabled = false
+    }
+}
+
+animations {
+    enabled = false
+}
+
+misc {
+    disable_hyprland_qtutils_check = true
+    force_default_wallpaper = 0
+    vrr = 1
+    mouse_move_enables_dpms = true
+    key_press_enables_dpms = true
+}
+
+binds {
+    # Focus follows mouse disabled for streaming session stability
+    focus_preferred_method = 1
+}
+
+# App launchers
+bind = $mod, D, exec, fuzzel
+bind = $mod, Return, exec, xterm
+bind = $mod, B, exec, firefox
+bind = $mod, S, exec, steam-start.sh
+bind = $mod, W, killactive
+bind = $mod, F, fullscreen, 0
+bind = $mod SHIFT, F, togglefloating
