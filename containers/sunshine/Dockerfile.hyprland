@@ -355,8 +355,8 @@ curl -fL -o /tmp/libei.tar.gz https://gitlab.freedesktop.org/libinput/libei/-/ar
 tar -xzf /tmp/libei.tar.gz -C /tmp
 cd /tmp/libei-1.6.0
 meson setup build --buildtype=release --prefix ${PREFIX} \
-    -Dtests=false \
-    -Ddocumentation=false \
+    -Dtests=disabled \
+    -Ddocumentation=disabled \
     -Dsd-bus=disabled
 ninja -C build install
 ldconfig
