@@ -523,8 +523,8 @@ git clone --depth 1 --recurse-submodules https://gitlab.freedesktop.org/xorg/lib
 cd libxcb-errors
 autoreconf -fi
 ./configure --prefix=${PREFIX}
-make -j$(nproc) > /dev/null
-make install > /dev/null
+make -j$(nproc)
+make install
 ldconfig
 
 _BUILD_XCB_ERRORS
