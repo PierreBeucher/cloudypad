@@ -534,7 +534,7 @@ _BUILD_XCB_ERRORS
 RUN --mount=type=cache,id=cache-build,target=/var/cache --mount=type=tmpfs,target=/var/log <<_BUILD_LUA
 
 set -e
-curl -fL -o /tmp/lua.tar.gz https://github.com/lua/lua/archive/refs/tags/v5.5.1.tar.gz
+curl -fL -o /tmp/lua.tar.gz https://www.lua.org/ftp/lua-5.5.1.tar.gz
 tar -xzf /tmp/lua.tar.gz -C /tmp
 cd /tmp/lua-5.5.1
 make all MYCFLAGS="-fPIC" -j$(nproc) > /dev/null
