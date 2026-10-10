@@ -354,7 +354,8 @@ set -e
 apt update
 
 apt install -y \
-    libsystemd-dev
+    libsystemd-dev \
+    python3-jinja2
 
 apt clean
 
