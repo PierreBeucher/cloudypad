@@ -505,6 +505,7 @@ apt update
 
 apt install -y \
     libxcb-composite0-dev \
+    xcb-proto \
     xutils-dev \
     autoconf \
     automake \
