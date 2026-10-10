@@ -78,6 +78,7 @@ apt install -y \
     curl \
     ca-certificates \
     cpio \
+    bison \
     meson
 
 apt clean
