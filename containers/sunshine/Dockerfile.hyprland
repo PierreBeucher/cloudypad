@@ -555,6 +555,33 @@ EOF
 
 _BUILD_LUA
 
+# re2 built from source with libc++: Ubuntu's libre2 is compiled against libstdc++
+# (GCC ABI) which conflicts with our libc++ build (undefined std::__1 references)
+RUN --mount=type=cache,id=cache-build,target=/var/cache --mount=type=tmpfs,target=/var/log <<_BUILD_RE2
+
+set -e
+git clone --depth 1 -b 2025-11-05 https://github.com/google/re2.git
+cd re2
+cmake -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=${PREFIX} -DBUILD_SHARED_LIBS=ON -S .
+cmake --build build -j$(nproc)
+cmake --install build
+ldconfig
+
+_BUILD_RE2
+
+# muparser built from source with libc++: same ABI issue as re2 with Ubuntu's package
+RUN --mount=type=cache,id=cache-build,target=/var/cache --mount=type=tmpfs,target=/var/log <<_BUILD_MUPARSER
+
+set -e
+git clone --depth 1 --branch v2.3.6 https://github.com/beltoforion/muparser.git
+cd muparser
+cmake -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=${PREFIX} -DBUILD_SHARED_LIBS=ON -S .
+cmake --build build -j$(nproc)
+cmake --install build
+ldconfig
+
+_BUILD_MUPARSER
+
 # hyprwire from source (new hyprwm wire protocol library, required by Hyprland v0.56)
 RUN --mount=type=cache,id=cache-build,target=/var/cache --mount=type=tmpfs,target=/var/log <<_BUILD_HYPRWIRE
 
@@ -644,6 +671,8 @@ apt install -y \
     unzip \
     gedit \
     seatd \
+    libc++1-20 \
+    libc++abi1-20 \
     pipewire \
     pipewire-pulse \
     wireplumber \
