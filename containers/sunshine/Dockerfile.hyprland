@@ -588,6 +588,9 @@ _BUILD_RE2
 RUN --mount=type=cache,id=cache-build,target=/var/cache --mount=type=tmpfs,target=/var/log <<_BUILD_MUPARSER
 
 set -e
+apt update
+apt install -y libomp-20-dev
+apt clean
 git clone --depth 1 --branch v2.3.5 https://github.com/beltoforion/muparser.git
 cd muparser
 cmake -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=${PREFIX} -DBUILD_SHARED_LIBS=ON -S .
