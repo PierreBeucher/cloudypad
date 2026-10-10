@@ -506,6 +506,7 @@ apt update
 apt install -y \
     libxcb-composite0-dev \
     xcb-proto \
+    libreadline-dev \
     xutils-dev \
     autoconf \
     automake \
@@ -553,6 +554,19 @@ Cflags: -I\${includedir}
 EOF
 
 _BUILD_LUA
+
+# hyprwire from source (new hyprwm wire protocol library, required by Hyprland v0.56)
+RUN --mount=type=cache,id=cache-build,target=/var/cache --mount=type=tmpfs,target=/var/log <<_BUILD_HYPRWIRE
+
+set -e
+git clone --depth 1 --branch v0.3.1 https://github.com/hyprwm/hyprwire.git
+cd hyprwire
+cmake -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=${PREFIX} -S .
+cmake --build build -j$(nproc)
+cmake --install build
+ldconfig
+
+_BUILD_HYPRWIRE
 
 # Hyprland
 # NOTE: --recursive is required: subprojects/udis86 is a git submodule
