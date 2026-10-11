@@ -13,6 +13,13 @@ all:
 
       autostop_timeout_seconds: 3600 # 1h
 
+      # Vagrant VM has no usable GPU: VirtualBox VMSVGA (vmwgfx) EGL is not
+      # supported by modern Mesa. Load the vkms virtual GPU module so the
+      # compositor can render with llvmpipe over GBM and Sunshine can capture
+      # via linux-dmabuf (see start-labwc.sh software rendering fallback)
+      # (variable name kept: _vgem suffix, module switched to vkms)
+      sunshine_software_rendering_vgem: true
+
       sunshine_keyboard_layout: fr
       sunshine_keyboard_variant: azerty
       sunshine_keyboard_model: pc104

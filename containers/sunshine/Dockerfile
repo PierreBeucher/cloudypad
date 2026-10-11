@@ -314,6 +314,7 @@ apt install -y \
     librsvg2-bin \
     gettext-base \
     bc \
+    kmod \
     python3-apt \
     xterm \
     xz-utils \
@@ -323,8 +324,6 @@ apt install -y \
     nano \
     unzip \
     gedit
-
-# Vulkan, LibGL and other video related packages
 apt install -y \
     libxcb1:i386 \
     libxcb1:amd64 \

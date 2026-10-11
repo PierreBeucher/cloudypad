@@ -11,6 +11,15 @@ if [ -e /dev/uinput ]; then
     chmod 0666 /dev/uinput
 fi
 
+# Ensure DRM devices usable by all processes: compositor opens DRM devices
+# directly (O_RDWR) as the runtime user, not through seatd
+if ls /dev/dri/renderD* >/dev/null 2>&1; then
+    chmod 0666 /dev/dri/renderD*
+fi
+if ls /dev/dri/card[0-9]* >/dev/null 2>&1; then
+    chmod 0666 /dev/dri/card[0-9]*
+fi
+
 # Ensure required directories exist and are usable by Cloudy user (XDG_*, Home directories, etc.)
 # As these directories are designed to be mounted from host, we need to ensure they exist and are usable by Cloudy user
 # since container runtime like Docker would typically mount them with root:root ownership and unwanted permissions

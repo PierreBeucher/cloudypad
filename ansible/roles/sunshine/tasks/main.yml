@@ -28,6 +28,29 @@
   when: sunshine_nvidia_enable
   tags: [ nvidia ]
 
+- name: Ensure vkms virtual GPU module is loaded at boot
+  # Software rendering fallback for GPU-less environments (eg. dev VMs):
+  # Sunshine wlr capture requires the compositor to expose linux-dmabuf,
+  # which needs a GBM-backed renderer on a DRM device. vkms provides a
+  # virtual card supporting GBM buffer allocation, which Mesa can drive
+  # with llvmpipe (see containers/sunshine/overlay/cloudy/bin/start-labwc.sh)
+  become: true
+  copy:
+    content: "vkms"
+    dest: /etc/modules-load.d/vkms.conf
+    mode: '0644'
+  register: vkms_modules_load_config
+  when: sunshine_software_rendering_vgem | default(false)
+
+- name: Load vkms module now
+  become: true
+  ansible.builtin.modprobe:
+    name: vkms
+    state: present
+  when:
+    - sunshine_software_rendering_vgem | default(false)
+    - vkms_modules_load_config is changed
+
 - name: Copy Sunshine readiness check script
   become: true
   copy:

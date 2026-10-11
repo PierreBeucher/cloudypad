@@ -13,4 +13,9 @@ set -e
 
 echo "Starting seatd (socket group: video)..."
 
+# Non-VT-bound seat: containers have no VTs, a VT-bound seat would never
+# become "active" and wlroots would keep outputs disabled waiting for the
+# session activation (pattern from podstage streaming containers)
+export SEATD_VTBOUND=0
+
 exec seatd -g video
