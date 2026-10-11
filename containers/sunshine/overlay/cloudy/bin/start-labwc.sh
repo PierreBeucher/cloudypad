@@ -137,8 +137,16 @@ else
         export WLR_RENDERER_ALLOW_SOFTWARE=1
         # Do not add an extra headless output: the vkms connector is the output
         unset WLR_HEADLESS_OUTPUTS
+        # Record the DRM device for other components: Sunshine DMA-BUF import
+        # (gbm device) must use the same card. Written as a Sunshine config
+        # snippet consumed by start-sunshine.sh (adapter_name is honored by
+        # Sunshine render device resolution, see resolve_render_device())
+        mkdir -p $CLOUDYPAD_CONF_DIR/sunshine
+        echo "adapter_name = $VKMS_CARD" > $CLOUDYPAD_CONF_DIR/sunshine/software-rendering.conf
+        chmod 0644 $CLOUDYPAD_CONF_DIR/sunshine/software-rendering.conf
     else
         echo "WARNING: no usable DRM device (hardware GPU or vkms), compositor will use pixman renderer and Sunshine capture may not work"
+        rm -f $CLOUDYPAD_CONF_DIR/sunshine/software-rendering.conf
     fi
 fi
 
