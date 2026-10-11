@@ -302,21 +302,48 @@ Local VM goals:
 - Changes to Ansible Playbook in `ansible/`
 - Changes to Sunshine container image (Docker image) in `containers/`
 
+**Requirements**
+
+Tools are provided by the Nix development shell: run all Vagrant and Ansible commands from `nix develop` (or run `nix develop -c task ...`). VirtualBox must be installed on the host.
+
+⚠️ Vagrant machine state lives in `.vagrant/` at the **root of the checkout you run `vagrant up` from**: it is not shared between the main repository and git worktrees. Run `vagrant up` and the `dev-*` tasks from the same directory, or the SSH key paths used by the tasks and inventory will not resolve.
+
 **Local VM setup**
 
 Debug VM can be setup with:
 
 ```sh
-# Create VM
+# Create VM (from the repository checkout you work in)
 vagrant up
 
-# Run configuration from Ansible playbook
+# Build the Sunshine container image locally and push it to the VM,
+# then start the container via Compose
+task dev-docker-sunshine-to-vm
+
+# Run configuration from Ansible playbook (also applies deploy-time configuration)
 task dev-ansible-config
 
-# Might fail as :local tag doesn't exist
-# Push local container image to VM
+# Full loop: build + push image + Ansible config + container restart
+task dev-ansible-config-with-docker
+```
+
+Useful related tasks:
+
+```sh
+# Rebuild local Sunshine image only
+task build-sunshine-container-local
+
+# Re-run only the container start on the VM (image already loaded)
 task dev-docker-sunshine-to-vm
 ```
+
+Typical iteration loop when changing the container image:
+
+1. `task dev-docker-sunshine-to-vm` (builds, ships and starts the container)
+2. Connect with Moonlight to `192.168.56.43` to test
+3. Edit code, go back to 1 - image layers are cached, rebuilds are fast unless base packages change
+
+For Ansible-only changes, `task dev-ansible-config` is enough (no image build).
 
 **Using local VM**
 
@@ -330,6 +357,18 @@ To pair, connect to the Sunshine web UI and use Moonlight manually:
 # password: @!/:,?!*#'€`_\µ$="foo
 #   or 'sunshine'
 https://192.168.56.43:47990/
+```
+
+The Web UI port is also forwarded to the host: [https://localhost:47990](https://localhost:47990)
+
+Moonlight connects to `192.168.56.43` directly (streaming ports are on the VM's private network, no forwarding needed).
+
+VM SSH access (also used to inspect the container):
+
+```sh
+vagrant ssh
+docker logs -f cloudy        # container logs
+docker exec -it cloudy bash  # shell in container
 ```
 
 **Debug container and Dockerfile changes**

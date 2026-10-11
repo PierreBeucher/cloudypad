@@ -33,16 +33,14 @@ all:
       sunshine_locale: fr_FR.UTF-8
 
       # Dev environment specifics
-      # Vagrant doesn't have a GPU access and Sunshine default to KMS capture
-      # which somehow fails in Vagrant VM + container and make X11 and desktop crash
-      # for unknown reason.
+      # Vagrant VM has no GPU access. Sunshine default capture is wlr
+      # (Wayland compositor capture) which works fine on the labwc stack.
       #
-      # This is related to /dev/dri* access: when Sunshine doesn't have access to
-      # /dev/dri* it will fallback to X11 capture as it can't read it, but since
-      # Sunshine user has access to /dev/* it will try to use KMS capture which make
-      # use of DRI. This somehow crash the X11 and desktop process for unknown reason.
-      # Forcing to use X11 capture workaround the issue.
-      sunshine_additional_config: "capture = x11"
+      # Legacy note for the former Xorg/XFCE stack: Sunshine defaulted to KMS
+      # capture which crashed X11 in the VM + container for unknown reason;
+      # forcing "capture = x11" was a workaround. No longer applicable on
+      # the Wayland (labwc) stack.
+      sunshine_additional_config: ""
       sunshine_max_bitrate_kbps: "5000"
 
       cloudypad_provider: "vagrant"
