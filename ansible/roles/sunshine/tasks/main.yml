@@ -24,9 +24,13 @@
   tags: [ legacy-data ]
 
 - name: import Nvidia tasks
+  # nvidia.yml detects driver version, PCI bus ID etc. needed to render
+  # docker-compose.nvidia.yml: also tagged sunshine-nvidia so the compose
+  # deployment (tag sunshine-docker) can pull these detection tasks without
+  # the heavy nvidia-driver role (driver reinstall, reboot...)
   import_tasks: nvidia.yml
   when: sunshine_nvidia_enable
-  tags: [ nvidia ]
+  tags: [ nvidia, sunshine-nvidia ]
 
 - name: Ensure vkms virtual GPU module is loaded at boot
   # Software rendering fallback for GPU-less environments (eg. dev VMs):

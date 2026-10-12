@@ -21,7 +21,8 @@ describe('Linode lifecycle', () => {
 
     // Linode test configuration
     const region = "fr-par"
-    const instanceType = "g2-gpu-rtx4000a1-m"
+    // Temporary change for new Sunshine container debug: smallest GPU instance
+    const instanceType = "g2-gpu-rtx4000a1-s"
     const rootDiskSizeGb = 25
     const dataDiskSizeGb = 10
 
@@ -52,11 +53,12 @@ describe('Linode lifecycle', () => {
                 instanceType: instanceType,
                 rootDiskSizeGb: rootDiskSizeGb,
                 dataDiskSizeGb: dataDiskSizeGb,
-                // imageId: "private/33927621",
+                // Temporary change for new Sunshine container debug: deploy from
+                // most recent existing Cloudy Pad base image
+                imageId: "private/38723364",
                 watchdogEnabled: true, // need to have watchdog otherwise Ansible reboot during config will effectively shutdown instance
-                dns: {
-                    domainName: "green.instances.cloudypad.gg",
-                },
+                // Temporary change for new Sunshine container debug: no DNS record
+                // (token lacks domains scope), SSH uses IP directly
                 deleteInstanceServerOnStop: true,
                 baseImageSnapshot: {
                     enable: true,
@@ -67,11 +69,18 @@ describe('Linode lifecycle', () => {
                     enable: true,
                     username: "sunshine",
                     passwordBase64: Buffer.from("Sunshine!").toString('base64'),
-                    imageTag: "dev"
-                }, 
-                // ansible: {
-                //     additionalArgs: "-t data-disk,sunshine"
-                // }
+                    // Temporary change for new Sunshine container debug: branch image tag
+                    imageTag: "dockerfile-update-labwc-waybar-fuzzel"
+                },
+                // Temporary change for new Sunshine container debug: base image
+                // already has machine prep, docker and NVIDIA driver installed:
+                // only run the nvidia detection (vars needed by
+                // docker-compose.nvidia.yml template, tag sunshine-nvidia) and
+                // Sunshine Docker Compose deployment, skipping the heavy
+                // nvidia-driver role (driver reinstall + reboot)
+                ansible: {
+                    additionalArgs: "-t sunshine-nvidia,sunshine-docker"
+                }
             })
     })
 

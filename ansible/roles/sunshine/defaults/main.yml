@@ -37,9 +37,16 @@ sunshine_compose_pull_images: always
 
 # Keyboard settings
 # see docker-compose.yml for more details
-sunshine_keyboard_layout: en
+# Keyboard layout: must be a valid xkb layout name (us, fr, de...)
+# "en" is NOT a valid xkb layout (there is no "en" symbols file) and crashes
+# the compositor at startup (xkb keymap compile failure -> NULL keymap ->
+# segfault in keybind_update_keycodes)
+sunshine_keyboard_layout: us
+# Keyboard model/variant: must be valid xkb names or empty.
+# Note "qwerty" is NOT a valid variant of layout "us" (us has no variants),
+# it crashes the compositor at startup (xkb keymap compile failure)
 sunshine_keyboard_model: ""
-sunshine_keyboard_variant: "qwerty"
+sunshine_keyboard_variant: ""
 sunshine_keyboard_options: ""
 
 # Desired locale
