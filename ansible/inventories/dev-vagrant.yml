@@ -9,9 +9,21 @@ all:
       sunshine_server_name: dev-vagrant
       sunshine_nvidia_enable: false
       sunshine_compose_pull_images: never
+
+      # No autoheal on dev VM: container is recreated on every deploy
+      # (dev-docker-sunshine-to-vm force-recreate) and pulling the autoheal
+      # image on a fresh VM fails the deploy (pull policy "never" above)
+      sunshine_autoheal_enable: false
       sunshine_image_tag: local
 
       autostop_timeout_seconds: 3600 # 1h
+
+      # Web UI access: Sunshine 2026+ CSRF requires explicit origin allowlist.
+      # start-sunshine.sh allows localhost + container IPs automatically; add
+      # the VM LAN IP here as it's unreachable from the container (NAT) while
+      # host browsers reach the Web UI through it (port forwarding)
+      sunshine_csrf_allowed_origins:
+        - "https://192.168.56.43"
 
       sunshine_keyboard_layout: fr
       sunshine_keyboard_variant: azerty
@@ -52,18 +64,15 @@ all:
       # Ansible re-deploys the Compose with these mounts on every
       # "task dev-docker-sunshine-to-vm" / "task dev-ansible-config" run,
       # recreating the container when mounts change.
-      #
-      # Mount the whole overlay bin/ and conf/ trees: mounted files are read
-      # from the local checkout at container start (config templates are
-      # rendered at boot by start scripts)
-      # Note: whole-tree mounts hide persistent configs bind mounted above
-      # (eg. /cloudy/conf/labwc) - mount subdirectories instead if needed
+      # Note: mounted paths must match the XFCE stack overlay layout; do not
+      # mount paths that start scripts write to at runtime (rendered configs)
       sunshine_extra_volumes:
         - "/vagrant/containers/sunshine/overlay/cloudy/bin:/cloudy/bin"
         - "/vagrant/containers/sunshine/overlay/cloudy/conf/cloudypad:/cloudy/conf/cloudypad"
-        - "/vagrant/containers/sunshine/overlay/cloudy/conf/sunshine:/cloudy/conf/sunshine"
-        - "/vagrant/containers/sunshine/overlay/cloudy/conf/labwc-default:/cloudy/conf/labwc-default"
-        - "/vagrant/containers/sunshine/overlay/cloudy/conf/waybar-default:/cloudy/conf/waybar-default"
+        - "/vagrant/containers/sunshine/overlay/cloudy/conf/sunshine/sunshine.conf.template:/cloudy/conf/sunshine/sunshine.conf.template"
+        - "/vagrant/containers/sunshine/overlay/cloudy/conf/sunshine/apps.json:/cloudy/conf/sunshine/apps.json"
+        - "/vagrant/containers/sunshine/overlay/cloudy/conf/sunshine/assets:/cloudy/conf/sunshine/assets"
+        - "/vagrant/containers/sunshine/overlay/cloudy/conf/xfce4-default:/cloudy/conf/xfce4-default"
         - "/vagrant/containers/sunshine/overlay/cloudy/conf/heroic-default:/cloudy/conf/heroic-default"
         - "/vagrant/containers/sunshine/overlay/cloudy/conf/supervisor:/cloudy/conf/supervisor"
 

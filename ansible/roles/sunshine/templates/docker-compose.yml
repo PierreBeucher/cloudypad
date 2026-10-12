@@ -91,6 +91,11 @@ services:
       # eg. "capture = x11\nfoo = bar"
       CLOUDYPAD_SUNSHINE_ADDITIONAL_CONFIG: "{{ sunshine_additional_config }}"
 
+      # Extra CSRF allowed origins for Sunshine Web UI (2026+)
+      # Comma-separated URL prefixes appended to built-in defaults and
+      # container IPs auto-detected by start-sunshine.sh
+      CLOUDYPAD_SUNSHINE_CSRF_ALLOWED_ORIGINS: "{{ sunshine_csrf_allowed_origins | default([]) | join(',') }}"
+
       # Sunshine maximum bitrate in Kbps
       # If unset, Sunshine will use its default bitrate settings
       CLOUDYPAD_SUNSHINE_MAX_BITRATE: "{{ sunshine_max_bitrate_kbps }}"
