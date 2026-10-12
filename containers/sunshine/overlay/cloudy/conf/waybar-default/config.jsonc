@@ -13,7 +13,9 @@
     "exclusive": true,
     "modules-left": ["custom/steam", "custom/heroic", "custom/epic", "custom/gog", "custom/lutris", "custom/firefox", "custom/terminal", "custom/files"],
     "modules-center": ["wlr/taskbar"],
-    "modules-right": ["clock"],
+    // tray: hosts StatusNotifierItem clients (eg. Sunshine system tray icon);
+    // Sunshine 2026.x exits when no tray host is available
+    "modules-right": ["tray", "clock"],
     "custom/steam": {
         "exec": "echo '{\"text\":\"🎮\",\"tooltip\":\"Steam\"}'",
         "interval": "once",

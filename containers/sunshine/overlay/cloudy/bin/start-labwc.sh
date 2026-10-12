@@ -143,6 +143,11 @@ else
         # Sunshine render device resolution, see resolve_render_device())
         mkdir -p $CLOUDYPAD_CONF_DIR/sunshine
         echo "adapter_name = $VKMS_CARD" > $CLOUDYPAD_CONF_DIR/sunshine/software-rendering.conf
+        # Software encoder: hardware encoders (nvenc/vaapi/vulkan) are useless
+        # without a real GPU, and the vulkan probe crashes on lavapipe (no
+        # VK_EXT_physical_device_drm properties). libx264 was proven working
+        # against vkms DMA-BUF imports
+        echo "encoder = software" >> $CLOUDYPAD_CONF_DIR/sunshine/software-rendering.conf
         chmod 0644 $CLOUDYPAD_CONF_DIR/sunshine/software-rendering.conf
     else
         echo "WARNING: no usable DRM device (hardware GPU or vkms), compositor will use pixman renderer and Sunshine capture may not work"

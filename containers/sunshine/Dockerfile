@@ -13,9 +13,15 @@ WORKDIR /app
 
 # Sunshine
 # https://github.com/LizardByte/Sunshine/releases
+# NOTE: v2026.x required for GPU-less environments: Sunshine render device
+# resolution (resolve_render_device) honors the "adapter_name" config which
+# we set to the vkms virtual GPU card when running without hardware GPU
+# (see overlay/cloudy/bin/start-labwc.sh)
+# NOTE: 2026.x asset naming: sunshine_<ver>-1+ubuntu24.04_amd64.deb
+# (2025.x used sunshine-ubuntu-24.04-amd64.deb)
 FROM download-base AS download-sunshine
-ARG SUNSHINE_VERSION=2025.924.154138
-RUN curl -fL -o /app/sunshine.deb "https://github.com/LizardByte/Sunshine/releases/download/v${SUNSHINE_VERSION}/sunshine-ubuntu-24.04-amd64.deb"
+ARG SUNSHINE_VERSION=2026.1011.160319
+RUN curl -fL -o /app/sunshine.deb "https://github.com/LizardByte/Sunshine/releases/download/v${SUNSHINE_VERSION}/sunshine_${SUNSHINE_VERSION}-1%2Bubuntu24.04_amd64.deb"
 
 # Steam
 # https://repo.steampowered.com/steam/archive/stable/

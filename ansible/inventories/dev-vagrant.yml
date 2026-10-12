@@ -20,6 +20,12 @@ all:
       # (variable name kept: _vgem suffix, module switched to vkms)
       sunshine_software_rendering_vgem: true
 
+# Web UI access: Sunshine 2026+ CSRF requires explicit origin allowlist.
+      # start-sunshine.sh allows localhost + container IPs automatically;
+      # add the VM LAN IP (address used by the host browser through port
+      # forwarding) here
+      sunshine_additional_config: "csrf_allowed_origins = https://192.168.56.43"
+
       sunshine_keyboard_layout: fr
       sunshine_keyboard_variant: azerty
       sunshine_keyboard_model: pc104
@@ -47,7 +53,10 @@ all:
       # capture which crashed X11 in the VM + container for unknown reason;
       # forcing "capture = x11" was a workaround. No longer applicable on
       # the Wayland (labwc) stack.
-      sunshine_additional_config: ""
+      # Disable autostop on dev VM: inactivity shutdown kills the dev
+      # environment during long debugging sessions
+      autostop_enable: false
+
       sunshine_max_bitrate_kbps: "5000"
 
       cloudypad_provider: "vagrant"
