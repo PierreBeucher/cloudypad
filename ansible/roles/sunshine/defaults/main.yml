@@ -53,6 +53,15 @@ sunshine_additional_config: ""
 # Maximum bitrate in Kbps for Sunshine streaming (max_bitrate config)
 sunshine_max_bitrate_kbps: "0"
 
+# Extra volumes to bind mount in the Sunshine container
+# List of Docker Compose volume entries, eg:
+#   sunshine_extra_volumes:
+#     - "/some/host/path:/cloudy/conf/sunshine/sunshine.conf.template"
+# Empty by default: production deployments mount nothing extra.
+# Used by dev inventories (eg. Vagrant) to mount local repo overlay files
+# directly in the container for faster debugging (see contribution guide)
+sunshine_extra_volumes: []
+
 # Enable Sunshine container autoheal
 # If enabled, Sunshine container will be automatically restarted if it becomes unhealthy
 # It may happen the container crashes without exiting (eg. Sunshine server crash), autoheal helps being more resilient

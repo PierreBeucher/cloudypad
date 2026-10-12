@@ -36,6 +36,20 @@ services:
     # persisting this folder makes sense to keep user's data across container recreation
     - "{{ sunshine_persistent_home_dir }}:/home/cloudy"
 
+    {% if sunshine_extra_volumes | default([]) | length > 0 %}
+    #
+    # Extra volumes (eg. local overlay mounts for debugging, see contribution guide)
+    #
+    {% for volume in sunshine_extra_volumes -%}
+    - "{{ volume }}"
+    {% endfor %}
+
+    {% endif %}
+    # XDG_RUNTIME_DIR as tmpfs: required by Wayland clients (compositor sockets,
+    # PipeWire, dbus session...) and wiped on restart as expected by XDG spec
+    tmpfs:
+      - /cloudy/runtime
+
     # Allow container to read/write/manage attributes on character device 13
     # 13 matches /dev/input mouse, keyboard, etc. devices
     # thus allowing process in container to manage input which we need for Sunshine

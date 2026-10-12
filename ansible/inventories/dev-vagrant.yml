@@ -45,5 +45,27 @@ all:
       sunshine_additional_config: "capture = x11"
       sunshine_max_bitrate_kbps: "5000"
 
+      # Debug mounts: bind mount local repo overlay directly in the container
+      # so overlay changes (scripts, configs...) can be tested without
+      # rebuilding the image. The local project is synced in the VM at
+      # /vagrant (see Vagrantfile), hence /vagrant/<project/path> paths.
+      # Ansible re-deploys the Compose with these mounts on every
+      # "task dev-docker-sunshine-to-vm" / "task dev-ansible-config" run,
+      # recreating the container when mounts change.
+      #
+      # Mount the whole overlay bin/ and conf/ trees: mounted files are read
+      # from the local checkout at container start (config templates are
+      # rendered at boot by start scripts)
+      # Note: whole-tree mounts hide persistent configs bind mounted above
+      # (eg. /cloudy/conf/labwc) - mount subdirectories instead if needed
+      sunshine_extra_volumes:
+        - "/vagrant/containers/sunshine/overlay/cloudy/bin:/cloudy/bin"
+        - "/vagrant/containers/sunshine/overlay/cloudy/conf/cloudypad:/cloudy/conf/cloudypad"
+        - "/vagrant/containers/sunshine/overlay/cloudy/conf/sunshine:/cloudy/conf/sunshine"
+        - "/vagrant/containers/sunshine/overlay/cloudy/conf/labwc-default:/cloudy/conf/labwc-default"
+        - "/vagrant/containers/sunshine/overlay/cloudy/conf/waybar-default:/cloudy/conf/waybar-default"
+        - "/vagrant/containers/sunshine/overlay/cloudy/conf/heroic-default:/cloudy/conf/heroic-default"
+        - "/vagrant/containers/sunshine/overlay/cloudy/conf/supervisor:/cloudy/conf/supervisor"
+
       cloudypad_provider: "vagrant"
       
