@@ -59,8 +59,8 @@ tasks:
     - scp -i .vagrant/machines/default/virtualbox/private_key tmp/sunshine-container-image.tar vagrant@192.168.56.43:/tmp
     - ssh -i .vagrant/machines/default/virtualbox/private_key vagrant@192.168.56.43 docker load -i /tmp/sunshine-container-image.tar
     - ansible-playbook -i ansible/inventories/dev-vagrant.yml ansible/sunshine.yml -t sunshine-docker
-    - ssh -i .vagrant/machines/default/virtualbox/private_key vagrant@192.168.56.43 
-      docker compose -f sunshine/docker-compose.yml -p sunshine up -d
+    - ssh -i .vagrant/machines/default/virtualbox/private_key vagrant@192.168.56.43
+      docker compose -f sunshine/docker-compose.yml -p sunshine up -d --force-recreate
 
   # Quick dev build + deploy for rapid Sunshine container feedback loop
   dev-ansible-config:
@@ -156,11 +156,11 @@ tasks:
 
   # Ensure analytics key are matching in various places in code 
   test-analytics-key-match:
-    - cmd: test/shell/test-matching-analytics-key.sh
+    - cmd: "test/shell/test-matching-analytics-key.sh"
 
   # Ensure install script is working
   test-install-script:
-    - cmd: test/shell/test-install.sh
+    - cmd: "test/shell/test-install.sh"
 
   # Smoke test to check container image is working
   test-container-smoke-test:

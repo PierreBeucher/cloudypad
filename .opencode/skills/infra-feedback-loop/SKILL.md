@@ -1,26 +1,62 @@
 ---
 name: infra-feedback-loop
-description: Efficient feedback loop and problem fix when working with Instance deployment and infrastructure using real Cloud resources. Use when testing Instance deployment (creation, deployment, provision, configuration, start/stop, destroy, etc.)
+description: Efficient feedback loop and problem fix when working with Instance deployment and infrastructure using real Cloud resources or the local Vagrant dev VM. Use when testing Instance deployment (creation, deployment, provision, configuration, start/stop, destroy, etc.)
 ---
 
-When you test Instance deployment (creation, deployment, provision, configuration, start/stop, etc.) feedback loop is not easy as you need to have broad context with Cloud resources and commands / tests are long to run. These rules define workflow for efficient debugging and feedback loop.
+# Debug workflow: local and Cloud
+
+- [General instructions](#general-instructions)
+  - [Include contribution doc](#include-contribution-doc)
+  - [Debug instructions](#debug-instructions)
+- [Full instance lifecycle](#full-instance-lifecycle)
+  - [Instance Provision](#instance-provision)
+  - [Instance Configuration](#instance-configuration)
+  - [Instance Start](#instance-start)
+  - [Instance Stop](#instance-stop)
+  - [Instance Destroy](#instance-destroy)
+- [Commands and environment variables](#commands-and-environment-variables)
+  - [Create and deploy instance for debugging](#create-and-deploy-instance-for-debugging)
+    - [AWS](#aws)
+    - [Azure](#azure)
+    - [GCP](#gcp)
+    - [Scaleway](#scaleway)
+  - [Provision](#provision)
+  - [Configure, create or deploy with specific Ansible tasks target](#configure-create-or-deploy-with-specific-ansible-tasks-target)
+  - [Start and Stop](#start-and-stop)
+  - [Destroy](#destroy)
+  - [Pulumi commands](#pulumi-commands)
+  - [Environment variables](#environment-variables)
+  - [SSH into instance](#ssh-into-instance)
+  - [Running and using integration tests](#running-and-using-integration-tests)
+- [Local debug with Vagrant VM](#local-debug-with-vagrant-vm)
+  - [Initial dev workflow setup](#initial-dev-workflow-setup)
+  - [Container overlay update](#container-overlay-update-in-containerssunshineoverlay)
+  - [Dockerfile/Containerfile and package update](#dockerfilecontainerfile-and-package-update)
+  - [Ansible playbook update](#ansible-playbook-update)
+  - [Observe and debug the container in VM](#observe-and-debug-the-container-in-vm)
+  - [Local debug footguns](#local-debug-footguns)
+- [Infrastructure provisioning and Pulumi deployment](#infrastructure-provisioning-and-pulumi-deployment)
+- [Useful references](#useful-references)
+
+Debugging Cloudy Pad instance deployment might be complex as it includes building container image, provisioning and configure VM, running Ansible, running containers and debugging lots of processes in Cloudy Pad container (supervisord, Sunshine, desktop environment...). This skill describe how to debug efficiently and with a fast feedback loop.
+
+## General instructions
+
+### Include contribution doc
+
+Always read content of `docs/src/contributing/contribution-guide.md`, it contains useful commands and debug instructions
+
+### Debug instructions
 
 Workflow:
 
 - Identify the failure reason and related component. Identify clearly if it's related to Pulumi, Ansible, a Cloud client we implemented or something else. 
-- You are allowed to run CLI commands (`az`, `aws`, `gcloud`, `pulumi`...) to read and delete resources related to our instance.
+- You are allowed to run CLI commands (`az`, `aws`, `gcloud`, `pulumi`, `vagrant`...) to read and delete resources related to our instance.
 - Update code to try and fix issue
-- Don't run the entire test again, instead run only specific commands or test that will try again the part of code that failed before continuing
-- When problem is fixed, you can the overall test and command again
+- Don't run entire test suites and deployment script every retry, instead run only specific commands or test that will try again or fix the specific the part that failed before continuing
+- When problem is fixed, you can the overall test and command again to see entire flow still works
 
-Below is:
-
-- Workflow to follow in various situations
-- Commands to run for each actions
-
-# Debug workflow in situations
-
-## Instance Deployment or Update
+## Full instance lifecycle
 
 Instance Deployment (or Update) is a full cycle of state creation/update, provision, configuration, stop, base image creation and start again. It's quite long. Depending on where we had failure:
 
@@ -36,18 +72,18 @@ Instance Deployment (or Update) is a full cycle of state creation/update, provis
 
 See below for specifics on each steps.
 
-## Instance Provision
+### Instance Provision
 
 Typically a Pulumi or internal code issue: fix and run Provision again.
 
-## Instance Configuration
+### Instance Configuration
 
 Typically an Ansible issue. Don't run entire configuration and Ansible playbook again. May be related to several problems:
 - Root cause is Ansible-specific issue (eg. a malformed task, or a missing package on machine): fix then run Configuration targetting impacted Ansible tasks
 - Root cause is infrastructure (eg. a missing Cloud resource): fix, run Provision to update infra and then run Configuration targetting impacted Ansible tasks
 - Root cause is unclear (not Ansible itself, unrelated to infrastructure or code): try to fix, run Configuration targetting impacted tasks. If it doesn't work, you can run Provision then Configuration again.
         
-## Instance Start
+### Instance Start
 
 Start is actually comprised of Data disk snapshot restoration, Provision and Start. 
 
@@ -57,7 +93,7 @@ Start is actually comprised of Data disk snapshot restoration, Provision and Sta
   - If issue is after Provision: fix and Start again
 - Other issue: fix and Start again
 
-## Instance Stop
+### Instance Stop
 
 Stop will actually stop the Instance Server, create Data Disk Snapshot then run Provision with desired Instance Server to deleted state (so as to keep only data snapshot)
 
@@ -67,17 +103,17 @@ Stop will actually stop the Instance Server, create Data Disk Snapshot then run 
   - If a more complex issue: in most situations, fixing related code and running Stop is OK. But you may need to run Provision or another task as well.
 - Issue with Provision for resources deletion: Fix and stop again. At this point Data Disk Snapshot should be created and Stop will be fast.
 
-## Instance Destroy
+### Instance Destroy
 
 Try deletion again. If needed, try to delete manually, ONLY if you're sure that deleted resources are directly related to our instance. Otherwise stop and ask for input. 
 
-# Commands and environment variables
+## Commands and environment variables
 
-## Create and deploy instance for debugging
+### Create and deploy instance for debugging
 
 Use debug CLI to create an instance without interaction. All CLI flags must be passed so as not to be prompted:
 
-### AWS
+#### AWS
 
 ```sh
 # Set name according to current test
@@ -107,7 +143,7 @@ npx tsx src/cli/main.ts create aws \
   --yes --overwrite-existing --skip-pairing
 ```
 
-### Azure
+#### Azure
 
 ```sh
 # Set name according to current test
@@ -137,7 +173,7 @@ npx tsx src/cli/main.ts create azure \
   --yes --overwrite-existing --skip-pairing
 ```
 
-### GCP
+#### GCP
 
 ```sh
 # Set name according to current test
@@ -171,7 +207,7 @@ npx tsx src/cli/main.ts create gcp \
   --yes --overwrite-existing --skip-pairing
 ```
 
-### Scaleway
+#### Scaleway
 
 ```sh
 # Set name according to current test
@@ -198,13 +234,13 @@ npx tsx src/cli/main.ts create scaleway \
   --yes --overwrite-existing --skip-pairing
 ```
 
-## Provision
+### Provision
 
 ```sh
 npx tsx src/cli/main.ts provision my-instance
 ```
 
-## Configure, create or deploy with specific Ansible tasks target
+### Configure, create or deploy with specific Ansible tasks target
 
 ```sh
 # Run Configuration with specifc tasks target or roles
@@ -218,20 +254,20 @@ npx tsx src/cli/main.ts deploy my-instance --ansible-args-override "-t data-disk
 npx tsx src/cli/main.ts start my-instance --ansible-args-override "-t data-disk"
 ```
 
-## Start and Stop
+### Start and Stop
 
 ```sh
 npx tsx src/cli/main.ts start my-instance --wait
 npx tsx src/cli/main.ts stop my-instance --wait
 ```
 
-## Destroy
+### Destroy
 
 ```sh
 npx tsx src/cli/main.ts destroy --yes my-instance
 ```
 
-## Pulumi commands
+### Pulumi commands
 
 Specific pulumi commands you can run when needed:
 
@@ -249,7 +285,7 @@ pulumi cancel -y -s organization/CloudyPad-Azure/test-azure-advanced
 pulumi destroy -ryf -s organization/CloudyPad-Azure/test-azure-advanced
 ```
 
-## Environment variables
+### Environment variables
 
 ```sh
 # Enable DEBUG log level (if not already done)
@@ -264,11 +300,11 @@ export CLOUDYPAD_SKIP_CONFIGURATION=true
 export CLOUDYPAD_ANSIBLE_ARGS_OVERRIDE="-t data-disk"
 ```
 
-## SSH into instance
+### SSH into instance
 
 See docs: `docs/src/usage/ssh.md`
 
-## Running and using integration tests
+### Running and using integration tests
 
 Tests under `test/integ/stable/core/providers/<provider>/lifecycle[.*].ts` are useful for feedback to create instances and do various lifecycle checks. When using these tests:
 
@@ -276,8 +312,82 @@ Tests under `test/integ/stable/core/providers/<provider>/lifecycle[.*].ts` are u
   - For example, when testing an infrastructure side aspect, it may be useful to disable anything related to Ansible with `CLOUDYPAD_SKIP_CONFIGURATION=true`
 - When it fails, do NOT RUN EVERYTHING AGAIN. Comment tests that are passing and ONLY RUN THE PART WE NEED.
 
+## Local debug with Vagrant VM
 
-# Useful references
+A locally running Vagrant VM is available to debug locally. It does not have an available GPU, it relies on Sunshine software encoder and might behave differently than Cloud GPU, but should be enough to have a working container and working desktop environment with Sunshine - though it may be slower than GPU machine.
+
+### Initial dev workflow setup
+
+By default, for initial iteration (once per local machine boot), you need Vagrant VM and initial deployment:
+
+```sh
+# One-time action: deploy the VM
+vagrant up
+
+# Run FULL Ansible playbook: installs Docker (geerlingguy.docker role) and prepares the machine.
+# MANDATORY on first provisioning: dev-docker-sunshine-to-vm only runs the "sunshine-docker"
+# tagged tasks and does NOT install Docker - it would fail at the compose step.
+task dev-ansible-config
+
+# Copy local container image in VM (build + save + load + tagged deploy + force-recreate)
+task dev-docker-sunshine-to-vm
+```
+
+It will re-build the container image, upload to Vagrant and force-recreate the container. 
+
+However for minor tweaks after this - like updating a file in overlay or changing a simple Ansible config - this is too long. Use a more specific workflow as outlined below.
+
+### Container overlay update in `containers/sunshine/overlay` 
+
+Updates in `containers/sunshine/overlay` only require a container restart in VM. No need for full rebuild or Ansible run: we optimized this by mounting overlay in VM and directly in container, so a container restart is enough. Boot scripts (envsubst templates etc.) re-render configs at container start, so the restart picks up overlay changes.
+
+```sh
+vagrant ssh
+$ docker restart cloudy
+```
+
+### Dockerfile/Containerfile and package update
+
+A Dockerfile/Containerfile update needs a container rebuild and copy into the VM. Only a rebuild and copy into machine is needed, no need for full Ansible rerun (image content only). Use:
+
+```sh
+task dev-docker-sunshine-to-vm
+```
+
+### Ansible playbook update
+
+Updating Ansible playbook or Ansible files/templates need an Ansible playbook run:
+
+```sh
+task dev-ansible-config
+```
+
+For faster feedback loop, run a specific Ansible config with only required `--tags` or directly `--start-at-task`
+
+All-in-one (build + deploy image + ansible + restart) also exists: `task dev-ansible-config-with-docker`
+
+### Observe and debug the container in VM
+
+```sh
+vagrant ssh
+$ docker exec -u root cloudy supervisorctl status   # services state (sunshine, labwc, waybar, pipewire...)
+$ docker logs -f cloudy                              # container logs
+$ tail -f /cloudy/log/sunshine.log                   # Sunshine log (also labwc*.log in /cloudy/log)
+$ docker exec -it cloudy bash                        # shell in container
+```
+
+### Local debug footguns
+
+- **NEVER update the container files directly**. Do not chmod, install package, etc. directly in container - otherwise changes might be lost on next reboot or recreate, which will cause confusion. ALWAYS update the source or truth: scripts, Dockerfile or whatever, which will eventually be applied in container.
+- **Config wipe on restart**: start scripts re-render configs (envsubst) at container start. Manual edits inside `/cloudy/conf/sunshine/sunshine.conf` are LOST on `docker restart`. Change the template or inventory var instead.
+- **Stale persistent state**: `/cloudy/data` bind mount survives reboots and container recreation. When debugging pairing: `rm /cloudy/data/sunshine/sunshine_state.json` AND forget the host on the Moonlight client side, then pair fresh.
+- **Vagrant SSH state desync**: multiple VirtualBox VMs exist (main repo + worktrees, `.vagrant/` lives at the root of the checkout that ran `vagrant up`). If `vagrant ssh` says "VM must be running" while `VBoxManage showvminfo <vm> --machinereadable | grep VMState=` says running, you're in the wrong checkout. Always run `vagrant`/`task dev-*` from the checkout the VM was created in.
+
+## Infrastructure provisioning and Pulumi deployment
+
+TBD
+
+## Useful references
 
 See for examples:
 

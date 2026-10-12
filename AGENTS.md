@@ -1,9 +1,22 @@
 # Cloudy Pad Core - Agent instructions
 
-Additional skills available under `.opencode/skills/`:
-
-- `gh-cli` - GitHub CLI (gh) comprehensive reference for repositories, issues, pull requests, Actions, projects, releases, gists, codespaces, organizations, extensions, and all GitHub operations from the command line.
-- `infra-feedback-loop` - Efficient feedback loop and problem fix when working with Instance deployment and infrastructure using real Cloud resources. Use when testing Instance deployment (creation, deployment, provision, configuration, start/stop, destroy, etc.)
+- [General](#general)
+- [Glossary](#glossary)
+- [Cloudy Pad Core architecture overview](#cloudy-pad-core-architecture-overview)
+- [Instance lifecycle and Core components](#instance-lifecycle-and-core-components)
+- [Instance resources](#instance-resources)
+- [Instance lifecycle phases](#instance-lifecycle-phases)
+  - [Instance State](#instance-state)
+- [Code and components](#code-and-components)
+  - [Provider implementation](#provider-implementation)
+- [Source code files and organization](#source-code-files-and-organization)
+- [Coding rules](#coding-rules)
+  - [Coding best practice](#coding-best-practice)
+  - [Code architecture](#code-architecture)
+  - [Writing code and test](#writing-code-and-test)
+- [Commands](#commands)
+  - [ALWAYS run commands under a Nix development shell](#always-run-commands-under-a-nix-development-shell)
+  - [Task files](#task-files)
 
 ## General
 
