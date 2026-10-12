@@ -9,6 +9,11 @@ all:
       sunshine_server_name: dev-vagrant
       sunshine_nvidia_enable: false
       sunshine_compose_pull_images: never
+
+      # No autoheal on dev VM: container is recreated on every deploy
+      # (dev-docker-sunshine-to-vm force-recreate) and pulling the autoheal
+      # image on a fresh VM fails the deploy (pull policy "never" above)
+      sunshine_autoheal_enable: false
       sunshine_image_tag: local
 
       autostop_timeout_seconds: 3600 # 1h
@@ -21,10 +26,11 @@ all:
       sunshine_software_rendering_vgem: true
 
 # Web UI access: Sunshine 2026+ CSRF requires explicit origin allowlist.
-      # start-sunshine.sh allows localhost + container IPs automatically;
-      # add the VM LAN IP (address used by the host browser through port
-      # forwarding) here
-      sunshine_additional_config: "csrf_allowed_origins = https://192.168.56.43"
+      # start-sunshine.sh allows localhost + container IPs automatically; add
+      # the VM LAN IP here as it's unreachable from the container (NAT) while
+      # host browsers reach the Web UI through it (port forwarding)
+      sunshine_csrf_allowed_origins:
+        - "https://192.168.56.43"
 
       sunshine_keyboard_layout: fr
       sunshine_keyboard_variant: azerty
@@ -75,7 +81,12 @@ all:
       sunshine_extra_volumes:
         - "/vagrant/containers/sunshine/overlay/cloudy/bin:/cloudy/bin"
         - "/vagrant/containers/sunshine/overlay/cloudy/conf/cloudypad:/cloudy/conf/cloudypad"
-        - "/vagrant/containers/sunshine/overlay/cloudy/conf/sunshine:/cloudy/conf/sunshine"
+        # conf/sunshine contains runtime-rendered files (sunshine.conf,
+        # software-rendering.conf) written by start scripts: do NOT mount the
+        # whole tree read-only, mount individual static files/dirs instead
+        - "/vagrant/containers/sunshine/overlay/cloudy/conf/sunshine/sunshine.conf.template:/cloudy/conf/sunshine/sunshine.conf.template"
+        - "/vagrant/containers/sunshine/overlay/cloudy/conf/sunshine/apps.json:/cloudy/conf/sunshine/apps.json"
+        - "/vagrant/containers/sunshine/overlay/cloudy/conf/sunshine/assets:/cloudy/conf/sunshine/assets"
         - "/vagrant/containers/sunshine/overlay/cloudy/conf/labwc-default:/cloudy/conf/labwc-default"
         - "/vagrant/containers/sunshine/overlay/cloudy/conf/waybar-default:/cloudy/conf/waybar-default"
         - "/vagrant/containers/sunshine/overlay/cloudy/conf/heroic-default:/cloudy/conf/heroic-default"

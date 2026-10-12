@@ -400,7 +400,7 @@ To mount additional paths, add entries to `sunshine_extra_volumes` in `ansible/i
 Notes:
 
 - The container runs as user `cloudy` (UID 1001) while Vagrant-synced files belong to the host user (UID 1000): mounted files are readable/executable (repo files are world-readable with exec bits preserved) but not writable from inside the container. Edit files on the host, then `docker restart cloudy`.
-- Don't whole-tree mount overlay directories that are also persistent config mount points (eg. `/cloudy/conf/labwc`, `/cloudy/conf/waybar`, `/cloudy/conf/heroic`): the inventory mounts default dirs (`labwc-default`, `waybar-default`...) to avoid this. Mount subdirectories or single files if needed.
+- Do NOT mount directories that start scripts write to at runtime: overlay `conf/sunshine/` contains rendered files (`sunshine.conf`, `software-rendering.conf`) written at container start - mounting the whole tree read-only breaks the boot scripts. The inventory mounts only its static items (`sunshine.conf.template`, `apps.json`, `assets/`). Same caution for any path next to persistent config mount points (`/cloudy/conf/labwc`, `/cloudy/conf/waybar`, `/cloudy/conf/heroic`): mount default dirs (`labwc-default`, `waybar-default`...) or single files instead.
 - Full image rebuilds (Dockerfile changes) still use `task dev-docker-sunshine-to-vm`.
 
 ### Connect to Cloudy Pad VM and container
