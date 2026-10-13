@@ -144,7 +144,15 @@ apt clean
 _MAIN_PACKAGES
 
 #
-# Desktop (xfce4) and utilities
+# Desktop (KDE Plasma on X11) and utilities
+# Mirrors selkies docker-selkies-egl-desktop Plasma layer: plasma-desktop +
+# plasma-workspace + breeze theming on the base's X server (Xorg-dummy).
+# Noble ships Plasma 5.27 (KDE 5): the X11 session (startplasma-x11) and
+# kwin-x11 come from plasma-workspace / kwin-x11, there is no separate
+# plasma-session-x11 package (that's Plasma 6 naming on 26.04/trixie).
+# NOTE: Selkies rebuilds kwin-x11 with patches for virtual displays
+# (patches/kwin-x11/) - we run stock kwin_x11 first and patch only if it
+# misbehaves on the Xorg-dummy display.
 #
 RUN --mount=type=cache,target=/var/cache --mount=type=tmpfs,target=/var/log <<_DESKTOP
 
@@ -159,18 +167,31 @@ echo "\
 Package: * \n\
 Pin: release o=LP-PPA-mozillateam \n\
 Pin-Priority: 1001 \n\
-\n\
 Package: firefox \n\
 Pin: version 1:1snap* \n\
 Pin-Priority: -1" | tee /etc/apt/preferences.d/mozilla-firefox
 
 apt update
 apt install -y \
-    xfce4 \
-    xfce4-screenshooter \
+    plasma-desktop \
+    plasma-workspace \
     sudo \
     locales \
-    firefox
+    firefox \
+    # Recommends a session is expected to provide: Breeze theme (Qt+GTK+icons),
+    # GTK bridge, PolicyKit agent, tools KDE apps launch by name
+    breeze \
+    breeze-gtk-theme \
+    breeze-icon-theme \
+    kde-config-gtk-style \
+    polkit-kde-agent-1 \
+    # Basic desktop applications: file manager, terminal, editor, dialogs
+    dolphin \
+    konsole \
+    kwrite \
+    kdialog \
+    # Screenshot tool (replaces xfce4-screenshooter)
+    kde-spectacle
 
 apt clean
 

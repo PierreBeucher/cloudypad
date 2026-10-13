@@ -74,7 +74,7 @@ all:
       # Ansible re-deploys the Compose with these mounts on every
       # "task dev-docker-sunshine-to-vm" / "task dev-ansible-config" run,
       # recreating the container when mounts change.
-      # Note: mounted paths must match the XFCE stack overlay layout; do not
+      # Note: mounted paths must match the Plasma stack overlay layout; do not
       # mount paths that start scripts write to at runtime (rendered configs)
       sunshine_extra_volumes:
         - "/vagrant/containers/sunshine/overlay/cloudy/bin:/cloudy/bin"
@@ -82,7 +82,6 @@ all:
         - "/vagrant/containers/sunshine/overlay/cloudy/conf/sunshine/sunshine.conf.template:/cloudy/conf/sunshine/sunshine.conf.template"
         - "/vagrant/containers/sunshine/overlay/cloudy/conf/sunshine/apps.json:/cloudy/conf/sunshine/apps.json"
         - "/vagrant/containers/sunshine/overlay/cloudy/conf/sunshine/assets:/cloudy/conf/sunshine/assets"
-        - "/vagrant/containers/sunshine/overlay/cloudy/conf/xfce4-default:/cloudy/conf/xfce4-default"
         - "/vagrant/containers/sunshine/overlay/cloudy/conf/heroic-default:/cloudy/conf/heroic-default"
         - "/vagrant/containers/sunshine/overlay/cloudy/conf/supervisor:/cloudy/conf/supervisor"
 
