@@ -7,7 +7,7 @@
     <value type="int" value="2"/>
     <property name="dark-mode" type="bool" value="true"/>
 
-    <!-- Horizontal upper bar showing minimized apps -->
+    <!-- Horizontal upper bar: window buttons, clock, volume, system tray -->
     <property name="panel-1" type="empty">
       <property name="position" type="string" value="p=6;x=0;y=0"/>
       <property name="length" type="uint" value="100"/>
@@ -16,8 +16,18 @@
       <property name="size" type="uint" value="26"/>
       <property name="plugin-ids" type="array">
 
+        <!-- Window buttons / tasklist -->
         <value type="int" value="10"/>
-      
+
+        <!-- Clock -->
+        <value type="int" value="20"/>
+
+        <!-- Volume (PulseAudio) -->
+        <value type="int" value="22"/>
+
+        <!-- System tray (notification icons, eg. Sunshine) -->
+        <value type="int" value="21"/>
+
       </property>
     </property>
 
@@ -78,6 +88,21 @@
 
     <property name="plugin-10" type="string" value="tasklist">
       <property name="grouping" type="uint" value="1"/>
+    </property>
+
+    <!-- Clock: 24h hour:minute, day name and date -->
+    <property name="plugin-20" type="string" value="clock">
+      <property name="digital-format" type="string" value="%R"/>
+      <property name="mode" type="uint" value="2"/>
+      <property name="show-frame" type="bool" value="false"/>
+    </property>
+
+    <!-- Volume control (PulseAudio) -->
+    <property name="plugin-22" type="string" value="pulseaudio"/>
+
+    <!-- System tray -->
+    <property name="plugin-21" type="string" value="systray">
+      <property name="show-frame" type="bool" value="false"/>
     </property>
 
     <property name="plugin-1" type="string" value="launcher">
