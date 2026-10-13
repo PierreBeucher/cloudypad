@@ -172,25 +172,22 @@ Pin: version 1:1snap* \n\
 Pin-Priority: -1" | tee /etc/apt/preferences.d/mozilla-firefox
 
 apt update
+# NOTE: no inline comments in the list - sh continuation breaks on them
 apt install -y \
     plasma-desktop \
     plasma-workspace \
     sudo \
     locales \
     firefox \
-    # Recommends a session is expected to provide: Breeze theme (Qt+GTK+icons),
-    # GTK bridge, PolicyKit agent, tools KDE apps launch by name
     breeze \
     breeze-gtk-theme \
     breeze-icon-theme \
     kde-config-gtk-style \
     polkit-kde-agent-1 \
-    # Basic desktop applications: file manager, terminal, editor, dialogs
     dolphin \
     konsole \
     kwrite \
     kdialog \
-    # Screenshot tool (replaces xfce4-screenshooter)
     kde-spectacle
 
 apt clean
