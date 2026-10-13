@@ -58,6 +58,9 @@
         <!-- Lutris -->
         <value type="int" value="12"/>
 
+        <!-- Prism Launcher (Minecraft) -->
+        <value type="int" value="18"/>
+
         <!-- Separator -->
         <value type="int" value="98"/>
 
@@ -139,6 +142,12 @@
     <property name="plugin-12" type="string" value="launcher">
       <property name="items" type="array">
         <value type="string" value="lutris.desktop"/>
+      </property>
+    </property>
+
+    <property name="plugin-18" type="string" value="launcher">
+      <property name="items" type="array">
+        <value type="string" value="prismlauncher.desktop"/>
       </property>
     </property>
 
