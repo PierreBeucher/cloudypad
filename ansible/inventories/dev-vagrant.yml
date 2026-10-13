@@ -17,6 +17,9 @@ all:
       sunshine_image_tag: local
 
       autostop_timeout_seconds: 3600 # 1h
+      # Disable autostop on dev VM: inactivity shutdown kills the dev
+      # environment during long debugging sessions
+      autostop_enable: false
 
       # Web UI access: Sunshine 2026+ CSRF requires explicit origin allowlist.
       # start-sunshine.sh allows localhost + container IPs automatically; add
