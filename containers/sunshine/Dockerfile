@@ -188,6 +188,7 @@ apt install -y \
     konsole \
     kwrite \
     kdialog \
+    systemsettings \
     kde-spectacle
 
 apt clean
