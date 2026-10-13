@@ -3,18 +3,17 @@
 wait-x-availability.sh
 
 # Run an independent dbus session and save address to file
-# As some process will need to communicate with xfce4's dbus to update settings
-# (eg. on Sunshine session start to update desktop icon size)
+# As some process will need to communicate with the desktop session dbus
+# (eg. on Sunshine session start to update settings)
 export DBUS_SESSION_BUS_ADDRESS=$(dbus-daemon --session --print-address --fork)
 echo $DBUS_SESSION_BUS_ADDRESS > "$XDG_RUNTIME_DIR/xfce4-dbus-session-bus-address"
 
-echo "Starting xfce4 desktop with bus address: $DBUS_SESSION_BUS_ADDRESS"
+echo "Starting Plasma desktop (X11 session) with bus address: $DBUS_SESSION_BUS_ADDRESS"
 
-# Shows a bunch of warning but at least doesn't crash ¯\_(ツ)_/¯
-startxfce4 &
-XFCE_PID=$!
+# Plasma X11 session on the Xorg-dummy display
+# (startplasma-x11 wires the session: kwin_x11 WM, plasmashell, plasma-workspace)
+startplasma-x11 &
+PLASMA_PID=$!
 
-setup-xfce4-default-wallpaper.sh
-
-# Wait for xfce4 process
-wait $XFCE_PID
+# Wait for Plasma session process
+wait $PLASMA_PID

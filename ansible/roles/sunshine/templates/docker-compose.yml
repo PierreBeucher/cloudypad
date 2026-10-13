@@ -25,8 +25,8 @@ services:
     # Cloudy Pad data and XDG_DATA_HOME where data should be persisted (game files, Sunshine state, etc.)
     - "{{ sunshine_data_dir }}:/cloudy/data"
 
-    # Keep xfce4 config on host as user may customize it (eg. keyboard layout)
-    - "{{ sunshine_persistent_config_dir }}/xfce4:/cloudy/conf/xfce4"
+    # Keep Plasma config on host as user may customize it (eg. panel layout)
+    - "{{ sunshine_persistent_config_dir }}/plasma:/home/cloudy/.config/plasma-workspace"
 
     # Keep Heroic config and data
     - "{{ sunshine_persistent_config_dir }}/heroic:/cloudy/conf/heroic"
