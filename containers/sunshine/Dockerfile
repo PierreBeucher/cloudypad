@@ -11,7 +11,7 @@ WORKDIR /app
 # NOTE: 2026.x asset naming: sunshine_<ver>-1+ubuntu24.04_amd64.deb
 # (2025.x used sunshine-ubuntu-24.04-amd64.deb)
 FROM download-base AS download-sunshine
-ARG SUNSHINE_VERSION=2026.1011.160319
+ARG SUNSHINE_VERSION=2026.914.233613
 RUN curl -fL -o /app/sunshine.deb "https://github.com/LizardByte/Sunshine/releases/download/v${SUNSHINE_VERSION}/sunshine_${SUNSHINE_VERSION}-1%2Bubuntu24.04_amd64.deb"
 
 # Steam
