@@ -4,7 +4,8 @@
   <property name="Net" type="empty">
     <!-- Fluent GTK theme: matches xfwm4 ThemeName and Fluent-gtk-theme install -->
     <property name="ThemeName" type="string" value="Fluent-Dark"/>
-    <property name="IconThemeName" type="string" value="Papirus-Dark"/>
+    <!-- Fluent icon theme (rounded Windows 11 style, pairs with the GTK theme) -->
+    <property name="IconThemeName" type="string" value="Fluent-Dark"/>
   </property>
   <property name="Gtk" type="empty">
     <property name="FontName" type="string" value="Sans 10"/>

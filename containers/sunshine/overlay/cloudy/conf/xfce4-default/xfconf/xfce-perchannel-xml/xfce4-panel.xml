@@ -30,6 +30,9 @@
       <property name="size" type="uint" value="48"/> <!-- This property auto updates on start depending on screen size-->
       <property name="plugin-ids" type="array">
 
+        <!-- Applications menu ("dot"/launcher style, left of the dock) -->
+        <value type="int" value="3"/>
+
         <!-- Steam -->
         <value type="int" value="9"/>
 
@@ -87,6 +90,12 @@
       <property name="items" type="array">
         <value type="string" value="mouse.desktop"/>
       </property>
+    </property>
+
+    <property name="plugin-3" type="string" value="applicationsmenu">
+      <property name="button-title" type="string" value=""/>
+      <property name="show-button-title" type="bool" value="false"/>
+      <property name="show-icons" type="bool" value="true"/>
     </property>
 
     <!-- uses panel/launcher-9 -->

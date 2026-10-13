@@ -22,9 +22,10 @@ while [ $ELAPSED -lt $TIMEOUT ]; do
         echo "Found monitor: $MONITOR_NAME after ${ELAPSED}s, setting xfce4 default desktop wallpaper..."
         
         # Set xfce4 default desktop wallpaper
+        # Fluent blurred wallpaper, pairs with Fluent-Dark GTK theme
         xfconf-query -c xfce4-desktop \
             -p /backdrop/screen0/${MONITOR_NAME}/workspace0/last-image \
-            -s $XDG_CONFIG_HOME/xfce4-default/cloudypad-wallpaper.svg
+            -s $XDG_CONFIG_HOME/xfce4-default/wallpapers/fluent-blur.jpg
 
         break
     fi
