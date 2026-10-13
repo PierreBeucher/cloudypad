@@ -154,6 +154,10 @@ run_cloudypad_docker() {
         "PULUMI_BACKEND_URL" "PULUMI_CONFIG_PASSPHRASE"
     )
 
+    # Pin PULUMI_HOME inside ~/.cloudypad so the plugin cache (provider binaries) persists
+    # across container runs without requiring a separate ~/.pulumi mount.
+    cmd+=" -e PULUMI_HOME=$HOME/.cloudypad/pulumi-home"
+
     for env_var in "${env_vars[@]}"; do
         if [ -n "${!env_var}" ]; then
             cmd+=" -e $env_var=${!env_var}"
