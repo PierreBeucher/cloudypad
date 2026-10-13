@@ -15,9 +15,5 @@ echo "Starting Plasma desktop (X11 session) with bus address: $DBUS_SESSION_BUS_
 startplasma-x11 &
 PLASMA_PID=$!
 
-# Apply Cloudy Pad desktop defaults once plasmashell is up:
-# wallpaper + task manager launchers (additive, see script header)
-setup-plasma-default-desktop.sh
-
 # Wait for Plasma session process
 wait $PLASMA_PID
