@@ -145,7 +145,8 @@ export class GcpInputPrompter extends AbstractInputPrompter<GcpCreateCliArgs, Gc
     const machineType = await this.machineType(client, zone, partialInput.provision?.machineType)
     const acceleratorType = await this.acceleratorType(client, zone, partialInput.provision?.acceleratorType, machineType)
     const useSpot = await this.useSpotInstance(partialInput.provision?.useSpot)
-    const diskSize = await this.diskSize(partialInput.provision?.diskSize)
+    const rootDiskSize = await this.rootDiskSize(partialInput.provision?.diskSize)
+    const dataDiskSizeGb = await this.dataDiskSize(partialInput.provision?.dataDiskSizeGb)
     const diskType = await this.diskType({ diskType: partialInput.provision?.diskType, client: client, zone: zone })
     const networkTier = await this.networkTier(partialInput.provision?.networkTier)
     const nicType = await this.nicType(partialInput.provision?.nicType)
@@ -159,7 +160,7 @@ export class GcpInputPrompter extends AbstractInputPrompter<GcpCreateCliArgs, Gc
       {
         provision: {
           projectId,
-          diskSize,
+          diskSize: rootDiskSize,
           diskType,
           networkTier,
           nicType,
@@ -178,7 +179,7 @@ export class GcpInputPrompter extends AbstractInputPrompter<GcpCreateCliArgs, Gc
               enable: partialInput.provision.baseImageSnapshot.enable,
               keepOnDeletion: partialInput.provision.baseImageSnapshot.keepOnDeletion
           } : undefined,
-          dataDiskSizeGb: partialInput.provision?.dataDiskSizeGb ?? 0, // Use CLI arg if provided, otherwise default to 0
+          dataDiskSizeGb,
         },
       }
     )
@@ -298,14 +299,34 @@ export class GcpInputPrompter extends AbstractInputPrompter<GcpCreateCliArgs, Gc
     return selectedMachineType
   }
 
-  private async diskSize(diskSize?: number): Promise<number> {
-    if (diskSize) return diskSize;
+  private async rootDiskSize(diskSize?: number): Promise<number> {
+    if (diskSize) {
+      return diskSize;
+    }
 
-    const selectedDiskSize = await input({
-      message: 'Enter desired disk size (GB):',
-      default: "100"
-    })
-    return Number.parseInt(selectedDiskSize)
+    // If not overridden, use a static default value
+    // As OS disk size is managed by Cloudy Pad and should not impact user
+    // except for specific customizations
+    return 20
+  }
+
+  private async dataDiskSize(diskSize?: number): Promise<number> {
+    if (diskSize !== undefined) { // allow 0 meaning explicit no data disk
+      return diskSize
+    }
+
+    let selectedDiskSize: string
+    let parsedDiskSize: number | undefined = undefined
+
+    while (parsedDiskSize === undefined || isNaN(parsedDiskSize)) {
+      selectedDiskSize = await input({
+        message: 'Data disk size in GB (OS will use another independent disk)',
+        default: "100"
+      })
+      parsedDiskSize = Number.parseInt(selectedDiskSize)
+    }
+
+    return parsedDiskSize
   }
 
   private async region(client: GcpApi, region?: string): Promise<string> {
