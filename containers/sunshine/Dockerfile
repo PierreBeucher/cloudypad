@@ -176,6 +176,33 @@ apt clean
 
 _DESKTOP
 
+#
+# Fluent GTK theme
+# https://github.com/vinceliuice/Fluent-gtk-theme
+# No binary release assets: install from tagged source with upstream install.sh
+# Installs GTK3/4 + xfwm4 titlebar variants to /usr/share/themes (system-wide)
+#
+# Theme name is referenced by the default xfconf config (xsettings.xml: ThemeName,
+# xfwm4.xml: ThemeName) - keep in sync if version bump changes variant names
+ARG FLUENT_THEME_VERSION=2025-04-17
+RUN --mount=type=cache,target=/var/cache <<_THEME
+
+set -e
+apt update
+apt install -y \
+    git \
+    sassc \
+    libglib2.0-dev \
+    papirus-icon-theme
+curl -fsSL -o /tmp/fluent-theme.tar.gz "https://github.com/vinceliuice/Fluent-gtk-theme/archive/refs/tags/${FLUENT_THEME_VERSION}.tar.gz"
+tar -xzf /tmp/fluent-theme.tar.gz -C /tmp
+cd "/tmp/Fluent-gtk-theme-${FLUENT_THEME_VERSION}"
+# Install all desktop variants including dark, to system themes dir
+./install.sh --dest /usr/share/themes
+ls /usr/share/themes | grep -i fluent
+
+_THEME
+
 # Default locale
 RUN locale-gen en_US.UTF-8 && \
     update-locale LANG=en_US.UTF-8

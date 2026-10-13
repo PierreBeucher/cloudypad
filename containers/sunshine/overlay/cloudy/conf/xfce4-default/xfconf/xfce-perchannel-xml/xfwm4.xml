@@ -3,5 +3,6 @@
 <channel name="xfwm4" version="1.0">
   <property name="general" type="empty">
     <property name="workspace_count" type="int" value="1"/>
+    <property name="ThemeName" type="string" value="Fluent-Dark"/>
   </property>
 </channel>
