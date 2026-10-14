@@ -79,6 +79,10 @@ services:
       # Desired locale
       CLOUDYPAD_LOCALE: {{ sunshine_locale }}
 
+      # Extra XDG data dir for Cloudy Pad desktop launchers
+      # (conf/cloudypad/applications/cloudypad-*.desktop, discovered by Plasma)
+      XDG_DATA_DIRS: /cloudy/conf/cloudypad:/usr/local/share:/usr/share
+
       # Sunshine Web UI password
       # If unset or empty, can be set via Web UI directly
       SUNSHINE_WEB_PASSWORD_BASE64: "{{ sunshine_web_password_base64 }}"
