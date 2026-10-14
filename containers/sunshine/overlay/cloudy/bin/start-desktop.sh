@@ -10,6 +10,18 @@ echo $DBUS_SESSION_BUS_ADDRESS > "$XDG_RUNTIME_DIR/xfce4-dbus-session-bus-addres
 
 echo "Starting Plasma desktop (X11 session) with bus address: $DBUS_SESSION_BUS_ADDRESS"
 
+# Seed default Plasma config (task manager launchers etc.) BEFORE the
+# session starts: plasmashell loads the config at startup. Only seeds when
+# missing - user customizations are preserved on restart
+setup-plasma-default-desktop.sh
+
+# Rebuild the KSycoca services cache BEFORE starting the session:
+# plasmashell loads the cache at startup (and caches service lookups),
+# a stale cache makes task manager launcher pins render blank/broken.
+# cloudypad-*.desktop launchers live in XDG_DATA_DIRS (see Dockerfile).
+echo "Rebuilding KSycoca services cache..."
+kbuildsycoca5 || echo "Warning: kbuildsycoca5 failed, launchers may render blank"
+
 # Plasma X11 session on the Xorg-dummy display
 # (startplasma-x11 wires the session: kwin_x11 WM, plasmashell, plasma-workspace)
 startplasma-x11 &

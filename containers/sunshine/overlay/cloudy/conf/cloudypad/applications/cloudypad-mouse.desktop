@@ -1,0 +1,10 @@
+[Desktop Entry]
+Name=Mouse Settings
+Comment=Configure mouse and pointer
+Exec=systemsettings5 kcm_mouse
+Icon=input-tablet
+Terminal=false
+Type=Application
+Categories=Settings;
+Path=
+StartupNotify=true
