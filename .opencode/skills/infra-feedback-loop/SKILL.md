@@ -370,10 +370,33 @@ All-in-one (build + deploy image + ansible + restart) also exists: `task dev-ans
 
 ```sh
 vagrant ssh
-$ docker exec -u root cloudy supervisorctl status   # services state (sunshine, labwc, waybar, pipewire...)
+$ docker exec -u root cloudy supervisorctl status   # services state (sunshine, desktop, waybar, pipewire...)
 $ docker logs -f cloudy                              # container logs
-$ tail -f /cloudy/log/sunshine.log                   # Sunshine log (also labwc*.log in /cloudy/log)
+$ tail -f /cloudy/log/sunshine.log                   # Sunshine log (also *.err.log / desktop.log in /cloudy/log)
 $ docker exec -it cloudy bash                        # shell in container
+```
+
+Runtime verification of a deployed change (the deploy task output can lie - see footguns):
+
+```sh
+$ docker ps --format "{{.Names}} {{.Status}}"        # expect: Up ... (healthy)
+$ pgrep -a sunshine                                   # expect: alive
+$ grep -aE "Found H.264|main loop" /cloudy/log/sunshine.log | tail -2
+$ which <new-binary-added-to-image>                   # confirm the NEW image actually runs
+```
+
+Screenshot the running desktop for visual checks (no image analysis needed to smoke-test):
+
+```sh
+$ timeout 20 xwd -root -silent | gzip > /tmp/shot.xwd.gz   # inside container, DISPLAY=:42, XDG_RUNTIME_DIR=/cloudy/runtime
+$ docker exec cloudy cat /tmp/shot.xwd.gz > tmp/shot.xwd.gz # pull to host
+```
+
+Theme/settings state on the desktop session (Xfce example, adapt per stack):
+
+```sh
+$ xfconf-query -c xsettings -p /Net/ThemeName
+$ xfconf-query -c xsettings -p /Net/IconThemeName
 ```
 
 ### Local debug footguns
@@ -382,6 +405,24 @@ $ docker exec -it cloudy bash                        # shell in container
 - **Config wipe on restart**: start scripts re-render configs (envsubst) at container start. Manual edits inside `/cloudy/conf/sunshine/sunshine.conf` are LOST on `docker restart`. Change the template or inventory var instead.
 - **Stale persistent state**: `/cloudy/data` bind mount survives reboots and container recreation. When debugging pairing: `rm /cloudy/data/sunshine/sunshine_state.json` AND forget the host on the Moonlight client side, then pair fresh.
 - **Vagrant SSH state desync**: multiple VirtualBox VMs exist (main repo + worktrees, `.vagrant/` lives at the root of the checkout that ran `vagrant up`). If `vagrant ssh` says "VM must be running" while `VBoxManage showvminfo <vm> --machinereadable | grep VMState=` says running, you're in the wrong checkout. Always run `vagrant`/`task dev-*` from the checkout the VM was created in.
+- **Silent deploy failure on host disk full** (guarded since 2026-10, but know the failure mode): `docker image save` in `dev-docker-sunshine-to-vm` used to fail **silently** on a full host disk - the task exited 0 and the VM kept the PREVIOUS image. The task now aborts (checks tarball exists after save, `Loaded image:` after docker load), but if a deploy behaves like your change never landed, suspect it anyway and free space: `rm tmp/sunshine-container-image.tar`, `rm -rf tmp/sunshine-container.cache.tgz` (build cache export, ~7GB, rebuilds slower without it), `docker image prune -f && docker builder prune -f` (reclaims dangling local images).
+- **VM boot hangs**: `vagrant up` sometimes prints boot-timeout and stale status messages while the guest never finishes booting (symptom: `VBoxManage guestproperty get <vm> "/VirtualBox/GuestInfo/Net/1/V4/IP"` stays "No value set!" and ping to 192.168.56.43 fails). Fix: hard poweroff then direct start:
+  ```sh
+  VBoxManage controlvm "<VM NAME>" poweroff   # name via: VBoxManage list vms
+  VBoxManage startvm "<VM NAME>" --type headless
+  # poll guest IP until it answers:
+  VBoxManage guestproperty get "<VM NAME>" "/VirtualBox/GuestInfo/Net/1/V4/IP"
+  ping -c 2 192.168.56.43
+  ```
+- **VM guest disk smaller than provisioned**: the Vagrantfile provisions a 100GB disk but the guest LV/filesystem ships ~31G. On a fresh VM, grow once inside the guest (survives reboots):
+  ```sh
+  vagrant ssh
+  $ sudo growpart /dev/sda 3 && sudo pvresize /dev/sda3 \
+    && sudo lvextend -l +100%FREE /dev/ubuntu-vg/ubuntu-lv \
+    && sudo resize2fs /dev/ubuntu-vg/ubuntu-lv
+  ```
+  Docker images + containerd content otherwise fill the VM disk and image `docker load`/deploy fails with "no space left on device" (wiping `/var/lib/containerd` on the VM is safe when everything is reproducible from local builds: `sudo systemctl stop docker containerd && sudo rm -rf /var/lib/containerd && sudo systemctl start containerd docker`).
+- **Stale Sunshine pairing across image updates**: `/cloudy/data` persists `sunshine_state.json` in the OLD Sunshine version's format. After a Sunshine major version bump, Moonlight gets "client is not authorized / certificate verification failed" (log: `SSL Verification error :: Client certificate identity is not enabled`). Fix: `rm /cloudy/data/sunshine/sunshine_state.json` in container + forget host in Moonlight + re-pair fresh.
 
 ## Infrastructure provisioning and Pulumi deployment
 
