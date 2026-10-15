@@ -72,6 +72,11 @@ sunshine_max_bitrate_kbps: "0"
 # directly in the container for faster debugging (see contribution guide)
 sunshine_extra_volumes: []
 
+# Force re-seed of the default Plasma config (appletsrc etc.) at container
+# start, over the persistent config. Dev feedback-loop helper only: keep
+# false in production to preserve user customizations on restart.
+sunshine_plasma_default_force: false
+
 # Enable Sunshine container autoheal
 # If enabled, Sunshine container will be automatically restarted if it becomes unhealthy
 # It may happen the container crashes without exiting (eg. Sunshine server crash), autoheal helps being more resilient

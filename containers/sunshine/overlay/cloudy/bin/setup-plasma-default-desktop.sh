@@ -29,8 +29,18 @@ APPLETSRC_NAME=plasma-org.kde.plasma.desktop-appletsrc
 APPLETSRC_DEFAULT=$XDG_CONFIG_HOME/plasma-default/$APPLETSRC_NAME
 APPLETSRC=$XDG_CONFIG_HOME/$APPLETSRC_NAME
 
-if [ ! -f "$APPLETSRC" ]; then
-    echo "Plasma config not found at $APPLETSRC, seeding default from $APPLETSRC_DEFAULT"
+# CLOUDYPAD_PLASMA_DEFAULT_FORCE=true forces re-seed over the persistent
+# config - dev helper for fast feedback loops on the default overlay config
+# (see ansible/inventories/dev-vagrant.yml debug mounts). Prod keeps the
+# seed-once behavior to preserve user customizations.
+SHOULD_RESEED=false
+if [ "${CLOUDYPAD_PLASMA_DEFAULT_FORCE:-}" = "true" ] && [ -f "$APPLETSRC" ]; then
+    echo "CLOUDYPAD_PLASMA_DEFAULT_FORCE=true: re-seeding default config over existing $APPLETSRC"
+    SHOULD_RESEED=true
+fi
+
+if [ ! -f "$APPLETSRC" ] || [ "$SHOULD_RESEED" = "true" ]; then
+    echo "Seeding Plasma config from $APPLETSRC_DEFAULT"
     mkdir -p "$(dirname "$APPLETSRC")"
     cp "$APPLETSRC_DEFAULT" "$APPLETSRC"
 else
