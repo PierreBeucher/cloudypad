@@ -7,10 +7,9 @@ Terminal=false
 Type=Application
 Categories=Network;FileTransfer;Game;
 MimeType=x-scheme-handler/steam;x-scheme-handler/steamlink;
-Actions=Library;Store;Community;Servers;Screenshots;News;Settings;BigPicture;Friends;
+Actions=Store;Community;Library;Servers;Screenshots;News;Settings;BigPicture;Friends;
 PrefersNonDefaultGPU=true
 X-KDE-RunOnDiscreteGpu=true
-X-XFCE-Source=file:///usr/share/applications/steam.desktop
 Path=
 StartupNotify=false
 

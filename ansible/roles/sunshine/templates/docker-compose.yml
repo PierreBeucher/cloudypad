@@ -25,8 +25,8 @@ services:
     # Cloudy Pad data and XDG_DATA_HOME where data should be persisted (game files, Sunshine state, etc.)
     - "{{ sunshine_data_dir }}:/cloudy/data"
 
-    # Keep xfce4 config on host as user may customize it (eg. keyboard layout)
-    - "{{ sunshine_persistent_config_dir }}/xfce4:/cloudy/conf/xfce4"
+    # Keep Plasma config on host as user may customize it (eg. panel layout)
+    - "{{ sunshine_persistent_config_dir }}/plasma:/home/cloudy/.config/plasma-workspace"
 
     # Keep Heroic config and data
     - "{{ sunshine_persistent_config_dir }}/heroic:/cloudy/conf/heroic"
@@ -35,6 +35,20 @@ services:
     # Some important data are stored in $HOME by numerous apps (like Heroic or Lutris)
     # persisting this folder makes sense to keep user's data across container recreation
     - "{{ sunshine_persistent_home_dir }}:/home/cloudy"
+
+    {% if sunshine_extra_volumes | default([]) | length > 0 %}
+    #
+    # Extra volumes (eg. local overlay mounts for debugging, see contribution guide)
+    #
+    {% for volume in sunshine_extra_volumes -%}
+    - "{{ volume }}"
+    {% endfor %}
+
+    {% endif %}
+    # XDG_RUNTIME_DIR as tmpfs: required by Wayland clients (compositor sockets,
+    # PipeWire, dbus session...) and wiped on restart as expected by XDG spec
+    tmpfs:
+      - /cloudy/runtime
 
     # Allow container to read/write/manage attributes on character device 13
     # 13 matches /dev/input mouse, keyboard, etc. devices
@@ -65,6 +79,15 @@ services:
       # Desired locale
       CLOUDYPAD_LOCALE: {{ sunshine_locale }}
 
+      # Extra XDG data dir for Cloudy Pad desktop launchers
+      # (conf/cloudypad/applications/cloudypad-*.desktop, discovered by Plasma)
+      XDG_DATA_DIRS: /cloudy/conf/cloudypad:/usr/local/share:/usr/share
+
+      # Dev feedback loop helper: force re-seed of the default Plasma config
+      # (appletsrc etc.) over the persistent config at container start.
+      # Seed is normally once-only (user customizations preserved on restart)
+      CLOUDYPAD_PLASMA_DEFAULT_FORCE: "{{ sunshine_plasma_default_force | default(false) | ternary('true', 'false') }}"
+
       # Sunshine Web UI password
       # If unset or empty, can be set via Web UI directly
       SUNSHINE_WEB_PASSWORD_BASE64: "{{ sunshine_web_password_base64 }}"
@@ -76,6 +99,11 @@ services:
       # Use "\n" for multiple lines
       # eg. "capture = x11\nfoo = bar"
       CLOUDYPAD_SUNSHINE_ADDITIONAL_CONFIG: "{{ sunshine_additional_config }}"
+
+      # Extra CSRF allowed origins for Sunshine Web UI (2026+)
+      # Comma-separated URL prefixes appended to built-in defaults and
+      # container IPs auto-detected by start-sunshine.sh
+      CLOUDYPAD_SUNSHINE_CSRF_ALLOWED_ORIGINS: "{{ sunshine_csrf_allowed_origins | default([]) | join(',') }}"
 
       # Sunshine maximum bitrate in Kbps
       # If unset, Sunshine will use its default bitrate settings

@@ -1,10 +1,10 @@
 [Desktop Entry]
-Version=1.0
-Type=Application
 Name=Exit to host
-Comment=Exit to host
+Comment=Stop the Cloudy Pad session
 Exec=/cloudy/bin/stop-container-user.sh
 Icon=system-shutdown
-Path=
 Terminal=false
+Type=Application
+Categories=System;
+Path=
 StartupNotify=false

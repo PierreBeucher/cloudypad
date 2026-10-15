@@ -1,18 +1,12 @@
 [Desktop Entry]
 Name=Heroic
-Comment=Managing and play games on Heroic Games Launcher
+Comment=Manage and play games via Heroic Games Launcher
 Exec=heroic-start.sh
 Icon=heroic
 Terminal=false
 Type=Application
 Categories=Network;FileTransfer;Game;
-Actions=Launch
 PrefersNonDefaultGPU=true
 X-KDE-RunOnDiscreteGpu=true
-X-XFCE-Source=file:///usr/share/applications/heroic.desktop
 Path=
 StartupNotify=false
-
-[Desktop Action Launch]
-Name=Launch
-Exec=heroic

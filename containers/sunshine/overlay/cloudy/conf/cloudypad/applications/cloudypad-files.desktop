@@ -1,0 +1,10 @@
+[Desktop Entry]
+Name=Files
+Comment=Open the file explorer on user data
+Exec=dolphin /cloudy/data
+Icon=folder
+Terminal=false
+Type=Application
+Categories=FileManager;
+Path=
+StartupNotify=true
