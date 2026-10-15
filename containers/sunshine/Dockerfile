@@ -25,13 +25,13 @@ RUN curl -f -o /app/steam.deb "https://repo.steampowered.com/steam/archive/stabl
 # Lutris
 # https://github.com/lutris/lutris/releases
 FROM download-base AS download-lutris
-ARG LUTRIS_VERSION="0.5.20"
+ARG LUTRIS_VERSION="0.5.22"
 RUN curl -fL -o /app/lutris.deb "https://github.com/lutris/lutris/releases/download/v${LUTRIS_VERSION}/lutris_${LUTRIS_VERSION}_all.deb"
 
 # Heroic
 # https://github.com/Heroic-Games-Launcher/HeroicGamesLauncher/releases
 FROM download-base AS download-heroic
-ARG HEROIC_VERSION="2.19.1"
+ARG HEROIC_VERSION="2.22.4"
 
 RUN curl -fL -o /app/heroic.deb "https://github.com/Heroic-Games-Launcher/HeroicGamesLauncher/releases/download/v${HEROIC_VERSION}/Heroic-${HEROIC_VERSION}-linux-amd64.deb"
 
@@ -39,7 +39,7 @@ RUN curl -fL -o /app/heroic.deb "https://github.com/Heroic-Games-Launcher/Heroic
 # Sunshine image based on Ubuntu 24.04
 # with desktop environment, game launchers and dependencies
 #
-FROM ubuntu:noble-20260210.1@sha256:98ff7968124952e719a8a69bb3cccdd217f5fe758108ac4f21ad22e1df44d237
+FROM ubuntu:noble-20260917@sha256:534baea6a22c03a63003dbc8dbe78fe34bc0d7e595d9a9dc9834884ff530eb55
 
 ENV DEBIAN_FRONTEND=noninteractive
 
@@ -251,7 +251,7 @@ apt install -y /app/heroic.deb
 _HEROIC
 
 # GE-Proton version that will be installed and configured for Heroic by default
-ENV CLOUDYPAD_HEROIC_DEFAULT_GEPROTON_VERSION="GE-Proton10-32"
+ENV CLOUDYPAD_HEROIC_DEFAULT_GEPROTON_VERSION="GE-Proton11-9"
 
 # 
 # Global environment variables
