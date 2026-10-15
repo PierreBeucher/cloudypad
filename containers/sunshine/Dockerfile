@@ -8,11 +8,11 @@ WORKDIR /app
 # resolution (resolve_render_device) honors the "adapter_name" config which
 # we set to the vkms virtual GPU card when running without hardware GPU
 # (see overlay/cloudy/bin/start-labwc.sh)
-# NOTE: 2026.x asset naming: sunshine_<ver>-1+ubuntu24.04_amd64.deb
+# NOTE: 2026.x asset naming: sunshine_<ver>-1+ubuntu<basever>_amd64.deb (matches the base Ubuntu version)
 # (2025.x used sunshine-ubuntu-24.04-amd64.deb)
 FROM download-base AS download-sunshine
 ARG SUNSHINE_VERSION=2026.914.233613
-RUN curl -fL -o /app/sunshine.deb "https://github.com/LizardByte/Sunshine/releases/download/v${SUNSHINE_VERSION}/sunshine_${SUNSHINE_VERSION}-1%2Bubuntu24.04_amd64.deb"
+RUN curl -fL -o /app/sunshine.deb "https://github.com/LizardByte/Sunshine/releases/download/v${SUNSHINE_VERSION}/sunshine_${SUNSHINE_VERSION}-1%2Bubuntu26.04_amd64.deb"
 
 # Steam
 # https://repo.steampowered.com/steam/archive/stable/
@@ -39,7 +39,7 @@ RUN curl -fL -o /app/heroic.deb "https://github.com/Heroic-Games-Launcher/Heroic
 # Sunshine image based on Ubuntu 24.04
 # with desktop environment, game launchers and dependencies
 #
-FROM ubuntu:noble-20260917@sha256:534baea6a22c03a63003dbc8dbe78fe34bc0d7e595d9a9dc9834884ff530eb55
+FROM ubuntu:26.04@sha256:f144425ff09be612d6d9ad965196e9cdc23dae1f42110a8a11a3e9a8198759f7
 
 ENV DEBIAN_FRONTEND=noninteractive
 
@@ -147,9 +147,8 @@ _MAIN_PACKAGES
 # Desktop (KDE Plasma on X11) and utilities
 # Mirrors selkies docker-selkies-egl-desktop Plasma layer: plasma-desktop +
 # plasma-workspace + breeze theming on the base's X server (Xorg-dummy).
-# Noble ships Plasma 5.27 (KDE 5): the X11 session (startplasma-x11) and
-# kwin-x11 come from plasma-workspace / kwin-x11, there is no separate
-# plasma-session-x11 package (that's Plasma 6 naming on 26.04/trixie).
+# Resolute (26.04) ships Plasma 6.6: the X11 session comes from the
+# plasma-session-x11 package (startplasma-x11), kwin from kwin-x11.
 # NOTE: Selkies rebuilds kwin-x11 with patches for virtual displays
 # (patches/kwin-x11/) - we run stock kwin_x11 first and patch only if it
 # misbehaves on the Xorg-dummy display.
@@ -176,6 +175,8 @@ apt update
 apt install -y \
     plasma-desktop \
     plasma-workspace \
+    plasma-session-x11 \
+    kwin-x11 \
     sudo \
     locales \
     firefox \
@@ -218,8 +219,11 @@ RUN --mount=type=cache,target=/var/cache --mount=type=tmpfs,target=/var/log --mo
 
 set -e
 
-apt install -y /app/steam-libs-amd64.deb
-apt install -y /app/steam-libs-i386.deb
+# --allow-downgrades: steam-libs pins older versions of some Ubuntu libs
+# (eg libc6:i386) than a newer base distro ships; Steam runtime containers
+# bundle their own libs anyway, the host pins are only for the launcher
+apt install -y --allow-downgrades /app/steam-libs-amd64.deb
+apt install -y --allow-downgrades /app/steam-libs-i386.deb
 apt install -y /app/steam.deb
 
 # Patch steam launch script to prevent Desktop shortcut creation on first launch:
