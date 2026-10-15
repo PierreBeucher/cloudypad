@@ -21,6 +21,12 @@ all:
       # environment during long debugging sessions
       autostop_enable: false
 
+      # Dev feedback loop: re-seed default Plasma config over the persistent
+      # one at each container start, so overlay config changes in
+      # conf/plasma-default land with a simple "docker restart cloudy"
+      # (no image rebuild). Keep false in prod: user customizations preserved
+      sunshine_plasma_default_force: true
+
       # Web UI access: Sunshine 2026+ CSRF requires explicit origin allowlist.
       # start-sunshine.sh allows localhost + container IPs automatically; add
       # the VM LAN IP here as it's unreachable from the container (NAT) while
@@ -79,6 +85,11 @@ all:
       sunshine_extra_volumes:
         - "/vagrant/containers/sunshine/overlay/cloudy/bin:/cloudy/bin"
         - "/vagrant/containers/sunshine/overlay/cloudy/conf/cloudypad:/cloudy/conf/cloudypad"
+        # Plasma default configs (appletsrc etc.): seeded by
+        # setup-plasma-default-desktop.sh at container start. Note seed is
+        # only applied when the persistent config is missing: rm it in the
+        # container to re-seed from this mount on restart
+        - "/vagrant/containers/sunshine/overlay/cloudy/conf/plasma-default:/cloudy/conf/plasma-default"
         - "/vagrant/containers/sunshine/overlay/cloudy/conf/sunshine/sunshine.conf.template:/cloudy/conf/sunshine/sunshine.conf.template"
         - "/vagrant/containers/sunshine/overlay/cloudy/conf/sunshine/apps.json:/cloudy/conf/sunshine/apps.json"
         - "/vagrant/containers/sunshine/overlay/cloudy/conf/sunshine/assets:/cloudy/conf/sunshine/assets"
