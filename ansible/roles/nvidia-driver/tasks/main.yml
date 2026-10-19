@@ -72,8 +72,10 @@
 # and Sunshine capture need the nvidia DRM card to exist and stay available.
 # - modules-load.d: load nvidia_drm at boot (modprobe resolves nvidia core deps)
 # - modprobe.d: modeset=1 is required for the DRM device to be usable by wlroots
-# - nvidia-drm-hold service: holds the card device open so the module stays
-#   loaded (prevents last-close teardown)
+# - nvidia-drm-hold service: holds the render node open so the module stays
+#   loaded (prevents last-close teardown). Never hold the card node: an open
+#   card client takes NVKMS modesetting ownership and blocks the X server
+#   with "Failed to acquire modesetting permission"
 
 - name: Ensure nvidia_drm is loaded at boot
   become: true
@@ -110,10 +112,18 @@
   when: nvidia_drm_hold_systemd_unit.changed or nvidia_drm_hold_script.changed
 
 - name: Enable nvidia-drm-hold service
+  become: true
   ansible.builtin.systemd_service:
     name: nvidia-drm-hold
     enabled: true
     state: started
+
+- name: Restart nvidia-drm-hold service on script update
+  become: true
+  ansible.builtin.systemd_service:
+    name: nvidia-drm-hold
+    state: restarted
+  when: nvidia_drm_hold_script.changed
 
 # Load nvidia_drm right away when possible (fresh install without reboot):
 # ignore failure as the module may require a reboot to be loadable
