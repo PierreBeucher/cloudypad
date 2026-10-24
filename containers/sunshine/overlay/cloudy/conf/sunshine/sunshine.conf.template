@@ -3,11 +3,15 @@ sunshine_name = $SUNSHINE_SERVER_NAME
 # Safe by default: only allow LAN access
 origin_web_ui_allowed = lan
 
-# Capture the Xorg (dummy/nvidia) display via XCB
-# Pinned: Sunshine auto-probe prefers KMS which breaks on nvidia-drm in
-# containers (framebuffer fd: Function not implemented) - stream dies with
-# Initial Ping Timeout. X11 grab is the reliable path on this stack.
-capture = x11
+# Capture backend. Pinned to an explicit backend: Sunshine auto-probe prefers
+# KMS which breaks on nvidia-drm in containers (framebuffer fd: Function not
+# implemented) - stream dies with Initial Ping Timeout.
+# x11 (XCB grab): default path, works on dummy and nvidia displays
+# nvfbc: driver-level GPU capture, preferred on datacenter (Tesla/pro) GPUs -
+# atomic capture avoids stream tearing on fullscreen unredirected games and
+# skips the CPU framebuffer copy. NvFBC is driver-blocked on GeForce.
+# Value is set per GPU type by Ansible (CLOUDYPAD_SUNSHINE_CAPTURE compose env)
+capture = $CLOUDYPAD_SUNSHINE_CAPTURE
 min_log_level = info
 
 # Enforce encryption for both network modes

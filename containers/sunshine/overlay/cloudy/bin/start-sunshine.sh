@@ -5,6 +5,12 @@ wait-x-availability.sh
 # Ensure Sunshine state directory exists
 mkdir -p $CLOUDYPAD_DATA_DIR/sunshine
 
+# Capture backend default: x11 unless overridden by compose env (nvfbc on
+# datacenter GPUs, see docker-compose.nvidia.yml). Defaults here so a stale
+# compose file without the var doesn't render an empty capture setting and
+# let Sunshine fall back to its broken-in-container KMS auto-probe.
+export CLOUDYPAD_SUNSHINE_CAPTURE=${CLOUDYPAD_SUNSHINE_CAPTURE:-x11}
+
 # Templatise sunshine.conf with env variables
 envsubst < $CLOUDYPAD_CONF_DIR/sunshine/sunshine.conf.template > $CLOUDYPAD_CONF_DIR/sunshine/sunshine.conf
 
