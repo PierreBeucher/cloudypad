@@ -35,6 +35,9 @@ APPLETSRC=$XDG_CONFIG_HOME/$APPLETSRC_NAME
 KSCREENLOCKERRC_DEFAULT=$CLOUDYPAD_CONF_DIR/kscreenlockerrc
 KSCREENLOCKERRC=$XDG_CONFIG_HOME/kscreenlockerrc
 
+BALOOFILERC_DEFAULT=$CLOUDYPAD_CONF_DIR/baloofilerc
+BALOOFILERC=$XDG_CONFIG_HOME/baloofilerc
+
 # CLOUDYPAD_PLASMA_DEFAULT_FORCE=true forces re-seed over the persistent
 # config - dev helper for fast feedback loops on the default overlay config
 # (see ansible/inventories/dev-vagrant.yml debug mounts). Prod keeps the
@@ -58,6 +61,14 @@ fi
 if [ -f "$KSCREENLOCKERRC_DEFAULT" ] && [ ! -f "$KSCREENLOCKERRC" ]; then
     echo "Seeding kscreenlockerrc from $KSCREENLOCKERRC_DEFAULT"
     cp "$KSCREENLOCKERRC_DEFAULT" "$KSCREENLOCKERRC"
+fi
+
+# Seed Baloo config (disable the file indexer - it has no use on a headless
+# streamed desktop and can cause IO/CPU stutters walking large game
+# libraries), only when missing so user customizations are preserved
+if [ -f "$BALOOFILERC_DEFAULT" ] && [ ! -f "$BALOOFILERC" ]; then
+    echo "Seeding baloofilerc from $BALOOFILERC_DEFAULT"
+    cp "$BALOOFILERC_DEFAULT" "$BALOOFILERC"
 fi
 
 echo "Plasma default config setup complete"

@@ -108,6 +108,12 @@ services:
       # If unset, Sunshine will use its default bitrate settings
       CLOUDYPAD_SUNSHINE_MAX_BITRATE: "{{ sunshine_max_bitrate_kbps }}"
 
+      # Sunshine capture backend (x11 or nvfbc). Default x11 (XCB grab):
+      # Sunshine auto-probe prefers KMS which breaks on nvidia-drm in
+      # containers. Overridden to nvfbc on datacenter GPUs by
+      # docker-compose.nvidia.yml
+      CLOUDYPAD_SUNSHINE_CAPTURE: "x11"
+
 {% if sunshine_autoheal_enable %}
   autoheal:
     image: {{ sunshine_autoheal_image }}
