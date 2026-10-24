@@ -4,10 +4,6 @@ WORKDIR /app
 
 # Sunshine
 # https://github.com/LizardByte/Sunshine/releases
-# NOTE: v2026.x required for GPU-less environments: Sunshine render device
-# resolution (resolve_render_device) honors the "adapter_name" config which
-# we set to the vkms virtual GPU card when running without hardware GPU
-# (see overlay/cloudy/bin/start-labwc.sh)
 # NOTE: 2026.x asset naming: sunshine_<ver>-1+ubuntu<basever>_amd64.deb (matches the base Ubuntu version)
 # (2025.x used sunshine-ubuntu-24.04-amd64.deb)
 FROM download-base AS download-sunshine
@@ -287,7 +283,10 @@ ENV SUNSHINE_SERVER_NAME="Sunshine"
 # See https://specifications.freedesktop.org/basedir-spec/latest/
 # 
 ENV XDG_RUNTIME_DIR=$CLOUDYPAD_RUNTIME_DIR
-ENV XDG_CONFIG_HOME=$CLOUDYPAD_CONF_DIR
+# User-space config (Plasma settings, app configs...) lives in the persisted
+# home directory. Cloudy Pad managed configs stay in CLOUDYPAD_CONF_DIR
+# (ephemeral, re-generated from image at container start)
+ENV XDG_CONFIG_HOME=$CLOUDYPAD_USER_HOME/.config
 ENV XDG_CACHE_HOME=$CLOUDYPAD_USER_HOME/.cache
 
 # Write data in known directory for persistence

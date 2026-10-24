@@ -21,6 +21,13 @@ mkdir -p \
     $XDG_DATA_HOME \
     $CLOUDYPAD_USER_HOME
 
+# Sunshine resolves its appdata dir (apps.json, assets, covers) from
+# XDG_CONFIG_HOME/sunshine. Its config and assets are Cloudy Pad-managed
+# (shipped in image and re-rendered at start in the ephemeral conf dir):
+# symlink the appdata path to the Cloudy Pad conf dir instead of duplicating
+# files, so XDG_CONFIG_HOME can point to the persisted user home
+ln -sfn $CLOUDYPAD_CONF_DIR/sunshine $XDG_CONFIG_HOME/sunshine
+
 chown $CLOUDYPAD_USER:$CLOUDYPAD_USER \
     $CLOUDYPAD_DATA_DIR \
     $CLOUDYPAD_LOG_DIR \

@@ -37,8 +37,10 @@ fi
 echo "cloudy:${CLOUDY_PASSWORD}" | chpasswd
 
 # Set up sudo lecture file directory from template
-SUDO_LECTURE_FILE="${XDG_CONFIG_HOME}/cloudypad/sudo/lecture_file.txt"
-SUDO_LECTURE_TEMPLATE="${XDG_CONFIG_HOME}/cloudypad/sudo/lecture_file.template.txt"
+# Files are Cloudy Pad-managed (shipped in image): resolve them from the
+# ephemeral conf dir, not the persisted user XDG_CONFIG_HOME
+SUDO_LECTURE_FILE="${CLOUDYPAD_CONF_DIR}/cloudypad/sudo/lecture_file.txt"
+SUDO_LECTURE_TEMPLATE="${CLOUDYPAD_CONF_DIR}/cloudypad/sudo/lecture_file.template.txt"
 
 echo "Copying sudo lecture file from template from ${SUDO_LECTURE_TEMPLATE} to ${SUDO_LECTURE_FILE}"
 
