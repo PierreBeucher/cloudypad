@@ -32,7 +32,28 @@ export class SunshineMoonlightPairer extends AbstractMoonlightPairer implements 
         return new SSHClient(this.args.ssh);
     }
 
-    protected async doPair(pin: string) {    
+    /**
+     * List pending pairing sessions currently waiting for a PIN confirmation.
+     * Sunshine 2026+ pairing API: a pending pairing session is created by each
+     * Moonlight client waiting for its PIN to be confirmed.
+     */
+    private async fetchPendingPairings(ssh: SSHClient): Promise<{ id: string, name?: string, address?: string }[]> {
+        const result = await ssh.command([
+            'curl',
+            '-sk',
+            '-u',
+            `${this.args.sunshine.username}:${this.args.sunshine.password}`,
+            'https://localhost:47990/api/pin',
+        ])
+
+        this.logger.trace(`Sunshine pending pairings GET via SSH result: ${JSON.stringify(result)}`)
+
+        // Response should contain JSON such as { "pairings": [ { "id": "...", "name": "...", "address": "..." } ] }
+        const json = JSON.parse(result.stdout)
+        return json.pairings ?? []
+    }
+
+    protected async doPair(pin: string) {
         // try to pair for 2 min by punshing through Sunshine API with our pin
         // Using plain curl + SSH command as Sunshine Web UI is not reachable directly
         // A simple but effective enough method
@@ -71,20 +92,46 @@ export class SunshineMoonlightPairer extends AbstractMoonlightPairer implements 
 
         this.logger.debug(`Trying to send pin to Sunshine API... (enable trace logs to see raw outputs)`)
 
+        // Sunshine 2026+ requires a pairing_id identifying the pending pairing
+        // session created by the Moonlight client waiting for its PIN: list
+        // pending pairings first, then confirm the one we're pairing with.
+        // Fresh listing on each attempt ensures we never confirm a stale session.
+        let pendingPairings: { id: string, name?: string, address?: string }[]
+        try {
+            pendingPairings = await this.fetchPendingPairings(ssh)
+        } catch (error) {
+            this.logger.warn(`Failed to list pending pairing sessions from Sunshine API.`, { cause: error })
+            return false
+        }
+
+        this.logger.debug(`Sunshine pending pairings: ${JSON.stringify(pendingPairings)}`)
+
+        if (pendingPairings.length === 0) {
+            this.logger.debug(`No pending pairing session on Sunshine: Moonlight is not waiting for a PIN yet.`)
+            return false
+        }
+
+        if (pendingPairings.length > 1) {
+            // Confirming a PIN applies to a single pending client: with multiple
+            // pending sessions we cannot safely guess which one is ours. Let
+            // stale sessions expire and retry on next attempt.
+            this.logger.warn(`Multiple pending pairing sessions on Sunshine (${pendingPairings.map(p => p.id).join(", ")}): skipping PIN attempt to avoid pairing the wrong client.`)
+            return false
+        }
+
         let result: SSHExecCommandResponse
         try {
             result = await ssh.command([
                 'curl',
-                '-v',
+                '-sk',
                 '-u',
                 `${this.args.sunshine.username}:${this.args.sunshine.password}`,
                 '-X',
                 'POST',
-                '-k',
                 'https://localhost:47990/api/pin',
                 '-H', 'Content-Type: application/json',
                 '-d',
-                JSON.stringify({ pin: pin, name: this.args.instanceName })
+                JSON.stringify({ pairing_id: pendingPairings[0].id, pin: pin, name: this.args.instanceName })
             ])
         } catch (error) {
             this.logger.warn(`Failed to send pin to Sunshine API.`, { cause: error })
@@ -98,7 +145,7 @@ export class SunshineMoonlightPairer extends AbstractMoonlightPairer implements 
         let json;
         try {
             json = JSON.parse(result.stdout);
-            
+
             this.logger.debug(`Sunshine /api/pin POST JSON output: ${JSON.stringify(json)}`)
 
             // Sunshine server may respond with true (boolean) or "true" (string)

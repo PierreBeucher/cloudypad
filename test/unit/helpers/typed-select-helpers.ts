@@ -16,8 +16,18 @@
 import type { select as InquirerSelect } from '@inquirer/prompts';
 
 // -----------------------------------------------------------------------------
-// Core "select" contract used by tests and adapters
+// Inquirer-derived types
+// - NOTE: @inquirer/prompts >= 5 (select >= 5.2) exports `select` as a generic
+//   function `<const Value>(config) => Promise<Value>`. Deriving the value
+//   type from its parameter type via conditional inference is fragile across
+//   versions (union with Separator breaks ChoiceVal distribution), so the
+//   adapter is simply typed as the select signature itself and SelectLike
+//   values are constrained to string | number (all test usages).
 // -----------------------------------------------------------------------------
+type InqValue = string | number;
+
+// Parameters of the real inquirer select (instantiated: Value must be given)
+type InqParams = Parameters<typeof InquirerSelect<InqValue>>[0];
 
 export type SelectParam<T = unknown> = {
     message?: string;
@@ -41,29 +51,6 @@ export function mkSelect<T>(value: T, onCall?: (opts: SelectParam<T>) => void): 
     };
     return Object.assign(core, { cancel });
 }
-
-// -----------------------------------------------------------------------------
-// Inquirer-derived types
-// - We infer Inquirer `select` parameter type, the choice element type,
-//   and the *effective* value type that a choice yields.
-// -----------------------------------------------------------------------------
-
-type InqParams = Parameters<typeof InquirerSelect>[0];
-
-// Element type of the `choices` array (if present), otherwise `unknown`.
-type InqChoice = InqParams extends { choices: readonly (infer C)[] } ? C : unknown;
-
-// Given a choice element type C, infer the "value" it represents.
-// - If choice is `{ value: V }`, the effective value is V.
-// - If choice is a scalar (`string` | `number`), the value is the scalar itself.
-// - Otherwise `never` (unusable for selection).
-type ChoiceVal<C> =
-    C extends { value: infer V } ? V :
-    C extends string | number ? C :
-    never;
-
-// The "Inquirer value" we will ultimately return from the adapter.
-type InqValue = ChoiceVal<InqChoice>;
 
 // -----------------------------------------------------------------------------
 // Focused type guards (no wide casts leaked into business logic)
@@ -130,7 +117,7 @@ const defaultEq: Eq = Object.is;
 export function toInquirerSelect<T extends InqValue>(
     selectLike: SelectLike<T>,
     eq: Eq = defaultEq
-) {
+): typeof InquirerSelect {
     async function core(config: InqParams): Promise<InqValue> {
         const choices = extractChoices(config);
         const message = extractMessage(config);
@@ -199,13 +186,17 @@ export function toInquirerSelect<T extends InqValue>(
     // Broad compatibility:
     // - Generic callable enriched with `cancel` (some callers expect this)
     // - Returned promise enriched with `cancel` (other callers attach it on the promise)
-    const callable = <Value>(opts: InqParams, _context?: unknown) => {
+    // NOTE: cast to the inquirer select signature: our concrete-typed params
+    // (InqParams, InqValue) are not structurally compatible with the generic
+    // <const Value> inference in @inquirer/select >= 5.2, but the adapter is
+    // runtime-compatible (it forwards choices and resolves the chosen value).
+    const callable = <const Value>(opts: InqParams, _context?: unknown): Promise<Value> => {
         void _context; // keep the parameter for structural compatibility with Inquirer
-        const p = core(opts) as Promise<Value>;
+        const p = core(opts) as unknown as Promise<Value>;
         return Object.assign(p, { cancel });
     };
 
     const inquirerCompat = Object.assign(callable, { cancel });
 
-    return inquirerCompat;
+    return inquirerCompat as unknown as typeof InquirerSelect;
 }

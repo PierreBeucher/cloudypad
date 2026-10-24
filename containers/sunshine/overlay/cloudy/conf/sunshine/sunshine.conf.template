@@ -1,6 +1,17 @@
 sunshine_name = $SUNSHINE_SERVER_NAME
 
+# Safe by default: only allow LAN access
 origin_web_ui_allowed = lan
+
+# Capture backend. Pinned to an explicit backend: Sunshine auto-probe prefers
+# KMS which breaks on nvidia-drm in containers (framebuffer fd: Function not
+# implemented) - stream dies with Initial Ping Timeout.
+# x11 (XCB grab): default path, works on dummy and nvidia displays
+# nvfbc: driver-level GPU capture, preferred on datacenter (Tesla/pro) GPUs -
+# atomic capture avoids stream tearing on fullscreen unredirected games and
+# skips the CPU framebuffer copy. NvFBC is driver-blocked on GeForce.
+# Value is set per GPU type by Ansible (CLOUDYPAD_SUNSHINE_CAPTURE compose env)
+capture = $CLOUDYPAD_SUNSHINE_CAPTURE
 min_log_level = info
 
 # Enforce encryption for both network modes
@@ -9,7 +20,8 @@ lan_encryption_mode = 2
 wan_encryption_mode = 2
 
 # Keep state files in Cloudy Pad data dir to persist on container recreation
-# They are by default saved in XDG_CONFIG_HOME but this folder is not persisted voluntarily
+# They are by default saved in XDG_CONFIG_HOME/sunshine, which symlinks to the
+# ephemeral Cloudy Pad conf dir (see setup-dirs.sh)
 credentials_file = /cloudy/data/sunshine/sunshine_credentials.json
 file_state = /cloudy/data/sunshine/sunshine_state.json
 pkey = /cloudy/data/sunshine/pkey.pem

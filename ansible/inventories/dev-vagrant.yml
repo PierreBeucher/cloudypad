@@ -9,9 +9,37 @@ all:
       sunshine_server_name: dev-vagrant
       sunshine_nvidia_enable: false
       sunshine_compose_pull_images: never
+
+      # No autoheal on dev VM: container is recreated on every deploy
+      # (dev-docker-sunshine-to-vm force-recreate) and pulling the autoheal
+      # image on a fresh VM fails the deploy (pull policy "never" above)
+      sunshine_autoheal_enable: false
       sunshine_image_tag: local
 
       autostop_timeout_seconds: 3600 # 1h
+      # Disable autostop on dev VM: inactivity shutdown kills the dev
+      # environment during long debugging sessions
+      autostop_enable: false
+
+      # Dev feedback loop: re-seed default Plasma config over the persistent
+      # one at each container start, so overlay config changes in
+      # conf/plasma-default land with a simple "docker restart cloudy"
+      # (no image rebuild). Keep false in prod: user customizations preserved
+      sunshine_plasma_default_force: true
+
+      # Web UI access: Sunshine 2026+ CSRF requires explicit origin allowlist.
+      # start-sunshine.sh allows localhost + container IPs automatically; add
+      # the VM LAN IP here as it's unreachable from the container (NAT) while
+      # host browsers reach the Web UI through it (port forwarding)
+      sunshine_csrf_allowed_origins:
+        - "https://192.168.56.43"
+
+      # Web UI access: Sunshine 2026+ CSRF requires explicit origin allowlist.
+      # start-sunshine.sh allows localhost + container IPs automatically; add
+      # the VM LAN IP here as it's unreachable from the container (NAT) while
+      # host browsers reach the Web UI through it (port forwarding)
+      sunshine_csrf_allowed_origins:
+        - "https://192.168.56.43"
 
       sunshine_keyboard_layout: fr
       sunshine_keyboard_variant: azerty
@@ -44,6 +72,29 @@ all:
       # Forcing to use X11 capture workaround the issue.
       sunshine_additional_config: "capture = x11"
       sunshine_max_bitrate_kbps: "5000"
+
+      # Debug mounts: bind mount local repo overlay directly in the container
+      # so overlay changes (scripts, configs...) can be tested without
+      # rebuilding the image. The local project is synced in the VM at
+      # /vagrant (see Vagrantfile), hence /vagrant/<project/path> paths.
+      # Ansible re-deploys the Compose with these mounts on every
+      # "task dev-docker-sunshine-to-vm" / "task dev-ansible-config" run,
+      # recreating the container when mounts change.
+      # Note: mounted paths must match the Plasma stack overlay layout; do not
+      # mount paths that start scripts write to at runtime (rendered configs)
+      sunshine_extra_volumes:
+        - "/vagrant/containers/sunshine/overlay/cloudy/bin:/cloudy/bin"
+        - "/vagrant/containers/sunshine/overlay/cloudy/conf/cloudypad:/cloudy/conf/cloudypad"
+        # Plasma default configs (appletsrc etc.): seeded by
+        # setup-plasma-default-desktop.sh at container start. Note seed is
+        # only applied when the persistent config is missing: rm it in the
+        # container to re-seed from this mount on restart
+        - "/vagrant/containers/sunshine/overlay/cloudy/conf/plasma-default:/cloudy/conf/plasma-default"
+        - "/vagrant/containers/sunshine/overlay/cloudy/conf/sunshine/sunshine.conf.template:/cloudy/conf/sunshine/sunshine.conf.template"
+        - "/vagrant/containers/sunshine/overlay/cloudy/conf/sunshine/apps.json:/cloudy/conf/sunshine/apps.json"
+        - "/vagrant/containers/sunshine/overlay/cloudy/conf/sunshine/assets:/cloudy/conf/sunshine/assets"
+        - "/vagrant/containers/sunshine/overlay/cloudy/conf/heroic-default:/cloudy/conf/heroic-default"
+        - "/vagrant/containers/sunshine/overlay/cloudy/conf/supervisor:/cloudy/conf/supervisor"
 
       cloudypad_provider: "vagrant"
       

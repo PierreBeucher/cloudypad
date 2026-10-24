@@ -1,0 +1,27 @@
+[Unit]
+# Keep the NVIDIA DRM render node device open.
+#
+# On hosts with a headless NVIDIA GPU (eg. datacenter GPUs such as RTX 4000
+# Ada on Linode), the nvidia_drm module tears itself down shortly after the
+# last client closes the DRM devices ("Cannot find any crtc or sizes"
+# followed by driver unload), making /dev/dri/cardN and renderD* disappear
+# from sysfs. Cloudy Pad's compositor and Sunshine capture need the DRM
+# card to stay available.
+#
+# The render node is held instead of the card node on purpose: an open card
+# client takes NVKMS modesetting ownership and blocks the X server with
+# "Failed to acquire modesetting permission", while an open render node
+# keeps the module loaded without interfering with the X server.
+Description=Hold NVIDIA DRM render node device open to prevent nvidia_drm module teardown
+After=multi-user.target
+
+[Service]
+Type=simple
+# Keep retrying: the card may not exist yet at boot (module load order) or
+# may be temporarily unavailable during driver reloads
+ExecStart=/usr/local/bin/nvidia-drm-hold.sh
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
