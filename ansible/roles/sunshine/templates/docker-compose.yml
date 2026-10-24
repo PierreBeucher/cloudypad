@@ -25,11 +25,10 @@ services:
     # Cloudy Pad data and XDG_DATA_HOME where data should be persisted (game files, Sunshine state, etc.)
     - "{{ sunshine_data_dir }}:/cloudy/data"
 
-    # Keep Plasma config on host as user may customize it (eg. panel layout)
-    - "{{ sunshine_persistent_config_dir }}/plasma:/home/cloudy/.config/plasma-workspace"
-
-    # Keep Heroic config and data
-    - "{{ sunshine_persistent_config_dir }}/heroic:/cloudy/conf/heroic"
+    # Keep Heroic config and data.
+    # XDG_CONFIG_HOME is $HOME/.config: Heroic config written there is
+    # persisted via this mount (and the whole home mount below)
+    - "{{ sunshine_persistent_config_dir }}/heroic:/home/cloudy/.config/heroic"
 
     # Keep user's home directory
     # Some important data are stored in $HOME by numerous apps (like Heroic or Lutris)

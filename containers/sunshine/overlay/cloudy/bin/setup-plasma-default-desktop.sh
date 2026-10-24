@@ -7,10 +7,13 @@
 #   Heroic, Lutris, Firefox, Konsole, Files, Keyboard, Mouse, Help, Exit -
 #   mirroring the former XFCE bottom dock
 #
-# Config is seeded from conf/plasma-default overlay dir into the persistent
-# XDG_CONFIG_HOME (/cloudy/conf). User customizations made afterwards are
-# preserved on restart: the default file is only copied when missing, never
-# overwritten (same pattern as the former setup-xfce4-default-config.sh).
+# Config is seeded from the CLOUDYPAD_CONF_DIR/plasma-default overlay dir
+# into the persisted XDG_CONFIG_HOME ($HOME/.config, bind-mounted to the
+# instance data disk). User customizations made afterwards are preserved
+# across container restart and instance stop/start: the default file is only
+# copied when missing, never overwritten.
+#
+# Also seeds kscreenlockerrc (never auto-lock the headless streamed session)
 #
 # NOTE: the KSycoca services cache is rebuilt by start-desktop.sh BEFORE the
 # session starts - task manager pins resolve through that cache and a stale
@@ -26,8 +29,11 @@
 echo "Setting up default Plasma config..."
 
 APPLETSRC_NAME=plasma-org.kde.plasma.desktop-appletsrc
-APPLETSRC_DEFAULT=$XDG_CONFIG_HOME/plasma-default/$APPLETSRC_NAME
+APPLETSRC_DEFAULT=$CLOUDYPAD_CONF_DIR/plasma-default/$APPLETSRC_NAME
 APPLETSRC=$XDG_CONFIG_HOME/$APPLETSRC_NAME
+
+KSCREENLOCKERRC_DEFAULT=$CLOUDYPAD_CONF_DIR/kscreenlockerrc
+KSCREENLOCKERRC=$XDG_CONFIG_HOME/kscreenlockerrc
 
 # CLOUDYPAD_PLASMA_DEFAULT_FORCE=true forces re-seed over the persistent
 # config - dev helper for fast feedback loops on the default overlay config
@@ -45,6 +51,13 @@ if [ ! -f "$APPLETSRC" ] || [ "$SHOULD_RESEED" = "true" ]; then
     cp "$APPLETSRC_DEFAULT" "$APPLETSRC"
 else
     echo "Plasma config already present at $APPLETSRC, keeping it (user customizations preserved)"
+fi
+
+# Seed screen locker config (disable auto-lock for the headless streamed
+# session), only when missing so user customizations are preserved
+if [ -f "$KSCREENLOCKERRC_DEFAULT" ] && [ ! -f "$KSCREENLOCKERRC" ]; then
+    echo "Seeding kscreenlockerrc from $KSCREENLOCKERRC_DEFAULT"
+    cp "$KSCREENLOCKERRC_DEFAULT" "$KSCREENLOCKERRC"
 fi
 
 echo "Plasma default config setup complete"

@@ -16,7 +16,8 @@ lan_encryption_mode = 2
 wan_encryption_mode = 2
 
 # Keep state files in Cloudy Pad data dir to persist on container recreation
-# They are by default saved in XDG_CONFIG_HOME but this folder is not persisted voluntarily
+# They are by default saved in XDG_CONFIG_HOME/sunshine, which symlinks to the
+# ephemeral Cloudy Pad conf dir (see setup-dirs.sh)
 credentials_file = /cloudy/data/sunshine/sunshine_credentials.json
 file_state = /cloudy/data/sunshine/sunshine_state.json
 pkey = /cloudy/data/sunshine/pkey.pem
