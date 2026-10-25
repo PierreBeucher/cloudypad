@@ -42,4 +42,7 @@ if [[ -n "$SUNSHINE_WEB_PASSWORD_BASE64" && -n "$SUNSHINE_WEB_USERNAME" ]]; then
     sunshine $CLOUDYPAD_CONF_DIR/sunshine/sunshine.conf --creds $SUNSHINE_WEB_USERNAME $SUNSHINE_WEB_PASSWORD
 fi
 
-sunshine $CLOUDYPAD_CONF_DIR/sunshine/sunshine.conf
+# exec so the supervised process IS sunshine (supervisorctl tracks its real
+# PID; without exec, restarts leave the shell tracked while Sunshine survives
+# as an orphan holding the protocol ports)
+exec sunshine $CLOUDYPAD_CONF_DIR/sunshine/sunshine.conf
