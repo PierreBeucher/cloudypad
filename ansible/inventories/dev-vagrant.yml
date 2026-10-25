@@ -34,13 +34,6 @@ all:
       sunshine_csrf_allowed_origins:
         - "https://192.168.56.43"
 
-      # Web UI access: Sunshine 2026+ CSRF requires explicit origin allowlist.
-      # start-sunshine.sh allows localhost + container IPs automatically; add
-      # the VM LAN IP here as it's unreachable from the container (NAT) while
-      # host browsers reach the Web UI through it (port forwarding)
-      sunshine_csrf_allowed_origins:
-        - "https://192.168.56.43"
-
       sunshine_keyboard_layout: fr
       sunshine_keyboard_variant: azerty
       sunshine_keyboard_model: pc104

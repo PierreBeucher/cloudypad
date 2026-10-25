@@ -63,76 +63,6 @@
   command: update-initramfs -u
   when: nvidia_driver_module_file_result.changed
 
-# --- nvidia_drm module load and hold ---
-# On headless NVIDIA GPUs (datacenter, eg. Linode RTX 4000 Ada), the nvidia_drm
-# module is not loaded at boot (nothing triggers it on a headless host) and
-# tears itself down shortly after load when the last client closes the card
-# device ("Cannot find any crtc or sizes" then driver unload), making
-# /dev/dri/cardN disappear. Cloudy Pad's compositor (labwc DRM/GBM renderer)
-# and Sunshine capture need the nvidia DRM card to exist and stay available.
-# - modules-load.d: load nvidia_drm at boot (modprobe resolves nvidia core deps)
-# - modprobe.d: modeset=1 is required for the DRM device to be usable by wlroots
-# - nvidia-drm-hold service: holds the render node open so the module stays
-#   loaded (prevents last-close teardown). Never hold the card node: an open
-#   card client takes NVKMS modesetting ownership and blocks the X server
-#   with "Failed to acquire modesetting permission"
-
-- name: Ensure nvidia_drm is loaded at boot
-  become: true
-  copy:
-    content: "nvidia_drm"
-    dest: /etc/modules-load.d/nvidia-drm.conf
-    mode: '0644'
-
-- name: Ensure nvidia_drm modeset option is set
-  become: true
-  copy:
-    content: "options nvidia-drm modeset=1"
-    dest: /etc/modprobe.d/nvidia-drm-modeset.conf
-    mode: '0644'
-
-- name: Ensure nvidia-drm-hold script exists
-  become: true
-  register: nvidia_drm_hold_script
-  copy:
-    dest: /usr/local/bin/nvidia-drm-hold.sh
-    mode: '0755'
-    src: files/nvidia-drm-hold.sh
-
-- name: Ensure nvidia-drm-hold service exists
-  become: true
-  register: nvidia_drm_hold_systemd_unit
-  copy:
-    dest: /etc/systemd/system/nvidia-drm-hold.service
-    mode: '0644'
-    src: files/nvidia-drm-hold.service
-
-- name: Reload systemd for nvidia-drm-hold
-  ansible.builtin.command: systemctl daemon-reload
-  when: nvidia_drm_hold_systemd_unit.changed or nvidia_drm_hold_script.changed
-
-- name: Enable nvidia-drm-hold service
-  become: true
-  ansible.builtin.systemd_service:
-    name: nvidia-drm-hold
-    enabled: true
-    state: started
-
-- name: Restart nvidia-drm-hold service on script update
-  become: true
-  ansible.builtin.systemd_service:
-    name: nvidia-drm-hold
-    state: restarted
-  when: nvidia_drm_hold_script.changed
-
-# Load nvidia_drm right away when possible (fresh install without reboot):
-# ignore failure as the module may require a reboot to be loadable
-- name: Load nvidia_drm module now
-  ansible.builtin.modprobe:
-    name: nvidia_drm
-    state: present
-  ignore_errors: true
-
 # Setup a service running in userspace to ensure /dev/nvidia-caps/* devices are present on boot
 # See https://docs.nvidia.com/datacenter/tesla/mig-user-guide/index.html#device-nodes-devfs
 - name: Ensure nvidia-caps startup script exists
@@ -165,10 +95,10 @@
     name: nvidia-setup-devices
     enabled: true
 
-- name: reboot after initramfs, NVIDIA devices script or nvidia-drm-hold update
+- name: reboot after initramfs or NVIDIA devices script update
   reboot:
     post_reboot_delay: 10
-  when: (nvidia_driver_module_file_result.changed or nvidia_dev_systemd_unit.changed or nvidia_dev_script.changed or nvidia_drm_hold_systemd_unit.changed or nvidia_drm_hold_script.changed) and not nvidia_driver_skip_reboot
+  when: (nvidia_driver_module_file_result.changed or nvidia_dev_systemd_unit.changed or nvidia_dev_script.changed) and not nvidia_driver_skip_reboot
 
 - name: install NVIDIA container toolkit
   import_tasks: container-toolkit.yml

@@ -478,6 +478,7 @@ export abstract class AbstractInputPrompter<
             let autoStopTimeoutStr: string = await select({
                 message: "Select Auto Stop timeout:",
                 choices: autoStopTimeoutChoices,
+                default: '900',
             })
 
             while (autoStopTimeoutStr === '_' || isNaN(Number.parseInt(autoStopTimeoutStr))) {

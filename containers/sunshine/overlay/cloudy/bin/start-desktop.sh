@@ -6,7 +6,7 @@ wait-x-availability.sh
 # As some process will need to communicate with the desktop session dbus
 # (eg. on Sunshine session start to update settings)
 export DBUS_SESSION_BUS_ADDRESS=$(dbus-daemon --session --print-address --fork)
-echo $DBUS_SESSION_BUS_ADDRESS > "$XDG_RUNTIME_DIR/xfce4-dbus-session-bus-address"
+echo $DBUS_SESSION_BUS_ADDRESS > "$XDG_RUNTIME_DIR/dbus-session-bus-address"
 
 echo "Starting Plasma desktop (X11 session) with bus address: $DBUS_SESSION_BUS_ADDRESS"
 
