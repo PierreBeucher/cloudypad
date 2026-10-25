@@ -44,11 +44,6 @@ services:
     {% endfor %}
 
     {% endif %}
-    # XDG_RUNTIME_DIR as tmpfs: required by Wayland clients (compositor sockets,
-    # PipeWire, dbus session...) and wiped on restart as expected by XDG spec
-    tmpfs:
-      - /cloudy/runtime
-
     # Allow container to read/write/manage attributes on character device 13
     # 13 matches /dev/input mouse, keyboard, etc. devices
     # thus allowing process in container to manage input which we need for Sunshine

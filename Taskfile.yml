@@ -94,12 +94,6 @@ tasks:
     - docker tag $CLOUDYPAD_BUILD_CORE_IMAGE_REGISTRY:$CLOUDYPAD_BUILD_CORE_IMAGE_TAG $CLOUDYPAD_BUILD_CORE_IMAGE_REGISTRY:dev
     - docker push $CLOUDYPAD_BUILD_CORE_IMAGE_REGISTRY:dev
 
-  # Send a Sunshine PIN to a running instance, same as `cloudypad pair` CLI
-  # usage: task dev:pin -- <instance IP> <PIN shown by Moonlight>
-  dev:pin:
-    cmds:
-    - ./hack/dev-sunshine-pin.sh {{ .CLI_ARGS }}
-
   # Reset Sunshine pairing state on an instance (fixes "Client certificate not authorized"
   # after image change / state format migration). User must then forget the host in Moonlight and re-pair.
   # usage: task dev:reset-sunshine-state -- <instance IP>

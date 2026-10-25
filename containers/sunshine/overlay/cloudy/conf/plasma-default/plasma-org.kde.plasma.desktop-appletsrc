@@ -118,25 +118,11 @@ plugin=org.kde.plasma.notifications
 [Containments][8][Applets][10][Configuration]
 PreloadWeight=47
 
-[Containments][8][Applets][11]
-immutability=1
-plugin=org.kde.plasma.vault
-
-[Containments][8][Applets][11][Configuration]
-PreloadWeight=42
-
 [Containments][8][Applets][12]
 immutability=1
 plugin=org.kde.plasma.keyboardlayout
 
 [Containments][8][Applets][12][Configuration]
-PreloadWeight=42
-
-[Containments][8][Applets][13]
-immutability=1
-plugin=org.kde.plasma.devicenotifier
-
-[Containments][8][Applets][13][Configuration]
 PreloadWeight=42
 
 [Containments][8][Applets][14]
@@ -163,13 +149,6 @@ plugin=org.kde.plasma.clipboard
 [Containments][8][Applets][16][Configuration]
 PreloadWeight=42
 
-[Containments][8][Applets][19]
-immutability=1
-plugin=org.kde.plasma.battery
-
-[Containments][8][Applets][19][Configuration]
-PreloadWeight=47
-
 [Containments][8][Applets][9]
 immutability=1
 plugin=org.kde.plasma.manage-inputmethod
@@ -185,8 +164,8 @@ DialogWidth=680
 PreloadWeight=42
 
 [Containments][8][General]
-extraItems=org.kde.plasma.manage-inputmethod,org.kde.plasma.notifications,org.kde.plasma.battery,org.kde.plasma.vault,org.kde.plasma.keyboardlayout,org.kde.plasma.devicenotifier,org.kde.plasma.bluetooth,org.kde.kscreen,org.kde.plasma.networkmanagement,org.kde.plasma.volume,org.kde.kupapplet,org.kde.plasma.mediacontroller,org.kde.plasma.clipboard
-knownItems=org.kde.plasma.manage-inputmethod,org.kde.plasma.notifications,org.kde.plasma.battery,org.kde.plasma.vault,org.kde.plasma.keyboardlayout,org.kde.plasma.devicenotifier,org.kde.plasma.bluetooth,org.kde.kscreen,org.kde.plasma.networkmanagement,org.kde.plasma.volume,org.kde.kupapplet,org.kde.plasma.mediacontroller,org.kde.plasma.clipboard
+extraItems=org.kde.plasma.manage-inputmethod,org.kde.plasma.notifications,org.kde.plasma.keyboardlayout,org.kde.kscreen,org.kde.plasma.volume,org.kde.plasma.mediacontroller,org.kde.plasma.clipboard
+knownItems=org.kde.plasma.manage-inputmethod,org.kde.plasma.notifications,org.kde.plasma.keyboardlayout,org.kde.kscreen,org.kde.plasma.volume,org.kde.plasma.mediacontroller,org.kde.plasma.clipboard
 
 [ScreenMapping]
 itemsOnDisabledScreens=

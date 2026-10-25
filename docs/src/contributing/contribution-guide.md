@@ -9,7 +9,7 @@ Here's a typical workflow outline for contributions:
 3. Setup your development environment
    - Development environment setup is **fully automated!** Don't worry about tooling installation and setup
 4. Write code 
-   - Use of AI is encouraged, we provide contextual AI `AGENTS.md` and Cursor rules files. 
+   - Use of AI is encouraged, we provide contextual AI `AGENTS.md` files. 
    - You can also pass this contribution guide directly to AI context
    - Make sure to review and test your code before going forward though. Unsupervised IA contribution are unlikely to pass review.
 5. Run tests and review
@@ -83,7 +83,7 @@ See [Architecture overview](./architecture.md)
 
 ## Using AI is encouraged - with caveats
 
-You are encouraged to use AI to contribute to Cloudy Pad. `AGENTS.md`-like files are present under `.cursor/rules` - make sure to include them. They describe expected best practices and context for AI to better understand the project. 
+You are encouraged to use AI to contribute to Cloudy Pad. Make sure to include the `AGENTS.md` files in AI context - they describe expected best practices and context for AI to better understand the project. 
 
 Please note:
 
@@ -361,7 +361,7 @@ To mount additional paths, add entries to `sunshine_extra_volumes` in `ansible/i
 Notes:
 
 - The container runs as user `cloudy` (UID 1001) while Vagrant-synced files belong to the host user (UID 1000): mounted files are readable/executable (repo files are world-readable with exec bits preserved) but not writable from inside the container. Edit files on the host, then `docker restart cloudy`.
-- Do NOT mount directories that start scripts write to at runtime: overlay `conf/sunshine/` contains rendered files (`sunshine.conf`) written at container start - mounting the whole tree read-only breaks the boot scripts. The inventory mounts only its static items (`sunshine.conf.template`, `apps.json`, `assets/`). Same caution for any path next to persistent config mount points (`/cloudy/conf/xfce4`, `/cloudy/conf/heroic`): mount default dirs (`xfce4-default`, ...) or single files instead.
+- Do NOT mount directories that start scripts write to at runtime: overlay `conf/sunshine/` contains rendered files (`sunshine.conf`) written at container start - mounting the whole tree read-only breaks the boot scripts. The inventory mounts only its static items (`sunshine.conf.template`, `apps.json`, `assets/`). Same caution for any path next to persistent config mount points (`/home/cloudy`, `/home/cloudy/.config/heroic`): mount default dirs (e.g. `heroic-default`) or single files instead.
 - Full image rebuilds (Dockerfile changes) still use `task dev-docker-sunshine-to-vm`.
 
 ### Connect to Cloudy Pad VM and container

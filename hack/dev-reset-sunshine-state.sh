@@ -7,7 +7,7 @@
 # forcing Sunshine to regenerate a fresh identity and clean pairing state.
 #
 # Moonlight side must then: forget the host (stored server cert is now invalid)
-# and re-pair fresh with task dev:pin.
+# and re-pair fresh with `cloudypad pair <instance>`.
 #
 # Sunshine 2026+ state layout (all under /cloudy/data/sunshine/):
 #   - cert.pem / pkey.pem          server identity (regenerated when missing)
@@ -15,11 +15,12 @@
 #   - sunshine_state.json          legacy 2025 pairing state (absent on 2026+)
 #
 # Implementation notes:
-#   - supervisorctl is NOT usable: supervisord.conf has no unix_http_server
-#     section, so supervisorctl fails with "unix:///var/run/supervisor.sock no such file"
 #   - docker exec cannot run on a stopped container, and Sunshine may rewrite
 #     credentials on shutdown: stop the container, wipe via the host bind mount,
 #     then start it again
+#   - Sunshine can also be stopped in-container via
+#     `docker exec cloudy supervisorctl stop sunshine` but state files must
+#     still be wiped from the host bind mount
 #
 # Usage: ./hack/dev-reset-sunshine-state.sh <instance IP>
 set -euo pipefail
@@ -74,4 +75,4 @@ echo
 echo "Sunshine state reset."
 echo "Next steps:"
 echo "  1. Forget the host in Moonlight (remove saved pairing entry - server identity changed)"
-echo "  2. Re-pair: start Moonlight (it will show a PIN), then: task dev:pin -- $IP <PIN>"
+echo "  2. Re-pair: start Moonlight (it will show a PIN), then: cloudypad pair <instance-name>"
