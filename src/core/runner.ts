@@ -43,6 +43,12 @@ export interface InstanceRunner {
     pairInteractive(): Promise<void>
 
     /**
+     * Pair automatically and non-interactively: a PIN is generated, the moonlight pair
+     * command is printed and the PIN is sent to the streaming server
+     */
+    pairAuto(): Promise<void>
+
+    /**
      * Send pairing PIN to the instance
      * @returns true if the PIN was valid and pairing was successful, false otherwise
      */
@@ -145,10 +151,15 @@ export abstract class AbstractInstanceRunner<C extends CommonProvisionInputV1, O
         const pairer = this.buildMoonlightPairer()
         return pairer.pairSendPin(pin, retries, retryDelay)
     }
-    
+
     async pairInteractive(){
         const pairer = this.buildMoonlightPairer()
         await pairer.pairInteractive()
+    }
+
+    async pairAuto(){
+        const pairer = this.buildMoonlightPairer()
+        await pairer.pairAuto()
     }
 
     /**

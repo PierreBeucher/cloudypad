@@ -94,6 +94,13 @@ tasks:
     - docker tag $CLOUDYPAD_BUILD_CORE_IMAGE_REGISTRY:$CLOUDYPAD_BUILD_CORE_IMAGE_TAG $CLOUDYPAD_BUILD_CORE_IMAGE_REGISTRY:dev
     - docker push $CLOUDYPAD_BUILD_CORE_IMAGE_REGISTRY:dev
 
+  # Pair an instance with Moonlight non-interactively (runs moonlight pair too).
+  # Moonlight defaults to the Flatpak install, override with MOONLIGHT_CMD env var.
+  # usage: task dev:pair -- <instance-name>
+  dev:pair:
+    cmds:
+    - ./hack/dev-pair.sh {{ .CLI_ARGS }}
+
   # Reset Sunshine pairing state on an instance (fixes "Client certificate not authorized"
   # after image change / state format migration). User must then forget the host in Moonlight and re-pair.
   # usage: task dev:reset-sunshine-state -- <instance IP>

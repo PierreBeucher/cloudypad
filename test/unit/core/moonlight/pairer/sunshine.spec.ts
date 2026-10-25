@@ -68,6 +68,24 @@ describe('SunshineMoonlightPairer', () => {
         sshDisposeStub.restore()
     })
 
+    describe('pairAuto', () => {
+
+        it('should generate a PIN, print the moonlight pair command and send the PIN', async () => {
+            stubSshResponses(
+                pendingPairings([{ id: 'a'.repeat(32) }]),
+                pinResult('true'),
+            )
+
+            await pairer.pairAuto()
+
+            assert.ok(sshCommandStub.calledTwice, 'a GET (list pairings) then a POST (confirm pin) must be run')
+            const postCall = sshCommandStub.secondCall.args[0] as string[]
+            const payload = JSON.parse(postCall[postCall.length - 1])
+            assert.match(payload.pin, /^\d{4}$/)
+        })
+
+    })
+
     describe('pairSendPin', () => {
 
         it('should pair successfully when a single pending pairing exists and Sunshine confirms the PIN', async () => {

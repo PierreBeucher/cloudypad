@@ -54,31 +54,43 @@ export class SunshineMoonlightPairer extends AbstractMoonlightPairer implements 
     }
 
     protected async doPair(pin: string) {
-        // try to pair for 2 min by punshing through Sunshine API with our pin
+        // try to pair for ~2 min by pushing through Sunshine API with our pin
         // Using plain curl + SSH command as Sunshine Web UI is not reachable directly
         // A simple but effective enough method
         // Maybe wen use a more resilient with proper HTTP client and SSH tunneling such as https://github.com/agebrock/tunnel-ssh
-        await this.pairSendPin(pin, 60, 2000) // up to 60 attempts with 2 sec delay =~ 2 min
+        await this.pairSendPin(pin) // defaults: ~2 min budget, 1s polls
     }
 
-    async pairSendPin(pin: string, retries=3, retryDelayMs=2000): Promise<boolean> {
-        const sshClient = this.buildSshClient()
+    // Retry for ~2 min by default: Moonlight needs time to run its pairing
+    // handshake (discovery, cert exchange) before its pending pairing session
+    // appears on Sunshine and can be confirmed
+    // Retry for ~2 min by default: Moonlight needs time to run its pairing
+    // handshake (discovery, cert exchange) before its pending pairing session
+    // appears on Sunshine. Polling is fast (1s) as Moonlight only waits a few
+    // seconds for the PIN confirmation before giving up on the pairing.
+    async pairSendPin(pin: string, retries=120, retryDelayMs=1000): Promise<boolean> {
+        let sshClient = this.buildSshClient()
         let pinResult = false
         let lastError: unknown | undefined = undefined
-        for (let attempt = 0; attempt < retries; attempt++) {
-            try {
-                await sshClient.connect()
-                pinResult = await this.tryPin(sshClient, pin)
-                if (pinResult) break;
-            } catch (error) {
-                lastError = error
-                this.logger.warn(`Attempt ${attempt + 1} failed to send pin to Sunshine API. Retrying...`, error)
-            } finally {
-                sshClient.dispose()
+        try {
+            for (let attempt = 0; attempt < retries; attempt++) {
+                try {
+                    await sshClient.connect()
+                    pinResult = await this.tryPin(sshClient, pin)
+                    if (pinResult) break;
+                } catch (error) {
+                    lastError = error
+                    this.logger.warn(`Attempt ${attempt + 1} failed to send pin to Sunshine API. Retrying...`, error)
+                    // Rebuild the client: the SSH connection may be in a broken state
+                    sshClient.dispose()
+                    sshClient = this.buildSshClient()
+                }
+
+                await new Promise(resolve => setTimeout(resolve, retryDelayMs))
+
             }
-
-            await new Promise(resolve => setTimeout(resolve, retryDelayMs))
-
+        } finally {
+            sshClient.dispose()
         }
 
         if (!pinResult) {
