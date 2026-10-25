@@ -78,10 +78,10 @@ all:
       sunshine_extra_volumes:
         - "/vagrant/containers/sunshine/overlay/cloudy/bin:/cloudy/bin"
         - "/vagrant/containers/sunshine/overlay/cloudy/conf/cloudypad:/cloudy/conf/cloudypad"
-        # Plasma default configs (appletsrc etc.): seeded by
-        # setup-plasma-default-desktop.sh at container start. Note seed is
-        # only applied when the persistent config is missing: rm it in the
-        # container to re-seed from this mount on restart
+        # Plasma default configs (appletsrc, theme, panel size): seeded by
+        # setup-plasma-default-desktop.sh at container start. sunshine_plasma_default_force
+        # is true on dev: look & feel defaults are re-seeded over the persistent
+        # config at each container start (prod keeps user customizations)
         - "/vagrant/containers/sunshine/overlay/cloudy/conf/plasma-default:/cloudy/conf/plasma-default"
         - "/vagrant/containers/sunshine/overlay/cloudy/conf/sunshine/sunshine.conf.template:/cloudy/conf/sunshine/sunshine.conf.template"
         - "/vagrant/containers/sunshine/overlay/cloudy/conf/sunshine/apps.json:/cloudy/conf/sunshine/apps.json"

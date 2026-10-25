@@ -33,5 +33,9 @@ fi
 startplasma-x11 &
 PLASMA_PID=$!
 
+# Apply default look & feel on fresh instances once the session is up.
+# Runs in background: the session keeps running in foreground below.
+apply-plasma-default-lookandfeel.sh &
+
 # Wait for Plasma session process
 wait $PLASMA_PID
