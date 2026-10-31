@@ -22,10 +22,6 @@
 #   session; baloofilerc: disable the file indexer) are seeded when missing on
 #   any instance: they are functional safeguards, not preferences. Users who
 #   customized them already have the file and are never overwritten.
-# - CLOUDYPAD_PLASMA_DEFAULT_FORCE=true re-seeds the look & feel defaults over
-#   the persistent config - dev helper for fast feedback loops on the default
-#   overlay config (see ansible/inventories/dev-vagrant.yml debug mounts).
-#   Prod keeps seed-once semantics to preserve user customizations.
 #
 # NOTE: the KSycoca services cache is rebuilt by start-desktop.sh BEFORE the
 # session starts - task manager pins resolve through that cache and a stale
@@ -52,12 +48,6 @@ KSCREENLOCKERRC=$XDG_CONFIG_HOME/kscreenlockerrc
 BALOOFILERC_DEFAULT=$PLASMA_DEFAULT_DIR/baloofilerc
 BALOOFILERC=$XDG_CONFIG_HOME/baloofilerc
 
-FORCE_RESEED=false
-if [ "${CLOUDYPAD_PLASMA_DEFAULT_FORCE:-}" = "true" ]; then
-    echo "CLOUDYPAD_PLASMA_DEFAULT_FORCE=true: look & feel defaults will be re-seeded over existing config"
-    FORCE_RESEED=true
-fi
-
 # A config dir already used by a Plasma session contains session-generated
 # files (written at first session start, before any user customization).
 # Their presence identifies an existing instance. Only files the session
@@ -68,24 +58,22 @@ IS_FRESH=true
 for f in kactivitymanagerdrc kconf_updaterc plasma-localerc; do
     if [ -f "$XDG_CONFIG_HOME/$f" ]; then
         IS_FRESH=false
-        if [ "$FORCE_RESEED" != "true" ]; then
-            echo "Existing Plasma user config detected ($f present): keeping existing config, look & feel defaults are only seeded on new instances"
-        fi
+        echo "Existing Plasma user config detected ($f present): keeping existing config, look & feel defaults are only seeded on new instances"
         break
     fi
 done
 
-# Seed a look & feel default: new instances (or any instance when FORCE), when missing
+# Seed a look & feel default: new instances, when missing
 seed_default() {
     local src=$1 dst=$2
-    if [ "$FORCE_RESEED" != "true" ] && [ "$IS_FRESH" != "true" ]; then
+    if [ "$IS_FRESH" != "true" ]; then
         return
     fi
     if [ ! -f "$src" ]; then
         echo "Warning: default $src not found, cannot seed $dst"
         return
     fi
-    if [ -f "$dst" ] && [ "$FORCE_RESEED" != "true" ]; then
+    if [ -f "$dst" ]; then
         echo "$dst already present, keeping it (user customizations preserved)"
         return
     fi
@@ -121,7 +109,7 @@ seed_protective "$BALOOFILERC_DEFAULT" "$BALOOFILERC"
 # (apply-plasma-default-lookandfeel.sh) to re-apply the Cloudy Pad default
 # look & feel once the session is up. Flag lives in the ephemeral runtime dir:
 # wiped on container restart, so this never runs on existing instances.
-if [ "$FORCE_RESEED" = "true" ] || [ "$IS_FRESH" = "true" ]; then
+if [ "$IS_FRESH" = "true" ]; then
     mkdir -p "$XDG_RUNTIME_DIR"
     touch "$XDG_RUNTIME_DIR/cloudypad-apply-plasma-default-lookandfeel"
     echo "Default look & feel will be applied once the Plasma session is up"

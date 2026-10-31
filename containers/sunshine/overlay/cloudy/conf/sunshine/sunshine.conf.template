@@ -10,8 +10,8 @@ origin_web_ui_allowed = lan
 # nvfbc: driver-level GPU capture, preferred on datacenter (Tesla/pro) GPUs -
 # atomic capture avoids stream tearing on fullscreen unredirected games and
 # skips the CPU framebuffer copy. NvFBC is driver-blocked on GeForce.
-# Value is set per GPU type by Ansible (CLOUDYPAD_SUNSHINE_CAPTURE compose env)
 capture = $CLOUDYPAD_SUNSHINE_CAPTURE
+
 min_log_level = info
 
 # Enforce encryption for both network modes
@@ -20,8 +20,7 @@ lan_encryption_mode = 2
 wan_encryption_mode = 2
 
 # Keep state files in Cloudy Pad data dir to persist on container recreation
-# They are by default saved in XDG_CONFIG_HOME/sunshine, which symlinks to the
-# ephemeral Cloudy Pad conf dir (see setup-dirs.sh)
+# They are by default saved in XDG_CONFIG_HOME but this folder is not persisted voluntarily
 credentials_file = /cloudy/data/sunshine/sunshine_credentials.json
 file_state = /cloudy/data/sunshine/sunshine_state.json
 pkey = /cloudy/data/sunshine/pkey.pem
@@ -29,6 +28,11 @@ cert = /cloudy/data/sunshine/cert.pem
 
 # Maximum bitrate in Kbps
 max_bitrate = $CLOUDYPAD_SUNSHINE_MAX_BITRATE
+
+# CSRF allowed origins for Sunshine Web UI (2026+): built-in localhost
+# variants + every container IP + extra origins, computed at start by
+# start-sunshine.sh (see also CLOUDYPAD_SUNSHINE_CSRF_ALLOWED_ORIGINS)
+csrf_allowed_origins = $CLOUDYPAD_SUNSHINE_CSRF_ORIGINS
 
 # Additional configs
 $CLOUDYPAD_SUNSHINE_ADDITIONAL_CONFIG
