@@ -290,11 +290,6 @@ ENV XDG_CACHE_HOME=$CLOUDYPAD_USER_HOME/.cache
 # Use this known directory to easily persist it as bind mount or volume
 ENV XDG_DATA_HOME=$CLOUDYPAD_DATA_DIR
 
-# Extra XDG data dir: Cloudy Pad desktop launchers (cloudypad-*.desktop) are
-# discovered there via <dir>/applications/*.desktop (Plasma app menu + task
-# manager pinning). System dirs kept so distro apps stay discoverable
-ENV XDG_DATA_DIRS=$CLOUDYPAD_CONF_DIR/cloudypad:/usr/local/share:/usr/share
-
 ENV DBUS_SYSTEM_BUS_ADDRESS="unix:path=$XDG_RUNTIME_DIR/dbus"
 
 # Run as non-root user
