@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+set -euo pipefail
 
 #
 # Generate random password for cloudy user and add to sudoers
@@ -45,7 +46,7 @@ SUDO_LECTURE_TEMPLATE="${CLOUDYPAD_CONF_DIR}/cloudypad/sudo/lecture_file.templat
 echo "Copying sudo lecture file from template from ${SUDO_LECTURE_TEMPLATE} to ${SUDO_LECTURE_FILE}"
 
 # Copy lecture file (secured for CLOUDYPAD_USER as it contains the password)
-mkdir -p "${SUDO_LECTURE_DIR}"
+mkdir -p "$(dirname "${SUDO_LECTURE_FILE}")"
 touch "${SUDO_LECTURE_FILE}"
 chmod 600 "${SUDO_LECTURE_FILE}"
 chown $CLOUDYPAD_USER:$CLOUDYPAD_USER "${SUDO_LECTURE_FILE}"
