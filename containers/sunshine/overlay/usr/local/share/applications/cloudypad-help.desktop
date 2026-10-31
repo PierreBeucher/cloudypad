@@ -2,7 +2,7 @@
 Name=Cloudy Pad Help
 Comment=Open Cloudy Pad documentation
 Exec=firefox https://docs.cloudypad.gg/help/moonlight-usage.html
-Icon=help-contents
+Icon=help-about
 Terminal=false
 Type=Application
 Categories=Documentation;

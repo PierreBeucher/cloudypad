@@ -2,7 +2,7 @@
 Name=Mouse Settings
 Comment=Configure mouse and pointer
 Exec=systemsettings kcm_mouse
-Icon=input-tablet
+Icon=input-mouse
 Terminal=false
 Type=Application
 Categories=Settings;

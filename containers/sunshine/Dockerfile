@@ -140,10 +140,6 @@ _MAIN_PACKAGES
 
 #
 # Desktop (KDE Plasma on X11) and utilities
-# Mirrors selkies docker-selkies-egl-desktop Plasma layer: plasma-desktop +
-# plasma-workspace + breeze theming on the base's X server (Xorg-dummy).
-# Resolute (26.04) ships Plasma 6.6: the X11 session comes from the
-# plasma-session-x11 package (startplasma-x11), kwin from kwin-x11.
 #
 RUN --mount=type=cache,target=/var/cache --mount=type=tmpfs,target=/var/log <<_DESKTOP
 
@@ -289,6 +285,11 @@ ENV XDG_CACHE_HOME=$CLOUDYPAD_USER_HOME/.cache
 # XDG_DATA_HOME is used by various programs (like Steam) to store data
 # Use this known directory to easily persist it as bind mount or volume
 ENV XDG_DATA_HOME=$CLOUDYPAD_DATA_DIR
+
+# User shell: supervisord children, session processes and docker exec shells
+# inherit $SHELL from here. Without it Konsole warns "could not find ''" and
+# falls back to /bin/bash
+ENV SHELL=/bin/bash
 
 ENV DBUS_SYSTEM_BUS_ADDRESS="unix:path=$XDG_RUNTIME_DIR/dbus"
 
