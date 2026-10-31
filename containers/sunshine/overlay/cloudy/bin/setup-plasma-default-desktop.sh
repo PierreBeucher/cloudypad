@@ -6,8 +6,13 @@
 #   with Cloudy Pad defaults: task manager launchers pinned to Steam, Epic, GOG,
 #   Heroic, Lutris, Firefox, Konsole, Files, Keyboard, Mouse, Help, Exit -
 #   mirroring the former XFCE bottom dock
-# - Seed the Cloudy Pad default look from kdedefaults/* (Breeze Dark theme)
-#   and plasmashellrc (60px panel = taskbar icon size)
+# - Seed plasmashellrc (60px panel = taskbar icon size)
+#
+# Look & feel (Breeze Dark theme) is NOT seeded here: on a fresh user config,
+# Plasma session startup applies its own default look & feel AFTER this seed
+# and overwrites theme files. The post-session applier
+# (apply-plasma-default-lookandfeel.sh) is the only mechanism that wins - see
+# its header for the full rationale.
 #
 # Config is seeded from the CLOUDYPAD_CONF_DIR/plasma-default overlay dir
 # into the persisted XDG_CONFIG_HOME ($HOME/.config, bind-mounted to the
@@ -96,9 +101,6 @@ seed_protective() {
 # Look & feel defaults: new instances only
 seed_default "$APPLETSRC_DEFAULT" "$APPLETSRC"
 seed_default "$PLASMA_DEFAULT_DIR/plasmashellrc" "$XDG_CONFIG_HOME/plasmashellrc"
-for f in kdedefaults/kdeglobals kdedefaults/package kdedefaults/ksplashrc; do
-    seed_default "$PLASMA_DEFAULT_DIR/$f" "$XDG_CONFIG_HOME/$f"
-done
 
 # Protective configs: any instance when missing
 seed_protective "$KSCREENLOCKERRC_DEFAULT" "$KSCREENLOCKERRC"
