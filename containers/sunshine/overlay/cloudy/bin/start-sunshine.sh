@@ -2,8 +2,33 @@
 
 wait-x-availability.sh
 
-# Ensure Sunshine state directory exists
+# Sunshine appdata dir: Sunshine resolves everything relative to it (main
+# config, apps.json, assets, covers). It lives in the persisted user home:
+# user state survives container recreation and instance restarts.
+APPDATA=$XDG_CONFIG_HOME/sunshine
+mkdir -p $APPDATA
+
+# Sunshine state directory (cert, pkey, pairing state, credentials), pinned
+# to the persisted data dir via sunshine.conf
 mkdir -p $CLOUDYPAD_DATA_DIR/sunshine
+
+# Seed the app list from the image when missing (new instances and instances
+# where the user deleted apps.json): Cloudy Pad app list, never overwrites
+# user edits made via the Web UI on existing instances
+if [ ! -f $APPDATA/apps.json ]; then
+    echo "Seeding Sunshine apps.json from image"
+    cp $CLOUDYPAD_CONF_DIR/sunshine/apps.json $APPDATA/apps.json
+fi
+
+# Refresh app cover images from the image on every start (static, tiny):
+# image updates land without container recreation
+mkdir -p $APPDATA/assets
+cp $CLOUDYPAD_CONF_DIR/sunshine/assets/*.png $APPDATA/assets/
+
+# Sunshine hardcodes its cover upload dir to appdata/covers: symlink it to
+# the persisted data dir so user-uploaded covers survive container recreation
+mkdir -p $CLOUDYPAD_DATA_DIR/sunshine/covers
+ln -sfn $CLOUDYPAD_DATA_DIR/sunshine/covers $APPDATA/covers
 
 # Capture backend default: x11 unless overridden by compose env (nvfbc on
 # datacenter GPUs, see docker-compose.nvidia.yml). Defaults here so a stale
@@ -48,16 +73,18 @@ if [[ -n "$MISSING_VARS" ]]; then
     exit 1
 fi
 
-# Templatise sunshine.conf with env variables
-envsubst < "$TEMPLATE" > $CLOUDYPAD_CONF_DIR/sunshine/sunshine.conf
+# Render sunshine.conf into the appdata dir (Sunshine's default config
+# location) and pass it explicitly to the binary
+CONFIG=$APPDATA/sunshine.conf
+envsubst < "$TEMPLATE" > $CONFIG
 
 # Set credentials if both Sunshine Web UI password and username are present
 if [[ -n "$SUNSHINE_WEB_PASSWORD_BASE64" && -n "$SUNSHINE_WEB_USERNAME" ]]; then
     SUNSHINE_WEB_PASSWORD=$(echo "$SUNSHINE_WEB_PASSWORD_BASE64" | base64 -d)
-    sunshine $CLOUDYPAD_CONF_DIR/sunshine/sunshine.conf --creds $SUNSHINE_WEB_USERNAME $SUNSHINE_WEB_PASSWORD
+    sunshine $CONFIG --creds $SUNSHINE_WEB_USERNAME $SUNSHINE_WEB_PASSWORD
 fi
 
 # exec so the supervised process IS sunshine (supervisorctl tracks its real
 # PID; without exec, restarts leave the shell tracked while Sunshine survives
 # as an orphan holding the protocol ports)
-exec sunshine $CLOUDYPAD_CONF_DIR/sunshine/sunshine.conf
+exec sunshine $CONFIG
