@@ -2,9 +2,11 @@
 # Pair a Cloudy Pad instance with Moonlight, fully non-interactive:
 # 1. Check the instance is running
 # 2. Resolve the instance host from its state
-# 3. Remove any stale Moonlight host entry with the same hostname (destroyed
+# 3. Check for a stale Moonlight host entry with the same hostname (destroyed
 #    and recreated instances keep the old server identity in Moonlight config,
-#    which blocks pairing with "Found unexpected PC" - same name, new cert)
+#    which blocks pairing with "Found unexpected PC" - same name, new cert).
+#    We never touch the user's Moonlight config: if one exists, ask the user
+#    to remove it and abort.
 # 4. Generate a PIN
 # 5. Run `cloudypad pair <name> --pin <PIN>` in background: it polls the
 #    Sunshine API waiting for the pending pairing session and confirms it
@@ -15,9 +17,12 @@
 # confirms on its next 2s poll). The pairer confirmation is the health bar:
 # if it does not happen within DEADLINE_SECS, something is wrong with the
 # instance (Sunshine not responding, degraded network...) and the script
-# fails fast with diagnostics instead of polling for minutes. Moonlight keeps
-# running a bit longer (grace) as it needs to observe the pairing completion
-# to save the host entry in its config.
+# fails fast with diagnostics instead of polling for minutes.
+#
+# Moonlight never exits on its own (GUI process): once the pairer confirms,
+# the script gives Moonlight a short grace window to observe the pairing
+# completion and save the host entry, then kills it. The end-to-end
+# verification below is the final verdict.
 #
 # Moonlight is invoked through MOONLIGHT_CMD (default: Flatpak install).
 # Paired host is stored in the user's real Moonlight config.
@@ -51,46 +56,16 @@ if [ -z "$HOST" ] || [ "$HOST" = "null" ]; then
     exit 1
 fi
 
-# Remove stale same-hostname Moonlight entries: a destroyed and recreated
+# Detect a stale same-hostname Moonlight entry: a destroyed and recreated
 # instance has a new server cert/uuid, Moonlight matches by hostname and the
-# stale entry blocks pairing. Backup the config before touching it.
-if [ -f "$MOONLIGHT_CONFIG" ]; then
-    BACKUP="tmp/moonlight.conf.backup-$(date +%s)"
-    cp "$MOONLIGHT_CONFIG" "$BACKUP"
-    remove_stale_host() {
-        python3 - "$MOONLIGHT_CONFIG" "$NAME" <<'EOF'
-import sys, re
-path, target = sys.argv[1], sys.argv[2]
-with open(path) as f:
-    lines = f.readlines()
-section = None
-stale = set()
-for l in lines:
-    m = re.match(r'^\[(.+)\]$', l.strip())
-    if m:
-        section = m.group(1)
-        continue
-    if section == 'hosts':
-        hm = re.match(r'^(\d+)\\hostname=(.*)$', l.rstrip('\n'))
-        if hm and hm.group(2) == target:
-            stale.add(hm.group(1))
-if stale:
-    filtered = [l for l in lines if not any(l.startswith(f"{i}\\") for i in stale)]
-    remaining = sum(1 for l in filtered if re.match(r'^\d+\\hostname=', l))
-    out, sec, size_idx = [], None, None
-    for l in filtered:
-        m = re.match(r'^\[(.+)\]$', l.strip())
-        if m:
-            sec = m.group(1)
-        elif sec == 'hosts' and re.match(r'^size=\d+$', l):
-            l = f"size={remaining}\n"
-        out.append(l)
-    with open(path, 'w') as f:
-        f.writelines(out)
-    print(f"Removed stale Moonlight host entry(ies) for '{target}': {sorted(stale)}")
-EOF
-    }
-    remove_stale_host
+# stale entry blocks pairing. We do not modify the user's Moonlight config:
+# ask them to remove the stale host themselves (Moonlight UI or config file).
+if [ -f "$MOONLIGHT_CONFIG" ] && grep -q "hostname=${NAME}\$" "$MOONLIGHT_CONFIG"; then
+    echo "ERROR: Moonlight config already has a host entry named '$NAME' (likely stale from a previous instance with the same name)." >&2
+    echo "Remove it before pairing, then re-run this task:" >&2
+    echo "  - In the Moonlight UI: remove the host '$NAME', or" >&2
+    echo "  - Manually edit $MOONLIGHT_CONFIG (hosts section)" >&2
+    exit 1
 fi
 
 PIN=$(printf '%04d' $((RANDOM % 10000)))
@@ -105,8 +80,7 @@ start=$(date +%s)
 
 # The pairer is authoritative: moonlight may exit without server-side
 # confirmation, only the pairer proves Sunshine accepted the PIN
-MOONLIGHT_PID=""
-timeout $((DEADLINE_SECS + MOONLIGHT_GRACE_SECS)) $MOONLIGHT_CMD pair "$HOST" --pin "$PIN" &
+$MOONLIGHT_CMD pair "$HOST" --pin "$PIN" &
 MOONLIGHT_PID=$!
 
 PAIRER_OK=false
@@ -133,10 +107,14 @@ if [ "$PAIRER_OK" != "true" ]; then
     exit 1
 fi
 
-# Let moonlight finish: it may exit before observing the PIN confirmation
-# (its observation window races the pairer's confirmation) - harmless, the
-# list check below is the end-to-end verdict
-wait "$MOONLIGHT_PID" 2>/dev/null || true
+echo "Pairer confirmed pairing in ${PAIRER_CONFIRM_SECS}s"
+
+# Moonlight never exits on its own: it already created the pending session
+# the pairer confirmed. Give it a short grace window to observe the pairing
+# completion and save the host entry in its config, then kill it. The
+# end-to-end verification below is the final verdict.
+sleep $MOONLIGHT_GRACE_SECS
+kill "$MOONLIGHT_PID" 2>/dev/null || true
 
 # End-to-end verification: the saved host entry must list apps from the instance
 if $MOONLIGHT_CMD list "$HOST" 2>/dev/null | grep -q "Desktop"; then

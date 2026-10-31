@@ -5,7 +5,6 @@ WORKDIR /app
 # Sunshine
 # https://github.com/LizardByte/Sunshine/releases
 # NOTE: 2026.x asset naming: sunshine_<ver>-1+ubuntu<basever>_amd64.deb (matches the base Ubuntu version)
-# (2025.x used sunshine-ubuntu-24.04-amd64.deb)
 FROM download-base AS download-sunshine
 ARG SUNSHINE_VERSION=2026.914.233613
 RUN curl -fL -o /app/sunshine.deb "https://github.com/LizardByte/Sunshine/releases/download/v${SUNSHINE_VERSION}/sunshine_${SUNSHINE_VERSION}-1%2Bubuntu26.04_amd64.deb"
@@ -145,9 +144,6 @@ _MAIN_PACKAGES
 # plasma-workspace + breeze theming on the base's X server (Xorg-dummy).
 # Resolute (26.04) ships Plasma 6.6: the X11 session comes from the
 # plasma-session-x11 package (startplasma-x11), kwin from kwin-x11.
-# NOTE: Selkies rebuilds kwin-x11 with patches for virtual displays
-# (patches/kwin-x11/) - we run stock kwin_x11 first and patch only if it
-# misbehaves on the Xorg-dummy display.
 #
 RUN --mount=type=cache,target=/var/cache --mount=type=tmpfs,target=/var/log <<_DESKTOP
 
