@@ -6,10 +6,16 @@ import { input, select } from '@inquirer/prompts';
  */
 export interface MoonlightPairer {
     /**
-     * Interaactively pair with the streaming server. Will prompt the user for a pin and send it to the streaming server.
+     * Interactively pair with the streaming server. Will prompt the user for a pin and send it to the streaming server.
      */
     pairInteractive(): Promise<void>
-    
+
+    /**
+     * Pair automatically: generate a PIN, print the moonlight pair command to run
+     * and send the pin to the streaming server. Non-interactive.
+     */
+    pairAuto(): Promise<void>
+
     /**
      * Send a pin to the streaming server as part of pairing process.
      * @param pin - The pin to send to the streaming server.
@@ -36,6 +42,25 @@ export abstract class AbstractMoonlightPairer implements MoonlightPairer {
     }
     
     abstract pairSendPin(pin: string, retries?: number, retryDelay?: number): Promise<boolean>
+
+    /**
+     * Pair automatically and non-interactively: a PIN is generated and sent to
+     * the streaming server, user can run a `moonlight pair` command with pre-defined PIN
+     */
+    async pairAuto() {
+        const pin = makePin()
+
+        console.info(`Run this command to pair your instance:`)
+        console.info()
+        console.info(`  moonlight pair ${this.host} --pin ${pin}`)
+        console.info()
+        console.info(`For Mac / Apple devices, you may need to use this pseudo-IPv6 address:`)
+        console.info()
+        console.info(`  moonlight pair ::ffff:${this.host} --pin ${pin}`)
+        console.info()
+
+        await this.doPair(pin)
+    }
 
     /**
      * Pair with the streaming server interactively: prompt for PIN or generate PIN and send pairing request
@@ -81,7 +106,7 @@ export abstract class AbstractMoonlightPairer implements MoonlightPairer {
             if(pairMethod === pairManual) {
                 await this.initiatePairManual()
             } else if (pairMethod === pairAuto){
-                await this.initiatePairAuto()
+                await this.pairAuto()
             } else {
                 throw new Error(`Unrecognized pair method '${pairMethod}'. This is probably an internal bug.`)
             }
@@ -105,21 +130,6 @@ export abstract class AbstractMoonlightPairer implements MoonlightPairer {
 
         await this.doPair(pin)
 
-    }
-
-    private async initiatePairAuto(){
-        const pin = makePin()
-
-        console.info(`Run this command to pair your instance:`)
-        console.info()
-        console.info(`  moonlight pair ${this.host} --pin ${pin}`)
-        console.info()
-        console.info(`For Mac / Apple devices, you may need to use this pseudo-IPv6 address:`)
-        console.info()
-        console.info(`  moonlight pair ::ffff:${this.host} --pin ${pin}`)
-        console.info()
-        
-        await this.doPair(pin)
     }
 
     /**

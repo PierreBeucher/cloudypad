@@ -52,15 +52,9 @@ tasks:
   # - Run Sunshine container in dev VM
   # Note: might as well use a bind mount from host to dev VM instead of scp
   dev-docker-sunshine-to-vm:
-    cmds: 
+    cmds:
     - task: build-sunshine-container-local
-    - >
-      docker image save $CLOUDYPAD_BUILD_SUNSHINE_IMAGE_REGISTRY:$CLOUDYPAD_BUILD_SUNSHINE_IMAGE_TAG -o tmp/sunshine-container-image.tar
-    - scp -i .vagrant/machines/default/virtualbox/private_key tmp/sunshine-container-image.tar vagrant@192.168.56.43:/tmp
-    - ssh -i .vagrant/machines/default/virtualbox/private_key vagrant@192.168.56.43 docker load -i /tmp/sunshine-container-image.tar
-    - ansible-playbook -i ansible/inventories/dev-vagrant.yml ansible/sunshine.yml -t sunshine-docker
-    - ssh -i .vagrant/machines/default/virtualbox/private_key vagrant@192.168.56.43 
-      docker compose -f sunshine/docker-compose.yml -p sunshine up -d
+    - ./hack/dev-docker-sunshine-to-vm.sh
 
   # Quick dev build + deploy for rapid Sunshine container feedback loop
   dev-ansible-config:
@@ -73,17 +67,34 @@ tasks:
     - task: dev-ansible-config
     - vagrant ssh -c "docker restart cloudy"
 
+  # Push Sunshine image to registry. Default tag is "dev" but can be overridden
+  # eg task dev-docker-sunshine-build-push-image --tag dockerfile-update-plasma-desktop
+  # to push a branch-named tag (used for integration test deployments)
   dev-docker-sunshine-build-push-image:
     cmds:
     - task: build-sunshine-container-local
-    - docker tag $CLOUDYPAD_BUILD_SUNSHINE_IMAGE_REGISTRY:$CLOUDYPAD_BUILD_SUNSHINE_IMAGE_TAG $CLOUDYPAD_BUILD_SUNSHINE_IMAGE_REGISTRY:dev
-    - docker push $CLOUDYPAD_BUILD_SUNSHINE_IMAGE_REGISTRY:dev
+    - docker tag $CLOUDYPAD_BUILD_SUNSHINE_IMAGE_REGISTRY:$CLOUDYPAD_BUILD_SUNSHINE_IMAGE_TAG $CLOUDYPAD_BUILD_SUNSHINE_IMAGE_REGISTRY:{{ .CLI_ARGS | default "dev" }}
+    - docker push $CLOUDYPAD_BUILD_SUNSHINE_IMAGE_REGISTRY:{{ .CLI_ARGS | default "dev" }}
 
   dev-docker-core-build-push-image:
     cmds:
     - task: build-core-container-local
     - docker tag $CLOUDYPAD_BUILD_CORE_IMAGE_REGISTRY:$CLOUDYPAD_BUILD_CORE_IMAGE_TAG $CLOUDYPAD_BUILD_CORE_IMAGE_REGISTRY:dev
     - docker push $CLOUDYPAD_BUILD_CORE_IMAGE_REGISTRY:dev
+
+  # Pair an instance with Moonlight non-interactively (runs moonlight pair too).
+  # Moonlight defaults to the Flatpak install, override with MOONLIGHT_CMD env var.
+  # usage: task dev:pair -- <instance-name>
+  dev:pair:
+    cmds:
+    - ./hack/dev-pair.sh {{ .CLI_ARGS }}
+
+  # Reset Sunshine pairing state on the dev VM (fresh server identity).
+  # Moonlight must then forget the host and re-pair (task dev:pair).
+  # usage: task dev:reset-sunshine-state
+  dev:reset-sunshine-state:
+    cmds:
+    - ansible-playbook -i ansible/inventories/dev-vagrant.yml ansible/dev-reset-sunshine-state.yml
 
   #
   # Tests
@@ -156,11 +167,11 @@ tasks:
 
   # Ensure analytics key are matching in various places in code 
   test-analytics-key-match:
-    - cmd: test/shell/test-matching-analytics-key.sh
+    - cmd: "test/shell/test-matching-analytics-key.sh"
 
   # Ensure install script is working
   test-install-script:
-    - cmd: test/shell/test-install.sh
+    - cmd: "test/shell/test-install.sh"
 
   # Smoke test to check container image is working
   test-container-smoke-test:

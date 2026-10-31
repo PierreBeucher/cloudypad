@@ -1,0 +1,12 @@
+[Desktop Entry]
+Name=Heroic (Epic)
+Comment=Manage and play Epic games via Heroic Games Launcher
+Exec=heroic-start.sh
+Icon=/usr/local/share/cloudypad/icons/epic.png
+Terminal=false
+Type=Application
+Categories=Network;FileTransfer;Game;
+PrefersNonDefaultGPU=true
+X-KDE-RunOnDiscreteGpu=true
+Path=
+StartupNotify=false
