@@ -19,7 +19,7 @@ setup-plasma-default-desktop.sh
 # plasmashell loads the cache at startup (and caches service lookups),
 # a stale cache makes task manager launcher pins render blank/broken.
 # cloudypad-*.desktop launchers are baked into the image at
-# /usr/local/share/cloudypad (standard XDG_DATA_DIRS system path).
+# /usr/local/share/applications (standard XDG_DATA_DIRS system path).
 # kbuildsycoca6 on Plasma 6 (KF6), kbuildsycoca5 on Plasma 5
 echo "Rebuilding KSycoca services cache..."
 KSYCOCA_BIN=$(command -v kbuildsycoca6 || command -v kbuildsycoca5 || true)
