@@ -89,12 +89,12 @@ tasks:
     cmds:
     - ./hack/dev-pair.sh {{ .CLI_ARGS }}
 
-  # Reset Sunshine pairing state on an instance (fixes "Client certificate not authorized"
-  # after image change / state format migration). User must then forget the host in Moonlight and re-pair.
-  # usage: task dev:reset-sunshine-state -- <instance IP>
+  # Reset Sunshine pairing state on the dev VM (fresh server identity).
+  # Moonlight must then forget the host and re-pair (task dev:pair).
+  # usage: task dev:reset-sunshine-state
   dev:reset-sunshine-state:
     cmds:
-    - ./hack/dev-reset-sunshine-state.sh {{ .CLI_ARGS }}
+    - ansible-playbook -i ansible/inventories/dev-vagrant.yml ansible/dev-reset-sunshine-state.yml
 
   #
   # Tests

@@ -2,13 +2,21 @@ import { AbstractMoonlightPairer, makePin, MoonlightPairer } from "./abstract";
 import { SSHClient, SSHClientArgs } from "../../../tools/ssh";
 import { SSHExecCommandResponse } from "node-ssh";
 
+// Sunshine runs in a Docker Compose container (service name "cloudy" set as
+// container_name in ansible/roles/sunshine/templates/docker-compose.yml)
+const SUNSHINE_CONTAINER = "cloudy"
+const SUNSHINE_STATE_DIR = "/cloudy/data/sunshine"
+// Sunshine 2026+ pairing/auth state files. Wiping them forces Sunshine to
+// regenerate a fresh server identity and clean pairing state.
+const SUNSHINE_STATE_FILES = ["sunshine_credentials.json", "sunshine_state.json", "cert.pem", "pkey.pem"]
+
 export interface SunshineMoonlightPairerArgs {
     instanceName: string
     host: string
     ssh: SSHClientArgs,
     sunshine: {
-        username: string
-        password: string
+        username: string,
+        password: string,
     }
 }
 
@@ -16,13 +24,13 @@ export interface SunshineMoonlightPairerArgs {
  * Pair with Sunshine using Sunshine API via SSH
  */
 export class SunshineMoonlightPairer extends AbstractMoonlightPairer implements MoonlightPairer {
-    
+
     private readonly args: SunshineMoonlightPairerArgs
 
     constructor(args: SunshineMoonlightPairerArgs) {
         super({
             instanceName: args.instanceName,
-            host: args.host
+            host: args.host,
         })
         this.args = args
     }
@@ -30,6 +38,68 @@ export class SunshineMoonlightPairer extends AbstractMoonlightPairer implements 
     private buildSshClient(): SSHClient {
         this.logger.debug(`Building SSH client with args: ${JSON.stringify(this.args.ssh)}`)
         return new SSHClient(this.args.ssh);
+    }
+
+    /**
+     * Reset Sunshine pairing state: stop Sunshine, remove its server identity
+     * (cert/pkey) and pairing/credentials state files, start it again.
+     * Sunshine then regenerates a fresh server identity and clean pairing
+     * state, making the pairing flow deterministic: no stale pending pairing
+     * session can be confused for ours and no stale client certificate can
+     * reject our pairing ("Client certificate not authorized").
+     *
+     * NOTE: this invalidates all previously paired clients - they must forget
+     * the host (server identity changed) and re-pair.
+     */
+    private async resetSunshineState(ssh: SSHClient): Promise<void> {
+        this.logger.info(`Resetting Sunshine pairing state...`)
+
+        // Sunshine may rewrite state files on shutdown: wipe them AFTER it
+        // stopped. The container itself stays running (docker exec cannot run
+        // on a stopped container): Sunshine is stopped/started through its
+        // supervisor.
+        await ssh.command(['docker', 'exec', SUNSHINE_CONTAINER, 'supervisorctl', 'stop', 'sunshine'])
+        await ssh.command(['docker', 'exec', SUNSHINE_CONTAINER, 'rm', '-f', ...SUNSHINE_STATE_FILES.map(f => `${SUNSHINE_STATE_DIR}/${f}`)])
+        await ssh.command(['docker', 'exec', SUNSHINE_CONTAINER, 'supervisorctl', 'start', 'sunshine'])
+
+        // Wait for Sunshine to come back up (it regenerates identity and
+        // credentials on startup)
+        for (let attempt = 0; attempt < 30; attempt++) {
+            const result = await ssh.command(['docker', 'exec', SUNSHINE_CONTAINER, 'pgrep', '-c', 'sunshine'], { ignoreNonZeroExitCode: true })
+            if (parseInt(result.stdout.trim()) > 0) {
+                this.logger.debug(`Sunshine is back up after pairing state reset`)
+                return
+            }
+            await new Promise(resolve => setTimeout(resolve, 1000))
+        }
+        throw new Error(`Sunshine did not come back up after pairing state reset`)
+    }
+
+    /**
+     * Purge all pending pairing sessions via Sunshine API (DELETE /api/pin):
+     * Sunshine 2026+ cancels a pairing request waiting for PIN approval.
+     * Called before our pairing flow: any pending pairing session created
+     * during our pairing window is therefore ours, never a stale session left
+     * by a previous pairing attempt.
+     */
+    private async purgePendingPairings(ssh: SSHClient): Promise<void> {
+        const pendingPairings = await this.fetchPendingPairings(ssh)
+        for (const pairing of pendingPairings) {
+            this.logger.info(`Cancelling stale pending pairing session ${pairing.id} (name: ${pairing.name}, address: ${pairing.address})`)
+            const result = await ssh.command([
+                'curl',
+                '-sk',
+                '-u',
+                `${this.args.sunshine.username}:${this.args.sunshine.password}`,
+                '-X',
+                'DELETE',
+                'https://localhost:47990/api/pin',
+                '-H', 'Content-Type: application/json',
+                '-d',
+                JSON.stringify({ pairing_id: pairing.id }),
+            ])
+            this.logger.trace(`Sunshine pair DELETE via SSH result: ${JSON.stringify(result)}`)
+        }
     }
 
     /**
@@ -54,16 +124,25 @@ export class SunshineMoonlightPairer extends AbstractMoonlightPairer implements 
     }
 
     protected async doPair(pin: string) {
-        // try to pair for ~2 min by pushing through Sunshine API with our pin
-        // Using plain curl + SSH command as Sunshine Web UI is not reachable directly
-        // A simple but effective enough method
-        // Maybe wen use a more resilient with proper HTTP client and SSH tunneling such as https://github.com/agebrock/tunnel-ssh
+        // Deterministic pairing: start from a clean slate before Moonlight
+        // creates its pending pairing session.
+        // - Reset Sunshine pairing state: fresh server identity and no stale
+        //   pairing state (also fixes "Client certificate not authorized")
+        // - Purge any pending pairing session (eg. a session created
+        //   concurrently during the restart): the only pending session during
+        //   our pairing window is the one our Moonlight client creates
+        const sshClient = this.buildSshClient()
+        try {
+            await sshClient.connect()
+            await this.resetSunshineState(sshClient)
+            await this.purgePendingPairings(sshClient)
+        } finally {
+            sshClient.dispose()
+        }
+
         await this.pairSendPin(pin) // defaults: ~2 min budget, 1s polls
     }
 
-    // Retry for ~2 min by default: Moonlight needs time to run its pairing
-    // handshake (discovery, cert exchange) before its pending pairing session
-    // appears on Sunshine and can be confirmed
     // Retry for ~2 min by default: Moonlight needs time to run its pairing
     // handshake (discovery, cert exchange) before its pending pairing session
     // appears on Sunshine. Polling is fast (1s) as Moonlight only waits a few
@@ -158,12 +237,10 @@ export class SunshineMoonlightPairer extends AbstractMoonlightPairer implements 
         try {
             json = JSON.parse(result.stdout);
 
-            this.logger.debug(`Sunshine /api/pin POST JSON output: ${JSON.stringify(json)}`)
-
             // Sunshine server may respond with true (boolean) or "true" (string)
             return json.status == "true" || json.status == true
         } catch (error) {
-            this.logger.warn(`Failed to parse Sunshine API JSON response from raw output ${JSON.stringify(result.stdout)}. If you think this is a bug please report it.`, error);
+            this.logger.warn(`Failed to parse Sunshine pair POST JSON output: ${result.stdout}`, error)
             return false
         }
     }
