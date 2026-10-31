@@ -11,21 +11,13 @@ mkdir -p $CLOUDYPAD_DATA_DIR/sunshine
 # let Sunshine fall back to its broken-in-container KMS auto-probe.
 export CLOUDYPAD_SUNSHINE_CAPTURE=${CLOUDYPAD_SUNSHINE_CAPTURE:-x11}
 
-# Templatise sunshine.conf with env variables
-envsubst < $CLOUDYPAD_CONF_DIR/sunshine/sunshine.conf.template > $CLOUDYPAD_CONF_DIR/sunshine/sunshine.conf
-
-# Ensure the rendered config ends with a newline: envsubst drops the template
-# trailing newline when the last line is a variable (eg. additional config),
-# which would glue appended lines onto it
-[ -n "$(tail -c 1 $CLOUDYPAD_CONF_DIR/sunshine/sunshine.conf)" ] && echo >> $CLOUDYPAD_CONF_DIR/sunshine/sunshine.conf
-
-# CSRF protection (Sunshine 2026+): Web UI actions (PIN pairing) require
-# an explicit origin allowlist, origin_web_ui_allowed=lan is not enough.
-# Render a single csrf_allowed_origins line (duplicate keys in the config
-# would be resolved last-key-wins): localhost variants + every container IP
-# (clients may reach the Web UI through any of them) + extra origins from
-# CLOUDYPAD_SUNSHINE_CSRF_ALLOWED_ORIGINS (eg. NAT/port-forwarding addresses
-# such as the Vagrant VM LAN IP, unreachable from the container)
+# Compute the CSRF allowed origins list before rendering the config:
+# Sunshine 2026+ Web UI actions (PIN pairing) require an explicit origin
+# allowlist, origin_web_ui_allowed=lan is not enough. Built-in localhost
+# variants + every container IP (clients may reach the Web UI through any
+# of them) + extra origins from CLOUDYPAD_SUNSHINE_CSRF_ALLOWED_ORIGINS
+# (eg. NAT/port-forwarding addresses such as the Vagrant VM LAN IP,
+# unreachable from the container)
 CSRF_ORIGINS="https://localhost:47990,https://127.0.0.1:47990"
 for ip in $(hostname -I); do
     CSRF_ORIGINS="$CSRF_ORIGINS,https://$ip:47990"
@@ -33,8 +25,31 @@ done
 if [ -n "$CLOUDYPAD_SUNSHINE_CSRF_ALLOWED_ORIGINS" ]; then
     CSRF_ORIGINS="$CSRF_ORIGINS,$CLOUDYPAD_SUNSHINE_CSRF_ALLOWED_ORIGINS"
 fi
-echo "csrf_allowed_origins = $CSRF_ORIGINS" >> $CLOUDYPAD_CONF_DIR/sunshine/sunshine.conf
+export CLOUDYPAD_SUNSHINE_CSRF_ORIGINS="$CSRF_ORIGINS"
 echo "CSRF allowed origins: $CSRF_ORIGINS"
+
+TEMPLATE=$CLOUDYPAD_CONF_DIR/sunshine/sunshine.conf.template
+
+# Ensure every variable referenced by sunshine.conf.template is set:
+# envsubst renders unset variables as empty strings, which would silently
+# produce an invalid config (eg. "capture = " breaking Sunshine's capture
+# auto-probe). Fail hard instead, listing all missing variables.
+# NOTE: keep the list below in sync with the template variables. Using an
+# explicit list over automatic template parsing keeps the contract visible
+# and avoids grepping the template at runtime.
+MISSING_VARS=""
+if [[ -z "${SUNSHINE_SERVER_NAME+x}" ]]; then MISSING_VARS="$MISSING_VARS SUNSHINE_SERVER_NAME"; fi
+if [[ -z "${CLOUDYPAD_SUNSHINE_CAPTURE+x}" ]]; then MISSING_VARS="$MISSING_VARS CLOUDYPAD_SUNSHINE_CAPTURE"; fi
+if [[ -z "${CLOUDYPAD_SUNSHINE_MAX_BITRATE+x}" ]]; then MISSING_VARS="$MISSING_VARS CLOUDYPAD_SUNSHINE_MAX_BITRATE"; fi
+if [[ -z "${CLOUDYPAD_SUNSHINE_CSRF_ORIGINS+x}" ]]; then MISSING_VARS="$MISSING_VARS CLOUDYPAD_SUNSHINE_CSRF_ORIGINS"; fi
+if [[ -z "${CLOUDYPAD_SUNSHINE_ADDITIONAL_CONFIG+x}" ]]; then MISSING_VARS="$MISSING_VARS CLOUDYPAD_SUNSHINE_ADDITIONAL_CONFIG"; fi
+if [[ -n "$MISSING_VARS" ]]; then
+    echo "ERROR: sunshine.conf.template references unset variables:$MISSING_VARS. The Sunshine container environment must provide them all (see ansible/roles/sunshine/templates/docker-compose.yml)" >&2
+    exit 1
+fi
+
+# Templatise sunshine.conf with env variables
+envsubst < "$TEMPLATE" > $CLOUDYPAD_CONF_DIR/sunshine/sunshine.conf
 
 # Set credentials if both Sunshine Web UI password and username are present
 if [[ -n "$SUNSHINE_WEB_PASSWORD_BASE64" && -n "$SUNSHINE_WEB_USERNAME" ]]; then

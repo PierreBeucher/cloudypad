@@ -12,7 +12,7 @@
 # container restarts and instance stop/start.
 #
 # Gated by a flag file written by setup-plasma-default-desktop.sh when the user
-# config is fresh (new instance, or CLOUDYPAD_PLASMA_DEFAULT_FORCE in dev).
+# config is fresh (new instance).
 # The flag lives in XDG_RUNTIME_DIR: wiped on container restart, so this runs
 # at most once per fresh instance boot.
 #

@@ -21,12 +21,6 @@ all:
       # environment during long debugging sessions
       autostop_enable: false
 
-      # Dev feedback loop: re-seed default Plasma config over the persistent
-      # one at each container start, so overlay config changes in
-      # conf/plasma-default land with a simple "docker restart cloudy"
-      # (no image rebuild). Keep false in prod: user customizations preserved
-      sunshine_plasma_default_force: true
-
       # Web UI access: Sunshine 2026+ CSRF requires explicit origin allowlist.
       # start-sunshine.sh allows localhost + container IPs automatically; add
       # the VM LAN IP here as it's unreachable from the container (NAT) while
@@ -54,16 +48,6 @@ all:
       sunshine_locale: fr_FR.UTF-8
 
       # Dev environment specifics
-      # Vagrant doesn't have a GPU access and Sunshine default to KMS capture
-      # which somehow fails in Vagrant VM + container and make X11 and desktop crash
-      # for unknown reason.
-      #
-      # This is related to /dev/dri* access: when Sunshine doesn't have access to
-      # /dev/dri* it will fallback to X11 capture as it can't read it, but since
-      # Sunshine user has access to /dev/* it will try to use KMS capture which make
-      # use of DRI. This somehow crash the X11 and desktop process for unknown reason.
-      # Forcing to use X11 capture workaround the issue.
-      sunshine_additional_config: "capture = x11"
       sunshine_max_bitrate_kbps: "5000"
 
       # Debug mounts: bind mount local repo overlay directly in the container
@@ -79,9 +63,10 @@ all:
         - "/vagrant/containers/sunshine/overlay/cloudy/bin:/cloudy/bin"
         - "/vagrant/containers/sunshine/overlay/cloudy/conf/cloudypad:/cloudy/conf/cloudypad"
         # Plasma default configs (appletsrc, theme, panel size): seeded by
-        # setup-plasma-default-desktop.sh at container start. sunshine_plasma_default_force
-        # is true on dev: look & feel defaults are re-seeded over the persistent
-        # config at each container start (prod keeps user customizations)
+        # setup-plasma-default-desktop.sh at container start on new instances
+        # only. To test default overlay config changes: start a fresh container
+        # (remove $HOME/.config Plasma session files) as user customizations
+        # are preserved on restart
         - "/vagrant/containers/sunshine/overlay/cloudy/conf/plasma-default:/cloudy/conf/plasma-default"
         - "/vagrant/containers/sunshine/overlay/cloudy/conf/sunshine/sunshine.conf.template:/cloudy/conf/sunshine/sunshine.conf.template"
         - "/vagrant/containers/sunshine/overlay/cloudy/conf/sunshine/apps.json:/cloudy/conf/sunshine/apps.json"

@@ -52,21 +52,9 @@ tasks:
   # - Run Sunshine container in dev VM
   # Note: might as well use a bind mount from host to dev VM instead of scp
   dev-docker-sunshine-to-vm:
-    cmds: 
+    cmds:
     - task: build-sunshine-container-local
-    - >
-      docker image save $CLOUDYPAD_BUILD_SUNSHINE_IMAGE_REGISTRY:$CLOUDYPAD_BUILD_SUNSHINE_IMAGE_TAG -o tmp/sunshine-container-image.tar
-    - >
-      test -s tmp/sunshine-container-image.tar ||
-      (echo "ERROR: docker image save produced no file (host disk full? check 'df -h .'). Aborting BEFORE scp/deploy: the VM would keep the previous image and the failure would be silent." && exit 1)
-    - scp -i .vagrant/machines/default/virtualbox/private_key tmp/sunshine-container-image.tar vagrant@192.168.56.43:/tmp
-    - >
-      ssh -i .vagrant/machines/default/virtualbox/private_key vagrant@192.168.56.43
-      docker load -i /tmp/sunshine-container-image.tar | grep -q "Loaded image:" ||
-      (echo "ERROR: docker load failed on VM (VM disk full? wipes /var/lib/containerd are safe: see AGENTS.md). Aborting BEFORE deploy." && exit 1)
-    - ansible-playbook -i ansible/inventories/dev-vagrant.yml ansible/sunshine.yml -t sunshine-docker
-    - ssh -i .vagrant/machines/default/virtualbox/private_key vagrant@192.168.56.43
-      docker compose -f sunshine/docker-compose.yml -p sunshine up -d --force-recreate
+    - ./hack/dev-docker-sunshine-to-vm.sh
 
   # Quick dev build + deploy for rapid Sunshine container feedback loop
   dev-ansible-config:
