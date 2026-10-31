@@ -35,15 +35,14 @@ describe('SunshineMoonlightPairer', () => {
     }
 
     /**
-     * Stub the commands issued by doPair: state reset (docker exec), purge
-     * (GET listing + DELETE cancellations) and PIN confirmation (GET listing
-     * + POST). Returns the first GET listing as `purgeListings` (stale
-     * sessions to cancel), subsequent GET listings as `pinListings`.
+     * Stub the commands issued by doPair: purge (GET listing + DELETE
+     * cancellations) and PIN confirmation (GET listing + POST). Returns the
+     * first GET listing as `purgeListings` (stale sessions to cancel),
+     * subsequent GET listings as `pinListings`.
      */
     function stubDoPair(purgeListings: { id: string }[], pinListings: { id: string }[]) {
         let getCalls = 0
         stubSsh(cmd => {
-            if (cmd[0] === 'docker') return sshResponse('1') // reset + pgrep check
             if (cmd.includes('DELETE')) return sshResponse(JSON.stringify({ status: true }))
             if (cmd.includes('POST')) return pinResult('true')
             getCalls++
@@ -65,21 +64,13 @@ describe('SunshineMoonlightPairer', () => {
 
     describe('pairAuto', () => {
 
-        it('should reset Sunshine state, cancel stale pending pairings, then confirm the PIN', async () => {
+        it('should cancel stale pending pairings, then confirm the PIN', async () => {
             stubDoPair(
                 [{ id: 'a'.repeat(32) }], // stale pending pairing listed before pairing
                 [{ id: 'b'.repeat(32) }], // our Moonlight client's pending pairing
             )
 
             await pairer.pairAuto()
-
-            // Reset: Sunshine stopped, state files wiped, Sunshine restarted
-            const dockerCmds = sshCommandStub.getCalls()
-                .map(call => call.args[0] as string[])
-                .filter(cmd => cmd[0] === 'docker')
-            assert.ok(dockerCmds.some(cmd => cmd.join(' ').includes('supervisorctl stop sunshine')), 'Sunshine must be stopped')
-            assert.ok(dockerCmds.some(cmd => cmd.join(' ').includes('rm -f')), 'State files must be wiped')
-            assert.ok(dockerCmds.some(cmd => cmd.join(' ').includes('supervisorctl start sunshine')), 'Sunshine must be restarted')
 
             // Purge: the stale pending pairing must be cancelled via DELETE
             const deleteCall = sshCommandStub.getCalls()

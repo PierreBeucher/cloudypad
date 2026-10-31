@@ -2,14 +2,6 @@ import { AbstractMoonlightPairer, makePin, MoonlightPairer } from "./abstract";
 import { SSHClient, SSHClientArgs } from "../../../tools/ssh";
 import { SSHExecCommandResponse } from "node-ssh";
 
-// Sunshine runs in a Docker Compose container (service name "cloudy" set as
-// container_name in ansible/roles/sunshine/templates/docker-compose.yml)
-const SUNSHINE_CONTAINER = "cloudy"
-const SUNSHINE_STATE_DIR = "/cloudy/data/sunshine"
-// Sunshine 2026+ pairing/auth state files. Wiping them forces Sunshine to
-// regenerate a fresh server identity and clean pairing state.
-const SUNSHINE_STATE_FILES = ["sunshine_credentials.json", "sunshine_state.json", "cert.pem", "pkey.pem"]
-
 export interface SunshineMoonlightPairerArgs {
     instanceName: string
     host: string
@@ -38,41 +30,6 @@ export class SunshineMoonlightPairer extends AbstractMoonlightPairer implements 
     private buildSshClient(): SSHClient {
         this.logger.debug(`Building SSH client with args: ${JSON.stringify(this.args.ssh)}`)
         return new SSHClient(this.args.ssh);
-    }
-
-    /**
-     * Reset Sunshine pairing state: stop Sunshine, remove its server identity
-     * (cert/pkey) and pairing/credentials state files, start it again.
-     * Sunshine then regenerates a fresh server identity and clean pairing
-     * state, making the pairing flow deterministic: no stale pending pairing
-     * session can be confused for ours and no stale client certificate can
-     * reject our pairing ("Client certificate not authorized").
-     *
-     * NOTE: this invalidates all previously paired clients - they must forget
-     * the host (server identity changed) and re-pair.
-     */
-    private async resetSunshineState(ssh: SSHClient): Promise<void> {
-        this.logger.info(`Resetting Sunshine pairing state...`)
-
-        // Sunshine may rewrite state files on shutdown: wipe them AFTER it
-        // stopped. The container itself stays running (docker exec cannot run
-        // on a stopped container): Sunshine is stopped/started through its
-        // supervisor.
-        await ssh.command(['docker', 'exec', SUNSHINE_CONTAINER, 'supervisorctl', 'stop', 'sunshine'])
-        await ssh.command(['docker', 'exec', SUNSHINE_CONTAINER, 'rm', '-f', ...SUNSHINE_STATE_FILES.map(f => `${SUNSHINE_STATE_DIR}/${f}`)])
-        await ssh.command(['docker', 'exec', SUNSHINE_CONTAINER, 'supervisorctl', 'start', 'sunshine'])
-
-        // Wait for Sunshine to come back up (it regenerates identity and
-        // credentials on startup)
-        for (let attempt = 0; attempt < 30; attempt++) {
-            const result = await ssh.command(['docker', 'exec', SUNSHINE_CONTAINER, 'pgrep', '-c', 'sunshine'], { ignoreNonZeroExitCode: true })
-            if (parseInt(result.stdout.trim()) > 0) {
-                this.logger.debug(`Sunshine is back up after pairing state reset`)
-                return
-            }
-            await new Promise(resolve => setTimeout(resolve, 1000))
-        }
-        throw new Error(`Sunshine did not come back up after pairing state reset`)
     }
 
     /**
@@ -124,17 +81,14 @@ export class SunshineMoonlightPairer extends AbstractMoonlightPairer implements 
     }
 
     protected async doPair(pin: string) {
-        // Deterministic pairing: start from a clean slate before Moonlight
-        // creates its pending pairing session.
-        // - Reset Sunshine pairing state: fresh server identity and no stale
-        //   pairing state (also fixes "Client certificate not authorized")
-        // - Purge any pending pairing session (eg. a session created
-        //   concurrently during the restart): the only pending session during
-        //   our pairing window is the one our Moonlight client creates
+        // Start from a clean pairing slate before Moonlight creates its
+        // pending pairing session: purge any stale pending pairing session
+        // (eg. left by a previous pairing attempt or a concurrent client).
+        // The only pending session seen during our pairing window is
+        // therefore the one our Moonlight client creates.
         const sshClient = this.buildSshClient()
         try {
             await sshClient.connect()
-            await this.resetSunshineState(sshClient)
             await this.purgePendingPairings(sshClient)
         } finally {
             sshClient.dispose()
