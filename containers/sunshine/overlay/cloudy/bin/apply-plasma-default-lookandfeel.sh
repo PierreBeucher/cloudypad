@@ -5,9 +5,9 @@
 # session is up, on fresh instances only.
 #
 # Why after session start: on a fresh user config, Plasma session startup
-# applies the default look & feel (Breeze, light) and overwrites the theme
-# files seeded before the session (kdedefaults/*, kdeglobals) - the pre-session
-# seed cannot win. Applying via plasma-apply-lookandfeel AFTER the session is
+# applies the default look & feel (Breeze, light) and overwrites any pre-session
+# theme seeding - the pre-session seed cannot win. Applying via
+# plasma-apply-lookandfeel AFTER the session is
 # up is the same code path as System Settings and the result persists across
 # container restarts and instance stop/start.
 #
