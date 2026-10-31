@@ -61,7 +61,7 @@ all:
       # mount paths that start scripts write to at runtime (rendered configs)
       sunshine_extra_volumes:
         - "/vagrant/containers/sunshine/overlay/cloudy/bin:/cloudy/bin"
-        - "/vagrant/containers/sunshine/overlay/cloudy/conf/cloudypad:/cloudy/conf/cloudypad"
+        - "/vagrant/containers/sunshine/overlay/usr/local/share/cloudypad:/usr/local/share/cloudypad"
         # Plasma default configs (appletsrc, theme, panel size): seeded by
         # setup-plasma-default-desktop.sh at container start on new instances
         # only. To test default overlay config changes: start a fresh container
