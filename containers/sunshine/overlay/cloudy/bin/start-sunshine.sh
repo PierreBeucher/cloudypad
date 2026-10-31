@@ -53,8 +53,6 @@ fi
 export CLOUDYPAD_SUNSHINE_CSRF_ORIGINS="$CSRF_ORIGINS"
 echo "CSRF allowed origins: $CSRF_ORIGINS"
 
-TEMPLATE=$CLOUDYPAD_CONF_DIR/sunshine/sunshine.conf.template
-
 # Ensure every variable referenced by sunshine.conf.template is set:
 # envsubst renders unset variables as empty strings, which would silently
 # produce an invalid config (eg. "capture = " breaking Sunshine's capture
@@ -76,7 +74,7 @@ fi
 # Render sunshine.conf into the appdata dir (Sunshine's default config
 # location) and pass it explicitly to the binary
 CONFIG=$APPDATA/sunshine.conf
-envsubst < "$TEMPLATE" > $CONFIG
+envsubst < "$CLOUDYPAD_CONF_DIR/sunshine/sunshine.conf.template" > $CONFIG
 
 # Set credentials if both Sunshine Web UI password and username are present
 if [[ -n "$SUNSHINE_WEB_PASSWORD_BASE64" && -n "$SUNSHINE_WEB_USERNAME" ]]; then
