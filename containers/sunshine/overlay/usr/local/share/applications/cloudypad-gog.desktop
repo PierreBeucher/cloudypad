@@ -9,4 +9,5 @@ Categories=Network;FileTransfer;Game;
 PrefersNonDefaultGPU=true
 X-KDE-RunOnDiscreteGpu=true
 Path=
-StartupNotify=false
+StartupNotify=true
+StartupWMClass=Heroic
