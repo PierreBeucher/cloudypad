@@ -13,4 +13,16 @@ if [ ! -f $CLOUDYPAD_DATA_DIR/Steam/config/config.vdf ]; then
     chmod 0644 $CLOUDYPAD_DATA_DIR/Steam/config/config.vdf
 fi
 
-steam "$@"
+echo "Starting Steam, may take a few seconds..."
+
+# Steam is detached from the calling terminal session so its parent may close
+# at any time without killing Steam (terminal close sends SIGHUP to the
+# session's process group). Used by the desktop launcher, which shows
+# this script's output as a console log viewer: it closes automatically when
+# Steam exits (tail --pid). Logs are kept in a file so closing the console
+# never loses them. Sunshine app launch (apps.json) and direct calls run the
+# same flow without any console to display it.
+STEAM_LOG="${CLOUDYPAD_LOG_DIR:-/cloudy/log}/steam-user.log"
+setsid steam "$@" >> "$STEAM_LOG" 2>&1 &
+STEAM_PID=$!
+tail -n 50 --pid="$STEAM_PID" -f "$STEAM_LOG"
