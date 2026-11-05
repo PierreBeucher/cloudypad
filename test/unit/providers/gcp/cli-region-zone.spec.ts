@@ -39,6 +39,7 @@ describe('GCP CLI region/zone selection (cli-region-zone)', () => {
         machineType: 'n1-standard-8',
         acceleratorType: 'nvidia-tesla-t4',
         diskSize: 100,
+        dataDiskSizeGb: 200,
         diskType: DEFAULT_DISK_TYPE,
         networkTier: DEFAULT_NETWORK_TIER,
         nicType: DEFAULT_NIC_TYPE,
