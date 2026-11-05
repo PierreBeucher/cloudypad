@@ -15,6 +15,11 @@ interface GcpDataDiskSnapshotArgs {
      */
     volumeId: pulumi.Input<string>
     additionalTags: pulumi.Input<string[]>
+
+    /**
+     * Unique version identifier forcing snapshot replacement when it changes.
+     */
+    snapshotVersion: pulumi.Input<string>
 }
 
 class CloudyPadGcpDataDiskSnapshot extends pulumi.ComponentResource {
@@ -42,8 +47,13 @@ class CloudyPadGcpDataDiskSnapshot extends pulumi.ComponentResource {
             parent: this
         }
 
+        // Snapshot version in name forces replacement on each stop cycle (GCP snapshot names are immutable)
+        const snapshotName = pulumi.output(args.snapshotVersion).apply((version) =>
+            `${name}-data-volume-snapshot-${version}`.toLowerCase()
+        )
+
         const snapshot = new gcp.compute.Snapshot(`${name}-data-volume-snapshot`, {
-            name: `${name}-data-volume-snapshot`.toLowerCase(),
+            name: snapshotName,
             sourceDisk: args.volumeId,
             labels: globalTags,
         }, {
@@ -68,6 +78,7 @@ async function gcpDataDiskSnapshotPulumiProgram(): Promise<Record<string, any> |
     const config = new pulumi.Config()
     const volumeId = config.get("volumeId")
     const additionalTags = config.getObject<string[]>("additionalTags") || []
+    const snapshotVersion = config.require("snapshotVersion")
 
     const stackName = pulumi.getStack()
 
@@ -79,6 +90,7 @@ async function gcpDataDiskSnapshotPulumiProgram(): Promise<Record<string, any> |
     const snapshot = new CloudyPadGcpDataDiskSnapshot(stackName, {
         volumeId: volumeId,
         additionalTags: additionalTags,
+        snapshotVersion: snapshotVersion,
     })
 
     return {
@@ -97,6 +109,12 @@ export interface PulumiStackConfigGcpDataDiskSnapshot {
      * no-op. Any existing snapshot is KEPT and no new snapshot is created.
      */
     baseVolumeId?: string
+
+    /**
+     * Unique version identifier for the snapshot. A new value forces creation
+     * of a fresh snapshot replacing the previous one.
+     */
+    snapshotVersion: string
 }
 
 export interface GcpDataDiskSnapshotPulumiOutput {
@@ -126,6 +144,7 @@ export class GcpDataDiskSnapshotPulumiClient extends InstancePulumiClient<Pulumi
         await stack.setConfig("gcp:zone", { value: config.zone})
         await stack.setConfig("additionalTags", { value: JSON.stringify([`instance:${config.instanceName}`])})
         if(config.baseVolumeId) await stack.setConfig("volumeId", { value: config.baseVolumeId})
+        await stack.setConfig("snapshotVersion", { value: config.snapshotVersion})
 
         const allConfs = await stack.getAllConfig()
         this.logger.debug(`GCP snapshot stack config after update: ${JSON.stringify(allConfs)}`)

@@ -78,6 +78,8 @@ export class GcpProvisioner extends AbstractInstanceProvisioner<GcpProvisionInpu
             region: this.args.provisionInput.region,
             zone: this.args.provisionInput.zone,
             baseVolumeId: this.args.provisionOutput.dataDiskId,
+            // unique version to force a fresh snapshot on each call, see data-volume-snapshot.ts
+            snapshotVersion: Math.floor(Date.now() / 1000).toString(),
         })
         const snapshotOutput = await snapshotClient.up()
 
