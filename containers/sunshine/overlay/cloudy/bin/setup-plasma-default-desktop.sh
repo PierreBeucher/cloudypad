@@ -28,6 +28,21 @@
 #   any instance: they are functional safeguards, not preferences. Users who
 #   customized them already have the file and are never overwritten.
 #
+# Default look & feel decision (see post-session applier header) is tracked by
+# persisted markers in XDG_CONFIG_HOME/cloudypad:
+# - plasma-lookandfeel-applied present: the decision was already made on a
+#   previous start (default applied, or intentionally skipped), nothing to do
+# - plasma-lookandfeel-applied missing: raise the pending marker so the
+#   post-session applier runs on this start
+#
+# Raising pending is deliberately NOT gated on the "existing instance"
+# detection above: session-generated files prove a Plasma session ran, not
+# that the default look & feel was successfully applied. A first boot killed
+# before the applier completed leaves session markers behind and no applied
+# theme: without this, such an instance would permanently keep the stock
+# light theme (apply is retried until it succeeds, thanks to the pending
+# marker surviving restarts).
+#
 # NOTE: the KSycoca services cache is rebuilt by start-desktop.sh BEFORE the
 # session starts - task manager pins resolve through that cache and a stale
 # cache renders pinned launchers as blank/broken icons.
@@ -52,6 +67,10 @@ KSCREENLOCKERRC=$XDG_CONFIG_HOME/kscreenlockerrc
 
 BALOOFILERC_DEFAULT=$PLASMA_DEFAULT_DIR/baloofilerc
 BALOOFILERC=$XDG_CONFIG_HOME/baloofilerc
+
+LOOKANDFEEL_MARKER_DIR=$XDG_CONFIG_HOME/cloudypad
+LOOKANDFEEL_APPLIED_MARKER=$LOOKANDFEEL_MARKER_DIR/plasma-lookandfeel-applied
+LOOKANDFEEL_PENDING_MARKER=$LOOKANDFEEL_MARKER_DIR/plasma-lookandfeel-pending
 
 # A config dir already used by a Plasma session contains session-generated
 # files (written at first session start, before any user customization).
@@ -106,15 +125,13 @@ seed_default "$PLASMA_DEFAULT_DIR/plasmashellrc" "$XDG_CONFIG_HOME/plasmashellrc
 seed_protective "$KSCREENLOCKERRC_DEFAULT" "$KSCREENLOCKERRC"
 seed_protective "$BALOOFILERC_DEFAULT" "$BALOOFILERC"
 
-# Fresh config: Plasma session startup applies the default (light) look and
-# feel over the seeded theme files. Flag the post-session applier
-# (apply-plasma-default-lookandfeel.sh) to re-apply the Cloudy Pad default
-# look & feel once the session is up. Flag lives in the ephemeral runtime dir:
-# wiped on container restart, so this never runs on existing instances.
-if [ "$IS_FRESH" = "true" ]; then
-    mkdir -p "$XDG_RUNTIME_DIR"
-    touch "$XDG_RUNTIME_DIR/cloudypad-apply-plasma-default-lookandfeel"
-    echo "Default look & feel will be applied once the Plasma session is up"
+# Default look & feel: decided exactly once per instance by the post-session
+# applier (apply-plasma-default-lookandfeel.sh), tracked via persisted markers.
+# Not gated on IS_FRESH: see header.
+if [ ! -f "$LOOKANDFEEL_APPLIED_MARKER" ]; then
+    echo "Default look & feel not decided yet: raising pending marker for the post-session applier"
+    mkdir -p "$LOOKANDFEEL_MARKER_DIR"
+    touch "$LOOKANDFEEL_PENDING_MARKER"
 fi
 
 echo "Plasma default config setup complete"
