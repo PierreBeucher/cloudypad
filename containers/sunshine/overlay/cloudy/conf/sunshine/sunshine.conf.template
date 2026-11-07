@@ -1,6 +1,17 @@
 sunshine_name = $SUNSHINE_SERVER_NAME
 
+# Safe by default: only allow LAN access
 origin_web_ui_allowed = lan
+
+# Capture backend. Pinned to an explicit backend: Sunshine auto-probe prefers
+# KMS which breaks on nvidia-drm in containers (framebuffer fd: Function not
+# implemented) - stream dies with Initial Ping Timeout.
+# x11 (XCB grab): default path, works on dummy and nvidia displays
+# nvfbc: driver-level GPU capture, preferred on datacenter (Tesla/pro) GPUs -
+# atomic capture avoids stream tearing on fullscreen unredirected games and
+# skips the CPU framebuffer copy. NvFBC is driver-blocked on GeForce.
+capture = $CLOUDYPAD_SUNSHINE_CAPTURE
+
 min_log_level = info
 
 # Enforce encryption for both network modes
@@ -17,6 +28,11 @@ cert = /cloudy/data/sunshine/cert.pem
 
 # Maximum bitrate in Kbps
 max_bitrate = $CLOUDYPAD_SUNSHINE_MAX_BITRATE
+
+# CSRF allowed origins for Sunshine Web UI (2026+): built-in localhost
+# variants + every container IP + extra origins, computed at start by
+# start-sunshine.sh (see also CLOUDYPAD_SUNSHINE_CSRF_ALLOWED_ORIGINS)
+csrf_allowed_origins = $CLOUDYPAD_SUNSHINE_CSRF_ORIGINS
 
 # Additional configs
 $CLOUDYPAD_SUNSHINE_ADDITIONAL_CONFIG

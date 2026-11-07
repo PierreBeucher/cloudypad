@@ -25,17 +25,25 @@ services:
     # Cloudy Pad data and XDG_DATA_HOME where data should be persisted (game files, Sunshine state, etc.)
     - "{{ sunshine_data_dir }}:/cloudy/data"
 
-    # Keep xfce4 config on host as user may customize it (eg. keyboard layout)
-    - "{{ sunshine_persistent_config_dir }}/xfce4:/cloudy/conf/xfce4"
-
-    # Keep Heroic config and data
-    - "{{ sunshine_persistent_config_dir }}/heroic:/cloudy/conf/heroic"
+    # Keep Heroic config and data.
+    # XDG_CONFIG_HOME is $HOME/.config: Heroic config written there is
+    # persisted via this mount (and the whole home mount below)
+    - "{{ sunshine_persistent_config_dir }}/heroic:/home/cloudy/.config/heroic"
 
     # Keep user's home directory
     # Some important data are stored in $HOME by numerous apps (like Heroic or Lutris)
     # persisting this folder makes sense to keep user's data across container recreation
     - "{{ sunshine_persistent_home_dir }}:/home/cloudy"
 
+    {% if sunshine_extra_volumes | default([]) | length > 0 %}
+    #
+    # Extra volumes (eg. local overlay mounts for debugging, see contribution guide)
+    #
+    {% for volume in sunshine_extra_volumes -%}
+    - "{{ volume }}"
+    {% endfor %}
+
+    {% endif %}
     # Allow container to read/write/manage attributes on character device 13
     # 13 matches /dev/input mouse, keyboard, etc. devices
     # thus allowing process in container to manage input which we need for Sunshine
@@ -76,6 +84,11 @@ services:
       # Use "\n" for multiple lines
       # eg. "capture = x11\nfoo = bar"
       CLOUDYPAD_SUNSHINE_ADDITIONAL_CONFIG: "{{ sunshine_additional_config }}"
+
+      # Extra CSRF allowed origins for Sunshine Web UI (2026+)
+      # Comma-separated URL prefixes appended to built-in defaults and
+      # container IPs auto-detected by start-sunshine.sh
+      CLOUDYPAD_SUNSHINE_CSRF_ALLOWED_ORIGINS: "{{ sunshine_csrf_allowed_origins | default([]) | join(',') }}"
 
       # Sunshine maximum bitrate in Kbps
       # If unset, Sunshine will use its default bitrate settings

@@ -182,9 +182,12 @@ export const toPathString = function (url: URL) {
  *
  * @export
  */
-export const createRequestFunction = function (axiosArgs: RequestArgs, globalAxios: AxiosInstance, BASE_PATH: string, configuration?: Configuration) {
-    return <T = unknown, R = AxiosResponse<T>>(axios: AxiosInstance = globalAxios, basePath: string = BASE_PATH) => {
+// NOTE: explicit return type annotation required since TS >= 5.9 with
+// axios 1.20 request<T, R> generics (TS2527 unique symbol inference).
+// Single-generic form: callers type the result as AxiosPromise<T>
+export const createRequestFunction = function (axiosArgs: RequestArgs, globalAxios: AxiosInstance, BASE_PATH: string, configuration?: Configuration): <T = unknown>(axios?: AxiosInstance, basePath?: string) => Promise<AxiosResponse<T>> {
+    return <T = unknown>(axios: AxiosInstance = globalAxios, basePath: string = BASE_PATH): Promise<AxiosResponse<T>> => {
         const axiosRequestArgs = {...axiosArgs.options, url: (axios.defaults.baseURL ? '' : configuration?.basePath ?? basePath) + axiosArgs.url};
-        return axios.request<T, R>(axiosRequestArgs);
+        return axios.request<T>(axiosRequestArgs);
     };
 }

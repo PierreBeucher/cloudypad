@@ -83,4 +83,4 @@ Then:
   - [ ] Node version - see [Docker Hub](https://hub.docker.com/_/node)
   - [ ] Ansible version installed by pip - See [Ansible PyPI page](https://pypi.org/project/ansible/)
 
-Last update and dependency bumps: 2026-02-18
+Last update and dependency bumps: 2026-10-15
