@@ -20,8 +20,8 @@
 # fails fast with diagnostics instead of polling for minutes.
 #
 # Moonlight never exits on its own (GUI process): once the pairer confirms,
-# the script gives Moonlight a short grace window to observe the pairing
-# completion and save the host entry, then kills it. The end-to-end
+# the script waits for Moonlight to persist the new host entry in its config
+# (event-driven, with a deadline fallback) then kills it. The end-to-end
 # verification below is the final verdict.
 #
 # Moonlight is invoked through MOONLIGHT_CMD (default: Flatpak install).
@@ -110,11 +110,32 @@ fi
 echo "Pairer confirmed pairing in ${PAIRER_CONFIRM_SECS}s"
 
 # Moonlight never exits on its own: it already created the pending session
-# the pairer confirmed. Give it a short grace window to observe the pairing
-# completion and save the host entry in its config, then kill it. The
-# end-to-end verification below is the final verdict.
-sleep $MOONLIGHT_GRACE_SECS
+# the pairer confirmed. Kill it as soon as it persists the new host entry in
+# its config: the stale-host guard above guarantees no same-name entry
+# existed before pairing, so its appearance is proof the pairing was saved.
+# Deadline fallback in case Moonlight is slow to flush (QSettings buffering):
+# kill anyway and let the end-to-end verification below be the final verdict.
+start=$(date +%s)
+while kill -0 "$MOONLIGHT_PID" 2>/dev/null; do
+    if grep -q "hostname=${NAME}\$" "$MOONLIGHT_CONFIG"; then
+        MOONLIGHT_SAVE_SECS=$(( $(date +%s) - start ))
+        echo "Moonlight saved the host entry ${MOONLIGHT_SAVE_SECS}s after pairer confirmation, killing it"
+        break
+    fi
+    if [ $(( $(date +%s) - start )) -ge $MOONLIGHT_GRACE_SECS ]; then
+        echo "Warning: host entry not seen in Moonlight config within ${MOONLIGHT_GRACE_SECS}s, killing Moonlight anyway" >&2
+        break
+    fi
+    sleep 1
+done
 kill "$MOONLIGHT_PID" 2>/dev/null || true
+
+# SIGTERM may not tear down the flatpak sandbox (bwrap children) promptly:
+# escalate to SIGKILL if still alive shortly after
+sleep 2
+if kill -0 "$MOONLIGHT_PID" 2>/dev/null; then
+    kill -9 "$MOONLIGHT_PID" 2>/dev/null || true
+fi
 
 # End-to-end verification: the saved host entry must list apps from the instance
 if $MOONLIGHT_CMD list "$HOST" 2>/dev/null | grep -q "Desktop"; then
