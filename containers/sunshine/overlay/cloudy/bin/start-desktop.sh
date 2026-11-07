@@ -34,7 +34,9 @@ fi
 startplasma-x11 &
 PLASMA_PID=$!
 
-# Apply default look & feel on fresh instances once the session is up.
+# Apply the default look & feel once the session is up, when not decided yet
+# (gated on persisted markers, retried on next start if it failed - see
+# apply-plasma-default-lookandfeel.sh header).
 # Runs in background: the session keeps running in foreground below.
 apply-plasma-default-lookandfeel.sh &
 

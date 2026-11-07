@@ -2,7 +2,7 @@
 
 #
 # Apply the Cloudy Pad default look & feel (Breeze Dark) after the Plasma
-# session is up, on fresh instances only.
+# session is up, exactly once per instance.
 #
 # Why after session start: on a fresh user config, Plasma session startup
 # applies the default look & feel (Breeze, light) and overwrites any pre-session
@@ -11,20 +11,31 @@
 # up is the same code path as System Settings and the result persists across
 # container restarts and instance stop/start.
 #
-# Gated by a flag file written by setup-plasma-default-desktop.sh when the user
-# config is fresh (new instance).
-# The flag lives in XDG_RUNTIME_DIR: wiped on container restart, so this runs
-# at most once per fresh instance boot.
+# The decision is driven by persisted markers in $XDG_CONFIG_HOME/cloudypad,
+# raised by setup-plasma-default-desktop.sh (see its header):
+# - plasma-lookandfeel-pending: the default look & feel has not been decided
+#   yet. Persisted: a boot interrupted before the apply completed is retried
+#   on next start, until it succeeds.
+# - plasma-lookandfeel-applied: the decision is final (applied, or skipped as
+#   a user customization). Setup stops raising pending once it exists.
+#
+# Re-applying the same look & feel package is harmless: a container killed
+# between a successful apply and the marker write simply re-applies on next
+# start.
 #
 
 DEFAULT_LOOKANDFEEL_PACKAGE="org.kde.breezedark.desktop"
+PLASMA_STOCK_LOOKANDFEEL_PACKAGE="org.kde.breeze.desktop"
 
-FLAG=$XDG_RUNTIME_DIR/cloudypad-apply-plasma-default-lookandfeel
-if [ ! -f "$FLAG" ]; then
+MARKER_DIR=$XDG_CONFIG_HOME/cloudypad
+PENDING_MARKER=$MARKER_DIR/plasma-lookandfeel-pending
+APPLIED_MARKER=$MARKER_DIR/plasma-lookandfeel-applied
+
+if [ ! -f "$PENDING_MARKER" ]; then
     exit 0
 fi
 
-echo "Fresh Plasma config detected: waiting for session to apply default look & feel..."
+echo "Pending default look & feel detected: waiting for session to apply it..."
 
 # Wait for plasmashell (up to 120s)
 PLASMASHELL_UP=false
@@ -41,15 +52,35 @@ if [ "$PLASMASHELL_UP" != "true" ]; then
     exit 1
 fi
 
-# Let the session settle: the default (light) look & feel is applied during
+# Let the session settle: the stock (light) look & feel is applied during
 # session startup, give it time to complete before overriding
 sleep 10
 
 source export-dbus-address.sh
 
+# Write the final decision marker and clear the pending one
+mark_decision_final() {
+    mkdir -p "$MARKER_DIR"
+    touch "$APPLIED_MARKER"
+    rm -f "$PENDING_MARKER"
+}
+
+# A look & feel differing from the stock Plasma default is a user choice:
+# keep it and mark the decision final so the Cloudy Pad default never
+# overrides it. Empty or stock value means the config was never customized:
+# safe to apply the Cloudy Pad default.
+CURRENT_LOOKANDFEEL=$(kreadconfig6 --file kdeglobals --group KDE --key LookAndFeelPackage 2>/dev/null || true)
+
+if [ -n "$CURRENT_LOOKANDFEEL" ] && [ "$CURRENT_LOOKANDFEEL" != "$PLASMA_STOCK_LOOKANDFEEL_PACKAGE" ]; then
+    echo "Custom look & feel '$CURRENT_LOOKANDFEEL' detected: keeping it, marking Cloudy Pad default as skipped"
+    mark_decision_final
+    exit 0
+fi
+
 if plasma-apply-lookandfeel --apply "$DEFAULT_LOOKANDFEEL_PACKAGE"; then
     echo "Default look & feel applied: $DEFAULT_LOOKANDFEEL_PACKAGE"
-    rm -f "$FLAG"
+    mark_decision_final
 else
-    echo "Warning: failed to apply default look & feel $DEFAULT_LOOKANDFEEL_PACKAGE" >&2
+    echo "Warning: failed to apply default look & feel $DEFAULT_LOOKANDFEEL_PACKAGE, will retry on next start" >&2
+    exit 1
 fi
