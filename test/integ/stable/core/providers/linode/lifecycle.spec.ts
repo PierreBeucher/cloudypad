@@ -54,9 +54,9 @@ describe('Linode lifecycle', () => {
                 dataDiskSizeGb: dataDiskSizeGb,
                 // imageId: "private/33927621",
                 watchdogEnabled: true, // need to have watchdog otherwise Ansible reboot during config will effectively shutdown instance
-                dns: {
-                    domainName: "green.instances.cloudypad.gg",
-                },
+                // no DNS: test API token only has domains:read_only scope, DNS record
+                // creation would fail with 401. Instance public IP is used as hostname.
+
                 deleteInstanceServerOnStop: true,
                 baseImageSnapshot: {
                     enable: true,
@@ -67,7 +67,7 @@ describe('Linode lifecycle', () => {
                     enable: true,
                     username: "sunshine",
                     passwordBase64: Buffer.from("Sunshine!").toString('base64'),
-                    imageTag: "dev"
+                    imageTag: "dockerfile-update-plasma-desktop"
                 }, 
                 // ansible: {
                 //     additionalArgs: "-t data-disk,sunshine"
@@ -310,4 +310,8 @@ describe('Linode lifecycle', () => {
     })
     
 
-}).timeout(360000) 
+    // No suite-level timeout: mocha 11 cascades suite .timeout() onto every
+    // registered test, overriding per-test timeouts (eg. 30 min deploy).
+    // Long tests rely on their own .timeout() declarations only.
+
+})
