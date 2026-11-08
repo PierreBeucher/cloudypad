@@ -1,11 +1,9 @@
-import * as fs from 'fs'
 import { input, select } from '@inquirer/prompts';
-import Docker from 'dockerode';
 import axios from 'axios';
 import { URL } from 'url'
 import { buildAxiosError, CloudyPadAxiosError } from '../../../tools/axios';
 import { AbstractMoonlightPairer, makePin, MoonlightPairer } from "./abstract";
-import { SSHClientArgs } from '../../../tools/ssh';
+import { SSHClient, SSHClientArgs } from '../../../tools/ssh';
 
 export interface WolfMoonlightPairerArgs {
     instanceName: string
@@ -29,39 +27,19 @@ export class WolfMoonlightPairer extends AbstractMoonlightPairer implements Moon
         throw new Error("Not implemented")
     }
 
-    private buildDockerClient(): Docker {
-
-        const privateKeyContent = this.args.ssh.privateKeyPath ? fs.readFileSync(this.args.ssh.privateKeyPath, 'utf-8') : undefined
-
-        const docker = new Docker({
-            host: this.args.host,
-            protocol: 'ssh',
-            port: 22,
-            username: this.args.ssh.user,
-            sshOptions: {
-                privateKey: privateKeyContent,
-                password: this.args.ssh.password
-            }
-        });
-
-        return docker
+    private buildSshClient(): SSHClient {
+        return new SSHClient(this.args.ssh)
     }
- 
-    private async getLatestPinURL(docker: Docker, host: string): Promise<string | undefined> {
-        const containerName = 'wolf';
-        const pinUrlLogMatch = 'Insert pin at';
-    
-        try {
-            const container = docker.getContainer(containerName)
 
-            const logs = (await container.logs({
-                stdout: true,
-                stderr: true,
-                tail: 500,
-            }))
-            .toString('utf-8')
-            .trim()
-            .split('\n')
+    private async getLatestPinURL(sshClient: SSHClient, host: string): Promise<string | undefined> {
+        const pinUrlLogMatch = 'Insert pin at';
+
+        try {
+            const result = await sshClient.command(['sh', '-c', 'docker logs wolf --tail 500 2>&1'], {
+                ignoreNonZeroExitCode: true
+            })
+
+            const logs = result.stdout.trim().split('\n')
 
             this.logger.trace(`Checking logs for PIN: ${JSON.stringify(logs)}`)
 
@@ -153,24 +131,20 @@ export class WolfMoonlightPairer extends AbstractMoonlightPairer implements Moon
      * Check if the pairing was successful by looking for a success message in the logs.
      * Only logs appearing after the given date are considered.
      */
-    private async checkPairingSuccess(docker: Docker, notBefore: Date): Promise<boolean> {
-        const containerName = 'wolf';
+    private async checkPairingSuccess(sshClient: SSHClient, notBefore: Date): Promise<boolean> {
         const successLogMatch = 'Succesfully paired';
 
         try {
-            const container = docker.getContainer(containerName)
+            // Docker CLI --since accepts a Unix timestamp in seconds
+            const sinceUnixSeconds = Math.floor(notBefore.getTime() / 1000)
 
-            const logs = (await container.logs({
-                stdout: true,
-                stderr: true,
-                tail: 100,
-                // Only check logs appeared after given date
-                // Actually use seconds and note UNX timestamp as documented by Docker API
-                since: (notBefore.getTime() / 1000), 
-            }))
-            .toString('utf-8')
-            .trim()
-            .split('\n')
+            const result = await sshClient.command(['sh', '-c',
+                `docker logs wolf --tail 100 --since ${sinceUnixSeconds} 2>&1`
+            ], {
+                ignoreNonZeroExitCode: true
+            })
+
+            const logs = result.stdout.trim().split('\n')
 
             // Check for success or failure messages in recent logs
             for (let i = logs.length - 1; i >= 0; i--) {
@@ -201,7 +175,7 @@ export class WolfMoonlightPairer extends AbstractMoonlightPairer implements Moon
 
         this.logger.debug(`Pairing instance ${this.instanceName} with Wolf for host ${this.args.host}`)
 
-        const docker = this.buildDockerClient()
+        const sshClient = this.buildSshClient()
         const timeout = 60 * 5 * 1000; // 5 minutes
         const pollInterval = 2000; // 2s
         const startTime = new Date();
@@ -209,42 +183,48 @@ export class WolfMoonlightPairer extends AbstractMoonlightPairer implements Moon
         // voluntary console.info to show in user's console
         console.info("Sending PIN to Wolf...")
 
-        while (Date.now() - startTime.getTime() < timeout) {
-            try {
+        try {
+            await sshClient.connect()
 
-                this.logger.debug(`Fetching latest PIN URL in logs of Wolf container...`)
+            while (Date.now() - startTime.getTime() < timeout) {
+                try {
 
-                const publicPinUrl = await this.getLatestPinURL(docker, this.args.host)
-         
-                if (!publicPinUrl) {
-                    this.logger.debug(`No PIN URL found in logs, waiting for user to initiate pairing...`)
+                    this.logger.debug(`Fetching latest PIN URL in logs of Wolf container...`)
+
+                    const publicPinUrl = await this.getLatestPinURL(sshClient, this.args.host)
+
+                    if (!publicPinUrl) {
+                        this.logger.debug(`No PIN URL found in logs, waiting for user to initiate pairing...`)
+                        await new Promise(resolve => setTimeout(resolve, pollInterval))
+                        continue;
+                    }
+
+                    this.logger.debug(`Sending PIN to ${publicPinUrl}...`)
+
+                    await this.sendPinData(publicPinUrl, pin)
+
+                    this.logger.debug(`Checking in logs if pairing was successful...`)
+
+                    const pairingSuccess = await this.checkPairingSuccess(sshClient, startTime)
+
+                    if (pairingSuccess) {
+                        this.logger.info(`Successfully paired instance ${this.instanceName} with Wolf`)
+                        return;
+                    }
+
+                    this.logger.debug(`Pairing not yet successful, will retry in ${pollInterval}ms...`)
                     await new Promise(resolve => setTimeout(resolve, pollInterval))
-                    continue;
+
+                } catch (e) {
+                    this.logger.error(`Failed to pair instance ${this.instanceName} with Wolf.`, { cause: e })
+                    await new Promise(resolve => setTimeout(resolve, pollInterval))
                 }
-
-                this.logger.debug(`Sending PIN to ${publicPinUrl}...`)
-
-                await this.sendPinData(publicPinUrl, pin)
-
-                this.logger.debug(`Checking in logs if pairing was successful...`)
-
-                const pairingSuccess = await this.checkPairingSuccess(docker, startTime)
-
-                if (pairingSuccess) {
-                    this.logger.info(`Successfully paired instance ${this.instanceName} with Wolf`)
-                    return;
-                }
-
-                this.logger.debug(`Pairing not yet successful, will retry in ${pollInterval}ms...`)
-                await new Promise(resolve => setTimeout(resolve, pollInterval))
-
-            } catch (e) {
-                this.logger.error(`Failed to pair instance ${this.instanceName} with Wolf.`, { cause: e })
-                await new Promise(resolve => setTimeout(resolve, pollInterval))
             }
-        }
 
-        throw new Error(`Failed to pair instance ${this.instanceName} with Wolf after ${timeout}ms timeout`);
+            throw new Error(`Failed to pair instance ${this.instanceName} with Wolf after ${timeout}ms timeout`);
+        } finally {
+            sshClient.dispose()
+        }
     }
         
 }
