@@ -145,25 +145,52 @@ else
   echo "Mode '$MODE_NAME' already exists in the list of modes for $SCREEN_NAME. Skipping addmode."
 fi
 
-echo "Setting mode '$MODE_NAME' to $SCREEN_NAME"
+# Detect the mode currently active on the screen (xrandr marks it with '*')
+# Reuse XRANDR_OUTPUT captured above to avoid an extra xrandr call
+CURRENT_MODE_LINE=$(echo "$XRANDR_OUTPUT" | grep '\*' | head -n1)
+CURRENT_MODE_NAME=$(echo "$CURRENT_MODE_LINE" | awk '{print $1}')
+CURRENT_MODE_REFRESH=$(echo "$CURRENT_MODE_LINE" | awk '{print $2}' | sed 's/\*.*//;s/+.*//')
 
-# Apply the new mode to the screen
-xrandr --output $SCREEN_NAME --mode ${MODE_NAME} --refresh ${DESIRED_SCREEN_FPS}
-
-if [ $? -eq 0 ]; then
-  echo "Successfully applied mode '$MODE_NAME' to $SCREEN_NAME."
+# Skip mode application and ForceFullCompositionPipeline when the display
+# already runs the desired mode: re-applying xrandr mode and nvidia
+# CurrentMetaMode under a fullscreen game holding a live DXVK/vkd3d swapchain
+# can wedge its present path (observed: UE5 game frozen, vkd3d-swapchain
+# thread stuck in futex wait after a mid-game mode re-apply on session start)
+MODE_ALREADY_ACTIVE=false
+if [ -n "$CURRENT_MODE_NAME" ] \
+   && [ "$CURRENT_MODE_NAME" = "$MODE_NAME" ] \
+   && awk -v current="$CURRENT_MODE_REFRESH" -v desired="$DESIRED_SCREEN_FPS" 'BEGIN { exit !(current == desired) }'; then
+  MODE_ALREADY_ACTIVE=true
+  echo "Mode '$MODE_NAME @ ${DESIRED_SCREEN_FPS}Hz' already active on '$SCREEN_NAME'. Skipping mode application."
 else
-  echo "Failed to apply mode '$MODE_NAME' to $SCREEN_NAME."
+  echo "Setting mode '$MODE_NAME' to $SCREEN_NAME"
+
+  # Apply the new mode to the screen
+  xrandr --output $SCREEN_NAME --mode ${MODE_NAME} --refresh ${DESIRED_SCREEN_FPS}
+
+  if [ $? -eq 0 ]; then
+    echo "Successfully applied mode '$MODE_NAME' to $SCREEN_NAME."
+  else
+    echo "Failed to apply mode '$MODE_NAME' to $SCREEN_NAME."
+  fi
 fi
 
 # Apply NVIDIA ForceFullCompositionPipeline if NVIDIA is enabled
 # ForceFullCompositionPipeline allow smoother images in games where image may tear otherwise
 if [ "$NVIDIA_ENABLE" = "true" ]; then
-  echo "NVIDIA enabled, applying ForceFullCompositionPipeline for $SCREEN_NAME..."
-  nvidia-settings --assign "CurrentMetaMode=$SCREEN_NAME: $MODE_NAME +0+0 { ForceFullCompositionPipeline = On }"
-  if [ $? -eq 0 ]; then
-    echo "Successfully enabled ForceFullCompositionPipeline for $SCREEN_NAME."
+  # Skip when the mode was left untouched and FFCP is already part of the
+  # active CurrentMetaMode: re-assigning an identical meta mode can also
+  # disrupt the running swapchain
+  if [ "$MODE_ALREADY_ACTIVE" = "true" ] \
+     && nvidia-settings -q CurrentMetaMode 2>/dev/null | grep -q "ForceFullCompositionPipeline=On"; then
+    echo "ForceFullCompositionPipeline already active for the current mode on '$SCREEN_NAME'. Skipping."
   else
-    echo "Warning: Failed to enable ForceFullCompositionPipeline for $SCREEN_NAME. This may be expected in some environments."
+    echo "NVIDIA enabled, applying ForceFullCompositionPipeline for $SCREEN_NAME..."
+    nvidia-settings --assign "CurrentMetaMode=$SCREEN_NAME: $MODE_NAME +0+0 { ForceFullCompositionPipeline = On }"
+    if [ $? -eq 0 ]; then
+      echo "Successfully enabled ForceFullCompositionPipeline for $SCREEN_NAME."
+    else
+      echo "Warning: Failed to enable ForceFullCompositionPipeline for $SCREEN_NAME. This may be expected in some environments."
+    fi
   fi
 fi
