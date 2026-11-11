@@ -31,7 +31,7 @@ mkdir -p $CLOUDYPAD_DATA_DIR/sunshine/covers
 ln -sfn $CLOUDYPAD_DATA_DIR/sunshine/covers $APPDATA/covers
 
 # Capture backend default: x11 unless overridden by compose env (nvfbc on
-# datacenter GPUs, see docker-compose.nvidia.yml). Defaults here so a stale
+# datacenter and professional GPUs, see docker-compose.nvidia.yml). Defaults here so a stale
 # compose file without the var doesn't render an empty capture setting and
 # let Sunshine fall back to its broken-in-container KMS auto-probe.
 export CLOUDYPAD_SUNSHINE_CAPTURE=${CLOUDYPAD_SUNSHINE_CAPTURE:-x11}
