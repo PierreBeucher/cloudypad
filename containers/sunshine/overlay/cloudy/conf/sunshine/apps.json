@@ -21,7 +21,7 @@
         },
         {
             "name": "Steam (Big Picture)",
-            "image-path": "$(XDG_CONFIG_HOME)/sunshine/assets/steam-big-picture.png",
+            "image-path": "/cloudy/conf/sunshine/assets/steam-big-picture.png",
             "prep-cmd": [
                 {
                     "do": "sh -c \"sunshine-app-startup.sh > \/tmp\/sunshine-session-start.log 2>&1\"",

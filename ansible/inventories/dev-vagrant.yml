@@ -63,15 +63,9 @@ all:
         - "/vagrant/containers/sunshine/overlay/cloudy/bin:/cloudy/bin"
         - "/vagrant/containers/sunshine/overlay/usr/local/share/applications:/usr/local/share/applications"
         - "/vagrant/containers/sunshine/overlay/usr/local/share/pixmaps:/usr/local/share/pixmaps"
-        # Plasma default configs (appletsrc, theme, panel size): seeded by
-        # setup-plasma-default-desktop.sh at container start on new instances
-        # only. To test default overlay config changes: start a fresh container
-        # (remove $HOME/.config Plasma session files) as user customizations
-        # are preserved on restart
         - "/vagrant/containers/sunshine/overlay/cloudy/conf/plasma-default:/cloudy/conf/plasma-default"
         - "/vagrant/containers/sunshine/overlay/cloudy/conf/sunshine/sunshine.conf.template:/cloudy/conf/sunshine/sunshine.conf.template"
         - "/vagrant/containers/sunshine/overlay/cloudy/conf/sunshine/apps.json:/cloudy/conf/sunshine/apps.json"
-        - "/vagrant/containers/sunshine/overlay/cloudy/conf/sunshine/assets:/cloudy/conf/sunshine/assets"
         - "/vagrant/containers/sunshine/overlay/cloudy/conf/heroic-default:/cloudy/conf/heroic-default"
         - "/vagrant/containers/sunshine/overlay/cloudy/conf/supervisor:/cloudy/conf/supervisor"
 

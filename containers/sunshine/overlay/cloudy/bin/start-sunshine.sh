@@ -3,32 +3,15 @@
 wait-x-availability.sh
 
 # Sunshine appdata dir: Sunshine resolves everything relative to it (main
-# config, apps.json, assets, covers). It lives in the persisted user home:
-# user state survives container recreation and instance restarts.
+# config). It lives in the persisted user home: user state survives container
+# recreation and instance restarts. Apps list itself comes from the image via
+# the file_apps config (see sunshine.conf.template).
 APPDATA=$XDG_CONFIG_HOME/sunshine
 mkdir -p $APPDATA
 
 # Sunshine state directory (cert, pkey, pairing state, credentials), pinned
 # to the persisted data dir via sunshine.conf
 mkdir -p $CLOUDYPAD_DATA_DIR/sunshine
-
-# Seed the app list from the image when missing (new instances and instances
-# where the user deleted apps.json): Cloudy Pad app list, never overwrites
-# user edits made via the Web UI on existing instances
-if [ ! -f $APPDATA/apps.json ]; then
-    echo "Seeding Sunshine apps.json from image"
-    cp $CLOUDYPAD_CONF_DIR/sunshine/apps.json $APPDATA/apps.json
-fi
-
-# Refresh app cover images from the image on every start (static, tiny):
-# image updates land without container recreation
-mkdir -p $APPDATA/assets
-cp $CLOUDYPAD_CONF_DIR/sunshine/assets/*.png $APPDATA/assets/
-
-# Sunshine hardcodes its cover upload dir to appdata/covers: symlink it to
-# the persisted data dir so user-uploaded covers survive container recreation
-mkdir -p $CLOUDYPAD_DATA_DIR/sunshine/covers
-ln -sfn $CLOUDYPAD_DATA_DIR/sunshine/covers $APPDATA/covers
 
 # Capture backend default: x11 unless overridden by compose env (nvfbc on
 # datacenter and professional GPUs, see docker-compose.nvidia.yml). Defaults here so a stale
