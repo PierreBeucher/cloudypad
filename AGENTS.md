@@ -17,6 +17,7 @@
 - [Commands](#commands)
   - [ALWAYS run commands under a Nix development shell](#always-run-commands-under-a-nix-development-shell)
   - [Task files](#task-files)
+  - [Moonlight host helpers](#moonlight-host-helpers)
 
 ## General
 
@@ -376,3 +377,25 @@ task test-unit
 ```
 
 Considering above statement, these must be run as `nix develop -c task ...` of course.
+
+### Moonlight host helpers
+
+Moonlight has no CLI command to list or remove paired hosts (`moonlight list <host>` only lists a host's apps): hosts live in the Moonlight config file (`Moonlight.conf`, QSettings format) as `[hosts]` groups keyed `N\key=value` with a `size=N` host count. `hack/moonlight-hosts.sh` parses and edits that file — useful when debugging pairing (eg. stale host entries left by destroyed/recreated instances block new pairings, and failed pairing attempts leave partial entries).
+
+```sh
+# List hosts: index, paired state (non-empty srvcert), hostname, address, UUID
+task dev:moonlight-list
+
+# Delete a host by index (renumbers remaining groups, fixes size, backs up the config first)
+task dev:moonlight-delete -- 2
+
+# Delete all hosts
+task dev:moonlight-delete-all
+```
+
+Notes:
+
+- Exiting Moonlight does not overwrite external edits to the config, so the file can be edited while Moonlight runs (verified)
+- Config path defaults to the Flatpak install, overridable with `MOONLIGHT_CONFIG` (same convention as `hack/dev-pair.sh` and `hack/dev-vagrant-pair.sh`)
+- A timestamped backup is written next to the config before every edit
+

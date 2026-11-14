@@ -96,6 +96,24 @@ tasks:
     cmds:
     - ./hack/dev-vagrant-pair.sh
 
+  # List Moonlight hosts (paired instances) from the Moonlight config file
+  # usage: task dev:moonlight-list
+  dev:moonlight-list:
+    cmds:
+    - ./hack/moonlight-hosts.sh list
+
+  # Delete a Moonlight host by index (as shown by dev:moonlight-list)
+  # usage: task dev:moonlight-delete -- <index>
+  dev:moonlight-delete:
+    cmds:
+    - ./hack/moonlight-hosts.sh delete {{ .CLI_ARGS }}
+
+  # Delete ALL Moonlight hosts from the Moonlight config file
+  # usage: task dev:moonlight-delete-all
+  dev:moonlight-delete-all:
+    cmds:
+    - ./hack/moonlight-hosts.sh delete-all
+
   # Reset Sunshine pairing state on the dev VM (fresh server identity).
   # Moonlight must then forget the host and re-pair (task dev:pair).
   # usage: task dev:reset-sunshine-state
