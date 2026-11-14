@@ -80,14 +80,47 @@ start=$(date +%s)
 
 # The pairer is authoritative: moonlight may exit without server-side
 # confirmation, only the pairer proves Sunshine accepted the PIN
-$MOONLIGHT_CMD pair "$HOST" --pin "$PIN" &
+#
+# Launch Moonlight in its own process group via setsid: the whole tree it
+# spawns (flatpak launcher, bwrap sandbox, xdg-dbus-proxy, moonlight app)
+# inherits that group, so cleanup can tear it all down atomically. Killing
+# the flatpak launcher PID alone orphans the sandbox: SIGTERM doesn't
+# propagate into it and SIGKILL skips its cleanup entirely.
+setsid $MOONLIGHT_CMD pair "$HOST" --pin "$PIN" &
 MOONLIGHT_PID=$!
+
+SCRIPT_PGID=$(ps -o pgid= -p $$ | tr -d '[:space:]')
+MOONLIGHT_PGID=$(ps -o pgid= -p "$MOONLIGHT_PID" 2>/dev/null | tr -d '[:space:]' || true)
+
+# Never group-kill the script's own process group: if setsid failed or
+# Moonlight died before its PGID could be read, fall back to PID-only kill
+if [ -z "$MOONLIGHT_PGID" ] || [ "$MOONLIGHT_PGID" = "$SCRIPT_PGID" ]; then
+    echo "Warning: no dedicated Moonlight process group, cleanup will kill the launcher PID only" >&2
+    MOONLIGHT_PGID=""
+fi
+
+# SIGTERM first so the flatpak launcher can tear down its sandbox, then
+# SIGKILL the group if anything survived. Group kill takes down launcher +
+# bwrap + xdg-dbus-proxy + moonlight atomically.
+kill_moonlight_tree() {
+    if [ -n "$MOONLIGHT_PGID" ]; then
+        kill -- -"$MOONLIGHT_PGID" 2>/dev/null || true
+        sleep 2
+        if kill -0 -- -"$MOONLIGHT_PGID" 2>/dev/null; then
+            kill -9 -- -"$MOONLIGHT_PGID" 2>/dev/null || true
+        fi
+    else
+        kill "$MOONLIGHT_PID" 2>/dev/null || true
+        sleep 2
+        kill -9 "$MOONLIGHT_PID" 2>/dev/null || true
+    fi
+}
 
 PAIRER_OK=false
 while kill -0 "$PAIR_PID" 2>/dev/null; do
     if [ $(( $(date +%s) - start )) -ge $DEADLINE_SECS ]; then
         kill "$PAIR_PID" 2>/dev/null || true
-        kill "$MOONLIGHT_PID" 2>/dev/null || true
+        kill_moonlight_tree
         break
     fi
     sleep 1
@@ -113,13 +146,22 @@ echo "Pairer confirmed pairing in ${PAIRER_CONFIRM_SECS}s"
 # the pairer confirmed. Kill it as soon as it persists the new host entry in
 # its config: the stale-host guard above guarantees no same-name entry
 # existed before pairing, so its appearance is proof the pairing was saved.
+#
+# The entry is written in two stages: `hostname=` first (entry created, certs
+# still empty), then the pairing data (srvcert) once pairing completes.
+# Only kill once the pairing data is on disk: killing earlier leaves an
+# incomplete entry Moonlight treats as unpaired.
+moonlight_entry_paired() {
+    grep -A14 "hostname=${NAME}\$" "$MOONLIGHT_CONFIG" 2>/dev/null | grep -qE 'srvcert=@ByteArray\(.+\)'
+}
+
 # Deadline fallback in case Moonlight is slow to flush (QSettings buffering):
 # kill anyway and let the end-to-end verification below be the final verdict.
 start=$(date +%s)
 while kill -0 "$MOONLIGHT_PID" 2>/dev/null; do
-    if grep -q "hostname=${NAME}\$" "$MOONLIGHT_CONFIG"; then
+    if moonlight_entry_paired; then
         MOONLIGHT_SAVE_SECS=$(( $(date +%s) - start ))
-        echo "Moonlight saved the host entry ${MOONLIGHT_SAVE_SECS}s after pairer confirmation, killing it"
+        echo "Moonlight saved the paired host entry ${MOONLIGHT_SAVE_SECS}s after pairer confirmation, killing it"
         break
     fi
     if [ $(( $(date +%s) - start )) -ge $MOONLIGHT_GRACE_SECS ]; then
@@ -128,14 +170,7 @@ while kill -0 "$MOONLIGHT_PID" 2>/dev/null; do
     fi
     sleep 1
 done
-kill "$MOONLIGHT_PID" 2>/dev/null || true
-
-# SIGTERM may not tear down the flatpak sandbox (bwrap children) promptly:
-# escalate to SIGKILL if still alive shortly after
-sleep 2
-if kill -0 "$MOONLIGHT_PID" 2>/dev/null; then
-    kill -9 "$MOONLIGHT_PID" 2>/dev/null || true
-fi
+kill_moonlight_tree
 
 # End-to-end verification: the saved host entry must list apps from the instance
 if $MOONLIGHT_CMD list "$HOST" 2>/dev/null | grep -q "Desktop"; then

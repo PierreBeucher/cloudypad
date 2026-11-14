@@ -89,6 +89,13 @@ tasks:
     cmds:
     - ./hack/dev-pair.sh {{ .CLI_ARGS }}
 
+  # Pair the local Vagrant dev VM's Sunshine with Moonlight, no Cloudy Pad
+  # instance involved: the VM is not a Cloudy Pad instance, just reachable by IP.
+  # usage: task dev:vagrant-pair
+  dev:vagrant-pair:
+    cmds:
+    - ./hack/dev-vagrant-pair.sh
+
   # Reset Sunshine pairing state on the dev VM (fresh server identity).
   # Moonlight must then forget the host and re-pair (task dev:pair).
   # usage: task dev:reset-sunshine-state
@@ -163,7 +170,11 @@ tasks:
   test-integ-provider-linode:
     cmds:
     - npx mocha --config test/integ/.mocharc.json ./test/integ/stable/core/providers/linode/client.spec.ts
-    - npx mocha --config test/integ/.mocharc.json ./test/integ/stable/core/providers/linode/lifecycle.spec.ts 
+    - npx mocha --config test/integ/.mocharc.json ./test/integ/stable/core/providers/linode/lifecycle.spec.ts
+
+  test-integ-provider-linode-deploy-only:
+    cmds:
+    - npx mocha --config test/integ/.mocharc.json ./test/integ/stable/core/providers/linode/deploy-only-plasma.spec.ts
 
   # Ensure analytics key are matching in various places in code 
   test-analytics-key-match:
