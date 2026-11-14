@@ -1,0 +1,9 @@
+# Default Plasma shell config (seeded once on new instances, see
+# setup-plasma-default-desktop.sh)
+#
+# Panel thickness 60px: default taskbar icon size (icons fill the panel
+# height). Panel id maps to the panel containment id (2) in the default
+# plasma-org.kde.plasma.desktop-appletsrc. plasmashell appends its runtime
+# state ([Updates], per-resolution geometry) to this file at session start.
+[PlasmaViews][Panel 2][Defaults]
+thickness=60

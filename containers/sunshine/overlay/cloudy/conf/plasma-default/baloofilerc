@@ -1,0 +1,6 @@
+# Baloo (Plasma file indexer) configuration
+# The indexer has no use on a headless streamed gaming desktop and can cause
+# IO/CPU storms when it walks large game libraries (tens of GB on the data
+# disk), visible as stutters during play. Disable it entirely.
+[Basic Settings]
+Indexing-Enabled=false

@@ -20,25 +20,8 @@
             "wait-all": true
         },
         {
-            "name": "Steam",
-            "image-path": "steam.png",
-            "prep-cmd": [
-                {
-                    "do": "sh -c \"sunshine-app-startup.sh > \/tmp\/sunshine-session-start.log 2>&1\"",
-                    "undo": "sh -c \"steam-stop.sh > \/tmp\/steam-stop.log 2>&1\""
-                }
-            ],
-            "detached": [
-                "sh -c \"steam-start.sh steam:\/\/open\/games > \/tmp\/steam-start.log 2>&1\""
-            ],
-            "exclude-global-prep-cmd": "false",
-            "auto-detach": "true",
-            "wait-all": "true",
-            "exit-timeout": "5"
-        },
-        {
             "name": "Steam (Big Picture)",
-            "image-path": "$(XDG_CONFIG_HOME)/sunshine/assets/steam-big-picture.png",
+            "image-path": "/cloudy/conf/sunshine/assets/steam-big-picture.png",
             "prep-cmd": [
                 {
                     "do": "sh -c \"sunshine-app-startup.sh > \/tmp\/sunshine-session-start.log 2>&1\"",
@@ -47,95 +30,6 @@
             ],
             "detached": [
                 "sh -c \"steam-start.sh steam:\/\/open\/bigpicture > \/tmp\/steam-start-big-picture.log 2>&1\""
-            ],
-            "exclude-global-prep-cmd": "false",
-            "auto-detach": "true",
-            "wait-all": "true",
-            "exit-timeout": "5",
-            "cmd": ""
-        },
-        {
-            "name": "Firefox",
-            "image-path": "$(XDG_CONFIG_HOME)/sunshine/assets/firefox.png",
-            "prep-cmd": [
-                {
-                    "do": "sh -c \"sunshine-app-startup.sh > \/tmp\/sunshine-session-start.log 2>&1\""
-                }
-            ],
-            "detached": [
-                "sh -c \"firefox > \/tmp\/firefox-start.log 2>&1\""
-            ],
-            "exclude-global-prep-cmd": "false",
-            "auto-detach": "true",
-            "wait-all": "true",
-            "exit-timeout": "5",
-            "cmd": ""
-        },
-        {
-            "name": "Heroic Games Launcher",
-            "image-path": "$(XDG_CONFIG_HOME)/sunshine/assets/heroic.png",
-            "prep-cmd": [
-                {
-                    "do": "sh -c \"sunshine-app-startup.sh > \/tmp\/sunshine-session-start.log 2>&1\"",
-                    "undo": "sh -c \"heroic-stop.sh > \/tmp\/heroic-stop.log 2>&1\""
-                }
-            ],
-            "detached": [
-                "sh -c \"heroic-start.sh > \/tmp\/heroic-start.log 2>&1\""
-            ],
-            "exclude-global-prep-cmd": "false",
-            "auto-detach": "true",
-            "wait-all": "true",
-            "exit-timeout": "5",
-            "cmd": ""
-        },
-        {
-            "name": "Epic Games",
-            "image-path": "$(XDG_CONFIG_HOME)/sunshine/assets/epic.png",
-            "prep-cmd": [
-                {
-                    "do": "sh -c \"sunshine-app-startup.sh > \/tmp\/sunshine-session-start.log 2>&1\"",
-                    "undo": "sh -c \"heroic-stop.sh > \/tmp\/heroic-stop.log 2>&1\""
-                }
-            ],
-            "detached": [
-                "sh -c \"heroic-start.sh > \/tmp\/heroic-start.log 2>&1\""
-            ],
-            "exclude-global-prep-cmd": "false",
-            "auto-detach": "true",
-            "wait-all": "true",
-            "exit-timeout": "5",
-            "cmd": ""
-        },
-        {
-            "name": "GOG",
-            "image-path": "$(XDG_CONFIG_HOME)/sunshine/assets/gog.png",
-            "prep-cmd": [
-                {
-                    "do": "sh -c \"sunshine-app-startup.sh > \/tmp\/sunshine-session-start.log 2>&1\"",
-                    "undo": "sh -c \"heroic-stop.sh > \/tmp\/heroic-stop.log 2>&1\""
-                }
-            ],
-            "detached": [
-                "sh -c \"heroic-start.sh > \/tmp\/heroic-start.log 2>&1\""
-            ],
-            "exclude-global-prep-cmd": "false",
-            "auto-detach": "true",
-            "wait-all": "true",
-            "exit-timeout": "5",
-            "cmd": ""
-        },
-        {
-            "name": "Lutris",
-            "image-path": "$(XDG_CONFIG_HOME)/sunshine/assets/lutris.png",
-            "prep-cmd": [
-                {
-                    "do": "sh -c \"sunshine-app-startup.sh > \/tmp\/sunshine-session-start.log 2>&1\"",
-                    "undo": "sh -c \"lutris-stop.sh > \/tmp\/lutris-stop.log 2>&1\""
-                }
-            ],
-            "detached": [
-                "sh -c \"lutris-start.sh > \/tmp\/lutris-start.log 2>&1\""
             ],
             "exclude-global-prep-cmd": "false",
             "auto-detach": "true",

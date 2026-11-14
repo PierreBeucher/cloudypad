@@ -1,0 +1,9 @@
+[$Version]
+update_info=kscreenlocker.upd:0.1-autolock
+
+[Daemon]
+# Never auto-lock the session: Cloudy Pad is a headless streamed desktop,
+# locking the screen would lock the user out of their own instance
+Autolock=false
+# Never lock on resume either
+LockOnResume=false

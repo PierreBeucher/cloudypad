@@ -9,7 +9,7 @@ Here's a typical workflow outline for contributions:
 3. Setup your development environment
    - Development environment setup is **fully automated!** Don't worry about tooling installation and setup
 4. Write code 
-   - Use of AI is encouraged, we provide contextual AI `AGENTS.md` and Cursor rules files. 
+   - Use of AI is encouraged, we provide contextual AI `AGENTS.md` files. 
    - You can also pass this contribution guide directly to AI context
    - Make sure to review and test your code before going forward though. Unsupervised IA contribution are unlikely to pass review.
 5. Run tests and review
@@ -83,7 +83,7 @@ See [Architecture overview](./architecture.md)
 
 ## Using AI is encouraged - with caveats
 
-You are encouraged to use AI to contribute to Cloudy Pad. `AGENTS.md`-like files are present under `.cursor/rules` - make sure to include them. They describe expected best practices and context for AI to better understand the project. 
+You are encouraged to use AI to contribute to Cloudy Pad. Make sure to include the `AGENTS.md` files in AI context - they describe expected best practices and context for AI to better understand the project. 
 
 Please note:
 
@@ -334,25 +334,35 @@ https://192.168.56.43:47990/
 
 **Debug container and Dockerfile changes**
 
-During Sunshine container development, it's possible to use a Vagrant-specific Docker Compose which will mount folders from the host machine directly in the Cloudy Pad container.
+The Vagrant VM container supports bind mounting files from the local checkout directly in the Cloudy Pad container, so overlay changes (scripts, configs...) can be tested without rebuilding the image.
 
-For example, if you change `containers/sunshine/overlay/cloudy/conf/sunshine/sunshine.conf.template` locally, you don't need to rebuild the container image, you can mount this file directly in the VM container for faster testing:
+The Docker Compose deployed in the VM is rendered by Ansible from `ansible/roles/sunshine/templates/docker-compose.yml`. Extra volumes are defined by the `sunshine_extra_volumes` variable: the Vagrant inventory (`ansible/inventories/dev-vagrant.yml`) already mounts the Sunshine overlay `bin/` and default `conf/` trees from the local checkout (synced in the VM at `/vagrant`) into the container.
 
-- Update `test/resources/docker-compose.vagrant.yml` to mount desired files, for example:
-```yaml
-  volumes:
-  # [...]
-  #
-  # Mount local containers/sunshine/overlay/cloudy/conf/sunshine/sunshine.conf.template
-  # Local project is mounted at /vagrant, hence using /vagrant/<project/path>
-  # 
-  - "/vagrant/containers/sunshine/overlay/cloudy/conf/sunshine/sunshine.conf.template:/cloudy/conf/sunshine/sunshine.conf.template"
+For example, if you change `containers/sunshine/overlay/cloudy/conf/sunshine/sunshine.conf.template` locally:
+
+- Apply the Ansible config, which re-renders the Compose file and recreates the container with the mounts (config templates are rendered inside the container at boot):
+```sh
+task dev-ansible-config
 ```
-- Update container with custom mounts
+- Then restart the container so boot scripts pick up your changes:
 ```sh
 vagrant ssh
-$ docker compose -f /vagrant/test/resources/docker-compose.vagrant.yml -p sunshine up -d --force-recreate
+$ docker restart cloudy
 ```
+
+To mount additional paths, add entries to `sunshine_extra_volumes` in `ansible/inventories/dev-vagrant.yml`. Use `/vagrant/<project/path>` as the host part: the local checkout is synced in the VM at `/vagrant` by the Vagrantfile.
+
+```yaml
+      sunshine_extra_volumes:
+        # [...]
+        - "/vagrant/containers/sunshine/overlay/cloudy/conf/sunshine/sunshine.conf.template:/cloudy/conf/sunshine/sunshine.conf.template"
+```
+
+Notes:
+
+- The container runs as user `cloudy` (UID 1001) while Vagrant-synced files belong to the host user (UID 1000): mounted files are readable/executable (repo files are world-readable with exec bits preserved) but not writable from inside the container. Edit files on the host, then `docker restart cloudy`.
+- Do NOT mount directories that start scripts write to at runtime: overlay `conf/sunshine/` contains rendered files (`sunshine.conf`) written at container start - mounting the whole tree read-only breaks the boot scripts. The inventory mounts only its static items (`sunshine.conf.template`, `apps.json`, `assets/`). Same caution for any path next to persistent config mount points (`/home/cloudy`, `/home/cloudy/.config/heroic`): mount default dirs (e.g. `heroic-default`) or single files instead.
+- Full image rebuilds (Dockerfile changes) still use `task dev-docker-sunshine-to-vm`.
 
 ### Connect to Cloudy Pad VM and container
 

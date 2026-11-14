@@ -22,8 +22,6 @@ fi
 
 source setup-x-config.sh
 
-setup-xfce4-default-config.sh
-
 setup-pulseaudio.sh
 
 setup-heroic.sh

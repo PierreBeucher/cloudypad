@@ -139,6 +139,7 @@ export interface InstanceManager {
     doDestroy(opts?: DestroyOptions): Promise<void>
 
     pairInteractive(): Promise<void>
+    pairAuto(): Promise<void>
     pairSendPin(pin: string, retries?: number, retryDelay?: number): Promise<boolean>
 
     /**
@@ -427,6 +428,11 @@ export class GenericInstanceManager<ST extends InstanceStateV1> implements Insta
     async pairInteractive(): Promise<void> {
         const runner = await this.buildRunner()
         await runner.pairInteractive()
+    }
+
+    async pairAuto(): Promise<void> {
+        const runner = await this.buildRunner()
+        await runner.pairAuto()
     }
 
     async pairSendPin(pin: string, retries?: number, retryDelay?: number): Promise<boolean> {

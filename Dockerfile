@@ -1,5 +1,5 @@
 # https://hub.docker.com/_/node
-ARG NODE_VERSION="25.6.1-trixie-slim"
+ARG NODE_VERSION="26.12.0-trixie-slim"
 FROM node:${NODE_VERSION} AS base
 
 # Global tooling
@@ -15,10 +15,10 @@ RUN apt update && apt install -y \
 # pnpm for cache efficiency
 # Requires PNPM_HOME on PATH
 # Cache mounts are used later using these paths
-# pnpm requires global-bin-dir to exist and be on PATH
+# pnpm 12: global bin dir is $PNPM_HOME/bin and must be on PATH for global installs
 ENV PNPM_HOME="/usr/local/share/pnpm"
-ENV PATH="$PNPM_HOME:$PATH"
-ARG PNPM_VERSION="10.33.3"
+ENV PATH="$PNPM_HOME/bin:$PATH"
+ARG PNPM_VERSION="12.11.2"
 
 RUN npm install -g "pnpm@${PNPM_VERSION}" && \
   pnpm config set store-dir /pnpm_store && \
@@ -30,7 +30,7 @@ RUN npm install -g "pnpm@${PNPM_VERSION}" && \
 FROM base AS pulumi
 
 # https://github.com/pulumi/pulumi/releases
-ARG PULUMI_VERSION="v3.221.0"
+ARG PULUMI_VERSION="v3.269.0"
 ARG TARGETPLATFORM
 RUN case "$TARGETPLATFORM" in \
       "linux/amd64") \
@@ -54,6 +54,8 @@ WORKDIR /build
 
 COPY package.json    package.json
 COPY pnpm-lock.yaml  pnpm-lock.yaml
+# pnpm 12 config: approved dependency build scripts (see pnpm-workspace.yaml)
+COPY pnpm-workspace.yaml pnpm-workspace.yaml
 RUN --mount=type=cache,id=pnmcache,target=/pnpm_store \
   pnpm install --prefer-offline --frozen-lockfile
 
@@ -79,7 +81,7 @@ FROM base AS final
 # Can't use pipx yet for global install as major distrib have an older version (1.1.0) 
 # which does not support pipx ensurepath --global
 # Python warns about break-system-packages but should be fine
-RUN pip3 install ansible==13.3.0 --break-system-packages
+RUN pip3 install ansible==14.5.0 --break-system-packages
 
 # Required for Azure DefaultAzureCredential
 RUN curl -sL https://aka.ms/InstallAzureCLIDeb -o install.sh && chmod +x install.sh && ./install.sh -y
@@ -109,6 +111,7 @@ ENV ANSIBLE_STDOUT_CALLBACK=community.general.unixy
 ENV NODE_ENV=production
 COPY package.json    package.json
 COPY pnpm-lock.yaml  pnpm-lock.yaml
+COPY pnpm-workspace.yaml pnpm-workspace.yaml
 RUN --mount=type=cache,id=pnmcache,target=/pnpm_store \
   pnpm install --prefer-offline --frozen-lockfile --prod
 

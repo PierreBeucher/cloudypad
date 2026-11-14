@@ -12,10 +12,13 @@ nvidia_driver_module_params: ''
 
 # Install version from .run file
 # See https://www.nvidia.com/en-us/drivers/unix/ or https://download.nvidia.com/XFree86/Linux-x86_64
-nvidia_driver_display_dotrun_install_version: "595.58.03"
+nvidia_driver_display_dotrun_install_version: "595.99.02"
 
 # Datacenter driver version
 # See https://developer.nvidia.com/datacenter-driver-archive
+# Pinned to 590.48.01: driver 615+ breaks NVENC hardware encoding in the
+# Sunshine container on this stack (encoder init falls back to CPU software
+# encoding, ~10-20 FPS with heavy stuttering). See session logs for details.
 nvidia_driver_datacenter_dotrun_install_version: "590.48.01"
 
 # Skip Docker restart during NVIDIA driver installation
@@ -36,4 +39,4 @@ nvidia_driver_skip_reboot: false
 # - https://github.com/NVIDIA/nvidia-container-toolkit/issues/1218
 # - https://github.com/NVIDIA/nvidia-container-toolkit/issues/1456
 # - https://github.com/NVIDIA/nvidia-container-toolkit/issues/1477
-nvidia_container_toolkit_version: "1.19.0-1"
+nvidia_container_toolkit_version: "1.20.1-1"

@@ -467,15 +467,18 @@ export abstract class AbstractInputPrompter<
         if(_autostopTimeout !== undefined){
             autoStopTimeout = _autostopTimeout
         } else {
-            let autoStopTimeoutStr = await select({
+            // Typed as the union of choice values: default must be one of the
+            // choice values (not the display name) with inquirer >= select types
+            const autoStopTimeoutChoices = [
+                { name: '10 minutes', value: '600' },
+                { name: '15 minutes', value: '900' },
+                { name: '30 minutes', value: '1800' },
+                { name: 'Enter custom timeout', value: '_' },
+            ] as const
+            let autoStopTimeoutStr: string = await select({
                 message: "Select Auto Stop timeout:",
-                choices: [
-                    { name: '10 minutes', value: '600' },
-                    { name: '15 minutes', value: '900' },
-                    { name: '30 minutes', value: '1800' },
-                    { name: 'Enter custom timeout', value: '_' },
-                ],
-                default: '15 minutes',
+                choices: autoStopTimeoutChoices,
+                default: '900',
             })
 
             while (autoStopTimeoutStr === '_' || isNaN(Number.parseInt(autoStopTimeoutStr))) {

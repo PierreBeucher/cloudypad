@@ -385,11 +385,24 @@ export function buildProgram(){
     
     program.command('pair <name>')
         .description('Pair an instance with Moonlight')
-        .action(async (name: string) => {
+        .option('--pin <pin>', 'Send the given PIN to the streaming server, non-interactive. Run moonlight pair with the same PIN in parallel.')
+        .option('--auto', 'Generate a PIN, print the moonlight pair command and send the PIN, non-interactive')
+        .action(async (name: string, opts: { pin?: string, auto?: boolean }) => {
             try {
                 analyticsClient.sendEvent(RUN_COMMAND_PAIR)
                 const m = await getInstanceManager(name)
-                await m.pairInteractive()
+
+                if(opts.pin && opts.auto) {
+                    throw new Error('Options --pin and --auto are mutually exclusive.')
+                }
+
+                if(opts.pin) {
+                    await m.pairSendPin(opts.pin)
+                } else if(opts.auto) {
+                    await m.pairAuto()
+                } else {
+                    await m.pairInteractive()
+                }
             } catch (error) {
                 throw new Error('Failed to pair instance', { cause: error })
             }

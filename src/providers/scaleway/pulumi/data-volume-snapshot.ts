@@ -104,7 +104,7 @@ export class ScalewayDataDiskSnapshotPulumiClient extends InstancePulumiClient<P
         this.logger.debug(`Setting snapshot stack ${this.stackName} config: ${JSON.stringify(config)}`)
 
         const stack = await this.getStack()
-        await stack.setConfig("scaleway:project_id", { value: config.projectId})
+        await stack.setConfig("scaleway:projectId", { value: config.projectId})
         await stack.setConfig("scaleway:region", { value: config.region})
         await stack.setConfig("scaleway:zone", { value: config.zone})
         await stack.setConfig("additionalTags", { value: JSON.stringify([`instance:${config.instanceName}`])})

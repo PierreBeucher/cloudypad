@@ -1,6 +1,9 @@
 # Known NVIDIA datacenter GPU models
 # Name matches return value for nvidia-smi --query-gpu=gpu_name
 #
+# Headless GPUs (no display output): Sunshine uses NvFBC capture and
+# screen resolution is capped to 2560x1600 (see docker-compose.nvidia.yml)
+#
 # Generated using a mix of real nvidia-smi outputs from various providers, ChatGPT and 
 # https://en.wikipedia.org/wiki/List_of_Nvidia_graphics_processing_units#Tesla
 # so may not be completely accurate. Feel free to provide PR to fix / improve it!
@@ -51,3 +54,14 @@ nvidia_datacenter_gpu_models:
   - NVIDIA L40
   - NVIDIA L40S
   - NVIDIA L4
+
+# Known NVIDIA professional (workstation) GPU models supporting NvFBC capture
+# Name matches return value for nvidia-smi --query-gpu=gpu_name
+#
+# GPUs with display outputs: Sunshine uses NvFBC capture, no resolution cap.
+# On these GPUs the default x11 capture combined with ForceFullCompositionPipeline
+# (applied on session start) freezes fullscreen games: frames never complete
+# while the composition pipeline is forced (observed on Linode RTX 4000 Ada).
+# Only list models validated on a real instance.
+nvidia_professional_gpu_models:
+  - NVIDIA RTX 4000 Ada Generation

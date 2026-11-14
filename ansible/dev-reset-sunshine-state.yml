@@ -1,0 +1,58 @@
+---
+# Dev feedback loop: reset Sunshine pairing state on the dev VM.
+# Fixes "Client certificate not authorized" / pairing corruption after image
+# changes: Sunshine regenerates a fresh server identity (cert/pkey) and clean
+# pairing state on next start.
+#
+# Moonlight side must then forget the host (stored server cert is now invalid)
+# and re-pair fresh (task dev:pair).
+#
+# Sunshine 2026+ state layout (container path /cloudy/data/sunshine/, bind
+# mounted from the host sunshine_data_dir):
+#   - cert.pem / pkey.pem          server identity (regenerated when missing)
+#   - sunshine_credentials.json    web UI credentials
+#   - sunshine_state.json          legacy 2025 pairing state (absent on 2026+)
+#
+# Sunshine is stopped via supervisorctl before wiping: it may rewrite state
+# files on shutdown, so wipe AFTER it stopped (container itself is left
+# running: docker exec cannot run on a stopped container).
+#
+# Usage: task dev:reset-sunshine-state
+- name: Reset Sunshine pairing state on dev VM
+  hosts: all
+  gather_facts: false
+  vars:
+    # Matches the Sunshine compose service (ansible/roles/sunshine)
+    sunshine_container_name: cloudy
+    # Host bind mount of the container /cloudy/data/sunshine state directory
+    # (default from ansible/roles/sunshine/defaults/main.yml)
+    sunshine_state_dir: /var/lib/cloudypad/sunshine/data/sunshine
+    sunshine_state_files:
+      - sunshine_state.json
+      - sunshine_credentials.json
+      - cert.pem
+      - pkey.pem
+
+  tasks:
+    - name: Stop Sunshine process (prevents state rewrite on shutdown)
+      command:
+        argv: [docker, exec, "{{ sunshine_container_name }}", supervisorctl, stop, sunshine]
+
+    - name: Remove Sunshine pairing/credentials state (host bind mount)
+      become: true
+      file:
+        path: "{{ sunshine_state_dir }}/{{ item }}"
+        state: absent
+      loop: "{{ sunshine_state_files }}"
+
+    - name: Start Sunshine process (regenerates identity + credentials)
+      command:
+        argv: [docker, exec, "{{ sunshine_container_name }}", supervisorctl, start, sunshine]
+
+    - name: Wait for Sunshine to come back up
+      command:
+        argv: [docker, exec, "{{ sunshine_container_name }}", pgrep, "-c", sunshine]
+      register: sunshine_up
+      until: sunshine_up.rc == 0
+      retries: 30
+      delay: 2

@@ -1,0 +1,9 @@
+allowBuilds:
+  cpu-features: true
+  protobufjs: true
+  ssh2: true
+  unrs-resolver: true
+# pnpm 12 config: dependency build scripts are blocked by default.
+# Approve the (audited) ones: ssh2 + cpu-features build optional native
+# bindings via node-gyp (pure-JS fallback otherwise), protobufjs postinstall
+# is a no-op version check, unrs-resolver verifies its prebuilt napi binding.
