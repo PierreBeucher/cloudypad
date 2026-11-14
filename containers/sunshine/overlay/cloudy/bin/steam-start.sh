@@ -13,7 +13,13 @@ if [ ! -f $CLOUDYPAD_DATA_DIR/Steam/config/config.vdf ]; then
     chmod 0644 $CLOUDYPAD_DATA_DIR/Steam/config/config.vdf
 fi
 
-echo "Starting Steam, may take a few seconds..."
+echo
+echo "========================================="
+echo 
+echo "STARTING STEAM... UPDATE MAY TAKE A FEW SECONDS TO PROCEED"
+echo
+echo "========================================="
+echo
 
 # Steam is detached from the calling terminal session so its parent may close
 # at any time without killing Steam (terminal close sends SIGHUP to the
