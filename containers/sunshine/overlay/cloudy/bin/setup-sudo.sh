@@ -4,11 +4,6 @@ set -euo pipefail
 #
 # Give CLOUDYPAD_USER passwordless sudo access
 #
-# Passwordless by design: no sudo password to remember, no lecture needed
-# (sudo-rs, the default sudo on Ubuntu 24.10+/26.04, has no lecture feature:
-# trifectatechfoundation/sudo-rs#400). Container changes are not persistent
-# by nature, as stated in documentation and on-site help launcher.
-#
 
 # Check if running as root
 if [[ $(id -u) -ne 0 ]]; then
