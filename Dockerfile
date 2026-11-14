@@ -15,9 +15,9 @@ RUN apt update && apt install -y \
 # pnpm for cache efficiency
 # Requires PNPM_HOME on PATH
 # Cache mounts are used later using these paths
-# pnpm requires global-bin-dir to exist and be on PATH
+# pnpm 12: global bin dir is $PNPM_HOME/bin and must be on PATH for global installs
 ENV PNPM_HOME="/usr/local/share/pnpm"
-ENV PATH="$PNPM_HOME:$PATH"
+ENV PATH="$PNPM_HOME/bin:$PATH"
 ARG PNPM_VERSION="12.11.2"
 
 RUN npm install -g "pnpm@${PNPM_VERSION}" && \
@@ -54,6 +54,8 @@ WORKDIR /build
 
 COPY package.json    package.json
 COPY pnpm-lock.yaml  pnpm-lock.yaml
+# pnpm 12 config: approved dependency build scripts (see pnpm-workspace.yaml)
+COPY pnpm-workspace.yaml pnpm-workspace.yaml
 RUN --mount=type=cache,id=pnmcache,target=/pnpm_store \
   pnpm install --prefer-offline --frozen-lockfile
 
@@ -109,6 +111,7 @@ ENV ANSIBLE_STDOUT_CALLBACK=community.general.unixy
 ENV NODE_ENV=production
 COPY package.json    package.json
 COPY pnpm-lock.yaml  pnpm-lock.yaml
+COPY pnpm-workspace.yaml pnpm-workspace.yaml
 RUN --mount=type=cache,id=pnmcache,target=/pnpm_store \
   pnpm install --prefer-offline --frozen-lockfile --prod
 
