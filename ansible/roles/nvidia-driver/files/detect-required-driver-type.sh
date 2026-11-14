@@ -27,10 +27,23 @@ if [ -z "$gpu_lines" ]; then
     exit 0
 fi
 
+# Check known device IDs first, before name-based detection: some GPUs are
+# unknown to the local pci.ids database, in which case lspci -nn prints them
+# without any model name, such as
+# 01:00.0 3D controller [0302]: NVIDIA Corporation Device [10de:27b2] (rev a1)
+# and name-based detection below cannot work. Device ID matching does not
+# depend on pci.ids at all.
+if echo "$gpu_lines" | grep -Eqi '10de:27b2'; then
+  # NVIDIA RTX 4000 Ada Generation (device 27b2, the SFF variant is 27b0):
+  # workstation GPU with display outputs, eg. on Linode g2-gpu-rtx4000a1.
+  # Unknown to Ubuntu 22.04 pci.ids so it would otherwise fall back to the
+  # datacenter driver. Display driver is the validated setup on this GPU
+  # (with NvFBC Sunshine capture, see sunshine role nvidia_professional_gpu_models).
+  echo "display"
 # Detect known NVIDIA GPU models
 # Check for datacenter/Tesla GPUs first (including RTX A series)
 # Then check for consumer/display GPUs (GeForce, GTX, RTX without A series)
-if echo "$gpu_lines" | grep -Eiq '\b(L4|L40S?|A2|A10|A16|A30|A40|A100|H100|H200|B100|B200|Tesla|Quadro|T4|V100|P100|P40|P4|M40|K80|RTX A[0-9]+)\b'; then
+elif echo "$gpu_lines" | grep -Eiq '\b(L4|L40S?|A2|A10|A16|A30|A40|A100|H100|H200|B100|B200|Tesla|Quadro|T4|V100|P100|P40|P4|M40|K80|RTX A[0-9]+)\b'; then
   echo "datacenter"
 elif echo "$gpu_lines" | grep -Eiq '\b(GeForce|GTX|RTX|MX)\b'; then
   echo "display"

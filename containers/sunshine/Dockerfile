@@ -4,9 +4,10 @@ WORKDIR /app
 
 # Sunshine
 # https://github.com/LizardByte/Sunshine/releases
+# NOTE: 2026.x asset naming: sunshine_<ver>-1+ubuntu<basever>_amd64.deb (matches the base Ubuntu version)
 FROM download-base AS download-sunshine
-ARG SUNSHINE_VERSION=2025.924.154138
-RUN curl -fL -o /app/sunshine.deb "https://github.com/LizardByte/Sunshine/releases/download/v${SUNSHINE_VERSION}/sunshine-ubuntu-24.04-amd64.deb"
+ARG SUNSHINE_VERSION=2026.1113.231225
+RUN curl -fL -o /app/sunshine.deb "https://github.com/LizardByte/Sunshine/releases/download/v${SUNSHINE_VERSION}/sunshine_${SUNSHINE_VERSION}-1%2Bubuntu26.04_amd64.deb"
 
 # Steam
 # https://repo.steampowered.com/steam/archive/stable/
@@ -19,13 +20,13 @@ RUN curl -f -o /app/steam.deb "https://repo.steampowered.com/steam/archive/stabl
 # Lutris
 # https://github.com/lutris/lutris/releases
 FROM download-base AS download-lutris
-ARG LUTRIS_VERSION="0.5.20"
+ARG LUTRIS_VERSION="0.5.22"
 RUN curl -fL -o /app/lutris.deb "https://github.com/lutris/lutris/releases/download/v${LUTRIS_VERSION}/lutris_${LUTRIS_VERSION}_all.deb"
 
 # Heroic
 # https://github.com/Heroic-Games-Launcher/HeroicGamesLauncher/releases
 FROM download-base AS download-heroic
-ARG HEROIC_VERSION="2.19.1"
+ARG HEROIC_VERSION="2.22.4"
 
 RUN curl -fL -o /app/heroic.deb "https://github.com/Heroic-Games-Launcher/HeroicGamesLauncher/releases/download/v${HEROIC_VERSION}/Heroic-${HEROIC_VERSION}-linux-amd64.deb"
 
@@ -33,7 +34,7 @@ RUN curl -fL -o /app/heroic.deb "https://github.com/Heroic-Games-Launcher/Heroic
 # Sunshine image based on Ubuntu 24.04
 # with desktop environment, game launchers and dependencies
 #
-FROM ubuntu:noble-20260210.1@sha256:98ff7968124952e719a8a69bb3cccdd217f5fe758108ac4f21ad22e1df44d237
+FROM ubuntu:26.04@sha256:f144425ff09be612d6d9ad965196e9cdc23dae1f42110a8a11a3e9a8198759f7
 
 ENV DEBIAN_FRONTEND=noninteractive
 
@@ -138,7 +139,7 @@ apt clean
 _MAIN_PACKAGES
 
 #
-# Desktop (xfce4) and utilities
+# Desktop (KDE Plasma on X11) and utilities
 #
 RUN --mount=type=cache,target=/var/cache --mount=type=tmpfs,target=/var/log <<_DESKTOP
 
@@ -153,18 +154,30 @@ echo "\
 Package: * \n\
 Pin: release o=LP-PPA-mozillateam \n\
 Pin-Priority: 1001 \n\
-\n\
 Package: firefox \n\
 Pin: version 1:1snap* \n\
 Pin-Priority: -1" | tee /etc/apt/preferences.d/mozilla-firefox
 
 apt update
+# NOTE: no inline comments in the list - sh continuation breaks on them
 apt install -y \
-    xfce4 \
-    xfce4-screenshooter \
+    plasma-desktop \
+    plasma-workspace \
+    plasma-session-x11 \
+    kwin-x11 \
     sudo \
     locales \
-    firefox
+    firefox \
+    breeze \
+    breeze-gtk-theme \
+    breeze-icon-theme \
+    kde-config-gtk-style \
+    polkit-kde-agent-1 \
+    dolphin \
+    konsole \
+    kwrite \
+    kdialog \
+    kde-spectacle
 
 apt clean
 
@@ -194,8 +207,11 @@ RUN --mount=type=cache,target=/var/cache --mount=type=tmpfs,target=/var/log --mo
 
 set -e
 
-apt install -y /app/steam-libs-amd64.deb
-apt install -y /app/steam-libs-i386.deb
+# --allow-downgrades: steam-libs pins older versions of some Ubuntu libs
+# (eg libc6:i386) than a newer base distro ships; Steam runtime containers
+# bundle their own libs anyway, the host pins are only for the launcher
+apt install -y --allow-downgrades /app/steam-libs-amd64.deb
+apt install -y --allow-downgrades /app/steam-libs-i386.deb
 apt install -y /app/steam.deb
 
 # Patch steam launch script to prevent Desktop shortcut creation on first launch:
@@ -227,7 +243,7 @@ apt install -y /app/heroic.deb
 _HEROIC
 
 # GE-Proton version that will be installed and configured for Heroic by default
-ENV CLOUDYPAD_HEROIC_DEFAULT_GEPROTON_VERSION="GE-Proton10-32"
+ENV CLOUDYPAD_HEROIC_DEFAULT_GEPROTON_VERSION="GE-Proton11-9"
 
 # 
 # Global environment variables
@@ -259,13 +275,21 @@ ENV SUNSHINE_SERVER_NAME="Sunshine"
 # See https://specifications.freedesktop.org/basedir-spec/latest/
 # 
 ENV XDG_RUNTIME_DIR=$CLOUDYPAD_RUNTIME_DIR
-ENV XDG_CONFIG_HOME=$CLOUDYPAD_CONF_DIR
+# User-space config (Plasma settings, app configs...) lives in the persisted
+# home directory. Cloudy Pad managed configs stay in CLOUDYPAD_CONF_DIR
+# (ephemeral, re-generated from image at container start)
+ENV XDG_CONFIG_HOME=$CLOUDYPAD_USER_HOME/.config
 ENV XDG_CACHE_HOME=$CLOUDYPAD_USER_HOME/.cache
 
 # Write data in known directory for persistence
 # XDG_DATA_HOME is used by various programs (like Steam) to store data
 # Use this known directory to easily persist it as bind mount or volume
 ENV XDG_DATA_HOME=$CLOUDYPAD_DATA_DIR
+
+# User shell: supervisord children, session processes and docker exec shells
+# inherit $SHELL from here. Without it Konsole warns "could not find ''" and
+# falls back to /bin/bash
+ENV SHELL=/bin/bash
 
 ENV DBUS_SYSTEM_BUS_ADDRESS="unix:path=$XDG_RUNTIME_DIR/dbus"
 

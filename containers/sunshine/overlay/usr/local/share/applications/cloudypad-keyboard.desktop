@@ -1,0 +1,10 @@
+[Desktop Entry]
+Name=Keyboard Settings
+Comment=Configure keyboard layout and input
+Exec=systemsettings kcm_keyboard
+Icon=input-keyboard
+Terminal=false
+Type=Application
+Categories=Settings;
+Path=
+StartupNotify=true
