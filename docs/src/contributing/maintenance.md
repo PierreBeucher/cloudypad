@@ -20,7 +20,7 @@ Some tests are required before release:
 
 ### Do release
 
-GitHub authentication uses your local `gh` login (`gh auth login`, needs repo contents + pull requests write). Alternatively, `gh` also reads `GITHUB_TOKEN`/`GH_TOKEN` env vars if set (eg. via `source <(novops load -e release)`).
+GitHub authentication uses your local `gh` login (`gh auth login`, needs repo contents + pull requests write). Alternatively, `gh` also reads `GITHUB_TOKEN`/`GH_TOKEN` env vars if set.
 
 ```sh
 # Create release with version computed by git-cliff from commits since previous release
@@ -31,7 +31,7 @@ task release-create
 task release-create -- 0.46.0
 
 # Dry run: stamp and commit on local release branch only, nothing pushed
-CLOUDYPAD_RELEASE_DRY_RUN=true task release-create
+task release-create -- --dry-run
 ```
 
 Release is fully automated, no prompt. It ends by printing a PR `release-X.Y.Z` → `master`.

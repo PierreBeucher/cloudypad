@@ -20,6 +20,7 @@
 #
 # Usage:
 #   release-create.sh [VERSION]          Create or resume a release
+#   release-create.sh --dry-run [VER.]   Stamp on local release branch only, push nothing
 #   release-create.sh --abort [VERSION]  Undo a release whose PR is not merged
 #
 # VERSION (X.Y.Z) defaults to the release in progress (open release PR or
@@ -29,8 +30,6 @@
 #   GITHUB_TOKEN                 Optional. If unset, local gh authentication is
 #                                used (must have repo contents + pull requests
 #                                write access).
-#   CLOUDYPAD_RELEASE_DRY_RUN    If "true", stamp and commit on local release
-#                                branch only, push nothing.
 #
 
 set -euo pipefail
@@ -46,6 +45,7 @@ CORE_IMAGE="${CLOUDYPAD_BUILD_CORE_IMAGE_REGISTRY:-ghcr.io/pierrebeucher/cloudyp
 SUNSHINE_IMAGE="${CLOUDYPAD_BUILD_SUNSHINE_IMAGE_REGISTRY:-ghcr.io/pierrebeucher/cloudypad/sunshine}"
 CI_WATCH_TIMEOUT="${CLOUDYPAD_RELEASE_CI_WATCH_TIMEOUT:-3600}"
 CI_RUN_REGISTER_TIMEOUT=300
+# CLOUDYPAD_RELEASE_DRY_RUN env kept as fallback for backward compatibility
 DRY_RUN="${CLOUDYPAD_RELEASE_DRY_RUN:-false}"
 # Release candidate: X.Y.Z-rc. Prerelease versions are published as GitHub
 # prereleases (not latest) and are not release boundaries for git-cliff.
@@ -536,6 +536,7 @@ main() {
   while [ $# -gt 0 ]; do
     case "$1" in
       --abort) mode="abort" ;;
+      --dry-run) DRY_RUN="true" ;;
       -h|--help) usage; exit 0 ;;
       -*) fail "unknown option: $1" ;;
       *)
