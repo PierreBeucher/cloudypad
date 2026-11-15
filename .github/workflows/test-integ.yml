@@ -5,8 +5,8 @@ on:
     branches:
       - "master"
   pull_request:
-    branches:
-      - master
+    branches-ignore:
+      - "release-**"
 
 env:
   CLOUDYPAD_LOG_LEVEL: "3"
@@ -14,8 +14,6 @@ env:
 jobs:
   integ-test:
     name: Integration tests
-    # Skipped on release PRs (head ref release-X.Y.Z): tests already ran on master
-    if: "!startsWith(github.head_ref, 'release-')"
     runs-on: self-hosted
     
     steps:          

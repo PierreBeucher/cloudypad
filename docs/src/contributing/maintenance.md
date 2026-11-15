@@ -20,11 +20,9 @@ Some tests are required before release:
 
 ### Do release
 
-Load `GITHUB_TOKEN` (repo contents + pull requests write) and run:
+GitHub authentication uses your local `gh` login (`gh auth login`, needs repo contents + pull requests write). Alternatively, `gh` also reads `GITHUB_TOKEN`/`GH_TOKEN` env vars if set (eg. via `source <(novops load -e release)`).
 
 ```sh
-source <(novops load -e release)
-
 # Create release with version computed by git-cliff from commits since previous release
 # (or resume the release in progress)
 task release-create

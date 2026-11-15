@@ -26,7 +26,9 @@
 # release branch), or to git-cliff bumped version if no release is in progress.
 #
 # Environment:
-#   GITHUB_TOKEN                 Required. Repo contents + pull requests write.
+#   GITHUB_TOKEN                 Optional. If unset, local gh authentication is
+#                                used (must have repo contents + pull requests
+#                                write access).
 #   CLOUDYPAD_RELEASE_DRY_RUN    If "true", stamp and commit on local release
 #                                branch only, push nothing.
 #
@@ -200,8 +202,9 @@ preflight_common() {
     command -v "$bin" >/dev/null || fail "missing required binary: $bin"
   done
 
-  [ -n "${GITHUB_TOKEN:-}" ] || fail "GITHUB_TOKEN must be set (repo contents + pull requests write), eg. via 'source <(novops load -e release)'"
-  gh api "repos/$GH_REPO" --jq .full_name >/dev/null || fail "cannot access GitHub repository $GH_REPO with current GITHUB_TOKEN"
+  # GitHub auth: gh keyring by default, GITHUB_TOKEN/GH_TOKEN env vars if set (gh reads them)
+  gh auth status >/dev/null 2>&1 || fail "gh is not authenticated. Run 'gh auth login', or set GITHUB_TOKEN (repo contents + pull requests write)"
+  gh api "repos/$GH_REPO" --jq .full_name >/dev/null || fail "cannot access GitHub repository $GH_REPO with current gh authentication"
 
   [ -z "$(git status --porcelain --untracked-files=no)" ] || fail "working tree is not clean"
 }
