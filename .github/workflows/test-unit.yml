@@ -5,19 +5,21 @@ on:
     branches:
       - "master"
   pull_request:
-    branches-ignore:
-      - "release-**"
+    branches:
+      - master
 
 env:
   CLOUDYPAD_BUILD_CORE_IMAGE_TAG: ${{ github.head_ref || 'master' }}
   CLOUDYPAD_BUILD_SUNSHINE_IMAGE_TAG: ${{ github.head_ref || 'master' }}
 
-# Workflows don't trigger on release PRs (head ref release-*, see branches-ignore above):
-# tests already ran on master and release images are built and verified by the
-# tag-triggered Release workflow.
+# Job-level if (not pull_request branches-ignore): branches-ignore filters on the PR BASE
+# branch, so it never matches release PRs (release-X.Y.Z -> master).
+# All jobs are skipped on release PRs (head ref release-*): tests already ran on master
+# and release images are built and verified by the tag-triggered Release workflow.
 jobs:
   unit-test:
     name: Unit tests
+    if: "!startsWith(github.head_ref, 'release-')"
     runs-on: self-hosted
     
     steps:
@@ -31,6 +33,7 @@ jobs:
 
   build:
     name: Build Core container image
+    if: "!startsWith(github.head_ref, 'release-')"
     runs-on: self-hosted
     
     steps:
@@ -61,6 +64,7 @@ jobs:
 
   build-sunshine:
     name: Build Sunshine container image
+    if: "!startsWith(github.head_ref, 'release-')"
     runs-on: self-hosted
     steps:
 
@@ -84,6 +88,7 @@ jobs:
 
   test-install:
     name: Test install/run Ubuntu
+    if: "!startsWith(github.head_ref, 'release-')"
     runs-on: "${{ matrix.os }}"
     strategy:
       matrix:
@@ -107,6 +112,7 @@ jobs:
 
   test-install-macos:
     name: Test install/run MacOS
+    if: "!startsWith(github.head_ref, 'release-')"
     runs-on: "${{ matrix.os }}"
     strategy:
       matrix:
@@ -135,6 +141,7 @@ jobs:
 
   test-install-container:
     name: Test install/run in containers
+    if: "!startsWith(github.head_ref, 'release-')"
     runs-on: ubuntu-22.04
     
     # env:
@@ -155,6 +162,7 @@ jobs:
 
   test-flake-package:
     name: Test Flake package
+    if: "!startsWith(github.head_ref, 'release-')"
     runs-on: self-hosted
 
     steps:
@@ -165,6 +173,7 @@ jobs:
 
   test-doc-links:
     name: Test documentation links
+    if: "!startsWith(github.head_ref, 'release-')"
     runs-on: self-hosted
     
     steps:
