@@ -1,5 +1,29 @@
 # Changelog
 
+
+## [0.46.0](https://github.com/PierreBeucher/cloudypad/compare/v0.45.2...v0.46.0) (2026-11-15)
+
+
+### Features
+
+* Sunshine update with CSRF policy ([97a6019](https://github.com/PierreBeucher/cloudypad/commit/97a6019db6102faeabdf55579a323d3ed5fb64ba))
+* Sunshiy update and CSRF policcy ([49086de](https://github.com/PierreBeucher/cloudypad/commit/49086dee49a59aac1aa0ebf9c461d76d42b4fe8e))
+* Plasma X11 desktop stack (replaces xfce4) ([3f0695e](https://github.com/PierreBeucher/cloudypad/commit/3f0695e6cf9277663f6feeb677fba761deeed458))
+* never auto-lock Plasma session (headless streamed desktop) ([d1d0a3f](https://github.com/PierreBeucher/cloudypad/commit/d1d0a3fcc0821c1b7811d8487d59cbbd19fc52e2))
+* Cloudy Pad launchers pinned on Plasma task manager ([92c7b9b](https://github.com/PierreBeucher/cloudypad/commit/92c7b9b30abd2244f1ae32a67a788630e715fe3c))
+* bump all dependencies ([b76a44a](https://github.com/PierreBeucher/cloudypad/commit/b76a44acbe7db5035f23d5c933c5aa0e4b1fa2bd))
+* Ubuntu 26.04 LTS (Resolute) base with Plasma 6 ([77751b0](https://github.com/PierreBeucher/cloudypad/commit/77751b021182d0d25e5af8228810712352273756))
+* ensure nvidia device ([d405891](https://github.com/PierreBeucher/cloudypad/commit/d405891388cba352defc3646d1186c9137869497))
+* bump Sunshine pin to match latest version ([2090c22](https://github.com/PierreBeucher/cloudypad/commit/2090c227e48789e7b1c04a1cfc9c70b78fd74700))
+* NvFBC capture on datacenter GPUs, disable Baloo, restore supervisorctl socket ([6aafaab](https://github.com/PierreBeucher/cloudypad/commit/6aafaabbc01437bbced8a109acb0d0cfff4a52b2))
+* Cloudy Pad Plasma defaults on new instances (Breeze Dark theme, 60px panel) ([e29eb9f](https://github.com/PierreBeucher/cloudypad/commit/e29eb9fb92ce76aaefacbecd52ef67e95da59e82))
+* non-interactive pairing (pair --pin/--auto, task dev:pair) ([ac43fae](https://github.com/PierreBeucher/cloudypad/commit/ac43fae8ae1ff2b1abb85ff3e6c6a06eb90a73ca))
+* visible Steam startup + launcher loading indicators ([245b0c8](https://github.com/PierreBeucher/cloudypad/commit/245b0c8786c68b3443116e82d51f1a9d73b62c5e))
+* passwordless sudo for cloudy user ([42bb594](https://github.com/PierreBeucher/cloudypad/commit/42bb594c99144c51b886c020049ffda0b00d0286))
+* **sunshine:** keep only Desktop and Steam (Big Picture) Sunshine apps ([8b5191d](https://github.com/PierreBeucher/cloudypad/commit/8b5191df01daefe788977fc081adf44b5aa703de))
+* show header during Steam start to inform about update time ([96f0b08](https://github.com/PierreBeucher/cloudypad/commit/96f0b081ab3d5a8af88fae8162c6356034a1d460))
+* bump Sunshine to 2026.1113.231225 ([e861e37](https://github.com/PierreBeucher/cloudypad/commit/e861e379f815382bea861e3badb88f2eef58ba95))
+
 ## [0.45.2](https://github.com/PierreBeucher/cloudypad/compare/v0.45.1...v0.45.2) (2026-05-10)
 
 
