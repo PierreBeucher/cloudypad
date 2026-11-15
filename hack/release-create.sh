@@ -43,7 +43,10 @@ SUNSHINE_IMAGE="${CLOUDYPAD_BUILD_SUNSHINE_IMAGE_REGISTRY:-ghcr.io/pierrebeucher
 CI_WATCH_TIMEOUT="${CLOUDYPAD_RELEASE_CI_WATCH_TIMEOUT:-3600}"
 CI_RUN_REGISTER_TIMEOUT=300
 DRY_RUN="${CLOUDYPAD_RELEASE_DRY_RUN:-false}"
-VERSION_REGEX='^[0-9]+\.[0-9]+\.[0-9]+$'
+# Release candidate: X.Y.Z-rc. Prerelease versions are published as GitHub
+# prereleases (not latest) and are not release boundaries for git-cliff.
+VERSION_REGEX='^[0-9]+\.[0-9]+\.[0-9]+(-rc)?$'
+RC_REGEX='-rc$'
 
 # Set once version is resolved
 V=""
@@ -140,7 +143,7 @@ in_progress_versions() {
   {
     gh pr list --base "$BASE_BRANCH" --state open --json headRefName --jq '.[].headRefName'
     git ls-remote --heads "$REMOTE" 'refs/heads/release-*' | awk '{ sub("^refs/heads/", "", $2); print $2 }'
-  } | { grep -E '^release-[0-9]+\.[0-9]+\.[0-9]+$' || true; } | sed 's/^release-//' | sort -uV \
+  } | { grep -E '^release-[0-9]+\.[0-9]+\.[0-9]+(-rc)?$' || true; } | sed 's/^release-//' | sort -uV \
     | while read -r v; do
         if [ -z "$base" ] || version_gt "$v" "$base"; then
           echo "$v"
@@ -427,10 +430,20 @@ step_publish() {
   changelog_section "$STAMP_SHA" > "$notes"
   [ -s "$notes" ] || fail "empty release notes: no '## [$V]' section in CHANGELOG.md at $STAMP_SHA"
 
+  # Release candidates are published as prereleases, never latest
+  local latest_args=("--latest")
+  if [[ "$V" =~ $RC_REGEX ]]; then
+    latest_args=("--prerelease")
+  fi
+
   if gh release view "$TAG" --json tagName >/dev/null 2>&1; then
-    gh release edit "$TAG" --latest --draft=false --prerelease=false >/dev/null
+    if [[ "$V" =~ $RC_REGEX ]]; then
+      gh release edit "$TAG" --prerelease --draft=false >/dev/null
+    else
+      gh release edit "$TAG" --latest --draft=false --prerelease=false >/dev/null
+    fi
   else
-    gh release create "$TAG" --verify-tag --latest --title "$TAG" --notes-file "$notes" >/dev/null
+    gh release create "$TAG" --verify-tag "${latest_args[@]}" --title "$TAG" --notes-file "$notes" >/dev/null
   fi
 
   RELEASE_URL=$(gh release view "$TAG" --json url --jq .url)
@@ -529,7 +542,7 @@ main() {
   done
 
   if [ -n "$requested" ] && ! [[ "$requested" =~ $VERSION_REGEX ]]; then
-    fail "invalid version '$requested': expected X.Y.Z (no 'v' prefix, no prerelease suffix)"
+    fail "invalid version '$requested': expected X.Y.Z or X.Y.Z-rc (no 'v' prefix)"
   fi
 
   if [ "$mode" = "abort" ] && is_dry_run; then
@@ -545,7 +558,7 @@ main() {
   git fetch --quiet --prune --force --tags "$REMOTE"
 
   V=$(resolve_version "$requested" "$mode")
-  [[ "$V" =~ $VERSION_REGEX ]] || fail "invalid version '$V': expected X.Y.Z"
+  [[ "$V" =~ $VERSION_REGEX ]] || fail "invalid version '$V': expected X.Y.Z or X.Y.Z-rc"
 
   TAG="v$V"
   BRANCH="release-$V"
