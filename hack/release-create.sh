@@ -35,7 +35,9 @@ set -euo pipefail
 shopt -s inherit_errexit
 
 REMOTE="origin"
-BASE_BRANCH="master"
+# Base branch to cut the release from. Default master; override to release from
+# another branch (eg. test the release process itself from its own branch)
+BASE_BRANCH="${CLOUDYPAD_RELEASE_BASE_BRANCH:-master}"
 RELEASE_WORKFLOW="release.yml"
 export GH_REPO="${CLOUDYPAD_RELEASE_GH_REPO:-PierreBeucher/cloudypad}"
 CORE_IMAGE="${CLOUDYPAD_BUILD_CORE_IMAGE_REGISTRY:-ghcr.io/pierrebeucher/cloudypad}"
