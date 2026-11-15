@@ -204,8 +204,8 @@ tasks:
     - task: build-core-container-local
     - docker run $CLOUDYPAD_BUILD_CORE_IMAGE_REGISTRY:$CLOUDYPAD_BUILD_CORE_IMAGE_TAG --version
     - >-
-      [ $(docker run $CLOUDYPAD_BUILD_CORE_IMAGE_REGISTRY:$CLOUDYPAD_BUILD_CORE_IMAGE_TAG --version) = $(cat package.json | jq .version -r) ] 
-      || echo "Version in container image doesn't match package.json version"
+      [ "$(docker run $CLOUDYPAD_BUILD_CORE_IMAGE_REGISTRY:$CLOUDYPAD_BUILD_CORE_IMAGE_TAG --version)" = "$(jq -r .version package.json)" ]
+      || { echo "Version in container image doesn't match package.json version"; exit 1; }
 
   # Check documentation links for broken links
   # Self-contained: starts mdbook server, runs test, cleans up
@@ -403,11 +403,12 @@ tasks:
   # Release
   #
 
-  release-check-version:
-    cmds:
-    - >
-      [[ -z "{{ .CLOUDYPAD_RELEASE_VERSION }}" ]] && echo "CLOUDYPAD_RELEASE_VERSION not set" && exit 1 || true
-
-  
+  # Create or resume a release on branch release-X.Y.Z, ending with a PR to master (not merged)
+  # See hack/release-create.sh and docs/src/contributing/maintenance.md
+  #
+  # eg.
+  #   task release-create                      # resume release in progress or use git-cliff bumped version
+  #   task release-create -- 0.46.0            # explicit version
+  #   task release-create -- --abort 0.46.0    # undo an unmerged release
   release-create:
-    cmd: ./hack/release-create.sh
+    cmd: ./hack/release-create.sh {{ .CLI_ARGS }}

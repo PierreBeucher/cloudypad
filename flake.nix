@@ -54,6 +54,7 @@
                 yq
                 jq
                 gh
+                git-cliff
                 mdbook
                 pv # for demo-magic
                 asciinema
