@@ -5,8 +5,8 @@ on:
     branches:
       - "master"
   pull_request:
-    branches:
-      - master
+    branches-ignore:
+      - "release-**"
 
 env:
   CLOUDYPAD_LOG_LEVEL: "3"

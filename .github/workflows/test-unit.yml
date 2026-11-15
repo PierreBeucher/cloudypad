@@ -5,13 +5,16 @@ on:
     branches:
       - "master"
   pull_request:
-    branches:
-      - master
+    branches-ignore:
+      - "release-**"
 
 env:
   CLOUDYPAD_BUILD_CORE_IMAGE_TAG: ${{ github.head_ref || 'master' }}
   CLOUDYPAD_BUILD_SUNSHINE_IMAGE_TAG: ${{ github.head_ref || 'master' }}
 
+# Workflows don't trigger on release PRs (head ref release-*, see branches-ignore above):
+# tests already ran on master and release images are built and verified by the
+# tag-triggered Release workflow.
 jobs:
   unit-test:
     name: Unit tests
@@ -81,7 +84,6 @@ jobs:
 
   test-install:
     name: Test install/run Ubuntu
-    if: "!startsWith(github.head_ref, 'release/')" # Install test will fail on release branch as version won't mach
     runs-on: "${{ matrix.os }}"
     strategy:
       matrix:
@@ -105,7 +107,6 @@ jobs:
 
   test-install-macos:
     name: Test install/run MacOS
-    if: "!startsWith(github.head_ref, 'release/')" # Install test will fail on release branch as version won't mach
     runs-on: "${{ matrix.os }}"
     strategy:
       matrix:
@@ -134,7 +135,6 @@ jobs:
 
   test-install-container:
     name: Test install/run in containers
-    if: "!startsWith(github.head_ref, 'release/')" # Install test will fail on release branch as version won't mach
     runs-on: ubuntu-22.04
     
     # env:
