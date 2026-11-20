@@ -16,13 +16,3 @@ Keep in mind `sudo` commands can break things and we may not be able to provide 
 ## Persisting data
 
 Persistent data can be stored under `$XDG_DATA_HOME`, this folder and its content will persist across sessions. It contains your games and user data - be careful not to break anything important!
-
-## Get your sudo password
-
-To get your `sudo` password in Cloudy Pad:
-
-- Right click on desktop and run a terminal
-- Run command:
-```sh
-get-cloudy-password
-```
