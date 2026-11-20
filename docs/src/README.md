@@ -3,6 +3,9 @@
 
 Cloudy Pad lets you **deploy a Cloud gaming instance on your own servers, machines or directly in the Cloud** (AWS, Azure, Google Cloud, Scaleway...) and **play your own Steam, Epic, GOG and other games** - without requiring a powerful gaming machine or a costly subscription.
 
+![](./assets/desktop-e33.jpg)
+
+
 ## Features ✨
 
 - Supported Games Launchers:
@@ -30,10 +33,6 @@ Cloudy Pad lets you **deploy a Cloud gaming instance on your own servers, machin
 **Not familiar with Cloud Gaming ?** See [What's Cloud Gaming and how is Cloudy Pad useful ?](./what-is-cloud-gaming.md)
 
 [![Discord](https://img.shields.io/discord/856434175455133727?style=for-the-badge&logo=discord&logoColor=ffffff&label=Discord&labelColor=6A7EC2&color=7389D8)](https://discord.gg/QATA3b9TTa)
-
-<video controls>
-  <source src="assets/demo.webm" type="video/mp4">
-</video>
 
 ## Getting started
 
